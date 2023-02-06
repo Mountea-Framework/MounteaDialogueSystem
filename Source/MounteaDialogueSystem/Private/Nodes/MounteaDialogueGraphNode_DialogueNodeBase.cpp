@@ -10,6 +10,7 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBase", "DialogueNode");
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBase", "Dialogue Node");
 	BackgroundColor = FLinearColor(FColor::Orange);
+	NodeGUID = FGuid::NewGuid();
 }
 
 bool UMounteaDialogueGraphNode_DialogueNodeBase::CanCreateConnection(UMounteaDialogueGraphNode* Other, EEdGraphPinDirection Direction, FText& ErrorMessage)

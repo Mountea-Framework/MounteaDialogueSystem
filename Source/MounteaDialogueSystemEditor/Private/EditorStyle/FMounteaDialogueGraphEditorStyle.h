@@ -15,5 +15,4 @@ public:
 
 private:
 	static TSharedPtr<FSlateStyleSet> StyleSet;
-	
 };

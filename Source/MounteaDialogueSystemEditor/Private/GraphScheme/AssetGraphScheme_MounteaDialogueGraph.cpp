@@ -287,6 +287,9 @@ void UAssetGraphScheme_MounteaDialogueGraph::GetContextMenuActions(UToolMenu* Me
 	{
 		{
 			FToolMenuSection& Section = Menu->AddSection("MounteaDialogueGraphAssetGraphSchemaNodeActions", LOCTEXT("ClassActionsMenuHeader", "Node Actions"));
+			Section.AddSeparator(FName(TEXT("Main Options")));
+			Section.AddMenuEntry(FGenericCommands::Get().Rename);
+			Section.AddSeparator(FName(TEXT("Other Options")));
 			Section.AddMenuEntry(FGenericCommands::Get().Delete);
 			Section.AddMenuEntry(FGenericCommands::Get().Cut);
 			Section.AddMenuEntry(FGenericCommands::Get().Copy);

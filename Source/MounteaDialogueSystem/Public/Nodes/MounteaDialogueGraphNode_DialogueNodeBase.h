@@ -28,6 +28,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
 	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
 
+	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
+	FGuid NodeGUID;
+
 protected:
 
 	virtual bool CanCreateConnection(UMounteaDialogueGraphNode* Other, EEdGraphPinDirection Direction, FText& ErrorMessage) override;

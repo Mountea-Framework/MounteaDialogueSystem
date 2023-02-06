@@ -1,6 +1,8 @@
 // Copyright Dominik Pavlicek 2023. All Rights Reserved.
 
 #include "FMounteaDialogueGraphEditorStyle.h"
+
+#include "Interfaces/IPluginManager.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Misc/Paths.h"
 
@@ -14,19 +16,26 @@ TSharedPtr<FSlateStyleSet> FMounteaDialogueGraphEditorStyle::StyleSet = nullptr;
 
 void FMounteaDialogueGraphEditorStyle::Initialize()
 {
+	const FVector2D Icon16x16(16.0f, 16.0f);
 	const FVector2D Icon40x40(40.0f, 40.0f);
 	const FVector2D Icon64x64(64.0f, 64.0f);
 
-	if (StyleSet.IsValid())
+	if (StyleSet.IsValid() )
 	{
 		return;
 	}
 
-	StyleSet = MakeShareable(new FSlateStyleSet("MounteaDialogueGraphEditorStyle"));
+	StyleSet = MakeShareable(new FSlateStyleSet("MDSStyleSet"));
+	StyleSet->SetContentRoot(IPluginManager::Get().FindPlugin("MounteaDialogueSystem")->GetBaseDir() / TEXT("Resources"));
 
-	StyleSet->SetContentRoot(FPaths::ProjectPluginsDir() / TEXT("MounteaDialogueSystem/Resources"));
+	StyleSet->Set("MDSStyleSet.AutoArrange.small", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.AutoArrange", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.AutoArrange.large", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon64x64));
+	
 
-	StyleSet->Set("MounteaDialogueGraphEditor.AutoArrange", new IMAGE_BRUSH("AutoArrangeIcon", Icon40x40));
+	StyleSet->Set("MDSStyleSet.GraphSettings.small", new IMAGE_BRUSH(TEXT("GraphSettings"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.GraphSettings", new IMAGE_BRUSH(TEXT("GraphSettings"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.GraphSettings.large", new IMAGE_BRUSH(TEXT("GraphSettings"), Icon64x64));
 
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
 }

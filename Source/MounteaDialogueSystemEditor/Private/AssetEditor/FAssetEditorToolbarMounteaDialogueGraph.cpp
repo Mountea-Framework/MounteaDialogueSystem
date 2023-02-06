@@ -29,7 +29,7 @@ void FAssetEditorToolbarMounteaDialogueGraph::FillMounteaDialogueGraphToolbar(FT
 			NAME_None,
 			LOCTEXT("GraphSettings_Label", "Graph Settings"),
 			LOCTEXT("GraphSettings_ToolTip", "Show the Graph Settings"),
-			FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.GameSettings"));
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetStyleSetName(),"MDSStyleSet.GraphSettings"));
 	}
 	ToolbarBuilder.EndSection();
 
@@ -38,8 +38,8 @@ void FAssetEditorToolbarMounteaDialogueGraph::FillMounteaDialogueGraphToolbar(FT
 		ToolbarBuilder.AddToolBarButton(FMounteaDialogueGraphEditorCommands::Get().AutoArrange,
 			NAME_None,
 			LOCTEXT("AutoArrange_Label", "Auto Arrange"),
-			LOCTEXT("AutoArrange_ToolTip", "Auto arrange nodes, not perfect, but still handy"),
-			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetStyleSetName(), "GenericGraphEditor.AutoArrange")); 
+			LOCTEXT("AutoArrange_ToolTip", "Tries its best to arrange Graph Nodes. Don't judge too harshly please."),
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetStyleSetName(), "MDSStyleSet.AutoArrange")); 
 	}
 	ToolbarBuilder.EndSection();
 }

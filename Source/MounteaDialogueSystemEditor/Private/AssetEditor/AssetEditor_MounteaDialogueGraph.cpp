@@ -14,6 +14,7 @@
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
+#include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "GraphScheme/AssetGraphScheme_MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Layout/ForceDirectedSolveLayoutStrategy.h"
@@ -137,7 +138,7 @@ UMounteaDialogueGraphEditorSettings* FAssetEditor_MounteaDialogueGraph::GetSetti
 
 void FAssetEditor_MounteaDialogueGraph::RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
 {
-	WorkspaceMenuCategory = InTabManager->AddLocalWorkspaceMenuCategory(LOCTEXT("WorkspaceMenu_GenericGraphEditor", "Generic Graph Editor"));
+	WorkspaceMenuCategory = InTabManager->AddLocalWorkspaceMenuCategory(LOCTEXT("WorkspaceMenu_MounteaDialogueTreeEditor", "Mountea Dialogue Tree Editor"));
 	auto WorkspaceMenuCategoryRef = WorkspaceMenuCategory.ToSharedRef();
 
 	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
@@ -153,9 +154,9 @@ void FAssetEditor_MounteaDialogueGraph::RegisterTabSpawners(const TSharedRef<FTa
 		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.Tabs.Details"));
 
 	InTabManager->RegisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphEditorSettingsID, FOnSpawnTab::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::SpawnTab_EditorSettings))
-		.SetDisplayName(LOCTEXT("EditorSettingsTab", "Generic Graph Editor Setttings"))
+		.SetDisplayName(LOCTEXT("EditorSettingsTab", "Mountea Dialogue Graph Editor Setttings"))
 		.SetGroup(WorkspaceMenuCategoryRef)
-		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.Tabs.Details"));
+		.SetIcon(FSlateIcon(FMounteaDialogueGraphEditorStyle::GetStyleSetName(), "MDSStyleSet.GraphSettings.small"));
 }
 
 void FAssetEditor_MounteaDialogueGraph::UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)

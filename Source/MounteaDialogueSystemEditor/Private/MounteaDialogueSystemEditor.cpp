@@ -34,8 +34,11 @@ class FGraphPanelNodeFactory_MounteaDialogueGraph : public FGraphPanelNodeFactor
 
 void FMounteaDialogueSystemEditor::StartupModule()
 {
-	FMounteaDialogueGraphEditorStyle::Initialize();
-
+	// AutoArrange Icon
+	{
+		FMounteaDialogueGraphEditorStyle::Initialize();
+	}
+	
 	// Register new Graph
 	{
 		GraphPanelNodeFactory_MounteaDialogueGraph = MakeShareable(new FGraphPanelNodeFactory_MounteaDialogueGraph());
