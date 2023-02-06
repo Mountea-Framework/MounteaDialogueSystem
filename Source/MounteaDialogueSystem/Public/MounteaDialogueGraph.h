@@ -26,7 +26,7 @@ public:
 #pragma region Variables
 	
 public: 
-	UPROPERTY(EditDefaultsOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	FString Name;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
@@ -44,7 +44,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TArray<UMounteaDialogueGraphNode*> AllNodes;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly, Category = "Mountea|Dialogue")
 	bool bEdgeEnabled;
 
 #pragma endregion
@@ -69,7 +69,7 @@ public:
 	UPROPERTY()
 	class UEdGraph* EdGraph;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Mountea|Dialogue|Editor")
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
 	bool bCanRenameNode;
 #endif
 };

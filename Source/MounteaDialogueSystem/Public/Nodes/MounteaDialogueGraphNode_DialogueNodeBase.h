@@ -11,7 +11,7 @@
 /**
  * 
  */
-UCLASS(Abstract, ClassGroup=("Mountea|Dialogue"))
+UCLASS(Abstract, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories="Mountea", AutoExpandCategories="DataTableRowHandle")
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_DialogueNodeBase : public UMounteaDialogueGraphNode
 {
 	GENERATED_BODY()
@@ -22,10 +22,10 @@ public:
 
 protected:
 
-	UPROPERTY(EditDefaultsOnly, Category="Mountea|Dialogue")
+	UPROPERTY(EditDefaultsOnly, Category="Mountea|Dialogue", meta=(RowType="DialogueRow"))
 	FDataTableRowHandle DialogueRowHandle;
 
-	UPROPERTY(VisibleAnywhere, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
 	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
 
 protected:
