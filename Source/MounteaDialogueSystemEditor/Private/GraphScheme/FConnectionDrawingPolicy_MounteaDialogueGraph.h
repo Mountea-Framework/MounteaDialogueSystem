@@ -3,18 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BlueprintConnectionDrawingPolicy.h"
 #include "ConnectionDrawingPolicy.h"
 
-class FConnectionDrawingPolicy_MounteaDialogueGraph : public FConnectionDrawingPolicy
+class FConnectionDrawingPolicy_MounteaDialogueGraph : public FKismetConnectionDrawingPolicy
 {
-	
-protected:
-	UEdGraph* GraphObj;
-	TMap<UEdGraphNode*, int32> NodeWidgetMap;
-	
+
 public:
 	FConnectionDrawingPolicy_MounteaDialogueGraph(int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj);
-
+	virtual ~FConnectionDrawingPolicy_MounteaDialogueGraph() {};
+	
 	// FConnectionDrawingPolicy interface 
 	virtual void DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin, /*inout*/ FConnectionParams& Params) override;
 	virtual void Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& InPinGeometries, FArrangedChildren& ArrangedNodes) override;
@@ -24,8 +22,12 @@ public:
 	virtual FVector2D ComputeSplineTangent(const FVector2D& Start, const FVector2D& End) const override;
 	virtual void DetermineLinkGeometry(FArrangedChildren& ArrangedNodes, TSharedRef<SWidget>& OutputPinWidget, UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FArrangedWidget*& StartWidgetGeometry, FArrangedWidget*& EndWidgetGeometry) override;
 	// End of FConnectionDrawingPolicy interface
-
-	protected:
+	
+protected:
 	void Internal_DrawLineWithArrow(const FVector2D& StartAnchorPoint, const FVector2D& EndAnchorPoint, const FConnectionParams& Params);
+
+protected:
+	UEdGraph* GraphObj;
+	TMap<UEdGraphNode*, int32> NodeWidgetMap;
 	
 };

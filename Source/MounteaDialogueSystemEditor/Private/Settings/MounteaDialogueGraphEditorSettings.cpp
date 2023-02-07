@@ -16,4 +16,8 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 	MaxIteration = 50;
 	InitTemperature = 10.f;
 	CoolDownRate = 10.f;
+
+	WireWidth = 1.5f;
+	WireStyle = EWiringStyle::EWS_Simple;
+	BubbleDrawRule = EBubbleDrawRule::EBDR_OnSelected;
 }

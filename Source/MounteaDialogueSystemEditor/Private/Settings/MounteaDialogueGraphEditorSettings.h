@@ -16,6 +16,23 @@ enum class EAutoLayoutStrategyType : uint8
 	Default						UMETA(Hidden)
 };
 
+UENUM(BlueprintType)
+enum class EWiringStyle : uint8
+{
+	EWS_Vanilla				UMETA(DisplayName="Vanilla"),
+	EWS_Simple			UMETA(DisplayName="90° Angle"),
+	EWS_Complex			UMETA(DisplayName="45° Angle"),
+
+	Default						UMETA(Hidden)
+};
+
+UENUM(BlueprintType)
+enum class EBubbleDrawRule : uint8
+{
+	EBDR_Always			UMETA(DisplayName="Always"),
+	EBDR_OnSelected	UMETA(DisplayName="When Selected")
+};
+
 /**
  * Mountea Dialogue System global settings.
  */
@@ -30,9 +47,51 @@ public:
 
 private:	
 
+#pragma region GraphWiring
+	
+	UPROPERTY(config, EditDefaultsOnly, Category = "GraphSettings")
+	float WireWidth;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "GraphSettings", AdvancedDisplay, meta=(ToolTip="Work in Progress!"))
+	bool bUseAdvancedWiring;
+	
+	UPROPERTY(config, EditDefaultsOnly, Category = "GraphSettings", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
+	EWiringStyle WireStyle;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "GraphSettings", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
+	uint32 HorizontalOffset = 16;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "GraphSettings", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
+	EBubbleDrawRule BubbleDrawRule;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "GraphSettings", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
+	int32 BubbleZoomThreshold;
+
+	/* Space between bubbles on the wires. Default: 20.0 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "GraphSettings", AdvancedDisplay, meta = (ClampMin = "10.0", ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
+	float BubbleSpace = 20.0f;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "GraphSettings", AdvancedDisplay, meta = (ClampMin = "10.0", ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
+	float BubbleSize = 2.0f;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "GraphSettings", AdvancedDisplay, meta = (ClampMin = "10.0", ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
+	float BubbleSpeed = 2.0f;
+	
+	/* Disable the offset for pins. Default: false */
+	UPROPERTY(config, EditDefaultsOnly, Category = "GraphSettings", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
+	bool DisablePinOffset = false;
+
+	/* Fix default zoomed-out wire displacement. Default: true */
+	UPROPERTY(config, EditDefaultsOnly, Category = "GraphSettings", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
+	bool FixZoomDisplacement = true;
+
+#pragma endregion
+
+#pragma region GraphArrange
+	
 	UPROPERTY(config, EditDefaultsOnly, Category = "AutoArrange")
 	float OptimalDistance;
-
+	
 	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
 	EAutoLayoutStrategyType AutoLayoutStrategy;
 
@@ -50,6 +109,8 @@ private:
 
 	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
 	float CoolDownRate;
+
+#pragma endregion 
 
 #if WITH_EDITOR
 	virtual FText GetSectionText() const override
@@ -69,12 +130,45 @@ private:
 #endif
 
 public:
-	
-	float GetOptimalDistance() const
-	{ return OptimalDistance; };
 
+#pragma region GraphWiring_Getters
+
+	float GetWireWidth() const
+	{ return WireWidth; };
+	
+	bool AllowAdvancedWiring() const
+	{ return bUseAdvancedWiring; };
+	
+	EWiringStyle GetWireStyle() const
+	{ return WireStyle; };
+
+	int32 GetHorizontalOffset() const
+	{ return HorizontalOffset; };
+
+	EBubbleDrawRule GetBubbleDrawRule() const
+	{ return  BubbleDrawRule; };
+
+	int32 GetBubbleZoomThreshold() const
+	{ return BubbleZoomThreshold; };
+
+	float GetBubbleSpace() const
+	{ return BubbleSpace; };
+
+	float GetBubbleSpeed() const
+	{ return BubbleSpeed; };
+
+	float GetBubbleSize() const
+	{ return BubbleSize; };
+
+#pragma endregion 
+
+#pragma region GraphArrange_Getters
+	
 	EAutoLayoutStrategyType GetAutoLayoutStrategy() const
 	{ return AutoLayoutStrategy; };
+
+	float GetOptimalDistance() const
+	{ return OptimalDistance; };
 
 	int32 GetMaxIteration() const
 	{ return MaxIteration; };
@@ -90,5 +184,7 @@ public:
 
 	float GetCoolDownRate() const
 	{ return CoolDownRate; };
+
+#pragma endregion 
 };
 

@@ -11,6 +11,7 @@
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "Framework/Commands/GenericCommands.h"
+#include "Settings/MounteaDialogueGraphEditorSettings.h"
 
 #define LOCTEXT_NAMESPACE "AssetGraphScheme_MounteaDialogueGraph"
 
@@ -397,6 +398,16 @@ FConnectionDrawingPolicy* UAssetGraphScheme_MounteaDialogueGraph::CreateConnecti
 	int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements,
 	UEdGraph* InGraphObj) const
 {
+	/*
+	if (const UMounteaDialogueGraphEditorSettings* MounteaDialogueGraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
+	{
+		if (MounteaDialogueGraphEditorSettings->AllowAdvancedWiring())
+		{
+			return new FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
+		}
+	}
+	*/
+	
 	return new FConnectionDrawingPolicy_MounteaDialogueGraph(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
 }
 
