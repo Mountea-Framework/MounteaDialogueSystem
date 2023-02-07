@@ -54,6 +54,8 @@ public:
 	FText GetDescription() const;
 	virtual FText GetDescription_Implementation() const;
 
+	virtual void OnCreatedInEditor() {};
+
 #pragma endregion 
 
 #if WITH_EDITORONLY_DATA
@@ -64,8 +66,11 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
 	bool bAllowOutputNodes;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Mountea|Dialogue|Editor")
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
 	FText NodeTitle;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	FText ContextMenuName;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
 	TSubclassOf<UMounteaDialogueGraph> CompatibleGraphType;
@@ -73,8 +78,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Mountea|Dialogue|Editor")
 	FLinearColor BackgroundColor;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Mountea|Dialogue|Editor")
-	FText ContextMenuName;
 #endif
 
 #if WITH_EDITOR

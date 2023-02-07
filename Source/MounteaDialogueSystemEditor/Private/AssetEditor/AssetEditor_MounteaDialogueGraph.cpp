@@ -9,6 +9,7 @@
 #include "EdGraphUtilities.h"
 
 #include "MounteaDialogueGraph.h"
+#include "MounteaDialogueGraphNode.h"
 #include "EditorCommands/FMounteaDialogueGraphEditorCommands.h"
 #include "AssetEditor/FAssetEditorToolbarMounteaDialogueGraph.h"
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
@@ -295,6 +296,27 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 		// Give the schema a chance to fill out any required nodes (like the results node)
 		const UEdGraphSchema* Schema = EditingGraph->EdGraph->GetSchema();
 		Schema->CreateDefaultNodesForGraph(*EditingGraph->EdGraph);
+
+		UEdGraph_MounteaDialogueGraph* MounteaDialogueGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
+
+		const auto NewNode = MounteaDialogueGraph->CreateIntermediateNode<UEdNode_MounteaDialogueGraphNode>();
+	
+		NewNode->SetMounteaDialogueGraphNode(EditingGraph->StartNode);
+		NewNode->CreateNewGuid();
+		NewNode->PostPlacedNewNode();
+		NewNode->AllocateDefaultPins();
+		NewNode->AutowireNewNode(nullptr);
+
+		NewNode->NodePosX = 0;
+		NewNode->NodePosY = 0;
+
+		NewNode->DialogueGraphNode->SetFlags(RF_Transactional);
+		NewNode->SetFlags(RF_Transactional);
+		
+	//	NewNode->NodeHeight = 32;
+	//	NewNode->NodeWidth = 64;
+		
+		MounteaDialogueGraph->RebuildMounteaDialogueGraph();
 	}
 }
 

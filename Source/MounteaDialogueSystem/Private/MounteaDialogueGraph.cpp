@@ -5,6 +5,7 @@
 #include "MounteaDialogueGraphEdge.h"
 #include "MounteaDialogueGraphNode.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraph"
 
@@ -14,6 +15,8 @@ UMounteaDialogueGraph::UMounteaDialogueGraph()
 	EdgeType = UMounteaDialogueGraphEdge::StaticClass();
 
 	bEdgeEnabled = true;
+
+	
 
 #if WITH_EDITORONLY_DATA
 	EdGraph = nullptr;
@@ -115,6 +118,32 @@ void UMounteaDialogueGraph::GetNodesByLevel(int Level, TArray<UMounteaDialogueGr
 	}
 }
 
+void UMounteaDialogueGraph::CreateGraph()
+{
+	// We already have existing Graph
+	if (EdGraph != nullptr)
+	{
+		return;
+	}
+
+	// We already have existing Start Node
+	if (StartNode != nullptr)
+	{
+		return;
+	}
+
+	StartNode = ConstructDialogueNode<UMounteaDialogueGraphNode_StartNode>();
+	if (StartNode != nullptr )
+	{
+		StartNode->Graph = this;
+
+		RootNodes.Add(StartNode);
+		AllNodes.Add(StartNode);
+		
+		//MarkPackageDirty();
+	}
+}
+
 void UMounteaDialogueGraph::ClearGraph()
 {
 	for (int i = 0; i < AllNodes.Num(); ++i)
@@ -128,6 +157,24 @@ void UMounteaDialogueGraph::ClearGraph()
 
 	AllNodes.Empty();
 	RootNodes.Empty();
+}
+
+void UMounteaDialogueGraph::PostInitProperties()
+{
+	UObject::PostInitProperties();
+
+	// Ignore these cases
+	if (HasAnyFlags(RF_ClassDefaultObject | RF_NeedLoad))
+	{
+		return;
+	}
+
+#if WITH_EDITOR
+
+	CreateGraph();
+	
+#endif
+	
 }
 
 

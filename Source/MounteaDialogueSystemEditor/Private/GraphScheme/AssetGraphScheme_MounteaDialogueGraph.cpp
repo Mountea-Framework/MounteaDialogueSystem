@@ -474,4 +474,9 @@ void UAssetGraphScheme_MounteaDialogueGraph::ForceVisualizationCacheClear() cons
 	++CurrentCacheRefreshID;
 }
 
+void UAssetGraphScheme_MounteaDialogueGraph::CreateDefaultNodesForGraph(UEdGraph& Graph) const
+{
+	Super::CreateDefaultNodesForGraph(Graph);
+}
+
 #undef LOCTEXT_NAMESPACE

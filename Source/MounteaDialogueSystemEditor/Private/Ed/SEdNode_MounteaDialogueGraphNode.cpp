@@ -88,16 +88,6 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 	TSharedPtr<SErrorText> ErrorText;
 	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, GraphNode);
 
-	bool bAllowInputPin = true;
-	bool bAllowOutputPin = false;
-	
-	const UEdNode_MounteaDialogueGraphNode* Node = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode);
-	if (Node && Node->DialogueGraphNode)
-	{
-		bAllowInputPin = Node->DialogueGraphNode->bAllowInputNodes;
-		bAllowOutputPin = Node->DialogueGraphNode->bAllowOutputNodes;
-	}
-
 	// TODO: any way to disable areas?
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	this->GetOrAddSlot(ENodeZone::Center)

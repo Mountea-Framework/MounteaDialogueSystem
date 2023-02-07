@@ -43,8 +43,13 @@ private:
 	
 	void RegisterAssetTypeAction(IAssetTools& AssetTools, TSharedRef<IAssetTypeActions> Action);
 
-private:
+protected:
 
+	// Handle Blueprint Events
+	void HandleNewDialogueGraphCreated(UBlueprint* Blueprint);
+
+private:
+	
 	TSharedPtr<FSlateStyleSet> DialogueTreeSet;
 	TSharedPtr<class FMounteaDialogueGraphAssetAction> MounteaDialogueGraphAssetActions;
 	

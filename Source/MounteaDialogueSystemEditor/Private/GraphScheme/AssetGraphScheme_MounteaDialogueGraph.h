@@ -87,6 +87,8 @@ public:
 
 	virtual void ForceVisualizationCacheClear() const override;
 
+	virtual void CreateDefaultNodesForGraph(UEdGraph& Graph) const override;
+
 private:
 	
 	static int32 CurrentCacheRefreshID;

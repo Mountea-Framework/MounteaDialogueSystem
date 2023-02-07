@@ -26,7 +26,7 @@ public:
 	UMounteaDialogueGraphEdge* MounteaDialogueGraphEdge;
 
 public:
-
+	
 	void SetEdge(UMounteaDialogueGraphEdge* Edge);
 
 	virtual void AllocateDefaultPins() override;

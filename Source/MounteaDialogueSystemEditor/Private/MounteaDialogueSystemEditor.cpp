@@ -16,6 +16,8 @@
 
 class FGraphPanelNodeFactory_MounteaDialogueGraph : public FGraphPanelNodeFactory
 {
+public:
+	
 	virtual TSharedPtr<class SGraphNode> CreateNode(UEdGraphNode* Node) const override
 	{
 		
@@ -34,7 +36,7 @@ class FGraphPanelNodeFactory_MounteaDialogueGraph : public FGraphPanelNodeFactor
 
 void FMounteaDialogueSystemEditor::StartupModule()
 {
-	// AutoArrange Icon
+	// Button Icons
 	{
 		FMounteaDialogueGraphEditorStyle::Initialize();
 	}
@@ -95,30 +97,40 @@ void FMounteaDialogueSystemEditor::ShutdownModule()
 	}
 
 	// Asset Types Cleanup
-	if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
 	{
+		if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
 		{
-			FAssetToolsModule::GetModule().Get().UnregisterAssetTypeActions(MounteaDialogueGraphAssetActions.ToSharedRef());
+			{
+				FAssetToolsModule::GetModule().Get().UnregisterAssetTypeActions(MounteaDialogueGraphAssetActions.ToSharedRef());
+			}
 		}
 	}
-
+	
 	// Unregister all the asset types that we registered
-	if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
 	{
-		IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
-		for (int32 Index = 0; Index < CreatedAssetTypeActions.Num(); ++Index)
+		if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
 		{
-			AssetTools.UnregisterAssetTypeActions(CreatedAssetTypeActions[Index].ToSharedRef());
+			IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
+			for (int32 Index = 0; Index < CreatedAssetTypeActions.Num(); ++Index)
+			{
+				AssetTools.UnregisterAssetTypeActions(CreatedAssetTypeActions[Index].ToSharedRef());
+			}
 		}
 	}
-
-	if (GraphPanelNodeFactory_MounteaDialogueGraph.IsValid())
+	
+	// Unregister new Graph
 	{
-		FEdGraphUtilities::UnregisterVisualNodeFactory(GraphPanelNodeFactory_MounteaDialogueGraph);
-		GraphPanelNodeFactory_MounteaDialogueGraph.Reset();
+		if (GraphPanelNodeFactory_MounteaDialogueGraph.IsValid())
+		{
+			FEdGraphUtilities::UnregisterVisualNodeFactory(GraphPanelNodeFactory_MounteaDialogueGraph);
+			GraphPanelNodeFactory_MounteaDialogueGraph.Reset();
+		}
 	}
-
-	FMounteaDialogueGraphEditorStyle::Shutdown();
+	
+	// Button Icons
+	{
+		FMounteaDialogueGraphEditorStyle::Shutdown();
+	}
 	
 	EditorLOG_WARNING(TEXT("MounteaDialogueSystemEditor module has been unloaded"));
 }
@@ -127,6 +139,15 @@ void FMounteaDialogueSystemEditor::RegisterAssetTypeAction(IAssetTools& AssetToo
 {
 	AssetTools.RegisterAssetTypeActions(Action);
 	CreatedAssetTypeActions.Add(Action);
+}
+
+void FMounteaDialogueSystemEditor::HandleNewDialogueGraphCreated(UBlueprint* Blueprint)
+{
+	if (!Blueprint)
+	{
+		return;
+	}
+	
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -20,6 +20,7 @@ UEdNode_MounteaDialogueGraphNode::~UEdNode_MounteaDialogueGraphNode()
 
 void UEdNode_MounteaDialogueGraphNode::SetMounteaDialogueGraphNode(UMounteaDialogueGraphNode* NewNode)
 {
+	DialogueGraphNode = NewNode;
 }
 
 UEdGraph_MounteaDialogueGraph* UEdNode_MounteaDialogueGraphNode::GetDialogueGraphEdGraph() const

@@ -25,7 +25,10 @@ public:
 
 #pragma region Variables
 	
-public: 
+public:
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
+	class UMounteaDialogueGraphNode* StartNode = nullptr;
+	
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	FString Name;
 
@@ -61,7 +64,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
 	void GetNodesByLevel(int Level, TArray<UMounteaDialogueGraphNode*>& Nodes);
 
+	void CreateGraph();
 	void ClearGraph();
+
+	virtual void PostInitProperties() override;
 
 #pragma endregion 
 
@@ -72,4 +78,16 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
 	bool bCanRenameNode;
 #endif
+
+public:
+
+	// Construct and initialize a node within this Dialogue.
+	template<class T>
+	T* ConstructDialogueNode(TSubclassOf<UMounteaDialogueGraphNode> DialogueNodeClass = T::StaticClass())
+	{
+		// Set flag to be transactional so it registers with undo system
+		T* DialogueNode = NewObject<T>(this, DialogueNodeClass, NAME_None, RF_Transactional);
+		DialogueNode->OnCreatedInEditor();
+		return DialogueNode;
+	}
 };
