@@ -54,6 +54,10 @@ public:
 	FText GetDescription() const;
 	virtual FText GetDescription_Implementation() const;
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "MissionNode")
+	FText GetNodeCategory() const;
+	virtual FText GetNodeCategory_Implementation() const;
+
 	virtual void OnCreatedInEditor() {};
 
 #pragma endregion 

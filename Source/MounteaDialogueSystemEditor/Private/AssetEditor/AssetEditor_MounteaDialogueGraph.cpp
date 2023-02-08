@@ -566,13 +566,13 @@ bool FAssetEditor_MounteaDialogueGraph::CanCopyNodes()
 	for (FGraphPanelSelectionSet::TConstIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
 	{
 		UEdGraphNode* Node = Cast<UEdGraphNode>(*SelectedIter);
-		if (Node && Node->CanDuplicateNode())
+		if (Node && Node->CanDuplicateNode() == false)
 		{
-			return true;
+			return false;
 		}
 	}
 
-	return false;
+	return true;
 }
 
 void FAssetEditor_MounteaDialogueGraph::PasteNodes()
@@ -652,6 +652,16 @@ void FAssetEditor_MounteaDialogueGraph::PasteNodesHere(const FVector2D& Location
 
 bool FAssetEditor_MounteaDialogueGraph::CanPasteNodes()
 {
+	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
+	for (FGraphPanelSelectionSet::TConstIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
+	{
+		const UEdNode_MounteaDialogueGraphNode* Node = Cast<UEdNode_MounteaDialogueGraphNode>(*SelectedIter);
+		if (Node && Node->CanUserPasteNodes() == false)
+		{
+			return false;
+		}
+	}
+	
 	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
 	if (!CurrentGraphEditor.IsValid())
 	{

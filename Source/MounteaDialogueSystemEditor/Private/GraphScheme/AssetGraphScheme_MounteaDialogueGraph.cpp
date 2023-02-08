@@ -205,6 +205,7 @@ void UAssetGraphScheme_MounteaDialogueGraph::GetGraphContextActions(FGraphContex
 	TSet<TSubclassOf<UMounteaDialogueGraphNode> > Visited;
 
 	FText Desc = Graph->NodeType.GetDefaultObject()->ContextMenuName;
+	FText NodeCategory = Graph->NodeType.GetDefaultObject()->GetNodeCategory();
 
 	if (Desc.IsEmpty())
 	{
@@ -215,7 +216,7 @@ void UAssetGraphScheme_MounteaDialogueGraph::GetGraphContextActions(FGraphContex
 
 	if (!Graph->NodeType->HasAnyClassFlags(CLASS_Abstract))
 	{
-		TSharedPtr<FAssetSchemaAction_MounteaDialogueGraph_NewNode> NewNodeAction(new FAssetSchemaAction_MounteaDialogueGraph_NewNode(LOCTEXT("MounteaDialogueGraphNodeAction", "Mountea Dialogue Tree Nodes"), Desc, AddToolTip, 0));
+		TSharedPtr<FAssetSchemaAction_MounteaDialogueGraph_NewNode> NewNodeAction(new FAssetSchemaAction_MounteaDialogueGraph_NewNode(NodeCategory, Desc, AddToolTip, 0));
 		NewNodeAction->NodeTemplate = NewObject<UEdNode_MounteaDialogueGraphNode>(ContextMenuBuilder.OwnerOfTemporaries);
 		NewNodeAction->NodeTemplate->DialogueGraphNode = NewObject<UMounteaDialogueGraphNode>(NewNodeAction->NodeTemplate, Graph->NodeType);
 		NewNodeAction->NodeTemplate->DialogueGraphNode->Graph = Graph;
@@ -242,6 +243,8 @@ void UAssetGraphScheme_MounteaDialogueGraph::GetGraphContextActions(FGraphContex
 			Desc = NodeType.GetDefaultObject()->ContextMenuName;
 			AddToolTip = NodeType.GetDefaultObject()->GetDescription();
 
+			NodeCategory = NodeType.GetDefaultObject()->GetNodeCategory();
+
 			if (Desc.IsEmpty())
 			{
 				FString Title = NodeType->GetName();
@@ -249,7 +252,7 @@ void UAssetGraphScheme_MounteaDialogueGraph::GetGraphContextActions(FGraphContex
 				Desc = FText::FromString(Title);
 			}
 
-			TSharedPtr<FAssetSchemaAction_MounteaDialogueGraph_NewNode> Action(new FAssetSchemaAction_MounteaDialogueGraph_NewNode(LOCTEXT("MounteaDialogueGraphNodeAction", "Mountea Dialogue Tree Nodes"), Desc, AddToolTip, 0));
+			TSharedPtr<FAssetSchemaAction_MounteaDialogueGraph_NewNode> Action(new FAssetSchemaAction_MounteaDialogueGraph_NewNode(NodeCategory, Desc, AddToolTip, 0));
 			Action->NodeTemplate = NewObject<UEdNode_MounteaDialogueGraphNode>(ContextMenuBuilder.OwnerOfTemporaries);
 			Action->NodeTemplate->DialogueGraphNode = NewObject<UMounteaDialogueGraphNode>(Action->NodeTemplate, NodeType);
 			Action->NodeTemplate->DialogueGraphNode->Graph = Graph;

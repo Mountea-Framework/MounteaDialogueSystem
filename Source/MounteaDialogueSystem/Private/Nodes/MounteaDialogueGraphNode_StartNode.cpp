@@ -24,4 +24,9 @@ FText UMounteaDialogueGraphNode_StartNode::GetDescription_Implementation() const
 	return LOCTEXT("MounteaDialogueGraphNode_StartNodeDescription", "Start Node is automatically placed Node which cannot be deleted. Indicates starting point of the Dialogue.");
 }
 
+FText UMounteaDialogueGraphNode_StartNode::GetNodeCategory_Implementation() const
+{
+	return Super::GetNodeCategory_Implementation();
+}
+
 #undef LOCTEXT_NAMESPACE

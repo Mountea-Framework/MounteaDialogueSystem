@@ -25,7 +25,16 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineWiringStyle(UEdGrap
 {
 	Params.AssociatedPin1 = OutputPin;
 	Params.AssociatedPin2 = InputPin;
-	Params.WireThickness = 1.5f;
+
+	const UMounteaDialogueGraphEditorSettings* MounteaDialogueGraphEditorSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
+	if (MounteaDialogueGraphEditorSettings)
+	{
+		Params.WireThickness = MounteaDialogueGraphEditorSettings->GetWireWidth();
+	}
+	else
+	{
+		Params.WireThickness = 1.f;
+	}
 
 	const bool bDeemphasizeUnhoveredPins = HoveredPins.Num() > 0;
 	if (bDeemphasizeUnhoveredPins)

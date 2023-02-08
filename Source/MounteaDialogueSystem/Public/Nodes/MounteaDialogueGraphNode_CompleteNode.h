@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "MounteaDialogueGraphNode.h"
-#include "UObject/Object.h"
 #include "MounteaDialogueGraphNode_CompleteNode.generated.h"
 
 /**
@@ -20,4 +19,5 @@ public:
 	UMounteaDialogueGraphNode_CompleteNode();
 
 	virtual FText GetDescription_Implementation() const override;
+	virtual FText GetNodeCategory_Implementation() const override;
 };

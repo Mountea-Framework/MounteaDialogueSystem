@@ -44,6 +44,11 @@ FText UMounteaDialogueGraphNode::GetDescription_Implementation() const
 	return LOCTEXT("NodeDesc", "Mountea Dialogue Graph Node");
 }
 
+FText UMounteaDialogueGraphNode::GetNodeCategory_Implementation() const
+{
+	return LOCTEXT("NodeCategory", "Mountea Dialogue Tree Node");
+}
+
 #if WITH_EDITOR
 
 FLinearColor UMounteaDialogueGraphNode::GetBackgroundColor() const

@@ -20,4 +20,9 @@ FText UMounteaDialogueGraphNode_AnswerNode::GetDescription_Implementation() cons
 	return LOCTEXT("MounteaDialogueGraphNode_AnswerNodeDescription", "Answear Node is a Node which usually contains Player parts of the Dialogue.");
 }
 
+FText UMounteaDialogueGraphNode_AnswerNode::GetNodeCategory_Implementation() const
+{
+	return LOCTEXT("MounteaDialogueGraphNode_AnswearNodeCategory", "Mountea Dialogue Branche Nodes");
+}
+
 #undef LOCTEXT_NAMESPACE

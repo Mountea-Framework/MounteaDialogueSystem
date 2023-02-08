@@ -38,6 +38,8 @@ public:
 	virtual bool CanUserDeleteNode() const override;
 	virtual bool CanDuplicateNode() const override;
 
+	virtual bool CanUserPasteNodes() const;
+
 #if WITH_EDITOR
 	virtual void PostEditUndo() override;
 #endif
@@ -48,4 +50,11 @@ public:
 	UMounteaDialogueGraphNode* DialogueGraphNode;
 
 	SEdNode_MounteaDialogueGraphNode* SEdNode;
+
+private:
+
+	bool bAllowCopy;
+	bool bAllowDelete;
+	bool bAllowDuplicate;
+	bool bAllowPaste;
 };

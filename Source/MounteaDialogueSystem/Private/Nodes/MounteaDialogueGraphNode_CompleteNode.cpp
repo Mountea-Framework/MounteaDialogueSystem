@@ -18,4 +18,9 @@ FText UMounteaDialogueGraphNode_CompleteNode::GetDescription_Implementation() co
 	return LOCTEXT("MounteaDialogueGraphNode_CompleteNodeDescription", "Complete Node is a helper visual Node which indicates ending of its dialogue branch. Is not required to use.");
 }
 
+FText UMounteaDialogueGraphNode_CompleteNode::GetNodeCategory_Implementation() const
+{
+	return LOCTEXT("MounteaDialogueGraphNode_CompleteNodeCategory", "Mountea Dialogue Visual Nodes");
+}
+
 #undef LOCTEXT_NAMESPACE

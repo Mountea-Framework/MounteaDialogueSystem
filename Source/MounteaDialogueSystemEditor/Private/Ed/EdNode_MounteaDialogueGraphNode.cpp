@@ -12,6 +12,11 @@
 UEdNode_MounteaDialogueGraphNode::UEdNode_MounteaDialogueGraphNode()
 {
 	bCanRenameNode = true;
+
+	bAllowCopy = true;
+	bAllowDelete = true;
+	bAllowDuplicate = true;
+	bAllowPaste = true;
 }
 
 UEdNode_MounteaDialogueGraphNode::~UEdNode_MounteaDialogueGraphNode()
@@ -21,6 +26,14 @@ UEdNode_MounteaDialogueGraphNode::~UEdNode_MounteaDialogueGraphNode()
 void UEdNode_MounteaDialogueGraphNode::SetMounteaDialogueGraphNode(UMounteaDialogueGraphNode* NewNode)
 {
 	DialogueGraphNode = NewNode;
+
+	if (DialogueGraphNode)
+	{
+		bAllowCopy = DialogueGraphNode->bAllowCopy;
+		bAllowDelete = DialogueGraphNode->bAllowDelete;
+		bAllowDuplicate = DialogueGraphNode->bAllowPaste;
+		bAllowPaste = DialogueGraphNode->bAllowPaste;
+	}
 }
 
 UEdGraph_MounteaDialogueGraph* UEdNode_MounteaDialogueGraphNode::GetDialogueGraphEdGraph() const
@@ -102,13 +115,11 @@ bool UEdNode_MounteaDialogueGraphNode::CanUserDeleteNode() const
 		return false;
 	}
 
-	if (! DialogueGraphNode)
+	if (DialogueGraphNode)
 	{
-		return false;
-	}
-
-	
-	return DialogueGraphNode->bAllowDelete;
+		return DialogueGraphNode->bAllowDelete;
+	}	
+	return bAllowDelete;
 }
 
 bool UEdNode_MounteaDialogueGraphNode::CanDuplicateNode() const
@@ -118,13 +129,22 @@ bool UEdNode_MounteaDialogueGraphNode::CanDuplicateNode() const
 		return false;
 	}
 
-	if (! DialogueGraphNode)
+	if (DialogueGraphNode)
 	{
-		return false;
+		return DialogueGraphNode->bAllowCopy;
+	}
+	
+	return bAllowCopy;
+}
+
+bool UEdNode_MounteaDialogueGraphNode::CanUserPasteNodes() const
+{
+	if (DialogueGraphNode)
+	{
+		return DialogueGraphNode->bAllowPaste;
 	}
 
-	
-	return DialogueGraphNode->bAllowCopy;
+	return bAllowPaste;
 }
 
 void UEdNode_MounteaDialogueGraphNode::PostEditUndo()
