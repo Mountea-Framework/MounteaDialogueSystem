@@ -53,23 +53,25 @@ void SEdNode_MounteaDialogueGraphEdge::UpdateGraphNode()
 
 	RightNodeBox.Reset();
 	LeftNodeBox.Reset();
-
+	
+	
 	this->ContentScale.Bind( this, &SGraphNode::GetContentScale );
 	this->GetOrAddSlot( ENodeZone::Center )
 		.HAlign(HAlign_Center)
 		.VAlign(VAlign_Center)
 		[
 			SNew(SOverlay)
-			+ SOverlay::Slot()
+			/*+ SOverlay::Slot()
 			[
 				SNew(SImage)
 				.Image(FEditorStyle::GetBrush("Graph.TransitionNode.ColorSpill"))
 				.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphEdge::GetEdgeColor)
-			]
+			]*/
 			+ SOverlay::Slot()
 			[
 				SNew(SImage)
-				.Image(FEditorStyle::GetBrush("Graph.TransitionNode.Icon"))
+				.Image(FEditorStyle::GetBrush("GraphEditor.RefPinIcon"))
+				.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphEdge::GetEdgeColor)
 			]
 		];
 }
