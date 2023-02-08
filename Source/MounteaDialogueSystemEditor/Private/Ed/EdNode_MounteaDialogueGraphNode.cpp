@@ -95,6 +95,38 @@ UEdGraphPin* UEdNode_MounteaDialogueGraphNode::GetOutputPin() const
 	return Pins[0];
 }
 
+bool UEdNode_MounteaDialogueGraphNode::CanUserDeleteNode() const
+{
+	if( !Super::CanUserDeleteNode())
+	{
+		return false;
+	}
+
+	if (! DialogueGraphNode)
+	{
+		return false;
+	}
+
+	
+	return DialogueGraphNode->bAllowDelete;
+}
+
+bool UEdNode_MounteaDialogueGraphNode::CanDuplicateNode() const
+{
+	if( !Super::CanUserDeleteNode())
+	{
+		return false;
+	}
+
+	if (! DialogueGraphNode)
+	{
+		return false;
+	}
+
+	
+	return DialogueGraphNode->bAllowCopy;
+}
+
 void UEdNode_MounteaDialogueGraphNode::PostEditUndo()
 {
 	Super::PostEditUndo();

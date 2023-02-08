@@ -65,6 +65,21 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
 	bool bAllowOutputNodes;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	bool bAllowCopy;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	bool bAllowCut;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	bool bAllowPaste;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	bool bAllowDelete;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	bool bAllowManualCreate;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
 	FText NodeTitle;

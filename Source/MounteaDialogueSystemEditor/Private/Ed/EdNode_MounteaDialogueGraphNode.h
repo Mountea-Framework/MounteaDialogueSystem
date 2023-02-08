@@ -35,6 +35,9 @@ public:
 	virtual UEdGraphPin* GetInputPin() const;
 	virtual UEdGraphPin* GetOutputPin() const;
 
+	virtual bool CanUserDeleteNode() const override;
+	virtual bool CanDuplicateNode() const override;
+
 #if WITH_EDITOR
 	virtual void PostEditUndo() override;
 #endif

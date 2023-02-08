@@ -15,6 +15,12 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
 
 	bAllowInputNodes = true;
 	bAllowOutputNodes = true;
+
+	bAllowCopy = true;
+	bAllowCut = true;
+	bAllowDelete = true;
+	bAllowPaste = true;
+	bAllowManualCreate = true;
 #endif
 }
 

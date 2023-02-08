@@ -236,6 +236,9 @@ void UAssetGraphScheme_MounteaDialogueGraph::GetGraphContextActions(FGraphContex
 			if (!Graph->GetClass()->IsChildOf(NodeType.GetDefaultObject()->CompatibleGraphType))
 				continue;
 
+			if (!NodeType.GetDefaultObject()->bAllowManualCreate)
+				continue;
+			
 			Desc = NodeType.GetDefaultObject()->ContextMenuName;
 
 			if (Desc.IsEmpty())
@@ -256,8 +259,7 @@ void UAssetGraphScheme_MounteaDialogueGraph::GetGraphContextActions(FGraphContex
 	}
 }
 
-void UAssetGraphScheme_MounteaDialogueGraph::GetContextMenuActions(UToolMenu* Menu,
-	UGraphNodeContextMenuContext* Context) const
+void UAssetGraphScheme_MounteaDialogueGraph::GetContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
 	if (Context->Pin)
 	{
@@ -394,9 +396,7 @@ bool UAssetGraphScheme_MounteaDialogueGraph::CreateAutomaticConversionNodeAndCon
 	return true;
 }
 
-FConnectionDrawingPolicy* UAssetGraphScheme_MounteaDialogueGraph::CreateConnectionDrawingPolicy(int32 InBackLayerID,
-	int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements,
-	UEdGraph* InGraphObj) const
+FConnectionDrawingPolicy* UAssetGraphScheme_MounteaDialogueGraph::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj) const
 {
 	/*
 	if (const UMounteaDialogueGraphEditorSettings* MounteaDialogueGraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
@@ -437,9 +437,7 @@ void UAssetGraphScheme_MounteaDialogueGraph::BreakSinglePinLink(UEdGraphPin* Sou
 	Super::BreakSinglePinLink(SourcePin, TargetPin);
 }
 
-UEdGraphPin* UAssetGraphScheme_MounteaDialogueGraph::DropPinOnNode(UEdGraphNode* InTargetNode,
-	const FName& InSourcePinName, const FEdGraphPinType& InSourcePinType,
-	EEdGraphPinDirection InSourcePinDirection) const
+UEdGraphPin* UAssetGraphScheme_MounteaDialogueGraph::DropPinOnNode(UEdGraphNode* InTargetNode, const FName& InSourcePinName, const FEdGraphPinType& InSourcePinType, EEdGraphPinDirection InSourcePinDirection) const
 {
 	UEdNode_MounteaDialogueGraphNode* EdNode = Cast<UEdNode_MounteaDialogueGraphNode>(InTargetNode);
 	switch (InSourcePinDirection)
@@ -453,8 +451,7 @@ UEdGraphPin* UAssetGraphScheme_MounteaDialogueGraph::DropPinOnNode(UEdGraphNode*
 	}
 }
 
-bool UAssetGraphScheme_MounteaDialogueGraph::SupportsDropPinOnNode(UEdGraphNode* InTargetNode,
-	const FEdGraphPinType& InSourcePinType, EEdGraphPinDirection InSourcePinDirection, FText& OutErrorMessage) const
+bool UAssetGraphScheme_MounteaDialogueGraph::SupportsDropPinOnNode(UEdGraphNode* InTargetNode, const FEdGraphPinType& InSourcePinType, EEdGraphPinDirection InSourcePinDirection, FText& OutErrorMessage) const
 {
 	return Cast<UEdNode_MounteaDialogueGraphNode>(InTargetNode) != nullptr;
 }
