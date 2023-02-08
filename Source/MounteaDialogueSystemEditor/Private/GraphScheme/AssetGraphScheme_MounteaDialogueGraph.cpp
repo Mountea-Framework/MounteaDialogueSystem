@@ -200,7 +200,7 @@ void UAssetGraphScheme_MounteaDialogueGraph::GetGraphContextActions(FGraphContex
 
 	const bool bNoParent = (ContextMenuBuilder.FromPin == NULL);
 
-	const FText AddToolTip = LOCTEXT("NewMoutneaDialogueGraphNodeTooltip", "Add Dialogue Node here");
+	 FText AddToolTip = LOCTEXT("NewMoutneaDialogueGraphNodeTooltip", "Add Dialogue Node here");
 
 	TSet<TSubclassOf<UMounteaDialogueGraphNode> > Visited;
 
@@ -240,6 +240,7 @@ void UAssetGraphScheme_MounteaDialogueGraph::GetGraphContextActions(FGraphContex
 				continue;
 			
 			Desc = NodeType.GetDefaultObject()->ContextMenuName;
+			AddToolTip = NodeType.GetDefaultObject()->GetDescription();
 
 			if (Desc.IsEmpty())
 			{

@@ -20,6 +20,8 @@ public:
 
 	UMounteaDialogueGraphNode_DialogueNodeBase();
 
+	virtual FText GetDescription_Implementation() const override;
+
 protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Mountea|Dialogue", meta=(RowType="DialogueRow"))

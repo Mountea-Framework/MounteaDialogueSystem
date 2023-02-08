@@ -7,10 +7,15 @@
 
 UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNodeBase()
 {
-	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBase", "DialogueNode");
-	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBase", "Dialogue Node");
+	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseTitle", "Dialogue Node Base");
+	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseContextMenu", "Dialogue Node");
 	BackgroundColor = FLinearColor(FColor::Orange);
 	NodeGUID = FGuid::NewGuid();
+}
+
+FText UMounteaDialogueGraphNode_DialogueNodeBase::GetDescription_Implementation() const
+{
+	return LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseDescription", "Dialogue Base Node has no logic tied to itself.");
 }
 
 bool UMounteaDialogueGraphNode_DialogueNodeBase::CanCreateConnection(UMounteaDialogueGraphNode* Other, EEdGraphPinDirection Direction, FText& ErrorMessage)

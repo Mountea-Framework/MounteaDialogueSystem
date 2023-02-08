@@ -18,4 +18,6 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_StartNode : public UMo
 public:
 
 	UMounteaDialogueGraphNode_StartNode();
+
+	virtual FText GetDescription_Implementation() const override;
 };

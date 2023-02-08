@@ -14,6 +14,10 @@ UCLASS(ClassGroup=("Mountea|Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_AnswerNode : public UMounteaDialogueGraphNode_DialogueNodeBase
 {
 	GENERATED_BODY()
+	
+public:
 
 	UMounteaDialogueGraphNode_AnswerNode();
+
+	virtual FText GetDescription_Implementation() const override;
 };

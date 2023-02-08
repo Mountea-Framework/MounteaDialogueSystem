@@ -10,12 +10,17 @@
 
 UMounteaDialogueGraphNode_LeadNode::UMounteaDialogueGraphNode_LeadNode()
 {
-	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBase", "DialogueLeadNode");
-	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBase", "Lead Node");
+	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_LeadNodeBaseTitle", "Lead Node");
+	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_LeadNodeContextMenuName", "Lead Node");
 	BackgroundColor = FLinearColor(FColor::Orange);
 
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_AnswerNode::StaticClass());
+}
+
+FText UMounteaDialogueGraphNode_LeadNode::GetDescription_Implementation() const
+{
+	return LOCTEXT("MounteaDialogueGraphNode_LeadNodeDescription", "Lead Node is a Node which usually a contains NPC parts of the Dialogue.");
 }
 
 #undef LOCTEXT_NAMESPACE
