@@ -20,7 +20,7 @@ FText UMounteaDialogueGraphNode_CompleteNode::GetDescription_Implementation() co
 
 FText UMounteaDialogueGraphNode_CompleteNode::GetNodeCategory_Implementation() const
 {
-	return LOCTEXT("MounteaDialogueGraphNode_CompleteNodeCategory", "Mountea Dialogue Visual Nodes");
+	return LOCTEXT("MounteaDialogueGraphNode_CompleteNodeCategory", "Mountea Dialogue Nodes");
 }
 
 #undef LOCTEXT_NAMESPACE
