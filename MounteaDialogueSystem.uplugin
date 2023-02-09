@@ -1,9 +1,9 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "1.0",
-	"FriendlyName": "MounteaDialogueSystem",
-	"Description": "",
+	"VersionName": "0.0.0.1",
+	"FriendlyName": "Mountea Dialogue System",
+	"Description": "Mountea Dialogue System is an Open-Source Mountea Framework plugin which visually guides you when creating in game Dialogues, no matter how complex or long those are!",
 	"Category": "Mountea Framework",
 	"CreatedBy": "Dominik Pavlicek",
 	"CreatedByURL": "https://github.com/Mountea-Framework",
@@ -13,7 +13,7 @@
 	"EngineVersion": "4.26.0",
 	"CanContainContent": true,
 	"IsBetaVersion": true,
-	"IsExperimentalVersion": false,
+	"IsExperimentalVersion": true,
 	"Installed": true,
 	"Modules": [
 		{
