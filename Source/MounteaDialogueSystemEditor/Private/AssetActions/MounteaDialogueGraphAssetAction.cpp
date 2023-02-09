@@ -17,10 +17,12 @@ FText FMounteaDialogueGraphAssetAction::GetName() const
 	return LOCTEXT("MounteaDialogueGraphAssetAction", "Mountea Dialogue Tree");
 }
 
+/*
 FText FMounteaDialogueGraphAssetAction::GetAssetDescription(const FAssetData& AssetData) const
 {
 	return LOCTEXT("MounteaDialogueGraphAssetAction", "Mountea Dialogue Tree Asset for creating Mountea Dialogues.");
 }
+*/
 
 FColor FMounteaDialogueGraphAssetAction::GetTypeColor() const
 {
@@ -41,7 +43,7 @@ void FMounteaDialogueGraphAssetAction::OpenAssetEditor(const TArray<UObject*>& I
 		if (UMounteaDialogueGraph* Graph = Cast<UMounteaDialogueGraph>(*ObjIt))
 		{
 			TSharedRef<FAssetEditor_MounteaDialogueGraph> NewGraphEditor(new FAssetEditor_MounteaDialogueGraph());
-			NewGraphEditor->InitGenericGraphAssetEditor(Mode, EditWithinLevelEditor, Graph);
+			NewGraphEditor->InitMounteaDialogueGraphAssetEditor(Mode, EditWithinLevelEditor, Graph);
 		}
 	}
 }

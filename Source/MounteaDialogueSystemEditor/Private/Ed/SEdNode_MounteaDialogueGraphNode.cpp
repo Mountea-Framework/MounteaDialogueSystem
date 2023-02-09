@@ -14,7 +14,7 @@
 #include "GraphEditorSettings.h"
 #include "MounteaDialogueGraph.h"
 
-#define LOCTEXT_NAMESPACE "EdNode_GenericGraph"
+#define LOCTEXT_NAMESPACE "EdNode_MounteaDialogueGraph"
 
 #pragma region Pin
 

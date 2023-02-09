@@ -38,8 +38,8 @@ public:
 
 #pragma region Functions
 	
-	UFUNCTION(BlueprintCallable, Category = "GenericGraphNode")
-	virtual UMounteaDialogueGraphEdge* GetEdge(UMounteaDialogueGraphNode* ChildNode);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	virtual FText GetNodeTitle() const;
 
 	/**
 	 * Returns true if there are no connected Nodes to this one.
@@ -50,15 +50,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
 	UMounteaDialogueGraph* GetGraph() const;
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "MissionNode")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetDescription() const;
 	virtual FText GetDescription_Implementation() const;
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "MissionNode")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetNodeCategory() const;
 	virtual FText GetNodeCategory_Implementation() const;
 
 	virtual void OnCreatedInEditor() {};
+	virtual UMounteaDialogueGraphEdge* GetEdge(UMounteaDialogueGraphNode* ChildNode);
 
 #pragma endregion 
 
@@ -101,9 +102,7 @@ public:
 
 #if WITH_EDITOR
 	virtual FLinearColor GetBackgroundColor() const;
-
-	virtual FText GetNodeTitle() const;
-
+	
 	virtual void SetNodeTitle(const FText& NewTitle);
 	
 	virtual bool CanCreateConnection(UMounteaDialogueGraphNode* Other, enum EEdGraphPinDirection Direction, FText& ErrorMessage);

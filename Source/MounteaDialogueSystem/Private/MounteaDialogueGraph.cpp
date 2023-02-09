@@ -14,9 +14,8 @@ UMounteaDialogueGraph::UMounteaDialogueGraph()
 	NodeType = UMounteaDialogueGraphNode::StaticClass();
 	EdgeType = UMounteaDialogueGraphEdge::StaticClass();
 
-	bEdgeEnabled = true;
-
-	
+	bEdgeEnabled = false;
+	GraphGUID = FGuid::NewGuid();
 
 #if WITH_EDITORONLY_DATA
 	EdGraph = nullptr;
@@ -60,6 +59,26 @@ void UMounteaDialogueGraph::Print(bool ToConsole, bool ToScreen)
 		NextLevelNodes.Reset();
 		++Level;
 	}
+}
+
+FGuid UMounteaDialogueGraph::GetGraphGUID() const
+{
+	return GraphGUID;
+}
+
+TArray<UMounteaDialogueGraphNode*> UMounteaDialogueGraph::GetAllNodes() const
+{
+	return AllNodes;
+}
+
+TArray<UMounteaDialogueGraphNode*> UMounteaDialogueGraph::GetRootNodes() const
+{
+	return RootNodes;
+}
+
+UMounteaDialogueGraphNode* UMounteaDialogueGraph::GetStartNode() const
+{
+	return StartNode;
 }
 
 int UMounteaDialogueGraph::GetLevelNum() const

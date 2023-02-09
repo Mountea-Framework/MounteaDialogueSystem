@@ -54,7 +54,7 @@ FAssetEditor_MounteaDialogueGraph::~FAssetEditor_MounteaDialogueGraph()
 	UPackage::PackageSavedEvent.Remove(OnPackageSavedDelegateHandle);
 }
 
-void FAssetEditor_MounteaDialogueGraph::InitGenericGraphAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UMounteaDialogueGraph* Graph)
+void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UMounteaDialogueGraph* Graph)
 {
 	EditingGraph = Graph;
 	CreateEdGraph();
@@ -312,9 +312,6 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 
 		NewNode->DialogueGraphNode->SetFlags(RF_Transactional);
 		NewNode->SetFlags(RF_Transactional);
-		
-	//	NewNode->NodeHeight = 32;
-	//	NewNode->NodeWidth = 64;
 		
 		MounteaDialogueGraph->RebuildMounteaDialogueGraph();
 	}

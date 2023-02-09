@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
+#include "Templates/SubclassOf.h"
 #include "GameplayTagContainer.h"
 
 #include "MounteaDialogueGraph.generated.h"
 
 class UMounteaDialogueGraphNode;
 class UMounteaDialogueGraphEdge;
+
 
 /**
  * 
@@ -25,29 +26,32 @@ public:
 
 #pragma region Variables
 	
-public:
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
-	class UMounteaDialogueGraphNode* StartNode = nullptr;
+protected:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
-	FString Name;
+	FGuid GraphGUID;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue")
+	FGameplayTagContainer GraphTags;
+
+public:
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
+	class UMounteaDialogueGraphNode* StartNode = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TSubclassOf<UMounteaDialogueGraphNode> NodeType;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TSubclassOf<UMounteaDialogueGraphEdge> EdgeType;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue")
-	FGameplayTagContainer GraphTags;
-
+	
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TArray<UMounteaDialogueGraphNode*> RootNodes;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TArray<UMounteaDialogueGraphNode*> AllNodes;
 
-	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	bool bEdgeEnabled;
 
 #pragma endregion
@@ -55,28 +59,49 @@ public:
 #pragma region Functions
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
+
+	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	void Print(bool ToConsole = true, bool ToScreen = true);
 
+	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
+	FGuid GetGraphGUID() const;
+	
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	TArray<UMounteaDialogueGraphNode*> GetAllNodes() const;
+	
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	TArray<UMounteaDialogueGraphNode*> GetRootNodes() const;
+	
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	UMounteaDialogueGraphNode* GetStartNode() const;
+	
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
 	int GetLevelNum() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
 	void GetNodesByLevel(int Level, TArray<UMounteaDialogueGraphNode*>& Nodes);
 
+public:
+	
 	void CreateGraph();
 	void ClearGraph();
+
+	FORCEINLINE bool IsEdgeEnabled() const
+	{ return bEdgeEnabled; };
 
 	virtual void PostInitProperties() override;
 
 #pragma endregion 
 
 #if WITH_EDITORONLY_DATA
+
+public:
 	UPROPERTY()
 	class UEdGraph* EdGraph;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
 	bool bCanRenameNode;
+
 #endif
 
 public:

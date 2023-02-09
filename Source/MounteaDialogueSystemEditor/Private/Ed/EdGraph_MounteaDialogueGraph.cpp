@@ -20,7 +20,7 @@ UEdGraph_MounteaDialogueGraph::~UEdGraph_MounteaDialogueGraph()
 
 void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 {
-	EditorLOG_INFO(TEXT("UGenericGraphEdGraph::RebuildGenericGraph has been called"));
+	EditorLOG_INFO(TEXT("UMounteaDialogueGraphEdGraph::RebuildMounteaDialogueGraph has been called"));
 
 	UMounteaDialogueGraph* Graph = GetMounteaDialogueGraph();
 

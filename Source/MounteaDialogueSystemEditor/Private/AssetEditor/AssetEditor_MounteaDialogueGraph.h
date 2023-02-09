@@ -15,7 +15,7 @@ public:
 	FAssetEditor_MounteaDialogueGraph();
 	virtual ~FAssetEditor_MounteaDialogueGraph() override;
 
-	void InitGenericGraphAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UMounteaDialogueGraph* Graph);
+	void InitMounteaDialogueGraphAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UMounteaDialogueGraph* Graph);
 	UMounteaDialogueGraphEditorSettings* GetSettings() const;
 	
 #pragma region ToolkitInterface

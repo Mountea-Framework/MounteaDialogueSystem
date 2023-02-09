@@ -339,7 +339,7 @@ const FPinConnectionResponse UAssetGraphScheme_MounteaDialogueGraph::CanCreateCo
 
 	if (EdNode_A == nullptr || EdNode_B == nullptr)
 	{
-		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinError", "Not a valid UGenericGraphEdNode"));
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinError", "Not a valid UMounteaDialogueGraphEdNode"));
 	}
 
 	FText ErrorMessage;
