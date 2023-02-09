@@ -6,14 +6,11 @@
 
 UMounteaDialogueGraphNode_CompleteNode::UMounteaDialogueGraphNode_CompleteNode()
 {
-#if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_CompleteNodeTitle", "Complete Node");
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_CompleteNodeContextMenuName", "Complete Node");
 	BackgroundColor = FLinearColor(1, 0, 0, 1);
 
 	bAllowOutputNodes = false;
-#endif
-	
 }
 
 FText UMounteaDialogueGraphNode_CompleteNode::GetDescription_Implementation() const

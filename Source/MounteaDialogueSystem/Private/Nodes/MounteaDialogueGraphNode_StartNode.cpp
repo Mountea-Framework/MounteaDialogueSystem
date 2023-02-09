@@ -7,7 +7,6 @@
 
 UMounteaDialogueGraphNode_StartNode::UMounteaDialogueGraphNode_StartNode()
 {
-#if WITH_EDITORONLY_DATA
 	bAllowInputNodes = false;
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_StartNodeTitle", "Start Node");
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_StartNodeContextMenuName", "Start Node");
@@ -18,8 +17,6 @@ UMounteaDialogueGraphNode_StartNode::UMounteaDialogueGraphNode_StartNode()
 	bAllowPaste = false;
 	bAllowDelete = false;
 	bAllowManualCreate = false;
-#endif
-	
 }
 
 FText UMounteaDialogueGraphNode_StartNode::GetDescription_Implementation() const

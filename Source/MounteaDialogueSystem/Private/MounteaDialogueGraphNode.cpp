@@ -24,16 +24,6 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
 #endif
 }
 
-TArray<UMounteaDialogueGraphNode*> UMounteaDialogueGraphNode::GetChildNodes() const
-{
-	return ChildrenNodes;
-}
-
-TArray<UMounteaDialogueGraphNode*> UMounteaDialogueGraphNode::GetParentNodes() const
-{
-	return ParentNodes;
-}
-
 UMounteaDialogueGraphEdge* UMounteaDialogueGraphNode::GetEdge(UMounteaDialogueGraphNode* ChildNode)
 {
 	return Edges.Contains(ChildNode) ? Edges.FindChecked(ChildNode) : nullptr;
@@ -59,16 +49,16 @@ FText UMounteaDialogueGraphNode::GetNodeCategory_Implementation() const
 	return LOCTEXT("NodeCategory", "Mountea Dialogue Tree Node");
 }
 
-FText UMounteaDialogueGraphNode::GetNodeTitle() const
-{
-	return NodeTitle;
-}
-
 #if WITH_EDITOR
 
 FLinearColor UMounteaDialogueGraphNode::GetBackgroundColor() const
 {
 	return BackgroundColor;
+}
+
+FText UMounteaDialogueGraphNode::GetNodeTitle() const
+{
+	return NodeTitle;
 }
 
 void UMounteaDialogueGraphNode::SetNodeTitle(const FText& NewTitle)
