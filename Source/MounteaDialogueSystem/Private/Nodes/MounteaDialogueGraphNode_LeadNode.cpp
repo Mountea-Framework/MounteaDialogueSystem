@@ -10,12 +10,15 @@
 
 UMounteaDialogueGraphNode_LeadNode::UMounteaDialogueGraphNode_LeadNode()
 {
+#if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_LeadNodeBaseTitle", "Lead Node");
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_LeadNodeContextMenuName", "Lead Node");
 	BackgroundColor = FLinearColor(FColor::Orange);
 
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_AnswerNode::StaticClass());
+#endif
+	
 }
 
 FText UMounteaDialogueGraphNode_LeadNode::GetDescription_Implementation() const

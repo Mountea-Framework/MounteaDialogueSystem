@@ -7,8 +7,10 @@
 
 UMounteaDialogueGraphNode_AutoCompleteNode::UMounteaDialogueGraphNode_AutoCompleteNode()
 {
+#if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_AutoCompleteNodeTitle", "Auto Complete Node");
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_AutoCompleteNodeContextMenuName", "Auto Complete Node");
+#endif
 }
 
 FText UMounteaDialogueGraphNode_AutoCompleteNode::GetDescription_Implementation() const

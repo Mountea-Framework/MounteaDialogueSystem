@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "MounteaDialogueGraphNode.h"
 #include "Engine/DataTable.h"
-#include "UObject/Object.h"
 #include "MounteaDialogueGraphNode_DialogueNodeBase.generated.h"
 
 /**
@@ -26,14 +25,22 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Mountea|Dialogue", meta=(RowType="DialogueRow"))
 	FDataTableRowHandle DialogueRowHandle;
-
-	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
-	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
-
+	
 	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
 	FGuid NodeGUID;
 
+#if WITH_EDITORONLY_DATA
+	
+	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
+	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
+
+#endif
+	
+
 protected:
 
+#if WITH_EDITOR
 	virtual bool CanCreateConnection(UMounteaDialogueGraphNode* Other, EEdGraphPinDirection Direction, FText& ErrorMessage) override;
+#endif
+	
 };

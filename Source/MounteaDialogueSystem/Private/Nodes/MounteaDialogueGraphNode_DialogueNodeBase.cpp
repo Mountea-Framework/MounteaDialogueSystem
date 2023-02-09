@@ -7,9 +7,12 @@
 
 UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNodeBase()
 {
+#if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseTitle", "Dialogue Node Base");
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseContextMenu", "Dialogue Node");
 	BackgroundColor = FLinearColor(FColor::Orange);
+#endif
+	
 	NodeGUID = FGuid::NewGuid();
 }
 
@@ -18,6 +21,7 @@ FText UMounteaDialogueGraphNode_DialogueNodeBase::GetDescription_Implementation(
 	return LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseDescription", "Dialogue Base Node has no logic tied to itself.");
 }
 
+#if WITH_EDITOR
 bool UMounteaDialogueGraphNode_DialogueNodeBase::CanCreateConnection(UMounteaDialogueGraphNode* Other, EEdGraphPinDirection Direction, FText& ErrorMessage)
 {
 	if (Other == nullptr)
@@ -49,6 +53,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::CanCreateConnection(UMounteaDia
 
 	return true;
 }
+#endif
 
 #undef LOCTEXT_NAMESPACE
 
