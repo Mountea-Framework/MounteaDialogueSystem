@@ -1,8 +1,8 @@
 # MounteaDialogueSystem
 Mountea Dialogue System is an Open-source Mountea Framework Unreal Engine tool for creating complex dialogues within its own editor.
 
-![UE](https://img.shields.io/badge/supported-4.26%2B-green)
-![License](https://img.shields.io/github/license/Mountea-Framework/ActorInteractionPlugin)
+[![UE](https://img.shields.io/badge/supported-4.26%2B-green)](https://github.com/Mountea-Framework/MounteaDialogueSystem/edit/master/README.md#compatible-engine-version)
+[![License](https://img.shields.io/github/license/Mountea-Framework/ActorInteractionPlugin)](https://github.com/Mountea-Framework/MounteaDialogueSystem/blob/master/LICENSE)
 [![YouTube](https://img.shields.io/badge/YouTube-Subscribe-red?style=flat&logo=youtube)](https://www.youtube.com/@mounteaframework)
 [![Discord](https://badgen.net/discord/online-members/2vXWEEN?label=Discord&logo=discord&logoColor=ffffff&color=7389D8)](https://discord.com/invite/2vXWEEN)
 [![Discord](https://badgen.net/discord/members/2vXWEEN?label=Discord&logo=discord&logoColor=ffffff&color=7389D8)](https://discord.com/invite/2vXWEEN)
