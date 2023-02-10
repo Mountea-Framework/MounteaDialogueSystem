@@ -16,10 +16,12 @@ Join support and community Discord!
 ## Compatible Engine Version
 
 ### Legend
-🟩 - Supported
-🟨 - WIP
-🟪 - Deprecated
-🟥 - Partially supported
+Colour | Explanation
+-------------- | --------------
+🟩 | Supported
+🟨 | WIP
+🟪 | Deprecated (abaddoned)
+🟥 | Partially supported ( Epic Game does not allow support for versions other than the 3 last ones) 
 
 ### Suport Table
 Engine Version | Plugin Version | Support
