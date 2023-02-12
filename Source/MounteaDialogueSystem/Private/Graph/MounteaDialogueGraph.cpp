@@ -1,9 +1,9 @@
 // All rights reserved Dominik Pavlicek 2023
 
-#include "MounteaDialogueGraph.h"
+#include "Graph/MounteaDialogueGraph.h"
 
-#include "MounteaDialogueGraphEdge.h"
-#include "MounteaDialogueGraphNode.h"
+#include "Edges/MounteaDialogueGraphEdge.h"
+#include "Nodes/MounteaDialogueGraphNode.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 

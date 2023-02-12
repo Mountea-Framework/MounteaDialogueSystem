@@ -1,8 +1,8 @@
 // All rights reserved Dominik Pavlicek 2023
 
-#include "MounteaDialogueGraphNode.h"
+#include "Nodes/MounteaDialogueGraphNode.h"
 
-#include "MounteaDialogueGraph.h"
+#include "Graph/MounteaDialogueGraph.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueNode"
 

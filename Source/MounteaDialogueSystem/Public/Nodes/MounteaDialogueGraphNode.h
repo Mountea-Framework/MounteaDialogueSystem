@@ -37,6 +37,15 @@ public:
 #pragma endregion 
 
 #pragma region Functions
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetChildrenNodes() const
+	{ return ChildrenNodes; };
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetParentNodes() const
+	{return ParentNodes; };
+
 	
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	virtual FText GetNodeTitle() const;
