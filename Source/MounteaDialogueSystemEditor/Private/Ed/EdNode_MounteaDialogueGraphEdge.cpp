@@ -4,7 +4,7 @@
 #include "EdNode_MounteaDialogueGraphEdge.h"
 
 #include "EdNode_MounteaDialogueGraphNode.h"
-#include "MounteaDialogueGraphEdge.h"
+#include "Edges/MounteaDialogueGraphEdge.h"
 
 void UEdNode_MounteaDialogueGraphEdge::SetEdge(UMounteaDialogueGraphEdge* Edge)
 {

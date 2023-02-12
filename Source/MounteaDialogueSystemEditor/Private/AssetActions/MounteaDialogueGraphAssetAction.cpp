@@ -3,7 +3,7 @@
 
 #include "MounteaDialogueGraphAssetAction.h"
 
-#include "MounteaDialogueGraph.h"
+#include "Graph/MounteaDialogueGraph.h"
 #include "AssetEditor/AssetEditor_MounteaDialogueGraph.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueNodeAssetAction"

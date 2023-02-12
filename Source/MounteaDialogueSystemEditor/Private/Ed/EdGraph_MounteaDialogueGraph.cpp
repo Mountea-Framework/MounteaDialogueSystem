@@ -5,9 +5,9 @@
 
 #include "EdNode_MounteaDialogueGraphEdge.h"
 #include "EdNode_MounteaDialogueGraphNode.h"
-#include "MounteaDialogueGraph.h"
-#include "MounteaDialogueGraphNode.h"
-#include "MounteaDialogueGraphEdge.h"
+#include "Graph/MounteaDialogueGraph.h"
+#include "Nodes/MounteaDialogueGraphNode.h"
+#include "Edges/MounteaDialogueGraphEdge.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 
 UEdGraph_MounteaDialogueGraph::UEdGraph_MounteaDialogueGraph()

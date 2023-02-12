@@ -8,8 +8,8 @@
 #include "HAL/PlatformApplicationMisc.h"
 #include "EdGraphUtilities.h"
 
-#include "MounteaDialogueGraph.h"
-#include "MounteaDialogueGraphNode.h"
+#include "Graph/MounteaDialogueGraph.h"
+#include "Nodes/MounteaDialogueGraphNode.h"
 #include "EditorCommands/FMounteaDialogueGraphEditorCommands.h"
 #include "AssetEditor/FAssetEditorToolbarMounteaDialogueGraph.h"
 #include "Ed/EdGraph_MounteaDialogueGraph.h"

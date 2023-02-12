@@ -3,6 +3,7 @@
 #include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
 
 #include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
+#include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_AnswerNode"
 
@@ -13,6 +14,7 @@ UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 	BackgroundColor = FLinearColor(FColor::Turquoise);
 
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_LeadNode::StaticClass());
+	AllowedInputClasses.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
 }
 
 FText UMounteaDialogueGraphNode_AnswerNode::GetDescription_Implementation() const

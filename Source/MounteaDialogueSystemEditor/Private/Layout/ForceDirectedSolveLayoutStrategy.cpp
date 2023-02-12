@@ -3,8 +3,8 @@
 
 #include "ForceDirectedSolveLayoutStrategy.h"
 
-#include "MounteaDialogueGraph.h"
-#include "MounteaDialogueGraphNode.h"
+#include "Graph/MounteaDialogueGraph.h"
+#include "Nodes/MounteaDialogueGraphNode.h"
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"

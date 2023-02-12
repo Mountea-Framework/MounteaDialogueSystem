@@ -2,7 +2,7 @@
 
 #include "SEdNode_MounteaDialogueGraphNode.h"
 
-#include "MounteaDialogueGraphNode.h"
+#include "Nodes/MounteaDialogueGraphNode.h"
 #include "Helpers/MounteaDialogueGraphColors.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 
@@ -12,7 +12,7 @@
 #include "SlateOptMacros.h"
 #include "SGraphPin.h"
 #include "GraphEditorSettings.h"
-#include "MounteaDialogueGraph.h"
+#include "Graph/MounteaDialogueGraph.h"
 
 #define LOCTEXT_NAMESPACE "EdNode_MounteaDialogueGraph"
 

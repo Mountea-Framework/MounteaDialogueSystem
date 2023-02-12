@@ -3,7 +3,7 @@
 
 #include "MounteaDialogueGraphLayoutStrategy.h"
 
-#include "MounteaDialogueGraphNode.h"
+#include "Nodes/MounteaDialogueGraphNode.h"
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "Ed/SEdNode_MounteaDialogueGraphNode.h"

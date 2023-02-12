@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MounteaDialogueGraphNode.h"
+#include "Nodes/MounteaDialogueGraphNode.h"
 #include "MounteaDialogueGraphNode_CompleteNode.generated.h"
 
 /**

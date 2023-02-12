@@ -4,7 +4,7 @@
 #include "EdNode_MounteaDialogueGraphNode.h"
 
 #include "EdGraph_MounteaDialogueGraph.h"
-#include "MounteaDialogueGraphNode.h"
+#include "Nodes/MounteaDialogueGraphNode.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 
 #define LOCTEXT_NAMESPACE "UEdNode_MounteaDialogueGraphNode"

@@ -1,6 +1,6 @@
 #include "MounteaDialogueGraphFactory.h"
 
-#include "MounteaDialogueGraph.h"
+#include "Graph/MounteaDialogueGraph.h"
 
 UMounteaDialogueGraphFactory::UMounteaDialogueGraphFactory()
 {

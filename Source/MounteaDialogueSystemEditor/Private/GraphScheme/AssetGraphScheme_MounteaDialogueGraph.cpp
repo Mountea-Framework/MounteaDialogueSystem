@@ -4,9 +4,9 @@
 
 #include "FConnectionDrawingPolicy_MounteaDialogueGraph.h"
 #include "GraphEditorActions.h"
-#include "MounteaDialogueGraph.h"
-#include "MounteaDialogueGraphEdge.h"
-#include "MounteaDialogueGraphNode.h"
+#include "Graph/MounteaDialogueGraph.h"
+#include "Edges/MounteaDialogueGraphEdge.h"
+#include "Nodes/MounteaDialogueGraphNode.h"
 #include "ToolMenu.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
