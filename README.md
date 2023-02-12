@@ -21,7 +21,7 @@ Colour | Explanation
 🟩 | Supported
 🟨 | WIP
 🟪 | Deprecated (abaddoned)
-🟥 | Partially supported ( Epic Game does not allow support for versions other than the 3 last ones) 
+🟥 | Partially supported ([Epic Games Policies](https://www.unrealengine.com/en-US/marketplace-guidelines#263d)) 
 
 ### Suport Table
 Engine Version | Plugin Version | Support
