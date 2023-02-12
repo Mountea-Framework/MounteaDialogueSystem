@@ -40,7 +40,9 @@ public class MounteaDialogueSystemEditor : ModuleRules
 				"ApplicationCore",
 				"ToolMenus",
 				"DeveloperSettings",
-				"Projects"
+				"Projects", 
+				
+				"WebBrowser"
 				// ... add private dependencies that you statically link with here ...
 			}
 		);

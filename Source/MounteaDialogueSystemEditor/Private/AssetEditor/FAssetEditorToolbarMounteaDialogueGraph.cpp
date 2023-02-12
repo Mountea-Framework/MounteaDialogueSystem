@@ -39,7 +39,13 @@ void FAssetEditorToolbarMounteaDialogueGraph::FillMounteaDialogueGraphToolbar(FT
 			NAME_None,
 			LOCTEXT("AutoArrange_Label", "Auto Arrange"),
 			LOCTEXT("AutoArrange_ToolTip", "Tries its best to arrange Graph Nodes. Don't judge too harshly please."),
-			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetStyleSetName(), "MDSStyleSet.AutoArrange")); 
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetStyleSetName(), "MDSStyleSet.AutoArrange"));
+
+		ToolbarBuilder.AddToolBarButton(FMounteaDialogueGraphEditorCommands::Get().ValidateGraph,
+			NAME_None,
+			LOCTEXT("ValidateGraph_Label", "Validate Graph"),
+			LOCTEXT("ValidateGraph_ToolTip", "Validates Graph if there are any invalid connections or broken data."),
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetStyleSetName(), "MDSStyleSet.ValidateGraph"));
 	}
 	ToolbarBuilder.EndSection();
 }

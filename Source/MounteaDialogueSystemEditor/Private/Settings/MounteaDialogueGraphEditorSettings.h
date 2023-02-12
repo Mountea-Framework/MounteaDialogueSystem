@@ -45,7 +45,17 @@ public:
 
 	UMounteaDialogueGraphEditorSettings();
 
-private:	
+private:
+
+#pragma region GraphNodes
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
+	bool bAutoNameNodes;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
+	bool bAllowRenameNodes;
+
+#pragma endregion 
 
 #pragma region GraphWiring
 	
@@ -130,6 +140,16 @@ private:
 #endif
 
 public:
+
+#pragma region GraphNodes_Getters
+
+	bool AllowNodesAutoName() const
+	{ return bAutoNameNodes; };
+
+	bool AllowRenameNodes() const
+	{ return bAllowRenameNodes; };
+
+#pragma endregion 
 
 #pragma region GraphWiring_Getters
 

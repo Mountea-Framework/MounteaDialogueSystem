@@ -17,10 +17,12 @@
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "GraphScheme/AssetGraphScheme_MounteaDialogueGraph.h"
+#include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Layout/ForceDirectedSolveLayoutStrategy.h"
 #include "Layout/MounteaDialogueGraphLayoutStrategy.h"
 #include "Layout/TreeSolveLayoutStrategy.h"
+#include "Popups/MDSPopup_GraphValidation.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
 
 #define LOCTEXT_NAMESPACE "AssetEditorMounteaDialogueGraph"
@@ -284,6 +286,11 @@ void FAssetEditor_MounteaDialogueGraph::BindCommands()
 		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::AutoArrange),
 		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::CanAutoArrange)
 	);
+
+	ToolkitCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().ValidateGraph,
+		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::ValidateGraph),
+		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::CanValidateGraph)
+	);
 }
 
 void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
@@ -337,6 +344,10 @@ void FAssetEditor_MounteaDialogueGraph::CreateCommandList()
 	GraphEditorCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().AutoArrange,
 		FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::AutoArrange),
 		FCanExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::CanAutoArrange));
+
+	GraphEditorCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().ValidateGraph,
+		FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::ValidateGraph),
+		FCanExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::CanValidateGraph));
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().SelectAll,
 		FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::SelectAllNodes),
@@ -731,6 +742,35 @@ bool FAssetEditor_MounteaDialogueGraph::CanAutoArrange() const
 	return EditingGraph != nullptr && Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph) != nullptr;
 }
 
+void FAssetEditor_MounteaDialogueGraph::ValidateGraph()
+{
+	UEdGraph_MounteaDialogueGraph* EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
+	check(EdGraph != nullptr);
+
+	const FScopedTransaction Transaction(LOCTEXT("MounteaDialogueGraphEditorValidateGraph", "Mountea Dialogue Graph Editor: Validate Graph."));
+
+	UMounteaDialogueGraph* MounteaGraph = EdGraph->GetMounteaDialogueGraph();
+	check(MounteaGraph != nullptr);
+	
+	RebuildMounteaDialogueGraph();
+	
+	TArray<FText> ValidationMessages;
+	if (MounteaGraph->ValidateGraph(ValidationMessages) == false)
+	{
+		MDSPopup_GraphValidation::Open(ValidationMessages);
+	}
+	else
+	{
+		ValidationMessages.Empty();
+		MDSPopup_GraphValidation::Open(ValidationMessages);
+	}
+}
+
+bool FAssetEditor_MounteaDialogueGraph::CanValidateGraph() const
+{
+	return true;
+}
+
 void FAssetEditor_MounteaDialogueGraph::OnRenameNode()
 {
 	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
@@ -751,13 +791,8 @@ void FAssetEditor_MounteaDialogueGraph::OnRenameNode()
 
 bool FAssetEditor_MounteaDialogueGraph::CanRenameNodes() const
 {
-	UEdGraph_MounteaDialogueGraph* EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
-	check(EdGraph != nullptr);
-
-	UMounteaDialogueGraph* Graph = EdGraph->GetMounteaDialogueGraph();
-	check(Graph != nullptr)
-
-	return Graph->bCanRenameNode && GetSelectedNodes().Num() == 1;
+	check(GetSettings() != nullptr);
+	return GetSettings()->AllowRenameNodes() == true && GetSelectedNodes().Num() == 1;
 }
 
 void FAssetEditor_MounteaDialogueGraph::OnSelectedNodesChanged(const TSet<UObject*>& NewSelection)

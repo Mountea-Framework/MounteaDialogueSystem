@@ -46,6 +46,8 @@ public:
 	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetParentNodes() const
 	{return ParentNodes; };
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	virtual bool CanStartNode() const;
 	
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	virtual FText GetNodeTitle() const;
@@ -115,6 +117,8 @@ public:
 	virtual void SetNodeTitle(const FText& NewTitle);
 	
 	virtual bool CanCreateConnection(UMounteaDialogueGraphNode* Other, enum EEdGraphPinDirection Direction, FText& ErrorMessage);
+
+	virtual bool ValidateNode(TArray<FText>& ValidationsMessages);
 #endif
 
 };

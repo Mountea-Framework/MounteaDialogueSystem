@@ -56,6 +56,11 @@ FLinearColor UMounteaDialogueGraphNode::GetBackgroundColor() const
 	return BackgroundColor;
 }
 
+bool UMounteaDialogueGraphNode::CanStartNode() const
+{
+	return true;
+}
+
 FText UMounteaDialogueGraphNode::GetNodeTitle() const
 {
 	return NodeTitle;
@@ -74,6 +79,11 @@ bool UMounteaDialogueGraphNode::CanCreateConnection(UMounteaDialogueGraphNode* O
 		return false;
 	}
 	
+	return true;
+}
+
+bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages)
+{
 	return true;
 }
 

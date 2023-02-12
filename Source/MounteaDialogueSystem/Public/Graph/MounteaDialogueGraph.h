@@ -74,12 +74,16 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	UMounteaDialogueGraphNode* GetStartNode() const;
-	
+
+	bool ValidateGraph(TArray<FText>& ValidationErrors);
+
+#pragma region HelpingFunctions
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
 	int GetLevelNum() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
 	void GetNodesByLevel(int Level, TArray<UMounteaDialogueGraphNode*>& Nodes);
+#pragma endregion 
 
 public:
 	
@@ -104,6 +108,12 @@ public:
 
 #endif
 
+#if WITH_EDITOR
+
+	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
+
+#endif
+	
 public:
 
 	// Construct and initialize a node within this Dialogue.

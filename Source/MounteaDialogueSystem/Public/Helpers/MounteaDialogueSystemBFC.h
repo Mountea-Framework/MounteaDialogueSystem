@@ -30,5 +30,18 @@ public:
 
 		return nullptr;
 	}
-	
+
+	/**
+	 * Tries to get first Dialogue Node from Children Nodes. If none is found, returns null.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	static UMounteaDialogueGraphNode* GetFirstChildNode(const UMounteaDialogueGraphNode* ParentNode)
+	{
+		if (ParentNode->GetChildrenNodes().IsValidIndex(0))
+		{
+			return ParentNode->GetChildrenNodes()[0];
+		}
+
+		return nullptr;
+	}
 };

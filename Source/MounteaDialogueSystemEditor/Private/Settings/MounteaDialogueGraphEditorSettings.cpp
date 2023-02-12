@@ -20,4 +20,7 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 	WireWidth = 1.5f;
 	WireStyle = EWiringStyle::EWS_Simple;
 	BubbleDrawRule = EBubbleDrawRule::EBDR_OnSelected;
+
+	bAllowRenameNodes = true;
+	bAutoNameNodes = false;
 }

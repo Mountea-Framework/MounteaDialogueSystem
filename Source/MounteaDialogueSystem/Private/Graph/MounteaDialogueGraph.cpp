@@ -81,6 +81,21 @@ UMounteaDialogueGraphNode* UMounteaDialogueGraph::GetStartNode() const
 	return StartNode;
 }
 
+bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors)
+{
+	// TODO: Validations :)
+	bool bReturnValue = true;
+	for (UMounteaDialogueGraphNode* Itr : AllNodes)
+	{
+		if (Itr != nullptr && (Itr->ValidateNode(ValidationErrors) == false))
+		{
+			bReturnValue = false;
+		}
+	}
+	
+	return bReturnValue;
+}
+
 int UMounteaDialogueGraph::GetLevelNum() const
 {
 	int Level = 0;
@@ -194,6 +209,20 @@ void UMounteaDialogueGraph::PostInitProperties()
 	
 #endif
 	
+}
+
+EDataValidationResult UMounteaDialogueGraph::IsDataValid(TArray<FText>& ValidationErrors)
+{
+	auto ParentResult = UObject::IsDataValid(ValidationErrors);
+	
+	if (ValidateGraph(ValidationErrors))
+	{
+		return EDataValidationResult::Valid;
+	}
+	else
+	{
+		return EDataValidationResult::Invalid;
+	}
 }
 
 

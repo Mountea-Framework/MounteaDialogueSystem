@@ -94,6 +94,9 @@ private:
 	void AutoArrange();
 	bool CanAutoArrange() const;
 
+	void ValidateGraph();
+	bool CanValidateGraph() const;
+
 	void OnRenameNode();
 	bool CanRenameNodes() const;
 
