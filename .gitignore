@@ -73,5 +73,7 @@ Plugins/*/Intermediate/*
 # Cache files for the editor to use
 DerivedDataCache/*
 
-# Ignore
+# Ignore project specific files
 *.png~
+Config/FilterPlugin.ini
+Config/MDSConfig.ini
