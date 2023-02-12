@@ -124,7 +124,7 @@ public:
 	
 	virtual bool CanCreateConnection(UMounteaDialogueGraphNode* Other, enum EEdGraphPinDirection Direction, FText& ErrorMessage);
 
-	virtual bool ValidateNode(TArray<FText>& ValidationsMessages);
+	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat);
 #endif
 
 };

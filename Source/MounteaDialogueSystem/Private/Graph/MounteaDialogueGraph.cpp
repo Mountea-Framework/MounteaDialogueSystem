@@ -81,13 +81,13 @@ UMounteaDialogueGraphNode* UMounteaDialogueGraph::GetStartNode() const
 	return StartNode;
 }
 
-bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors)
+bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat)
 {
 	// TODO: Validations :)
 	bool bReturnValue = true;
 	for (UMounteaDialogueGraphNode* Itr : AllNodes)
 	{
-		if (Itr != nullptr && (Itr->ValidateNode(ValidationErrors) == false))
+		if (Itr != nullptr && (Itr->ValidateNode(ValidationErrors, RichTextFormat) == false))
 		{
 			bReturnValue = false;
 		}
@@ -215,7 +215,7 @@ EDataValidationResult UMounteaDialogueGraph::IsDataValid(TArray<FText>& Validati
 {
 	auto ParentResult = UObject::IsDataValid(ValidationErrors);
 	
-	if (ValidateGraph(ValidationErrors))
+	if (ValidateGraph(ValidationErrors, false))
 	{
 		return EDataValidationResult::Valid;
 	}

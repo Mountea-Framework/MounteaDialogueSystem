@@ -75,7 +75,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	UMounteaDialogueGraphNode* GetStartNode() const;
 
-	bool ValidateGraph(TArray<FText>& ValidationErrors);
+	bool ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat);
 
 #pragma region HelpingFunctions
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")

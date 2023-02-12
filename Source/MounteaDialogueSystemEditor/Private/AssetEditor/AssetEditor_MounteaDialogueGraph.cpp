@@ -755,7 +755,7 @@ void FAssetEditor_MounteaDialogueGraph::ValidateGraph()
 	RebuildMounteaDialogueGraph();
 	
 	TArray<FText> ValidationMessages;
-	if (MounteaGraph->ValidateGraph(ValidationMessages) == false)
+	if (MounteaGraph->ValidateGraph(ValidationMessages, true) == false)
 	{
 		MDSPopup_GraphValidation::Open(ValidationMessages);
 	}

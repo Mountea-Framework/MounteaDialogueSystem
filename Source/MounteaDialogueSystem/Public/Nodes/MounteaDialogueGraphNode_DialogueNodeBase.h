@@ -37,7 +37,7 @@ protected:
 	FGuid NodeGUID;
 
 #if WITH_EDITOR
-	virtual bool ValidateNode(TArray<FText>& ValidationsMessages) override;
+	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat) override;
 #endif
 	
 protected:

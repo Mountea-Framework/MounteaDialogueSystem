@@ -22,22 +22,26 @@ FText UMounteaDialogueGraphNode_DialogueNodeBase::GetDescription_Implementation(
 FDataTableRowHandle UMounteaDialogueGraphNode_DialogueNodeBase::GetDialogueGraphHandle() const
 {	return DialogueRowHandle;}
 
-bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& ValidationsMessages)
+bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
 {
-	bool bResult = Super::ValidateNode(ValidationsMessages);
+	bool bResult = Super::ValidateNode(ValidationsMessages, false);
 
 	if (DialogueRowHandle.DataTable == nullptr)
 	{
 		bResult = false;
 
-		const FString ReturnMessage =
+		const FString RichTextReturn =
 		FString("* ").
 		Append("<RichTextBlock.Bold>").
 		Append(NodeTitle.ToString()).
 		Append("</>").
 		Append(": Does not contain any Dialogue Row!");
+
+		const FString TextReturn =
+		FString(NodeTitle.ToString()).
+		Append(": Does not contain any Dialogue Row!");
 		
-		ValidationsMessages.Add(FText::FromString(ReturnMessage));
+		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
 	return bResult;

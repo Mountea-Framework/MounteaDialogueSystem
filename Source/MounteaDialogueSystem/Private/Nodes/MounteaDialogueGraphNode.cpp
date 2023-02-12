@@ -86,23 +86,45 @@ bool UMounteaDialogueGraphNode::CanCreateConnection(UMounteaDialogueGraphNode* O
 	return true;
 }
 
-bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages)
+bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
 {
 	bool bResult = true;
 	if (ParentNodes.Num() == 0 && ChildrenNodes.Num() == 0)
 	{
 		bResult = false;
 		
-		const FString ReturnMessage =
+		const FString RichTextReturn =
 		FString("* ").
 		Append("<RichTextBlock.Bold>").
 		Append(NodeTitle.ToString()).
 		Append("</>").
 		Append(": This Node has no Connections!");
+
+		const FString TextReturn =
+		FString(NodeTitle.ToString()).
+		Append(": This Node has no Connections!");
 		
-		ValidationsMessages.Add(FText::FromString(ReturnMessage));
+		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
+	if (bAllowInputNodes && ParentNodes.Num() == 0)
+	{
+		bResult = false;
+		
+		const FString RichTextReturn =
+		FString("* ").
+		Append("<RichTextBlock.Bold>").
+		Append(NodeTitle.ToString()).
+		Append("</>").
+		Append(": This Node requires Inputs, however, none are found!");
+		
+		const FString TextReturn =
+		FString(NodeTitle.ToString()).
+		Append(": This Node requires Inputs, however, none are found!");
+		
+		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+	}
+	
 	return bResult;
 }
 
