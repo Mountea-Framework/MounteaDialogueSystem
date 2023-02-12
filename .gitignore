@@ -77,3 +77,4 @@ DerivedDataCache/*
 *.png~
 Config/FilterPlugin.ini
 Config/MDSConfig.ini
+Config/UpdateConfig.ini
