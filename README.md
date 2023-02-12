@@ -1,5 +1,5 @@
 # MounteaDialogueSystem
-Mountea Dialogue System is an Open-source Mountea Framework Unreal Engine tool for creating complex dialogues within its own editor.
+Mountea Dialogue System is an Open-source Mountea Framework Unreal Engine tool for creating (not just) complex dialogues within its own editor and validation system.
 
 [![UE](https://img.shields.io/badge/supported-4.26%2B-green)](https://github.com/Mountea-Framework/MounteaDialogueSystem/edit/master/README.md#compatible-engine-version)
 [![License](https://img.shields.io/github/license/Mountea-Framework/ActorInteractionPlugin)](https://github.com/Mountea-Framework/MounteaDialogueSystem/master/README.md#compatible-engine-version)
@@ -34,7 +34,13 @@ UE 5.1 | - | 🟨
 ## Features
 ### Graph Editor
 This plugin comes with its own Graph Editor! This way you can easily connect nodes and visualise the Dialogue flow!
-![image](https://user-images.githubusercontent.com/37410226/218049716-8ea5edcd-64cb-4c3d-926d-611019de32ed.png)
+![image](https://user-images.githubusercontent.com/37410226/218337094-4be1690f-d55d-4f62-8f0f-514e9796b069.png)
+
+#### Graph Editor Validations
+We are just humans and we tend to do mistakes. This feature will try its best to track down all issues that might resolve in broken Dialogue Trees and inform you which node has what issues!
+![image](https://user-images.githubusercontent.com/37410226/218337112-69509436-269a-454a-ae99-64ffd183a702.png)
+
+
 
 ## Installation
 
