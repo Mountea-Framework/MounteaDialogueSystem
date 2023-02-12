@@ -11,6 +11,7 @@
 UMounteaDialogueGraphNode_LeadNode::UMounteaDialogueGraphNode_LeadNode()
 {
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_LeadNodeBaseTitle", "Lead Node");
+	InternalName = LOCTEXT("MounteaDialogueGraphNode_LeadNodeBaseInternalTitle", "Lead Node");
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_LeadNodeContextMenuName", "Lead Node");
 	BackgroundColor = FLinearColor(FColor::Orange);
 

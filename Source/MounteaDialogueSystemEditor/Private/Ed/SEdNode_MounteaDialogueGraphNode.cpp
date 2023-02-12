@@ -168,7 +168,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 													.Style(FEditorStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
 													.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
 													.OnVerifyTextChanged(this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
-													.OnTextCommitted(this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommited)
+													.OnTextCommitted(this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
 													.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
 													.IsSelected(this, &SEdNode_MounteaDialogueGraphNode::IsSelectedExclusively)
 												]
@@ -301,8 +301,10 @@ bool SEdNode_MounteaDialogueGraphNode::IsNameReadOnly() const
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-void SEdNode_MounteaDialogueGraphNode::OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo)
+void SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted(const FText& InText, ETextCommit::Type CommitInfo)
 {
+	if (InText.IsEmpty()) return;
+	
 	SGraphNode::OnNameTextCommited(InText, CommitInfo);
 
 	UEdNode_MounteaDialogueGraphNode* MyNode = CastChecked<UEdNode_MounteaDialogueGraphNode>(GraphNode);

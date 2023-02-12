@@ -51,9 +51,10 @@ void MDSPopup_GraphValidation::Open(const TArray<FText> ValidationMessages)
 	{
 		ListOfMessages->AddSlot()
 		[
-			SNew(STextBlock)
+			SNew(SRichTextBlock)
 			.Text(Itr)
 			.TextStyle(FEditorStyle::Get(), "NormalText")
+			.DecoratorStyleSet(&FEditorStyle::Get())
 			.AutoWrapText(true)
 		];
 	}

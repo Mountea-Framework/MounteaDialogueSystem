@@ -21,7 +21,7 @@ public:
 	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
 	virtual bool IsNameReadOnly() const override;
 
-	void OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo);
+	void OnNameTextCommitted(const FText& InText, ETextCommit::Type CommitInfo);
 
 	virtual FSlateColor GetBorderBackgroundColor() const;
 	virtual FSlateColor GetBackgroundColor() const;

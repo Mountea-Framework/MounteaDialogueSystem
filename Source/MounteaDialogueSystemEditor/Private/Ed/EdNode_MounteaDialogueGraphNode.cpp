@@ -3,6 +3,7 @@
 
 #include "EdNode_MounteaDialogueGraphNode.h"
 
+#include "Helpers/MounteaDialogueSystemEditorBFC.h"
 #include "EdGraph_MounteaDialogueGraph.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
@@ -62,12 +63,7 @@ void UEdNode_MounteaDialogueGraphNode::AllocateDefaultPins()
 
 FText UEdNode_MounteaDialogueGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	if (DialogueGraphNode == nullptr)
-	{
-		return Super::GetNodeTitle(TitleType);
-	}
-
-	return DialogueGraphNode->GetNodeTitle();
+	return UMounteaDialogueSystemEditorBFC::GetNodeTitle(DialogueGraphNode);;
 }
 
 void UEdNode_MounteaDialogueGraphNode::PrepareForCopying()
@@ -150,6 +146,11 @@ bool UEdNode_MounteaDialogueGraphNode::CanUserPasteNodes() const
 void UEdNode_MounteaDialogueGraphNode::PostEditUndo()
 {
 	Super::PostEditUndo();
+}
+
+void UEdNode_MounteaDialogueGraphNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 
 #undef LOCTEXT_NAMESPACE

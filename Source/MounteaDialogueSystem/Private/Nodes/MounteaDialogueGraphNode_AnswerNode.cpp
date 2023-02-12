@@ -10,6 +10,7 @@
 UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 {
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeTitle", "Answear Node");
+	InternalName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeInternalTitle", "Answear Node");
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeContextMenuName", "Answear Node");
 	BackgroundColor = FLinearColor(FColor::Turquoise);
 

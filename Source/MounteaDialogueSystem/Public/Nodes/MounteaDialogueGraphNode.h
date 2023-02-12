@@ -51,7 +51,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	virtual FText GetNodeTitle() const;
-
+	FText GetInternalName() const
+	{ return InternalName; };
+	
 	/**
 	 * Returns true if there are no connected Nodes to this one.
 	 */
@@ -75,6 +77,8 @@ public:
 #pragma endregion 
 
 #if WITH_EDITORONLY_DATA
+
+	bool bHasBenManuallyRenamed;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
 	bool bAllowInputNodes;
@@ -108,6 +112,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Mountea|Dialogue|Editor")
 	FLinearColor BackgroundColor;
+
+	FText InternalName;
 
 #endif
 

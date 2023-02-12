@@ -9,14 +9,18 @@ UMounteaDialogueGraphNode_StartNode::UMounteaDialogueGraphNode_StartNode()
 {
 	bAllowInputNodes = false;
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_StartNodeTitle", "Start Node");
+	InternalName = LOCTEXT("MounteaDialogueGraphNode_StartNodeInternalTitle", "Start Node");
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_StartNodeContextMenuName", "Start Node");
 	BackgroundColor = FLinearColor(0, 1, 0, 1);
 
+#if WITH_EDITORONLY_DATA
 	bAllowCopy = false;
 	bAllowCut = false;
 	bAllowPaste = false;
 	bAllowDelete = false;
 	bAllowManualCreate = false;
+#endif
+	
 }
 
 FText UMounteaDialogueGraphNode_StartNode::GetDescription_Implementation() const

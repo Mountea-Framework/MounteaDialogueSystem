@@ -21,6 +21,10 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
 	bAllowDelete = true;
 	bAllowPaste = true;
 	bAllowManualCreate = true;
+
+	bHasBenManuallyRenamed = false;
+
+	InternalName = LOCTEXT("MounteaDialogueNode_InternalName", "MounteaDialogueGraphNode");
 #endif
 }
 
@@ -84,7 +88,22 @@ bool UMounteaDialogueGraphNode::CanCreateConnection(UMounteaDialogueGraphNode* O
 
 bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages)
 {
-	return true;
+	bool bResult = true;
+	if (ParentNodes.Num() == 0 && ChildrenNodes.Num() == 0)
+	{
+		bResult = false;
+		
+		const FString ReturnMessage =
+		FString("* ").
+		Append("<RichTextBlock.Bold>").
+		Append(NodeTitle.ToString()).
+		Append("</>").
+		Append(": This Node has no Connections!");
+		
+		ValidationsMessages.Add(FText::FromString(ReturnMessage));
+	}
+
+	return bResult;
 }
 
 #endif

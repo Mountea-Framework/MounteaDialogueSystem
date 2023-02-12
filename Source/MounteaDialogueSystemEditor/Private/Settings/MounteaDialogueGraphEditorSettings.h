@@ -50,7 +50,7 @@ private:
 #pragma region GraphNodes
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
-	bool bAutoNameNodes;
+	bool bDisplayAutomaticNames;
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	bool bAllowRenameNodes;
@@ -143,8 +143,8 @@ public:
 
 #pragma region GraphNodes_Getters
 
-	bool AllowNodesAutoName() const
-	{ return bAutoNameNodes; };
+	bool ShowAutomaticNames() const
+	{ return bDisplayAutomaticNames; };
 
 	bool AllowRenameNodes() const
 	{ return bAllowRenameNodes; };

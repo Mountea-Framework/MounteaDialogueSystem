@@ -22,5 +22,5 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 	BubbleDrawRule = EBubbleDrawRule::EBDR_OnSelected;
 
 	bAllowRenameNodes = true;
-	bAutoNameNodes = false;
+	bDisplayAutomaticNames = false;
 }

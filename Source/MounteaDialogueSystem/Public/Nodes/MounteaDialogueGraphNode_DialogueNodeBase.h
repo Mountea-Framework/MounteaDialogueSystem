@@ -22,6 +22,9 @@ public:
 
 	virtual FText GetDescription_Implementation() const override;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	virtual FDataTableRowHandle GetDialogueGraphHandle() const;
+
 protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Mountea|Dialogue", meta=(RowType="DialogueRow"))
@@ -33,6 +36,10 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
 	FGuid NodeGUID;
 
+#if WITH_EDITOR
+	virtual bool ValidateNode(TArray<FText>& ValidationsMessages) override;
+#endif
+	
 protected:
 
 	virtual bool CanCreateConnection(UMounteaDialogueGraphNode* Other, EEdGraphPinDirection Direction, FText& ErrorMessage) override;
