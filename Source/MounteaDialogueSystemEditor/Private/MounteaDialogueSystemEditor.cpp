@@ -10,6 +10,7 @@
 
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Interfaces/IPluginManager.h"
+#include "Popups/MDSPopup.h"
 #include "Styling/SlateStyleRegistry.h"
 
 #define LOCTEXT_NAMESPACE "FMounteaDialogueSystemEditor"
@@ -84,6 +85,11 @@ void FMounteaDialogueSystemEditor::StartupModule()
 				}
 			}
 		}
+	}
+
+	// Register Popup
+	{
+		MDSPopup::Register();
 	}
 	
 	EditorLOG_WARNING(TEXT("MounteaDialogueSystemEditor module has been loaded"));
