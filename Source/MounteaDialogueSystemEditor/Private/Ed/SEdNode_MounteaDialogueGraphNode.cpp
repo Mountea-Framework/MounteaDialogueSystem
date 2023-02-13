@@ -96,12 +96,25 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 		.VAlign(VAlign_Center)
 		[
 			SNew(SBorder)
-			.BorderImage(FEditorStyle::GetBrush("Graph.Node.ColorSpill"))
+			.BorderImage(FEditorStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
 			.Padding(3.0f)
 			.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor)
 			[
 				SNew(SOverlay)
 
+				// Adding some colours so its not so boring
+				+ SOverlay::Slot()
+				.HAlign(HAlign_Fill)
+				.VAlign(VAlign_Fill)
+				[
+					SNew(SBorder)
+					.BorderImage(FEditorStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Center)
+					.ColorAndOpacity(FLinearColor(1,1,1,0.25))
+					.Visibility(EVisibility::SelfHitTestInvisible)
+				]
+				
 				// Pins and node details
 				+ SOverlay::Slot()
 				.HAlign(HAlign_Fill)
@@ -115,12 +128,12 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 					[
 						SNew(SBox)
 						.MinDesiredHeight(NodePadding.Top)
-						.MinDesiredWidth(FOptionalSize(100.f))
+						.MinDesiredWidth(FOptionalSize(110.f))
 						[
 							SAssignNew(LeftNodeBox, SVerticalBox)
 						]
 					]
-
+					
 					// STATE NAME AREA
 					+ SVerticalBox::Slot()
 					.Padding(FMargin(NodePadding.Left, 0.0f, NodePadding.Right, 0.0f))
