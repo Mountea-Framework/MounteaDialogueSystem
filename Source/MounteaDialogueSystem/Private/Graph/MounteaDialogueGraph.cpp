@@ -205,7 +205,6 @@ void UMounteaDialogueGraph::PostInitProperties()
 
 bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat)
 {
-	// TODO: Validations :)
 	bool bReturnValue = true;
 	for (UMounteaDialogueGraphNode* Itr : AllNodes)
 	{

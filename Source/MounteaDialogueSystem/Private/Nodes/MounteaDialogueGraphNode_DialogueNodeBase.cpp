@@ -29,7 +29,7 @@ FDataTableRowHandle UMounteaDialogueGraphNode_DialogueNodeBase::GetDialogueGraph
 
 bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
 {
-	bool bResult = Super::ValidateNode(ValidationsMessages, false);
+	bool bResult = Super::ValidateNode(ValidationsMessages, RichFormat);
 
 	if (DialogueRowHandle.DataTable == nullptr)
 	{
