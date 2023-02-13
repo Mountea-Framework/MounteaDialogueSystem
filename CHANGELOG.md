@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 **Version 0.0.0.2**
 ### Added 
+> - Added: GitHub Changelog getter
 > - Added: Mountea Dialogue Graph extensions: Validate Graph
 > - Added: Mountea Dialogue Graph extensions Icons
 > - Added: Welcome popup with Links
