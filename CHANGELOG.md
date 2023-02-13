@@ -1,3 +1,5 @@
+Current Version: 0.0.0.2
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
