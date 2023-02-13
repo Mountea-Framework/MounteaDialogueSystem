@@ -42,7 +42,10 @@ public class MounteaDialogueSystemEditor : ModuleRules
 				"DeveloperSettings",
 				"Projects", 
 				
-				"WebBrowser"
+				"WebBrowser",
+				"Http", 
+				"Json", 
+				"JsonUtilities"
 				// ... add private dependencies that you statically link with here ...
 			}
 		);

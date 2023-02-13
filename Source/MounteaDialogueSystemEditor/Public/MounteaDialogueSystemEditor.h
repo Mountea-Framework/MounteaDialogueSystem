@@ -5,7 +5,9 @@
 #include "Modules/ModuleManager.h"
 #include "EdGraphUtilities.h"
 #include "IAssetTools.h"
+#include "Interfaces/IHttpRequest.h"
 
+class FHttpModule;
 class FSlateStyleSet;
 
 class FMounteaDialogueSystemEditor : public IModuleInterface
@@ -42,6 +44,10 @@ class FMounteaDialogueSystemEditor : public IModuleInterface
 private:
 	
 	void RegisterAssetTypeAction(IAssetTools& AssetTools, TSharedRef<IAssetTypeActions> Action);
+	
+	void OnGetResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
+	UFUNCTION()
+	void SendHTTPGet();
 
 protected:
 
@@ -57,4 +63,5 @@ private:
 	TArray< TSharedPtr<IAssetTypeActions> > CreatedAssetTypeActions;
 
 	EAssetTypeCategories::Type MounteaDialogueGraphAssetCategoryBit;
+	FHttpModule* Http;
 };

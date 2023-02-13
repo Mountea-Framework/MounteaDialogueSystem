@@ -16,11 +16,54 @@ void MDSPopup::OnBrowserLinkClicked(const FSlateHyperlinkRun::FMetadata& Metadat
 	}
 }
 
-void MDSPopup::Register()
+void MDSPopup::FormatChangelog(FString& InChangelog)
+{
+	FString WelcomeMessage = FString(R"(
+<LargeText>Hello and thank you for using Mountea Dialogue System!</>
+
+First thing first, if you've been enjoying using it, it would mean a lot if you could just drop <a id="browser" href="https://bit.ly/MDS_UE4Marketplace">a small review on the marketplace page</> :).
+
+I also made a paid <a id="browser" href="https://bit.ly/ModularSwordsPack_UE4Marketplace">Modular Sword Pack</>. It's a simple yet powerful tool that allows creating thousands upon thousands of unique swords with a simple click, now with a free upgrade of Modular Scabbard System!
+
+But let's keep it short, here are the cool new features (and bugfixes) of this version!
+
+
+)");
+
+	if (InChangelog.IsEmpty())
+	{
+		const FString InvalidChangelog =FString(R"(
+		
+We are sorry, but there has been an error trying to access online Changelog. We are sorry for this.
+The changelist is available publicly <a id="browser" href="https://github.com/Mountea-Framework/MounteaDialogueSystem/blob/4.26_dev/CHANGELOG.md">on our GitHub</>.
+		)");
+
+
+		InChangelog = InChangelog.Append(WelcomeMessage).Append(InvalidChangelog);
+		return;
+	}
+	
+	InChangelog = InChangelog.RightChop(109);
+	InChangelog = InChangelog.Replace(TEXT("### Added"), TEXT("<RichTextBlock.Bold>Added</>"));
+	InChangelog = InChangelog.Replace(TEXT("### Fixed"), TEXT("<RichTextBlock.Bold>Fixed</>"));
+	InChangelog = InChangelog.Replace(TEXT("### Changed"), TEXT("<RichTextBlock.Bold>Changed</>"));
+	InChangelog = InChangelog.Replace(TEXT("> -"), TEXT("*"));
+
+	InChangelog = InChangelog.Replace(TEXT("**Version"), TEXT("<LargeText>Version"));
+	InChangelog = InChangelog.Replace(TEXT("**"), TEXT("</>"));
+	
+	const FString TempString = InChangelog;
+
+	InChangelog.Empty();
+
+	InChangelog = WelcomeMessage.Append(TempString);
+}
+
+void MDSPopup::Register(const FString& Changelog)
 {
 	const FString PluginDirectory = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"))->GetBaseDir();
 	const FString UpdatedConfigFile = PluginDirectory + "/Config/UpdateConfig.ini";
-	const FString CurrentPluginVersion = "0.1";
+	FString CurrentPluginVersion = "0.0.0.1";
 
 	UMDSPopupConfig* MDSPopupConfig = GetMutableDefault<UMDSPopupConfig>();
 
@@ -33,25 +76,34 @@ void MDSPopup::Register()
 		MDSPopupConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
 	}
 
+	// Override Plugin Version from GitHub
+	if (!Changelog.IsEmpty())
+	{
+		FString ChangelogVersion = Changelog.Left(24);
+		ChangelogVersion = ChangelogVersion.Right(7);
+		
+		CurrentPluginVersion = ChangelogVersion;
+	}
+	
 	if (MDSPopupConfig->PluginVersionUpdate != CurrentPluginVersion)
 	{
 		MDSPopupConfig->PluginVersionUpdate = CurrentPluginVersion;
 		MDSPopupConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
 
-		FCoreDelegates::OnPostEngineInit.AddLambda([]()
-		{
-			Open();
-		});
+		Open(Changelog);
 	}
 }
 
-void MDSPopup::Open()
+void MDSPopup::Open(const FString& Changelog)
 {
 	if (!FSlateApplication::Get().CanDisplayWindows())
 	{
 		return;
 	}
 
+	FString DisplayText = Changelog;
+	FormatChangelog(DisplayText);
+		
 	const TSharedRef<SBorder> WindowContent = SNew(SBorder)
 			.BorderImage(FCoreStyle::Get().GetBrush("ToolPanel.GroupBorder"))
 			.Padding(FMargin(8.0f, 8.0f));
@@ -79,7 +131,7 @@ void MDSPopup::Open()
 		[
 			SNew(STextBlock)
 			.Font(HeadingFont)
-			.Text(FText::FromString("Mountea Dialogue System v0.1"))
+			.Text(FText::FromString("Mountea Dialogue System"))
 			.Justification(ETextJustify::Center)
 		]
 		+ SVerticalBox::Slot()
@@ -94,27 +146,7 @@ void MDSPopup::Open()
 				+ SScrollBox::Slot()
 				[
 					SNew(SRichTextBlock)
-					.Text(FText::FromString(R"(
-<LargeText>Hello and thank you for using Mountea Dialogue System!</>
-
-First thing first, if you've been enjoying using it, it would mean a lot if you could just drop <a id="browser" href="https://bit.ly/MDS_UE4Marketplace">a small review on the marketplace page</> :).
-
-I also made a paid <a id="browser" href="https://bit.ly/ModularSwordsPack_UE4Marketplace">Modular Sword Pack</>. It's a simple yet powerful tool that allows creating thousands upon thousands of unique swords with a simple click, now with a free upgrade of Modular Scabbard System!
-					
-But let's keep it short, here are the cool new features (and bugfixes) of version 0.1!
-
-<LargeText>Version 3.1</>
-
-<RichTextBlock.Bold>Features</>
-
-* There sure are some
-<RichTextBlock.Bold>Bugfixes</>
-
-* There sure are some
-<RichTextBlock.Bold>Updates</>
-
-* There sure are some
-)"))
+					.Text(FText::FromString(DisplayText))
 					.TextStyle(FEditorStyle::Get(), "NormalText")
 					.DecoratorStyleSet(&FEditorStyle::Get())
 					.AutoWrapText(true)
@@ -152,7 +184,7 @@ But let's keep it short, here are the cool new features (and bugfixes) of versio
 				.HAlign(HAlign_Center)
 				.OnClicked_Lambda([]()
 				{
-					const FString URL = "https://bit.ly/MDS_GitHubDonate";
+					const FString URL = "https://bit.ly/MounteaFramework_Sponsors";
 					FPlatformProcess::LaunchURL(*URL, nullptr, nullptr);
 
 					return FReply::Handled();

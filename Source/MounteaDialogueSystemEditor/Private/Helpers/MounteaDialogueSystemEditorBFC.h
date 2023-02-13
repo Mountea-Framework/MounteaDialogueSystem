@@ -18,6 +18,7 @@ class UMounteaDialogueSystemEditorBFC : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 	
 public:
+
 #if WITH_EDITOR
 	
 	static const UMounteaDialogueGraphEditorSettings* GetMounteaDialogueEditorSettings()

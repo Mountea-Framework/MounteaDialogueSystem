@@ -1,6 +1,7 @@
 #include "MounteaDialogueSystemEditor.h"
 
 #include "AssetToolsModule.h"
+#include "HttpModule.h"
 #include "AssetActions/MounteaDialogueGraphAssetAction.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
@@ -9,9 +10,14 @@
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
+#include "Interfaces/IHttpResponse.h"
 #include "Interfaces/IPluginManager.h"
 #include "Popups/MDSPopup.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 #include "Styling/SlateStyleRegistry.h"
+
+const FString ChangelogURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/4.26_dev/CHANGELOG.md");
 
 #define LOCTEXT_NAMESPACE "FMounteaDialogueSystemEditor"
 
@@ -37,6 +43,12 @@ public:
 
 void FMounteaDialogueSystemEditor::StartupModule()
 {
+	// Try to request Changelog from GitHub
+	{
+		Http = &FHttpModule::Get();
+		SendHTTPGet();
+	}
+	
 	// Button Icons
 	{
 		FMounteaDialogueGraphEditorStyle::Initialize();
@@ -86,11 +98,6 @@ void FMounteaDialogueSystemEditor::StartupModule()
 			}
 		}
 	}
-
-	// Register Popup
-	{
-		MDSPopup::Register();
-	}
 	
 	EditorLOG_WARNING(TEXT("MounteaDialogueSystemEditor module has been loaded"));
 }
@@ -137,7 +144,7 @@ void FMounteaDialogueSystemEditor::ShutdownModule()
 	{
 		FMounteaDialogueGraphEditorStyle::Shutdown();
 	}
-	
+		
 	EditorLOG_WARNING(TEXT("MounteaDialogueSystemEditor module has been unloaded"));
 }
 
@@ -145,6 +152,34 @@ void FMounteaDialogueSystemEditor::RegisterAssetTypeAction(IAssetTools& AssetToo
 {
 	AssetTools.RegisterAssetTypeActions(Action);
 	CreatedAssetTypeActions.Add(Action);
+}
+
+void FMounteaDialogueSystemEditor::OnGetResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
+{
+	FString ResponseBody;
+	if (Response.IsValid() && Response->GetResponseCode() == 200)
+	{
+		ResponseBody = Response->GetContentAsString();
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
+	}
+
+	// Register Popup even if we have no response, this way we can show at least something
+	{
+		MDSPopup::Register(ResponseBody);
+	}
+}
+
+void FMounteaDialogueSystemEditor::SendHTTPGet()
+{
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = Http->CreateRequest();
+
+	Request->OnProcessRequestComplete().BindRaw(this, &FMounteaDialogueSystemEditor::OnGetResponse);
+	Request->SetURL(ChangelogURL);
+
+	Request->SetVerb("GET");
+	Request->SetHeader("User-Agent", "X-UnrealEngine-Agent");
+	Request->SetHeader("Content-Type", "text");
+	Request->ProcessRequest();
 }
 
 void FMounteaDialogueSystemEditor::HandleNewDialogueGraphCreated(UBlueprint* Blueprint)
