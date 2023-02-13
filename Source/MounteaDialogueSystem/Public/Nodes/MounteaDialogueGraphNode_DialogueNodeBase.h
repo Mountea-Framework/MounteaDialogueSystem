@@ -38,9 +38,7 @@ protected:
 
 #if WITH_EDITOR
 	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat) override;
+	virtual bool CanCreateConnection(UMounteaDialogueGraphNode* Other, EEdGraphPinDirection Direction, FText& ErrorMessage) override;
 #endif
 	
-protected:
-
-	virtual bool CanCreateConnection(UMounteaDialogueGraphNode* Other, EEdGraphPinDirection Direction, FText& ErrorMessage) override;
 };

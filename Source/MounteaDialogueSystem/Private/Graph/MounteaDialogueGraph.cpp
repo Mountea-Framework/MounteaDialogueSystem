@@ -26,6 +26,7 @@ UMounteaDialogueGraph::UMounteaDialogueGraph()
 
 void UMounteaDialogueGraph::Print(bool ToConsole, bool ToScreen)
 {
+
 	int Level = 0;
 	TArray<UMounteaDialogueGraphNode*> CurrLevelNodes = RootNodes;
 	TArray<UMounteaDialogueGraphNode*> NextLevelNodes;
@@ -44,11 +45,13 @@ void UMounteaDialogueGraph::Print(bool ToConsole, bool ToScreen)
 				LOG_INFO(TEXT("%s"), *Message);
 			}
 
+#if WITH_EDITOR
 			if (ToScreen && GEngine != nullptr)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Blue, Message);
 			}
-
+#endif
+			
 			for (int j = 0; j < Node->ChildrenNodes.Num(); ++j)
 			{
 				NextLevelNodes.Add(Node->ChildrenNodes[j]);
@@ -59,6 +62,7 @@ void UMounteaDialogueGraph::Print(bool ToConsole, bool ToScreen)
 		NextLevelNodes.Reset();
 		++Level;
 	}
+
 }
 
 FGuid UMounteaDialogueGraph::GetGraphGUID() const
@@ -79,21 +83,6 @@ TArray<UMounteaDialogueGraphNode*> UMounteaDialogueGraph::GetRootNodes() const
 UMounteaDialogueGraphNode* UMounteaDialogueGraph::GetStartNode() const
 {
 	return StartNode;
-}
-
-bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat)
-{
-	// TODO: Validations :)
-	bool bReturnValue = true;
-	for (UMounteaDialogueGraphNode* Itr : AllNodes)
-	{
-		if (Itr != nullptr && (Itr->ValidateNode(ValidationErrors, RichTextFormat) == false))
-		{
-			bReturnValue = false;
-		}
-	}
-	
-	return bReturnValue;
 }
 
 int UMounteaDialogueGraph::GetLevelNum() const
@@ -154,6 +143,7 @@ void UMounteaDialogueGraph::GetNodesByLevel(int Level, TArray<UMounteaDialogueGr
 
 void UMounteaDialogueGraph::CreateGraph()
 {
+#if WITH_EDITOR
 	// We already have existing Graph
 	if (EdGraph != nullptr)
 	{
@@ -176,6 +166,7 @@ void UMounteaDialogueGraph::CreateGraph()
 		
 		//MarkPackageDirty();
 	}
+#endif
 }
 
 void UMounteaDialogueGraph::ClearGraph()
@@ -208,7 +199,23 @@ void UMounteaDialogueGraph::PostInitProperties()
 	CreateGraph();
 	
 #endif
+}
+
+#if WITH_EDITOR
+
+bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat)
+{
+	// TODO: Validations :)
+	bool bReturnValue = true;
+	for (UMounteaDialogueGraphNode* Itr : AllNodes)
+	{
+		if (Itr != nullptr && (Itr->ValidateNode(ValidationErrors, RichTextFormat) == false))
+		{
+			bReturnValue = false;
+		}
+	}
 	
+	return bReturnValue;
 }
 
 EDataValidationResult UMounteaDialogueGraph::IsDataValid(TArray<FText>& ValidationErrors)
@@ -225,5 +232,6 @@ EDataValidationResult UMounteaDialogueGraph::IsDataValid(TArray<FText>& Validati
 	}
 }
 
+#endif
 
 #undef LOCTEXT_NAMESPACE

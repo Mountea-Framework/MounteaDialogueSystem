@@ -75,8 +75,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	UMounteaDialogueGraphNode* GetStartNode() const;
 
-	bool ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat);
-
 #pragma region HelpingFunctions
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
 	int GetLevelNum() const;
@@ -110,6 +108,7 @@ public:
 
 #if WITH_EDITOR
 
+	virtual bool ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat);
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
 
 #endif

@@ -7,10 +7,13 @@
 
 UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNodeBase()
 {
+#if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseTitle", "Dialogue Node Base");
 	InternalName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseInternalTitle", "Dialogue Node Base");
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseContextMenu", "Dialogue Node");
 	BackgroundColor = FLinearColor(FColor::Orange);
+#endif
+	
 	NodeGUID = FGuid::NewGuid();
 }
 
@@ -21,6 +24,8 @@ FText UMounteaDialogueGraphNode_DialogueNodeBase::GetDescription_Implementation(
 
 FDataTableRowHandle UMounteaDialogueGraphNode_DialogueNodeBase::GetDialogueGraphHandle() const
 {	return DialogueRowHandle;}
+
+#if WITH_EDITOR
 
 bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
 {
@@ -79,5 +84,6 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::CanCreateConnection(UMounteaDia
 	return true;
 }
 
+#endif	
 #undef LOCTEXT_NAMESPACE
 

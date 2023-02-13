@@ -9,11 +9,14 @@
 
 UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 {
+#if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeTitle", "Answear Node");
 	InternalName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeInternalTitle", "Answear Node");
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeContextMenuName", "Answear Node");
+	
 	BackgroundColor = FLinearColor(FColor::Turquoise);
-
+#endif
+	
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_LeadNode::StaticClass());
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
 }

@@ -51,9 +51,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	virtual FText GetNodeTitle() const;
-	FText GetInternalName() const
-	{ return InternalName; };
-	
+		
 	/**
 	 * Returns true if there are no connected Nodes to this one.
 	 */
@@ -119,6 +117,8 @@ public:
 
 #if WITH_EDITOR
 	virtual FLinearColor GetBackgroundColor() const;
+	FText GetInternalName() const
+	{ return InternalName; };
 	
 	virtual void SetNodeTitle(const FText& NewTitle);
 	
