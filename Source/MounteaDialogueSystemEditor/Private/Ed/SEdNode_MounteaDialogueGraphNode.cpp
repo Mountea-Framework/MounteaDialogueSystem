@@ -12,7 +12,9 @@
 #include "SlateOptMacros.h"
 #include "SGraphPin.h"
 #include "GraphEditorSettings.h"
+#include "Blueprint/UserWidget.h"
 #include "Graph/MounteaDialogueGraph.h"
+#include "Settings/MounteaDialogueGraphEditorSettings.h"
 
 #define LOCTEXT_NAMESPACE "EdNode_MounteaDialogueGraph"
 
@@ -87,16 +89,15 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 
 	TSharedPtr<SErrorText> ErrorText;
 	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, GraphNode);
-
-	// TODO: any way to disable areas?
+		
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	this->GetOrAddSlot(ENodeZone::Center)
 		.HAlign(HAlign_Fill)
 		.VAlign(VAlign_Center)
 		[
 			SNew(SBorder)
-			.BorderImage(FEditorStyle::GetBrush("Graph.StateNode.Body"))
-			.Padding(0.0f)
+			.BorderImage(FEditorStyle::GetBrush("Graph.Node.ColorSpill"))
+			.Padding(3.0f)
 			.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor)
 			[
 				SNew(SOverlay)
@@ -114,6 +115,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 					[
 						SNew(SBox)
 						.MinDesiredHeight(NodePadding.Top)
+						.MinDesiredWidth(FOptionalSize(100.f))
 						[
 							SAssignNew(LeftNodeBox, SVerticalBox)
 						]
@@ -142,6 +144,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 									SNew(SVerticalBox)
 									+ SVerticalBox::Slot()
 									.AutoHeight()
+									.HAlign(HAlign_Center)
 									[
 										SNew(SHorizontalBox)
 										+ SHorizontalBox::Slot()
@@ -155,6 +158,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 
 										+ SHorizontalBox::Slot()
 										.AutoWidth()
+										.HAlign(HAlign_Center)
 										[
 											SNew(SHorizontalBox)
 											+ SHorizontalBox::Slot()
@@ -162,6 +166,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 											[
 												SNew(SVerticalBox)
 												+ SVerticalBox::Slot()
+												.HAlign(HAlign_Center)
 												.AutoHeight()
 												[
 													SAssignNew(InlineEditableText, SInlineEditableTextBlock)
@@ -171,6 +176,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 													.OnTextCommitted(this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
 													.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
 													.IsSelected(this, &SEdNode_MounteaDialogueGraphNode::IsSelectedExclusively)
+													.Justification(ETextJustify::Center)
 												]
 												+ SVerticalBox::Slot()
 												.AutoHeight()
