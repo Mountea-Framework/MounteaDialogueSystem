@@ -23,16 +23,6 @@ void FAssetEditorToolbarMounteaDialogueGraph::FillMounteaDialogueGraphToolbar(FT
 	check(MounteaDialogueGraphEditor.IsValid());
 	TSharedPtr<FAssetEditor_MounteaDialogueGraph> MounteaDialogueGraphEditorPtr = MounteaDialogueGraphEditor.Pin();
 
-	ToolbarBuilder.BeginSection("Mountea Dialogue Graph");
-	{
-		ToolbarBuilder.AddToolBarButton(FMounteaDialogueGraphEditorCommands::Get().GraphSettings,
-			NAME_None,
-			LOCTEXT("GraphSettings_Label", "Graph Settings"),
-			LOCTEXT("GraphSettings_ToolTip", "Show the Graph Settings"),
-			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetStyleSetName(),"MDSStyleSet.GraphSettings"));
-	}
-	ToolbarBuilder.EndSection();
-
 	ToolbarBuilder.BeginSection("Util");
 	{
 		ToolbarBuilder.AddToolBarButton(FMounteaDialogueGraphEditorCommands::Get().AutoArrange,

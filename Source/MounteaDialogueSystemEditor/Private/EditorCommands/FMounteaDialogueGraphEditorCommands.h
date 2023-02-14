@@ -12,10 +12,8 @@ public:
 	{
 	}
 	
-	TSharedPtr<FUICommandInfo> GraphSettings;
 	TSharedPtr<FUICommandInfo> AutoArrange;
 	TSharedPtr<FUICommandInfo> ValidateGraph;
 
 	virtual void RegisterCommands() override;
-
 };

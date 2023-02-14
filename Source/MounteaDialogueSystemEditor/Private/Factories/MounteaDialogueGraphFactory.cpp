@@ -11,12 +11,13 @@ UMounteaDialogueGraphFactory::UMounteaDialogueGraphFactory()
 
 UObject* UMounteaDialogueGraphFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
 {
+	/*
 	FString NewName;
 	Name.ToString(NewName);
 
 	NewName = NewName.Replace(TEXT("Graph"), TEXT("Tree"));
 
-	Name = FName(*NewName);
-	
+	Name = FName(*NewName); 
+	*/
 	return NewObject<UObject>(InParent, Class, Name, Flags | RF_Transactional);
 } 

@@ -32,7 +32,6 @@ struct FAssetEditorTabs_MounteaDialogueGraph
 	// Tab identifiers
 	static const FName MounteaDialogueGraphPropertyID;
 	static const FName ViewportID;
-	static const FName MounteaDialogueGraphEditorSettingsID;
 };
 
 #pragma region ConstantNames
@@ -40,7 +39,6 @@ struct FAssetEditorTabs_MounteaDialogueGraph
 const FName MounteaDialogueGraphEditorAppName = FName(TEXT("MounteaDialogueGraphEditorApp"));
 const FName FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID(TEXT("MounteaDialogueGraphProperty"));
 const FName FAssetEditorTabs_MounteaDialogueGraph::ViewportID(TEXT("Viewport"));
-const FName FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphEditorSettingsID(TEXT("MounteaDialogueGraphEditorSettings"));
 
 #pragma endregion 
 
@@ -79,7 +77,7 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(cons
 	ToolbarBuilder->AddMounteaDialogueGraphToolbar(ToolbarExtender);
 
 	// Layout
-	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("Standalone_MounteaDialogueGraphEditor_Layout_v1")
+	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("Standalone_MounteaDialogueGraphEditor_LayoutV0.1")
 		->AddArea
 		(
 			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
@@ -95,7 +93,7 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(cons
 				->Split
 				(
 					FTabManager::NewStack()
-					->SetSizeCoefficient(0.65f)
+					->SetSizeCoefficient(3.f)
 					->AddTab(FAssetEditorTabs_MounteaDialogueGraph::ViewportID, ETabState::OpenedTab)->SetHideTabWell(true)
 				)
 				->Split
@@ -104,14 +102,8 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(cons
 					->Split
 					(
 						FTabManager::NewStack()
-						->SetSizeCoefficient(0.7f)
+						->SetSizeCoefficient(0.9f)
 						->AddTab(FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID, ETabState::OpenedTab)->SetHideTabWell(true)
-					)
-					->Split
-					(
-						FTabManager::NewStack()
-						->SetSizeCoefficient(0.3f)
-						->AddTab(FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphEditorSettingsID, ETabState::OpenedTab)
 					)
 				)
 			)
@@ -155,11 +147,6 @@ void FAssetEditor_MounteaDialogueGraph::RegisterTabSpawners(const TSharedRef<FTa
 		.SetDisplayName(LOCTEXT("DetailsTab", "Property"))
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.Tabs.Details"));
-
-	InTabManager->RegisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphEditorSettingsID, FOnSpawnTab::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::SpawnTab_EditorSettings))
-		.SetDisplayName(LOCTEXT("EditorSettingsTab", "Mountea Dialogue Graph Editor Setttings"))
-		.SetGroup(WorkspaceMenuCategoryRef)
-		.SetIcon(FSlateIcon(FMounteaDialogueGraphEditorStyle::GetStyleSetName(), "MDSStyleSet.GraphSettings.small"));
 }
 
 void FAssetEditor_MounteaDialogueGraph::UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
@@ -168,7 +155,6 @@ void FAssetEditor_MounteaDialogueGraph::UnregisterTabSpawners(const TSharedRef<F
 
 	InTabManager->UnregisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::ViewportID);
 	InTabManager->UnregisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID);
-	InTabManager->UnregisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphEditorSettingsID);
 }
 
 FName FAssetEditor_MounteaDialogueGraph::GetToolkitFName() const
@@ -249,9 +235,6 @@ void FAssetEditor_MounteaDialogueGraph::CreateInternalWidgets()
 	PropertyWidget = PropertyModule.CreateDetailView(Args);
 	PropertyWidget->SetObject(EditingGraph);
 	PropertyWidget->OnFinishedChangingProperties().AddSP(this, &FAssetEditor_MounteaDialogueGraph::OnFinishedChangingProperties);
-
-	EditorSettingsWidget = PropertyModule.CreateDetailView(Args);
-	EditorSettingsWidget->SetObject(MounteaDialogueGraphEditorSettings);
 }
 
 TSharedRef<SGraphEditor> FAssetEditor_MounteaDialogueGraph::CreateViewportWidget()
@@ -277,11 +260,6 @@ TSharedRef<SGraphEditor> FAssetEditor_MounteaDialogueGraph::CreateViewportWidget
 
 void FAssetEditor_MounteaDialogueGraph::BindCommands()
 {
-	ToolkitCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().GraphSettings,
-		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::GraphSettings),
-		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::CanGraphSettings)
-	);
-
 	ToolkitCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().AutoArrange,
 		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::AutoArrange),
 		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::CanAutoArrange)
@@ -336,10 +314,6 @@ void FAssetEditor_MounteaDialogueGraph::CreateCommandList()
 	// Can't use CreateSP here because derived editor are already implementing TSharedFromThis<FAssetEditorToolkit>
 	// however it should be safe, since commands are being used only within this editor
 	// if it ever crashes, this function will have to go away and be reimplemented in each derived class
-
-	GraphEditorCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().GraphSettings,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::GraphSettings),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::CanGraphSettings));
 
 	GraphEditorCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().AutoArrange,
 		FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::AutoArrange),
@@ -693,16 +667,6 @@ bool FAssetEditor_MounteaDialogueGraph::CanDuplicateNodes()
 	return CanCopyNodes();
 }
 
-void FAssetEditor_MounteaDialogueGraph::GraphSettings()
-{
-	PropertyWidget->SetObject(EditingGraph);
-}
-
-bool FAssetEditor_MounteaDialogueGraph::CanGraphSettings() const
-{
-	return true;
-}
-
 void FAssetEditor_MounteaDialogueGraph::AutoArrange()
 {
 	UEdGraph_MounteaDialogueGraph* EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
@@ -727,7 +691,6 @@ void FAssetEditor_MounteaDialogueGraph::AutoArrange()
 
 	if (LayoutStrategy != nullptr)
 	{
-		LayoutStrategy->Settings = MounteaDialogueGraphEditorSettings;
 		LayoutStrategy->Layout(EdGraph);
 		LayoutStrategy->ConditionalBeginDestroy();
 	}
@@ -857,18 +820,6 @@ TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Details(const F
 		.Label(LOCTEXT("Details_Title", "Property"))
 		[
 			PropertyWidget.ToSharedRef()
-		];
-}
-
-TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_EditorSettings(const FSpawnTabArgs& Args)
-{
-	check(Args.GetTabId() == FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphEditorSettingsID);
-
-	return SNew(SDockTab)
-		.Icon(FEditorStyle::GetBrush("LevelEditor.Tabs.Details"))
-		.Label(LOCTEXT("EditorSettings_Title", "Mountea Dialogue Graph Editor Setttings"))
-		[
-			EditorSettingsWidget.ToSharedRef()
 		];
 }
 

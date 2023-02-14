@@ -88,9 +88,6 @@ private:
 	void DuplicateNodes();
 	bool CanDuplicateNodes();
 
-	void GraphSettings();
-	bool CanGraphSettings() const;
-
 	void AutoArrange();
 	bool CanAutoArrange() const;
 
@@ -120,7 +117,6 @@ private:
 
 	TSharedRef<SDockTab> SpawnTab_Viewport(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_Details(const FSpawnTabArgs& Args);
-	TSharedRef<SDockTab> SpawnTab_EditorSettings(const FSpawnTabArgs& Args);
 
 	UMounteaDialogueGraphEditorSettings* MounteaDialogueGraphEditorSettings;
 
@@ -134,7 +130,6 @@ private:
 
 	TSharedPtr<SGraphEditor> ViewportWidget;
 	TSharedPtr<class IDetailsView> PropertyWidget;
-	TSharedPtr<class IDetailsView> EditorSettingsWidget;
 
 	/** The command list for this editor */
 	TSharedPtr<FUICommandList> GraphEditorCommands;
