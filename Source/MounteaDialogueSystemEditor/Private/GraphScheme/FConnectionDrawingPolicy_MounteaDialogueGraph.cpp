@@ -12,13 +12,14 @@ FConnectionDrawingPolicy_MounteaDialogueGraph::FConnectionDrawingPolicy_MounteaD
 	: FKismetConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, ZoomFactor, InClippingRect, InDrawElements, InGraphObj)
 	  , GraphObj(InGraphObj)
 {
-	ArrowImage = FEditorStyle::GetBrush( TEXT("Graph.Arrow") );
+	
+	ArrowImage = FEditorStyle::GetBrush( TEXT("GenericPlay") );
 	ArrowRadius = ArrowImage->ImageSize * ZoomFactor * 0.5f;
 	MidpointImage = nullptr;
 	MidpointRadius = FVector2D::ZeroVector;
 	HoverDeemphasisDarkFraction = 0.8f;
 
-	BubbleImage = FEditorStyle::GetBrush( TEXT("Graph.ExecutionBubble") );
+	BubbleImage = FEditorStyle::GetBrush( TEXT("Graph.Arrow") );
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FConnectionParams& Params)

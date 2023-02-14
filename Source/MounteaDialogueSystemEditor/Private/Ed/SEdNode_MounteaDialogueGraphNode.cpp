@@ -38,12 +38,13 @@ public:
 		const UEdGraphSchema* Schema = GraphPinObj->GetSchema();
 		check(Schema);
 
+		// Pins Out/In Border
 		SBorder::Construct(SBorder::FArguments()
 			.BorderImage(this, &SMounteaDialogueGraphPin::GetPinBorder)
 			.BorderBackgroundColor(this, &SMounteaDialogueGraphPin::GetPinColor)
 			.OnMouseButtonDown(this, &SMounteaDialogueGraphPin::OnPinMouseDown)
 			.Cursor(this, &SMounteaDialogueGraphPin::GetPinCursor)
-			.Padding(FMargin(10.0f))
+			.Padding(FMargin(5.0f))
 		);
 	}
 
@@ -60,7 +61,7 @@ protected:
 
 	const FSlateBrush* GetPinBorder() const
 	{
-		return FEditorStyle::GetBrush(TEXT("Graph.StateNode.Body"));
+		return FEditorStyle::GetBrush(TEXT("LevelViewport.ViewportConfig_OnePane"));
 	}
 };
 
@@ -93,108 +94,128 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	this->GetOrAddSlot(ENodeZone::Center)
 		.HAlign(HAlign_Fill)
-		.VAlign(VAlign_Center)
+		.VAlign(VAlign_Fill)
 		[
-			SNew(SBorder)
-			.BorderImage(FEditorStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
-			.Padding(3.0f)
-			.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor)
+			SNew(SBox)
+			//.MinDesiredHeight(FOptionalSize(50.f))
 			[
-				SNew(SOverlay)
-
-				// Adding some colours so its not so boring
-				+ SOverlay::Slot()
-				.HAlign(HAlign_Fill)
-				.VAlign(VAlign_Fill)
+				SNew(SBorder)
+				.BorderImage(FEditorStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+				.Padding(3.0f)
+				.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor)
 				[
-					SNew(SBorder)
-					.BorderImage(FEditorStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+					SNew(SOverlay)
+
+					// Adding some colours so its not so boring
+					+ SOverlay::Slot()
 					.HAlign(HAlign_Fill)
-					.VAlign(VAlign_Center)
-					.ColorAndOpacity(FLinearColor(1,1,1,0.25))
-					.Visibility(EVisibility::SelfHitTestInvisible)
-				]
-				
-				// Pins and node details
-				+ SOverlay::Slot()
-				.HAlign(HAlign_Fill)
-				.VAlign(VAlign_Fill)
-				[
-					SNew(SVerticalBox)
-
-					// INPUT PIN AREA
-					+ SVerticalBox::Slot()
-					.AutoHeight()
+					.VAlign(VAlign_Fill)
 					[
-						SNew(SBox)
-						.MinDesiredHeight(NodePadding.Top)
-						.MinDesiredWidth(FOptionalSize(110.f))
-						[
-							SAssignNew(LeftNodeBox, SVerticalBox)
-						]
+						SNew(SBorder)
+						.BorderImage(FEditorStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+						.HAlign(HAlign_Fill)
+						.VAlign(VAlign_Center)
+						.Visibility(EVisibility::SelfHitTestInvisible)
+						.BorderBackgroundColor(MounteaDialogueGraphColors::NodeBorder::Inactive)
 					]
 					
-					// STATE NAME AREA
-					+ SVerticalBox::Slot()
-					.Padding(FMargin(NodePadding.Left, 0.0f, NodePadding.Right, 0.0f))
+					// Pins and node details
+					+ SOverlay::Slot()
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Fill)
 					[
 						SNew(SVerticalBox)
+
+						// INPUT PIN AREA
 						+ SVerticalBox::Slot()
 						.AutoHeight()
 						[
-							SAssignNew(NodeBody, SBorder)
-							.BorderImage(FEditorStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
-							.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetBackgroundColor)
-							.HAlign(HAlign_Fill)
-							.VAlign(VAlign_Center)
-							.Visibility(EVisibility::SelfHitTestInvisible)
+							SNew(SBox)
+							.MinDesiredHeight(NodePadding.Top)
 							[
-								SNew(SOverlay)
-								+ SOverlay::Slot()
-								.HAlign(HAlign_Fill)
-								.VAlign(VAlign_Fill)
-								[
-									SNew(SVerticalBox)
-									+ SVerticalBox::Slot()
-									.AutoHeight()
-									.HAlign(HAlign_Center)
-									[
-										SNew(SHorizontalBox)
-										+ SHorizontalBox::Slot()
-										.AutoWidth()
-										[
-											// POPUP ERROR MESSAGE
-											SAssignNew(ErrorText, SErrorText)
-											.BackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetErrorColor)
-											.ToolTipText(this, &SEdNode_MounteaDialogueGraphNode::GetErrorMsgToolTip)
-										]
+								SAssignNew(LeftNodeBox, SVerticalBox)
+							]
+						]
 
-										+ SHorizontalBox::Slot()
-										.AutoWidth()
-										.HAlign(HAlign_Center)
+						+ SVerticalBox::Slot()
+						.AutoHeight()
+						[
+							SNew(SSpacer)
+							.Size(FVector2D(0.f, 10.f))
+						]
+												
+						// STATE NAME AREA
+						+ SVerticalBox::Slot()
+						.Padding(FMargin(NodePadding.Left, 0.0f, NodePadding.Right, 0.0f))
+						.VAlign(VAlign_Fill)
+						[
+							SNew(SBox)
+							.MinDesiredHeight(FOptionalSize(30.f))
+							.VAlign(VAlign_Fill)
+							[
+								SNew(SVerticalBox)
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								[
+									SAssignNew(NodeBody, SBorder)
+									.BorderImage(FEditorStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+									.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetBackgroundColor)
+									.HAlign(HAlign_Fill)
+									.VAlign(VAlign_Center)
+									.Visibility(EVisibility::SelfHitTestInvisible)
+									[
+										SNew(SBox)
+										.MinDesiredWidth(FOptionalSize(110.f))
 										[
-											SNew(SHorizontalBox)
-											+ SHorizontalBox::Slot()
-											.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+											SNew(SOverlay)
+											+ SOverlay::Slot()
+											.HAlign(HAlign_Fill)
+											.VAlign(VAlign_Fill)
 											[
 												SNew(SVerticalBox)
 												+ SVerticalBox::Slot()
+												.AutoHeight()
 												.HAlign(HAlign_Center)
-												.AutoHeight()
 												[
-													SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-													.Style(FEditorStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
-													.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
-													.OnVerifyTextChanged(this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
-													.OnTextCommitted(this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
-													.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
-													.IsSelected(this, &SEdNode_MounteaDialogueGraphNode::IsSelectedExclusively)
-													.Justification(ETextJustify::Center)
-												]
-												+ SVerticalBox::Slot()
-												.AutoHeight()
-												[
-													NodeTitle.ToSharedRef()
+													SNew(SHorizontalBox)
+													+ SHorizontalBox::Slot()
+													.AutoWidth()
+													[
+														// POPUP ERROR MESSAGE
+														SAssignNew(ErrorText, SErrorText)
+														.BackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetErrorColor)
+														.ToolTipText(this, &SEdNode_MounteaDialogueGraphNode::GetErrorMsgToolTip)
+													]
+
+													+ SHorizontalBox::Slot()
+													.AutoWidth()
+													.HAlign(HAlign_Center)
+													[
+														SNew(SHorizontalBox)
+														+ SHorizontalBox::Slot()
+														.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+														[
+															SNew(SVerticalBox)
+															+ SVerticalBox::Slot()
+															.HAlign(HAlign_Center)
+															.AutoHeight()
+															[
+																SAssignNew(InlineEditableText, SInlineEditableTextBlock)
+																.Style(FEditorStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
+																.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
+																.OnVerifyTextChanged(this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
+																.OnTextCommitted(this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
+																.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
+																.IsSelected(this, &SEdNode_MounteaDialogueGraphNode::IsSelectedExclusively)
+																.Justification(ETextJustify::Center)
+															]
+															+ SVerticalBox::Slot()
+															.AutoHeight()
+															[
+																NodeTitle.ToSharedRef()
+															]
+														]
+													]
 												]
 											]
 										]
@@ -202,23 +223,30 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 								]
 							]
 						]
-					]
 
-					// OUTPUT PIN AREA
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					[
-						SNew(SBox)
-						.MinDesiredHeight(NodePadding.Bottom)
+						+ SVerticalBox::Slot()
+						.AutoHeight()
 						[
-							SAssignNew(RightNodeBox, SVerticalBox)
-							+ SVerticalBox::Slot()
-							.HAlign(HAlign_Fill)
-							.VAlign(VAlign_Fill)
-							.Padding(20.0f, 0.0f)
-							.FillHeight(1.0f)
+							SNew(SSpacer)
+							.Size(FVector2D(0.f, 10.f))
+						]
+						
+						// OUTPUT PIN AREA
+						+ SVerticalBox::Slot()
+						.AutoHeight()
+						[
+							SNew(SBox)
+							.MinDesiredHeight(NodePadding.Bottom)
 							[
-								SAssignNew(OutputPinBox, SHorizontalBox)
+								SAssignNew(RightNodeBox, SVerticalBox)
+								+ SVerticalBox::Slot()
+								.HAlign(HAlign_Fill)
+								.VAlign(VAlign_Fill)
+								.Padding(20.0f, 0.0f)
+								.FillHeight(1.0f)
+								[
+									SAssignNew(OutputPinBox, SHorizontalBox)
+								]
 							]
 						]
 					]

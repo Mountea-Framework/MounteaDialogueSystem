@@ -86,6 +86,16 @@ void UEdNode_MounteaDialogueGraphNode::AutowireNewNode(UEdGraphPin* FromPin)
 
 FLinearColor UEdNode_MounteaDialogueGraphNode::GetBackgroundColor() const
 {
+	// Getting Node colour based on the Settings if any found, otherwise use this logic
+	if (UMounteaDialogueGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
+	{
+		FLinearColor ReturnColour;
+		if (GraphEditorSettings->FindNodeBackgroundColourOverride(DialogueGraphNode->GetClass(), ReturnColour))
+		{
+			return ReturnColour;
+		}
+	}
+	
 	return DialogueGraphNode ? DialogueGraphNode->GetBackgroundColor() : FLinearColor::Black;
 }
 

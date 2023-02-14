@@ -55,6 +55,13 @@ private:
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	bool bAllowRenameNodes;
 
+	/**
+	 * Select a Node Class and specify Override Colour for this Node type.
+	 * Only non-abstract classes are allowed!
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings", meta=(ShowTreeView))
+	TMap<TSoftClassPtr<UMounteaDialogueGraphNode>, FLinearColor> OverrideNodeBackgroundColours;
+
 #pragma endregion 
 
 #pragma region GraphWiring
@@ -148,6 +155,17 @@ public:
 
 	bool AllowRenameNodes() const
 	{ return bAllowRenameNodes; };
+
+	bool FindNodeBackgroundColourOverride(const TSoftClassPtr<UMounteaDialogueGraphNode> NodeClass, FLinearColor& BackgroundColour)
+	{
+		if (OverrideNodeBackgroundColours.Contains(NodeClass))
+		{
+			BackgroundColour = *OverrideNodeBackgroundColours.Find(NodeClass);
+			return true;
+		}
+
+		return false;
+	}
 
 #pragma endregion 
 
