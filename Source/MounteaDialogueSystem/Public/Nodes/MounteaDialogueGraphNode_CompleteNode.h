@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS(ClassGroup=("Mountea|Dialogue"))
+UCLASS(ClassGroup=("Mountea|Dialogue"), DisplayName="Complete Node", meta=(ToolTip="Mountea Dialogue Tree: Complete Node"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_CompleteNode : public UMounteaDialogueGraphNode
 {
 	GENERATED_BODY()

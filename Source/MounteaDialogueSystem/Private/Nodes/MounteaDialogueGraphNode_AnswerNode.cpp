@@ -10,9 +10,9 @@
 UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 {
 #if WITH_EDITORONLY_DATA
-	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeTitle", "Answear Node");
-	InternalName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeInternalTitle", "Answear Node");
-	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeContextMenuName", "Answear Node");
+	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeTitle", "Answer Node");
+	InternalName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeInternalTitle", "Answer Node");
+	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeContextMenuName", "Answer Node");
 	
 	BackgroundColor = FLinearColor(FColor::Turquoise);
 #endif
