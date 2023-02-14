@@ -10,7 +10,7 @@
 	"DocsURL": "https://github.com/Mountea-Framework/ActorInteractionPlugin/wiki",
 	"MarketplaceURL": "",
 	"SupportURL": "https://bit.ly/DominikPavlicek_SupportServer",
-	"EngineVersion": "4.26.0",
+	"EngineVersion": "4.26",
 	"CanContainContent": true,
 	"IsBetaVersion": true,
 	"IsExperimentalVersion": true,
