@@ -108,7 +108,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
 	TSubclassOf<UMounteaDialogueGraph> CompatibleGraphType;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Mountea|Dialogue|Editor")
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
 	FLinearColor BackgroundColor;
 
 	FText InternalName;
