@@ -33,6 +33,13 @@ enum class EBubbleDrawRule : uint8
 	EBDR_OnSelected	UMETA(DisplayName="When Selected")
 };
 
+UENUM(BlueprintType)
+enum class ENodeTheme : uint8
+{
+	ENT_DarkTheme			UMETA(DisplayName="Dark Theme"),
+	ENT_LightTheme			UMETA(DisplayName="Light Theme")
+};
+
 /**
  * Mountea Dialogue System global settings.
  */
@@ -48,6 +55,9 @@ public:
 private:
 
 #pragma region GraphNodes
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
+	ENodeTheme NodeTheme;
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	bool bDisplayAutomaticNames;
@@ -150,6 +160,9 @@ public:
 
 #pragma region GraphNodes_Getters
 
+	ENodeTheme GetNodeTheme() const
+	{ return NodeTheme; };
+	
 	bool ShowAutomaticNames() const
 	{ return bDisplayAutomaticNames; };
 

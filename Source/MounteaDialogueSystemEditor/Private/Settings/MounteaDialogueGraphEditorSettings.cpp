@@ -5,6 +5,9 @@
 
 UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 {
+
+	NodeTheme = ENodeTheme::ENT_DarkTheme;
+	
 	CategoryName = TEXT("Mountea Framework");
 	SectionName = TEXT("Mountea Dialogue System");
 	

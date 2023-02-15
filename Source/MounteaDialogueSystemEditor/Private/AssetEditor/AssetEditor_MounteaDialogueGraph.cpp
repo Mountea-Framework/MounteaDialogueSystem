@@ -227,13 +227,13 @@ void FAssetEditor_MounteaDialogueGraph::CreateInternalWidgets()
 {
 	ViewportWidget = CreateViewportWidget();
 
-	FDetailsViewArgs Args;
-	Args.bHideSelectionTip = true;
-	Args.NotifyHook = this;
+	FDetailsViewArgs Args( false, false, true, FDetailsViewArgs::HideNameArea, false );
+	Args.bShowActorLabel = false;
 
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyWidget = PropertyModule.CreateDetailView(Args);
 	PropertyWidget->SetObject(EditingGraph);
+	
 	PropertyWidget->OnFinishedChangingProperties().AddSP(this, &FAssetEditor_MounteaDialogueGraph::OnFinishedChangingProperties);
 }
 
@@ -707,6 +707,11 @@ bool FAssetEditor_MounteaDialogueGraph::CanAutoArrange() const
 
 void FAssetEditor_MounteaDialogueGraph::ValidateGraph()
 {
+	if (ValidationWindow.IsValid())
+	{
+		ValidationWindow->RequestDestroyWindow();
+	}
+	
 	UEdGraph_MounteaDialogueGraph* EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
 	check(EdGraph != nullptr);
 
@@ -720,12 +725,12 @@ void FAssetEditor_MounteaDialogueGraph::ValidateGraph()
 	TArray<FText> ValidationMessages;
 	if (MounteaGraph->ValidateGraph(ValidationMessages, true) == false)
 	{
-		MDSPopup_GraphValidation::Open(ValidationMessages);
+		ValidationWindow = MDSPopup_GraphValidation::Open(ValidationMessages);
 	}
 	else
 	{
 		ValidationMessages.Empty();
-		MDSPopup_GraphValidation::Open(ValidationMessages);
+		ValidationWindow = MDSPopup_GraphValidation::Open(ValidationMessages);
 	}
 }
 
@@ -774,6 +779,7 @@ void FAssetEditor_MounteaDialogueGraph::OnSelectedNodesChanged(const TSet<UObjec
 	}
 	else
 	{
+		// When node is selected, add it to PropertyWidget
 		PropertyWidget->SetObjects(Selection);
 	}
 }

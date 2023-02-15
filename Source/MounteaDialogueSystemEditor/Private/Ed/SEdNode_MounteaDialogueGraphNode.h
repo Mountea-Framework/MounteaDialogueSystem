@@ -24,7 +24,10 @@ public:
 	void OnNameTextCommitted(const FText& InText, ETextCommit::Type CommitInfo);
 
 	virtual FSlateColor GetBorderBackgroundColor() const;
+	virtual FSlateColor GetBorderFrontColor() const;
 	virtual FSlateColor GetBackgroundColor() const;
+
+	virtual FSlateColor GetPinsDockColor() const;
 
 	virtual EVisibility GetDragOverMarkerVisibility() const;
 
@@ -33,5 +36,9 @@ public:
 protected:
 	TSharedPtr<SBorder> NodeBody;
 	TSharedPtr<SHorizontalBox> OutputPinBox;
-	
+
+	class UMounteaDialogueGraphEditorSettings* GraphEditorSettings = nullptr;
+
+	FLinearColor NodeInnerColor;
+	FLinearColor PinsDockColor;
 };

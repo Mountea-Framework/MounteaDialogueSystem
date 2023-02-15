@@ -11,6 +11,7 @@ public:
 	static void Initialize();
 	static void Shutdown();
 
+	static const FSlateBrush * GetBrush(FName PropertyName, const ANSICHAR* Specifier = NULL);
 	static const FName& GetStyleSetName();
 
 private:

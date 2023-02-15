@@ -13,6 +13,7 @@
 #include "SGraphPin.h"
 #include "GraphEditorSettings.h"
 #include "Blueprint/UserWidget.h"
+#include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
 
@@ -51,6 +52,19 @@ public:
 protected:
 	virtual FSlateColor GetPinColor() const override
 	{
+		if (const UMounteaDialogueGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
+		{
+			switch (GraphEditorSettings->GetNodeTheme())
+			{
+			case ENodeTheme::ENT_DarkTheme:
+				return MounteaDialogueGraphColors::PinsDock::LightTheme;
+			case ENodeTheme::ENT_LightTheme:
+				return MounteaDialogueGraphColors::PinsDock::DarkTheme;
+			default:
+				return MounteaDialogueGraphColors::PinsDock::LightTheme;
+			}
+		}
+		
 		return MounteaDialogueGraphColors::Pin::Default;
 	}
 
@@ -61,7 +75,9 @@ protected:
 
 	const FSlateBrush* GetPinBorder() const
 	{
-		return FEditorStyle::GetBrush(TEXT("LevelViewport.ViewportConfig_OnePane"));
+		// TODO: Register new Brush
+		//return FEditorStyle::GetBrush(TEXT("Graph.DelegatePin.Connected"));
+		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.PinsDockOverlay"));
 	}
 };
 
@@ -72,6 +88,33 @@ void SEdNode_MounteaDialogueGraphNode::Construct(const FArguments& InArgs, UEdNo
 	GraphNode = InNode;
 	UpdateGraphNode();
 	InNode->SEdNode = this;
+
+	GraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>();
+
+	if (GraphEditorSettings)
+	{
+		switch (GraphEditorSettings->GetNodeTheme())
+		{
+		case ENodeTheme::ENT_DarkTheme:
+			NodeInnerColor = MounteaDialogueGraphColors::Overlay::DarkTheme;
+			PinsDockColor = MounteaDialogueGraphColors::Overlay::LightTheme;
+			break;
+		case ENodeTheme::ENT_LightTheme:
+			NodeInnerColor = MounteaDialogueGraphColors::Overlay::LightTheme;
+			PinsDockColor = MounteaDialogueGraphColors::Overlay::DarkTheme;
+			break;
+		default:
+			NodeInnerColor = MounteaDialogueGraphColors::Overlay::DarkTheme;
+			PinsDockColor = MounteaDialogueGraphColors::Overlay::LightTheme;
+			break;
+		}
+	}
+	else
+	{
+		GraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>();
+		NodeInnerColor = MounteaDialogueGraphColors::Overlay::DarkTheme;
+		PinsDockColor = MounteaDialogueGraphColors::Overlay::LightTheme;
+	}
 }
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
@@ -101,11 +144,9 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 			[
 				// OUTER STYLE
 				SNew(SBorder)
-				//.BorderImage(FEditorStyle::GetBrush("Graph.StateNode.ColorSpill"))
-				.BorderImage(FEditorStyle::GetBrush("MDSStyleSet.Graph.NodeOverlay"))
+				.BorderImage(FEditorStyle::GetBrush("Graph.StateNode.Body"))
 				.Padding(3.0f)
-				//.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor)
-				.BorderBackgroundColor(MounteaDialogueGraphColors::Overlay::LightTheme)
+				.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor)
 				[
 					SNew(SOverlay)
 
@@ -116,13 +157,11 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 					[
 						// INNER STYLE
 						SNew(SBorder)
-						//.BorderImage(FEditorStyle::GetBrush("MDSStyleSet.GraphNode.NodeOverlay_Type01"))
 						.BorderImage(FEditorStyle::GetBrush("Graph.StateNode.ColorSpill"))
 						.HAlign(HAlign_Fill)
 						.VAlign(VAlign_Center)
 						.Visibility(EVisibility::SelfHitTestInvisible)
-						//.BorderBackgroundColor(MounteaDialogueGraphColors::Overlay::LightTheme)
-						.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor)
+						.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetBorderFrontColor)
 					]
 					
 					// Pins and node details
@@ -299,7 +338,7 @@ void SEdNode_MounteaDialogueGraphNode::CreatePinWidgets()
 		if (!MyPin->bHidden)
 		{
 			TSharedPtr<SGraphPin> NewPin = SNew(SMounteaDialogueGraphPin, MyPin);
-
+			
 			AddPin(NewPin.ToSharedRef());
 		}
 	}
@@ -378,9 +417,41 @@ FSlateColor SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor() const
 	return MyNode ? MyNode->GetBackgroundColor() : MounteaDialogueGraphColors::NodeBorder::HighlightAbortRange0;
 }
 
+FSlateColor SEdNode_MounteaDialogueGraphNode::GetBorderFrontColor() const
+{
+	if (GraphEditorSettings)
+	{
+		switch (GraphEditorSettings->GetNodeTheme())
+		{
+		case ENodeTheme::ENT_DarkTheme:
+			return  MounteaDialogueGraphColors::Overlay::DarkTheme;
+		case ENodeTheme::ENT_LightTheme:
+			return MounteaDialogueGraphColors::Overlay::LightTheme;
+		}
+	}
+
+	return MounteaDialogueGraphColors::Overlay::DarkTheme;
+}
+
 FSlateColor SEdNode_MounteaDialogueGraphNode::GetBackgroundColor() const
 {
 	return MounteaDialogueGraphColors::NodeBody::Default;
+}
+
+FSlateColor SEdNode_MounteaDialogueGraphNode::GetPinsDockColor() const
+{
+	if (GraphEditorSettings)
+	{
+		switch (GraphEditorSettings->GetNodeTheme())
+		{
+		case ENodeTheme::ENT_DarkTheme:
+			return  MounteaDialogueGraphColors::PinsDock::DarkTheme;
+		case ENodeTheme::ENT_LightTheme:
+			return MounteaDialogueGraphColors::PinsDock::LightTheme;
+		}
+	}
+
+	return MounteaDialogueGraphColors::Overlay::DarkTheme;
 }
 
 EVisibility SEdNode_MounteaDialogueGraphNode::GetDragOverMarkerVisibility() const

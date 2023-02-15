@@ -42,4 +42,16 @@ namespace MounteaDialogueGraphColors
 	{
 		constexpr FLinearColor DragMarker(1.0f, 1.0f, 0.2f);
 	}
+
+	namespace  Overlay
+	{
+		constexpr FLinearColor LightTheme(0.f, 0.f, 0.f, 0.5f);
+		constexpr FLinearColor DarkTheme(0.f, 0.f, 0.f, 0.9f);
+	}
+
+	namespace PinsDock
+	{
+		constexpr FLinearColor LightTheme(0.5f, 0.5f, 0.5f, 0.5f);
+		constexpr FLinearColor DarkTheme(0.f, 0.f, 0.f, 0.75f);
+	}
 }
