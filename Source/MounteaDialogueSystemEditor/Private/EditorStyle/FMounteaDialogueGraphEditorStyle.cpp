@@ -41,7 +41,12 @@ void FMounteaDialogueGraphEditorStyle::Initialize()
 	StyleSet->Set("MDSStyleSet.ValidateGraph.large", new IMAGE_BRUSH(TEXT("ValidateGraph"), Icon64x64));
 	
 	StyleSet->Set("MDSStyleSet.Graph.NodeOverlay", new BOX_BRUSH( TEXT("NodeOverlay"), FMargin(8.0f/64.0f, 3.0f/32.0f, 0, 0) ));
-	StyleSet->Set("MDSStyleSet.Graph.PinsDockOverlay", new BOX_BRUSH( TEXT("PinsDockOverlay"), FMargin(8.0f/64.0f, 3.0f/32.0f, 0, 0) ));
+	StyleSet->Set("MDSStyleSet.Graph.PinDocksOverlay", new BOX_BRUSH( TEXT("PinDocksOverlay"), FMargin(8.0f/64.0f, 3.0f/32.0f, 0, 0) ));
+
+	StyleSet->Set("MDSStyleSet.Graph.SimpleArrow", new IMAGE_BRUSH(TEXT("SimpleArrow"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Graph.HollowArrow", new IMAGE_BRUSH(TEXT("HollowArrow"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Graph.FancyArrow", new IMAGE_BRUSH(TEXT("FancyArrow"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Graph.Bubble", new IMAGE_BRUSH(TEXT("Bubble"), Icon16x16));
 
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
 }

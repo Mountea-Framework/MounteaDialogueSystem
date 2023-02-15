@@ -4,6 +4,7 @@
 
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
+#include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
 
@@ -12,9 +13,34 @@ FConnectionDrawingPolicy_MounteaDialogueGraph::FConnectionDrawingPolicy_MounteaD
 	: FKismetConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, ZoomFactor, InClippingRect, InDrawElements, InGraphObj)
 	  , GraphObj(InGraphObj)
 {
+	if (const UMounteaDialogueGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
+	{
+		switch (GraphEditorSettings->GetArrowType())
+		{
+			case EArrowType::ERT_SimpleArrow:
+					ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.SimpleArrow"));
+					break;
+			case EArrowType::ERT_HollowArrow:
+				ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.HollowArrow"));
+				break;
+			case EArrowType::ERT_FancyArrow:
+				ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.FancyArrow"));
+				break;
+			case EArrowType::ERT_Bubble:
+				ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.Bubble"));
+				break;
+			case EArrowType::ERT_None:
+			default:
+				ArrowImage = nullptr;
+		}
+	}
+	else
+	{
+		ArrowImage = FEditorStyle::GetBrush( TEXT("GenericPlay") );
+	}
 	
-	ArrowImage = FEditorStyle::GetBrush( TEXT("GenericPlay") );
-	ArrowRadius = ArrowImage->ImageSize * ZoomFactor * 0.5f;
+	//ArrowImage = FEditorStyle::GetBrush( TEXT("GenericPlay") );
+	ArrowRadius = ArrowImage ? ArrowImage->ImageSize * ZoomFactor * 0.5f : FVector2D(0.f);
 	MidpointImage = nullptr;
 	MidpointRadius = FVector2D::ZeroVector;
 	HoverDeemphasisDarkFraction = 0.8f;

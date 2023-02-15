@@ -75,9 +75,7 @@ protected:
 
 	const FSlateBrush* GetPinBorder() const
 	{
-		// TODO: Register new Brush
-		//return FEditorStyle::GetBrush(TEXT("Graph.DelegatePin.Connected"));
-		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.PinsDockOverlay"));
+		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.PinDocksOverlay"));
 	}
 };
 

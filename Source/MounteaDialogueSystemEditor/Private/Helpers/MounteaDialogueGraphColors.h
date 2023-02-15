@@ -45,13 +45,13 @@ namespace MounteaDialogueGraphColors
 
 	namespace  Overlay
 	{
-		constexpr FLinearColor LightTheme(0.f, 0.f, 0.f, 0.5f);
+		constexpr FLinearColor LightTheme(1.f, 1.f, 1.f, 0.5f);
 		constexpr FLinearColor DarkTheme(0.f, 0.f, 0.f, 0.9f);
 	}
 
 	namespace PinsDock
 	{
-		constexpr FLinearColor LightTheme(0.5f, 0.5f, 0.5f, 0.5f);
-		constexpr FLinearColor DarkTheme(0.f, 0.f, 0.f, 0.75f);
+		constexpr FLinearColor DarkTheme(1.f, 1.f, 1.f, 0.5f);
+		constexpr FLinearColor LightTheme(1.f, 1.f, 1.f, 0.3f);
 	}
 }
