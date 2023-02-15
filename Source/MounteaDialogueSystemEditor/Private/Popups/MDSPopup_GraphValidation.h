@@ -6,6 +6,6 @@ class SScrollBox;
 class MDSPopup_GraphValidation
 {
 public:
-	static void Open(const TArray<FText> ValidationMessages);
+	static TSharedPtr<SWindow> Open(const TArray<FText> ValidationMessages);
 	static void OnBrowserLinkClicked(const FSlateHyperlinkRun::FMetadata& Metadata);
 };

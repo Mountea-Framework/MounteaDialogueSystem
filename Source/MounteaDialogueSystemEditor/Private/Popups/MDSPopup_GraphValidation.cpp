@@ -16,11 +16,11 @@ void MDSPopup_GraphValidation::OnBrowserLinkClicked(const FSlateHyperlinkRun::FM
 	}
 }
 
-void MDSPopup_GraphValidation::Open(const TArray<FText> ValidationMessages)
+TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> ValidationMessages)
 {
 	if (!FSlateApplication::Get().CanDisplayWindows())
 	{
-		return;
+		return nullptr;
 	}
 
 	const TSharedRef<SBorder> WindowContent = SNew(SBorder)
@@ -170,4 +170,6 @@ void MDSPopup_GraphValidation::Open(const TArray<FText> ValidationMessages)
 	
 	WindowContent->SetContent(InnerContent);
 	Window = FSlateApplication::Get().AddWindow(Window.ToSharedRef());
+
+	return Window;
 }
