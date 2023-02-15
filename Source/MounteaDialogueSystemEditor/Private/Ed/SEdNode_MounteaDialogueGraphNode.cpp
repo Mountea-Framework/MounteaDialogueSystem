@@ -99,10 +99,13 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 			SNew(SBox)
 			//.MinDesiredHeight(FOptionalSize(50.f))
 			[
+				// OUTER STYLE
 				SNew(SBorder)
-				.BorderImage(FEditorStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+				//.BorderImage(FEditorStyle::GetBrush("Graph.StateNode.ColorSpill"))
+				.BorderImage(FEditorStyle::GetBrush("MDSStyleSet.Graph.NodeOverlay"))
 				.Padding(3.0f)
-				.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor)
+				//.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor)
+				.BorderBackgroundColor(MounteaDialogueGraphColors::Overlay::LightTheme)
 				[
 					SNew(SOverlay)
 
@@ -111,12 +114,15 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 					.HAlign(HAlign_Fill)
 					.VAlign(VAlign_Fill)
 					[
+						// INNER STYLE
 						SNew(SBorder)
-						.BorderImage(FEditorStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+						//.BorderImage(FEditorStyle::GetBrush("MDSStyleSet.GraphNode.NodeOverlay_Type01"))
+						.BorderImage(FEditorStyle::GetBrush("Graph.StateNode.ColorSpill"))
 						.HAlign(HAlign_Fill)
 						.VAlign(VAlign_Center)
 						.Visibility(EVisibility::SelfHitTestInvisible)
-						.BorderBackgroundColor(MounteaDialogueGraphColors::NodeBorder::Inactive)
+						//.BorderBackgroundColor(MounteaDialogueGraphColors::Overlay::LightTheme)
+						.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor)
 					]
 					
 					// Pins and node details

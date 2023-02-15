@@ -134,5 +134,7 @@ private:
 	/** The command list for this editor */
 	TSharedPtr<FUICommandList> GraphEditorCommands;
 
+	TSharedPtr<SWindow> ValidationWindow;
+
 #pragma endregion 
 };
