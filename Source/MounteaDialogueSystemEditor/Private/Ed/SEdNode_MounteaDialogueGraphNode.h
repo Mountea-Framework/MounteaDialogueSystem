@@ -22,13 +22,15 @@ public:
 	virtual bool IsNameReadOnly() const override;
 
 	void OnNameTextCommitted(const FText& InText, ETextCommit::Type CommitInfo);
-
+	
+	virtual const FSlateBrush* GetNodeTypeBrush () const;
+	virtual const FSlateBrush* GetTextNodeTypeBrush () const;
 	virtual FSlateColor GetBorderBackgroundColor() const;
 	virtual FSlateColor GetBorderFrontColor() const;
 	virtual FSlateColor GetBackgroundColor() const;
 
 	virtual FSlateColor GetPinsDockColor() const;
-
+	
 	virtual EVisibility GetDragOverMarkerVisibility() const;
 
 	virtual const FSlateBrush* GetNameIcon() const;
@@ -41,4 +43,9 @@ protected:
 
 	FLinearColor NodeInnerColor;
 	FLinearColor PinsDockColor;
+
+private:
+
+	// TODO: Example, will be expanded further
+	virtual TSharedRef<SVerticalBox>  MakeTextBox(const FText& InText);
 };

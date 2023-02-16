@@ -56,13 +56,13 @@ protected:
 		{
 			switch (GraphEditorSettings->GetNodeTheme())
 			{
-			case ENodeTheme::ENT_DarkTheme:
-				return MounteaDialogueGraphColors::PinsDock::LightTheme;
-			case ENodeTheme::ENT_LightTheme:
-				return MounteaDialogueGraphColors::PinsDock::DarkTheme;
-			default:
-				return MounteaDialogueGraphColors::PinsDock::LightTheme;
-			}
+				case ENodeTheme::ENT_DarkTheme:
+					return MounteaDialogueGraphColors::PinsDock::LightTheme;
+				case ENodeTheme::ENT_LightTheme:
+					return MounteaDialogueGraphColors::PinsDock::DarkTheme;
+				default:
+					return MounteaDialogueGraphColors::PinsDock::LightTheme;
+			} 
 		}
 		
 		return MounteaDialogueGraphColors::Pin::Default;
@@ -75,6 +75,17 @@ protected:
 
 	const FSlateBrush* GetPinBorder() const
 	{
+		if (const UMounteaDialogueGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
+		{
+			switch (GraphEditorSettings->GetNodeType())
+			{
+				case ENodeType::ENT_SoftCorners:
+					return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges");
+				case ENodeType::ENT_HardCorners: 
+					return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextHardEdges");
+			}
+		}
+
 		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.PinDocksOverlay"));
 	}
 };
@@ -142,7 +153,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 			[
 				// OUTER STYLE
 				SNew(SBorder)
-				.BorderImage(FEditorStyle::GetBrush("Graph.StateNode.Body"))
+				.BorderImage(this, &SEdNode_MounteaDialogueGraphNode::GetNodeTypeBrush)
 				.Padding(3.0f)
 				.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor)
 				[
@@ -155,7 +166,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 					[
 						// INNER STYLE
 						SNew(SBorder)
-						.BorderImage(FEditorStyle::GetBrush("Graph.StateNode.ColorSpill"))
+						.BorderImage(this, &SEdNode_MounteaDialogueGraphNode::GetNodeTypeBrush)
 						.HAlign(HAlign_Fill)
 						.VAlign(VAlign_Center)
 						.Visibility(EVisibility::SelfHitTestInvisible)
@@ -201,7 +212,8 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 								.AutoHeight()
 								[
 									SAssignNew(NodeBody, SBorder)
-									.BorderImage(FEditorStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+									//.BorderImage(this, &SEdNode_MounteaDialogueGraphNode::GetNodeTypeBrush)
+									.BorderImage(this, &SEdNode_MounteaDialogueGraphNode::GetTextNodeTypeBrush)
 									.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetBackgroundColor)
 									.HAlign(HAlign_Fill)
 									.VAlign(VAlign_Center)
@@ -409,6 +421,38 @@ void SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted(const FText& InText, 
 	}
 }
 
+const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetNodeTypeBrush() const
+{
+	if (GraphEditorSettings)
+	{
+		switch (GraphEditorSettings->GetNodeType())
+		{
+			case ENodeType::ENT_SoftCorners:
+				return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges");
+			case ENodeType::ENT_HardCorners: 
+				return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.HardEdges");
+		}
+	}
+
+	return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges");
+}
+
+const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetTextNodeTypeBrush() const
+{
+	if (GraphEditorSettings)
+	{
+		switch (GraphEditorSettings->GetNodeType())
+		{
+		case ENodeType::ENT_SoftCorners:
+			return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges");
+		case ENodeType::ENT_HardCorners: 
+			return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextHardEdges");
+		}
+	}
+
+	return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges");
+}
+
 FSlateColor SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor() const
 {
 	UEdNode_MounteaDialogueGraphNode* MyNode = CastChecked<UEdNode_MounteaDialogueGraphNode>(GraphNode);
@@ -421,11 +465,11 @@ FSlateColor SEdNode_MounteaDialogueGraphNode::GetBorderFrontColor() const
 	{
 		switch (GraphEditorSettings->GetNodeTheme())
 		{
-		case ENodeTheme::ENT_DarkTheme:
-			return  MounteaDialogueGraphColors::Overlay::DarkTheme;
-		case ENodeTheme::ENT_LightTheme:
-			return MounteaDialogueGraphColors::Overlay::LightTheme;
-		}
+			case ENodeTheme::ENT_DarkTheme:
+				return  MounteaDialogueGraphColors::Overlay::DarkTheme;
+			case ENodeTheme::ENT_LightTheme:
+				return MounteaDialogueGraphColors::Overlay::LightTheme;
+		} 
 	}
 
 	return MounteaDialogueGraphColors::Overlay::DarkTheme;
@@ -460,6 +504,28 @@ EVisibility SEdNode_MounteaDialogueGraphNode::GetDragOverMarkerVisibility() cons
 const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetNameIcon() const
 {
 	return FEditorStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Icon"));
+}
+
+// TODO: Make functions to generate Slate elements so I can stack them together
+TSharedRef<SVerticalBox> SEdNode_MounteaDialogueGraphNode::MakeTextBox(const FText& InText)
+{
+	return
+
+	SNew(SVerticalBox)
+	+ SVerticalBox::Slot()
+	.HAlign(HAlign_Center)
+	.AutoHeight()
+	[
+		SAssignNew(InlineEditableText, SInlineEditableTextBlock)
+		.Style(FEditorStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
+		.Text(InText)
+		.OnVerifyTextChanged(this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
+		.OnTextCommitted(this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
+		.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
+		.IsSelected(this, &SEdNode_MounteaDialogueGraphNode::IsSelectedExclusively)
+		.Justification(ETextJustify::Center)
+	]
+	;
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -9,9 +9,9 @@ UMounteaDialogueGraphNode_StartNode::UMounteaDialogueGraphNode_StartNode()
 {
 #if WITH_EDITORONLY_DATA
 	bAllowInputNodes = false;
-	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_StartNodeTitle", "Start Node");
-	InternalName = LOCTEXT("MounteaDialogueGraphNode_StartNodeInternalTitle", "Start Node");
-	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_StartNodeContextMenuName", "Start Node");
+	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_StartNodeTitle", "Start Dialogue");
+	InternalName = LOCTEXT("MounteaDialogueGraphNode_StartNodeInternalTitle", "Start Dialogue");
+	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_StartNodeContextMenuName", "Start Dialogue");
 	BackgroundColor = FLinearColor(0, 1, 0, 1);
 	
 	bAllowCopy = false;

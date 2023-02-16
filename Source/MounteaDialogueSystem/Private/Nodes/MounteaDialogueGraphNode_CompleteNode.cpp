@@ -7,10 +7,10 @@
 UMounteaDialogueGraphNode_CompleteNode::UMounteaDialogueGraphNode_CompleteNode()
 {
 #if WITH_EDITORONLY_DATA
-	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_CompleteNodeTitle", "Complete Node");
-	InternalName = LOCTEXT("MounteaDialogueGraphNode_CompleteNodeInternalTitle", "Complete Node");
+	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_CompleteNodeTitle", "Complete Dialogue");
+	InternalName = LOCTEXT("MounteaDialogueGraphNode_CompleteNodeInternalTitle", "Complete Dialogue");
 	
-	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_CompleteNodeContextMenuName", "Complete Node");
+	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_CompleteNodeContextMenuName", "Complete Dialogue");
 	BackgroundColor = FLinearColor(1, 0, 0, 1);
 
 	bAllowOutputNodes = false;
