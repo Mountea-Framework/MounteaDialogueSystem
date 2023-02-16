@@ -39,6 +39,14 @@ enum class ENodeTheme : uint8
 	ENT_DarkTheme			UMETA(DisplayName="Dark Theme"),
 	ENT_LightTheme			UMETA(DisplayName="Light Theme")
 };
+
+UENUM(BlueprintType)
+enum class ENodeType : uint8
+{
+	ENT_SoftCorners			UMETA(DisplayName="Soft Corners"),
+	ENT_HardCorners			UMETA(DisplayName="Hard Corners")
+};
+
 UENUM(BlueprintType)
 enum class EArrowType : uint8
 {
@@ -66,8 +74,11 @@ private:
 #pragma region GraphNodes
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
-	ENodeTheme NodeTheme;
+	ENodeType NodeType;
 
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
+	ENodeTheme NodeTheme;
+	
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	bool bDisplayAutomaticNames;
 
@@ -174,6 +185,9 @@ public:
 
 	ENodeTheme GetNodeTheme() const
 	{ return NodeTheme; };
+
+	ENodeType GetNodeType() const
+	{ return NodeType; };
 	
 	bool ShowAutomaticNames() const
 	{ return bDisplayAutomaticNames; };

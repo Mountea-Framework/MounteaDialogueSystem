@@ -5,7 +5,7 @@
 
 UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 {
-
+	NodeType = ENodeType::ENT_SoftCorners;
 	NodeTheme = ENodeTheme::ENT_DarkTheme;
 	ArrowType = EArrowType::ERT_SimpleArrow;
 	

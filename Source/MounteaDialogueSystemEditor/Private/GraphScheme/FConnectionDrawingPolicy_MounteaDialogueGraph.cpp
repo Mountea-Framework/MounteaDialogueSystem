@@ -39,7 +39,6 @@ FConnectionDrawingPolicy_MounteaDialogueGraph::FConnectionDrawingPolicy_MounteaD
 		ArrowImage = FEditorStyle::GetBrush( TEXT("GenericPlay") );
 	}
 	
-	//ArrowImage = FEditorStyle::GetBrush( TEXT("GenericPlay") );
 	ArrowRadius = ArrowImage ? ArrowImage->ImageSize * ZoomFactor * 0.5f : FVector2D(0.f);
 	MidpointImage = nullptr;
 	MidpointRadius = FVector2D::ZeroVector;

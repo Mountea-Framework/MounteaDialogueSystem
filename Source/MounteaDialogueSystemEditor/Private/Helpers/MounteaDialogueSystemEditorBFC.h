@@ -52,6 +52,16 @@ public:
 		return Node->GetNodeTitle();
 	}
 
+	static ENodeTheme GetNodeTheme()
+	{
+		if (GetMounteaDialogueEditorSettings() != nullptr)
+		{
+			return GetMounteaDialogueEditorSettings()->GetNodeTheme();
+		}
+
+		return ENodeTheme::ENT_DarkTheme;
+	}
+
 #endif
 	
 };
