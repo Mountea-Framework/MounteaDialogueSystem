@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "Data/MounteaDialogueGraphDataTypes.h"
 #include "MounteaDialogueInterface.generated.h"
 
 // This class does not need to be modified.
@@ -16,10 +17,16 @@ class UMounteaDialogueInterface : public UInterface
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
 
+struct FDialogueRow;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueGraphChanged, UMounteaDialogueGraph*, NewGraph);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueStarted, UMounteaDialogueGraphNode*, StartingNode);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueFinished, UMounteaDialogueGraphNode*, ActiveNode);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueActiveNodeChanged, UMounteaDialogueGraphNode*, NewActiveNode);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueNodeExecuted, UMounteaDialogueGraphNode*, Node);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FDialogueRowExecuted, UMounteaDialogueGraphNode*, Node, const FDialogueRow&, Row, int32, RowIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueNodeFinished, UMounteaDialogueGraphNode*, Node);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueExitRequested, UMounteaDialogueGraphNode*, ActiveNode);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueSkipStarted, UMounteaDialogueGraphNode*, NodeToSkip);
@@ -55,6 +62,13 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue")
 	bool  StartDialogueEvent();
 
+	/**
+	 * Executes given Node.
+	 * Nodes have abstract function "ExecuteNode" which is triggered.
+	 */
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue")
+	void ExecuteDialogueNodeEvent();
+
 #pragma endregion
 
 protected:
@@ -85,6 +99,8 @@ public:
 	virtual bool CanStartDialogue() const = 0;
 	virtual bool StartDialogue() = 0;
 
+	virtual void ExecuteDialogueNode(UMounteaDialogueGraphNode* Node) = 0;
+
 	virtual UMounteaDialogueGraph* GetDialogueGraph() const = 0;
 	virtual void SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph) = 0;
 
@@ -101,9 +117,12 @@ public:
 	virtual FDialogueStarted& GetDialogueStartedEventHandle() = 0;
 	virtual FDialogueFinished& GetDialogueFinishedEventHandle() = 0;
 	virtual FDialogueActiveNodeChanged& GetDialogueActiveNodeChangedEventHandle() = 0;
-	virtual FDialogueExitRequested& GetDialogueExitRequested() = 0;
-	virtual FDialogueSkipStarted& GetDialogueSkipStarted() = 0;
-	virtual FDialogueSkipFinished& GetDialogueSkipFinished() = 0;
+	virtual FDialogueNodeExecuted& GetDialogueNodeExecutedEventHandle() = 0;
+	virtual FDialogueRowExecuted& GetDialogueRowExecutedEventHandle() = 0;
+	virtual FDialogueNodeFinished& GetDialogueNodeFinishedEventHandle() = 0;
+	virtual FDialogueExitRequested& GetDialogueExitRequestedEventHandle() = 0;
+	virtual FDialogueSkipStarted& GetDialogueSkipStartedEventHandle() = 0;
+	virtual FDialogueSkipFinished& GetDialogueSkipFinishedEventHandle() = 0;
 
 #pragma endregion 
 };

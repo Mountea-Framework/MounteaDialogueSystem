@@ -74,6 +74,8 @@ public:
 
 #pragma endregion 
 
+
+
 #if WITH_EDITORONLY_DATA
 
 	bool bHasBenManuallyRenamed;

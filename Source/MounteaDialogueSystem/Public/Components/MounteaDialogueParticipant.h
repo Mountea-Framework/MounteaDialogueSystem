@@ -7,6 +7,9 @@
 #include "Interfaces/MounteaDialogueInterface.h"
 #include "MounteaDialogueParticipant.generated.h"
 
+class UMounteaDialogueGraphNode_CompleteNode;
+class UMounteaDialogueGraphNode_DialogueNodeBase;
+
 /**
  * Mountea Dialogue Participant Component.
  *
@@ -44,6 +47,8 @@ protected:
 	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea|Dialogue", meta=(DisplayThumbnail=false))
 	UMounteaDialogueGraphNode* ActiveNode = nullptr;
 
+	FTimerHandle TimerHandle_RowTimer;
+
 #pragma endregion
 
 #pragma region EventVariables
@@ -72,8 +77,18 @@ protected:
 	 */
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueActiveNodeChanged OnDialogueActiveNodeChanged;
-
-
+	/**
+	 * 
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	FDialogueNodeExecuted OnDialogueNodeExecuted;
+	/**
+	 * 
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	FDialogueRowExecuted OnDialogueRowExecuted;
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	FDialogueNodeFinished OnDialogueNodeFinished;
 	/**
 	 * Event called when player wants to exit Dialogue.
 	 */
@@ -119,7 +134,15 @@ protected:
 	 */
 	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue")
 	void OnDialogueActiveNodeChangedEvent(UMounteaDialogueGraphNode* NewActiveNode);
-
+	/**
+	 * 
+	 */
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue")
+	void OnDialogueNodeExecutedEvent(UMounteaDialogueGraphNode* Node);
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue")
+	void OnDialogueRowExecutedEvent(UMounteaDialogueGraphNode* Node, const FDialogueRow& Row, int32 Index);
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue")
+	void OnDialogueNodeFinishedEvent(UMounteaDialogueGraphNode* Node);
 	/**
 	 * Event called when player wants to exit Dialogue.
 	 */
@@ -135,6 +158,7 @@ protected:
 	 */
 	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue")
 	void OnDialogueSkipFinishedEvent(UMounteaDialogueGraphNode* NodeSkipped);
+
 #pragma endregion 
 
 #pragma region IMounteaDialogueInterface
@@ -155,6 +179,9 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual bool StartDialogue() override;
+
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	virtual void ExecuteDialogueNode(UMounteaDialogueGraphNode* Node) override;
 
 #pragma region GettersSetters
 	
@@ -183,14 +210,31 @@ public:
 	{ return OnDialogueFinished; };
 	virtual FDialogueActiveNodeChanged& GetDialogueActiveNodeChangedEventHandle() override
 	{ return OnDialogueActiveNodeChanged; };
-	virtual FDialogueExitRequested& GetDialogueExitRequested() override
+	virtual FDialogueNodeExecuted& GetDialogueNodeExecutedEventHandle() override
+	{ return OnDialogueNodeExecuted; };
+	virtual FDialogueRowExecuted& GetDialogueRowExecutedEventHandle() override
+	{ return OnDialogueRowExecuted; };
+	virtual FDialogueNodeFinished& GetDialogueNodeFinishedEventHandle() override
+	{ return OnDialogueNodeFinished; };
+	virtual FDialogueExitRequested& GetDialogueExitRequestedEventHandle() override
 	{ return OnDialogueExitRequested; };
-	virtual FDialogueSkipStarted& GetDialogueSkipStarted() override
+	virtual FDialogueSkipStarted& GetDialogueSkipStartedEventHandle() override
 	{return OnDialogueSkipRequested; };
-	virtual FDialogueSkipFinished& GetDialogueSkipFinished() override
+	virtual FDialogueSkipFinished& GetDialogueSkipFinishedEventHandle() override
 	{return OnDialogueSkipFinished; };
 
 #pragma endregion 
 
-#pragma endregion 
+#pragma endregion
+
+#pragma region Functions
+public:
+
+	virtual void ExecuteNode_DialogueNode(UMounteaDialogueGraphNode_DialogueNodeBase* Node);
+	virtual void ExecuteNode_CompleteNode(UMounteaDialogueGraphNode_CompleteNode* Node);
+
+	UFUNCTION() virtual void StartExecuteDialogueRow(const FDialogueRow& DialogueRow, int32 Index);
+	UFUNCTION() virtual void FinishedExecuteDialogueRow(const FDialogueRow& DialogueRow, int32 Index);
+#pragma endregion
+	
 };

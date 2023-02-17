@@ -781,6 +781,7 @@ void FAssetEditor_MounteaDialogueGraph::OnSelectedNodesChanged(const TSet<UObjec
 	{
 		// When node is selected, add it to PropertyWidget
 		PropertyWidget->SetObjects(Selection);
+		PropertyWidget->ShowAllAdvancedProperties();
 	}
 }
 
