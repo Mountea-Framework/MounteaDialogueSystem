@@ -19,6 +19,7 @@ void FMounteaDialogueGraphEditorStyle::Initialize()
 	const FVector2D Icon16x16(16.0f, 16.0f);
 	const FVector2D Icon40x40(40.0f, 40.0f);
 	const FVector2D Icon64x64(64.0f, 64.0f);
+	const FVector2D Icon128x128(128.f, 128.f);
 
 	if (StyleSet.IsValid() )
 	{
@@ -53,6 +54,8 @@ void FMounteaDialogueGraphEditorStyle::Initialize()
 
 	StyleSet->Set("MDSStyleSet.Node.TextSoftEdges", new BOX_BRUSH( TEXT("TextSoftCorners") , FMargin(16.f/64.f, 25.f/64.f, 16.f/64.f, 16.f/64.f) ));
 	StyleSet->Set("MDSStyleSet.Node.TextHardEdges", new BOX_BRUSH( TEXT("TextHardCorners") , FMargin(16.f/64.f, 25.f/64.f, 16.f/64.f, 16.f/64.f) ));
+
+	StyleSet->Set("MDSStyleSet.Graph.CornerImage", new IMAGE_BRUSH(TEXT("Icon128"), Icon128x128));
 	
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
 }

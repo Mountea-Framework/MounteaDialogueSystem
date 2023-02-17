@@ -19,6 +19,7 @@
 #include "GraphScheme/AssetGraphScheme_MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Helpers/MounteaDialogueSystemEditorBFC.h"
 #include "Layout/ForceDirectedSolveLayoutStrategy.h"
 #include "Layout/MounteaDialogueGraphLayoutStrategy.h"
 #include "Layout/TreeSolveLayoutStrategy.h"
@@ -241,6 +242,7 @@ TSharedRef<SGraphEditor> FAssetEditor_MounteaDialogueGraph::CreateViewportWidget
 {
 	FGraphAppearanceInfo AppearanceInfo;
 	AppearanceInfo.CornerText = LOCTEXT("AppearanceCornerText_MounteaDialogueGraph", "Mountea Dialogue Tree");
+	AppearanceInfo.CornerImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.CornerImage"));
 
 	CreateCommandList();
 
@@ -782,6 +784,9 @@ void FAssetEditor_MounteaDialogueGraph::OnSelectedNodesChanged(const TSet<UObjec
 		// When node is selected, add it to PropertyWidget
 		PropertyWidget->SetObjects(Selection);
 		PropertyWidget->ShowAllAdvancedProperties();
+
+		// TODO: Update Previews
+		UMounteaDialogueSystemEditorBFC::TriggerPreviewRefresh(Selection);
 	}
 }
 

@@ -100,20 +100,26 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::PostEditChangeProperty(FPropert
 
 	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_DialogueNodeBase, RowName))
 	{
-		if (!DataTable) Preview.Empty();
+		UpdatePreviews();
+	}
+}
 
-		const auto Row = UMounteaDialogueSystemBFC::GetDialogueRow(this);
-		if (UMounteaDialogueSystemBFC::IsDialogueRowValid(Row))
+void UMounteaDialogueGraphNode_DialogueNodeBase::UpdatePreviews()
+{
+	if (!DataTable) Preview.Empty();
+
+	Preview.Empty();
+	const auto Row = UMounteaDialogueSystemBFC::GetDialogueRow(this);
+	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(Row))
+	{
+		for (auto Itr : Row.DialogueRowData.Array())
 		{
-			for (auto Itr : Row.DialogueRowData.Array())
-			{
-				Preview.Add( Itr.RowText.ToString() );
-			}
+			Preview.Add( Itr.RowText.ToString() );
 		}
-		else
-		{
-			Preview.Empty();
-		}
+	}
+	else
+	{
+		Preview.Empty();
 	}
 }
 
