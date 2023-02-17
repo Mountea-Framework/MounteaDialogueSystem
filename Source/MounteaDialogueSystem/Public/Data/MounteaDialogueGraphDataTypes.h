@@ -83,7 +83,7 @@ public:
 	FText DialogueParticipant;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(TitleProperty="RowText"))
-	TSet<FDialogueRowData> DialogueRows;
+	TSet<FDialogueRowData> DialogueRowData;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay)
 	FGuid RowGUID;
@@ -97,7 +97,7 @@ public:
 	};
 
 	FDialogueRow(const FText& InParticipant, const TSet<FDialogueRowData>& InData)
-		: DialogueParticipant(InParticipant), DialogueRows(InData)
+		: DialogueParticipant(InParticipant), DialogueRowData(InData)
 	{
 		RowGUID = FGuid::NewGuid();
 	}

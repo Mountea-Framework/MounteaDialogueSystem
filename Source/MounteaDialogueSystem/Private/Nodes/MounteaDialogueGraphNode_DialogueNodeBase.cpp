@@ -3,6 +3,8 @@
 
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 
+#include "Helpers/MounteaDialogueSystemBFC.h"
+
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_DialogueNodeBase"
 
 UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNodeBase()
@@ -22,8 +24,10 @@ FText UMounteaDialogueGraphNode_DialogueNodeBase::GetDescription_Implementation(
 	return LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseDescription", "Dialogue Base Node has no logic tied to itself.");
 }
 
-FDataTableRowHandle UMounteaDialogueGraphNode_DialogueNodeBase::GetDialogueGraphHandle() const
-{	return DialogueRowHandle;}
+UDataTable* UMounteaDialogueGraphNode_DialogueNodeBase::GetDataTable() const
+{
+	return DataTable;
+}
 
 #if WITH_EDITOR
 
@@ -31,7 +35,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 {
 	bool bResult = Super::ValidateNode(ValidationsMessages, RichFormat);
 
-	if (DialogueRowHandle.DataTable == nullptr)
+	if (DataTable == nullptr)
 	{
 		bResult = false;
 
@@ -82,6 +86,35 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::CanCreateConnection(UMounteaDia
 	}
 
 	return true;
+}
+
+void UMounteaDialogueGraphNode_DialogueNodeBase::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_DialogueNodeBase, DataTable))
+	{
+		RowName = FName("");
+		Preview.Empty();
+	}
+
+	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_DialogueNodeBase, RowName))
+	{
+		if (!DataTable) Preview.Empty();
+
+		const auto Row = UMounteaDialogueSystemBFC::GetDialogueRow(this);
+		if (UMounteaDialogueSystemBFC::IsDialogueRowValid(Row))
+		{
+			for (auto Itr : Row.DialogueRowData.Array())
+			{
+				Preview.Add( Itr.RowText.ToString() );
+			}
+		}
+		else
+		{
+			Preview.Empty();
+		}
+	}
 }
 
 #endif	

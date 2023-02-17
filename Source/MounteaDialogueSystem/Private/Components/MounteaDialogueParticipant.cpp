@@ -121,7 +121,7 @@ void UMounteaDialogueParticipant::ExecuteNode_DialogueNode(UMounteaDialogueGraph
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 
 	const FDialogueRow DialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(Node);
-	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.DialogueRows.Array().IsValidIndex(0))
+	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.DialogueRowData.Array().IsValidIndex(0))
 	{
 		StartExecuteDialogueRow(DialogueRow, 0);
 	}
@@ -137,7 +137,7 @@ void UMounteaDialogueParticipant::StartExecuteDialogueRow(const FDialogueRow& Di
 	(
 		TimerHandle_RowTimer,
 		Delegate,
-		UMounteaDialogueSystemBFC::GetRowDuration(DialogueRow.DialogueRows.Array()[Index]),
+		UMounteaDialogueSystemBFC::GetRowDuration(DialogueRow.DialogueRowData.Array()[Index]),
 		false
 	);
 
@@ -150,14 +150,13 @@ void UMounteaDialogueParticipant::FinishedExecuteDialogueRow(const FDialogueRow&
 
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 	
-	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.DialogueRows.Array().IsValidIndex(Index + 1))
+	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.DialogueRowData.Array().IsValidIndex(Index + 1))
 	{
 		StartExecuteDialogueRow(DialogueRow, Index + 1);
 	}
 	else
 	{
 		// TODO: wait for new Node to be selected
-		UE_LOG(LogTemp, Error, TEXT("No more Rows to execute"))
 		OnDialogueNodeFinished.Broadcast(GetActiveNode());
 	}
 }

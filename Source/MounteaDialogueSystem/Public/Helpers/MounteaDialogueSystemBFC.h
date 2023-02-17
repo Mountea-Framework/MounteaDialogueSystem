@@ -90,10 +90,10 @@ public:
 		UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNodeBase = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node);
 		
 		if (!DialogueNodeBase) FDialogueRow();
-		if (DialogueNodeBase->GetDialogueGraphHandle().DataTable == nullptr) return FDialogueRow();
-		if (DialogueNodeBase->GetDialogueGraphHandle().DataTable->RowStruct->IsChildOf(FDialogueRow::StaticStruct()) == false) return FDialogueRow();
+		if (DialogueNodeBase->GetDataTable() == nullptr) return FDialogueRow();
+		if (DialogueNodeBase->GetDataTable()->RowStruct->IsChildOf(FDialogueRow::StaticStruct()) == false) return FDialogueRow();
 
-		const FDialogueRow* Row = DialogueNodeBase->GetDialogueGraphHandle().DataTable->FindRow<FDialogueRow>(DialogueNodeBase->GetDialogueGraphHandle().RowName, FString("") );
+		const FDialogueRow* Row = DialogueNodeBase->GetDataTable()->FindRow<FDialogueRow>(DialogueNodeBase->GetRowName(), FString("") );
 		if (!Row) return FDialogueRow();
 		if (IsDialogueRowValid(*Row) == false) return FDialogueRow();
 

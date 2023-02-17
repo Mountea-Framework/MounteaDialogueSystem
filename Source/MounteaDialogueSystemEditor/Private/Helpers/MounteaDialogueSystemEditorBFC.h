@@ -36,10 +36,10 @@ public:
 			{
 				if (const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNodeBase = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node))
 				{
-					if (DialogueNodeBase->GetDialogueGraphHandle().DataTable)
+					if (DialogueNodeBase->GetDataTable())
 					{
 						FString ReturnString;
-						DialogueNodeBase->GetDialogueGraphHandle().RowName.ToString(ReturnString);
+						DialogueNodeBase->GetRowName().ToString(ReturnString);
 
 						return FText::FromString(ReturnString);
 					}
