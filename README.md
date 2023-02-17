@@ -34,13 +34,22 @@ UE 5.1 | - | 🟨
 ## Features
 ### Graph Editor
 This plugin comes with its own Graph Editor! This way you can easily connect nodes and visualise the Dialogue flow!
-![image](https://user-images.githubusercontent.com/37410226/218337094-4be1690f-d55d-4f62-8f0f-514e9796b069.png)
+<p align="center" width="100%">
+    <img width="65%" src="https://user-images.githubusercontent.com/37410226/219809146-25a8ec0a-873d-403f-bf17-546d8086540b.png">
+</p>
 
 #### Graph Editor Validations
 We are just humans and we tend to do mistakes. This feature will try its best to track down all issues that might resolve in broken Dialogue Trees and inform you which node has what issues!
-![image](https://user-images.githubusercontent.com/37410226/218337112-69509436-269a-454a-ae99-64ffd183a702.png)
+**Bonus:** Graph Validation reflects Themes! You can have Light or Dark one.
+<p align="center" width="100%">
+    <img width="65%" src="https://user-images.githubusercontent.com/37410226/219807417-a2fa5d61-70be-449d-bbab-d9a8e9ae4793.png">
+</p>
 
-
+#### Dialogue Previews
+Select any node and see what is inside. No need search, just observe.
+<p align="center" width="100%">
+    <img width="65%" src="https://user-images.githubusercontent.com/37410226/219806723-bd0d407d-77ce-451a-a315-a01dd8f6409e.png">
+</p>
 
 ## Installation
 
