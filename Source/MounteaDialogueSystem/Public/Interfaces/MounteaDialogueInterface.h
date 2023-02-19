@@ -9,7 +9,7 @@
 
 // This class does not need to be modified.
 UINTERFACE()
-class UMounteaDialogueInterface : public UInterface
+class UMounteaDialogueParticipantInterface : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -37,7 +37,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueSkipFinished, UMounteaDialo
  * Interface connecting Mountea Dialogue Graph with Mountea Dialogue Component.
  * Mountea Dialogue Components are implementing this Interface.
  */
-class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueInterface
+class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueParticipantInterface
 {
 	GENERATED_BODY()
 

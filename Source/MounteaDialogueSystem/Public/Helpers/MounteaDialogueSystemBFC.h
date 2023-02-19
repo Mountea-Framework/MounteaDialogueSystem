@@ -3,10 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Data/MounteaDialogueContext.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
-#include "Kismet/BlueprintFunctionLibrary.h"
+#include "Graph/MounteaDialogueGraph.h"
+
+#include "Interfaces/MounteaDialogueManagerInterface.h"
+#include "Interfaces/MounteaDialogueInterface.h"
+
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
+
+#include "Kismet/BlueprintFunctionLibrary.h"
 #include "MounteaDialogueSystemBFC.generated.h"
 
 /**
@@ -18,6 +25,90 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSystemBFC : public UBlueprintFun
 	GENERATED_BODY()
 
 public:
+
+	/**
+	 * Tries to validate Dialogue Context.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	static bool IsContextValid(UMounteaDialogueContext* Context)
+	{
+		if (Context == nullptr) return false;
+
+		return Context->IsValid();
+	}
+	
+	/**
+	 * Tries to initialize Dialogue.
+	 * 
+	 * @param WorldContextObject	World Context Object
+	 * @param Initiator						Usually Player Controller
+	 * @param DialogueParticipant	Other person, could be NPC or other Player
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject"))
+	static bool InitializeDialogue(const UObject* WorldContextObject, UObject* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant)
+	{
+		if (Initiator == nullptr || DialogueParticipant.GetInterface() == nullptr) return false;
+
+		if (GetDialogueManger(WorldContextObject) == nullptr) return false;
+
+		if (DialogueParticipant->CanStartDialogue() == false) return false;
+
+		const UMounteaDialogueGraph* Graph = DialogueParticipant->GetDialogueGraph();
+
+		if (Graph == nullptr) return false;
+
+		TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(Graph->GetStartNode());
+		
+		if (StartNode_Children[0] == nullptr) return false;
+
+		UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
+		Context->SetDialogueContext(StartNode_Children[0], GetAllowedChildNodes(StartNode_Children[0]));
+
+		return  InitializeDialogueWithContext(WorldContextObject, Initiator, DialogueParticipant, Context);
+	}
+
+	/**
+	 * Tries to initialize Dialogue with given Context.
+	 * ❗Preferred way to Initialize Dialogue is to call 'InitializeDialogue' instead❗
+	 * 
+	 * @param WorldContextObject	World Context Object
+	 * @param Initiator						Usually Player Controller
+	 * @param DialogueParticipant	Other person, could be NPC or other Player
+	 * @param Context					Dialogue Context which is passed to Dialogue Manager
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject"))
+	static bool InitializeDialogueWithContext(const UObject* WorldContextObject, UObject* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant, UMounteaDialogueContext* Context)
+	{
+		if (DialogueParticipant == nullptr) return false;
+		if (Context == nullptr) return false;
+		if (IsContextValid(Context) == false) return false;
+
+		GetDialogueManger(WorldContextObject)->GetDialogueInitializedEventHandle().Broadcast(Context);
+		return true;
+	}
+
+	/**
+	 * Returns first 'Mountea Dialogue Manager' Component from Player Controller.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", CompactNodeTitle="Diaogue Initiator"))
+	static TScriptInterface<IMounteaDialogueManagerInterface> GetDialogueManger(const UObject* WorldContextObject)
+	{
+		if (!WorldContextObject) return nullptr;
+
+		const APlayerController* PlayerController = WorldContextObject->GetWorld()->GetFirstPlayerController();
+
+		if (!PlayerController) return nullptr;
+
+		auto Components = PlayerController->GetComponentsByInterface(UMounteaDialogueManagerInterface::StaticClass());
+
+		if (Components.Num() == 0) return nullptr;
+
+		TScriptInterface<IMounteaDialogueManagerInterface> ReturnValue;
+		ReturnValue.SetObject(Components[0]);
+		ReturnValue.SetInterface(Cast<IMounteaDialogueManagerInterface>(Components[0]));
+
+		return ReturnValue;
+	}
 
 	/**
 	 * Tries to get Dialogue Node  from Children Nodes at given Index. If none is found, returns null.
@@ -48,7 +139,8 @@ public:
 	}
 
 	/**
-	 *Returns all Allowed Child Nodes for given Parent.*/ 
+	 * Returns all Allowed Child Nodes for given Parent.
+	 */ 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	static TArray<UMounteaDialogueGraphNode*> GetAllowedChildNodes(const UMounteaDialogueGraphNode* ParentNode)
 	{

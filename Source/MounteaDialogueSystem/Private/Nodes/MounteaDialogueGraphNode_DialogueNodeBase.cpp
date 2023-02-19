@@ -106,6 +106,7 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::PostEditChangeProperty(FPropert
 
 void UMounteaDialogueGraphNode_DialogueNodeBase::UpdatePreviews()
 {
+	//TODO: use custom window in custom Tab rather than this crap
 	if (!DataTable) Preview.Empty();
 
 	Preview.Empty();
