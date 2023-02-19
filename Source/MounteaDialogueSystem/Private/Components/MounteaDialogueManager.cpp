@@ -109,7 +109,7 @@ void UMounteaDialogueManager::ProcessNode()
 
 void UMounteaDialogueManager::ProcessNode_Complete()
 {
-	CloseDialogue();
+	OnDialogueClosed.Broadcast(DialogueContext);
 }
 
 void UMounteaDialogueManager::ProcessNode_Dialogue()

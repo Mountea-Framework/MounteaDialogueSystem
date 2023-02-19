@@ -3,6 +3,7 @@
 
 #include "Data/MounteaDialogueContext.h"
 
+
 bool UMounteaDialogueContext::IsValid() const
 {
 	return ActiveNode != nullptr;
