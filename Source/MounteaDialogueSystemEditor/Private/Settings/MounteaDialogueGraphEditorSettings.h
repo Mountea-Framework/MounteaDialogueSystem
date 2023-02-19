@@ -63,7 +63,7 @@ enum class EArrowType : uint8
 /**
  * Mountea Dialogue System global settings.
  */
-UCLASS(config = MounteaEditorSettings)
+UCLASS(config = MounteaSettings)
 class MOUNTEADIALOGUESYSTEMEDITOR_API UMounteaDialogueGraphEditorSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
