@@ -10,10 +10,10 @@ All notable changes to this project will be documented in this file.
 > - Added: Dialogue Context Object
 > - Added: Dialogue Gameplay Settings
 
-### Fixed:
+### Fixed
 > - Fixed: -
 
-### Changed:
+### Changed
 > - Changed: Removed all Dialogue flow functions from Dialogue Participant
 
 **Version 0.0.0.3**
@@ -22,18 +22,18 @@ All notable changes to this project will be documented in this file.
 > - Added: Arrow Type values in Settings
 > - Added: Node Class specific colours override
 
-### Fixed:
+### Fixed
 > - Fixed: Wiring thickness clamped
 > - Fixed: Graph Validation text styling unified
 
-### Changed:
+### Changed
 > - Changed: Removed Settings tab from Graph window
 > - Changed: Graph Validation doesn't stack, only one Window for each Graph
 > - Changed: Removed Settings button freom Graph toolbar
 > - Changed: Node widget back to beveled shape
 
 **Version 0.0.0.2**
-### Added 
+### Added
 > - Added: GitHub Changelog getter
 > - Added: Mountea Dialogue Graph extensions: Validate Graph
 > - Added: Mountea Dialogue Graph extensions Icons
