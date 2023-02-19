@@ -22,6 +22,7 @@ void UMounteaDialogueManager::BeginPlay()
 	OnDialogueInitialized.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueInitializedEvent_Internal);
 	OnDialogueContextUpdated.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent_Internal);
 	OnDialogueStarted.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueStartedEvent_Internal);
+	OnDialogueClosed.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueClosedEvent_Internal);
 }
 
 void UMounteaDialogueManager::OnDialogueInitializedEvent_Internal(UMounteaDialogueContext* Context)
@@ -53,6 +54,13 @@ void UMounteaDialogueManager::OnDialogueStartedEvent_Internal(UMounteaDialogueCo
 	OnDialogueStartedEvent(Context);
 }
 
+void UMounteaDialogueManager::OnDialogueClosedEvent_Internal(UMounteaDialogueContext* Context)
+{
+	OnDialogueClosedEvent(DialogueContext);
+
+	CloseDialogue();
+}
+
 void UMounteaDialogueManager::StartDialogue()
 {
 	if (!DialogueContext)
@@ -63,6 +71,19 @@ void UMounteaDialogueManager::StartDialogue()
 	
 	//TODO: Add ability to start from specific Node
 	ProcessNode();
+}
+
+void UMounteaDialogueManager::CloseDialogue()
+{
+	//TODO: Close dialogue, destroy Context, clean Timer
+	if (!GetWorld()) return;
+
+	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
+
+	if(!DialogueContext) return;
+
+	DialogueContext->ConditionalBeginDestroy();
+	DialogueContext = nullptr;
 }
 
 void UMounteaDialogueManager::ProcessNode()
@@ -88,7 +109,7 @@ void UMounteaDialogueManager::ProcessNode()
 
 void UMounteaDialogueManager::ProcessNode_Complete()
 {
-	LOG_WARNING(TEXT("CompleteNode"))
+	CloseDialogue();
 }
 
 void UMounteaDialogueManager::ProcessNode_Dialogue()

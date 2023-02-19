@@ -41,5 +41,21 @@ protected:
 		return "Project";
 	}
 #endif
-	
+
+public:
+
+	/**
+	 * Returns Default Dialogue Widget if any is defined.
+	 * ❗Might return Null❗
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	TSoftClassPtr<UUserWidget> GetDefaultDialogueWidget() const
+	{
+		if (DefaultDialogueWidgetClass.IsNull())
+		{
+			return nullptr;
+		}
+
+		return  DefaultDialogueWidgetClass;
+	}
 };

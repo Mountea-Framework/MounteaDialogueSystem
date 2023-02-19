@@ -52,6 +52,15 @@ protected:
 	UFUNCTION()
 	void OnDialogueStartedEvent_Internal(UMounteaDialogueContext* Context);
 
+	/**
+	 * Event called when Dialogue has Closed.
+	 * Could be either by manual request or automatic, as there are no nodes to follow.
+	 */
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Close, Context"))
+	void OnDialogueClosedEvent(UMounteaDialogueContext* Context);
+	UFUNCTION()
+	void OnDialogueClosedEvent_Internal(UMounteaDialogueContext* Context);
+
 #pragma endregion
 
 #pragma region EventVariables
@@ -67,6 +76,12 @@ protected:
 	 */
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueEvent OnDialogueStarted;
+	/**
+	 * Event called when Dialogue has been closed.
+	 * Could be either manual or automatic.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	FDialogueEvent OnDialogueClosed;
 	
 	
 	/**
@@ -113,6 +128,7 @@ protected:
 protected:
 
 	virtual void StartDialogue() override;
+	virtual void CloseDialogue() override;
 	virtual void ProcessNode() override;
 	virtual void ProcessNode_Complete() override;
 	virtual void ProcessNode_Dialogue() override;
@@ -129,6 +145,8 @@ protected:
 	{ return OnDialogueInitialized; };
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() override
 	{ return OnDialogueStarted; };
+	virtual FDialogueEvent& GetDialogueClosedEventHandle() override
+	{ return OnDialogueClosed; };
 	virtual FDialogueContextUpdated& GetDialogueContextUpdatedEventHande() override
 	{ return OnDialogueContextUpdated; };
 	virtual FDialogueNodeEvent& GetDialogueNodeStartedEventHandle() override

@@ -17,6 +17,7 @@
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Blueprint/UserWidget.h"
 
 #include "MounteaDialogueSystemBFC.generated.h"
 
@@ -38,6 +39,15 @@ public:
 		return GetDefault<UMounteaDialogueSystemSettings>();
 	}
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="widget, UI"))
+	static TSubclassOf<UUserWidget>  GetDefaultDialogueWidget()
+	{
+		if (GetDialogueSystemSettings() == nullptr) return nullptr;
+		
+		const TSubclassOf<UUserWidget> DefaultClass = GetDialogueSystemSettings()->GetDefaultDialogueWidget().LoadSynchronous();
+		return DefaultClass;
+	}
+	
 	/**
 	 * Tries to validate given Dialogue Context.
 	 */
@@ -47,6 +57,17 @@ public:
 		if (Context == nullptr) return false;
 
 		return Context->IsValid();
+	}
+
+	/**
+	 * Tries to close Dialogue.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="close, exit, dialogue"))
+	static void CloseDialogue(const UObject* WorldContextObject, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant)
+	{
+		if (!GetDialogueManger(WorldContextObject)) return;
+
+		GetDialogueManger(WorldContextObject)->GetDialogueClosedEventHandle().Broadcast(nullptr);
 	}
 	
 	/**

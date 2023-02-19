@@ -35,6 +35,7 @@ class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueManagerInterface
 public:
 
 	virtual void StartDialogue() = 0;
+	virtual void CloseDialogue() = 0;
 	virtual void ProcessNode() = 0;
 	virtual void ProcessNode_Complete() = 0;
 	virtual void ProcessNode_Dialogue() = 0;
@@ -47,6 +48,7 @@ public:
 
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() = 0;
+	virtual FDialogueEvent& GetDialogueClosedEventHandle() = 0;
 	
 	virtual FDialogueContextUpdated& GetDialogueContextUpdatedEventHande() = 0;
 
