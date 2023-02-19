@@ -3,6 +3,8 @@
 
 #include "Components/MounteaDialogueManager.h"
 
+#include "TimerManager.h"
+
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Data/MounteaDialogueContext.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"

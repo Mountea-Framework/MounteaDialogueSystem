@@ -7,6 +7,8 @@
 #include "UObject/Object.h"
 #include "MounteaDialogueGraphDataTypes.generated.h"
 
+class USoundBase;
+
 UENUM(BlueprintType)
 enum class ERowDurationMode : uint8
 {

@@ -46,7 +46,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
 	FGuid NodeGUID;
 
-#if WITH_EDITOR
+#if WITH_EDITORONLY_DATA
 
 	/**
 	 * ❗Experimental Feature ❗
@@ -61,7 +61,9 @@ protected:
 	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat) override;
 	virtual bool CanCreateConnection(UMounteaDialogueGraphNode* Other, EEdGraphPinDirection Direction, FText& ErrorMessage) override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 
+#if WITH_EDITORONLY_DATA
 public:
 	virtual void UpdatePreviews();
 #endif

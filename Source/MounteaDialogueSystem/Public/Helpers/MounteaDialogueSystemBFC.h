@@ -18,8 +18,10 @@
 
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Blueprint/UserWidget.h"
+#include "Sound/SoundBase.h"
 
 #include "MounteaDialogueSystemBFC.generated.h"
+
 
 /**
  * Helper functions library for Mountea Dialogue System.
