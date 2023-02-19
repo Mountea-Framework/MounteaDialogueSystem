@@ -3,6 +3,12 @@
 
 #include "Components/MounteaDialogueManager.h"
 
+#include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Data/MounteaDialogueContext.h"
+#include "Data/MounteaDialogueGraphDataTypes.h"
+#include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
+#include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
 
 UMounteaDialogueManager::UMounteaDialogueManager()
 {
@@ -15,6 +21,7 @@ void UMounteaDialogueManager::BeginPlay()
 
 	OnDialogueInitialized.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueInitializedEvent_Internal);
 	OnDialogueContextUpdated.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent_Internal);
+	OnDialogueStarted.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueStartedEvent_Internal);
 }
 
 void UMounteaDialogueManager::OnDialogueInitializedEvent_Internal(UMounteaDialogueContext* Context)
@@ -24,12 +31,123 @@ void UMounteaDialogueManager::OnDialogueInitializedEvent_Internal(UMounteaDialog
 		OnDialogueInitializedEvent(Context);
 
 		OnDialogueContextUpdated.Broadcast(Context);
+
+		OnDialogueStarted.Broadcast(Context);
 	}
 }
 
 void UMounteaDialogueManager::OnDialogueContextUpdatedEvent_Internal(UMounteaDialogueContext* NewContext)
 {
 	SetDialogueContext(NewContext);
+}
+
+void UMounteaDialogueManager::OnDialogueStartedEvent_Internal(UMounteaDialogueContext* Context)
+{
+	StartDialogue();
+
+	OnDialogueStartedEvent(Context);
+}
+
+void UMounteaDialogueManager::StartDialogue()
+{
+	// TODO: Broadcast failure
+	if (!DialogueContext) return;
+	
+	//TODO: Add ability to start from specific Node
+	ProcessNode();
+}
+
+void UMounteaDialogueManager::ProcessNode()
+{
+	// TODO: Broadcast failure
+	if (!DialogueContext) return;
+
+	if (UMounteaDialogueGraphNode_DialogueNodeBase* DialogueLeadNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(DialogueContext->ActiveNode) )
+	{
+		ProcessNode_Dialogue();
+		return;
+	}
+	
+	if (UMounteaDialogueGraphNode_CompleteNode* CompleteNode = Cast<UMounteaDialogueGraphNode_CompleteNode>(DialogueContext->ActiveNode) )
+	{
+		ProcessNode_Complete();
+		return;
+	}
+}
+
+void UMounteaDialogueManager::ProcessNode_Complete()
+{
+	LOG_WARNING(TEXT("CompleteNode"))
+}
+
+void UMounteaDialogueManager::ProcessNode_Dialogue()
+{
+	//TODO: Broadcast failure
+	if (!GetWorld()) return;
+
+	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
+
+	const FDialogueRow DialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
+	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.DialogueRowData.Array().IsValidIndex(0))
+	{
+		DialogueContext->UpdateActiveDialogueRow(DialogueRow);
+		DialogueContext->UpdateActiveDialogueRowDataIndex(0);
+		OnDialogueContextUpdated.Broadcast(DialogueContext);
+		
+		StartExecuteDialogueRow();
+	}
+	else
+	{
+		//TODO: Broadcast failure
+	}
+
+	OnDialogueNodeStarted.Broadcast(DialogueContext);
+}
+
+void UMounteaDialogueManager::StartExecuteDialogueRow()
+{
+	FTimerDelegate Delegate;
+	Delegate.BindUObject(this, &UMounteaDialogueManager::FinishedExecuteDialogueRow);
+
+	const int32 Index = DialogueContext->GetActiveDialogueRowDataIndex();
+	const auto Row = DialogueContext->GetActiveDialogueRow();
+	const auto RowData = Row.DialogueRowData.Array()[Index];
+
+	GetWorld()->GetTimerManager().SetTimer
+	(
+		TimerHandle_RowTimer,
+		Delegate,
+		UMounteaDialogueSystemBFC::GetRowDuration(RowData),
+		false
+	);
+
+	OnDialogueRowStarted.Broadcast(DialogueContext);
+}
+
+void UMounteaDialogueManager::FinishedExecuteDialogueRow()
+{
+	if (!GetWorld()) return;
+
+	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
+
+	const int32 IncreasedIndex = DialogueContext->GetActiveDialogueRowDataIndex() + 1;
+
+	const bool bIsActiveRowValid = UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueContext->GetActiveDialogueRow());
+	const bool bDialogueRowDataValid = DialogueContext->GetActiveDialogueRow().DialogueRowData.Array().IsValidIndex(IncreasedIndex);
+
+	if (bIsActiveRowValid && bDialogueRowDataValid)
+	{
+		DialogueContext->UpdateActiveDialogueRowDataIndex(IncreasedIndex);
+		OnDialogueContextUpdated.Broadcast(DialogueContext);
+		
+		StartExecuteDialogueRow();
+	}
+	else
+	{
+		OnDialogueNodeFinished.Broadcast(DialogueContext);
+	}
+
+	OnDialogueRowFinished.Broadcast(DialogueContext);
 }
 
 void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewContext)

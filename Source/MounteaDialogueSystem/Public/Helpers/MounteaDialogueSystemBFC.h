@@ -8,7 +8,7 @@
 #include "Graph/MounteaDialogueGraph.h"
 
 #include "Interfaces/MounteaDialogueManagerInterface.h"
-#include "Interfaces/MounteaDialogueInterface.h"
+#include "Interfaces/MounteaDialogueParticipantInterface.h"
 
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
@@ -39,6 +39,7 @@ public:
 	
 	/**
 	 * Tries to initialize Dialogue.
+	 * ❗Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
 	 * 
 	 * @param WorldContextObject	World Context Object
 	 * @param Initiator						Usually Player Controller
@@ -69,6 +70,7 @@ public:
 
 	/**
 	 * Tries to initialize Dialogue with given Context.
+	 * ❗Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
 	 * ❗Preferred way to Initialize Dialogue is to call 'InitializeDialogue' instead❗
 	 * 
 	 * @param WorldContextObject	World Context Object
