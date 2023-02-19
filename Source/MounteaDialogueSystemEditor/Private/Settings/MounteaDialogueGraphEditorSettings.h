@@ -4,8 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
-#include "UObject/Object.h"
 #include "MounteaDialogueGraphEditorSettings.generated.h"
+
+#pragma region Enums
 
 UENUM(BlueprintType)
 enum class EAutoLayoutStrategyType : uint8
@@ -57,10 +58,12 @@ enum class EArrowType : uint8
 	ERT_None					UMETA(DisplayName="Nothing")
 };
 
+#pragma endregion 
+
 /**
  * Mountea Dialogue System global settings.
  */
-UCLASS(config = MounteaSettings, meta = (DisplayName = "Mountea Dialogue System"))
+UCLASS(config = MounteaEditorSettings)
 class MOUNTEADIALOGUESYSTEMEDITOR_API UMounteaDialogueGraphEditorSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
@@ -165,12 +168,12 @@ private:
 #if WITH_EDITOR
 	virtual FText GetSectionText() const override
 	{
-		return NSLOCTEXT("MounteaDialogueSystem", "MounteaSettingsDescription", "Mountea Dialogue System");
+		return NSLOCTEXT("MounteaDialogueEditorSystem", "MounteaSettingsEditorSection", "Mountea Dialogue System (Editor)");
 	}
 
 	virtual FText GetSectionDescription() const override
 	{
-		return NSLOCTEXT("MounteaDialogueSystem", "MounteaSettingsDescription", "Default values for Mountea Plugins.");
+		return NSLOCTEXT("MounteaDialogueEditorSystem", "MounteaSettingsEditorDescription", "Default values for Mountea Plugins (Editor).");
 	}
 
 	virtual FName GetContainerName() const override

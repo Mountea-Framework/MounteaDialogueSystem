@@ -4,6 +4,18 @@ Current Version: 0.0.0.3
 
 All notable changes to this project will be documented in this file.
 
+**Version 0.0.0.4**
+### Added
+> - Added: Dialogue Manager Component
+> - Added: Dialogue Context Object
+> - Added: Dialogue Gameplay Settings
+
+### Fixed:
+> - Fixed: -
+
+### Changed:
+> - Changed: Removed all Dialogue flow functions from Dialogue Participant
+
 **Version 0.0.0.3**
 ### Added
 > - Added: Node Theme values in Settings

@@ -23,6 +23,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueContextUpdated, UMounteaDia
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueNodeEvent, UMounteaDialogueContext*, Context);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueRowEvent, UMounteaDialogueContext*, Context);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueFailed, const FString&, ErrorMessage);
+
 /**
  * 
  */
@@ -52,4 +54,6 @@ public:
 	virtual FDialogueNodeEvent& GetDialogueNodeFinishedEventHandle() = 0;
 	virtual FDialogueRowEvent& GetDialogueRowStartedEventHandle() = 0;
 	virtual FDialogueRowEvent& GetDialogueRowFinishedEventHandle() = 0;
+
+	virtual FDialogueFailed& GetDialogueFailedEventHandle() = 0;
 };

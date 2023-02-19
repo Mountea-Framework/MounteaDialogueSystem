@@ -34,6 +34,11 @@ void UMounteaDialogueManager::OnDialogueInitializedEvent_Internal(UMounteaDialog
 
 		OnDialogueStarted.Broadcast(Context);
 	}
+	else
+	{
+		OnDialogueFailed.Broadcast(TEXT("Invalid Dialogue Context!"));
+		return;
+	}
 }
 
 void UMounteaDialogueManager::OnDialogueContextUpdatedEvent_Internal(UMounteaDialogueContext* NewContext)
@@ -50,8 +55,11 @@ void UMounteaDialogueManager::OnDialogueStartedEvent_Internal(UMounteaDialogueCo
 
 void UMounteaDialogueManager::StartDialogue()
 {
-	// TODO: Broadcast failure
-	if (!DialogueContext) return;
+	if (!DialogueContext)
+	{
+		OnDialogueFailed.Broadcast(TEXT("Invalid Dialogue Context!"));
+		return;
+	}
 	
 	//TODO: Add ability to start from specific Node
 	ProcessNode();
@@ -59,8 +67,11 @@ void UMounteaDialogueManager::StartDialogue()
 
 void UMounteaDialogueManager::ProcessNode()
 {
-	// TODO: Broadcast failure
-	if (!DialogueContext) return;
+	if (!DialogueContext)
+	{
+		OnDialogueFailed.Broadcast(TEXT("Invalid Dialogue Context!"));
+		return;
+	}
 
 	if (UMounteaDialogueGraphNode_DialogueNodeBase* DialogueLeadNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(DialogueContext->ActiveNode) )
 	{
@@ -82,8 +93,11 @@ void UMounteaDialogueManager::ProcessNode_Complete()
 
 void UMounteaDialogueManager::ProcessNode_Dialogue()
 {
-	//TODO: Broadcast failure
-	if (!GetWorld()) return;
+	if (!GetWorld())
+	{
+		OnDialogueFailed.Broadcast(TEXT("Cannot find World!"));
+		return;
+	}
 
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 
@@ -98,7 +112,8 @@ void UMounteaDialogueManager::ProcessNode_Dialogue()
 	}
 	else
 	{
-		//TODO: Broadcast failure
+		OnDialogueFailed.Broadcast(TEXT("Dialogue Row data contain Invalid Rows!"));
+		return;
 	}
 
 	OnDialogueNodeStarted.Broadcast(DialogueContext);
@@ -126,7 +141,11 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 
 void UMounteaDialogueManager::FinishedExecuteDialogueRow()
 {
-	if (!GetWorld()) return;
+	if (!GetWorld())
+	{
+		OnDialogueFailed.Broadcast(TEXT("Cannot find World!"));
+		return;
+	}
 
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 

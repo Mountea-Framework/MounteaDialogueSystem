@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "Data/MounteaDialogueGraphDataTypes.h"
 #include "MounteaDialogueParticipantInterface.generated.h"
 
 // This class does not need to be modified.
@@ -41,17 +40,6 @@ public:
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue")
 	bool CanStartDialogueEvent() const;
-
-	/*
-	 * Trigger function to Start dialogue.
-	 * Does only start if Dialogue Graph is valid!
-	 * Internal C++ functions calls CanStartDialogueEvent to validate this call.
-	 * ⚠ If you are using Blueprint implementation, don't forget to call Parent Node, which contains all parent implementations.
-	 */
-	/*
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue")
-	bool  StartDialogueEvent();
-	*/
 	
 #pragma endregion
 

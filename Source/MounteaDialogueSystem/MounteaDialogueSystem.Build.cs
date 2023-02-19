@@ -40,7 +40,9 @@ public class MounteaDialogueSystem : ModuleRules
 			{
 				"Slate",
 				"SlateCore",
-				"GameplayTags"
+				"GameplayTags",
+				"DeveloperSettings",
+				"UMG"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

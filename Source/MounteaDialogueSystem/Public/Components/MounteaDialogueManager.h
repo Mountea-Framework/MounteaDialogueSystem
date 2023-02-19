@@ -99,6 +99,12 @@ protected:
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueRowEvent OnDialogueRowFinished;
 
+	/**
+	 * Event called if Dialogue fails to execute.
+	 * Provides Error Message with explanation.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	FDialogueFailed OnDialogueFailed;
 
 #pragma endregion
 
@@ -133,6 +139,8 @@ protected:
 	{ return OnDialogueRowStarted; };
 	virtual FDialogueRowEvent& GetDialogueRowFinishedEventHandle() override
 	{ return OnDialogueRowFinished; };
+	virtual FDialogueFailed& GetDialogueFailedEventHandle() override
+	{ return OnDialogueFailed; };
 
 #pragma endregion 
 

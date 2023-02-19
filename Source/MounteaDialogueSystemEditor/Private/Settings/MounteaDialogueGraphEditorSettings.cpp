@@ -3,6 +3,8 @@
 
 #include "MounteaDialogueGraphEditorSettings.h"
 
+#define LOCTEXT_NAMESPACE "MounteaDialogueGraphEditorSettings"
+
 UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 {
 	NodeType = ENodeType::ENT_SoftCorners;
@@ -10,7 +12,7 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 	ArrowType = EArrowType::ERT_SimpleArrow;
 	
 	CategoryName = TEXT("Mountea Framework");
-	SectionName = TEXT("Mountea Dialogue System");
+	SectionName = TEXT("Mountea Dialogue System (Editor)");
 	
 	AutoLayoutStrategy = EAutoLayoutStrategyType::EALS_Tree;
 
@@ -28,3 +30,5 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 	bAllowRenameNodes = true;
 	bDisplayAutomaticNames = false;
 }
+
+#undef LOCTEXT_NAMESPACE

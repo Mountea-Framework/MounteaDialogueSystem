@@ -79,9 +79,18 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual bool CanStartDialogue() const override;
 
+	/**
+	 * Returns Dialogue Graph of this Participant.
+	 * ❗Might return Null❗
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual UMounteaDialogueGraph* GetDialogueGraph() const override
 	{ return DialogueGraph; };
+	/**
+	 * Overrides Dialogue Graph for this Participant.
+	 * ❗Accepts Null values❗
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph) override;
 
 #pragma region EventHandleGetters
