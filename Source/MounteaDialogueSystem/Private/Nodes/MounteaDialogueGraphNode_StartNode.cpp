@@ -33,7 +33,7 @@ FText UMounteaDialogueGraphNode_StartNode::GetNodeCategory_Implementation() cons
 }
 #if WITH_EDITOR
 
-bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
+bool UMounteaDialogueGraphNode_StartNode::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
 {
 	bool bResult = Super::ValidateNode(ValidationsMessages, RichFormat);
 

@@ -50,11 +50,11 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 		const FString TextReturn =
 		FString(NodeTitle.ToString()).
 		Append(": Does not contain any Dialogue Data Table!");
-		
+	
 		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
-	if (RowName.IsEmpty())
+	if (RowName.IsNone())
 	{
 		bResult = false;
 
@@ -68,7 +68,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 		const FString TextReturn =
 		FString(NodeTitle.ToString()).
 		Append(": Does not contain valid Dialogue Row!");
-		
+	
 		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 

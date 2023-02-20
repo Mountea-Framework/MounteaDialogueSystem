@@ -218,7 +218,7 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 		GetName().
 		Append(": Has no Start Node!");
 		
-		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
 
 		bReturnValue = false;
 	}
