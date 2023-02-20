@@ -62,6 +62,13 @@ protected:
 	void OnDialogueClosedEvent_Internal(UMounteaDialogueContext* Context);
 
 	/**
+	 * Event called when new Node is selected.
+	 */
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Start, Begin"))
+	void OnDialogueNodeSelectedEvent(UMounteaDialogueContext* Context);
+	UFUNCTION()
+	void OnDialogueNodeSelectedEvent_Internal(UMounteaDialogueContext* Context);
+	/**
 	 * Event called when Dialogue Node has Started.
 	 */
 	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Start, Begin"))
@@ -107,6 +114,11 @@ protected:
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueContextUpdated OnDialogueContextUpdated;
 
+	/**
+	 * Event called when new Dialogue Node has been selected.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	FDialogueNodeEvent OnDialogueNodeSelected;
 
 	/**
 	 * Event called when Dialogue Node has started.
@@ -165,6 +177,8 @@ protected:
 	{ return OnDialogueClosed; };
 	virtual FDialogueContextUpdated& GetDialogueContextUpdatedEventHande() override
 	{ return OnDialogueContextUpdated; };
+	virtual FDialogueNodeEvent& GetDialogueNodeSelected() override
+	{ return  OnDialogueNodeSelected; };
 	virtual FDialogueNodeEvent& GetDialogueNodeStartedEventHandle() override
 	{ return OnDialogueNodeStarted; };
 	virtual FDialogueNodeEvent& GetDialogueNodeFinishedEventHandle() override

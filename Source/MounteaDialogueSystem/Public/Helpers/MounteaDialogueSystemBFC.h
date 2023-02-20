@@ -215,6 +215,18 @@ public:
 	}
 
 	/**
+	 * Returns whether Dialogue Row Data is valid or not.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Is Dialogue Data Valid", Keywords="dialogue, check, valid, null"))
+	static bool IsDialogueRowDataValid(const FDialogueRowData& Data)
+	{
+		FGuid InvalidGuid;
+		InvalidGuid.Invalidate();
+
+		return Data.RowGUID != InvalidGuid || !Data.RowText.IsEmpty() || !Data.RowText.EqualTo(FText::FromString("Dialogue Example"));
+	}
+	
+	/**
 	 * Returns Dialogue Row for Given Node.
 	 * ❗Might return invalid Row❗
 	 */

@@ -28,6 +28,7 @@ void UMounteaDialogueManager::BeginPlay()
 	OnDialogueStarted.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueStartedEvent_Internal);
 	OnDialogueClosed.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueClosedEvent_Internal);
 
+	OnDialogueNodeSelected.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal);
 	OnDialogueNodeStarted.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeStartedEvent_Internal);
 	OnDialogueNodeFinished.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal);
 }
@@ -68,6 +69,13 @@ void UMounteaDialogueManager::OnDialogueClosedEvent_Internal(UMounteaDialogueCon
 	CloseDialogue();
 }
 
+void UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal(UMounteaDialogueContext* Context)
+{
+	OnDialogueNodeSelectedEvent(Context);
+
+	ProcessNode();
+}
+
 void UMounteaDialogueManager::OnDialogueNodeStartedEvent_Internal(UMounteaDialogueContext* Context)
 {
 	if (!DialogueContext)
@@ -94,6 +102,49 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 	if (AllowedChildrenNodes.Num() == 0)
 	{
 		OnDialogueClosed.Broadcast(Context);
+	}
+
+		TArray<UMounteaDialogueGraphNode_CompleteNode*> AllowedChildrenCompleteNodes;
+	for (const auto Itr : AllowedChildrenNodes)
+	{
+		if (UMounteaDialogueGraphNode_CompleteNode* TempNode = Cast<UMounteaDialogueGraphNode_CompleteNode>(Itr))
+		{
+			AllowedChildrenCompleteNodes.Add(TempNode);
+		}
+	}
+	
+	TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> AllowedChildrenDialogueNodes;
+	for (const auto Itr : AllowedChildrenNodes)
+	{
+		if (UMounteaDialogueGraphNode_DialogueNodeBase* TempNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Itr))
+		{
+			AllowedChildrenDialogueNodes.Add(TempNode);
+		}
+	}
+
+	// If there are only Complete Nodes left or no DialogueNodes left, just shut it down
+	if (AllowedChildrenDialogueNodes.Num() == 0)
+	{
+		OnDialogueClosed.Broadcast(DialogueContext);
+		return;
+	}
+	
+	const bool bAutoActive = AllowedChildrenDialogueNodes[0]->DoesAutoStart();
+
+	if (bAutoActive)
+	{
+		const auto NewActiveNode = AllowedChildrenDialogueNodes[0];
+
+		if (!NewActiveNode)
+		{
+			OnDialogueClosed.Broadcast(DialogueContext);	
+		}
+		
+		DialogueContext->SetDialogueContext(NewActiveNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(NewActiveNode));
+		DialogueContext->UpdateActiveDialogueRowDataIndex(0);
+		
+		OnDialogueNodeSelected.Broadcast(DialogueContext);
+		return;
 	}
 }
 
@@ -159,7 +210,7 @@ void UMounteaDialogueManager::ProcessNode_Dialogue()
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 
 	const FDialogueRow DialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
-	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.DialogueRowData.Array().IsValidIndex(0))
+	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.DialogueRowData.Array().IsValidIndex(DialogueContext->GetActiveDialogueRowDataIndex()))
 	{
 		DialogueContext->UpdateActiveDialogueRow(DialogueRow);
 		DialogueContext->UpdateActiveDialogueRowDataIndex(0);

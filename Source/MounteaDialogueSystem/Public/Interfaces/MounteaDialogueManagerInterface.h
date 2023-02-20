@@ -52,6 +52,8 @@ public:
 	
 	virtual FDialogueContextUpdated& GetDialogueContextUpdatedEventHande() = 0;
 
+	virtual FDialogueNodeEvent& GetDialogueNodeSelected() = 0;
+
 	virtual FDialogueNodeEvent& GetDialogueNodeStartedEventHandle() = 0;
 	virtual FDialogueNodeEvent& GetDialogueNodeFinishedEventHandle() = 0;
 	virtual FDialogueRowEvent& GetDialogueRowStartedEventHandle() = 0;

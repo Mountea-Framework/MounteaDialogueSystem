@@ -28,7 +28,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	FDialogueRow ActiveDialogueRow;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	int32 ActiveDialogueRowDataIndex;
+	int32 ActiveDialogueRowDataIndex = 0;
 
 public:
 
