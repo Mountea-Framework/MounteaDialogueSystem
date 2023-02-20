@@ -25,6 +25,11 @@ public:
 	{
 		VisitedNodes.Add(StartNode);
 
+		if (!QuiCheckDirectConnections(StartNode, EndNode))
+		{
+			return false;
+		}
+		
 		return TraverseInputNodesToRoot(EndNode);
 	}
 
@@ -61,6 +66,27 @@ private:
 		return true;
 	}
 
+	bool QuiCheckDirectConnections(UEdGraphNode* A, UEdGraphNode* B)
+	{
+		for (auto Itr : B->Pins)
+		{
+			if (A->Pins.Contains(Itr) )
+			{
+				return false;
+			}
+		}
+		
+		for (auto Itr : A->Pins)
+		{
+			if (B->Pins.Contains(Itr))
+			{
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
 	TSet<UEdGraphNode*> VisitedNodes;
 };
 
@@ -330,6 +356,10 @@ const FPinConnectionResponse UAssetGraphScheme_MounteaDialogueGraph::CanCreateCo
 	// check for cycles
 	FNodeVisitorCycleChecker CycleChecker;
 	if (!CycleChecker.CheckForLoop(A->GetOwningNode(), B->GetOwningNode()))
+	{
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Can't create a graph cycle"));
+	}
+	if (!CycleChecker.CheckForLoop(B->GetOwningNode(), A->GetOwningNode()))
 	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Can't create a graph cycle"));
 	}
