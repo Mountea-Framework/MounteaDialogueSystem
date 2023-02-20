@@ -22,9 +22,14 @@ void UMounteaDialogueManager::BeginPlay()
 	Super::BeginPlay();
 
 	OnDialogueInitialized.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueInitializedEvent_Internal);
+	
 	OnDialogueContextUpdated.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent_Internal);
+	
 	OnDialogueStarted.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueStartedEvent_Internal);
 	OnDialogueClosed.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueClosedEvent_Internal);
+
+	OnDialogueNodeStarted.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeStartedEvent_Internal);
+	OnDialogueNodeFinished.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal);
 }
 
 void UMounteaDialogueManager::OnDialogueInitializedEvent_Internal(UMounteaDialogueContext* Context)
@@ -61,6 +66,35 @@ void UMounteaDialogueManager::OnDialogueClosedEvent_Internal(UMounteaDialogueCon
 	OnDialogueClosedEvent(DialogueContext);
 
 	CloseDialogue();
+}
+
+void UMounteaDialogueManager::OnDialogueNodeStartedEvent_Internal(UMounteaDialogueContext* Context)
+{
+	if (!DialogueContext)
+	{
+		OnDialogueFailed.Broadcast(TEXT("Invalid Dialogue Context!"));
+		return;
+	}
+
+	OnDialogueNodeStartedEvent(Context);
+}
+
+void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialogueContext* Context)
+{
+	if (!DialogueContext)
+	{
+		OnDialogueFailed.Broadcast(TEXT("Invalid Dialogue Context!"));
+		return;
+	}
+	
+	OnDialogueNodeFinishedEvent(Context);
+
+	const TArray<UMounteaDialogueGraphNode*> AllowedChildrenNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(Context->ActiveNode);
+
+	if (AllowedChildrenNodes.Num() == 0)
+	{
+		OnDialogueClosed.Broadcast(Context);
+	}
 }
 
 void UMounteaDialogueManager::StartDialogue()

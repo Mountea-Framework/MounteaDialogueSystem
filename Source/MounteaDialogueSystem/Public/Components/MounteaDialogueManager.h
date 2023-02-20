@@ -61,6 +61,22 @@ protected:
 	UFUNCTION()
 	void OnDialogueClosedEvent_Internal(UMounteaDialogueContext* Context);
 
+	/**
+	 * Event called when Dialogue Node has Started.
+	 */
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Start, Begin"))
+	void OnDialogueNodeStartedEvent(UMounteaDialogueContext* Context);
+	UFUNCTION()
+	void OnDialogueNodeStartedEvent_Internal(UMounteaDialogueContext* Context);
+	/**
+	 * Event called when Dialogue Node has Finished.
+	 */
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Finish, End, Complete"))
+	void OnDialogueNodeFinishedEvent(UMounteaDialogueContext* Context);
+	UFUNCTION()
+	void OnDialogueNodeFinishedEvent_Internal(UMounteaDialogueContext* Context);
+
+
 #pragma endregion
 
 #pragma region EventVariables
