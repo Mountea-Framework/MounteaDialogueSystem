@@ -206,6 +206,23 @@ void UMounteaDialogueGraph::PostInitProperties()
 bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat)
 {
 	bool bReturnValue = true;
+
+	if (StartNode == nullptr)
+	{
+		const FString RichTextReturn =
+		FString("* ").
+		Append(TEXT("<RichTextBlock.Bold>Dialogue Graph</>")).
+		Append(": Has no Start Node!");
+
+		const FString TextReturn =
+		GetName().
+		Append(": Has no Start Node!");
+		
+		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+
+		bReturnValue = false;
+	}
+
 	for (UMounteaDialogueGraphNode* Itr : AllNodes)
 	{
 		if (Itr != nullptr && (Itr->ValidateNode(ValidationErrors, RichTextFormat) == false))

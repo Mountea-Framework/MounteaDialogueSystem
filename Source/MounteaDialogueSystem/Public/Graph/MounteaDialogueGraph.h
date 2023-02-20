@@ -13,7 +13,10 @@ class UMounteaDialogueGraphEdge;
 
 
 /**
+ * Mountea Dialogue Graph.
  * 
+ * Can be manually created from Content Browser, using Mountea Dialogue category.
+ * Comes with Node editor, which provides easy to follow visual way to create Dialogue Trees.
  */
 UCLASS(Blueprintable, ClassGroup=("Mountea|Dialogue"), DisplayName="Mountea Dialogue Tree")
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraph : public UObject
