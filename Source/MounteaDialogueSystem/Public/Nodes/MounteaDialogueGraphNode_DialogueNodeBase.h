@@ -33,6 +33,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual FName GetRowName() const
 	{ return RowName; };
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	virtual bool DoesAutoStart() const
+	{ return bAutoStarts; };
 	
 protected:
 
@@ -59,7 +63,7 @@ protected:
 	 * ❗Experimental Feature ❗
 	 * Shows read-only Texts without localization of selected Dialogue Row.
 	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue", meta=(MultiLine=true))
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue", meta=(MultiLine=true, ShowOnlyInnerProperties))
 	TArray<FString> Preview;
 
 #endif
