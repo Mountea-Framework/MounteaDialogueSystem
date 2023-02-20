@@ -8,7 +8,11 @@
 #include "MounteaDialogueGraphNode_AnswerNode.generated.h"
 
 /**
+ * Mountea Dialogue Answer Node.
  * 
+ * This Node represents Player's answers.
+ * This Node requires Player's input to be started.
+ * Requires Dialogue Data Table to work properly.
  */
 UCLASS(ClassGroup=("Mountea|Dialogue"), DisplayName="Answer Node", meta=(ToolTip="Mountea Dialogue Tree: Answer Node"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_AnswerNode : public UMounteaDialogueGraphNode_DialogueNodeBase

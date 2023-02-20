@@ -19,7 +19,7 @@ UMounteaDialogueGraphNode_CompleteNode::UMounteaDialogueGraphNode_CompleteNode()
 
 FText UMounteaDialogueGraphNode_CompleteNode::GetDescription_Implementation() const
 {
-	return LOCTEXT("MounteaDialogueGraphNode_CompleteNodeDescription", "Complete Node is a helper visual Node which indicates ending of its dialogue branch. Is not required to use.");
+	return LOCTEXT("MounteaDialogueGraphNode_CompleteNodeDescription", "Complete Node is an indication that Dialogue can be manually closed here by Player.");
 }
 
 FText UMounteaDialogueGraphNode_CompleteNode::GetNodeCategory_Implementation() const

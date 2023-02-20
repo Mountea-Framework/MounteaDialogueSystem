@@ -9,7 +9,11 @@ class UMounteaDialogueGraph;
 class UMounteaDialogueGraphEdge;
 
 /**
+ * Mountea Dialogue Graph Node abstract Base class.
  * 
+ * Provides generic functionality to be enhanced or overriden by Child Classes.
+ * Does come with ability to define Colours, Name, Description and Title.
+ * Contains information about Parent and Children Nodes.
  */
 UCLASS(Abstract, ClassGroup=("Mountea|Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject

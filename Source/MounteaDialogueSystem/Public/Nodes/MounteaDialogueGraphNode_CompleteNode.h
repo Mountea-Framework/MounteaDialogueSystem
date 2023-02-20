@@ -7,7 +7,10 @@
 #include "MounteaDialogueGraphNode_CompleteNode.generated.h"
 
 /**
+ * Complete Dialogue Node.
  * 
+ * This Node will complete Dialogue after Player's input.
+ * Indicates that Dialogue can be manually closed.
  */
 UCLASS(ClassGroup=("Mountea|Dialogue"), DisplayName="Complete Node", meta=(ToolTip="Mountea Dialogue Tree: Complete Node"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_CompleteNode : public UMounteaDialogueGraphNode

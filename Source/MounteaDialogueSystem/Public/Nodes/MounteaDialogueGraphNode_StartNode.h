@@ -8,7 +8,12 @@
 #include "MounteaDialogueGraphNode_StartNode.generated.h"
 
 /**
+ * Mountea Dialogue Start Node.
  * 
+ * This Node will be added to the Dialogue Graph automatically when Graph is created.
+ * This Node cannot be created manually.
+ * This Node cannot be deleted from Graph.
+ * Does not implement any logic, works as an Anchor starting point.
  */
 UCLASS(ClassGroup=("Mountea|Dialogue"), DisplayName="Start Node", meta=(ToolTip="Mountea Dialogue Tree: Start Node"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_StartNode : public UMounteaDialogueGraphNode
@@ -21,4 +26,8 @@ public:
 
 	virtual FText GetDescription_Implementation() const override;
 	virtual FText GetNodeCategory_Implementation() const override;
+
+#if WITH_EDITOR
+	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat);
+#endif
 };

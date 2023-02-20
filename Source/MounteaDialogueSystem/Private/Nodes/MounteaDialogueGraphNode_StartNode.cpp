@@ -31,5 +31,51 @@ FText UMounteaDialogueGraphNode_StartNode::GetNodeCategory_Implementation() cons
 {
 	return Super::GetNodeCategory_Implementation();
 }
+#if WITH_EDITOR
+
+bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
+{
+	bool bResult = Super::ValidateNode(ValidationsMessages, RichFormat);
+
+	if (ChildrenNodes.Num() == 0)
+	{
+		bResult = false;
+
+		const FString RichTextReturn =
+		FString("* ").
+		Append("<RichTextBlock.Bold>").
+		Append(NodeTitle.ToString()).
+		Append("</>").
+		Append(": Does not have any Children Nodes!");
+
+		const FString TextReturn =
+		FString(NodeTitle.ToString()).
+		Append(": Does not have any Children Nodes!");
+		
+		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+	}
+
+	if (ChildrenNodes.Num() > 1)
+	{
+		bResult = false;
+
+		const FString RichTextReturn =
+		FString("* ").
+		Append("<RichTextBlock.Bold>").
+		Append(NodeTitle.ToString()).
+		Append("</>").
+		Append(": Does have more than 1 Child Node. This version can utilize only first Child Node from Start Node!");
+
+		const FString TextReturn =
+		FString(NodeTitle.ToString()).
+		Append(": Does have more than 1 Child Node. This version can utilize only first Child Node from Start Node!");
+		
+		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+	}
+
+	return bResult;
+}
+
+#endif
 
 #undef LOCTEXT_NAMESPACE

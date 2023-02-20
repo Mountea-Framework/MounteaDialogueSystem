@@ -19,6 +19,8 @@ UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 	
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_LeadNode::StaticClass());
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
+
+	bAutoStarts = false;
 }
 
 FText UMounteaDialogueGraphNode_AnswerNode::GetDescription_Implementation() const

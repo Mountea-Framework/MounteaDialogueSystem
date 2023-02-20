@@ -8,7 +8,11 @@
 #include "MounteaDialogueGraphNode_AutoCompleteNode.generated.h"
 
 /**
+ * Auto Complete Dialogue Node.
  * 
+ * This Node will automatically complete Dialogue.
+ * Same functionality as Node being left with no branching.
+ * Does help performance, however, is not required.
  */
 UCLASS(ClassGroup=("Mountea|Dialogue"), DisplayName="Auto Complete Node", meta=(ToolTip="Mountea Dialogue Tree: Auto Complete Node"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_AutoCompleteNode : public UMounteaDialogueGraphNode_CompleteNode

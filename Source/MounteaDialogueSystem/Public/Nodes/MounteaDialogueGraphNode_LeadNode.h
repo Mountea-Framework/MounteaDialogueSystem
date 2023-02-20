@@ -8,7 +8,11 @@
 #include "MounteaDialogueGraphNode_LeadNode.generated.h"
 
 /**
+ * Mountea Dialogue Lead Node.
  * 
+ * This Node represents NPC lines.
+ * This Node starts automatically upon reaching in the Dialogue Tree.
+ * Requires Dialogue Data Table to work properly.
  */
 UCLASS(ClassGroup=("Mountea|Dialogue"), DisplayName="Lead Node", meta=(ToolTip="Mountea Dialogue Tree: Lead Node"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_LeadNode : public UMounteaDialogueGraphNode_DialogueNodeBase

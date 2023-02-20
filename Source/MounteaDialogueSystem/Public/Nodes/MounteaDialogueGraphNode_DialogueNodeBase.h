@@ -10,7 +10,10 @@
 #include "MounteaDialogueGraphNode_DialogueNodeBase.generated.h"
 
 /**
+ * Mountea Dialogue Graph Node abstract Base class.
  * 
+ * Enhances 'MounteaDialogueGraphNode' Base class with Dialogue data.
+ * Provides DataTable and Row options that define the Dialogue data which will be displayed in UI.
  */
 UCLASS(Abstract, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_DialogueNodeBase : public UMounteaDialogueGraphNode
@@ -32,6 +35,10 @@ public:
 	{ return RowName; };
 	
 protected:
+
+	/** Defines whether this Node will start automatically or if requires input.*/
+	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
+	uint8 bAutoStarts : 1;
 
 	UPROPERTY(Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(RequiredAssetDataTags="RowStructure=DialogueRow", DisplayThumbnail=false, NoResetToDefault))
 	UDataTable*	DataTable;

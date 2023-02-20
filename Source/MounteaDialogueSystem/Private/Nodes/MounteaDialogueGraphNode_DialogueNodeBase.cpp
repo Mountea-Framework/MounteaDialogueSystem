@@ -17,6 +17,7 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 #endif
 	
 	NodeGUID = FGuid::NewGuid();
+	bAutoStarts = false;
 }
 
 FText UMounteaDialogueGraphNode_DialogueNodeBase::GetDescription_Implementation() const
@@ -44,11 +45,29 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 		Append("<RichTextBlock.Bold>").
 		Append(NodeTitle.ToString()).
 		Append("</>").
-		Append(": Does not contain any Dialogue Row!");
+		Append(": Does not contain any Dialogue Data Table!");
 
 		const FString TextReturn =
 		FString(NodeTitle.ToString()).
-		Append(": Does not contain any Dialogue Row!");
+		Append(": Does not contain any Dialogue Data Table!");
+		
+		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+	}
+
+	if (RowName.IsEmpty())
+	{
+		bResult = false;
+
+		const FString RichTextReturn =
+		FString("* ").
+		Append("<RichTextBlock.Bold>").
+		Append(NodeTitle.ToString()).
+		Append("</>").
+		Append(": Does not contain valid Dialogue Row!");
+
+		const FString TextReturn =
+		FString(NodeTitle.ToString()).
+		Append(": Does not contain valid Dialogue Row!");
 		
 		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
