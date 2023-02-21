@@ -36,17 +36,26 @@ public:
 	/**
 	 * Returns Dialogue System Settings.
 	 */
-	static const UMounteaDialogueSystemSettings* GetDialogueSystemSettings()
+	static  const UMounteaDialogueSystemSettings* GetDialogueSystemSettings_Internal()
 	{
 		return GetDefault<UMounteaDialogueSystemSettings>();
 	}
-
+	
+	/**
+	 * Returns Dialogue System Settings.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="settings, setup, config"))
+	static UMounteaDialogueSystemSettings* GetDialogueSystemSettings()
+	{
+		return GetMutableDefault<UMounteaDialogueSystemSettings>();
+	};
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="widget, UI"))
 	static TSubclassOf<UUserWidget>  GetDefaultDialogueWidget()
 	{
-		if (GetDialogueSystemSettings() == nullptr) return nullptr;
+		if (GetDialogueSystemSettings_Internal() == nullptr) return nullptr;
 		
-		const TSubclassOf<UUserWidget> DefaultClass = GetDialogueSystemSettings()->GetDefaultDialogueWidget().LoadSynchronous();
+		const TSubclassOf<UUserWidget> DefaultClass = GetDialogueSystemSettings_Internal()->GetDefaultDialogueWidget().LoadSynchronous();
 		return DefaultClass;
 	}
 	

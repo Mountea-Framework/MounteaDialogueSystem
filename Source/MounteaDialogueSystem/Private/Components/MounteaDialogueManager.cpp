@@ -9,6 +9,7 @@
 #include "Data/MounteaDialogueContext.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Interfaces/MounteaDialogueWBPInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
@@ -243,6 +244,17 @@ void UMounteaDialogueManager::ProcessNode_Dialogue()
 
 bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
 {
+	if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal() == nullptr)
+	{
+		Message = TEXT("Cannot find Dialogue Settings!");
+		return false;
+	}
+
+	if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->SubtitlesAllowed() == false)
+	{
+		return true;
+	}
+	
 	if (GetDialogueWidgetClass() == nullptr)
 	{
 		Message = TEXT("Invalid Widget Class! Setup Widget class at least in Project settings!");
@@ -263,6 +275,11 @@ bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
 	}
 	
 	DialogueWidgetPtr = CreateWidget<UUserWidget>(PlayerController,  GetDialogueWidgetClass());
+	if (DialogueWidgetPtr->Implements<UMounteaDialogueWBPInterface>() == false)
+	{
+		Message = TEXT("Does not implement Diaogue Widget Interface!");
+		return false;
+	}
 
 	if (DialogueWidgetPtr == nullptr)
 	{
@@ -276,6 +293,18 @@ bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
 		return false;
 	}
 	
+	TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;
+	WidgetInterface.SetObject(DialogueWidgetPtr);
+	WidgetInterface.SetInterface(DialogueWidgetPtr);
+
+	if (WidgetInterface.GetInterface() == nullptr)
+	{
+		Message = TEXT("Invalid Widget Interface!");
+		return false;
+	}
+
+	WidgetInterface->Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CreateDialogueWidget);
+	
 	return true;
 }
 
@@ -286,12 +315,12 @@ TSubclassOf<UUserWidget> UMounteaDialogueManager::GetDialogueWidgetClass() const
 		return DialogueWidgetClass;
 	}
 
-	if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings()->GetDefaultDialogueWidget().IsNull())
+	if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->GetDefaultDialogueWidget().IsNull())
 	{
 		return nullptr;
 	}
 
-	return UMounteaDialogueSystemBFC::GetDialogueSystemSettings()->GetDefaultDialogueWidget().LoadSynchronous();
+	return UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->GetDefaultDialogueWidget().LoadSynchronous();
 }
 
 void UMounteaDialogueManager::SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass)
@@ -310,6 +339,11 @@ void UMounteaDialogueManager::SetDialogueUIPtr(UUserWidget* NewDialogueWidgetPtr
 
 void UMounteaDialogueManager::StartExecuteDialogueRow()
 {
+	if (!DialogueWidgetPtr)
+	{
+		OnDialogueFailed.Broadcast("Invalid Dialogue Widget Pointer!");
+	}
+	
 	FTimerDelegate Delegate;
 	Delegate.BindUObject(this, &UMounteaDialogueManager::FinishedExecuteDialogueRow);
 
@@ -326,6 +360,18 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 	);
 
 	OnDialogueRowStarted.Broadcast(DialogueContext);
+
+	// Show Subtitle Row only if allowed
+	if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal())
+	{
+		if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->SubtitlesAllowed())
+		{
+			TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;
+			WidgetInterface.SetObject(DialogueWidgetPtr);
+			WidgetInterface.SetInterface(DialogueWidgetPtr);
+			WidgetInterface->Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::ShowDialogueRow);
+		}
+	}
 }
 
 void UMounteaDialogueManager::FinishedExecuteDialogueRow()

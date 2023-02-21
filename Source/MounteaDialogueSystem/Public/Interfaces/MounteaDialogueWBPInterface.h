@@ -28,5 +28,5 @@ public:
 	 * This event should be called when you want to refresh UI data.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Interaction")
-	void RefreshDialogueWidget(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager);
+	void RefreshDialogueWidget(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command);
 };
