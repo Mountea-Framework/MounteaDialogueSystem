@@ -7,7 +7,7 @@
 #include "MounteaDialogueParticipantInterface.generated.h"
 
 // This class does not need to be modified.
-UINTERFACE()
+UINTERFACE(BlueprintType, Blueprintable)
 class UMounteaDialogueParticipantInterface : public UInterface
 {
 	GENERATED_BODY()

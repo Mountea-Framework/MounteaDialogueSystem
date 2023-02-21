@@ -7,7 +7,7 @@
 #include "MounteaDialogueManagerInterface.generated.h"
 
 // This class does not need to be modified.
-UINTERFACE(MinimalAPI)
+UINTERFACE(BlueprintType, Blueprintable)
 class UMounteaDialogueManagerInterface : public UInterface
 {
 	GENERATED_BODY()
@@ -19,6 +19,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueInitialized, UMounteaDialog
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueEvent, UMounteaDialogueContext*, Context);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueContextUpdated, UMounteaDialogueContext*, Context);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDialogueUserInterfaceChanged, TSubclassOf<UUserWidget>, DialogueWidgetClass, UUserWidget*, DiaogueWidget);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueNodeEvent, UMounteaDialogueContext*, Context);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueRowEvent, UMounteaDialogueContext*, Context);
@@ -40,9 +41,25 @@ public:
 	virtual void ProcessNode_Complete() = 0;
 	virtual void ProcessNode_Dialogue() = 0;
 
+	virtual bool InvokeDialogueUI(FString& Message) = 0;
+	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const = 0;
+	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) = 0;
+	virtual UUserWidget* GetDialogueUIPtr() const = 0;
+	virtual void SetDialogueUIPtr(UUserWidget* DialogueUIPtr) = 0;
+
 	virtual void StartExecuteDialogueRow() = 0;
 	virtual void FinishedExecuteDialogueRow() = 0;
 
+	/**
+	 * Returns Dialogue Context if any exists.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	UMounteaDialogueContext* GetDialogueContextEvent() const;
+	UMounteaDialogueContext* GetDialogueContextEvent_Implementation() const
+	{
+		return GetDialogueContext();
+	}
+	
 	virtual UMounteaDialogueContext* GetDialogueContext() const = 0;
 	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) = 0;
 
@@ -51,6 +68,7 @@ public:
 	virtual FDialogueEvent& GetDialogueClosedEventHandle() = 0;
 	
 	virtual FDialogueContextUpdated& GetDialogueContextUpdatedEventHande() = 0;
+	virtual FDialogueUserInterfaceChanged& GetDialogueUserInterfaceChangedEventHandle() = 0;
 
 	virtual FDialogueNodeEvent& GetDialogueNodeSelected() = 0;
 

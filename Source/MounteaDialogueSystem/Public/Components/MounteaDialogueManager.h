@@ -45,6 +45,15 @@ protected:
 	virtual void OnDialogueContextUpdatedEvent_Internal(UMounteaDialogueContext* NewContext);
 
 	/**
+	 * Event called when Dialogue Widget Class or Widget have changed.
+	 *❗Dialogue Widget Could be Null ❗
+	 */
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Update, Context"))
+	void OnDialogueUserInterfaceChangedEvent(TSubclassOf<UUserWidget> DialogueUIClass, UUserWidget* DialogueUIWidget);
+	UFUNCTION()
+	void OnDialogueUserInterfaceChangedEvent_Internal(TSubclassOf<UUserWidget> DialogueUIClass, UUserWidget* DialogueUIWidget);
+
+	/**
 	 * Event called when Dialogue has Started.
 	 */
 	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Update, Context"))
@@ -113,6 +122,13 @@ protected:
 	 */
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueContextUpdated OnDialogueContextUpdated;
+	/**
+	 * Event called when Dialogue Widget Class or Widget have changed.
+	 *❗Dialogue Widget Could be Null ❗
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	FDialogueUserInterfaceChanged OnDialogueUserInterfaceChanged;
+	
 
 	/**
 	 * Event called when new Dialogue Node has been selected.
@@ -161,9 +177,32 @@ protected:
 	virtual void ProcessNode_Complete() override;
 	virtual void ProcessNode_Dialogue() override;
 
+	virtual bool InvokeDialogueUI(FString& Message) override;
+	
+	/**
+	 * Returns Dialogue Widget Class if any exists already.
+	 * ❗If none specified per Manager will return Class from Project Settings❗
+	 * ❗Could return null❗
+	 */
+	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const override;
+	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) override;
+
+	/**
+	 * Returns Dialogue Widget Pointer if any exists already.
+	 * ❗Could return null❗
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
+	virtual UUserWidget* GetDialogueUIPtr() const override
+	{ return DialogueWidgetPtr; };
+	virtual void SetDialogueUIPtr(UUserWidget* NewDialogueWidgetPtr) override;
+
 	UFUNCTION() virtual void StartExecuteDialogueRow() override;
 	UFUNCTION() virtual void FinishedExecuteDialogueRow() override;
 
+	/**
+	 * Returns Dialogue Context if any exists.
+	 * ❗Could return null❗
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="Context, Get"))
 	virtual UMounteaDialogueContext* GetDialogueContext() const override
 	{ return DialogueContext; };
@@ -177,6 +216,8 @@ protected:
 	{ return OnDialogueClosed; };
 	virtual FDialogueContextUpdated& GetDialogueContextUpdatedEventHande() override
 	{ return OnDialogueContextUpdated; };
+	virtual FDialogueUserInterfaceChanged& GetDialogueUserInterfaceChangedEventHandle() override
+	{ return OnDialogueUserInterfaceChanged; };
 	virtual FDialogueNodeEvent& GetDialogueNodeSelected() override
 	{ return  OnDialogueNodeSelected; };
 	virtual FDialogueNodeEvent& GetDialogueNodeStartedEventHandle() override
@@ -200,9 +241,20 @@ protected:
 protected:
 
 	/**
+	 * Manager based Dialogue Widget Class.
+	 * ❔Could be left empty if Project Settings are setup properly❔
+	 * ❗Must implement MounteaDialogueWBPInterface❗
+	 */
+	UPROPERTY(EditAnywhere, Category="Mountea|Dialogue", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
+	TSubclassOf<UUserWidget> DialogueWidgetClass = nullptr;
+	
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue")
+	UUserWidget* DialogueWidgetPtr = nullptr;
+
+	/**
 	 * Dialogue Context which is used to contain temporary data.
 	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue", AdvancedDisplay=true)
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue")
 	UMounteaDialogueContext* DialogueContext = nullptr;
 
 	FTimerHandle TimerHandle_RowTimer;

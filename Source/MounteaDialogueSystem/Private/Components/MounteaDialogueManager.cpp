@@ -9,6 +9,7 @@
 #include "Data/MounteaDialogueContext.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Kismet/GameplayStatics.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
 
@@ -24,6 +25,7 @@ void UMounteaDialogueManager::BeginPlay()
 	OnDialogueInitialized.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueInitializedEvent_Internal);
 	
 	OnDialogueContextUpdated.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent_Internal);
+	OnDialogueUserInterfaceChanged.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueUserInterfaceChangedEvent_Internal);
 	
 	OnDialogueStarted.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueStartedEvent_Internal);
 	OnDialogueClosed.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueClosedEvent_Internal);
@@ -53,6 +55,11 @@ void UMounteaDialogueManager::OnDialogueInitializedEvent_Internal(UMounteaDialog
 void UMounteaDialogueManager::OnDialogueContextUpdatedEvent_Internal(UMounteaDialogueContext* NewContext)
 {
 	SetDialogueContext(NewContext);
+}
+
+void UMounteaDialogueManager::OnDialogueUserInterfaceChangedEvent_Internal(TSubclassOf<UUserWidget> DialogueUIClass, UUserWidget* DialogueUIWidget)
+{
+	OnDialogueUserInterfaceChangedEvent(DialogueUIClass, DialogueUIWidget);
 }
 
 void UMounteaDialogueManager::OnDialogueStartedEvent_Internal(UMounteaDialogueContext* Context)
@@ -104,7 +111,7 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 		OnDialogueClosed.Broadcast(Context);
 	}
 
-		TArray<UMounteaDialogueGraphNode_CompleteNode*> AllowedChildrenCompleteNodes;
+	TArray<UMounteaDialogueGraphNode_CompleteNode*> AllowedChildrenCompleteNodes;
 	for (const auto Itr : AllowedChildrenNodes)
 	{
 		if (UMounteaDialogueGraphNode_CompleteNode* TempNode = Cast<UMounteaDialogueGraphNode_CompleteNode>(Itr))
@@ -153,6 +160,13 @@ void UMounteaDialogueManager::StartDialogue()
 	if (!DialogueContext)
 	{
 		OnDialogueFailed.Broadcast(TEXT("Invalid Dialogue Context!"));
+		return;
+	}
+
+	FString ErrorMessage;
+	if (!InvokeDialogueUI(ErrorMessage))
+	{
+		OnDialogueFailed.Broadcast(ErrorMessage);
 		return;
 	}
 	
@@ -225,6 +239,73 @@ void UMounteaDialogueManager::ProcessNode_Dialogue()
 	}
 
 	OnDialogueNodeStarted.Broadcast(DialogueContext);
+}
+
+bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
+{
+	if (GetDialogueWidgetClass() == nullptr)
+	{
+		Message = TEXT("Invalid Widget Class! Setup Widget class at least in Project settings!");
+		return false;
+	}
+	
+	if (!GetWorld())
+	{
+		Message = TEXT("Invalid World!");
+		return false;
+	}
+
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (PlayerController == nullptr)
+	{
+		Message = TEXT("Invalid Player Controller!");
+		return false;
+	}
+	
+	DialogueWidgetPtr = CreateWidget<UUserWidget>(PlayerController,  GetDialogueWidgetClass());
+
+	if (DialogueWidgetPtr == nullptr)
+	{
+		Message = TEXT("Cannot spawn Dialogue Widget!");
+		return false;
+	}
+
+	if (DialogueWidgetPtr->AddToPlayerScreen() == false)
+	{
+		Message = TEXT("Cannot display Dialogue Widget!");
+		return false;
+	}
+	
+	return true;
+}
+
+TSubclassOf<UUserWidget> UMounteaDialogueManager::GetDialogueWidgetClass() const
+{
+	if (DialogueWidgetClass.Get() != nullptr)
+	{
+		return DialogueWidgetClass;
+	}
+
+	if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings()->GetDefaultDialogueWidget().IsNull())
+	{
+		return nullptr;
+	}
+
+	return UMounteaDialogueSystemBFC::GetDialogueSystemSettings()->GetDefaultDialogueWidget().LoadSynchronous();
+}
+
+void UMounteaDialogueManager::SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass)
+{
+	DialogueWidgetClass = NewWidgetClass;
+
+	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidgetPtr);
+}
+
+void UMounteaDialogueManager::SetDialogueUIPtr(UUserWidget* NewDialogueWidgetPtr)
+{
+	DialogueWidgetPtr = NewDialogueWidgetPtr;
+
+	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidgetPtr);
 }
 
 void UMounteaDialogueManager::StartExecuteDialogueRow()
