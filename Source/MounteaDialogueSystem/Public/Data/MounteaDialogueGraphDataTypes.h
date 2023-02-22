@@ -5,6 +5,10 @@
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "UObject/Object.h"
+
+#include "Fonts/SlateFontInfo.h"
+#include "Styling/CoreStyle.h"
+
 #include "MounteaDialogueGraphDataTypes.generated.h"
 
 class USoundBase;
