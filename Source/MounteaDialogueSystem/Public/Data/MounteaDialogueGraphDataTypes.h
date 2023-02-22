@@ -23,6 +23,31 @@ enum class ERowDurationMode : uint8
 	ERDM_AutoCalculate			UMETA(DisplayName="Calculate",			Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds.")
 };
 
+USTRUCT(BlueprintType)
+struct FSubtitlesSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles", meta=(DisplayName="Color and Oppacity"))
+	FLinearColor FontColor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles", meta=(ForceShowEngineContent))
+	FSlateFontInfo SubtitlesFont;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles")
+	FVector2D ShadowOffset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles")
+	FLinearColor ShadowColor;
+
+public:
+
+	FSubtitlesSettings() : FontColor(FLinearColor::White), ShadowOffset(1.5f, 1.25f), ShadowColor(FLinearColor::Black)
+	{
+		SubtitlesFont = FCoreStyle::GetDefaultFontStyle("Regular", 22, FFontOutlineSettings(1));
+	};
+};
+
 #define LOCTEXT_NAMESPACE "FDialogueRow"
 
 /**
@@ -36,7 +61,7 @@ struct FDialogueRowData
 	GENERATED_BODY()
 
 public:
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
 	FText RowText;
 
@@ -78,6 +103,11 @@ public:
 	{
 		return Other.RowGUID == this->RowGUID;
 	}
+
+	bool operator!=(const FDialogueRowData& Other) const
+	{
+		return !(*this == Other);
+	}
 	
 	static friend uint32 GetTypeHash(const FDialogueRowData& ActionKeyData)
 	{
@@ -101,6 +131,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
 	FText DialogueParticipant;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
+	FText RowTitle;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(TitleProperty="RowText"))
 	TSet<FDialogueRowData> DialogueRowData;
 
@@ -110,15 +143,32 @@ public:
 public:
 
 	FDialogueRow()
-		: DialogueParticipant(LOCTEXT("FDialogueRow_Participant", "Dialogue Participant"))
+		:  DialogueParticipant(LOCTEXT("FDialogueRow_Participant", "Dialogue Participant")), RowTitle(LOCTEXT("FDialogueRow_Title", "Selectable Option"))
 	{
 		RowGUID = FGuid::NewGuid();
 	};
 
-	FDialogueRow(const FText& InParticipant, const TSet<FDialogueRowData>& InData)
-		: DialogueParticipant(InParticipant), DialogueRowData(InData)
+	FDialogueRow(const FText& InText, const FText& InParticipant, const TSet<FDialogueRowData>& InData)
+		: DialogueParticipant(InParticipant), RowTitle(InText), DialogueRowData(InData)
 	{
 		RowGUID = FGuid::NewGuid();
+	}
+
+public:
+
+	bool operator==(const FDialogueRow& Other) const
+	{
+		return Other.RowGUID == this->RowGUID;
+	}
+
+	bool operator!=(const FDialogueRow& Other) const
+	{
+		return !(*this == Other);
+	}
+	
+	static friend uint32 GetTypeHash(const FDialogueRow& Row)
+	{
+		return FCrc::MemCrc32(&Row.RowGUID, sizeof(FGuid));
 	}
 };
 #undef LOCTEXT_NAMESPACE

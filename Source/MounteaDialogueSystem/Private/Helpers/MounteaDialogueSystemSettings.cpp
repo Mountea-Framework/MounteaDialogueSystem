@@ -11,7 +11,6 @@ UMounteaDialogueSystemSettings::UMounteaDialogueSystemSettings()
 	SectionName = TEXT("Mountea Dialogue System");
 
 	bAllowSubtitles = true;
-	DialogueSubtitlesSize = 22;
 
 	UpdateFrequency = 0.05f;
 

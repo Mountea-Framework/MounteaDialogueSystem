@@ -3,13 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Data/MounteaDialogueGraphDataTypes.h"
 #include "Engine/DeveloperSettings.h"
 #include "MounteaDialogueSystemSettings.generated.h"
 
 namespace MounteaDialogueWidgetCommands
 {
 	const FString CreateDialogueWidget		(TEXT("CreateDialogueWidget"));
-	const FString ShowDialogueRow			(TEXT("ShowDialogueRow"));
+	const FString CloseDialogueWidget		(TEXT("CloseDialogueWidget"));
+	const FString ShowDialogueRow				(TEXT("ShowDialogueRow"));
 	const FString UpdateDialogueRow			(TEXT("UpdateDialogueRow"));
 	const FString HideDialogueRow				(TEXT("HideDialogueRow"));
 	const FString AddDialogueOptions			(TEXT("AddDialogueOptions"));
@@ -43,9 +45,9 @@ protected:
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles")
 	uint8 bAllowSubtitles : 1;
-	
-	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles", meta=(UIMin=8.f, ClampMin=8.f, UIMax=32.f, ClampMax=32.f))
-	int32  DialogueSubtitlesSize = 22;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles")
+	FSubtitlesSettings SubtitlesSettings;
 
 #if WITH_EDITOR
 	virtual FText GetSectionText() const override
@@ -86,12 +88,12 @@ public:
 	{ return bAllowSubtitles; };
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
-	int32 GetDialogueSubtitlesSize() const
-	{ return DialogueSubtitlesSize; };
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	float GetWidgetUpdateFrequency() const
 	{ return UpdateFrequency; };
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	FSubtitlesSettings GetSubtitlesSettings() const
+	{ return SubtitlesSettings; };
 
 protected:
 

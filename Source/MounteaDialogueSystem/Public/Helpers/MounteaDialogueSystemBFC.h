@@ -85,7 +85,7 @@ public:
 	 * @param WorldContextObject	World Context Object
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="close, exit, dialogue"))
-	static bool CloseDialogue(const UObject* WorldContextObject, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant)
+	static bool CloseDialogue(const UObject* WorldContextObject)
 	{
 		if (!GetDialogueManger(WorldContextObject)) return false;
 
@@ -328,5 +328,19 @@ public:
 		ReturnValue = FMath::Max(1.f, ReturnValue);
 		
 		return ReturnValue;
+	}
+
+	/**
+	 * 
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Subtitles Settings", Keywords="settings, subtitles, font"))
+	static FSubtitlesSettings GetSubtitlesSettings(const UObject* WorldContextObject)
+	{
+		if (GetDialogueSystemSettings_Internal() == nullptr)
+		{
+			return FSubtitlesSettings();
+		}
+
+		return GetDialogueSystemSettings_Internal()->GetSubtitlesSettings();
 	}
 };
