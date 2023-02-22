@@ -154,6 +154,15 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 		OnDialogueNodeSelected.Broadcast(DialogueContext);
 		return;
 	}
+	else
+	{
+		TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;
+		WidgetInterface.SetObject(DialogueWidgetPtr);
+		WidgetInterface.SetInterface(DialogueWidgetPtr);
+		WidgetInterface->Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::AddDialogueOptions);
+
+		return;
+	}
 }
 
 void UMounteaDialogueManager::StartDialogue()

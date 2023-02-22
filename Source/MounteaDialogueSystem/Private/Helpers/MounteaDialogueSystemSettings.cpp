@@ -16,6 +16,7 @@ UMounteaDialogueSystemSettings::UMounteaDialogueSystemSettings()
 	UpdateFrequency = 0.05f;
 
 	DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::CreateDialogueWidget);
+	DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::CloseDialogueWidget);
 	DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::ShowDialogueRow);
 	DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::UpdateDialogueRow);
 	DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::HideDialogueRow);
@@ -33,6 +34,9 @@ void UMounteaDialogueSystemSettings::PostEditChangeProperty(FPropertyChangedEven
 	{
 		if (DialogueWidgetCommands.Contains(MounteaDialogueWidgetCommands::CreateDialogueWidget) == false)
 			DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::CreateDialogueWidget);
+
+		if (DialogueWidgetCommands.Contains(MounteaDialogueWidgetCommands::CloseDialogueWidget) == false)
+			DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::CloseDialogueWidget);
 		
 		if (DialogueWidgetCommands.Contains(MounteaDialogueWidgetCommands::ShowDialogueRow) == false)
 			DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::ShowDialogueRow);
