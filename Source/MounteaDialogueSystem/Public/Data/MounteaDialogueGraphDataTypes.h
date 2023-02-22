@@ -9,16 +9,27 @@
 
 class USoundBase;
 
+/**
+ * Row Duration Mode
+ * 
+ * Used for calculation of the Row Duration.
+ */
 UENUM(BlueprintType)
 enum class ERowDurationMode : uint8
 {
 	ERDM_Duration				UMETA(DisplayName="Duration",			Tooltip="Uses either duration of 'Row Sound' or value from 'Duration'."),
 	EDRM_Override				UMETA(DisplayName="Override",			Tooltip="Uses 'Duration Override' value."),
 	EDRM_Add					UMETA(DisplayName="Add Time",			Tooltip="Adds 'Duration Override' value to 'Duration'."),
-	ERDM_AutoCalculate	UMETA(DisplayName="Calculate",			Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds.")
+	ERDM_AutoCalculate			UMETA(DisplayName="Calculate",			Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds.")
 };
 
 #define LOCTEXT_NAMESPACE "FDialogueRow"
+
+/**
+ * Dialogue Row Data
+ * 
+ * Structure which contains Dialogue Row data, which will be displayed in UI and/or played.
+ */
 USTRUCT(BlueprintType)
 struct FDialogueRowData
 {
@@ -74,6 +85,12 @@ public:
 	}
 };
 
+/**
+ * Dialogue Row
+ * 
+ * Data Table compatible Dialogue Row.
+ * Contains name of Participant and Row Data.
+ */
 USTRUCT(BlueprintType)
 struct FDialogueRow : public FTableRowBase
 {

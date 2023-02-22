@@ -15,7 +15,10 @@ class UMounteaDialogueWBPInterface : public UInterface
 };
 
 /**
+ * Mountea Dialogue Widget Blueprint Interface.
  * 
+ * Interface allowing any Widget Blueprint to be used for Mountea Dialogue.
+ * Provides a nice and clean way to trigger Refresh event in any Widget Blueprint.
  */
 class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueWBPInterface
 {
@@ -26,6 +29,9 @@ public:
 
 	/**
 	 * This event should be called when you want to refresh UI data.
+	 * 
+	 * @param DialogueManager	Dialogue Manager Interface reference. Request 'GetDialogueContext' to retrieve data to display.
+	 * @param Command			String command. All commands are defined in ProjectSettings/MounteaFramework/MounteaDilaogueSystem.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Interaction")
 	void RefreshDialogueWidget(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command);

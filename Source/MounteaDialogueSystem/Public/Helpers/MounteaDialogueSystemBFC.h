@@ -24,7 +24,7 @@
 
 
 /**
- * Helper functions library for Mountea Dialogue System.
+ * Runtime helper functions library for Mountea Dialogue System.
  */
 UCLASS(meta=(DisplayName="Mountea Dialogue Blueprint Function Library"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSystemBFC : public UBlueprintFunctionLibrary
@@ -35,14 +35,16 @@ public:
 
 	/**
 	 * Returns Dialogue System Settings.
+	 * ❗Might return null❗
 	 */
-	static  const UMounteaDialogueSystemSettings* GetDialogueSystemSettings_Internal()
+	static const UMounteaDialogueSystemSettings* GetDialogueSystemSettings_Internal()
 	{
 		return GetDefault<UMounteaDialogueSystemSettings>();
 	}
 	
 	/**
 	 * Returns Dialogue System Settings.
+	 * ❗Might return null❗
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="settings, setup, config"))
 	static UMounteaDialogueSystemSettings* GetDialogueSystemSettings()
@@ -50,6 +52,12 @@ public:
 		return GetMutableDefault<UMounteaDialogueSystemSettings>();
 	};
 	
+	/**
+	 * Tries to get default Dialogue Widget from Project Settings.
+	 * 
+	 * ❗Will return null if settings are not accessible❗
+	 * ❗Will return null if no Default Widget is selected❗
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="widget, UI"))
 	static TSubclassOf<UUserWidget>  GetDefaultDialogueWidget()
 	{
@@ -72,13 +80,17 @@ public:
 
 	/**
 	 * Tries to close Dialogue.
+	 * 
+	 * ❗Returns false if Dialogue Manager is not accessible❗
+	 * @param WorldContextObject	World Context Object
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="close, exit, dialogue"))
-	static void CloseDialogue(const UObject* WorldContextObject, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant)
+	static bool CloseDialogue(const UObject* WorldContextObject, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant)
 	{
-		if (!GetDialogueManger(WorldContextObject)) return;
+		if (!GetDialogueManger(WorldContextObject)) return false;
 
 		GetDialogueManger(WorldContextObject)->GetDialogueClosedEventHandle().Broadcast(nullptr);
+		return true;
 	}
 	
 	/**
@@ -136,8 +148,10 @@ public:
 	/**
 	 * Returns first 'Mountea Dialogue Manager' Component from Player Controller.
 	 * ❗Might return Null❗
+	 * 
+	 * @param WorldContextObject	World Context Object 
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", CompactNodeTitle="Diaogue Initiator", Keywords="manager, dialogue, master"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", CompactNodeTitle="Diaogue Manager", Keywords="manager, dialogue, master, initialize"))
 	static TScriptInterface<IMounteaDialogueManagerInterface> GetDialogueManger(const UObject* WorldContextObject)
 	{
 		if (!WorldContextObject) return nullptr;
@@ -160,6 +174,9 @@ public:
 	/**
 	 * Tries to get Child Node from Dialogue Node at given Index. If none is found, returns null.
 	 * ❗Might return Null❗
+	 * 
+	 * @param Index			Index of the Node to be returned.
+	 * @param ParentNode	Parent Node which should contain the Node to be returned.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="dialogue, child, node, index"))
 	static UMounteaDialogueGraphNode* GetChildrenNodeFromIndex(const int32 Index, const UMounteaDialogueGraphNode* ParentNode)
@@ -175,10 +192,14 @@ public:
 	/**
 	 * Tries to get first Dialogue Node from Children Nodes. If none is found, returns null.
 	 * ❗Might return Null❗
+	 * 
+	 * @param ParentNode	Node to read from.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="dialogue, child, node, first"))
 	static UMounteaDialogueGraphNode* GetFirstChildNode(const UMounteaDialogueGraphNode* ParentNode)
 	{
+		if (ParentNode == nullptr) return nullptr;
+
 		if (ParentNode->GetChildrenNodes().IsValidIndex(0))
 		{
 			return ParentNode->GetChildrenNodes()[0];
@@ -190,8 +211,10 @@ public:
 	/**
 	 * Returns all Allowed Child Nodes for given Parent Node
 	 *❗Might return empty array❗
+	 * 
+	 * @param ParentNode	Node to get all Children From
 	 */ 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="diaogue"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="diaogue, child, nodes"))
 	static TArray<UMounteaDialogueGraphNode*> GetAllowedChildNodes(const UMounteaDialogueGraphNode* ParentNode)
 	{
 		TArray<UMounteaDialogueGraphNode*> ReturnNodes;
@@ -213,6 +236,8 @@ public:
 
 	/**
 	 * Returns whether Dialogue Row is valid or not.
+	 * 
+	 * @param Row	Row to be validated.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Is Dialogue Row Valid", Keywords="dialogue, check, valid, null"))
 	static bool IsDialogueRowValid(const FDialogueRow& Row)
@@ -225,6 +250,8 @@ public:
 
 	/**
 	 * Returns whether Dialogue Row Data is valid or not.
+	 * 
+	 * @param Data	Data to be validated.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Is Dialogue Data Valid", Keywords="dialogue, check, valid, null"))
 	static bool IsDialogueRowDataValid(const FDialogueRowData& Data)
@@ -238,6 +265,9 @@ public:
 	/**
 	 * Returns Dialogue Row for Given Node.
 	 * ❗Might return invalid Row❗
+	 * ❗Only 'UMounteaDialogueGraphNode_DialogueNodeBase' classes have Dialogue data❗
+	 * 
+	 * @param Node	Node to get Data from.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Get Dialogue Row", Keywords="row, dialogue"))
 	static FDialogueRow GetDialogueRow(UMounteaDialogueGraphNode* Node)
@@ -257,6 +287,8 @@ public:
 
 	/**
 	 * Returns Duration for each Dialogue Row.
+	 * 
+	 * @param Row	Row for the Duration to be calculated from.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Duration", Keywords="dialogue, duration, long, time"))
 	static float GetRowDuration(const struct FDialogueRowData& Row)

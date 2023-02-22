@@ -27,7 +27,10 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueRowEvent, UMounteaDialogueC
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueFailed, const FString&, ErrorMessage);
 
 /**
+ * Mountea Dialgue Manager Interface.
  * 
+ * Should attached directly to Player Controller or used for Components that are attached to some Controller.
+ * Provides options to start and stop dialogue as well as ability to select dialogue options.
  */
 class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueManagerInterface
 {
