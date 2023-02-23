@@ -54,8 +54,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
 	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
 
-	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
-	FGuid NodeGUID;
 
 #if WITH_EDITORONLY_DATA
 

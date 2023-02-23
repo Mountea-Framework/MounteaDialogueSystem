@@ -26,6 +26,8 @@ public:
 
 #pragma region Variables
 
+public:
+	
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TArray<UMounteaDialogueGraphNode*> ParentNodes;
 
@@ -38,9 +40,20 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	UMounteaDialogueGraph* Graph;
 
+protected:
+
+	UPROPERTY(SaveGame, BlueprintReadOnly, Category="Mountea|Dialogue")
+	FGuid NodeGUID;
+
 #pragma endregion 
 
 #pragma region Functions
+
+public:
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	FORCEINLINE FGuid GetNodeGUID() const
+	{ return NodeGUID; };
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetChildrenNodes() const
@@ -77,7 +90,6 @@ public:
 	virtual UMounteaDialogueGraphEdge* GetEdge(UMounteaDialogueGraphNode* ChildNode);
 
 #pragma endregion 
-
 
 
 #if WITH_EDITORONLY_DATA
@@ -131,6 +143,8 @@ public:
 	virtual bool CanCreateConnection(UMounteaDialogueGraphNode* Other, enum EEdGraphPinDirection Direction, FText& ErrorMessage);
 
 	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat);
+
+	virtual void OnPasted();
 #endif
 
 };

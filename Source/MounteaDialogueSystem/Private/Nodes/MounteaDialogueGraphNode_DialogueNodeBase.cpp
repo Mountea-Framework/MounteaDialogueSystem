@@ -16,7 +16,6 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 	BackgroundColor = FLinearColor(FColor::Orange);
 #endif
 	
-	NodeGUID = FGuid::NewGuid();
 	bAutoStarts = false;
 }
 

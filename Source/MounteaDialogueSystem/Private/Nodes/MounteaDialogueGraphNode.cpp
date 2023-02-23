@@ -8,6 +8,8 @@
 
 UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
 {
+	NodeGUID = FGuid::NewGuid();
+
 #if WITH_EDITORONLY_DATA
 	CompatibleGraphType = UMounteaDialogueGraph::StaticClass();
 
@@ -126,6 +128,11 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 	}
 	
 	return bResult;
+}
+
+void UMounteaDialogueGraphNode::OnPasted()
+{
+	NodeGUID = FGuid::NewGuid();
 }
 
 #endif
