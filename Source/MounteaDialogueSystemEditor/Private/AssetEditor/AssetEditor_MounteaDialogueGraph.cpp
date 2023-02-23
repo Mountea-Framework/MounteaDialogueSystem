@@ -620,6 +620,15 @@ void FAssetEditor_MounteaDialogueGraph::PasteNodesHere(const FVector2D& Location
 
 			// Give new node a different Guid from the old one
 			Node->CreateNewGuid();
+
+			if (UEdNode_MounteaDialogueGraphNode* MounteaNode = Cast<UEdNode_MounteaDialogueGraphNode>(Node))
+			{
+				if (MounteaNode->DialogueGraphNode)
+				{
+					MounteaNode->DialogueGraphNode->OnPasted();
+				}
+				
+			}
 		}
 	}
 
