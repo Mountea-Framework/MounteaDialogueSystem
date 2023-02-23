@@ -36,6 +36,32 @@ void UMounteaDialogueManager::BeginPlay()
 	OnDialogueNodeFinished.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal);
 }
 
+void UMounteaDialogueManager::CallDialogueNodeSelected_Implementation(const FGuid& NodeGUID)
+{
+	UMounteaDialogueGraphNode* SelectedNode = nullptr;
+	if (DialogueContext)
+	{
+		for (UMounteaDialogueGraphNode* Itr : DialogueContext->GetChildrenNodes())
+		{
+			if (Itr && Itr->GetNodeGUID() == NodeGUID)
+			{
+				SelectedNode = Itr;
+				break;
+			}
+		}
+	}
+
+	if (!SelectedNode)
+	{
+		OnDialogueFailed.Broadcast(TEXT("Cannot find Selected Option!"));
+	}
+		
+	DialogueContext->SetDialogueContext(SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
+	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
+	
+	OnDialogueNodeSelected.Broadcast(DialogueContext);
+}
+
 void UMounteaDialogueManager::OnDialogueInitializedEvent_Internal(UMounteaDialogueContext* Context)
 {
 	if (Context)
@@ -80,6 +106,19 @@ void UMounteaDialogueManager::OnDialogueClosedEvent_Internal(UMounteaDialogueCon
 void UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal(UMounteaDialogueContext* Context)
 {
 	OnDialogueNodeSelectedEvent(Context);
+
+	if (DialogueWidgetPtr)
+	{
+		TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;
+		WidgetInterface.SetObject(DialogueWidgetPtr);
+		WidgetInterface.SetInterface(DialogueWidgetPtr);
+		WidgetInterface->Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::RemoveDialogueOptions);
+	}
+	else
+	{
+		OnDialogueFailed.Broadcast(TEXT("No Dialogue Widget!"));
+		return;
+	}
 
 	ProcessNode();
 }
@@ -186,6 +225,25 @@ void UMounteaDialogueManager::StartDialogue()
 
 void UMounteaDialogueManager::CloseDialogue()
 {
+	if (DialogueWidgetPtr)
+	{
+		TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;
+		WidgetInterface.SetObject(DialogueWidgetPtr);
+		WidgetInterface.SetInterface(DialogueWidgetPtr);
+		WidgetInterface->Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CloseDialogueWidget);	
+	}
+
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (PlayerController == nullptr)
+	{
+		OnDialogueFailed.Broadcast(TEXT("No Player Controller found!"));
+		return;
+	}
+
+	//TODO: Cache previous settings to return to them
+	PlayerController->SetInputMode(FInputModeGameOnly());
+	PlayerController->SetShowMouseCursor(false);
+	
 	//TODO: Close dialogue, destroy Context, clean Timer
 	if (!GetWorld()) return;
 
@@ -300,6 +358,27 @@ bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
 	{
 		Message = TEXT("Cannot display Dialogue Widget!");
 		return false;
+	}
+
+	switch (UMounteaDialogueSystemBFC::GetDialogueSystemSettings()->GetDialogueInputMode())
+	{
+		case EInputMode::EIM_UIOnly:
+			{
+				const FInputModeUIOnly InputModeUI;
+				PlayerController->SetInputMode(InputModeUI);
+				PlayerController->SetShowMouseCursor(true);
+				PlayerController->StopMovement();
+			}
+			break;
+		case EInputMode::EIM_UIAndGame:
+			{
+				const FInputModeGameAndUI InputModeUIGame;
+				PlayerController->SetInputMode(InputModeUIGame);
+				PlayerController->SetShowMouseCursor(true);
+			}
+			break;
+		default:
+			break;
 	}
 	
 	TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;

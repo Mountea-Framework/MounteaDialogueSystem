@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Blueprint/UserWidget.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
 #include "Engine/DeveloperSettings.h"
 #include "MounteaDialogueSystemSettings.generated.h"
@@ -17,6 +18,16 @@ namespace MounteaDialogueWidgetCommands
 	const FString AddDialogueOptions			(TEXT("AddDialogueOptions"));
 	const FString RemoveDialogueOptions	(TEXT("RemoveDialogueOptions"));
 }
+
+/**
+ * 
+ */
+UENUM(BlueprintType)
+enum class EInputMode : uint8
+{
+	EIM_UIOnly			UMETA(DisplayName="UI Only"),
+	EIM_UIAndGame	UMETA(DisplayName="UI & Game")
+};
 
 /**
  * Mountea Dialogue System Runtime Settigns.
@@ -39,6 +50,12 @@ protected:
 	UPROPERTY(config, EditDefaultsOnly, Category = "UserInterface", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
 	TSoftClassPtr<UUserWidget> DefaultDialogueWidgetClass;
 
+	/**
+	 * Sets Input mode when in Dialogue.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "UserInterface")
+	EInputMode InputMode;
+	
 	/**
 	 * Defines how often Dialogue Widgets update per second.
 	 * Effectively can replaces Tick.
@@ -112,6 +129,10 @@ public:
 		return  DefaultDialogueWidgetClass;
 	}
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	EInputMode GetDialogueInputMode() const
+	{ return InputMode; };
+	
 	/**
 	 * Returns whether Subtitles are allowed or not.
 	 */
@@ -122,7 +143,7 @@ public:
 	/**
 	 * Returns Widget Update Frequency in seconds.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Update Frequency", Keywords="update, refresh, tick, frequency")))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Update Frequency", Keywords="update, refresh, tick, frequency"))
 	float GetWidgetUpdateFrequency() const
 	{ return UpdateFrequency; };
 
@@ -142,6 +163,27 @@ public:
 
 		return SubtitlesSettings;
 	};
+
+	/**
+	 * 
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	void SetSubtitlesSettings(const FSubtitlesSettings& NewSettings, const TSubclassOf<UUserWidget> OptionalClassFilter)
+	{
+		if (OptionalClassFilter == nullptr)
+		{
+			SubtitlesSettings = NewSettings;
+			return;
+		}
+
+		if (SubtitlesSettingsOverrides.Contains(OptionalClassFilter))
+		{
+			SubtitlesSettingsOverrides[OptionalClassFilter] = NewSettings;
+			return;
+		}
+
+		SubtitlesSettingsOverrides.Add(OptionalClassFilter, NewSettings);
+	}
 
 protected:
 

@@ -8,7 +8,7 @@
 
 class IMounteaDialogueManagerInterface;
 // This class does not need to be modified.
-UINTERFACE(MinimalAPI)
+UINTERFACE(BlueprintType, Blueprintable)
 class UMounteaDialogueWBPInterface : public UInterface
 {
 	GENERATED_BODY()
@@ -33,6 +33,10 @@ public:
 	 * @param DialogueManager	Dialogue Manager Interface reference. Request 'GetDialogueContext' to retrieve data to display.
 	 * @param Command			String command. All commands are defined in ProjectSettings/MounteaFramework/MounteaDilaogueSystem.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Interaction")
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Mountea|Dialogue")
 	void RefreshDialogueWidget(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command);
+
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Mountea|Dialogue")
+	void OnOptionSelected(const FGuid& SelectionGUID);
 };

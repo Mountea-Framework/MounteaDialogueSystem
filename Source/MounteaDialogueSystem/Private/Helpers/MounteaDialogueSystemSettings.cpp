@@ -10,6 +10,7 @@ UMounteaDialogueSystemSettings::UMounteaDialogueSystemSettings()
 	CategoryName = TEXT("Mountea Framework");
 	SectionName = TEXT("Mountea Dialogue System");
 
+	InputMode = EInputMode::EIM_UIOnly;
 	bAllowSubtitles = true;
 
 	UpdateFrequency = 0.05f;

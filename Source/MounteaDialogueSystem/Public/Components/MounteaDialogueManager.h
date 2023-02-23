@@ -31,6 +31,8 @@ protected:
 #pragma region EventFunctions
 protected:
 
+	void CallDialogueNodeSelected_Implementation(const FGuid& NodeGUID);
+
 	/**
 	 * Even called when Dialogue is Initialized.
 	 * ❗In order to use native logic, call Parent node❗
