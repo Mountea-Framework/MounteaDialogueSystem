@@ -19,7 +19,9 @@ namespace MounteaDialogueWidgetCommands
 }
 
 /**
+ * Mountea Dialogue System Runtime Settigns.
  * 
+ * Holds a list of settings that are used to further improve and tweak Dialogues.
  */
 UCLASS(config = MounteaSettings)
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSystemSettings : public UDeveloperSettings
@@ -37,17 +39,44 @@ protected:
 	UPROPERTY(config, EditDefaultsOnly, Category = "UserInterface", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
 	TSoftClassPtr<UUserWidget> DefaultDialogueWidgetClass;
 
-	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles", meta=(UIMin=0.01f, ClampMin=0.01f, UIMax=1.f, ClampMax=1.f))
+	/**
+	 * Defines how often Dialogue Widgets update per second.
+	 * Effectively can replaces Tick.
+	 * ❔Units: seconds
+	 * ❗Lower the value higher the performance impact❗
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles", meta=(UIMin=0.01f, ClampMin=0.01f, UIMax=1.f, ClampMax=1.f, Units="seconds"))
 	float UpdateFrequency = 0.05f;
 
+	/**
+	 * List of Dialogue commands.
+	 * Dialogue Commands are used to provide information what action should happen.
+	 * ❔Some values are hardcoded and cannot be deleted, thos are used for C++ requests
+	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles")
 	TSet<FString> DialogueWidgetCommands;
 
+	/**
+	 * Whether subtitles are allowed or not.
+	 * If subtitles are not allowed, C++ requests won't request showing subtitles.
+	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles")
 	uint8 bAllowSubtitles : 1;
 
+	/**
+	 * List of General Dialogue Settings.
+	 * Defines font, sizes etc. for all subtitles.
+	 * If any Widget is supposed to be overriden and use different setup for subtitles, just add that override to 'SubtitlesSettingsOverrides'.
+	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles")
 	FSubtitlesSettings SubtitlesSettings;
+
+	/**
+	 * Map of Widget Classes and their Subtitles Settings.
+	 * Used for overriding General Defaults.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles")
+	TMap<TSubclassOf<UUserWidget>, FSubtitlesSettings> SubtitlesSettingsOverrides;
 
 #if WITH_EDITOR
 	virtual FText GetSectionText() const override
@@ -83,17 +112,36 @@ public:
 		return  DefaultDialogueWidgetClass;
 	}
 
+	/**
+	 * Returns whether Subtitles are allowed or not.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	bool SubtitlesAllowed() const
 	{ return bAllowSubtitles; };
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	/**
+	 * Returns Widget Update Frequency in seconds.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Update Frequency", Keywords="update, refresh, tick, frequency")))
 	float GetWidgetUpdateFrequency() const
 	{ return UpdateFrequency; };
 
+	/**
+	 * Returns Subtitles Settings.
+	 * If given 'OptionalClassFilter' then it will search for Subtitles Settings override for this class, if any is specified.
+	 * 
+	 * @param OptionalClassFilter	Optional Class of UserWidget to filter out the override Settings
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
-	FSubtitlesSettings GetSubtitlesSettings() const
-	{ return SubtitlesSettings; };
+	FSubtitlesSettings GetSubtitlesSettings(TSubclassOf<UUserWidget> OptionalClassFilter) const
+	{ 
+		if (SubtitlesSettingsOverrides.Contains(OptionalClassFilter))
+		{
+			return SubtitlesSettingsOverrides[OptionalClassFilter];
+		}
+
+		return SubtitlesSettings;
+	};
 
 protected:
 

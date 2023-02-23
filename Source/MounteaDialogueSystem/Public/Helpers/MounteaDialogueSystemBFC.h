@@ -334,13 +334,13 @@ public:
 	 * 
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Subtitles Settings", Keywords="settings, subtitles, font"))
-	static FSubtitlesSettings GetSubtitlesSettings(const UObject* WorldContextObject)
+	static FSubtitlesSettings GetSubtitlesSettings(const UObject* WorldContextObject, TSubclassOf<UUserWidget> OptionalFilterClass)
 	{
 		if (GetDialogueSystemSettings_Internal() == nullptr)
 		{
 			return FSubtitlesSettings();
 		}
 
-		return GetDialogueSystemSettings_Internal()->GetSubtitlesSettings();
+		return GetDialogueSystemSettings_Internal()->GetSubtitlesSettings(OptionalFilterClass);
 	}
 };
