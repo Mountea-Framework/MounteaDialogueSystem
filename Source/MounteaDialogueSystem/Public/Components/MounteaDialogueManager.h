@@ -8,7 +8,12 @@
 #include "MounteaDialogueManager.generated.h"
 
 /**
- *  
+ *  Mountea Dialogue Manager Component
+ * 
+ * Should be attached to Player Controller or any other Controller which should be able to trigger dialogues.
+ * ❔Allows any Actor to be Dialogue Manager
+ * ❔Implements 'IMounteaDialogueManagerInterface'.
+ * ❗If attached to non-Controller class, then it will show Dialogue UI to first found Player Controller
  */
 UCLASS(ClassGroup=(Mountea), Blueprintable,  meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Manager"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueManager : public UActorComponent, public IMounteaDialogueManagerInterface
@@ -248,6 +253,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Mountea|Dialogue", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
 	TSubclassOf<UUserWidget> DialogueWidgetClass = nullptr;
 	
+	/**
+	 * Dialogue Widget which has been created.
+	 * Transient, for actual runtime only.
+	 */
 	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue")
 	UUserWidget* DialogueWidgetPtr = nullptr;
 

@@ -27,6 +27,9 @@ enum class ERowDurationMode : uint8
 	ERDM_AutoCalculate			UMETA(DisplayName="Calculate",			Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds.")
 };
 
+/**
+ * Helper structure exposing Widget text settings to set them globally.
+ */
 USTRUCT(BlueprintType)
 struct FSubtitlesSettings
 {

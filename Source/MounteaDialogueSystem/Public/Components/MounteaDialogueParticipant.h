@@ -14,6 +14,7 @@ class UMounteaDialogueGraphNode_DialogueNodeBase;
  * Mountea Dialogue Participant Component.
  *
  * ❔This Component allows any Actor to be Dialogue Participant.
+ * ❗Requires Dialogue Graph to work.
  */
 UCLASS(ClassGroup=(Mountea), Blueprintable, hideCategories=(Collision, AssetUserData, Cooking, ComponentTick, Activation, Rendering, Sockets), meta=(BlueprintSpawnableComponent, DisplayName = "Mountea Dialogue Participant"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueParticipant : public UActorComponent, public IMounteaDialogueParticipantInterface
