@@ -24,4 +24,5 @@ public:
 	UMounteaDialogueGraphNode_AutoCompleteNode();
 
 	virtual FText GetDescription_Implementation() const override;
+	virtual FText GetNodeCategory_Implementation() const override;
 };

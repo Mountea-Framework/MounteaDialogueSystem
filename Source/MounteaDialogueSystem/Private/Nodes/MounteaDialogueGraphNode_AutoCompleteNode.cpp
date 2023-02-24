@@ -13,11 +13,18 @@ UMounteaDialogueGraphNode_AutoCompleteNode::UMounteaDialogueGraphNode_AutoComple
 	
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_AutoCompleteNodeContextMenuName", "Auto Complete Dialogue");
 #endif
+
+	bAutoStarts = true;
 }
 
 FText UMounteaDialogueGraphNode_AutoCompleteNode::GetDescription_Implementation() const
 {
 	return LOCTEXT("MounteaDialogueGraphNode_AutoCompleteNodeDescription", "Auto Complete Node is a helper Node which automatically closes Dialogue upon reaching.");
+}
+
+FText UMounteaDialogueGraphNode_AutoCompleteNode::GetNodeCategory_Implementation() const
+{
+	return Super::GetNodeCategory_Implementation();
 }
 
 #undef LOCTEXT_NAMESPACE

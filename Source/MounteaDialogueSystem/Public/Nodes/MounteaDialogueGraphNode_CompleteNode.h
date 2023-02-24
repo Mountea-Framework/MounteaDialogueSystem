@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Nodes/MounteaDialogueGraphNode.h"
+#include "MounteaDialogueGraphNode_DialogueNodeBase.h"
 #include "MounteaDialogueGraphNode_CompleteNode.generated.h"
 
 /**
@@ -13,7 +13,7 @@
  * Indicates that Dialogue can be manually closed.
  */
 UCLASS(ClassGroup=("Mountea|Dialogue"), DisplayName="Complete Node", meta=(ToolTip="Mountea Dialogue Tree: Complete Node"))
-class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_CompleteNode : public UMounteaDialogueGraphNode
+class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_CompleteNode : public UMounteaDialogueGraphNode_DialogueNodeBase
 {
 	GENERATED_BODY()
 
