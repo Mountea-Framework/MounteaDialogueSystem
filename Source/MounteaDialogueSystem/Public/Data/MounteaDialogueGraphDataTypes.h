@@ -47,11 +47,14 @@ struct FSubtitlesSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles")
 	FLinearColor ShadowColor;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Subtitles")
+	FGuid SettingsGUID;
+
 public:
 
 	FSubtitlesSettings() : FontColor(FLinearColor::White), ShadowOffset(1.5f, 1.25f), ShadowColor(FLinearColor::Black)
 	{
-		SubtitlesFont = FCoreStyle::GetDefaultFontStyle("Regular", 22, FFontOutlineSettings(1));
+		SubtitlesFont = FCoreStyle::GetDefaultFontStyle("Regular", 16, FFontOutlineSettings(1));
 	};
 };
 
@@ -106,6 +109,18 @@ public:
 
 public:
 
+	inline FDialogueRowData& operator =(const FDialogueRowData& Other)
+	{
+		RowText = Other.RowText;
+		RowSound = Other.RowSound;
+		RowDurationMode = Other.RowDurationMode;
+		RowDuration = Other.RowDuration;
+		RowDurationOverride = Other.RowDurationOverride;
+		RowGUID = FGuid::NewGuid();
+		
+		return *this;
+	}
+
 	bool operator==(const FDialogueRowData& Other) const
 	{
 		return Other.RowGUID == this->RowGUID;
@@ -136,6 +151,9 @@ struct FDialogueRow : public FTableRowBase
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
+	UTexture* RowOptionalIcon = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
 	FText DialogueParticipant;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
@@ -144,24 +162,39 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(TitleProperty="RowText"))
 	TSet<FDialogueRowData> DialogueRowData;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
+	FSubtitlesSettings TitleSettingsOverride;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate))
 	FGuid RowGUID;
 
 public:
 
 	FDialogueRow()
-		:  DialogueParticipant(LOCTEXT("FDialogueRow_Participant", "Dialogue Participant")), RowTitle(LOCTEXT("FDialogueRow_Title", "Selectable Option"))
+		:  RowOptionalIcon(nullptr), DialogueParticipant(LOCTEXT("FDialogueRow_Participant", "Dialogue Participant")), RowTitle(LOCTEXT("FDialogueRow_Title", "Selectable Option"))
 	{
 		RowGUID = FGuid::NewGuid();
 	};
 
-	FDialogueRow(const FText& InText, const FText& InParticipant, const TSet<FDialogueRowData>& InData)
-		: DialogueParticipant(InParticipant), RowTitle(InText), DialogueRowData(InData)
+	FDialogueRow(UTexture* InRowIcon, const FText& InText, const FText& InParticipant, const TSet<FDialogueRowData>& InData)
+		: RowOptionalIcon(InRowIcon), DialogueParticipant(InParticipant), RowTitle(InText), DialogueRowData(InData)
 	{
 		RowGUID = FGuid::NewGuid();
 	}
-
+	
 public:
+
+	inline FDialogueRow& operator=(const FDialogueRow& Other)
+	{
+		RowOptionalIcon = Other.RowOptionalIcon;
+		DialogueParticipant = Other.DialogueParticipant;
+		RowTitle = Other.RowTitle;
+		DialogueRowData = Other.DialogueRowData;
+		TitleSettingsOverride = Other.TitleSettingsOverride;
+		RowGUID = FGuid::NewGuid();
+		
+		return *this;
+	}
 
 	bool operator==(const FDialogueRow& Other) const
 	{
