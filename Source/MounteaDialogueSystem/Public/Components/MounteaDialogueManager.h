@@ -29,9 +29,9 @@ protected:
 	virtual void BeginPlay() override;
 
 #pragma region EventFunctions
+	
 protected:
-
-	void CallDialogueNodeSelected_Implementation(const FGuid& NodeGUID);
+	virtual void CallDialogueNodeSelected_Implementation(const FGuid& NodeGUID) override;
 
 	/**
 	 * Even called when Dialogue is Initialized.
@@ -172,6 +172,9 @@ protected:
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueFailed OnDialogueFailed;
 
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	FDialogueManagerStateChanged OnDialogueManagerStateChanged;
+
 #pragma endregion
 
 #pragma region InterfaceImplementations
@@ -215,6 +218,11 @@ protected:
 	{ return DialogueContext; };
 	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) override;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="Context, Get"))
+	virtual EDialogueManagerState GetDialogueManagerState() const override
+	{ return  ManagerState; };
+	virtual void SetDialogueManagerState(const EDialogueManagerState NewState) override;
+
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() override
 	{ return OnDialogueInitialized; };
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() override
@@ -237,6 +245,8 @@ protected:
 	{ return OnDialogueRowFinished; };
 	virtual FDialogueFailed& GetDialogueFailedEventHandle() override
 	{ return OnDialogueFailed; };
+	virtual FDialogueManagerStateChanged& GetDialogueManagerStateChangedEventHandle() override
+	{ return OnDialogueManagerStateChanged; };
 
 #pragma endregion 
 
@@ -252,8 +262,11 @@ protected:
 	 * ❔Could be left empty if Project Settings are setup properly❔
 	 * ❗Must implement MounteaDialogueWBPInterface❗
 	 */
-	UPROPERTY(EditAnywhere, Category="Mountea|Dialogue", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
+	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
 	TSubclassOf<UUserWidget> DialogueWidgetClass = nullptr;
+
+	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue")
+	EDialogueManagerState ManagerState;
 	
 	/**
 	 * Dialogue Widget which has been created.

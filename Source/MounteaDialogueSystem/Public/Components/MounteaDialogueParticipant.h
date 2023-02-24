@@ -41,6 +41,12 @@ protected:
 	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(DisplayThumbnail=false, NoResetToDefault))
 	UMounteaDialogueGraph* DialogueGraph = nullptr;
 
+	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(NoResetToDefault))
+	EDialogueParticipantState DefaultParticipantState;
+	
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue", meta=(NoResetToDefault))
+	EDialogueParticipantState ParticipantState;
+
 #pragma endregion
 
 #pragma region EventVariables
@@ -53,6 +59,9 @@ protected:
 	 */
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueGraphChanged OnDialogueGraphChanged;
+
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	FDialogueParticipantStateChanged OnDialogueParticipantStateChanged;
 
 #pragma endregion 
 
@@ -94,10 +103,23 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph) override;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	virtual EDialogueParticipantState GetParticipantState() const override
+	{ return  ParticipantState; };
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	virtual void SetParticipantState(const EDialogueParticipantState NewState) override;
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	virtual EDialogueParticipantState GetDefaultParticipantState() const override
+	{ return  DefaultParticipantState; };
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	virtual void SetDefaultParticipantState(const EDialogueParticipantState NewState) override;
+
 #pragma region EventHandleGetters
 	
 	virtual FDialogueGraphChanged& GetDialogueGraphChangedEventHandle() override
 	{ return OnDialogueGraphChanged; };
+	virtual FDialogueParticipantStateChanged& GetDialogueParticipantStateChangedEventHandle() override
+	{ return OnDialogueParticipantStateChanged; };
 	
 #pragma endregion 
 

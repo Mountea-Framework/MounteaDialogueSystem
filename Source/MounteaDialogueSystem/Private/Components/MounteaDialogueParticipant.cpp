@@ -7,13 +7,17 @@
 #include "Nodes/MounteaDialogueGraphNode.h"
 
 UMounteaDialogueParticipant::UMounteaDialogueParticipant()
-{ }
+{
+	DefaultParticipantState = EDialogueParticipantState::EDPS_Enabled;
+}
 
 void UMounteaDialogueParticipant::BeginPlay()
 {
 	Super::BeginPlay();
 
 	OnDialogueGraphChanged.AddUniqueDynamic(this, &UMounteaDialogueParticipant::OnDialogueGraphChangedEvent);
+
+	SetParticipantState(GetDefaultParticipantState());
 }
 
 bool UMounteaDialogueParticipant::CanStartDialogue() const
@@ -33,4 +37,16 @@ void UMounteaDialogueParticipant::SetDialogueGraph(UMounteaDialogueGraph* NewDia
 
 		OnDialogueGraphChanged.Broadcast(NewDialogueGraph);
 	}
+}
+
+void UMounteaDialogueParticipant::SetParticipantState(const EDialogueParticipantState NewState)
+{
+	ParticipantState = NewState;
+
+	OnDialogueParticipantStateChanged.Broadcast(NewState);
+}
+
+void UMounteaDialogueParticipant::SetDefaultParticipantState(const EDialogueParticipantState NewState)
+{
+	DefaultParticipantState = NewState;
 }

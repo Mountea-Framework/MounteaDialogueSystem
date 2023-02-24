@@ -17,6 +17,7 @@
 UMounteaDialogueManager::UMounteaDialogueManager()
 {
 	DialogueContext = nullptr;
+	ManagerState = EDialogueManagerState::EDMS_Enabled;
 }
 
 void UMounteaDialogueManager::BeginPlay()
@@ -56,7 +57,7 @@ void UMounteaDialogueManager::CallDialogueNodeSelected_Implementation(const FGui
 		OnDialogueFailed.Broadcast(TEXT("Cannot find Selected Option!"));
 	}
 		
-	DialogueContext->SetDialogueContext(SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
+	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 	
 	OnDialogueNodeSelected.Broadcast(DialogueContext);
@@ -98,6 +99,13 @@ void UMounteaDialogueManager::OnDialogueStartedEvent_Internal(UMounteaDialogueCo
 
 void UMounteaDialogueManager::OnDialogueClosedEvent_Internal(UMounteaDialogueContext* Context)
 {
+	switch (GetDialogueManagerState())
+	{
+		case EDialogueManagerState::EDMS_Disabled:
+		case EDialogueManagerState::EDMS_Enabled:
+			return;
+	}
+	
 	OnDialogueClosedEvent(DialogueContext);
 
 	CloseDialogue();
@@ -187,7 +195,7 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 			OnDialogueClosed.Broadcast(DialogueContext);	
 		}
 		
-		DialogueContext->SetDialogueContext(NewActiveNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(NewActiveNode));
+		DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, NewActiveNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(NewActiveNode));
 		DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 		
 		OnDialogueNodeSelected.Broadcast(DialogueContext);
@@ -218,6 +226,8 @@ void UMounteaDialogueManager::StartDialogue()
 		OnDialogueFailed.Broadcast(ErrorMessage);
 		return;
 	}
+
+	SetDialogueManagerState(EDialogueManagerState::EDMS_Active);
 	
 	//TODO: Add ability to start from specific Node
 	ProcessNode();
@@ -249,8 +259,16 @@ void UMounteaDialogueManager::CloseDialogue()
 
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 
+	SetDialogueManagerState(EDialogueManagerState::EDMS_Enabled);
+
 	if(!DialogueContext) return;
 
+	if (!DialogueContext->GetDialogueParticipant().GetObject()) return;
+
+	// TODO: State MACHINE! Some dialogue might be finished, some might be paused etc.
+	DialogueContext->GetDialogueParticipant()->SetParticipantState(EDialogueParticipantState::EDPS_Enabled);
+	
+	DialogueContext->SetDialogueContext(nullptr, nullptr, TArray<UMounteaDialogueGraphNode*>());
 	DialogueContext->ConditionalBeginDestroy();
 	DialogueContext = nullptr;
 }
@@ -497,4 +515,11 @@ void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewCon
 	DialogueContext = NewContext;
 
 	OnDialogueContextUpdatedEvent(DialogueContext);
+}
+
+void UMounteaDialogueManager::SetDialogueManagerState(const EDialogueManagerState NewState)
+{
+	ManagerState = NewState;
+	
+	OnDialogueManagerStateChanged.Broadcast(NewState);
 }

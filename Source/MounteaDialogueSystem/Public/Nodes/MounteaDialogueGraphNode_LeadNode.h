@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "MounteaDialogueGraphNode_DialogueNodeBase.h"
-#include "UObject/Object.h"
 #include "MounteaDialogueGraphNode_LeadNode.generated.h"
 
 /**

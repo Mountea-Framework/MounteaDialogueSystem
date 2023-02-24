@@ -83,13 +83,17 @@ public:
 	 * 
 	 * ❗Returns false if Dialogue Manager is not accessible❗
 	 * @param WorldContextObject	World Context Object
+	 * @param DialogueParticipant	Dialogue with which Participant to close
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="close, exit, dialogue"))
-	static bool CloseDialogue(const UObject* WorldContextObject)
+	static bool CloseDialogue(const UObject* WorldContextObject, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant)
 	{
 		if (!GetDialogueManger(WorldContextObject)) return false;
-
-		GetDialogueManger(WorldContextObject)->GetDialogueClosedEventHandle().Broadcast(nullptr);
+		
+		UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
+		Context->SetDialogueContext(DialogueParticipant, nullptr, TArray<UMounteaDialogueGraphNode*>());
+		
+		GetDialogueManger(WorldContextObject)->GetDialogueClosedEventHandle().Broadcast(Context);
 		return true;
 	}
 	
@@ -119,7 +123,7 @@ public:
 		if (StartNode_Children[0] == nullptr) return false;
 
 		UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
-		Context->SetDialogueContext(StartNode_Children[0], GetAllowedChildNodes(StartNode_Children[0]));
+		Context->SetDialogueContext(DialogueParticipant, StartNode_Children[0], GetAllowedChildNodes(StartNode_Children[0]));
 
 		return  InitializeDialogueWithContext(WorldContextObject, Initiator, DialogueParticipant, Context);
 	}

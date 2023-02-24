@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Data/MounteaDialogueGraphDataTypes.h"
 #include "UObject/Interface.h"
 #include "MounteaDialogueManagerInterface.generated.h"
 
@@ -15,6 +16,7 @@ class UMounteaDialogueManagerInterface : public UInterface
 
 class UMounteaDialogueContext;
 
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueInitialized, UMounteaDialogueContext*, Context);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueEvent, UMounteaDialogueContext*, Context);
 
@@ -26,8 +28,10 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueRowEvent, UMounteaDialogueC
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueFailed, const FString&, ErrorMessage);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueManagerStateChanged, const EDialogueManagerState&, NewState);
+
 /**
- * Mountea Dialgue Manager Interface.
+ * Mountea Dialogue Manager Interface.
  * 
  * Should attached directly to Player Controller or used for Components that are attached to some Controller.
  * Provides options to start and stop dialogue as well as ability to select dialogue options.
@@ -72,6 +76,9 @@ public:
 	virtual UMounteaDialogueContext* GetDialogueContext() const = 0;
 	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) = 0;
 
+	virtual EDialogueManagerState GetDialogueManagerState() const = 0;
+	virtual void SetDialogueManagerState(const EDialogueManagerState NewState) = 0;
+
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueClosedEventHandle() = 0;
@@ -87,4 +94,6 @@ public:
 	virtual FDialogueRowEvent& GetDialogueRowFinishedEventHandle() = 0;
 
 	virtual FDialogueFailed& GetDialogueFailedEventHandle() = 0;
+
+	virtual FDialogueManagerStateChanged& GetDialogueManagerStateChangedEventHandle() = 0;
 };

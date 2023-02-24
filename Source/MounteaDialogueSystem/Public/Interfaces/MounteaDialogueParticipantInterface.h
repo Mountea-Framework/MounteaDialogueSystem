@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Data/MounteaDialogueGraphDataTypes.h"
 #include "UObject/Interface.h"
 #include "MounteaDialogueParticipantInterface.generated.h"
 
@@ -19,6 +20,7 @@ class UMounteaDialogueGraphNode;
 struct FDialogueRow;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueGraphChanged, UMounteaDialogueGraph*, NewGraph);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantStateChanged, const EDialogueParticipantState&, NewState);
 
 /**
  * Mountea Dialogue Participant Interface.
@@ -49,6 +51,15 @@ protected:
 
 	bool CanStartDialogueEvent_Implementation() const
 	{
+		switch (GetParticipantState())
+		{
+			case EDialogueParticipantState::EDPS_Active:
+			case EDialogueParticipantState::EDPS_Disabled:
+				return false;
+			case EDialogueParticipantState::EDPS_Enabled:
+				return true;
+		}
+
 		return true;
 	};
 
@@ -62,12 +73,18 @@ public:
 
 	virtual UMounteaDialogueGraph* GetDialogueGraph() const = 0;
 	virtual void SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph) = 0;
+
+	virtual EDialogueParticipantState GetParticipantState() const = 0;
+	virtual void SetParticipantState(const EDialogueParticipantState NewState) = 0;
+	virtual EDialogueParticipantState GetDefaultParticipantState() const = 0;
+	virtual void SetDefaultParticipantState(const EDialogueParticipantState NewState) = 0;
 	
 #pragma endregion
 
 #pragma region EventHandles
 
 	virtual FDialogueGraphChanged& GetDialogueGraphChangedEventHandle() = 0;
+	virtual FDialogueParticipantStateChanged& GetDialogueParticipantStateChangedEventHandle() = 0;
 
 #pragma endregion 
 };
