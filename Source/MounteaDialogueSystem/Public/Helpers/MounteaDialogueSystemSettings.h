@@ -188,8 +188,10 @@ public:
 protected:
 
 #if WITH_EDITOR
-
+	FSlateFontInfo SetupDefaultFontSettings() const;
+	
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 
 #endif
 	
