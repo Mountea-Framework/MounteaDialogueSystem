@@ -274,7 +274,7 @@ public:
 	{
 		UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNodeBase = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node);
 		
-		if (!DialogueNodeBase) FDialogueRow();
+		if (!DialogueNodeBase) return FDialogueRow();
 		if (DialogueNodeBase->GetDataTable() == nullptr) return FDialogueRow();
 		if (DialogueNodeBase->GetDataTable()->RowStruct->IsChildOf(FDialogueRow::StaticStruct()) == false) return FDialogueRow();
 
