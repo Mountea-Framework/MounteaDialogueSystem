@@ -177,9 +177,5 @@ bool FMounteaDialogueGraphEditorUtilities::OpenEditorForAsset(const UObject* Ass
 		return false;
 	}
 
-#if NY_ENGINE_VERSION >= 424
 	return GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(const_cast<UObject*>(Asset));
-#else
-	return FAssetEditorManager::Get().OpenEditorForAsset(const_cast<UObject*>(Asset));
-#endif
 }
