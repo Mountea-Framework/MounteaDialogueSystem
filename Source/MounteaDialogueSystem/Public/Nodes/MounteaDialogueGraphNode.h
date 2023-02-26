@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Decorators/MounteaDialogueGraphNodeDecoratorBase.h"
 #include "MounteaDialogueGraphNode.generated.h"
 
 class UMounteaDialogueGraph;
@@ -15,7 +16,7 @@ class UMounteaDialogueGraphEdge;
  * Does come with ability to define Colours, Name, Description and Title.
  * Contains information about Parent and Children Nodes.
  */
-UCLASS(Abstract, BlueprintType, ClassGroup=("Mountea|Dialogue"))
+UCLASS(Abstract, BlueprintType, ClassGroup=("Mountea|Dialogue"), HideCategories=("Hidden"), AutoExpandCategories=("Mountea, Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject
 {
 	GENERATED_BODY()
@@ -40,15 +41,18 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	UMounteaDialogueGraph* Graph;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, Category = "Hidden")
 	int32 NodeIndex = INDEX_NONE;
 
 	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
 	int32 MaxChildrenNodes = -1;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	TArray<FMounteaDialogueDecorator> NodeDecorators;
+	
 protected:
 
-	UPROPERTY(SaveGame, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(SaveGame, BlueprintReadOnly, Category="Hidden")
 	FGuid NodeGUID;
 
 #pragma endregion 

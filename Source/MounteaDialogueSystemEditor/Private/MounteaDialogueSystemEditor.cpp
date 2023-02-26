@@ -2,6 +2,8 @@
 
 #include "AssetToolsModule.h"
 #include "HttpModule.h"
+#include "AssetActions/MounteaDialogueAdditionalDataAssetAction.h"
+#include "AssetActions/MounteaDialogueDecoratorAssetAction.h"
 #include "AssetActions/MounteaDialogueGraphAssetAction.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
@@ -69,6 +71,12 @@ void FMounteaDialogueSystemEditor::StartupModule()
 	{
 		MounteaDialogueGraphAssetActions = MakeShared<FMounteaDialogueGraphAssetAction>();
 		FAssetToolsModule::GetModule().Get().RegisterAssetTypeActions(MounteaDialogueGraphAssetActions.ToSharedRef());
+
+		MounteaDialogueAdditionalDataAssetActions = MakeShared<FMounteaDialogueAdditionalDataAssetAction>();
+		FAssetToolsModule::GetModule().Get().RegisterAssetTypeActions(MounteaDialogueAdditionalDataAssetActions.ToSharedRef());
+		
+		MounteaDialogueDecoratorAssetAction = MakeShared<FMounteaDialogueDecoratorAssetAction>();
+		FAssetToolsModule::GetModule().Get().RegisterAssetTypeActions(MounteaDialogueDecoratorAssetAction.ToSharedRef());
 	}
 
 	// Thumbnails and Icons
@@ -91,10 +99,26 @@ void FMounteaDialogueSystemEditor::StartupModule()
 				{
 					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueGraph", DialogueTreeSetClassThumb);
 					DialogueTreeSet->Set("ClassIcon.MounteaDialogueGraph", DialogueTreeSetClassIcon);
-     
-					//Register the created style
-					FSlateStyleRegistry::RegisterSlateStyle(*DialogueTreeSet.Get());
 				}
+				
+				FSlateImageBrush* DialogueAdditionalDataSetClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/AdditionalDialogueData"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueAdditionalDataSetClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/AdditionalDialogueData"), TEXT(".png")), FVector2D(16.f, 16.f));
+				if (DialogueAdditionalDataSetClassIcon && DialogueAdditionalDataSetClassThumb)
+				{
+					DialogueTreeSet->Set("ClassThumbnail.DialogueAdditionalData", DialogueAdditionalDataSetClassThumb);
+					DialogueTreeSet->Set("ClassIcon.DialogueAdditionalData", DialogueAdditionalDataSetClassIcon);
+				}
+
+				FSlateImageBrush* DialogueDecoratorSetClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueDecorator"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueDecoratorDataSetClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueDecorator"), TEXT(".png")), FVector2D(16.f, 16.f));
+				if (DialogueDecoratorSetClassThumb && DialogueDecoratorDataSetClassIcon)
+				{
+					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueGraphNodeDecoratorBase", DialogueDecoratorSetClassThumb);
+					DialogueTreeSet->Set("ClassIcon.MounteaDialogueGraphNodeDecoratorBase", DialogueDecoratorDataSetClassIcon);
+				}
+
+				//Register the created style
+				FSlateStyleRegistry::RegisterSlateStyle(*DialogueTreeSet.Get());
 			}
 		}
 	}

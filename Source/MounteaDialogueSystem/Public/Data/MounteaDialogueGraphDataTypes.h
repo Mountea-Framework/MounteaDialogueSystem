@@ -192,6 +192,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
 	FSubtitlesSettings TitleSettingsOverride;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
+	UDataAsset* DialogueRowAdditionalData = nullptr;
+	
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate))
 	FGuid RowGUID;
 
@@ -203,8 +206,8 @@ public:
 		RowGUID = FGuid::NewGuid();
 	};
 
-	FDialogueRow(const int32 NewUIRowID, UTexture* InRowIcon, const FText& InText, const FText& InParticipant, const TSet<FDialogueRowData>& InData)
-		: UIRowID(NewUIRowID), RowOptionalIcon(InRowIcon), DialogueParticipant(InParticipant), RowTitle(InText), DialogueRowData(InData)
+	FDialogueRow(const int32 NewUIRowID, UTexture* InRowIcon, const FText& InText, const FText& InParticipant, const TSet<FDialogueRowData>& InData, UDataAsset* NewData)
+		: UIRowID(NewUIRowID), RowOptionalIcon(InRowIcon), DialogueParticipant(InParticipant), RowTitle(InText), DialogueRowData(InData), DialogueRowAdditionalData(NewData)
 	{
 		RowGUID = FGuid::NewGuid();
 	}
@@ -219,6 +222,7 @@ public:
 		DialogueRowData = Other.DialogueRowData;
 		TitleSettingsOverride = Other.TitleSettingsOverride;
 		UIRowID = Other.UIRowID;
+		DialogueRowAdditionalData = Other.DialogueRowAdditionalData;
 		RowGUID = FGuid::NewGuid();
 		
 		return *this;
@@ -271,13 +275,4 @@ struct FUIRowID
 	{
 		return FCrc::MemCrc32(&RowID.RowWidgetClass, sizeof(FUIRowID)) + RowID.UIRowID;
 	}
-};
-
-/**
- * 
- */
-UCLASS()
-class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphDataTypes : public UObject
-{
-	GENERATED_BODY()
 };

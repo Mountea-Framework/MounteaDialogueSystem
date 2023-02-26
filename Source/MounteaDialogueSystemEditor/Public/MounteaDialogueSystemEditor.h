@@ -58,6 +58,8 @@ private:
 	
 	TSharedPtr<FSlateStyleSet> DialogueTreeSet;
 	TSharedPtr<class FMounteaDialogueGraphAssetAction> MounteaDialogueGraphAssetActions;
+	TSharedPtr<class FMounteaDialogueAdditionalDataAssetAction> MounteaDialogueAdditionalDataAssetActions;
+	TSharedPtr<class FMounteaDialogueDecoratorAssetAction> MounteaDialogueDecoratorAssetAction;
 	
 	TSharedPtr<struct FGraphPanelNodeFactory> GraphPanelNodeFactory_MounteaDialogueGraph;
 	TArray< TSharedPtr<IAssetTypeActions> > CreatedAssetTypeActions;
