@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Blueprint/UserWidget.h"
 #include "Engine/DataTable.h"
 #include "UObject/Object.h"
 
@@ -173,6 +174,9 @@ struct FDialogueRow : public FTableRowBase
 
 public:
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true))
+	int32 UIRowID = 0;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
 	UTexture* RowOptionalIcon = nullptr;
 
@@ -199,8 +203,8 @@ public:
 		RowGUID = FGuid::NewGuid();
 	};
 
-	FDialogueRow(UTexture* InRowIcon, const FText& InText, const FText& InParticipant, const TSet<FDialogueRowData>& InData)
-		: RowOptionalIcon(InRowIcon), DialogueParticipant(InParticipant), RowTitle(InText), DialogueRowData(InData)
+	FDialogueRow(const int32 NewUIRowID, UTexture* InRowIcon, const FText& InText, const FText& InParticipant, const TSet<FDialogueRowData>& InData)
+		: UIRowID(NewUIRowID), RowOptionalIcon(InRowIcon), DialogueParticipant(InParticipant), RowTitle(InText), DialogueRowData(InData)
 	{
 		RowGUID = FGuid::NewGuid();
 	}
@@ -214,6 +218,7 @@ public:
 		RowTitle = Other.RowTitle;
 		DialogueRowData = Other.DialogueRowData;
 		TitleSettingsOverride = Other.TitleSettingsOverride;
+		UIRowID = Other.UIRowID;
 		RowGUID = FGuid::NewGuid();
 		
 		return *this;
@@ -235,6 +240,38 @@ public:
 	}
 };
 #undef LOCTEXT_NAMESPACE
+
+/**
+ * 
+ */
+USTRUCT(BlueprintType)
+struct FUIRowID
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true))
+	int32 UIRowID = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
+	TSubclassOf<UUserWidget> RowWidgetClass;
+
+	bool operator==(const FUIRowID& Other) const
+	{
+		return
+		UIRowID == Other.UIRowID &&
+		RowWidgetClass == Other.RowWidgetClass;
+	}
+
+	bool operator!=(const FUIRowID& Other) const
+	{
+		return !(*this == Other);
+	}
+	
+	friend uint32 GetTypeHash(const FUIRowID& RowID)
+	{
+		return FCrc::MemCrc32(&RowID.RowWidgetClass, sizeof(FUIRowID)) + RowID.UIRowID;
+	}
+};
 
 /**
  * 

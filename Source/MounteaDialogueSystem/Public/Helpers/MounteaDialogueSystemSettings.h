@@ -93,7 +93,7 @@ protected:
 	 * Used for overriding General Defaults.
 	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles")
-	TMap<TSubclassOf<UUserWidget>, FSubtitlesSettings> SubtitlesSettingsOverrides;
+	TMap<FUIRowID, FSubtitlesSettings> SubtitlesSettingsOverrides;
 
 #if WITH_EDITOR
 	virtual FText GetSectionText() const override
@@ -151,14 +151,14 @@ public:
 	 * Returns Subtitles Settings.
 	 * If given 'OptionalClassFilter' then it will search for Subtitles Settings override for this class, if any is specified.
 	 * 
-	 * @param OptionalClassFilter	Optional Class of UserWidget to filter out the override Settings
+	 * @param RowID	Optional Class and Row ID of UserWidget to filter out the override Settings
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
-	FSubtitlesSettings GetSubtitlesSettings(TSubclassOf<UUserWidget> OptionalClassFilter) const
+	FSubtitlesSettings GetSubtitlesSettings(const FUIRowID& RowID) const
 	{ 
-		if (SubtitlesSettingsOverrides.Contains(OptionalClassFilter))
+		if (SubtitlesSettingsOverrides.Contains(RowID))
 		{
-			return SubtitlesSettingsOverrides[OptionalClassFilter];
+			return SubtitlesSettingsOverrides[RowID];
 		}
 
 		return SubtitlesSettings;
@@ -168,21 +168,21 @@ public:
 	 * 
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
-	void SetSubtitlesSettings(const FSubtitlesSettings& NewSettings, const TSubclassOf<UUserWidget> OptionalClassFilter)
+	void SetSubtitlesSettings(const FSubtitlesSettings& NewSettings, FUIRowID& RowID)
 	{
-		if (OptionalClassFilter == nullptr)
+		if (RowID.RowWidgetClass == nullptr)
 		{
 			SubtitlesSettings = NewSettings;
 			return;
 		}
 
-		if (SubtitlesSettingsOverrides.Contains(OptionalClassFilter))
+		if (SubtitlesSettingsOverrides.Contains(RowID))
 		{
-			SubtitlesSettingsOverrides[OptionalClassFilter] = NewSettings;
+			SubtitlesSettingsOverrides[RowID] = NewSettings;
 			return;
 		}
 
-		SubtitlesSettingsOverrides.Add(OptionalClassFilter, NewSettings);
+		SubtitlesSettingsOverrides.Add(RowID, NewSettings);
 	}
 
 protected:
