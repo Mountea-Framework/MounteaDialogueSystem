@@ -1,8 +1,18 @@
-Current Version: 0.0.0.4
+Current Version: 0.0.0.5
 
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+**Version 0.0.0.5**
+### Added
+> - Added: Dialogue Manager Component
+
+### Fixed
+> - Fixed: -
+
+### Changed
+> - Changed: Removed all Dialogue flow functions from Dialogue Participant
 
 **Version 0.0.0.4**
 ### Added
