@@ -12,6 +12,7 @@
 #include "MounteaDialogueGraphDataTypes.generated.h"
 
 class USoundBase;
+class UTexture;
 
 /**
  * 

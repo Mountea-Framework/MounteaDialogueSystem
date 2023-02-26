@@ -25,8 +25,11 @@ UMounteaDialogueSystemSettings::UMounteaDialogueSystemSettings()
 	DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::AddDialogueOptions);
 	DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::RemoveDialogueOptions);
 
+#if WITH_EDITOR
 	SubtitlesSettings.SubtitlesFont = SetupDefaultFontSettings();
 	if (SubtitlesSettings.SettingsGUID.IsValid() == false)	SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
+#endif
+	
 }
 
 #if WITH_EDITOR
