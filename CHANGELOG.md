@@ -6,13 +6,24 @@ All notable changes to this project will be documented in this file.
 
 **Version 0.0.0.5**
 ### Added
-> - Added: Dialogue Manager Component
+> - Added: BPC_DialogueParticipant
+> - Added: Dialogue UI
+> - Added: Dialogue UI Materials
+> - Added: Dialogue UI Textures
+> - Added: Subtitles Settings in Project Settings
+> - Added: Dialogue Participant States
+> - Added: Dialogue Manager States
 
 ### Fixed
-> - Fixed: -
+> - Fixed: Crash when tried to access Dialogue Node with no Data
+> - Fixed: Diaogue Node GUID has been duplicated when copy pasted
+> - Fixed: Dialogue Row GUID has been duplicated when copy pasted
+> - Fixed: Dialogue Row Data has been duplicated when copy pasted
 
 ### Changed
-> - Changed: Removed all Dialogue flow functions from Dialogue Participant
+> - Changed: Graph Cycles Detecion
+> - Changed: Dialogue Structure now has Row Icon
+> - Changed: Compelete Node(s) now have Dialogue Data, too, to allow "Goodby" diaogue lines etc.
 
 **Version 0.0.0.4**
 ### Added
