@@ -20,7 +20,9 @@ struct FMounteaDialogueDecorator
 public:
 
 	/**
-	 * Explanation goes here.
+	 * A list of Decorators that can help out with enhancing the Dialogue flow.
+	 * Those Decorators are instanced and exist only as "triggers".
+	 * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "Mountea|Dialogue")
 	UMounteaDialogueGraphNodeDecoratorBase* DecoratorType = nullptr;
@@ -35,9 +37,12 @@ public:
 };
 
 /**
- * 
+ *	Mountea Dialogue Node Decorators.
+ *
+ * Decorators are instanced and exist only as "triggers".
+ * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
  */
-UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew) //, ClassGroup=("Mountea|Dialogue"), HideCategories=("Hidden"), AutoExpandCategories=("Mountea, Dialogue"))
+UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), HideCategories=("Hidden, Private"), AutoExpandCategories=("Mountea, Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNodeDecoratorBase : public UObject
 {
 	GENERATED_BODY()
@@ -49,7 +54,9 @@ public:
 		return GetTypedOuter<ULevel>();
 	}
 
-	//UFUNCTION(BlueprintCallable, Category="Inventory Transaction")
+public:
+	
+	//UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual UWorld* GetWorld() const override
 	{
 		// CDO objects do not belong to a world
@@ -67,7 +74,13 @@ public:
 		return nullptr;
 	};
 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
-	void InvokeDecorator();
-	virtual void InvokeDecorator_Implementation();
+public:
+
+	/**
+	 * Tries to execute the Decorator.
+	 * Useful for adding additional conditions to CanStartDialogue, let's say that specific Lead node has Decorator that makes it require a special Item to enter that dialogue part. With decorators, this effect can be achieved easily.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
+	bool ExecuteDecorator();
+	virtual bool ExecuteDecorator_Implementation();
 };
