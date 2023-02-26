@@ -14,7 +14,7 @@ FMounteaDialogueGraphAssetAction::FMounteaDialogueGraphAssetAction()
 
 FText FMounteaDialogueGraphAssetAction::GetName() const
 {
-	return LOCTEXT("MounteaDialogueGraphAssetAction", "Mountea Dialogue Tree");
+	return LOCTEXT("MounteaDialogueGraphAssetAction", "1. Mountea Dialogue Tree");
 }
 
 /*
