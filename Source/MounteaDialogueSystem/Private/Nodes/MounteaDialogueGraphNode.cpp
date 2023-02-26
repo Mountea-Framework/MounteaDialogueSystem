@@ -62,6 +62,12 @@ FLinearColor UMounteaDialogueGraphNode::GetBackgroundColor() const
 	return BackgroundColor;
 }
 
+void UMounteaDialogueGraphNode::SetNodeIndex(const int32 NewIndex)
+{
+	check(NewIndex>INDEX_NONE);
+	NodeIndex = NewIndex;
+}
+
 bool UMounteaDialogueGraphNode::CanStartNode() const
 {
 	return true;

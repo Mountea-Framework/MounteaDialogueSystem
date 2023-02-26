@@ -25,8 +25,7 @@ public:
 	UMounteaDialogueGraphNode_DialogueNodeBase();
 
 	virtual FText GetDescription_Implementation() const override;
-
-	//TODO: Implement custom Handle with this logic: UPROPERTY(meta=(GetOptions ="abc")) https://benui.ca/unreal/uproperty/#getoptions
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual UDataTable* GetDataTable() const;
 
@@ -37,7 +36,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual bool DoesAutoStart() const
 	{ return bAutoStarts; };
-	
+
+
 protected:
 
 	/** Defines whether this Node will start automatically or if requires input.*/
@@ -53,7 +53,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
 	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
-
 
 #if WITH_EDITORONLY_DATA
 

@@ -71,6 +71,26 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
+	if (MaxChildrenNodes > -1 && ChildrenNodes.Num() > MaxChildrenNodes)
+	{
+		const FString RichTextReturn =
+		FString("* ").
+		Append("<RichTextBlock.Bold>").
+		Append(NodeTitle.ToString()).
+		Append("</>").
+		Append(": Has more than ").
+		Append("<RichTextBlock.Bold>").
+		Append(FString::FromInt(MaxChildrenNodes)).
+		Append("</>").
+		Append(" Children Nodes!");
+
+		const FString TextReturn =
+		FString(NodeTitle.ToString()).
+		Append(": Has more than ").Append(FString::FromInt(MaxChildrenNodes)).Append(" Children Nodes!");
+	
+		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+	}
+
 	return bResult;
 }
 
@@ -79,6 +99,16 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::CanCreateConnection(UMounteaDia
 	if (Other == nullptr)
 	{
 		ErrorMessage = FText::FromString("Invalid Other Node!");
+	}
+
+	if (Other->GetMaxChildNodes() > -1 && Other->ChildrenNodes.Num() >= Other->GetMaxChildNodes())
+	{
+		const FString TextReturn =
+		FString(Other->GetNodeTitle().ToString()).
+		Append(": Cannot have more than ").Append(FString::FromInt(Other->GetMaxChildNodes())).Append(" Children Nodes!");
+
+		ErrorMessage = FText::FromString(TextReturn);
+		return false;
 	}
 
 	if (Direction == EGPD_Output)

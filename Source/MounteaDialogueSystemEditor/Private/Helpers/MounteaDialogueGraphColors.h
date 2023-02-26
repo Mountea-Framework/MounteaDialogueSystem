@@ -60,4 +60,10 @@ namespace MounteaDialogueGraphColors
 		constexpr FLinearColor LightTheme(0.1f, 0.1f, 0.1f, 1.f);
 		constexpr FLinearColor DarkTheme(0.05f, 0.05f, 0.05f, 1.f);
 	}
+
+	namespace IndexBorder
+	{
+		constexpr FLinearColor NormalState(0.05f, 0.05f, 0.05f, 1.f);
+		constexpr FLinearColor HoveredState(0.05f, 0.05f, 0.05f, 1.f);
+	}
 }

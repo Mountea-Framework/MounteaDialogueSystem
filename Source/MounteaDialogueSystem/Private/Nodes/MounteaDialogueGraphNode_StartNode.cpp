@@ -20,6 +20,9 @@ UMounteaDialogueGraphNode_StartNode::UMounteaDialogueGraphNode_StartNode()
 	bAllowDelete = false;
 	bAllowManualCreate = false;
 #endif
+
+	// TODO: Once there are Conditional Decorators, this will be replaced
+	MaxChildrenNodes = 1;
 }
 
 FText UMounteaDialogueGraphNode_StartNode::GetDescription_Implementation() const

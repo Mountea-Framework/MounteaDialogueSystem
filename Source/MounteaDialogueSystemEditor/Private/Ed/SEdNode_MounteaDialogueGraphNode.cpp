@@ -4,6 +4,7 @@
 
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Helpers/MounteaDialogueGraphColors.h"
+#include "Ed/SEdNode_MounteaDialogueGraphNodeIndex.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 
 #include "SLevelOfDetailBranchNode.h"
@@ -134,6 +135,19 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 
 	InputPins.Empty();
 	OutputPins.Empty();
+
+	// Used in GetOverlayWidgets
+	IndexOverlayWidget = SNew(SEdNode_MounteaDialogueGraphNodeIndex)
+		.OverlayBody(
+			SNew(STextBlock)
+			.Text(this, &SEdNode_MounteaDialogueGraphNode::GetIndexText)
+			.ColorAndOpacity(FLinearColor::White)
+			.Font(FEditorStyle::GetFontStyle("BTEditor.Graph.BTNode.IndexText"))
+		)
+		.ToolTipText(this, &SEdNode_MounteaDialogueGraphNode::GetIndexOverlayTooltipText)
+		.Visibility(EVisibility::Visible)
+		.OnHoverStateChanged(this, &SEdNode_MounteaDialogueGraphNode::OnIndexHoverStateChanged)
+		.OnGetBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetOverlayWidgetBackgroundColor);
 
 	// Reset variables that are going to be exposed, in case we are refreshing an already setup node.
 	RightNodeBox.Reset();
@@ -504,6 +518,33 @@ EVisibility SEdNode_MounteaDialogueGraphNode::GetDragOverMarkerVisibility() cons
 const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetNameIcon() const
 {
 	return FEditorStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Icon"));
+}
+
+FText SEdNode_MounteaDialogueGraphNode::GetIndexOverlayTooltipText() const
+{
+	return LOCTEXT("NodeIndexTooltip", "Node index");
+}
+
+FText SEdNode_MounteaDialogueGraphNode::GetIndexText() const
+{
+	if (const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
+	{
+		if (EdParentNode->DialogueGraphNode)
+		{
+			return FText::AsNumber(EdParentNode->DialogueGraphNode->GetNodeIndex());
+		}
+	}
+	return FText::AsNumber(INDEX_NONE);
+}
+
+void SEdNode_MounteaDialogueGraphNode::OnIndexHoverStateChanged(bool bArg) const
+{
+	// TODO something
+}
+
+FSlateColor SEdNode_MounteaDialogueGraphNode::GetOverlayWidgetBackgroundColor(bool bArg) const
+{
+	return bArg ? MounteaDialogueGraphColors::IndexBorder::HoveredState : MounteaDialogueGraphColors::IndexBorder::NormalState;
 }
 
 // TODO: Make functions to generate Slate elements so I can stack them together

@@ -445,6 +445,19 @@ void FAssetEditor_MounteaDialogueGraph::DeleteSelectedNodes()
 			EdNode->DestroyNode();
 		}
 	}
+
+	// Update UI
+	CurrentGraphEditor->NotifyGraphChanged();
+
+	UEdGraph* EdGraph = CurrentGraphEditor->GetCurrentGraph();
+	UObject* GraphOwner = EdGraph->GetOuter();
+	if (GraphOwner)
+	{
+		GraphOwner->PostEditChange();
+		GraphOwner->MarkPackageDirty();
+	}
+
+	RebuildMounteaDialogueGraph();
 }
 
 bool FAssetEditor_MounteaDialogueGraph::CanDeleteNodes()
@@ -641,6 +654,8 @@ void FAssetEditor_MounteaDialogueGraph::PasteNodesHere(const FVector2D& Location
 		GraphOwner->PostEditChange();
 		GraphOwner->MarkPackageDirty();
 	}
+
+	RebuildMounteaDialogueGraph();
 }
 
 bool FAssetEditor_MounteaDialogueGraph::CanPasteNodes()
@@ -786,7 +801,6 @@ void FAssetEditor_MounteaDialogueGraph::OnSelectedNodesChanged(const TSet<UObjec
 	if (Selection.Num() == 0) 
 	{
 		PropertyWidget->SetObject(EditingGraph);
-
 	}
 	else
 	{
@@ -797,6 +811,8 @@ void FAssetEditor_MounteaDialogueGraph::OnSelectedNodesChanged(const TSet<UObjec
 		// TODO: Update Previews
 		UMounteaDialogueSystemEditorBFC::TriggerPreviewRefresh(Selection);
 	}
+
+	RebuildMounteaDialogueGraph();
 }
 
 void FAssetEditor_MounteaDialogueGraph::OnNodeDoubleClicked(UEdGraphNode* Node)
@@ -810,6 +826,8 @@ void FAssetEditor_MounteaDialogueGraph::OnFinishedChangingProperties(const FProp
 		return;
 
 	EditingGraph->EdGraph->GetSchema()->ForceVisualizationCacheClear();
+
+	RebuildMounteaDialogueGraph();
 }
 
 void FAssetEditor_MounteaDialogueGraph::OnPackageSaved(const FString& PackageFileName, UObject* Outer)

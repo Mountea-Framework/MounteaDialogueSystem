@@ -40,6 +40,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	UMounteaDialogueGraph* Graph;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
+	int32 NodeIndex = INDEX_NONE;
+
+	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
+	int32 MaxChildrenNodes = -1;
+
 protected:
 
 	UPROPERTY(SaveGame, BlueprintReadOnly, Category="Mountea|Dialogue")
@@ -50,6 +56,15 @@ protected:
 #pragma region Functions
 
 public:
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	int32 GetMaxChildNodes() const
+	{ return MaxChildrenNodes; };
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	FORCEINLINE int32 GetNodeIndex() const
+	{ return NodeIndex; };
+	void SetNodeIndex(const int32 NewIndex);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	FORCEINLINE FGuid GetNodeGUID() const

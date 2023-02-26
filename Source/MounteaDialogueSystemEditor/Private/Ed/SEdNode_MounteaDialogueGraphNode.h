@@ -16,6 +16,8 @@ public:
 
 	void Construct(const FArguments& InArgs, UEdNode_MounteaDialogueGraphNode* InNode);
 
+
+	
 	virtual void UpdateGraphNode() override;
 	virtual void CreatePinWidgets() override;
 	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
@@ -35,6 +37,11 @@ public:
 
 	virtual const FSlateBrush* GetNameIcon() const;
 
+	virtual FText GetIndexOverlayTooltipText() const;
+	virtual FText GetIndexText() const;
+	virtual void OnIndexHoverStateChanged(bool bArg) const;
+	virtual FSlateColor GetOverlayWidgetBackgroundColor(bool bArg) const;
+
 protected:
 	TSharedPtr<SBorder> NodeBody;
 	TSharedPtr<SHorizontalBox> OutputPinBox;
@@ -43,6 +50,11 @@ protected:
 
 	FLinearColor NodeInnerColor;
 	FLinearColor PinsDockColor;
+
+protected:
+	
+	/** The widget we use to display the index of the node */
+	TSharedPtr<SWidget> IndexOverlayWidget;
 
 private:
 

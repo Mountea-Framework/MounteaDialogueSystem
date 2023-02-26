@@ -21,6 +21,9 @@ UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
 
 	bAutoStarts = false;
+
+	// TODO: Once there are Conditional Decorators, this will be replaced
+	MaxChildrenNodes = 1;
 }
 
 FText UMounteaDialogueGraphNode_AnswerNode::GetDescription_Implementation() const
@@ -32,5 +35,15 @@ FText UMounteaDialogueGraphNode_AnswerNode::GetNodeCategory_Implementation() con
 {
 	return LOCTEXT("MounteaDialogueGraphNode_AnswearNodeCategory", "Mountea Dialogue Branche Nodes");
 }
+
+#if WITH_EDITOR
+bool UMounteaDialogueGraphNode_AnswerNode::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
+{
+	bool Result = Super::ValidateNode(ValidationsMessages, RichFormat);
+	
+	return Result;
+}
+
+#endif
 
 #undef LOCTEXT_NAMESPACE
