@@ -16,7 +16,7 @@ class UMounteaDialogueGraphEdge;
  * Does come with ability to define Colours, Name, Description and Title.
  * Contains information about Parent and Children Nodes.
  */
-UCLASS(Abstract, BlueprintType, ClassGroup=("Mountea|Dialogue"), HideCategories=("Hidden"), AutoExpandCategories=("Mountea, Dialogue"))
+UCLASS(Abstract, BlueprintType, ClassGroup=("Mountea|Dialogue"), HideCategories=("Hidden", "Private"), AutoExpandCategories=("Mountea", "Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject
 {
 	GENERATED_BODY()
@@ -29,30 +29,38 @@ public:
 
 public:
 	
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, Category = "Private")
 	TArray<UMounteaDialogueGraphNode*> ParentNodes;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, Category = "Private")
 	TArray<UMounteaDialogueGraphNode*> ChildrenNodes;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, Category = "Private")
 	TMap<UMounteaDialogueGraphNode*, UMounteaDialogueGraphEdge*> Edges;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, Category = "Private")
 	UMounteaDialogueGraph* Graph;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Hidden")
+	UPROPERTY(BlueprintReadOnly, Category = "Private")
 	int32 NodeIndex = INDEX_NONE;
 
-	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, Category="Private")
 	int32 MaxChildrenNodes = -1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	uint8 bInheritGraphDecorators : 1;
+
+	/**
+	 * A list of Decorators that can help out with enhancing the Dialogue flow.
+	 * Those Decorators are instanced and exist only as "triggers".
+	 * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue", meta=(NoElementDuplicate))
 	TArray<FMounteaDialogueDecorator> NodeDecorators;
 	
 protected:
 
-	UPROPERTY(SaveGame, BlueprintReadOnly, Category="Hidden")
+	UPROPERTY(SaveGame, BlueprintReadOnly, Category="Private")
 	FGuid NodeGUID;
 
 #pragma endregion 
@@ -85,8 +93,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual bool CanStartNode() const;
 	
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(DevelopmentOnly=true))
-	virtual FText GetNodeTitle() const;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	FText GetNodeTitle() const;
+	virtual FText GetNodeTitle_Implementation() const;
 		
 	/**
 	 * Returns true if there are no connected Nodes to this one.

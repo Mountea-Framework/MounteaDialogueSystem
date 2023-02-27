@@ -9,6 +9,7 @@
 UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
 {
 	NodeGUID = FGuid::NewGuid();
+	bInheritGraphDecorators = true;
 
 #if WITH_EDITORONLY_DATA
 	CompatibleGraphType = UMounteaDialogueGraph::StaticClass();
@@ -73,7 +74,7 @@ bool UMounteaDialogueGraphNode::CanStartNode() const
 	return true;
 }
 
-FText UMounteaDialogueGraphNode::GetNodeTitle() const
+FText UMounteaDialogueGraphNode::GetNodeTitle_Implementation() const
 {
 	return NodeTitle;
 }
@@ -131,6 +132,41 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 		Append(": This Node requires Inputs, however, none are found!");
 		
 		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+	}
+
+	if (NodeDecorators.Num() > 1)
+	{
+		TMap<int32, FMounteaDialogueDecorator> Duplicates;
+		for (int i = 0; i < NodeDecorators.Num(); i++)
+		{
+			for (auto Itr2 : NodeDecorators)
+			{
+				if (NodeDecorators[i].DecoratorType == Itr2.DecoratorType)
+				{
+					Duplicates.Add(i, NodeDecorators[i]);
+				}
+			}
+		}
+	
+		if (Duplicates.Num() > 0)
+		{
+			const FString RichTextReturn =
+			FString("* ").
+			Append(TEXT("<RichTextBlock.Bold>Dialogue Graph</>")).
+			Append(": has ").
+			Append(FString::FromInt(Duplicates.Num())).
+			Append(" duplicated Decorators! Please, try to avoid duplicates.");
+
+			const FString TextReturn =
+			GetName().
+			Append(": has ").
+			Append(FString::FromInt(Duplicates.Num())).
+			Append(" duplicated Decorators! Please, try to avoid duplicates.");
+		
+			ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+
+			bResult = false;
+		}
 	}
 	
 	return bResult;

@@ -223,6 +223,41 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 		bReturnValue = false;
 	}
 
+	if (GraphDecorators.Num() > 1)
+	{
+		TMap<int32, FMounteaDialogueDecorator> Duplicates;
+		for (int i = 0; i < GraphDecorators.Num(); i++)
+		{
+			for (auto Itr2 : GraphDecorators)
+			{
+				if (GraphDecorators[i].DecoratorType == Itr2.DecoratorType)
+				{
+					Duplicates.Add(i, GraphDecorators[i]);
+				}
+			}
+		}
+	
+		if (Duplicates.Num() > 0)
+		{
+			const FString RichTextReturn =
+			FString("* ").
+			Append(TEXT("<RichTextBlock.Bold>Dialogue Graph</>")).
+			Append(": has ").
+			Append(FString::FromInt(Duplicates.Num())).
+			Append(" duplicated Decorators! Please, try to avoid duplicates.");
+
+			const FString TextReturn =
+			GetName().
+			Append(": has ").
+			Append(FString::FromInt(Duplicates.Num())).
+			Append(" duplicated Decorators! Please, try to avoid duplicates.");
+		
+			ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
+
+			bReturnValue = false;
+		}
+	}
+	
 	for (UMounteaDialogueGraphNode* Itr : AllNodes)
 	{
 		if (Itr != nullptr && (Itr->ValidateNode(ValidationErrors, RichTextFormat) == false))

@@ -5,11 +5,13 @@
 #include "CoreMinimal.h"
 #include "Templates/SubclassOf.h"
 #include "GameplayTagContainer.h"
-
+#include "Decorators/MounteaDialogueGraphNodeDecoratorBase.h"
 #include "MounteaDialogueGraph.generated.h"
 
 class UMounteaDialogueGraphNode;
 class UMounteaDialogueGraphEdge;
+
+struct FMounteaDialogueDecorator;
 
 
 /**
@@ -18,7 +20,7 @@ class UMounteaDialogueGraphEdge;
  * Can be manually created from Content Browser, using Mountea Dialogue category.
  * Comes with Node editor, which provides easy to follow visual way to create Dialogue Trees.
  */
-UCLASS(Blueprintable, ClassGroup=("Mountea|Dialogue"), DisplayName="Mountea Dialogue Tree")
+UCLASS(Blueprintable, ClassGroup=("Mountea|Dialogue"), DisplayName="Mountea Dialogue Tree", AutoExpandCategories=("Mountea", "Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraph : public UObject
 {
 	GENERATED_BODY()
@@ -33,6 +35,9 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	FGuid GraphGUID;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue", meta=(NoElementDuplicate))
+	TArray<FMounteaDialogueDecorator> GraphDecorators;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue")
 	FGameplayTagContainer GraphTags;

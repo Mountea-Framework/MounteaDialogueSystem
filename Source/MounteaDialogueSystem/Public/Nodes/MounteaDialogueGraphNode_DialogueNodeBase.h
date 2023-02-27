@@ -15,7 +15,7 @@
  * Enhances 'MounteaDialogueGraphNode' Base class with Dialogue data.
  * Provides DataTable and Row options that define the Dialogue data which will be displayed in UI.
  */
-UCLASS(Abstract, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"))
+UCLASS(Abstract, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"), HideCategories=("Base", "Hidden", "Private"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_DialogueNodeBase : public UMounteaDialogueGraphNode
 {
 	GENERATED_BODY()
@@ -39,11 +39,7 @@ public:
 
 
 protected:
-
-	/** Defines whether this Node will start automatically or if requires input.*/
-	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
-	uint8 bAutoStarts : 1;
-
+	
 	UPROPERTY(Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(RequiredAssetDataTags="RowStructure=DialogueRow", DisplayThumbnail=false, NoResetToDefault))
 	UDataTable*	DataTable;
 
@@ -51,7 +47,11 @@ protected:
 	UPROPERTY(Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault))
 	FName RowName;
 
-	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
+	/** Defines whether this Node will start automatically or if requires input.*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Base")
+	uint8 bAutoStarts : 1;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Base")
 	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
 
 #if WITH_EDITORONLY_DATA
