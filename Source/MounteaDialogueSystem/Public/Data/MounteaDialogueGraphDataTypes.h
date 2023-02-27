@@ -16,7 +16,9 @@ class USoundBase;
 class UTexture;
 
 /**
+ * Dialogue Manager State
  * 
+ * Define state of Dialogue Manager.
  */
 UENUM(BlueprintType)
 enum class EDialogueManagerState : uint8
@@ -27,7 +29,9 @@ enum class EDialogueManagerState : uint8
 };
 
 /**
+ * Dialogue Participant State
  * 
+ * Define state of Dialogue Participant. 
  */
 UENUM(BlueprintType)
 enum class EDialogueParticipantState : uint8
@@ -59,18 +63,30 @@ struct FSubtitlesSettings
 {
 	GENERATED_BODY()
 
+	/**
+	 * 
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles", meta=(DisplayName="Color and Oppacity"))
-	FLinearColor FontColor;
-
+	FSlateColor FontColor;
+	/**
+	 * 
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles", meta=(ForceShowEngineContent))
 	FSlateFontInfo SubtitlesFont;
-
+	/**
+	 * 
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles")
 	FVector2D ShadowOffset;
-
+	/**
+	 * 
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles")
 	FLinearColor ShadowColor;
 
+	/**
+	 * 
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Subtitles")
 	FGuid SettingsGUID;
 

@@ -3,7 +3,12 @@
 
 #include "Decorators/MounteaDialogueGraphNodeDecoratorBase.h"
 
-bool UMounteaDialogueGraphNodeDecoratorBase::ExecuteDecorator_Implementation()
+void UMounteaDialogueGraphNodeDecoratorBase::EvaluateDecorator_Implementation()
 {
 	return true;
+}
+
+void UMounteaDialogueGraphNodeDecoratorBase::ExecuteDecorator_Implementation()
+{
+	return;
 }
