@@ -54,7 +54,7 @@ Select any node and see what is inside. No need search, just observe.
 #### Dialogue Decorators
 Introducing *Decorators*, a powerful yet versitale tool of Blueprint based events that could be triggered per Dialogue Node! This provides a simple way to trigger cutscenes, switch cameras, end dialogues when being attacked or anything you like!
 <p align="center" width="100%">
-    <img width="65%" src="https://user-images.githubusercontent.com/37410226/221440314-e4b17a7d-a899-4c8e-9d81-9fea4c48fdd7.png">
+    <img width="65%" src="https://user-images.githubusercontent.com/37410226/221706467-7273be34-4aeb-43a2-bbb5-a7c16666677c.png">
 </p>
 
 ## Installation
