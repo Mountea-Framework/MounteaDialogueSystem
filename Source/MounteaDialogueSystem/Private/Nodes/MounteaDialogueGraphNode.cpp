@@ -155,13 +155,13 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 			Append(TEXT("<RichTextBlock.Bold>Dialogue Graph</>")).
 			Append(": has ").
 			Append(FString::FromInt(Duplicates.Num())).
-			Append(" duplicated Decorators! Please, try to avoid duplicates.");
+			Append("x the Decorators! Please, try to avoid duplicates.");
 
 			const FString TextReturn =
 			GetName().
 			Append(": has ").
 			Append(FString::FromInt(Duplicates.Num())).
-			Append(" duplicated Decorators! Please, try to avoid duplicates.");
+			Append("x the Decorators! Please, try to avoid duplicates.");
 		
 			ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 

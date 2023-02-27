@@ -17,6 +17,7 @@
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
+#include "Widgets/Layout/SScaleBox.h"
 
 #define LOCTEXT_NAMESPACE "EdNode_MounteaDialogueGraph"
 
@@ -156,6 +157,9 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 
 	TSharedPtr<SErrorText> ErrorText;
 	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, GraphNode);
+	TSharedPtr<STextBlock> DecoratorsText;
+	TSharedPtr<SVerticalBox> NameVerticalBox;
+	TSharedPtr<SVerticalBox> DecoratorsVerticalBox;
 		
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	this->GetOrAddSlot(ENodeZone::Center)
@@ -241,7 +245,40 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 											.HAlign(HAlign_Fill)
 											.VAlign(VAlign_Fill)
 											[
-												SNew(SVerticalBox)
+												SAssignNew(NameVerticalBox, SVerticalBox)
+												
+												// DECORATORS SLOT
+												+ SVerticalBox::Slot()
+												.AutoHeight()
+												.HAlign(HAlign_Center)
+												[
+													SAssignNew(DecoratorsVerticalBox, SVerticalBox)
+													.Visibility(this, &SEdNode_MounteaDialogueGraphNode::ShowDecoratorsSlot)
+													+ SVerticalBox::Slot()
+													[
+														
+														SNew(SHorizontalBox)
+														+ SHorizontalBox::Slot()
+														.AutoWidth()
+														.HAlign(HAlign_Center)
+														[
+															SNew(SHorizontalBox)
+															+ SHorizontalBox::Slot()
+															.Padding(FMargin(4.0f, 1.5f, 4.0f, 1.5f))
+															[
+																SNew(SScaleBox)
+																.Stretch(EStretch::ScaleToFit)
+																[
+																	SAssignNew(DecoratorsText, STextBlock)
+																	.Text(this, &SEdNode_MounteaDialogueGraphNode::GetDecoratorsText)
+																	.Justification(ETextJustify::Center)
+																]
+															]
+														]
+													]
+												]
+												
+												// NAME SLOT
 												+ SVerticalBox::Slot()
 												.AutoHeight()
 												.HAlign(HAlign_Center)
@@ -545,6 +582,50 @@ void SEdNode_MounteaDialogueGraphNode::OnIndexHoverStateChanged(bool bArg) const
 FSlateColor SEdNode_MounteaDialogueGraphNode::GetOverlayWidgetBackgroundColor(bool bArg) const
 {
 	return bArg ? MounteaDialogueGraphColors::IndexBorder::HoveredState : MounteaDialogueGraphColors::IndexBorder::NormalState;
+}
+
+bool SEdNode_MounteaDialogueGraphNode::HasDecorators() const
+{
+	if (const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
+	{
+		if (EdParentNode->DialogueGraphNode)
+		{
+			if (EdParentNode->DialogueGraphNode->GetNodeDecorators().Num() > 0)
+			{
+				bool bAllValid = true;
+
+				for (const auto Itr : EdParentNode->DialogueGraphNode->GetNodeDecorators())
+				{
+					if (Itr.DecoratorType == nullptr)
+					{
+						bAllValid = false;
+					}
+				}
+				return bAllValid;
+			}
+		}
+	}
+
+	return false;
+}
+
+EVisibility SEdNode_MounteaDialogueGraphNode::ShowDecoratorsSlot() const
+{
+	return HasDecorators() ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
+FText SEdNode_MounteaDialogueGraphNode::GetDecoratorsText() const
+{
+	if (const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
+	{
+		if (EdParentNode->DialogueGraphNode)
+		{
+			FString Number = FString::FromInt(EdParentNode->DialogueGraphNode->GetNodeDecorators().Num());
+			FString ReturnText = FString(TEXT("DECORATORS: "));
+			return FText::FromString( ReturnText.Append(Number) );
+		}
+	}
+	return FText::FromString("DECORATORS: none");
 }
 
 // TODO: Make functions to generate Slate elements so I can stack them together

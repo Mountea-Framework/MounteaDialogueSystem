@@ -244,13 +244,13 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 			Append(TEXT("<RichTextBlock.Bold>Dialogue Graph</>")).
 			Append(": has ").
 			Append(FString::FromInt(Duplicates.Num())).
-			Append(" duplicated Decorators! Please, try to avoid duplicates.");
+			Append("x the same Decorators! Please, try to avoid duplicates.");
 
 			const FString TextReturn =
 			GetName().
 			Append(": has ").
 			Append(FString::FromInt(Duplicates.Num())).
-			Append(" duplicated Decorators! Please, try to avoid duplicates.");
+			Append("x the same Decorators! Please, try to avoid duplicates.");
 		
 			ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
 

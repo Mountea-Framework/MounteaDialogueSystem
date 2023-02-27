@@ -42,6 +42,10 @@ public:
 	virtual void OnIndexHoverStateChanged(bool bArg) const;
 	virtual FSlateColor GetOverlayWidgetBackgroundColor(bool bArg) const;
 
+	virtual bool HasDecorators() const;
+	virtual EVisibility ShowDecoratorsSlot() const;
+	virtual FText GetDecoratorsText() const;
+
 protected:
 	TSharedPtr<SBorder> NodeBody;
 	TSharedPtr<SHorizontalBox> OutputPinBox;

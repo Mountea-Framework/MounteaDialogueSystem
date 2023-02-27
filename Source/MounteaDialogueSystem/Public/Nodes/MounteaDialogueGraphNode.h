@@ -70,6 +70,10 @@ protected:
 public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	TArray<FMounteaDialogueDecorator> GetNodeDecorators() const
+	{ return NodeDecorators; };
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	int32 GetMaxChildNodes() const
 	{ return MaxChildrenNodes; };
 
