@@ -7,7 +7,8 @@
 #include "MounteaDialogueGraphNodeDecoratorBase.generated.h"
 
 /**
- * 
+ * Dialogue Decorator Structure.
+ * Holds reference to its Instanced Decorator.
  */
 USTRUCT(BlueprintType)
 struct FMounteaDialogueDecorator
@@ -77,10 +78,19 @@ public:
 public:
 
 	/**
-	 * Tries to execute the Decorator.
-	 * Useful for adding additional conditions to CanStartDialogue, let's say that specific Lead node has Decorator that makes it require a special Item to enter that dialogue part. With decorators, this effect can be achieved easily.
+	 * Evaluates the Decorator.
+	 * Called for each Node it is attached to.
+	 * Could enhance Node's 'CanStartNode'. Example would be: BP_RequireItem decorator, which would return true if Player has specific Item in inventory. Otherwise it returns false and its Node is not available in Selection of Answers.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
-	bool ExecuteDecorator();
-	virtual bool ExecuteDecorator_Implementation();
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
+	bool EvaluateDecorator();
+	virtual bool EvaluateDecorator_Implementation();
+
+	/**
+	 * Executes the Decorator.
+	 * Useful for triggering special events per Node, for instance, switching dialogue cameras.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
+	void ExecuteDecorator();
+	virtual void ExecuteDecorator_Implementation();
 };
