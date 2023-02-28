@@ -159,7 +159,6 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, GraphNode);
 	TSharedPtr<STextBlock> DecoratorsText;
 	TSharedPtr<SVerticalBox> NameVerticalBox;
-	TSharedPtr<SVerticalBox> DecoratorsVerticalBox;
 		
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	this->GetOrAddSlot(ENodeZone::Center)
@@ -215,8 +214,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 							SNew(SSpacer)
 							.Size(FVector2D(0.f, 10.f))
 						]
-												
-						// STATE NAME AREA
+						
 						+ SVerticalBox::Slot()
 						.Padding(FMargin(NodePadding.Left, 0.0f, NodePadding.Right, 0.0f))
 						.VAlign(VAlign_Fill)
@@ -226,48 +224,47 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 							.VAlign(VAlign_Fill)
 							[
 								SNew(SVerticalBox)
+
+								// DECORATORS SLOT
 								+ SVerticalBox::Slot()
 								.AutoHeight()
 								[
-									SAssignNew(NodeBody, SBorder)
-									//.BorderImage(this, &SEdNode_MounteaDialogueGraphNode::GetNodeTypeBrush)
+									SAssignNew(DecoratorsBody, SBorder)
 									.BorderImage(this, &SEdNode_MounteaDialogueGraphNode::GetTextNodeTypeBrush)
-									.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetBackgroundColor)
+									.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetDecoratorsBackgroundColor)
 									.HAlign(HAlign_Fill)
 									.VAlign(VAlign_Center)
-									.Visibility(EVisibility::SelfHitTestInvisible)
+									.Visibility(this, &SEdNode_MounteaDialogueGraphNode::ShowDecoratorsSlot)
 									[
 										SNew(SBox)
-										.MinDesiredWidth(FOptionalSize(110.f))
+										.MinDesiredWidth(FOptionalSize(120.f))
 										[
-											SNew(SOverlay)
-											+ SOverlay::Slot()
-											.HAlign(HAlign_Fill)
-											.VAlign(VAlign_Fill)
+											SNew(SVerticalBox)
+											+ SVerticalBox::Slot()
+								.			AutoHeight()
 											[
-												SAssignNew(NameVerticalBox, SVerticalBox)
-												
-												// DECORATORS SLOT
-												+ SVerticalBox::Slot()
-												.AutoHeight()
-												.HAlign(HAlign_Center)
+												SNew(SOverlay)
+												+ SOverlay::Slot()
+												.HAlign(HAlign_Fill)
+												.VAlign(VAlign_Fill)
 												[
-													SAssignNew(DecoratorsVerticalBox, SVerticalBox)
-													.Visibility(this, &SEdNode_MounteaDialogueGraphNode::ShowDecoratorsSlot)
+													SNew(SVerticalBox)
 													+ SVerticalBox::Slot()
+													.AutoHeight()
+													.HAlign(HAlign_Center)
+													.VAlign(VAlign_Fill)
 													[
-														
-														SNew(SHorizontalBox)
-														+ SHorizontalBox::Slot()
-														.AutoWidth()
-														.HAlign(HAlign_Center)
+														SNew(SVerticalBox)
+														+ SVerticalBox::Slot()
 														[
 															SNew(SHorizontalBox)
 															+ SHorizontalBox::Slot()
-															.Padding(FMargin(4.0f, 1.5f, 4.0f, 1.5f))
+															.AutoWidth()
+															.HAlign(HAlign_Center)
 															[
-																SNew(SScaleBox)
-																.Stretch(EStretch::ScaleToFit)
+																SNew(SHorizontalBox)
+																+ SHorizontalBox::Slot()
+																.Padding(FMargin(4.0f, 0.f, 4.0f, 0.f))
 																[
 																	SAssignNew(DecoratorsText, STextBlock)
 																	.Text(this, &SEdNode_MounteaDialogueGraphNode::GetDecoratorsText)
@@ -277,48 +274,89 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 														]
 													]
 												]
-												
-												// NAME SLOT
-												+ SVerticalBox::Slot()
-												.AutoHeight()
-												.HAlign(HAlign_Center)
-												[
-													SNew(SHorizontalBox)
-													+ SHorizontalBox::Slot()
-													.AutoWidth()
-													[
-														// POPUP ERROR MESSAGE
-														SAssignNew(ErrorText, SErrorText)
-														.BackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetErrorColor)
-														.ToolTipText(this, &SEdNode_MounteaDialogueGraphNode::GetErrorMsgToolTip)
-													]
+											]
+										]
+									]
+								]
 
-													+ SHorizontalBox::Slot()
-													.AutoWidth()
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								[
+									SNew(SSpacer)
+									.Size(FVector2D(0.f, 0.25f))
+								]
+
+								// NAME SLOT
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								[
+									SAssignNew(NodeBody, SBorder)
+									.BorderImage(this, &SEdNode_MounteaDialogueGraphNode::GetTextNodeTypeBrush)
+									.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetNodeTitleBackgroundColor)
+									.HAlign(HAlign_Fill)
+									.VAlign(VAlign_Center)
+									.Visibility(EVisibility::SelfHitTestInvisible)
+									[
+										SNew(SBox)
+										.MinDesiredWidth(FOptionalSize(110.f))
+										[
+											SNew(SVerticalBox)
+											+ SVerticalBox::Slot()
+								.			AutoHeight()
+											[
+												SNew(SSpacer)
+												.Size(FVector2D(5.f, 0.f))
+											]
+											+ SVerticalBox::Slot()
+								.			AutoHeight()
+											[
+												SNew(SOverlay)
+												+ SOverlay::Slot()
+												.HAlign(HAlign_Fill)
+												.VAlign(VAlign_Fill)
+												[
+													SAssignNew(NameVerticalBox, SVerticalBox)
+													+ SVerticalBox::Slot()
+													.AutoHeight()
 													.HAlign(HAlign_Center)
 													[
 														SNew(SHorizontalBox)
 														+ SHorizontalBox::Slot()
-														.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+														.AutoWidth()
 														[
-															SNew(SVerticalBox)
-															+ SVerticalBox::Slot()
-															.HAlign(HAlign_Center)
-															.AutoHeight()
+															// POPUP ERROR MESSAGE
+															SAssignNew(ErrorText, SErrorText)
+															.BackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetErrorColor)
+															.ToolTipText(this, &SEdNode_MounteaDialogueGraphNode::GetErrorMsgToolTip)
+														]
+
+														+ SHorizontalBox::Slot()
+														.AutoWidth()
+														.HAlign(HAlign_Center)
+														[
+															SNew(SHorizontalBox)
+															+ SHorizontalBox::Slot()
+															.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 															[
-																SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-																.Style(FEditorStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
-																.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
-																.OnVerifyTextChanged(this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
-																.OnTextCommitted(this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
-																.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
-																.IsSelected(this, &SEdNode_MounteaDialogueGraphNode::IsSelectedExclusively)
-																.Justification(ETextJustify::Center)
-															]
-															+ SVerticalBox::Slot()
-															.AutoHeight()
-															[
-																NodeTitle.ToSharedRef()
+																SNew(SVerticalBox)
+																+ SVerticalBox::Slot()
+																.HAlign(HAlign_Center)
+																.AutoHeight()
+																[
+																	SAssignNew(InlineEditableText, SInlineEditableTextBlock)
+																	.Style(FEditorStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
+																	.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
+																	.OnVerifyTextChanged(this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
+																	.OnTextCommitted(this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
+																	.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
+																	.IsSelected(this, &SEdNode_MounteaDialogueGraphNode::IsSelectedExclusively)
+																	.Justification(ETextJustify::Center)
+																]
+																+ SVerticalBox::Slot()
+																.AutoHeight()
+																[
+																	NodeTitle.ToSharedRef()
+																]
 															]
 														]
 													]
@@ -526,9 +564,14 @@ FSlateColor SEdNode_MounteaDialogueGraphNode::GetBorderFrontColor() const
 	return MounteaDialogueGraphColors::Overlay::DarkTheme;
 }
 
-FSlateColor SEdNode_MounteaDialogueGraphNode::GetBackgroundColor() const
+FSlateColor SEdNode_MounteaDialogueGraphNode::GetNodeTitleBackgroundColor() const
 {
 	return MounteaDialogueGraphColors::NodeBody::Default;
+}
+
+FSlateColor SEdNode_MounteaDialogueGraphNode::GetDecoratorsBackgroundColor() const
+{
+	return MounteaDialogueGraphColors::DecoratorsBody::Default;
 }
 
 FSlateColor SEdNode_MounteaDialogueGraphNode::GetPinsDockColor() const

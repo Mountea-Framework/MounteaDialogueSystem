@@ -11,6 +11,11 @@ namespace MounteaDialogueGraphColors
 		constexpr FLinearColor Error(1.0f, 0.0f, 0.0f);
 	}
 
+	namespace DecoratorsBody
+	{
+		constexpr FLinearColor Default(0.1f, 0.1f, 0.1f);
+	}
+
 	namespace NodeBorder
 	{
 		constexpr FLinearColor Inactive(0.08f, 0.08f, 0.08f);

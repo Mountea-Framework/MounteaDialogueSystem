@@ -20,16 +20,6 @@ namespace MounteaDialogueWidgetCommands
 }
 
 /**
- * 
- */
-UENUM(BlueprintType)
-enum class EInputMode : uint8
-{
-	EIM_UIOnly			UMETA(DisplayName="UI Only"),
-	EIM_UIAndGame	UMETA(DisplayName="UI & Game")
-};
-
-/**
  * Mountea Dialogue System Runtime Settigns.
  * 
  * Holds a list of settings that are used to further improve and tweak Dialogues.

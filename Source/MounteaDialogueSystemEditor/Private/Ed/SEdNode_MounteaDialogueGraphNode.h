@@ -29,7 +29,8 @@ public:
 	virtual const FSlateBrush* GetTextNodeTypeBrush () const;
 	virtual FSlateColor GetBorderBackgroundColor() const;
 	virtual FSlateColor GetBorderFrontColor() const;
-	virtual FSlateColor GetBackgroundColor() const;
+	virtual FSlateColor GetNodeTitleBackgroundColor() const;
+	virtual FSlateColor GetDecoratorsBackgroundColor() const;
 
 	virtual FSlateColor GetPinsDockColor() const;
 	
@@ -48,6 +49,7 @@ public:
 
 protected:
 	TSharedPtr<SBorder> NodeBody;
+	TSharedPtr<SBorder> DecoratorsBody;
 	TSharedPtr<SHorizontalBox> OutputPinBox;
 
 	class UMounteaDialogueGraphEditorSettings* GraphEditorSettings = nullptr;
