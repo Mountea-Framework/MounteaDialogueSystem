@@ -16,7 +16,7 @@ class UMounteaDialogueGraphEdge;
  * Does come with ability to define Colours, Name, Description and Title.
  * Contains information about Parent and Children Nodes.
  */
-UCLASS(Abstract, BlueprintType, ClassGroup=("Mountea|Dialogue"), HideCategories=("Hidden", "Private"), AutoExpandCategories=("Mountea", "Dialogue"))
+UCLASS(Abstract, BlueprintType, ClassGroup=("Mountea|Dialogue"), HideCategories=("Hidden", "Private", "Base"), AutoExpandCategories=("Mountea", "Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject
 {
 	GENERATED_BODY()
@@ -72,6 +72,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	TArray<FMounteaDialogueDecorator> GetNodeDecorators() const
 	{ return NodeDecorators; };
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	bool DoesInheritDecorators() const
+	{ return bInheritGraphDecorators; };
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	int32 GetMaxChildNodes() const

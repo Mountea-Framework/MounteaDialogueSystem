@@ -225,6 +225,68 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 							[
 								SNew(SVerticalBox)
 
+								// DECORATORS INHERITANCE SLOT
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								[
+									SAssignNew(DecoratorsBody, SBorder)
+									.BorderImage(this, &SEdNode_MounteaDialogueGraphNode::GetTextNodeTypeBrush)
+									.BorderBackgroundColor(this, &SEdNode_MounteaDialogueGraphNode::GetDecoratorsBackgroundColor)
+									.HAlign(HAlign_Fill)
+									.VAlign(VAlign_Center)
+									.Visibility(this, &SEdNode_MounteaDialogueGraphNode::ShowInheritsDecorators)
+									[
+										SNew(SBox)
+										.MinDesiredWidth(FOptionalSize(140.f))
+										[
+											SNew(SVerticalBox)
+											+ SVerticalBox::Slot()
+								.			AutoHeight()
+											[
+												SNew(SOverlay)
+												+ SOverlay::Slot()
+												.HAlign(HAlign_Fill)
+												.VAlign(VAlign_Fill)
+												[
+													SNew(SVerticalBox)
+													+ SVerticalBox::Slot()
+													.AutoHeight()
+													.HAlign(HAlign_Center)
+													.VAlign(VAlign_Fill)
+													[
+														SNew(SVerticalBox)
+														+ SVerticalBox::Slot()
+														[
+															SNew(SHorizontalBox)
+															+ SHorizontalBox::Slot()
+															.AutoWidth()
+															.HAlign(HAlign_Center)
+															[
+																SNew(SHorizontalBox)
+																+ SHorizontalBox::Slot()
+																.Padding(FMargin(4.0f, 0.f, 4.0f, 0.f))
+																[
+																	SAssignNew(DecoratorsText, STextBlock)
+																	.Text(this, &SEdNode_MounteaDialogueGraphNode::GetDecoratorsInheritanceText)
+																	.Justification(ETextJustify::Center)
+																]
+															]
+														]
+													]
+												]
+											]
+										]
+									]
+								]
+
+								// SPACER
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								[
+									SNew(SSpacer)
+									.Size(FVector2D(0.f, 0.25f))
+								]
+
 								// DECORATORS SLOT
 								+ SVerticalBox::Slot()
 								.AutoHeight()
@@ -237,7 +299,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 									.Visibility(this, &SEdNode_MounteaDialogueGraphNode::ShowDecoratorsSlot)
 									[
 										SNew(SBox)
-										.MinDesiredWidth(FOptionalSize(120.f))
+										.MinDesiredWidth(FOptionalSize(140.f))
 										[
 											SNew(SVerticalBox)
 											+ SVerticalBox::Slot()
@@ -279,13 +341,14 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 									]
 								]
 
+								// SPACER
 								+ SVerticalBox::Slot()
 								.AutoHeight()
 								[
 									SNew(SSpacer)
 									.Size(FVector2D(0.f, 0.25f))
 								]
-
+								
 								// NAME SLOT
 								+ SVerticalBox::Slot()
 								.AutoHeight()
@@ -298,7 +361,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 									.Visibility(EVisibility::SelfHitTestInvisible)
 									[
 										SNew(SBox)
-										.MinDesiredWidth(FOptionalSize(110.f))
+										.MinDesiredWidth(FOptionalSize(140.f))
 										[
 											SNew(SVerticalBox)
 											+ SVerticalBox::Slot()
@@ -627,7 +690,26 @@ FSlateColor SEdNode_MounteaDialogueGraphNode::GetOverlayWidgetBackgroundColor(bo
 	return bArg ? MounteaDialogueGraphColors::IndexBorder::HoveredState : MounteaDialogueGraphColors::IndexBorder::NormalState;
 }
 
-bool SEdNode_MounteaDialogueGraphNode::HasDecorators() const
+bool SEdNode_MounteaDialogueGraphNode::HasGraphDecorators() const
+{
+	if (const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
+	{
+		if (EdParentNode->DialogueGraphNode && EdParentNode->DialogueGraphNode->Graph)
+		{
+			for (const auto Itr :  EdParentNode->DialogueGraphNode->Graph->GetGraphDecorators())
+			{
+				if (Itr.DecoratorType != nullptr)
+				{
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+bool SEdNode_MounteaDialogueGraphNode::HasNodeDecorators() const
 {
 	if (const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
 	{
@@ -654,7 +736,14 @@ bool SEdNode_MounteaDialogueGraphNode::HasDecorators() const
 
 EVisibility SEdNode_MounteaDialogueGraphNode::ShowDecoratorsSlot() const
 {
-	return HasDecorators() ? EVisibility::Visible : EVisibility::Collapsed;
+	if (GraphEditorSettings)
+	{
+		if (GraphEditorSettings->ShowDetailedInfo_NumDecorators())
+		{
+			return HasNodeDecorators() ? EVisibility::Visible : EVisibility::Collapsed;
+		}
+	}
+	return EVisibility::Collapsed;
 }
 
 FText SEdNode_MounteaDialogueGraphNode::GetDecoratorsText() const
@@ -669,6 +758,31 @@ FText SEdNode_MounteaDialogueGraphNode::GetDecoratorsText() const
 		}
 	}
 	return FText::FromString("DECORATORS: none");
+}
+
+EVisibility SEdNode_MounteaDialogueGraphNode::ShowInheritsDecorators() const
+{
+	if (GraphEditorSettings)
+	{
+		if (GraphEditorSettings->ShowDetailedInfo_InheritsDecorators())
+		{
+			return HasGraphDecorators() ? EVisibility::Visible : EVisibility::Collapsed;
+		}
+	}
+	return EVisibility::Collapsed;
+}
+
+FText SEdNode_MounteaDialogueGraphNode::GetDecoratorsInheritanceText() const
+{
+	if (const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
+	{
+		if (EdParentNode->DialogueGraphNode)
+		{
+			FString Result =  EdParentNode->DialogueGraphNode->DoesInheritDecorators() ? TEXT("yes") : TEXT("no") ;
+			return FText::FromString( FString(TEXT("Inherits decorators")).Append(" | ").Append(Result) );
+		}
+	}
+	return FText::FromString("invalid");
 }
 
 // TODO: Make functions to generate Slate elements so I can stack them together

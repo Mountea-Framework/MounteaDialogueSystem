@@ -16,7 +16,6 @@ public:
 
 	void Construct(const FArguments& InArgs, UEdNode_MounteaDialogueGraphNode* InNode);
 
-
 	
 	virtual void UpdateGraphNode() override;
 	virtual void CreatePinWidgets() override;
@@ -43,9 +42,12 @@ public:
 	virtual void OnIndexHoverStateChanged(bool bArg) const;
 	virtual FSlateColor GetOverlayWidgetBackgroundColor(bool bArg) const;
 
-	virtual bool HasDecorators() const;
+	virtual bool HasGraphDecorators() const;
+	virtual bool HasNodeDecorators() const;
 	virtual EVisibility ShowDecoratorsSlot() const;
 	virtual FText GetDecoratorsText() const;
+	virtual EVisibility ShowInheritsDecorators() const;
+	virtual FText GetDecoratorsInheritanceText() const;
 
 protected:
 	TSharedPtr<SBorder> NodeBody;

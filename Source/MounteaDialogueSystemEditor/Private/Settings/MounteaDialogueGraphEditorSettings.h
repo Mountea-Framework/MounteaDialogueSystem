@@ -81,6 +81,12 @@ private:
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	ENodeTheme NodeTheme;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
+	bool bShowDetailedInfo_NumDecorators;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
+	bool bShowDetailedInfo_InheritsDecorators;
 	
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	bool bDisplayAutomaticNames;
@@ -185,12 +191,18 @@ private:
 public:
 
 #pragma region GraphNodes_Getters
-
+	
 	ENodeTheme GetNodeTheme() const
 	{ return NodeTheme; };
 
 	ENodeType GetNodeType() const
 	{ return NodeType; };
+
+	bool ShowDetailedInfo_NumDecorators() const
+	{ return bShowDetailedInfo_NumDecorators; };
+
+	bool ShowDetailedInfo_InheritsDecorators() const
+	{ return bShowDetailedInfo_InheritsDecorators; };
 	
 	bool ShowAutomaticNames() const
 	{ return bDisplayAutomaticNames; };

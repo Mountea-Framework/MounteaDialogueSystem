@@ -29,6 +29,9 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 
 	bAllowRenameNodes = true;
 	bDisplayAutomaticNames = false;
+
+	bShowDetailedInfo_InheritsDecorators = false;
+	bShowDetailedInfo_NumDecorators = true;
 }
 
 #undef LOCTEXT_NAMESPACE
