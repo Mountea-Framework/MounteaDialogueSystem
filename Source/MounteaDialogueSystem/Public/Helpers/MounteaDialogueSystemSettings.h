@@ -149,7 +149,9 @@ public:
 
 	/**
 	 * Returns Subtitles Settings.
-	 * If given 'OptionalClassFilter' then it will search for Subtitles Settings override for this class, if any is specified.
+	 * If given 'RowID' then it will search for Subtitles Settings override for this class, if any is specified.
+	 * 
+	 * If 'SubtitlesSettingsOverrides' are specified but invalid, 'SubtitlesSettings' are returned instead like no optional filters were provided.
 	 * 
 	 * @param RowID	Optional Class and Row ID of UserWidget to filter out the override Settings
 	 */
@@ -158,7 +160,10 @@ public:
 	{ 
 		if (SubtitlesSettingsOverrides.Contains(RowID))
 		{
-			return SubtitlesSettingsOverrides[RowID];
+			return SubtitlesSettingsOverrides[RowID].SettingsGUID.IsValid() ? 
+			SubtitlesSettingsOverrides[RowID] :
+			SubtitlesSettings
+			;
 		}
 
 		return SubtitlesSettings;
