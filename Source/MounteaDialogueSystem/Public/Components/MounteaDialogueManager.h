@@ -181,6 +181,9 @@ protected:
 
 protected:
 
+	virtual bool EvaluateNodeDecorators() override;
+	virtual void ExecuteNodeDecorators() override;
+
 	virtual void StartDialogue() override;
 	virtual void CloseDialogue() override;
 	virtual void ProcessNode() override;

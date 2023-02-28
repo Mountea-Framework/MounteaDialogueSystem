@@ -212,6 +212,16 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 	}
 }
 
+bool UMounteaDialogueManager::EvaluateNodeDecorators()
+{
+	return true;
+}
+
+void UMounteaDialogueManager::ExecuteNodeDecorators()
+{
+	//TODO: Call BFC to execute all from Context
+}
+
 void UMounteaDialogueManager::StartDialogue()
 {
 	if (!DialogueContext)
