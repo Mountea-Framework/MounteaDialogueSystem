@@ -85,6 +85,11 @@ UMounteaDialogueGraphNode* UMounteaDialogueGraph::GetStartNode() const
 	return StartNode;
 }
 
+TArray<FMounteaDialogueDecorator> UMounteaDialogueGraph::GetGraphDecorators() const
+{
+	return GraphDecorators;
+}
+
 int UMounteaDialogueGraph::GetLevelNum() const
 {
 	int Level = 0;

@@ -121,11 +121,29 @@ public:
 		TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(Graph->GetStartNode());
 		
 		if (StartNode_Children[0] == nullptr) return false;
-
+		
 		UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
 		Context->SetDialogueContext(DialogueParticipant, StartNode_Children[0], GetAllowedChildNodes(StartNode_Children[0]));
 
+		if (!EvaluateDecorators(WorldContextObject, Context)) return false;
+		
 		return  InitializeDialogueWithContext(WorldContextObject, Initiator, DialogueParticipant, Context);
+	}
+
+	/**
+	 * Requests Evaluation for all Decorators for Graph and Context Node to verify that all are valid.
+	 */
+	static bool EvaluateDecorators(const UObject* WorldContextObject, UMounteaDialogueContext* DialogueContext)
+	{
+		return true;
+	}
+
+	/**
+	 * Requests Execution for all Decorators for Graph and Context Node
+	 */
+	static void ExecuteDecorators(const UObject* WorldContextObject, UMounteaDialogueContext* DialogueContext)
+	{
+		// TODO: Request execution Event on all Decorators
 	}
 
 	/**

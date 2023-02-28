@@ -20,7 +20,7 @@ struct FMounteaDialogueDecorator;
  * Can be manually created from Content Browser, using Mountea Dialogue category.
  * Comes with Node editor, which provides easy to follow visual way to create Dialogue Trees.
  */
-UCLASS(Blueprintable, ClassGroup=("Mountea|Dialogue"), DisplayName="Mountea Dialogue Tree", AutoExpandCategories=("Mountea", "Dialogue"))
+UCLASS(BlueprintType, ClassGroup=("Mountea|Dialogue"), DisplayName="Mountea Dialogue Tree", HideCategories=("Hidden", "Private"), AutoExpandCategories=("Mountea", "Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraph : public UObject
 {
 	GENERATED_BODY()
@@ -82,6 +82,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	UMounteaDialogueGraphNode* GetStartNode() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	TArray<FMounteaDialogueDecorator> GetGraphDecorators() const;
 
 #pragma region HelpingFunctions
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
