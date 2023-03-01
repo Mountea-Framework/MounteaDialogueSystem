@@ -341,6 +341,11 @@ TSharedRef<SBox> SEdNode_MounteaDialogueGraphNode::ConstructMainNodeElements_Sta
 
 TSharedRef<SBox> SEdNode_MounteaDialogueGraphNode::ConstructMainNodeElements_Unified(TSharedPtr<SErrorText>& ErrorText, TSharedPtr<SNodeTitle>& NodeTitle, TSharedPtr<STextBlock>& DecoratorsText, TSharedPtr<SVerticalBox>& NameVerticalBox)
 {
+	TSharedPtr<SBox> SBox_InheritanceOnly;
+	TSharedPtr<SBox> SBox_ImplementsOnly;
+	TSharedPtr<SBox> SBox_All;
+	TSharedPtr<SBox> SBox_BottomPadding;
+	
 	return
 	SNew(SBox)
      .MinDesiredHeight(FOptionalSize(30.f))
@@ -348,10 +353,6 @@ TSharedRef<SBox> SEdNode_MounteaDialogueGraphNode::ConstructMainNodeElements_Uni
 	.Visibility(this, &SEdNode_MounteaDialogueGraphNode::GetUnifiedVisibility)
 	[
 		SNew(SVerticalBox)
-
-		// DECORATORS INHERITANCE SLOT
-		+ SVerticalBox::Slot()
-		.AutoHeight()
 		+ SVerticalBox::Slot()
 		.AutoHeight()
 		[
@@ -437,10 +438,16 @@ TSharedRef<SBox> SEdNode_MounteaDialogueGraphNode::ConstructMainNodeElements_Uni
 					.HAlign(HAlign_Center)
 					.VAlign(VAlign_Fill)
 					[
-						SNew(SSpacer)
-						.Size(FVector2D(0.f, 1.f))
+						SNew(SBox)
+						.Visibility(this, &SEdNode_MounteaDialogueGraphNode::ShowDecoratorsBottomPadding)
+						[
+							SNew(SSpacer)
+							.Size(FVector2D(0.f, 2.5f))
+						]
+						
 					]
-					
+
+					// INHERITS ONLY
 					+ SVerticalBox::Slot()
 					.AutoHeight()
 					.HAlign(HAlign_Center)
@@ -448,6 +455,7 @@ TSharedRef<SBox> SEdNode_MounteaDialogueGraphNode::ConstructMainNodeElements_Uni
 					.Padding(FMargin(4.0f, 0.f, 4.0f, 0.f))
 					[
 						SNew(SBox)
+						.Visibility(this, &SEdNode_MounteaDialogueGraphNode::ShowInheritsDecorators)
 						.MaxDesiredWidth(FOptionalSize(135.f))
 						[
 							SNew(SScaleBox)
@@ -459,13 +467,24 @@ TSharedRef<SBox> SEdNode_MounteaDialogueGraphNode::ConstructMainNodeElements_Uni
 
 								+ SUniformGridPanel::Slot(0,0)
 								[
-									SNew(SRichTextBlock)
-									//.Text(FText::FromString(R"(<RichTextBlock.Italic>INHERITS</>)"))
-									.Text(LOCTEXT("A", "INHERITS"))
+									SNew(STextBlock)
+									.Text(LOCTEXT("A", "DECORATORS"))
 								]
-								+ SUniformGridPanel::Slot(1,0)
+								
+								+ SUniformGridPanel::Slot(0,1)
 								[
 									SNew(SBox)
+									.Visibility(this, &SEdNode_MounteaDialogueGraphNode::ShowInheritsDecorators)
+									[
+										SNew(STextBlock)
+										.Text(LOCTEXT("B", "inherits"))
+									]
+									
+								]
+								+ SUniformGridPanel::Slot(1,1)
+								[
+									SNew(SBox)
+									.Visibility(this, &SEdNode_MounteaDialogueGraphNode::ShowInheritsDecorators)
 									.MaxAspectRatio(FOptionalSize(1))
 									.MaxDesiredHeight(FOptionalSize(8.f))
 									.MaxDesiredWidth(FOptionalSize(8.f))
@@ -475,11 +494,38 @@ TSharedRef<SBox> SEdNode_MounteaDialogueGraphNode::ConstructMainNodeElements_Uni
 										.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetInheritsImageTint)
 									]
 								]
+							]
+						]
+					]
+					
+					// IMPLEMENTS ONLY
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.HAlign(HAlign_Center)
+					.VAlign(VAlign_Fill)
+					.Padding(FMargin(4.0f, 0.f, 4.0f, 0.f))
+					[
+						SNew(SBox)
+						.Visibility(this, &SEdNode_MounteaDialogueGraphNode::ShowDecoratorsSlot)
+						.MaxDesiredWidth(FOptionalSize(135.f))
+						[
+							SNew(SScaleBox)
+							.Stretch(EStretch::ScaleToFitX)
+							[
+								SNew(SUniformGridPanel)
+								.Visibility(EVisibility::HitTestInvisible)
+								.SlotPadding(FMargin(6.0f, 0.f, 0.0f, 0.f))
+
+								+ SUniformGridPanel::Slot(0,0)
+								[
+									SNew(STextBlock)
+									.Text(LOCTEXT("A", "DECORATORS"))
+								]
 
 								+ SUniformGridPanel::Slot(0,1)
 								[
-									SNew(SRichTextBlock)
-									.Text(LOCTEXT("B", "IMPLEMENTS"))
+									SNew(STextBlock)
+									.Text(LOCTEXT("C", "implements"))
 								]
 								+ SUniformGridPanel::Slot(1,1)
 								[
@@ -490,12 +536,78 @@ TSharedRef<SBox> SEdNode_MounteaDialogueGraphNode::ConstructMainNodeElements_Uni
 						]
 					]
 						
+					// BOTH
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.HAlign(HAlign_Center)
+					.VAlign(VAlign_Fill)
+					.Padding(FMargin(4.0f, 0.f, 4.0f, 0.f))
+					[
+						SNew(SBox)
+						.Visibility(this, &SEdNode_MounteaDialogueGraphNode::ShowAllDecorators)
+						.MaxDesiredWidth(FOptionalSize(135.f))
+						[
+							SNew(SScaleBox)
+							.Stretch(EStretch::ScaleToFitX)
+							[
+								SNew(SUniformGridPanel)
+								.Visibility(EVisibility::HitTestInvisible)
+								.SlotPadding(FMargin(6.0f, 0.f, 0.0f, 0.f))
+
+								+ SUniformGridPanel::Slot(0,0)
+								[
+									SNew(STextBlock)
+									.Text(LOCTEXT("A", "DECORATORS"))
+								]
+				
+								+ SUniformGridPanel::Slot(0,1)
+								[
+									SNew(SBox)
+									.Visibility(this, &SEdNode_MounteaDialogueGraphNode::ShowAllDecorators)
+									[
+										SNew(STextBlock)
+										.Text(LOCTEXT("B", "inherits"))
+									]
+					
+								]
+								+ SUniformGridPanel::Slot(1,1)
+								[
+									SNew(SBox)
+									.Visibility(this, &SEdNode_MounteaDialogueGraphNode::ShowAllDecorators)
+									.MaxAspectRatio(FOptionalSize(1))
+									.MaxDesiredHeight(FOptionalSize(8.f))
+									.MaxDesiredWidth(FOptionalSize(8.f))
+									[
+										SNew(SImage)
+										.Image(this, &SEdNode_MounteaDialogueGraphNode::GetInheritsImageBrush)
+										.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetInheritsImageTint)
+									]
+								]
+
+								+ SUniformGridPanel::Slot(0,2)
+								[
+									SNew(STextBlock)
+									.Text(LOCTEXT("C", "implements"))
+								]
+								+ SUniformGridPanel::Slot(1,2)
+								[
+									SNew(STextBlock)
+									.Text(this, &SEdNode_MounteaDialogueGraphNode::GetNumberOfDecorators)
+								]
+							]
+						]
+					]
+					
 					+ SVerticalBox::Slot()
 					.HAlign(HAlign_Center)
 					.VAlign(VAlign_Fill)
 					[
-						SNew(SSpacer)
-						.Size(FVector2D(0.f, 2.5f))
+						SNew(SBox)
+						.Visibility(this, &SEdNode_MounteaDialogueGraphNode::ShowDecoratorsBottomPadding)
+						[
+							SNew(SSpacer)
+							.Size(FVector2D(0.f, 2.5f))
+						]
 					]
 				]
 			]
@@ -940,7 +1052,7 @@ EVisibility SEdNode_MounteaDialogueGraphNode::ShowDecoratorsSlot() const
 {
 	if (GraphEditorSettings)
 	{
-		if (GraphEditorSettings->ShowDetailedInfo_NumDecorators())
+		if (GraphEditorSettings->ShowDetailedInfo_NumDecorators() && !GraphEditorSettings->ShowDetailedInfo_InheritsDecorators())
 		{
 			return HasNodeDecorators() ? EVisibility::Visible : EVisibility::Collapsed;
 		}
@@ -978,9 +1090,33 @@ EVisibility SEdNode_MounteaDialogueGraphNode::ShowInheritsDecorators() const
 {
 	if (GraphEditorSettings)
 	{
-		if (GraphEditorSettings->ShowDetailedInfo_InheritsDecorators())
+		if (GraphEditorSettings->ShowDetailedInfo_InheritsDecorators() && !GraphEditorSettings->ShowDetailedInfo_NumDecorators())
 		{
 			return HasGraphDecorators() ? EVisibility::Visible : EVisibility::Collapsed;
+		}
+	}
+	return EVisibility::Collapsed;
+}
+
+EVisibility SEdNode_MounteaDialogueGraphNode::ShowAllDecorators() const
+{
+	if (GraphEditorSettings)
+	{
+		if (GraphEditorSettings->ShowDetailedInfo_InheritsDecorators() && GraphEditorSettings->ShowDetailedInfo_NumDecorators())
+		{
+			return HasGraphDecorators() ? EVisibility::Visible : EVisibility::Collapsed;
+		}
+	}
+	return EVisibility::Collapsed;
+}
+
+EVisibility SEdNode_MounteaDialogueGraphNode::ShowDecoratorsBottomPadding() const
+{
+	if (GraphEditorSettings)
+	{
+		if (GraphEditorSettings->ShowDetailedInfo_InheritsDecorators() || GraphEditorSettings->ShowDetailedInfo_NumDecorators())
+		{
+			return EVisibility::Visible;
 		}
 	}
 	return EVisibility::Collapsed;

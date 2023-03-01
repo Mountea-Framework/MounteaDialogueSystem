@@ -49,14 +49,18 @@ public:
 	virtual void OnIndexHoverStateChanged(bool bArg) const;
 	virtual FSlateColor GetOverlayWidgetBackgroundColor(bool bArg) const;
 
-	virtual bool HasGraphDecorators() const;
-	virtual bool HasNodeDecorators() const;
-	virtual EVisibility ShowDecoratorsSlot() const;
+	bool HasGraphDecorators() const;
+	bool HasNodeDecorators() const;
+	
 	virtual FText GetDecoratorsText() const;
 	virtual FText GetNumberOfDecorators() const;
-	virtual EVisibility ShowInheritsDecorators() const;
 	virtual FText GetDecoratorsInheritanceText() const;
-
+	
+	EVisibility ShowDecoratorsSlot() const;
+	EVisibility ShowInheritsDecorators() const;
+	EVisibility ShowAllDecorators() const;
+	EVisibility ShowDecoratorsBottomPadding() const;
+	
 	virtual EDecoratorsInfoStyle GetDecoratorsStyle() const;
 	EVisibility GetStackVisibility() const;
 	EVisibility GetUnifiedVisibility() const;
