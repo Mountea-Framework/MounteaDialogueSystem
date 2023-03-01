@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "SGraphNode.h"
 
+enum class EDecoratorsInfoStyle : uint8;
 class UEdNode_MounteaDialogueGraphNode;
 
 class SEdNode_MounteaDialogueGraphNode : public SGraphNode
@@ -15,6 +16,9 @@ public:
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, UEdNode_MounteaDialogueGraphNode* InNode);
+	
+	TSharedRef<SBox> ConstructMainNodeElements_Stack(TSharedPtr<SErrorText>& ErrorText, TSharedPtr<SNodeTitle>& NodeTitle, TSharedPtr<STextBlock>& DecoratorsText, TSharedPtr<SVerticalBox>& NameVerticalBox);
+	TSharedRef<SBox> ConstructMainNodeElements_Unified(TSharedPtr<SErrorText>& ErrorText, TSharedPtr<SNodeTitle>& NodeTitle, TSharedPtr<STextBlock>& DecoratorsText, TSharedPtr<SVerticalBox>& NameVerticalBox);
 
 	
 	virtual void UpdateGraphNode() override;
@@ -37,6 +41,9 @@ public:
 
 	virtual const FSlateBrush* GetNameIcon() const;
 
+	virtual const FSlateBrush* GetInheritsImageBrush() const;
+	virtual FSlateColor GetInheritsImageTint() const;
+
 	virtual FText GetIndexOverlayTooltipText() const;
 	virtual FText GetIndexText() const;
 	virtual void OnIndexHoverStateChanged(bool bArg) const;
@@ -46,8 +53,13 @@ public:
 	virtual bool HasNodeDecorators() const;
 	virtual EVisibility ShowDecoratorsSlot() const;
 	virtual FText GetDecoratorsText() const;
+	virtual FText GetNumberOfDecorators() const;
 	virtual EVisibility ShowInheritsDecorators() const;
 	virtual FText GetDecoratorsInheritanceText() const;
+
+	virtual EDecoratorsInfoStyle GetDecoratorsStyle() const;
+	EVisibility GetStackVisibility() const;
+	EVisibility GetUnifiedVisibility() const;
 
 protected:
 	TSharedPtr<SBorder> NodeBody;
@@ -63,9 +75,4 @@ protected:
 	
 	/** The widget we use to display the index of the node */
 	TSharedPtr<SWidget> IndexOverlayWidget;
-
-private:
-
-	// TODO: Example, will be expanded further
-	virtual TSharedRef<SVerticalBox>  MakeTextBox(const FText& InText);
 };

@@ -32,6 +32,7 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 
 	bShowDetailedInfo_InheritsDecorators = false;
 	bShowDetailedInfo_NumDecorators = true;
+	DecoratorsInfoStyle = EDecoratorsInfoStyle::EDIS_Unified;
 }
 
 #undef LOCTEXT_NAMESPACE

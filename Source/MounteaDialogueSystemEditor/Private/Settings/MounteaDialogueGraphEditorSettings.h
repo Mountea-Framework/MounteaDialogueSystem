@@ -42,6 +42,13 @@ enum class ENodeTheme : uint8
 };
 
 UENUM(BlueprintType)
+enum class EDecoratorsInfoStyle : uint8
+{
+	EDSI_Stack				UMETA(DisplayName="Stack"),
+	EDIS_Unified				UMETA(DisplayName="Unified")
+};
+
+UENUM(BlueprintType)
 enum class ENodeType : uint8
 {
 	ENT_SoftCorners			UMETA(DisplayName="Soft Corners"),
@@ -87,6 +94,9 @@ private:
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	bool bShowDetailedInfo_InheritsDecorators;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
+	EDecoratorsInfoStyle DecoratorsInfoStyle;
 	
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	bool bDisplayAutomaticNames;
@@ -206,6 +216,9 @@ public:
 	
 	bool ShowAutomaticNames() const
 	{ return bDisplayAutomaticNames; };
+
+	EDecoratorsInfoStyle GetDecoratorsStyle() const
+	{ return DecoratorsInfoStyle; };
 
 	bool AllowRenameNodes() const
 	{ return bAllowRenameNodes; };
