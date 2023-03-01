@@ -46,7 +46,7 @@ We are just humans and we tend to do mistakes. This feature will try its best to
 </p>
 
 #### Dialogue Previews
-Select any node and see what is inside. No need search, just observe.
+Select any node and see what is inside. No need to search where all the texts are, just click and see.
 <p align="center" width="100%">
     <img width="65%" src="https://user-images.githubusercontent.com/37410226/219806723-bd0d407d-77ce-451a-a315-a01dd8f6409e.png">
 </p>
@@ -54,7 +54,7 @@ Select any node and see what is inside. No need search, just observe.
 #### Dialogue Decorators
 Introducing *Decorators*, a powerful yet versitale tool of Blueprint based events that could be triggered per Dialogue Node! This provides a simple way to trigger cutscenes, switch cameras, end dialogues when being attacked or anything you like!
 <p align="center" width="100%">
-    <img width="65%" src="https://user-images.githubusercontent.com/37410226/221706467-7273be34-4aeb-43a2-bbb5-a7c16666677c.png">
+    <img width="65%" src="https://user-images.githubusercontent.com/37410226/222269825-c1e92517-7f13-4754-ad15-97d938b9c841.png">
 </p>
 
 ## Installation
