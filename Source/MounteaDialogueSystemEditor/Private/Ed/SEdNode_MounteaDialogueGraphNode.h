@@ -17,10 +17,6 @@ public:
 
 	void Construct(const FArguments& InArgs, UEdNode_MounteaDialogueGraphNode* InNode);
 	
-	TSharedRef<SBox> ConstructMainNodeElements_Stack(TSharedPtr<SErrorText>& ErrorText, TSharedPtr<SNodeTitle>& NodeTitle, TSharedPtr<STextBlock>& DecoratorsText, TSharedPtr<SVerticalBox>& NameVerticalBox);
-	TSharedRef<SBox> ConstructMainNodeElements_Unified(TSharedPtr<SErrorText>& ErrorText, TSharedPtr<SNodeTitle>& NodeTitle, TSharedPtr<STextBlock>& DecoratorsText, TSharedPtr<SVerticalBox>& NameVerticalBox);
-
-	
 	virtual void UpdateGraphNode() override;
 	virtual void CreatePinWidgets() override;
 	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
@@ -61,6 +57,7 @@ public:
 	EVisibility ShowDecoratorsSlot_Stack() const;
 	EVisibility ShowInheritsDecoratorsSlot_Stack() const;
 	EVisibility ShowAllDecorators() const;
+	EVisibility ShowDecoratorsMiddlePadding() const;
 	EVisibility ShowDecoratorsBottomPadding() const;
 	
 	virtual EDecoratorsInfoStyle GetDecoratorsStyle() const;
@@ -76,9 +73,4 @@ protected:
 
 	FLinearColor NodeInnerColor;
 	FLinearColor PinsDockColor;
-
-protected:
-	
-	/** The widget we use to display the index of the node */
-	TSharedPtr<SWidget> IndexOverlayWidget;
 };

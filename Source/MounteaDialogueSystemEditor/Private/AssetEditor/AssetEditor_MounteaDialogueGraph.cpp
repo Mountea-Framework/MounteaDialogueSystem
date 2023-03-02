@@ -818,6 +818,7 @@ void FAssetEditor_MounteaDialogueGraph::OnSelectedNodesChanged(const TSet<UObjec
 void FAssetEditor_MounteaDialogueGraph::OnNodeDoubleClicked(UEdGraphNode* Node)
 {
 	// TODO StartRenaming
+	GraphEditorCommands->TryExecuteAction(FGenericCommands::Get().Rename.ToSharedRef());
 }
 
 void FAssetEditor_MounteaDialogueGraph::OnFinishedChangingProperties(const FPropertyChangedEvent& PropertyChangedEvent)
