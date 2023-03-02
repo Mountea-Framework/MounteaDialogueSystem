@@ -47,7 +47,8 @@ public class MounteaDialogueSystemEditor : ModuleRules
 				"Json", 
 				"JsonUtilities",
 				
-				"BlueprintGraph"
+				"BlueprintGraph",
+				"InputCore"
 				// ... add private dependencies that you statically link with here ...
 			}
 		);
