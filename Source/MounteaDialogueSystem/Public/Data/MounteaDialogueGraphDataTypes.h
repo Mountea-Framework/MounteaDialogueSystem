@@ -14,6 +14,7 @@
 
 class USoundBase;
 class UTexture;
+class UDataAsset;
 
 /**
  * Dialogue Manager State

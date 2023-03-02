@@ -1,6 +1,5 @@
 // All rights reserved Dominik Pavlicek 2023
 
-
 #include "Components/MounteaDialogueManager.h"
 
 #include "TimerManager.h"
