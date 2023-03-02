@@ -19,7 +19,6 @@
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
 #include "Widgets/Layout/SScaleBox.h"
 #include "Widgets/Layout/SUniformGridPanel.h"
-#include "Widgets/Text/SRichTextBlock.h"
 
 #define LOCTEXT_NAMESPACE "EdNode_MounteaDialogueGraph"
 
@@ -190,7 +189,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 						[
 							SNew(SVerticalBox)
 
-#pragma region Stack_new
+#pragma region Stack
 
 							+ SVerticalBox::Slot()
 							.HAlign(HAlign_Fill)

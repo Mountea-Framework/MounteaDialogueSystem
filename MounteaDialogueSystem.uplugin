@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "0.0.0.5",
+	"VersionName": "0.0.0.6",
 	"FriendlyName": "Mountea Dialogue System",
 	"Description": "Mountea Dialogue System is an Open-Source Mountea Framework plugin which visually guides you when creating in game Dialogues, no matter how complex or long those are!",
 	"Category": "Mountea Framework",
