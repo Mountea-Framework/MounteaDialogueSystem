@@ -56,8 +56,10 @@ public:
 	virtual FText GetNumberOfDecorators() const;
 	virtual FText GetDecoratorsInheritanceText() const;
 	
-	EVisibility ShowDecoratorsSlot() const;
-	EVisibility ShowInheritsDecorators() const;
+	EVisibility ShowDecoratorsSlot_Unified() const;
+	EVisibility ShowInheritsDecoratorsSlot_Unified() const;
+	EVisibility ShowDecoratorsSlot_Stack() const;
+	EVisibility ShowInheritsDecoratorsSlot_Stack() const;
 	EVisibility ShowAllDecorators() const;
 	EVisibility ShowDecoratorsBottomPadding() const;
 	
