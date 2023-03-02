@@ -17,6 +17,7 @@ bool FMounteaDialogueGraphEditorUtilities::PickChildrenOfClass(const FText& Titl
 	Options.ClassFilter = Filter;
 	Options.bShowUnloadedBlueprints = true;
 	Options.bExpandRootNodes = true;
+	Options.DisplayMode = EClassViewerDisplayMode::TreeView;
 	Options.NameTypeToDisplay = EClassViewerNameTypeToDisplay::Dynamic;
 	
 	return SClassPickerDialog::PickClass(TitleText, Options, OutChosenClass, Class);
