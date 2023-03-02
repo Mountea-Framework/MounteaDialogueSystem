@@ -1,4 +1,4 @@
-Current Version: 0.0.0.5
+Current Version: 0.0.0.6
 
 # Changelog
 
@@ -9,13 +9,16 @@ All notable changes to this project will be documented in this file.
 > - Added: Node Decorators
 > - Added: Context Menu updates to show Dialogue Assets
 > - Added: Graph Based Decorators, Node based decorators
+> - Added: Edit button to edit selected Decorator from an array
+> - Added: Browse button to browse to selected Decorator from an array
 
 ### Fixed
 > - Fixed: Fixed "Base", "Hidden" and "Private" categories not being hidden by default
 
 ### Changed
-> - Changed: Graph Node base width from 110px to 140px
+> - Changed: Graph Node base width from 110px to 145px
 > - Changed: Graph Node displays Decorators information
+> - Changed: Graph Node settings to toggle what Decorators info show
 
 **Version 0.0.0.5**
 ### Added
