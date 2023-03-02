@@ -30,7 +30,7 @@ void FMounteaDialogueDecorator_DetailsPanel::CustomizeChildren(TSharedRef<IPrope
 		MounteaDialogueDecorator_CustomDetailsHelper->Update();
 		MounteaDialogueDecorator_CustomDetailsHelper->SetFunctionNameToOpen
 		(
-			EMounteaDialogueBlueprintOpenType::Event,
+			EMounteaDialogueBlueprintOpenType::Function,
 			GET_FUNCTION_NAME_CHECKED(UMounteaDialogueGraphNodeDecoratorBase, EvaluateDecorator)
 		);
 	}
