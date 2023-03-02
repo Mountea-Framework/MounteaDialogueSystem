@@ -57,7 +57,6 @@ public:
 	EVisibility ShowDecoratorsSlot_Stack() const;
 	EVisibility ShowInheritsDecoratorsSlot_Stack() const;
 	EVisibility ShowAllDecorators() const;
-	EVisibility ShowDecoratorsMiddlePadding() const;
 	EVisibility ShowDecoratorsBottomPadding() const;
 	
 	virtual EDecoratorsInfoStyle GetDecoratorsStyle() const;
@@ -66,7 +65,6 @@ public:
 
 protected:
 	TSharedPtr<SBorder> NodeBody;
-	TSharedPtr<SBorder> DecoratorsBody;
 	TSharedPtr<SHorizontalBox> OutputPinBox;
 
 	class UMounteaDialogueGraphEditorSettings* GraphEditorSettings = nullptr;

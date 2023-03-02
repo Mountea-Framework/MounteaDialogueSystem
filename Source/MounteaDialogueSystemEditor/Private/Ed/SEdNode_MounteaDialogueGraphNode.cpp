@@ -961,18 +961,6 @@ EVisibility SEdNode_MounteaDialogueGraphNode::ShowAllDecorators() const
 	return EVisibility::Collapsed;
 }
 
-EVisibility SEdNode_MounteaDialogueGraphNode::ShowDecoratorsMiddlePadding() const
-{
-	if (GraphEditorSettings)
-	{
-		if (GraphEditorSettings->ShowDetailedInfo_InheritsDecorators() && GraphEditorSettings->ShowDetailedInfo_NumDecorators())
-		{
-			return EVisibility::SelfHitTestInvisible;
-		}
-	}
-	return EVisibility::Collapsed;
-}
-
 EVisibility SEdNode_MounteaDialogueGraphNode::ShowDecoratorsBottomPadding() const
 {
 	if (GraphEditorSettings)

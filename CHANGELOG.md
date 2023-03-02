@@ -4,6 +4,19 @@ Current Version: 0.0.0.5
 
 All notable changes to this project will be documented in this file.
 
+**Version 0.0.0.6**
+### Added
+> - Added: Node Decorators
+> - Added: Context Menu updates to show Dialogue Assets
+> - Added: Graph Based Decorators, Node based decorators
+
+### Fixed
+> - Fixed: Fixed "Base", "Hidden" and "Private" categories not being hidden by default
+
+### Changed
+> - Changed: Graph Node base width from 110px to 140px
+> - Changed: Graph Node displays Decorators information
+
 **Version 0.0.0.5**
 ### Added
 > - Added: BPC_DialogueParticipant
