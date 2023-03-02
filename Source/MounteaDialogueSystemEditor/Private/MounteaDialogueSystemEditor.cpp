@@ -1,3 +1,5 @@
+// All rights reserved Dominik Pavlicek 2023
+
 #include "MounteaDialogueSystemEditor.h"
 
 #include "AssetToolsModule.h"
@@ -5,6 +7,8 @@
 #include "AssetActions/MounteaDialogueAdditionalDataAssetAction.h"
 #include "AssetActions/MounteaDialogueDecoratorAssetAction.h"
 #include "AssetActions/MounteaDialogueGraphAssetAction.h"
+#include "DetailsPanel/MounteaDialogueDecorator_DetailsPanel.h"
+#include "DetailsPanel/MounteaDialogueGraphNode_Details.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "Ed/SEdNode_MounteaDialogueGraphNode.h"
@@ -121,6 +125,42 @@ void FMounteaDialogueSystemEditor::StartupModule()
 				FSlateStyleRegistry::RegisterSlateStyle(*DialogueTreeSet.Get());
 			}
 		}
+	}
+
+	//Register custom Buttons for Decorators
+	{
+		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		{
+			TArray<FOnGetDetailCustomizationInstance> CustomClassLayouts =
+			{
+				FOnGetDetailCustomizationInstance::CreateStatic(&FMounteaDialogueGraphNode_Details::MakeInstance),
+			};
+			RegisteredCustomClassLayouts =
+			{
+				UMounteaDialogueGraphNode::StaticClass()->GetFName(),
+			};
+			for (int32 i = 0; i < RegisteredCustomClassLayouts.Num(); i++)
+			{
+				PropertyModule.RegisterCustomClassLayout(RegisteredCustomClassLayouts[i], CustomClassLayouts[i]);
+			}
+		}
+
+		{
+			TArray<FOnGetPropertyTypeCustomizationInstance> CustomPropertyTypeLayouts =
+		   {
+				FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FMounteaDialogueDecorator_DetailsPanel::MakeInstance),
+			};
+			RegisteredCustomPropertyTypeLayout =
+			{
+				FMounteaDialogueDecorator::StaticStruct()->GetFName(),
+			};
+			for (int32 i = 0; i < RegisteredCustomPropertyTypeLayout.Num(); i++)
+			{
+				PropertyModule.RegisterCustomPropertyTypeLayout(RegisteredCustomPropertyTypeLayout[i], CustomPropertyTypeLayouts[i]);
+			}
+		}
+
+		PropertyModule.NotifyCustomizationModuleChanged();
 	}
 	
 	EditorLOG_WARNING(TEXT("MounteaDialogueSystemEditor module has been loaded"));

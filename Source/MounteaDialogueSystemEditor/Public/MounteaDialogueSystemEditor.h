@@ -66,4 +66,7 @@ private:
 
 	EAssetTypeCategories::Type MounteaDialogueGraphAssetCategoryBit;
 	FHttpModule* Http;
+
+	TArray<FName> RegisteredCustomClassLayouts;
+	TArray<FName> RegisteredCustomPropertyTypeLayout;
 };
