@@ -17,7 +17,7 @@ void FMounteaDialogueDecorator_DetailsPanel::CustomizeHeader(TSharedRef<IPropert
 
 void FMounteaDialogueDecorator_DetailsPanel::CustomizeChildren(TSharedRef<IPropertyHandle> InStructPropertyHandle, IDetailChildrenBuilder& StructBuilder, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
-	// CustomEvent
+	// Make Custom elements
 	{
 		DecoratorPropertyRow = &StructBuilder.AddProperty
 		(
@@ -27,6 +27,7 @@ void FMounteaDialogueDecorator_DetailsPanel::CustomizeChildren(TSharedRef<IPrope
 
 		// Add Custom buttons
 		MounteaDialogueDecorator_CustomDetailsHelper = MakeShared<FMounteaDialogueDecorator_CustomDetailsHelper>(DecoratorPropertyRow);
+		MounteaDialogueDecorator_CustomDetailsHelper->SetPropertyUtils(PropertyUtils);
 		MounteaDialogueDecorator_CustomDetailsHelper->Update();
 		MounteaDialogueDecorator_CustomDetailsHelper->SetFunctionNameToOpen
 		(

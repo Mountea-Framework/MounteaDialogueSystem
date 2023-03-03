@@ -130,6 +130,9 @@ void FMounteaDialogueSystemEditor::StartupModule()
 	//Register custom Buttons for Decorators
 	{
 		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+		//TODO: Implement showing/hiding custom categories in Graph
+		/*
 		{
 			TArray<FOnGetDetailCustomizationInstance> CustomClassLayouts =
 			{
@@ -144,7 +147,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 				PropertyModule.RegisterCustomClassLayout(RegisteredCustomClassLayouts[i], CustomClassLayouts[i]);
 			}
 		}
-
+		*/
 		{
 			TArray<FOnGetPropertyTypeCustomizationInstance> CustomPropertyTypeLayouts =
 		   {
@@ -161,7 +164,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		}
 
 		PropertyModule.NotifyCustomizationModuleChanged();
-	}
+	} 
 	
 	EditorLOG_WARNING(TEXT("MounteaDialogueSystemEditor module has been loaded"));
 }

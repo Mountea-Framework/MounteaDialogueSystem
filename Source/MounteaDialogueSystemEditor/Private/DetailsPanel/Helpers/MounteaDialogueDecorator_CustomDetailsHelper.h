@@ -18,7 +18,7 @@ class FMounteaDialogueDecorator_CustomDetailsHelper : public TSharedFromThis<FMo
 public:
 	
 	FMounteaDialogueDecorator_CustomDetailsHelper(IDetailPropertyRow* InPropertyRow);
-	virtual ~FMounteaDialogueDecorator_CustomDetailsHelper() {};
+	virtual ~FMounteaDialogueDecorator_CustomDetailsHelper() {}
 
 	// Update the full property row.
 	void Update();
@@ -28,6 +28,12 @@ public:
 	{
 		OpenType = InOpenType;
 		FunctionNameToOpen = Name;
+		return *this;
+	}
+
+	Self& SetPropertyUtils(const TSharedPtr<IPropertyUtilities>& Utils)
+	{
+		PropertyUtils = Utils;
 		return *this;
 	}
 
@@ -49,7 +55,12 @@ protected:
 	EVisibility GetBrowseButtonVisibility() const;
 	virtual bool CanBeVisible() const { return true; }
 
+	void RequestDeleteItem();
+	void OnDeleteItem();
+
 protected:
+
+	TSharedPtr<IPropertyUtilities> PropertyUtils;
 	
 	// The Property handle of what this row represents
 	IDetailPropertyRow* PropertyRow = nullptr;

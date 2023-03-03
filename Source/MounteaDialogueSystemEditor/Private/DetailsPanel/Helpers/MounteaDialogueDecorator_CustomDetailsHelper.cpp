@@ -3,6 +3,8 @@
 #include "MounteaDialogueDecorator_CustomDetailsHelper.h"
 
 #include "DetailWidgetRow.h"
+#include "IPropertyUtilities.h"
+#include "PropertyCustomizationHelpers.h"
 #include "SourceCodeNavigation.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_CustomDetailsHelper"
@@ -22,6 +24,14 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 		false
 	);
 
+	
+	PropertyRow->ShowPropertyButtons(true);
+
+	FExecuteAction OnInsertClicked;
+	FExecuteAction OnDeleteClicked = FExecuteAction::CreateSP( this, &FMounteaDialogueDecorator_CustomDetailsHelper::RequestDeleteItem );
+	FExecuteAction OnDuplicateClicked;
+
+	
 	FDetailWidgetRow& DetailWidgetRow = PropertyRow->CustomWidget(true);
 	DetailWidgetRow.NameContent()
 	[
@@ -43,7 +53,15 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
    [
 	   DefaultValueWidget.ToSharedRef()
    ];
-
+	
+	HorizontalBox->AddSlot()
+	.AutoWidth()
+	.VAlign(VAlign_Center)
+	.Padding(4.f)
+	[
+		PropertyCustomizationHelpers::MakeInsertDeleteDuplicateButton( OnInsertClicked, OnDeleteClicked, OnDuplicateClicked)
+	];
+	
 	// Browse Asset
 	HorizontalBox->AddSlot()
 	.AutoWidth()
@@ -216,6 +234,30 @@ EVisibility FMounteaDialogueDecorator_CustomDetailsHelper::GetBrowseButtonVisibi
 	}
 
 	return IsObjectABlueprint() ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
+void FMounteaDialogueDecorator_CustomDetailsHelper::RequestDeleteItem()
+{
+	PropertyUtils->EnqueueDeferredAction( FSimpleDelegate::CreateSP( this, &FMounteaDialogueDecorator_CustomDetailsHelper::OnDeleteItem ) );
+}
+
+// TODO: Make this just better
+void FMounteaDialogueDecorator_CustomDetailsHelper::OnDeleteItem()
+{
+	auto ArrayHandle = PropertyRow->GetPropertyHandle()->GetParentHandle()->GetParentHandle()->AsArray(); // NodeDecorators
+
+	// PLEASE TELL ME THERE IS A BETTER WAY
+	// I SUFFER IMAGINING THIS WILL GO LIVE :(
+	FString IndexString =  PropertyRow->GetPropertyHandle()->GetParentHandle()->GetPropertyDisplayName().ToString();
+	int32 Index = FCString::Atoi((TEXT("%s"), *IndexString));
+
+	check(ArrayHandle.IsValid());
+
+	if (ArrayHandle.IsValid())
+	{
+		ArrayHandle->DeleteItem(Index);
+	}
+
 }
 
 #undef LOCTEXT_NAMESPACE
