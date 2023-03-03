@@ -89,11 +89,11 @@ private:
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	ENodeTheme NodeTheme;
 
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
-	bool bShowDetailedInfo_NumDecorators;
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings|DecoratorsInfo")
+	uint8 bShowDetailedInfo_NumDecorators : 1;
 
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
-	bool bShowDetailedInfo_InheritsDecorators;
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings|DecoratorsInfo")
+	uint8 bShowDetailedInfo_InheritsDecorators : 1;
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	EDecoratorsInfoStyle DecoratorsInfoStyle;
