@@ -797,19 +797,18 @@ void FAssetEditor_MounteaDialogueGraph::OnSelectedNodesChanged(const TSet<UObjec
 	{
 		Selection.Add(SelectionEntry);
 	}
-
-	if (Selection.Num() == 0) 
+	
+	if (Selection.Num() == 1)
 	{
-		PropertyWidget->SetObject(EditingGraph);
+		// When just one node is selected, add it to PropertyWidget
+		PropertyWidget->SetObjects(Selection);
+		PropertyWidget->ShowAllAdvancedProperties();
+		
+		UMounteaDialogueSystemEditorBFC::TriggerPreviewRefresh(Selection);
 	}
 	else
 	{
-		// When node is selected, add it to PropertyWidget
-		PropertyWidget->SetObjects(Selection);
-		PropertyWidget->ShowAllAdvancedProperties();
-
-		// TODO: Update Previews
-		UMounteaDialogueSystemEditorBFC::TriggerPreviewRefresh(Selection);
+		PropertyWidget->SetObject(EditingGraph);
 	}
 
 	RebuildMounteaDialogueGraph();
