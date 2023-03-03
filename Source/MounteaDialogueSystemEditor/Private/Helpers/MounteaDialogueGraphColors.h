@@ -71,4 +71,16 @@ namespace MounteaDialogueGraphColors
 		constexpr FLinearColor NormalState(0.05f, 0.05f, 0.05f, 1.f);
 		constexpr FLinearColor HoveredState(0.05f, 0.05f, 0.05f, 1.f);
 	}
+
+	namespace BulletPointsColors
+	{
+		constexpr FLinearColor Normal(0.8f, 0.8f, 0.8f, 1.f);
+		constexpr FLinearColor Disabled(0.8f, 0.8f, 0.8f, 0.2f);
+	}
+
+	namespace TextColors
+	{
+		constexpr FLinearColor Normal(0.8f, 0.8f, 0.8f, 1.f);
+		constexpr FLinearColor Disabled(0.8f, 0.8f, 0.8f, 0.2f);
+	}
 }

@@ -16,6 +16,8 @@ public:
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, UEdNode_MounteaDialogueGraphNode* InNode);
+
+
 	
 	virtual void UpdateGraphNode() override;
 	virtual void CreatePinWidgets() override;
@@ -40,6 +42,8 @@ public:
 	virtual const FSlateBrush* GetInheritsImageBrush() const;
 	virtual FSlateColor GetInheritsImageTint() const;
 
+	const FSlateBrush* GetBulletPointImageBrush() const;
+
 	virtual FText GetIndexOverlayTooltipText() const;
 	virtual FText GetIndexText() const;
 	virtual void OnIndexHoverStateChanged(bool bArg) const;
@@ -52,12 +56,15 @@ public:
 	virtual FText GetNumberOfDecorators() const;
 	virtual FText GetDecoratorsInheritanceText() const;
 	
-	EVisibility ShowDecoratorsSlot_Unified() const;
+	EVisibility ShowImplementsOnlySlot_Unified() const;
 	EVisibility ShowInheritsDecoratorsSlot_Unified() const;
-	EVisibility ShowDecoratorsSlot_Stack() const;
+	EVisibility ShowImplementsOnlySlot_Stack() const;
 	EVisibility ShowInheritsDecoratorsSlot_Stack() const;
 	EVisibility ShowAllDecorators() const;
 	EVisibility ShowDecoratorsBottomPadding() const;
+
+	FSlateColor GetImplementsRowColor() const;
+	FSlateColor GetBulletPointsImagePointColor() const;
 	
 	virtual EDecoratorsInfoStyle GetDecoratorsStyle() const;
 	EVisibility GetStackVisibility() const;
