@@ -212,6 +212,85 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 {
 	bool bReturnValue = true;
 
+	// DECORATORS VALIDATION
+	{
+		TArray<UMounteaDialogueGraphNodeDecoratorBase*> UsedNodeDecorators;
+		for (int i = 0; i < GraphDecorators.Num(); i++)
+		{
+			if (GraphDecorators.IsValidIndex(i) && GraphDecorators[i].DecoratorType)
+			{
+				UsedNodeDecorators.Add(GraphDecorators[i].DecoratorType);
+			}
+			else
+			{
+				const FString RichTextReturn =
+				FString("* ").
+				Append( TEXT("<RichTextBlock.Bold>Dialogue Graph</>")).
+				Append(": has ").
+				Append(TEXT("<RichTextBlock.Bold>invalid</> Node Decorator at Index: ")).
+				Append(FString::FromInt(i )).
+				Append(".");
+
+				const FString TextReturn =
+				GetName().
+				Append(": has ").
+				Append(TEXT("INVALID Node Decorator at Index: ")).
+				Append(FString::FromInt(i )).
+				Append(".");
+		
+				ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
+
+				bReturnValue = false;
+			}
+		}
+		
+		TMap<UClass*, int32> DuplicatedDecoratorsMap;
+		for (const auto Itr : UsedNodeDecorators)
+		{
+			int32 ClassAppearance = 1;
+			for (const auto Itr2 : UsedNodeDecorators)
+			{
+				if (Itr != Itr2 && Itr->StaticClass() == Itr2->StaticClass())
+				{
+					auto A = Itr->GetClass()->GetName();
+					ClassAppearance++;
+				}
+			}
+
+			if (ClassAppearance > 1 && DuplicatedDecoratorsMap.Contains(Itr->GetClass()) == false)
+			{
+				DuplicatedDecoratorsMap.Add(Itr->GetClass(), ClassAppearance);
+			}
+		}
+		
+		if (DuplicatedDecoratorsMap.Num() > 0)
+		{
+			for (const auto Itr : DuplicatedDecoratorsMap)
+			{
+				bReturnValue = false;
+			
+				const FString RichTextReturn =
+				FString("* ").
+				Append(TEXT("<RichTextBlock.Bold>Dialogue Graph</>")).
+				Append(": has Node Decorator ").
+				Append("<RichTextBlock.Bold>").
+				Append(Itr.Key->GetName().LeftChop(2)).
+				Append("</> ").
+				Append(FString::FromInt(Itr.Value)).
+				Append("x times! Please, avoid duplicates!");
+				
+				const FString TextReturn =
+				FString(TEXT("Dialogue Graph: has Node Decorator ")).
+				Append( Itr.Key->GetName().LeftChop(2)).
+				Append(" ").
+				Append(FString::FromInt(Itr.Value)).
+				Append("x times! Please, avoid duplicates!");
+			
+				ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
+			}
+		}
+	}
+	
 	if (StartNode == nullptr)
 	{
 		const FString RichTextReturn =
@@ -228,41 +307,6 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 		bReturnValue = false;
 	}
 
-	if (GraphDecorators.Num() > 1)
-	{
-		TMap<int32, FMounteaDialogueDecorator> Duplicates;
-		for (int i = 0; i < GraphDecorators.Num(); i++)
-		{
-			for (auto Itr2 : GraphDecorators)
-			{
-				if (GraphDecorators[i].DecoratorType == Itr2.DecoratorType)
-				{
-					Duplicates.Add(i, GraphDecorators[i]);
-				}
-			}
-		}
-	
-		if (Duplicates.Num() > 0)
-		{
-			const FString RichTextReturn =
-			FString("* ").
-			Append(TEXT("<RichTextBlock.Bold>Dialogue Graph</>")).
-			Append(": has ").
-			Append(FString::FromInt(Duplicates.Num())).
-			Append("x the same Decorators! Please, try to avoid duplicates.");
-
-			const FString TextReturn =
-			GetName().
-			Append(": has ").
-			Append(FString::FromInt(Duplicates.Num())).
-			Append("x the same Decorators! Please, try to avoid duplicates.");
-		
-			ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
-
-			bReturnValue = false;
-		}
-	}
-	
 	for (UMounteaDialogueGraphNode* Itr : AllNodes)
 	{
 		if (Itr != nullptr && (Itr->ValidateNode(ValidationErrors, RichTextFormat) == false))
