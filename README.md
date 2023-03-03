@@ -57,6 +57,12 @@ Introducing *Decorators*, a powerful yet versitale tool of Blueprint based event
     <img width="65%" src="https://user-images.githubusercontent.com/37410226/222269825-c1e92517-7f13-4754-ad15-97d938b9c841.png">
 </p>
 
+#### Dialogue Node Details
+A new feature droped in, and that is Node Style now supporting indications how many Decorators each Node implements and whether it inherits Decorators from Graph or not. This will come handy for debugging dialogues, showing that some nodes might not implement required Decorators!
+<p align="center" width="100%">
+    <img width="65%" src="https://user-images.githubusercontent.com/37410226/222851076-58c74403-2818-4048-9fd6-a374487aaad6.png">
+</p>
+
 ## Installation
 
 Download the plugin (either from Releases or from Marketplace). For more detailed guide take a look at Wiki page.
