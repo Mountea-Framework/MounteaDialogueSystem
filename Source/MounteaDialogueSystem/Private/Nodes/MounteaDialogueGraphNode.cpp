@@ -35,6 +35,11 @@ UMounteaDialogueGraphEdge* UMounteaDialogueGraphNode::GetEdge(UMounteaDialogueGr
 	return Edges.Contains(ChildNode) ? Edges.FindChecked(ChildNode) : nullptr;
 }
 
+FText UMounteaDialogueGraphNode::GetNodeTooltipText_Implementation() const
+{
+	return FText::Format(LOCTEXT("MounteaDialogueGraphNode_FinalTooltip", "{A}\n\n{B}"), GetDefaultTooltipBody(), NodeTooltipText);
+}
+
 UMounteaDialogueGraph* UMounteaDialogueGraphNode::GetGraph() const
 {
 	return Graph;
@@ -219,6 +224,20 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 void UMounteaDialogueGraphNode::OnPasted()
 {
 	NodeGUID = FGuid::NewGuid();
+}
+
+FText UMounteaDialogueGraphNode::GetDefaultTooltipBody() const
+{
+	const FText InheritsValue = bInheritGraphDecorators ? LOCTEXT("True","Yes") : LOCTEXT("False","No");
+	const FText Inherits = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_InheritsTooltip", "Inherits Graph Decorators: {X}"), InheritsValue);
+
+	FText ImplementsNumber;
+	if (NodeDecorators.Num() == 0) ImplementsNumber = LOCTEXT("None","-");
+	else ImplementsNumber = FText::FromString(FString::FromInt(NodeDecorators.Num()));
+	
+	const FText Implements = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_ImplementsTooltip", "Implements Decorators: {A}"), ImplementsNumber);
+	
+	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{NodeTitle}\n\n{Inherits}\n{Implements}"), InternalName,  Inherits, Implements);
 }
 
 #endif

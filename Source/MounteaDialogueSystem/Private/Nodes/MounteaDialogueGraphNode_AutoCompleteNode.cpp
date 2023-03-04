@@ -12,6 +12,8 @@ UMounteaDialogueGraphNode_AutoCompleteNode::UMounteaDialogueGraphNode_AutoComple
 	InternalName = LOCTEXT("MounteaDialogueGraphNode_AutoCompleteNodeInternalTitle", "Auto Complete Dialogue");
 	
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_AutoCompleteNodeContextMenuName", "Auto Complete Dialogue");
+	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_AutoCompleteTooltip", "* This Node will automatically complete Dialogue.\n* Same functionality as Node being left with no branching or children.\n* Does help performance, however, is not required.");
+
 #endif
 
 	bAutoStarts = true;

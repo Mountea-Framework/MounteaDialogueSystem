@@ -17,6 +17,7 @@ UMounteaDialogueGraphNode_LeadNode::UMounteaDialogueGraphNode_LeadNode()
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_LeadNodeContextMenuName", "Lead Node");
 	
 	BackgroundColor = FLinearColor(FColor::Orange);
+	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_LeadTooltip", "* This Node represents NPC lines.\n* This Node starts automatically upon reaching in the Dialogue Tree.\n* Requires Dialogue Data Table to work properly.");
 #endif
 	
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());

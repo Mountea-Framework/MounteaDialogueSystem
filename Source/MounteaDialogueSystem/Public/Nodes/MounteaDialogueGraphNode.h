@@ -115,8 +115,7 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetNodeTooltipText() const;
-	virtual FText GetNodeTooltipText_Implementation() const
-	{ return NodeTooltipText; };
+	virtual FText GetNodeTooltipText_Implementation() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
 	UMounteaDialogueGraph* GetGraph() const;
@@ -190,6 +189,8 @@ public:
 	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat);
 
 	virtual void OnPasted();
+
+	FText GetDefaultTooltipBody() const;
 #endif
 
 };

@@ -14,6 +14,8 @@ UMounteaDialogueGraphNode_CompleteNode::UMounteaDialogueGraphNode_CompleteNode()
 	BackgroundColor = FLinearColor(1, 0, 0, 1);
 
 	bAllowOutputNodes = false;
+
+	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_CompleteTooltip", "* This Node will complete Dialogue after Player's input.\n* Indicates that Dialogue can be manually closed.\n* Requires Dialogue Data Table to work properly.");
 #endif
 
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_DialogueNodeBase::StaticClass());

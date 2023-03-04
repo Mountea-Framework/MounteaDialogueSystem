@@ -15,6 +15,8 @@ UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeContextMenuName", "Answer Node");
 	
 	BackgroundColor = FLinearColor(FColor::Turquoise);
+
+	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_AnswerTooltip", "* This Node represents Player's answers.\n* This Node requires Player's input to be started.\n* Requires Dialogue Data Table to work properly.");
 #endif
 	
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_LeadNode::StaticClass());

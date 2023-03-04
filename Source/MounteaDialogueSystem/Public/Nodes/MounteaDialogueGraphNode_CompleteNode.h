@@ -11,6 +11,7 @@
  * 
  * This Node will complete Dialogue after Player's input.
  * Indicates that Dialogue can be manually closed.
+ * Requires Dialogue Data Table to work properly.
  */
 UCLASS(ClassGroup=("Mountea|Dialogue"), DisplayName="Complete Node", meta=(ToolTip="Mountea Dialogue Tree: Complete Node"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_CompleteNode : public UMounteaDialogueGraphNode_DialogueNodeBase
