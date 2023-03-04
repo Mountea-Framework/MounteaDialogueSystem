@@ -3,6 +3,7 @@
 #pragma once
 
 #include "IDetailPropertyRow.h"
+#include "Decorators/MounteaDialogueGraphNodeDecoratorBase.h"
 #include "Helpers/MounteaDialogueGraphEditorUtilities.h"
 
 // Custom row for Objects that most likely are Blueprints?
@@ -19,7 +20,7 @@ public:
 	
 	FMounteaDialogueDecorator_CustomDetailsHelper(IDetailPropertyRow* InPropertyRow);
 	virtual ~FMounteaDialogueDecorator_CustomDetailsHelper() {}
-
+	
 	// Update the full property row.
 	void Update();
 
@@ -57,7 +58,7 @@ protected:
 
 	void RequestDeleteItem();
 	void OnDeleteItem();
-
+	
 protected:
 
 	TSharedPtr<IPropertyUtilities> PropertyUtils;

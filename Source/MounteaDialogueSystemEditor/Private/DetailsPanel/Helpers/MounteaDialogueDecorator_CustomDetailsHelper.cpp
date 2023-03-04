@@ -6,6 +6,9 @@
 #include "IPropertyUtilities.h"
 #include "PropertyCustomizationHelpers.h"
 #include "SourceCodeNavigation.h"
+//#include "Decorators/MounteaDialogueGraphNodeDecoratorBase.h"
+//#include "Engine/Selection.h"
+//#include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_CustomDetailsHelper"
 #define DEFAULT_FONT(...) FCoreStyle::GetDefaultFontStyle(__VA_ARGS__)
@@ -30,7 +33,6 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 	FExecuteAction OnInsertClicked; // Insert is not allowed
 	FExecuteAction OnDeleteClicked = FExecuteAction::CreateSP( this, &FMounteaDialogueDecorator_CustomDetailsHelper::RequestDeleteItem );
 	FExecuteAction OnDuplicateClicked; // Duplicates are not allowed
-
 	
 	FDetailWidgetRow& DetailWidgetRow = PropertyRow->CustomWidget(true);
 	DetailWidgetRow.NameContent()
@@ -49,7 +51,6 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 	HorizontalBox->AddSlot()
    .Padding(0.f, 0.f, 2.f, 0.f)
    .FillWidth(1.f)
-   // .AutoWidth()
    [
 	   DefaultValueWidget.ToSharedRef()
    ];
@@ -61,6 +62,17 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 	[
 		PropertyCustomizationHelpers::MakeInsertDeleteDuplicateButton( OnInsertClicked, OnDeleteClicked, OnDuplicateClicked)
 	];
+
+	// GEditor doesn't support inserting Handle values for EditInline
+	/*
+	HorizontalBox->AddSlot()
+	.AutoWidth()
+	.VAlign(VAlign_Center)
+	.Padding(4.f)
+	[
+		PropertyCustomizationHelpers::MakeUseSelectedButton( OnUseSelectedClicked)
+	];
+	*/
 	
 	// Browse Asset
 	HorizontalBox->AddSlot()
