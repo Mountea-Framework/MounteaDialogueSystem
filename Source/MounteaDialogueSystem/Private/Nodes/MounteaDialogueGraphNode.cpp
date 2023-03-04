@@ -25,8 +25,6 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
 	bAllowPaste = true;
 	bAllowManualCreate = true;
 
-	bHasBenManuallyRenamed = false;
-
 	InternalName = LOCTEXT("MounteaDialogueNode_InternalName", "MounteaDialogueGraphNode");
 #endif
 }
@@ -34,11 +32,6 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
 UMounteaDialogueGraphEdge* UMounteaDialogueGraphNode::GetEdge(UMounteaDialogueGraphNode* ChildNode)
 {
 	return Edges.Contains(ChildNode) ? Edges.FindChecked(ChildNode) : nullptr;
-}
-
-bool UMounteaDialogueGraphNode::IsLeafNode() const
-{
-	return ChildrenNodes.Num() == 0;
 }
 
 UMounteaDialogueGraph* UMounteaDialogueGraphNode::GetGraph() const

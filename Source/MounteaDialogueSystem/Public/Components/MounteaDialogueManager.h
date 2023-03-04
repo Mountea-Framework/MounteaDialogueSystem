@@ -15,7 +15,7 @@
  * ❔Implements 'IMounteaDialogueManagerInterface'.
  * ❗If attached to non-Controller class, then it will show Dialogue UI to first found Player Controller
  */
-UCLASS(ClassGroup=(Mountea), Blueprintable,  meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Manager"))
+UCLASS(ClassGroup=(Mountea), Blueprintable,  AutoExpandCategories=("Mountea", "Dialogue"), meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Manager"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueManager : public UActorComponent, public IMounteaDialogueManagerInterface
 {
 	GENERATED_BODY()
@@ -275,14 +275,15 @@ protected:
 	 * Dialogue Widget which has been created.
 	 * Transient, for actual runtime only.
 	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue")
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	UUserWidget* DialogueWidgetPtr = nullptr;
 
 	/**
 	 * Dialogue Context which is used to contain temporary data.
 	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue")
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	UMounteaDialogueContext* DialogueContext = nullptr;
 
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	FTimerHandle TimerHandle_RowTimer;
 };

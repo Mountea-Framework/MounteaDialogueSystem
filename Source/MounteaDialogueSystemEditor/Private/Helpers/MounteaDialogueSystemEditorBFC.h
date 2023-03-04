@@ -66,7 +66,7 @@ public:
 	{
 		for (auto Itr : NodeObjects)
 		{
-			UEdNode_MounteaDialogueGraphNode* SelectedNode = CastChecked<UEdNode_MounteaDialogueGraphNode>(Itr);
+			UEdNode_MounteaDialogueGraphNode* SelectedNode = Cast<UEdNode_MounteaDialogueGraphNode>(Itr);
 			if (!SelectedNode) continue;
 			if (!SelectedNode->DialogueGraphNode) continue;
 

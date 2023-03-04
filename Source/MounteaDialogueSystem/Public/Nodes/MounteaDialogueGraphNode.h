@@ -27,6 +27,7 @@ public:
 
 #pragma region Variables
 
+#pragma region ReadOnly
 public:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Private")
@@ -47,6 +48,16 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Private")
 	int32 MaxChildrenNodes = -1;
 
+protected:
+
+	UPROPERTY(SaveGame, BlueprintReadOnly, Category="Mountea", AdvancedDisplay)
+	FGuid NodeGUID;
+
+#pragma endregion
+
+#pragma region Editable
+public:
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	uint8 bInheritGraphDecorators : 1;
 
@@ -55,13 +66,10 @@ public:
 	 * Those Decorators are instanced and exist only as "triggers".
 	 * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue", meta=(NoElementDuplicate))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TArray<FMounteaDialogueDecorator> NodeDecorators;
-	
-protected:
 
-	UPROPERTY(SaveGame, BlueprintReadOnly, Category="Private")
-	FGuid NodeGUID;
+#pragma endregion
 
 #pragma endregion 
 
@@ -104,13 +112,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetNodeTitle() const;
 	virtual FText GetNodeTitle_Implementation() const;
-		
-	/**
-	 * Returns true if there are no connected Nodes to this one.
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
-	bool IsLeafNode() const;
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
 	UMounteaDialogueGraph* GetGraph() const;
 
@@ -129,8 +131,6 @@ public:
 
 
 #if WITH_EDITORONLY_DATA
-
-	bool bHasBenManuallyRenamed;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
 	bool bAllowInputNodes;

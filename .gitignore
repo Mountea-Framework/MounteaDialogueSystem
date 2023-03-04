@@ -79,3 +79,5 @@ Config/FilterPlugin.ini
 Config/MDSConfig.ini
 Config/UpdateConfig.ini
 *.zip
+*.h~
+*.cpp~

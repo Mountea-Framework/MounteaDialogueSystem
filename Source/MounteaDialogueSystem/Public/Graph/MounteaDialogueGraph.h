@@ -33,14 +33,14 @@ public:
 	
 protected:
 	
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
-	FGuid GraphGUID;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue", meta=(NoElementDuplicate))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TArray<FMounteaDialogueDecorator> GraphDecorators;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue")
 	FGameplayTagContainer GraphTags;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea")
+	FGuid GraphGUID;
 
 public:
 	
