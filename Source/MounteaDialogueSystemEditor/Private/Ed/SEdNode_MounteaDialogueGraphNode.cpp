@@ -19,7 +19,7 @@
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
 #include "Widgets/Layout/SGridPanel.h"
 #include "Widgets/Layout/SScaleBox.h"
-#include "Widgets/Layout/SUniformGridPanel.h"
+
 
 #define LOCTEXT_NAMESPACE "EdNode_MounteaDialogueGraph"
 
@@ -101,13 +101,34 @@ void SEdNode_MounteaDialogueGraphNode::Construct(const FArguments& InArgs, UEdNo
 	GraphNode = InNode;
 	UpdateGraphNode();
 	InNode->SEdNode = this;
-
+	bIsHovered = false;
+	
 	GraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>();
 
 	if (!GraphEditorSettings)
 	{
 		GraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>();
 	}
+}
+
+void SEdNode_MounteaDialogueGraphNode::OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+	bIsHovered = true;
+
+	SetToolTipText(GetTooltipText());
+	OnVisualizeTooltip(GetToolTip()->AsWidget());
+	
+	SGraphNode::OnMouseEnter(MyGeometry, MouseEvent);
+}
+
+void SEdNode_MounteaDialogueGraphNode::OnMouseLeave(const FPointerEvent& MouseEvent)
+{
+	bIsHovered = false;
+
+	SetToolTipText(FText::GetEmpty());
+	OnToolTipClosing();
+	
+	SGraphNode::OnMouseLeave(MouseEvent);
 }
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
@@ -135,6 +156,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 
 	TSharedPtr<SVerticalBox> StackBox;
 	TSharedPtr<SVerticalBox> UniformBox;
+	
 		
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	this->GetOrAddSlot(ENodeZone::Center)
@@ -1338,6 +1360,15 @@ EVisibility SEdNode_MounteaDialogueGraphNode::GetStackVisibility() const
 EVisibility SEdNode_MounteaDialogueGraphNode::GetUnifiedVisibility() const
 {
 	return GetDecoratorsStyle() == EDecoratorsInfoStyle::EDIS_Unified ? EVisibility::SelfHitTestInvisible : EVisibility::Collapsed;
+}
+
+FText SEdNode_MounteaDialogueGraphNode::GetTooltipText() const
+{
+	if (const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
+	{
+		return EdParentNode->GetTooltipText();
+	}
+	return LOCTEXT("SEdNode_MounteaDialogueGraphNode_Tooltip", "invalid node selected");
 }
 
 #undef LOCTEXT_NAMESPACE

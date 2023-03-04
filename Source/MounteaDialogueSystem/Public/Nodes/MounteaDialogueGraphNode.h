@@ -66,7 +66,7 @@ public:
 	 * Those Decorators are instanced and exist only as "triggers".
 	 * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue", NoClear, meta=(NoResetToDefault))
 	TArray<FMounteaDialogueDecorator> NodeDecorators;
 
 #pragma endregion
@@ -112,6 +112,11 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetNodeTitle() const;
 	virtual FText GetNodeTitle_Implementation() const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	FText GetNodeTooltipText() const;
+	virtual FText GetNodeTooltipText_Implementation() const
+	{ return NodeTooltipText; };
 	
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
 	UMounteaDialogueGraph* GetGraph() const;
@@ -165,11 +170,15 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
 	FLinearColor BackgroundColor;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	FText NodeTooltipText;
+
 	FText InternalName;
 
 #endif
 
 #if WITH_EDITOR
+	
 	virtual FLinearColor GetBackgroundColor() const;
 	FText GetInternalName() const
 	{ return InternalName; };

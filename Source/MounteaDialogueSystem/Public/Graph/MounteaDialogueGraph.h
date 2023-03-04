@@ -33,7 +33,7 @@ public:
 	
 protected:
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue", NoClear, meta=(NoResetToDefault))
 	TArray<FMounteaDialogueDecorator> GraphDecorators;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue")
@@ -68,9 +68,6 @@ public:
 
 public:
 
-	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
-	void Print(bool ToConsole = true, bool ToScreen = true);
-
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
 	FGuid GetGraphGUID() const;
 	
@@ -85,14 +82,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	TArray<FMounteaDialogueDecorator> GetGraphDecorators() const;
-
-#pragma region HelpingFunctions
-	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
-	int GetLevelNum() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
-	void GetNodesByLevel(int Level, TArray<UMounteaDialogueGraphNode*>& Nodes);
-#pragma endregion 
 
 public:
 	

@@ -26,6 +26,7 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
 	bAllowManualCreate = true;
 
 	InternalName = LOCTEXT("MounteaDialogueNode_InternalName", "MounteaDialogueGraphNode");
+	NodeTooltipText = LOCTEXT("MounteaDialogueNode_Tooltip", "Mountea Dialogue Base Node.\n\nChild Nodes provide more Information.");
 #endif
 }
 

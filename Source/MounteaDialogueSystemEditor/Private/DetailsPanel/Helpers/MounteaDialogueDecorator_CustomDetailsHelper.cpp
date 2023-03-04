@@ -18,18 +18,18 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 {
 	TSharedPtr<SWidget> DefaultNameWidget;
 	TSharedPtr<SWidget> DefaultValueWidget;
-	PropertyRow->GetDefaultWidgets(
+	PropertyRow->GetDefaultWidgets
+	(
 		DefaultNameWidget,
 		DefaultValueWidget,
 		false
 	);
-
 	
 	PropertyRow->ShowPropertyButtons(true);
 
-	FExecuteAction OnInsertClicked;
+	FExecuteAction OnInsertClicked; // Insert is not allowed
 	FExecuteAction OnDeleteClicked = FExecuteAction::CreateSP( this, &FMounteaDialogueDecorator_CustomDetailsHelper::RequestDeleteItem );
-	FExecuteAction OnDuplicateClicked;
+	FExecuteAction OnDuplicateClicked; // Duplicates are not allowed
 
 	
 	FDetailWidgetRow& DetailWidgetRow = PropertyRow->CustomWidget(true);
@@ -133,13 +133,11 @@ FReply FMounteaDialogueDecorator_CustomDetailsHelper::OnOpenClicked()
 			bAddBlueprintFunctionIfItDoesNotExist
 		);
 	}
-	/* Don't support Native Code, TODO: release this as update later
 	else if (UObject* Object = GetObject())
 	{
 		// Native
 		FSourceCodeNavigation::NavigateToClass(Object->GetClass());
 	}
-	*/
 	return FReply::Handled();
 }
 
@@ -218,9 +216,7 @@ EVisibility FMounteaDialogueDecorator_CustomDetailsHelper::GetOpenButtonVisibili
 		}
 
 		// Native
-		/* Don't support Native Code, TODO: release this as update later
 		return FSourceCodeNavigation::CanNavigateToClass(Object->GetClass()) ? EVisibility::Visible : EVisibility::Collapsed;
-		*/
 	}
 
 	return EVisibility::Collapsed;

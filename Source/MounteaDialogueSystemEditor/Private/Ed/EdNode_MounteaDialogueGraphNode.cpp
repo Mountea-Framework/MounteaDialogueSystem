@@ -153,6 +153,16 @@ bool UEdNode_MounteaDialogueGraphNode::CanUserPasteNodes() const
 	return bAllowPaste;
 }
 
+FText UEdNode_MounteaDialogueGraphNode::GetTooltipText() const
+{
+	if (DialogueGraphNode)
+	{
+		return DialogueGraphNode->GetNodeTooltipText();
+	}
+	
+	return NSLOCTEXT("UEdNode_MounteaDialogueGraphNode", "DefaultToolTip", "Mountea Dialogue Node");
+}
+
 void UEdNode_MounteaDialogueGraphNode::PostEditUndo()
 {
 	Super::PostEditUndo();

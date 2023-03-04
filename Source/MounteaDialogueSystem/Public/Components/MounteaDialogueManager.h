@@ -253,11 +253,7 @@ protected:
 
 #pragma endregion 
 
-#pragma region Functions
-
-	
-
-#pragma endregion 
+#pragma region Variables
 protected:
 
 	/**
@@ -286,4 +282,5 @@ protected:
 
 	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	FTimerHandle TimerHandle_RowTimer;
+#pragma endregion 
 };

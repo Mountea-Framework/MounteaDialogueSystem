@@ -17,7 +17,8 @@ public:
 
 	void Construct(const FArguments& InArgs, UEdNode_MounteaDialogueGraphNode* InNode);
 
-
+	virtual void OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
+	virtual void OnMouseLeave(const FPointerEvent& MouseEvent) override;
 	
 	virtual void UpdateGraphNode() override;
 	virtual void CreatePinWidgets() override;
@@ -69,6 +70,9 @@ public:
 	virtual EDecoratorsInfoStyle GetDecoratorsStyle() const;
 	EVisibility GetStackVisibility() const;
 	EVisibility GetUnifiedVisibility() const;
+
+	FText GetTooltipText() const;
+	EVisibility GetTooltipTextVisibility() const;
 
 protected:
 	TSharedPtr<SBorder> NodeBody;

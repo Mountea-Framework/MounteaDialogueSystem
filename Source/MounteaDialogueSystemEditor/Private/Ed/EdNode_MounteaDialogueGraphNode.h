@@ -40,6 +40,8 @@ public:
 
 	virtual bool CanUserPasteNodes() const;
 
+	virtual FText GetTooltipText() const override;
+
 #if WITH_EDITOR
 	virtual void PostEditUndo() override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

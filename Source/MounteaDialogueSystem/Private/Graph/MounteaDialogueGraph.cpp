@@ -4,7 +4,6 @@
 
 #include "Edges/MounteaDialogueGraphEdge.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
-#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraph"
@@ -22,47 +21,6 @@ UMounteaDialogueGraph::UMounteaDialogueGraph()
 
 	bCanRenameNode = true;
 #endif
-}
-
-void UMounteaDialogueGraph::Print(bool ToConsole, bool ToScreen)
-{
-
-	int Level = 0;
-	TArray<UMounteaDialogueGraphNode*> CurrLevelNodes = RootNodes;
-	TArray<UMounteaDialogueGraphNode*> NextLevelNodes;
-
-	while (CurrLevelNodes.Num() != 0)
-	{
-		for (int i = 0; i < CurrLevelNodes.Num(); ++i)
-		{
-			UMounteaDialogueGraphNode* Node = CurrLevelNodes[i];
-			check(Node != nullptr);
-
-			FString Message = FString::Printf(TEXT("%s, Level %d"), *Node->GetDescription().ToString(), Level);
-
-			if (ToConsole)
-			{
-				LOG_INFO(TEXT("%s"), *Message);
-			}
-
-#if WITH_EDITOR
-			if (ToScreen && GEngine != nullptr)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Blue, Message);
-			}
-#endif
-			
-			for (int j = 0; j < Node->ChildrenNodes.Num(); ++j)
-			{
-				NextLevelNodes.Add(Node->ChildrenNodes[j]);
-			}
-		}
-
-		CurrLevelNodes = NextLevelNodes;
-		NextLevelNodes.Reset();
-		++Level;
-	}
-
 }
 
 FGuid UMounteaDialogueGraph::GetGraphGUID() const
@@ -90,62 +48,6 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraph::GetGraphDecorators() co
 	return GraphDecorators;
 }
 
-int UMounteaDialogueGraph::GetLevelNum() const
-{
-	int Level = 0;
-	TArray<UMounteaDialogueGraphNode*> CurrLevelNodes = RootNodes;
-	TArray<UMounteaDialogueGraphNode*> NextLevelNodes;
-
-	while (CurrLevelNodes.Num() != 0)
-	{
-		for (int i = 0; i < CurrLevelNodes.Num(); ++i)
-		{
-			UMounteaDialogueGraphNode* Node = CurrLevelNodes[i];
-			check(Node != nullptr);
-
-			for (int j = 0; j < Node->ChildrenNodes.Num(); ++j)
-			{
-				NextLevelNodes.Add(Node->ChildrenNodes[j]);
-			}
-		}
-
-		CurrLevelNodes = NextLevelNodes;
-		NextLevelNodes.Reset();
-		++Level;
-	}
-
-	return Level;
-}
-
-void UMounteaDialogueGraph::GetNodesByLevel(int Level, TArray<UMounteaDialogueGraphNode*>& Nodes)
-{
-	int CurrLEvel = 0;
-	TArray<UMounteaDialogueGraphNode*> NextLevelNodes;
-
-	Nodes = RootNodes;
-
-	while (Nodes.Num() != 0)
-	{
-		if (CurrLEvel == Level)
-			break;
-
-		for (int i = 0; i < Nodes.Num(); ++i)
-		{
-			UMounteaDialogueGraphNode* Node = Nodes[i];
-			check(Node != nullptr);
-
-			for (int j = 0; j < Node->ChildrenNodes.Num(); ++j)
-			{
-				NextLevelNodes.Add(Node->ChildrenNodes[j]);
-			}
-		}
-
-		Nodes = NextLevelNodes;
-		NextLevelNodes.Reset();
-		++CurrLEvel;
-	}
-}
-
 void UMounteaDialogueGraph::CreateGraph()
 {
 #if WITH_EDITOR
@@ -168,8 +70,6 @@ void UMounteaDialogueGraph::CreateGraph()
 
 		RootNodes.Add(StartNode);
 		AllNodes.Add(StartNode);
-		
-		//MarkPackageDirty();
 	}
 #endif
 }
@@ -320,16 +220,12 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 
 EDataValidationResult UMounteaDialogueGraph::IsDataValid(TArray<FText>& ValidationErrors)
 {
-	auto ParentResult = UObject::IsDataValid(ValidationErrors);
-	
 	if (ValidateGraph(ValidationErrors, false))
 	{
 		return EDataValidationResult::Valid;
 	}
-	else
-	{
-		return EDataValidationResult::Invalid;
-	}
+	
+	return EDataValidationResult::Invalid;
 }
 
 #endif
