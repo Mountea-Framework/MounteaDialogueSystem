@@ -387,26 +387,12 @@ bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
 		return false;
 	}
 
-	switch (UMounteaDialogueSystemBFC::GetDialogueSystemSettings()->GetDialogueInputMode())
-	{
-		case EInputMode::EIM_UIOnly:
-			{
-				const FInputModeUIOnly InputModeUI;
-				PlayerController->SetInputMode(InputModeUI);
-				PlayerController->SetShowMouseCursor(true);
-				PlayerController->StopMovement();
-			}
-			break;
-		case EInputMode::EIM_UIAndGame:
-			{
-				const FInputModeGameAndUI InputModeUIGame;
-				PlayerController->SetInputMode(InputModeUIGame);
-				PlayerController->SetShowMouseCursor(true);
-			}
-			break;
-		default:
-			break;
-	}
+	// This event should be responsible for calling logic in Player Controller
+	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidgetPtr);
+	
+	// This Component should not be responsible for setting up Player Controller!
+	PlayerController->SetShowMouseCursor(true);
+	DialogueWidgetPtr->bStopAction = true;
 	
 	TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;
 	WidgetInterface.SetObject(DialogueWidgetPtr);
