@@ -35,11 +35,6 @@ UMounteaDialogueGraphEdge* UMounteaDialogueGraphNode::GetEdge(UMounteaDialogueGr
 	return Edges.Contains(ChildNode) ? Edges.FindChecked(ChildNode) : nullptr;
 }
 
-FText UMounteaDialogueGraphNode::GetNodeTooltipText_Implementation() const
-{
-	return FText::Format(LOCTEXT("MounteaDialogueGraphNode_FinalTooltip", "{A}\n\n{B}"), GetDefaultTooltipBody(), NodeTooltipText);
-}
-
 UMounteaDialogueGraph* UMounteaDialogueGraphNode::GetGraph() const
 {
 	return Graph;
@@ -56,6 +51,11 @@ FText UMounteaDialogueGraphNode::GetNodeCategory_Implementation() const
 }
 
 #if WITH_EDITOR
+
+FText UMounteaDialogueGraphNode::GetNodeTooltipText_Implementation() const
+{
+	return FText::Format(LOCTEXT("MounteaDialogueGraphNode_FinalTooltip", "{A}\n\n{B}"), GetDefaultTooltipBody(), NodeTooltipText);
+}
 
 FLinearColor UMounteaDialogueGraphNode::GetBackgroundColor() const
 {

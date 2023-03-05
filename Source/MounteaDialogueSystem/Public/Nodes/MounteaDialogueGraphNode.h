@@ -112,10 +112,6 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetNodeTitle() const;
 	virtual FText GetNodeTitle_Implementation() const;
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
-	FText GetNodeTooltipText() const;
-	virtual FText GetNodeTooltipText_Implementation() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
 	UMounteaDialogueGraph* GetGraph() const;
@@ -177,6 +173,10 @@ public:
 #endif
 
 #if WITH_EDITOR
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	FText GetNodeTooltipText() const;
+	virtual FText GetNodeTooltipText_Implementation() const;
 	
 	virtual FLinearColor GetBackgroundColor() const;
 	FText GetInternalName() const
