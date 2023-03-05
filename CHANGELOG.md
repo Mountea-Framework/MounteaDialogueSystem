@@ -4,6 +4,27 @@ Current Version: 0.0.0.6
 
 All notable changes to this project will be documented in this file.
 
+**Version 0.0.0.7**
+### Added
+> - Added: Node Decorators from array now can be deleted
+> - Added: Node Tooltip for Graph Editor
+> - Added: Evaluate Decorators for Graph
+> - Added: Evaluate Decorators each Node
+> - Added: Execute Decorators each Node
+
+### Fixed
+> - Fixed: Fixed Edit button opening Decorators with wrong Event name
+> - Fixed: Broken Dialogue Graph Validation
+> - Fixed: Broken Dialogue Node Validation
+> - Fixed: Editor crash when multiple Nodes are selected in Graph Editor
+
+### Changed
+> - Changed: When creating Decorators from context menu, Tree menu is now in use
+> - Changed: UI icons resized to max 128px
+> - Changed: Unified Node style to be more professional
+> - Changed: Removed all Player Controller code but showing Cursor and UI
+> - Changed: Removed EvaluateDecorators from Blueprint Function Library
+
 **Version 0.0.0.6**
 ### Added
 > - Added: Node Decorators
