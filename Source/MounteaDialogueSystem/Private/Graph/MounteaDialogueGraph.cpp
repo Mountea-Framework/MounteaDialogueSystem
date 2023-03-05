@@ -45,7 +45,42 @@ UMounteaDialogueGraphNode* UMounteaDialogueGraph::GetStartNode() const
 
 TArray<FMounteaDialogueDecorator> UMounteaDialogueGraph::GetGraphDecorators() const
 {
-	return GraphDecorators;
+	TArray<FMounteaDialogueDecorator> TempReturn;
+	TArray<FMounteaDialogueDecorator> Return;
+	
+	for (auto Itr : GraphDecorators)
+	{
+		if (Itr.DecoratorType != nullptr)
+		{
+			TempReturn.AddUnique(Itr);
+		}
+	}
+
+	/* TODO: Cleanup duplicates
+	for (auto Itr : TempReturn)
+	{
+		
+	}
+	*/
+	
+	Return = TempReturn;
+	return Return;
+}
+
+bool UMounteaDialogueGraph::CanStartDialogueGraph() const
+{
+	bool bSatisfied = true;
+	if (GetGraphDecorators().Num() == 0)
+	{
+		return bSatisfied;
+	}
+
+	for (auto Itr : GetGraphDecorators())
+	{
+		if (Itr.EvaluateDecorator() == false) bSatisfied = false;
+	}
+	
+	return bSatisfied;
 }
 
 void UMounteaDialogueGraph::CreateGraph()

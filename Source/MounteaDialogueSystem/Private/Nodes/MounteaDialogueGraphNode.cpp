@@ -30,11 +30,6 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
 #endif
 }
 
-UMounteaDialogueGraphEdge* UMounteaDialogueGraphNode::GetEdge(UMounteaDialogueGraphNode* ChildNode)
-{
-	return Edges.Contains(ChildNode) ? Edges.FindChecked(ChildNode) : nullptr;
-}
-
 UMounteaDialogueGraph* UMounteaDialogueGraphNode::GetGraph() const
 {
 	return Graph;
@@ -48,6 +43,63 @@ FText UMounteaDialogueGraphNode::GetDescription_Implementation() const
 FText UMounteaDialogueGraphNode::GetNodeCategory_Implementation() const
 {
 	return LOCTEXT("NodeCategory", "Mountea Dialogue Tree Node");
+}
+
+TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators() const
+{
+	TArray<FMounteaDialogueDecorator> TempReturn;
+	TArray<FMounteaDialogueDecorator> Return;
+	
+	for (auto Itr : NodeDecorators)
+	{
+		if (Itr.DecoratorType != nullptr)
+		{
+			TempReturn.AddUnique(Itr);
+		}
+	}
+
+	/* TODO: Cleanup duplicates
+	for (auto Itr : TempReturn)
+	{
+		
+	}
+	*/
+	
+	Return = TempReturn;
+	return Return;
+}
+
+bool UMounteaDialogueGraphNode::CanStartNode() const
+{
+	return EvaluateDecorators();
+}
+
+bool UMounteaDialogueGraphNode::EvaluateDecorators() const
+{
+	if (GetGraph() == nullptr)
+	{
+		LOG_ERROR(TEXT("[EvaluateDecorators] Graph is null (invalid)!"))
+		return false;
+	}
+	
+	bool bSatisfied = true;
+	TArray<FMounteaDialogueDecorator> AllDecorators;
+	if (bInheritGraphDecorators)
+	{
+		// Add those Decorators rather than asking Graph to evaluate, because Nodes might introduce specific context
+		AllDecorators.Append(GetGraph()->GetGraphDecorators());
+	}
+
+	AllDecorators.Append(GetNodeDecorators());
+
+	if (AllDecorators.Num() == 0) return bSatisfied;
+
+	for (auto Itr : AllDecorators)
+	{
+		if (Itr.EvaluateDecorator() == false) bSatisfied = false;
+	}
+
+	return bSatisfied;
 }
 
 #if WITH_EDITOR
@@ -66,11 +118,6 @@ void UMounteaDialogueGraphNode::SetNodeIndex(const int32 NewIndex)
 {
 	check(NewIndex>INDEX_NONE);
 	NodeIndex = NewIndex;
-}
-
-bool UMounteaDialogueGraphNode::CanStartNode() const
-{
-	return true;
 }
 
 FText UMounteaDialogueGraphNode::GetNodeTitle_Implementation() const

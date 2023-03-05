@@ -3,39 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "UObject/Object.h"
 #include "MounteaDialogueGraphNodeDecoratorBase.generated.h"
-
-/**
- * Dialogue Decorator Structure.
- * Holds reference to its Instanced Decorator.
- */
-USTRUCT(BlueprintType)
-struct FMounteaDialogueDecorator
-{
-	GENERATED_BODY()
-
-	FMounteaDialogueDecorator(): DecoratorType(nullptr)
-	{};
-
-public:
-
-	/**
-	 * A list of Decorators that can help out with enhancing the Dialogue flow.
-	 * Those Decorators are instanced and exist only as "triggers".
-	 * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "Mountea|Dialogue", meta=(NoResetToDefault, AllowAbstract = "false", BlueprintBaseOnly = "true"))
-	UMounteaDialogueGraphNodeDecoratorBase* DecoratorType = nullptr;
-
-public:
-
-	bool operator==(const FMounteaDialogueDecorator& Other) const
-	{
-		return DecoratorType == Other.DecoratorType;	
-	};
-	
-};
 
 /**
  *	Mountea Dialogue Node Decorators.
@@ -43,7 +13,7 @@ public:
  * Decorators are instanced and exist only as "triggers".
  * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
  */
-UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), HideCategories=("Hidden, Private"), AutoExpandCategories=("Mountea, Dialogue"))
+UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea, Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNodeDecoratorBase : public UObject
 {
 	GENERATED_BODY()
@@ -57,7 +27,7 @@ public:
 
 public:
 	
-	//UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual UWorld* GetWorld() const override
 	{
 		// CDO objects do not belong to a world
@@ -93,4 +63,60 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
 	void ExecuteDecorator();
 	virtual void ExecuteDecorator_Implementation();
+};
+
+
+/**
+ * Dialogue Decorator Structure.
+ * Holds reference to its Instanced Decorator.
+ */
+USTRUCT(BlueprintType)
+struct FMounteaDialogueDecorator
+{
+	GENERATED_BODY()
+
+	FMounteaDialogueDecorator(): DecoratorType(nullptr)
+	{};
+
+public:
+
+	bool EvaluateDecorator() const
+	{
+		if (DecoratorType)
+		{
+			return DecoratorType->EvaluateDecorator();
+		}
+		
+		LOG_ERROR(TEXT("[EvaluateDecorator] DecoratorType is null (invalid)!"))
+		return false;
+	};
+	
+	void ExecuteDecorator()
+	{
+		if (DecoratorType)
+		{
+			DecoratorType->ExecuteDecorator();
+		}
+		
+		LOG_ERROR(TEXT("[ExecuteDecorator] DecoratorType is null (invalid)!"))
+		return;
+	};
+
+public:
+
+	/**
+	 * A list of Decorators that can help out with enhancing the Dialogue flow.
+	 * Those Decorators are instanced and exist only as "triggers".
+	 * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "Mountea|Dialogue", meta=(NoResetToDefault, AllowAbstract = "false", BlueprintBaseOnly = "true"))
+	UMounteaDialogueGraphNodeDecoratorBase* DecoratorType = nullptr;
+
+public:
+
+	bool operator==(const FMounteaDialogueDecorator& Other) const
+	{
+		return DecoratorType == Other.DecoratorType;	
+	};
+	
 };

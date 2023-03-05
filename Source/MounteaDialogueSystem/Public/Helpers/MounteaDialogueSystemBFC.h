@@ -118,8 +118,11 @@ public:
 
 		if (Graph == nullptr) return false;
 
+		if (Graph->CanStartDialogueGraph() == false) return false;
+
 		TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(Graph->GetStartNode());
-		
+
+		if (StartNode_Children.Num() == 0) return false;
 		if (StartNode_Children[0] == nullptr) return false;
 		
 		UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();

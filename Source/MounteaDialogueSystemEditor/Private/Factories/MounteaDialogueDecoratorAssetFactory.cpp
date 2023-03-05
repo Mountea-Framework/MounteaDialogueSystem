@@ -27,7 +27,7 @@ UObject* UMounteaDialogueDecoratorAssetFactory::FactoryCreateNew(UClass* Class, 
 	}
 
 	// Create new Blueprint
-	return FKismetEditorUtilities::CreateBlueprint(
+	auto CreatedBlueprint = FKismetEditorUtilities::CreateBlueprint(
 		ParentClass,
 		InParent,
 		Name,
@@ -36,6 +36,14 @@ UObject* UMounteaDialogueDecoratorAssetFactory::FactoryCreateNew(UClass* Class, 
 		UBlueprintGeneratedClass::StaticClass(),
 		NAME_None
 	);
+
+	CreatedBlueprint->HideCategories.Add("Hidden");
+	CreatedBlueprint->HideCategories.Add("Private");
+	CreatedBlueprint->HideCategories.Add("Base");
+
+	CreatedBlueprint->BlueprintCategory = FString(TEXT("Mountea Dialogue"));
+
+	return CreatedBlueprint;
 }
 
 bool UMounteaDialogueDecoratorAssetFactory::ConfigureProperties()

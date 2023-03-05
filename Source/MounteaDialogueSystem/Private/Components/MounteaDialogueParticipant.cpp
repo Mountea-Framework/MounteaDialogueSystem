@@ -25,6 +25,7 @@ bool UMounteaDialogueParticipant::CanStartDialogue() const
 	return
 	Execute_CanStartDialogueEvent(this) &&
 	DialogueGraph != nullptr &&
+	DialogueGraph->CanStartDialogueGraph() &&
 	DialogueGraph->GetStartNode() != nullptr &&
 	DialogueGraph->GetStartNode()->GetChildrenNodes().Num() > 0;
 }

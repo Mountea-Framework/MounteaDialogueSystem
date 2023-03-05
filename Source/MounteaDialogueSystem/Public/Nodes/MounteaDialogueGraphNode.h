@@ -78,9 +78,12 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
-	TArray<FMounteaDialogueDecorator> GetNodeDecorators() const
-	{ return NodeDecorators; };
+	TArray<FMounteaDialogueDecorator> GetNodeDecorators() const;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	virtual bool CanStartNode() const;
+	virtual bool EvaluateDecorators() const;
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	bool DoesInheritDecorators() const
 	{ return bInheritGraphDecorators; };
@@ -89,6 +92,8 @@ public:
 	int32 GetMaxChildNodes() const
 	{ return MaxChildrenNodes; };
 
+
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	FORCEINLINE int32 GetNodeIndex() const
 	{ return NodeIndex; };
@@ -98,6 +103,11 @@ public:
 	FORCEINLINE FGuid GetNodeGUID() const
 	{ return NodeGUID; };
 
+	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
+	UMounteaDialogueGraph* GetGraph() const;
+
+	
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetChildrenNodes() const
 	{ return ChildrenNodes; };
@@ -106,16 +116,12 @@ public:
 	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetParentNodes() const
 	{return ParentNodes; };
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
-	virtual bool CanStartNode() const;
+	
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetNodeTitle() const;
 	virtual FText GetNodeTitle_Implementation() const;
 	
-	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
-	UMounteaDialogueGraph* GetGraph() const;
-
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetDescription() const;
 	virtual FText GetDescription_Implementation() const;
@@ -124,8 +130,8 @@ public:
 	FText GetNodeCategory() const;
 	virtual FText GetNodeCategory_Implementation() const;
 
+	
 	virtual void OnCreatedInEditor() {};
-	virtual UMounteaDialogueGraphEdge* GetEdge(UMounteaDialogueGraphNode* ChildNode);
 
 #pragma endregion 
 
