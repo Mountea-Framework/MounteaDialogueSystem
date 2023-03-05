@@ -128,7 +128,8 @@ public:
 		UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
 		Context->SetDialogueContext(DialogueParticipant, StartNode_Children[0], GetAllowedChildNodes(StartNode_Children[0]));
 
-		if (!EvaluateDecorators(WorldContextObject, Context)) return false;
+		// Decorators are evaluated in CanStartDialogueGraph and then for each Node, no need to duplicate the code around
+		//if (!EvaluateDecorators(WorldContextObject, Context)) return false;
 		
 		return  InitializeDialogueWithContext(WorldContextObject, Initiator, DialogueParticipant, Context);
 	}
@@ -136,10 +137,10 @@ public:
 	/**
 	 * Requests Evaluation for all Decorators for Graph and Context Node to verify that all are valid.
 	 */
-	static bool EvaluateDecorators(const UObject* WorldContextObject, UMounteaDialogueContext* DialogueContext)
-	{
-		return true;
-	}
+	//static bool EvaluateDecorators(const UObject* WorldContextObject, UMounteaDialogueContext* DialogueContext)
+	//{
+	//	return true;
+	//}
 
 	/**
 	 * Requests Execution for all Decorators for Graph and Context Node

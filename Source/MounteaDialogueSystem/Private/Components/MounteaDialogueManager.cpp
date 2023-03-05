@@ -10,8 +10,8 @@
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/MounteaDialogueWBPInterface.h"
 #include "Kismet/GameplayStatics.h"
+#include "Nodes/MounteaDialogueGraphNode_AutoCompleteNode.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
-#include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
 
 UMounteaDialogueManager::UMounteaDialogueManager()
 {
@@ -291,16 +291,16 @@ void UMounteaDialogueManager::ProcessNode()
 	}
 
 	UMounteaDialogueSystemBFC::ExecuteDecorators(this, DialogueContext);
+
+	if (UMounteaDialogueGraphNode_AutoCompleteNode* AutoCompleteNode = Cast<UMounteaDialogueGraphNode_AutoCompleteNode>(DialogueContext->ActiveNode) )
+	{
+		ProcessNode_Complete();
+		return;
+	}
 	
 	if (UMounteaDialogueGraphNode_DialogueNodeBase* DialogueLeadNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(DialogueContext->ActiveNode) )
 	{
 		ProcessNode_Dialogue();
-		return;
-	}
-	
-	if (UMounteaDialogueGraphNode_CompleteNode* CompleteNode = Cast<UMounteaDialogueGraphNode_CompleteNode>(DialogueContext->ActiveNode) )
-	{
-		ProcessNode_Complete();
 		return;
 	}
 }
