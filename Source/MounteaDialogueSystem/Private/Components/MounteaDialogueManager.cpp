@@ -290,6 +290,8 @@ void UMounteaDialogueManager::ProcessNode()
 		return;
 	}
 
+	UMounteaDialogueSystemBFC::ExecuteDecorators(this, DialogueContext);
+	
 	if (UMounteaDialogueGraphNode_DialogueNodeBase* DialogueLeadNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(DialogueContext->ActiveNode) )
 	{
 		ProcessNode_Dialogue();
@@ -424,7 +426,7 @@ TSubclassOf<UUserWidget> UMounteaDialogueManager::GetDialogueWidgetClass() const
 	return UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->GetDefaultDialogueWidget().LoadSynchronous();
 }
 
-void UMounteaDialogueManager::SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass)
+void UMounteaDialogueManager::SetDialogueWidgetClass(const TSubclassOf<UUserWidget> NewWidgetClass)
 {
 	DialogueWidgetClass = NewWidgetClass;
 

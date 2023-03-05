@@ -144,9 +144,38 @@ public:
 	/**
 	 * Requests Execution for all Decorators for Graph and Context Node
 	 */
-	static void ExecuteDecorators(const UObject* WorldContextObject, UMounteaDialogueContext* DialogueContext)
+	static bool ExecuteDecorators(const UObject* WorldContextObject, const UMounteaDialogueContext* DialogueContext)
 	{
-		// TODO: Request execution Event on all Decorators
+		if (DialogueContext == nullptr)
+		{
+			return false;
+		}
+
+		if (DialogueContext->DialogueParticipant.GetInterface() == nullptr)
+		{
+			return false;
+		}
+
+		if (DialogueContext->DialogueParticipant->GetDialogueGraph() == nullptr)
+		{
+			return false;
+		}
+
+		if (DialogueContext->GetActiveNode() == nullptr)
+		{
+			return false;
+		}
+		
+		TArray<FMounteaDialogueDecorator> AllDecorators;
+		AllDecorators.Append(DialogueContext->DialogueParticipant->GetDialogueGraph()->GetGraphDecorators());
+		AllDecorators.Append(DialogueContext->GetActiveNode()->GetNodeDecorators());
+
+		for (auto Itr : AllDecorators)
+		{
+			Itr.ExecuteDecorator();
+		}
+
+		return true;
 	}
 
 	/**
