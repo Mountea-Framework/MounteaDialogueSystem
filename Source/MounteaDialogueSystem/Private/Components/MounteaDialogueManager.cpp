@@ -16,7 +16,7 @@
 UMounteaDialogueManager::UMounteaDialogueManager()
 {
 	DialogueContext = nullptr;
-	ManagerState = EDialogueManagerState::EDMS_Enabled;
+	DefaultManagerState = EDialogueManagerState::EDMS_Enabled;
 }
 
 void UMounteaDialogueManager::BeginPlay()
@@ -34,6 +34,14 @@ void UMounteaDialogueManager::BeginPlay()
 	OnDialogueNodeSelected.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal);
 	OnDialogueNodeStarted.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeStartedEvent_Internal);
 	OnDialogueNodeFinished.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal);
+
+	OnDialogueRowStarted.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal);
+	OnDialogueRowFinished.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueRowFinishedEvent_Internal);
+
+	OnDialogueVoiceStartRequest.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal);
+	OnDialogueVoiceSkipRequest.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal);
+
+	SetDialogueManagerState(GetDefaultDialogueManagerState());
 }
 
 void UMounteaDialogueManager::CallDialogueNodeSelected_Implementation(const FGuid& NodeGUID)
@@ -209,6 +217,64 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 
 		return;
 	}
+}
+
+void UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal(UMounteaDialogueContext* Context)
+{
+	if (Context == nullptr)
+	{
+		OnDialogueFailed.Broadcast(TEXT("[DialogueRowStartedEvent] Invalid Dialogue Context!"));
+		return;
+	}
+
+	if (Context->GetActiveDialogueRow().DialogueRowData.Array().IsValidIndex(Context->GetActiveDialogueRowDataIndex()) == false)
+	{
+		OnDialogueFailed.Broadcast(TEXT("[DialogueRowStartedEvent] Trying to Access Invalid Dialogue Row data!"));
+		return;
+	}
+
+	// Let's hope we are not approaching invalid indexes
+	USoundBase* SoundToStart =  Context->GetActiveDialogueRow().DialogueRowData.Array()[Context->GetActiveDialogueRowDataIndex()].RowSound;
+	OnDialogueVoiceStartRequest.Broadcast(SoundToStart);
+}
+
+void UMounteaDialogueManager::OnDialogueRowFinishedEvent_Internal(UMounteaDialogueContext* Context)
+{
+	OnDialogueVoiceSkipRequest.Broadcast(nullptr);
+}
+
+void UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal(USoundBase* VoiceToStart)
+{
+	if (DialogueContext == nullptr)
+	{
+		OnDialogueFailed.Broadcast(TEXT("[DialogueVoiceStartRequestEvent] Invalid Dialogue Context!"));
+		return;
+	}
+
+	if (DialogueContext->DialogueParticipant.GetInterface() == nullptr)
+	{
+		OnDialogueFailed.Broadcast(TEXT("[DialogueVoiceStartRequestEvent] Invalid Dialogue Participant!"));
+		return;
+	}
+	
+	DialogueContext->DialogueParticipant->PlayParticipantVoice(VoiceToStart);
+}
+
+void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBase* VoiceToSkip)
+{
+	if (DialogueContext == nullptr)
+	{
+		OnDialogueFailed.Broadcast(TEXT("[DialogueVoiceSkipRequestEvent] Invalid Dialogue Context!"));
+		return;
+	}
+
+	if (DialogueContext->DialogueParticipant.GetInterface() == nullptr)
+	{
+		OnDialogueFailed.Broadcast(TEXT("[DialogueVoiceSkipRequestEvent] Invalid Dialogue Participant!"));
+		return;
+	}
+	
+	DialogueContext->DialogueParticipant->SkipParticipantVoice(VoiceToSkip);
 }
 
 bool UMounteaDialogueManager::EvaluateNodeDecorators()
@@ -461,7 +527,7 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 		UMounteaDialogueSystemBFC::GetRowDuration(RowData),
 		false
 	);
-
+	
 	OnDialogueRowStarted.Broadcast(DialogueContext);
 
 	// Show Subtitle Row only if allowed
@@ -519,4 +585,9 @@ void UMounteaDialogueManager::SetDialogueManagerState(const EDialogueManagerStat
 	ManagerState = NewState;
 	
 	OnDialogueManagerStateChanged.Broadcast(NewState);
+}
+
+void UMounteaDialogueManager::SetDefaultDialogueManagerState(const EDialogueManagerState NewState)
+{
+	DefaultManagerState = NewState;
 }

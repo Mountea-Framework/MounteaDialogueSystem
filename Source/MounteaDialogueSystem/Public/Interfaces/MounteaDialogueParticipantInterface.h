@@ -21,6 +21,7 @@ struct FDialogueRow;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueGraphChanged, UMounteaDialogueGraph*, NewGraph);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantStateChanged, const EDialogueParticipantState&, NewState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantAudioComponentChanged, const UAudioComponent*, NewAudioComp);
 
 /**
  * Mountea Dialogue Participant Interface.
@@ -71,6 +72,9 @@ public:
 	
 	virtual bool CanStartDialogue() const = 0;
 
+	virtual void PlayParticipantVoice(USoundBase* ParticipantVoice) = 0;
+	virtual void SkipParticipantVoice(USoundBase* ParticipantVoice) = 0;
+
 	virtual UMounteaDialogueGraph* GetDialogueGraph() const = 0;
 	virtual void SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph) = 0;
 
@@ -78,13 +82,17 @@ public:
 	virtual void SetParticipantState(const EDialogueParticipantState NewState) = 0;
 	virtual EDialogueParticipantState GetDefaultParticipantState() const = 0;
 	virtual void SetDefaultParticipantState(const EDialogueParticipantState NewState) = 0;
-	
+
+	virtual UAudioComponent* GetAudioComponent() const = 0;
+	virtual void SetAudioComponent(UAudioComponent* NewAudioComponent) = 0;
+
 #pragma endregion
 
 #pragma region EventHandles
 
 	virtual FDialogueGraphChanged& GetDialogueGraphChangedEventHandle() = 0;
 	virtual FDialogueParticipantStateChanged& GetDialogueParticipantStateChangedEventHandle() = 0;
+	virtual FDialogueParticipantAudioComponentChanged& GetDialogueParticipantAudioComponentChangedEventHandle() = 0;
 
 #pragma endregion 
 };

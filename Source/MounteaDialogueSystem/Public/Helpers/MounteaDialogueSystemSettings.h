@@ -56,6 +56,12 @@ protected:
 	float UpdateFrequency = 0.05f;
 
 	/**
+	 * Defines fading duration to naturally stop voice when anything is playing.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles", meta=(UIMin=0.01f, ClampMin=0.01f, UIMax=1.f, ClampMax=1.f, Units="seconds"))
+	float SkipFadeDuration = 0.01f;
+
+	/**
 	 * List of Dialogue commands.
 	 * Dialogue Commands are used to provide information what action should happen.
 	 * ❔Some values are hardcoded and cannot be deleted, thos are used for C++ requests
@@ -136,6 +142,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Update Frequency", Keywords="update, refresh, tick, frequency"))
 	float GetWidgetUpdateFrequency() const
 	{ return UpdateFrequency; };
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="SkipFadeDuration", Keywords="skip, fade, easy, smooth"))
+	float GetSkipFadeDuration() const
+	{ return SkipFadeDuration; };
 
 	/**
 	 * Returns Subtitles Settings.

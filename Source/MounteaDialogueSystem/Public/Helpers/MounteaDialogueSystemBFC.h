@@ -18,6 +18,7 @@
 
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/AudioComponent.h"
 #include "Sound/SoundBase.h"
 
 #include "MounteaDialogueSystemBFC.generated.h"
@@ -32,6 +33,48 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSystemBFC : public UBlueprintFun
 	GENERATED_BODY()
 
 public:
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="audio, tag, search"))
+	static UAudioComponent* FindAudioComponentByName(const AActor* ActorContext, const FName& Arg)
+	{
+		if (ActorContext == nullptr) return nullptr;
+
+		TArray<UAudioComponent*> OwnerComponents;
+		ActorContext->GetComponents<UAudioComponent>(OwnerComponents);
+	
+		if (OwnerComponents.Num() == 0) return nullptr;
+
+		for (const auto Itr : OwnerComponents)
+		{
+			if (Itr && Itr->GetName().Equals(Arg.ToString()))
+			{
+				return Itr;
+			}
+		}
+	
+		return nullptr;
+	}
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="audio, tag, search"))
+	static UAudioComponent* FindAudioComponentByTag(const AActor* ActorContext, const FName& Arg)
+	{
+		if (ActorContext == nullptr) return nullptr;
+
+		TArray<UAudioComponent*> OwnerComponents;
+		ActorContext->GetComponents<UAudioComponent>(OwnerComponents);
+	
+		if (OwnerComponents.Num() == 0) return nullptr;
+		
+		for (const auto Itr : OwnerComponents)
+		{
+			if (Itr && Itr->ComponentHasTag(Arg))
+			{
+				return Itr;
+			}
+		}
+	
+		return nullptr;
+	}
 
 	/**
 	 * Returns Dialogue System Settings.
@@ -133,14 +176,6 @@ public:
 		
 		return  InitializeDialogueWithContext(WorldContextObject, Initiator, DialogueParticipant, Context);
 	}
-
-	/**
-	 * Requests Evaluation for all Decorators for Graph and Context Node to verify that all are valid.
-	 */
-	//static bool EvaluateDecorators(const UObject* WorldContextObject, UMounteaDialogueContext* DialogueContext)
-	//{
-	//	return true;
-	//}
 
 	/**
 	 * Requests Execution for all Decorators for Graph and Context Node

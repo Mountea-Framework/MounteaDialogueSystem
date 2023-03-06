@@ -121,6 +121,22 @@ void FMounteaDialogueSystemEditor::StartupModule()
 					DialogueTreeSet->Set("ClassIcon.MounteaDialogueGraphNodeDecoratorBase", DialogueDecoratorDataSetClassIcon);
 				}
 
+				FSlateImageBrush* DialogueManagerSetClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueManagerIcon"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueManagerDataSetClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueManagerIcon"), TEXT(".png")), FVector2D(16.f, 16.f));
+				if (DialogueManagerSetClassThumb && DialogueManagerDataSetClassIcon)
+				{
+					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueManager", DialogueManagerSetClassThumb);
+					DialogueTreeSet->Set("ClassIcon.MounteaDialogueManager", DialogueManagerDataSetClassIcon);
+				}
+
+				FSlateImageBrush* DialogueParticipantSetClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueParticipantIcon"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueParticipantDataSetClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueParticipantIcon"), TEXT(".png")), FVector2D(16.f, 16.f));
+				if (DialogueParticipantSetClassThumb && DialogueParticipantDataSetClassIcon)
+				{
+					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueParticipant", DialogueParticipantSetClassThumb);
+					DialogueTreeSet->Set("ClassIcon.MounteaDialogueParticipant", DialogueParticipantDataSetClassIcon);
+				}
+
 				//Register the created style
 				FSlateStyleRegistry::RegisterSlateStyle(*DialogueTreeSet.Get());
 			}

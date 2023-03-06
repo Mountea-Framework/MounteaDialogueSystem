@@ -16,7 +16,7 @@ class UMounteaDialogueGraphNode_DialogueNodeBase;
  * ❔This Component allows any Actor to be Dialogue Participant.
  * ❗Requires Dialogue Graph to work.
  */
-UCLASS(ClassGroup=(Mountea), Blueprintable, hideCategories=(Collision, AssetUserData, Cooking, ComponentTick, Activation, Rendering, Sockets), meta=(BlueprintSpawnableComponent, DisplayName = "Mountea Dialogue Participant"))
+UCLASS(ClassGroup=(Mountea), Blueprintable, hideCategories=(Collision, AssetUserData, Cooking, Activation, Rendering, Sockets), meta=(BlueprintSpawnableComponent, DisplayName = "Mountea Dialogue Participant"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueParticipant : public UActorComponent, public IMounteaDialogueParticipantInterface
 {
 	GENERATED_BODY()
@@ -28,6 +28,19 @@ public:
 protected:
 
 	virtual void BeginPlay() override;
+
+#pragma region Functions
+
+protected:
+
+	UAudioComponent* FindAudioComponent() const;
+	UAudioComponent* FindAudioComponentByName(const FName& Arg) const;
+	UAudioComponent* FindAudioComponentByTag(const FName& Arg) const;
+
+	virtual void PlayParticipantVoice(USoundBase* ParticipantVoice) override;
+	virtual  void SkipParticipantVoice(USoundBase* ParticipantVoice) override;
+
+#pragma endregion 
 
 #pragma region Variables
 
@@ -41,11 +54,35 @@ protected:
 	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(DisplayThumbnail=false, NoResetToDefault))
 	UMounteaDialogueGraph* DialogueGraph = nullptr;
 
+	/**
+	 * 
+	 */
 	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(NoResetToDefault))
 	EDialogueParticipantState DefaultParticipantState;
-	
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue", meta=(NoResetToDefault))
+	/**
+	 * 
+	 */
+	UPROPERTY(Transient, VisibleAnywhere,  Category="Mountea", AdvancedDisplay,  meta=(NoResetToDefault))
 	EDialogueParticipantState ParticipantState;
+
+	/**
+	 * Provides simple way to pass down Audio Component.
+	 * Consumes:
+	 * * Actor Tag
+	 * * Name
+	 *
+	 * Tries to find 'UAudioComponent' by both methods in the Owner (Parent) Actor.
+	 * If any found, it will be set as AudioComponent.
+	 *
+	 * This is user friendly way to avoid node 'SetAudioComponent'.
+	 */
+	UPROPERTY(EditAnywhere, Category="Mountea|Dialogue", meta=(NoResetToDefault))
+	FName AudioComponentIdentification;
+	/**
+	 * 
+	 */
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false, NoResetToDefault))
+	UAudioComponent* AudioComponent = nullptr;
 
 #pragma endregion
 
@@ -62,6 +99,9 @@ protected:
 
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueParticipantStateChanged OnDialogueParticipantStateChanged;
+
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	FDialogueParticipantAudioComponentChanged OnAudioComponentChanged;
 
 #pragma endregion 
 
@@ -114,12 +154,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SetDefaultParticipantState(const EDialogueParticipantState NewState) override;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	virtual UAudioComponent* GetAudioComponent() const override
+	{ return AudioComponent; };
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	virtual void SetAudioComponent(UAudioComponent* NewAudioComponent) override;
+
 #pragma region EventHandleGetters
 	
 	virtual FDialogueGraphChanged& GetDialogueGraphChangedEventHandle() override
 	{ return OnDialogueGraphChanged; };
 	virtual FDialogueParticipantStateChanged& GetDialogueParticipantStateChangedEventHandle() override
 	{ return OnDialogueParticipantStateChanged; };
+	virtual FDialogueParticipantAudioComponentChanged& GetDialogueParticipantAudioComponentChangedEventHandle() override
+	{ return OnAudioComponentChanged; };
 	
 #pragma endregion 
 

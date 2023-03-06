@@ -30,6 +30,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueFailed, const FString&, Err
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueManagerStateChanged, const EDialogueManagerState&, NewState);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueVoiceEvent, class USoundBase*, NewDialogueVoice);
+
 /**
  * Mountea Dialogue Manager Interface.
  * 
@@ -81,7 +83,9 @@ public:
 
 	virtual EDialogueManagerState GetDialogueManagerState() const = 0;
 	virtual void SetDialogueManagerState(const EDialogueManagerState NewState) = 0;
-
+	virtual EDialogueManagerState GetDefaultDialogueManagerState() const = 0;
+	virtual void SetDefaultDialogueManagerState(const EDialogueManagerState NewState) = 0;
+	
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueClosedEventHandle() = 0;
@@ -99,4 +103,7 @@ public:
 	virtual FDialogueFailed& GetDialogueFailedEventHandle() = 0;
 
 	virtual FDialogueManagerStateChanged& GetDialogueManagerStateChangedEventHandle() = 0;
+
+	virtual FDialogueVoiceEvent& GetDialogueVoiceStartRequestEventHandle() = 0;
+	virtual FDialogueVoiceEvent& GetDialogueVoiceSkipRequestEventHandle() = 0;
 };

@@ -99,6 +99,17 @@ protected:
 	UFUNCTION()
 	void OnDialogueNodeFinishedEvent_Internal(UMounteaDialogueContext* Context);
 
+	UFUNCTION() void OnDialogueRowStartedEvent_Internal(UMounteaDialogueContext* Context);
+	UFUNCTION() void OnDialogueRowFinishedEvent_Internal(UMounteaDialogueContext* Context);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Finish, End, Complete"))
+	void OnDialogueVoiceStartRequestEvent(USoundBase* VoiceToStart);
+	UFUNCTION()
+	void OnDialogueVoiceStartRequestEvent_Internal(USoundBase* VoiceToStart);
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Finish, End, Complete"))
+	void OnDialogueVoiceSkipRequestEvent(USoundBase* VoiceToSkip);
+	UFUNCTION()
+	void OnDialogueVoiceSkipRequestEvent_Internal(USoundBase* VoiceToSkip);
 
 #pragma endregion
 
@@ -175,6 +186,11 @@ protected:
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueManagerStateChanged OnDialogueManagerStateChanged;
 
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	FDialogueVoiceEvent OnDialogueVoiceStartRequest;
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	FDialogueVoiceEvent OnDialogueVoiceSkipRequest;
+
 #pragma endregion
 
 #pragma region InterfaceImplementations
@@ -225,7 +241,11 @@ protected:
 	virtual EDialogueManagerState GetDialogueManagerState() const override
 	{ return  ManagerState; };
 	virtual void SetDialogueManagerState(const EDialogueManagerState NewState) override;
-
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="Context, Get"))
+	virtual EDialogueManagerState GetDefaultDialogueManagerState() const override
+	{ return DefaultManagerState; };
+	virtual void SetDefaultDialogueManagerState(const EDialogueManagerState NewState) override;
+	
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() override
 	{ return OnDialogueInitialized; };
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() override
@@ -250,6 +270,10 @@ protected:
 	{ return OnDialogueFailed; };
 	virtual FDialogueManagerStateChanged& GetDialogueManagerStateChangedEventHandle() override
 	{ return OnDialogueManagerStateChanged; };
+	virtual FDialogueVoiceEvent& GetDialogueVoiceSkipRequestEventHandle() override
+	{ return OnDialogueVoiceStartRequest; };
+	virtual FDialogueVoiceEvent& GetDialogueVoiceStartRequestEventHandle() override
+	{ return OnDialogueVoiceSkipRequest; };
 
 #pragma endregion 
 
@@ -265,6 +289,9 @@ protected:
 	TSubclassOf<UUserWidget> DialogueWidgetClass = nullptr;
 
 	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue")
+	EDialogueManagerState DefaultManagerState;
+	
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea|Dialogue")
 	EDialogueManagerState ManagerState;
 	
 	/**
@@ -284,3 +311,4 @@ protected:
 	FTimerHandle TimerHandle_RowTimer;
 #pragma endregion 
 };
+
