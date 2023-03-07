@@ -22,7 +22,10 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueContext : public UObject
 	GENERATED_BODY()
 
 public:
-	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	TScriptInterface<IMounteaDialogueParticipantInterface> ActiveDialogueParticipant;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	TScriptInterface<IMounteaDialogueParticipantInterface> PlayerDialogueParticipant;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant;
 	/**
@@ -52,8 +55,13 @@ public:
 
 public:
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Debug")
 	virtual bool IsValid() const;
 
+	TScriptInterface<IMounteaDialogueParticipantInterface> GetActiveDialogueParticipant() const
+	{ return PlayerDialogueParticipant; };
+	TScriptInterface<IMounteaDialogueParticipantInterface> GetDialoguePlayerParticipant() const
+	{ return PlayerDialogueParticipant; };
 	TScriptInterface<IMounteaDialogueParticipantInterface> GetDialogueParticipant() const
 	{ return DialogueParticipant; };
 	/**
@@ -93,4 +101,6 @@ public:
 	virtual void UpdateActiveDialogueNode(UMounteaDialogueGraphNode* NewActiveNode);
 	virtual void UpdateActiveDialogueRow(const FDialogueRow& NewActiveRow);
 	virtual void UpdateActiveDialogueRowDataIndex(int32 NewIndex);
+	void UpdateDialoguePlayerParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
+	void UpdateActiveDialogueParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
 };

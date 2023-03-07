@@ -77,6 +77,36 @@ public:
 	}
 
 	/**
+	 * Returns first 'Mountea Dialogue Particiapnt' Component from Player Pawn.
+	 * ❗Might return Null❗
+	 * 
+	 * @param WorldContextObject	World Context Object 
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", CompactNodeTitle="Player Participant", Keywords="participant, dialogue, player"))
+	static TScriptInterface<IMounteaDialogueParticipantInterface> GetPlayerDialogueParticipant(const UObject* WorldContextObject)
+	{
+		if (WorldContextObject == nullptr) return nullptr;
+
+		const APlayerController* PlayerController = WorldContextObject->GetWorld()->GetFirstPlayerController();
+
+		if (!PlayerController) return nullptr;
+
+		const APawn* PlayerPawn = PlayerController->GetPawn();
+
+		if (PlayerPawn == nullptr) return nullptr;
+
+		auto Components = PlayerPawn->GetComponentsByInterface(UMounteaDialogueParticipantInterface::StaticClass());
+
+		if (Components.Num() == 0) return nullptr;
+
+		TScriptInterface<IMounteaDialogueParticipantInterface> ReturnValue;
+		ReturnValue.SetObject(Components[0]);
+		ReturnValue.SetInterface(Cast<IMounteaDialogueParticipantInterface>(Components[0]));
+
+		return ReturnValue;
+	}
+	
+	/**
 	 * Returns Dialogue System Settings.
 	 * ❗Might return null❗
 	 */
@@ -121,6 +151,43 @@ public:
 		return Context->IsValid();
 	}
 
+	/**
+	 * Requests Execution for all Decorators for Graph and Context Node
+	 */
+	static bool ExecuteDecorators(const UObject* WorldContextObject, const UMounteaDialogueContext* DialogueContext)
+	{
+		if (DialogueContext == nullptr)
+		{
+			return false;
+		}
+
+		if (DialogueContext->DialogueParticipant.GetInterface() == nullptr)
+		{
+			return false;
+		}
+
+		if (DialogueContext->DialogueParticipant->GetDialogueGraph() == nullptr)
+		{
+			return false;
+		}
+
+		if (DialogueContext->GetActiveNode() == nullptr)
+		{
+			return false;
+		}
+		
+		TArray<FMounteaDialogueDecorator> AllDecorators;
+		AllDecorators.Append(DialogueContext->DialogueParticipant->GetDialogueGraph()->GetGraphDecorators());
+		AllDecorators.Append(DialogueContext->GetActiveNode()->GetNodeDecorators());
+
+		for (auto Itr : AllDecorators)
+		{
+			Itr.ExecuteDecorator();
+		}
+
+		return true;
+	}
+	
 	/**
 	 * Tries to close Dialogue.
 	 * 
@@ -170,50 +237,11 @@ public:
 		
 		UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
 		Context->SetDialogueContext(DialogueParticipant, StartNode_Children[0], GetAllowedChildNodes(StartNode_Children[0]));
-
-		// Decorators are evaluated in CanStartDialogueGraph and then for each Node, no need to duplicate the code around
-		//if (!EvaluateDecorators(WorldContextObject, Context)) return false;
+		Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(WorldContextObject));
 		
 		return  InitializeDialogueWithContext(WorldContextObject, Initiator, DialogueParticipant, Context);
 	}
-
-	/**
-	 * Requests Execution for all Decorators for Graph and Context Node
-	 */
-	static bool ExecuteDecorators(const UObject* WorldContextObject, const UMounteaDialogueContext* DialogueContext)
-	{
-		if (DialogueContext == nullptr)
-		{
-			return false;
-		}
-
-		if (DialogueContext->DialogueParticipant.GetInterface() == nullptr)
-		{
-			return false;
-		}
-
-		if (DialogueContext->DialogueParticipant->GetDialogueGraph() == nullptr)
-		{
-			return false;
-		}
-
-		if (DialogueContext->GetActiveNode() == nullptr)
-		{
-			return false;
-		}
-		
-		TArray<FMounteaDialogueDecorator> AllDecorators;
-		AllDecorators.Append(DialogueContext->DialogueParticipant->GetDialogueGraph()->GetGraphDecorators());
-		AllDecorators.Append(DialogueContext->GetActiveNode()->GetNodeDecorators());
-
-		for (auto Itr : AllDecorators)
-		{
-			Itr.ExecuteDecorator();
-		}
-
-		return true;
-	}
-
+	
 	/**
 	 * Tries to initialize Dialogue with given Context.
 	 * ❗Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
@@ -246,6 +274,8 @@ public:
 	{
 		if (!WorldContextObject) return nullptr;
 
+		if (WorldContextObject->GetWorld() == nullptr) return nullptr;
+			
 		const APlayerController* PlayerController = WorldContextObject->GetWorld()->GetFirstPlayerController();
 
 		if (!PlayerController) return nullptr;
@@ -432,5 +462,24 @@ public:
 		}
 
 		return GetDialogueSystemSettings_Internal()->GetSubtitlesSettings(OptionalFilterClass);
+	}
+
+	static TArray<FMounteaDialogueDecorator> GetAllDialogueDecorators(const UMounteaDialogueGraph* FromGraph)
+	{
+		TArray<FMounteaDialogueDecorator> Decorators;
+
+		if (FromGraph == nullptr) return Decorators;
+		
+		Decorators.Append(FromGraph->GetGraphDecorators());
+
+		for (const auto Itr : FromGraph->GetAllNodes())
+		{
+			if (Itr)
+			{
+				Decorators.Append(Itr->GetNodeDecorators());
+			}
+		}
+		
+		return Decorators;
 	}
 };

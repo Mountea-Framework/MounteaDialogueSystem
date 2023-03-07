@@ -12,6 +12,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Nodes/MounteaDialogueGraphNode_AutoCompleteNode.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
+#include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
 
 UMounteaDialogueManager::UMounteaDialogueManager()
 {
@@ -240,7 +241,7 @@ void UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal(UMounteaDialogu
 
 void UMounteaDialogueManager::OnDialogueRowFinishedEvent_Internal(UMounteaDialogueContext* Context)
 {
-	OnDialogueVoiceSkipRequest.Broadcast(nullptr);
+	//OnDialogueVoiceSkipRequest.Broadcast(nullptr);
 }
 
 void UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal(USoundBase* VoiceToStart)
@@ -257,7 +258,8 @@ void UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal(USoundBa
 		return;
 	}
 	
-	DialogueContext->DialogueParticipant->PlayParticipantVoice(VoiceToStart);
+	DialogueContext->ActiveDialogueParticipant->PlayParticipantVoice(VoiceToStart);
+	OnDialogueVoiceStartRequestEvent(VoiceToStart);
 }
 
 void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBase* VoiceToSkip)
@@ -273,8 +275,13 @@ void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBas
 		OnDialogueFailed.Broadcast(TEXT("[DialogueVoiceSkipRequestEvent] Invalid Dialogue Participant!"));
 		return;
 	}
+
 	
-	DialogueContext->DialogueParticipant->SkipParticipantVoice(VoiceToSkip);
+	DialogueContext->ActiveDialogueParticipant->SkipParticipantVoice(VoiceToSkip);
+
+	OnDialogueVoiceSkipRequestEvent(VoiceToSkip);
+	
+	FinishedExecuteDialogueRow();
 }
 
 bool UMounteaDialogueManager::EvaluateNodeDecorators()
@@ -364,11 +371,7 @@ void UMounteaDialogueManager::ProcessNode()
 		return;
 	}
 	
-	if (UMounteaDialogueGraphNode_DialogueNodeBase* DialogueLeadNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(DialogueContext->ActiveNode) )
-	{
-		ProcessNode_Dialogue();
-		return;
-	}
+	ProcessNode_Dialogue();
 }
 
 void UMounteaDialogueManager::ProcessNode_Complete()
@@ -384,6 +387,15 @@ void UMounteaDialogueManager::ProcessNode_Dialogue()
 		return;
 	}
 
+	if (DialogueContext->ActiveNode->GetClass()->IsChildOf(UMounteaDialogueGraphNode_LeadNode::StaticClass()))
+	{
+		DialogueContext->UpdateActiveDialogueParticipant(DialogueContext->GetDialogueParticipant());
+	}
+	else
+	{
+		DialogueContext->UpdateActiveDialogueParticipant(DialogueContext->GetDialoguePlayerParticipant());
+	}
+	
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 
 	const FDialogueRow DialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);

@@ -40,18 +40,18 @@ public:
 
 protected:
 	
-	UPROPERTY(Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(RequiredAssetDataTags="RowStructure=DialogueRow", DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(RequiredAssetDataTags="RowStructure=DialogueRow", DisplayThumbnail=false, NoResetToDefault))
 	UDataTable*	DataTable;
 
 	/** Name of row in the table that we want */
-	UPROPERTY(Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault))
+	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault))
 	FName RowName;
 
 	/** Defines whether this Node will start automatically or if requires input.*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Base")
+	UPROPERTY(SaveGame, EditAnywhere, BlueprintReadOnly, Category="Base")
 	uint8 bAutoStarts : 1;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Base")
+	UPROPERTY(SaveGame, EditDefaultsOnly, BlueprintReadOnly, Category="Base")
 	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
 
 #if WITH_EDITORONLY_DATA

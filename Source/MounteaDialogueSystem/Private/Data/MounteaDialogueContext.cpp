@@ -6,7 +6,7 @@
 
 bool UMounteaDialogueContext::IsValid() const
 {
-	return ActiveNode != nullptr && DialogueParticipant.GetInterface() != nullptr;
+	return ActiveNode != nullptr && DialogueParticipant.GetInterface() != nullptr && PlayerDialogueParticipant.GetInterface() != nullptr;
 }
 
 void UMounteaDialogueContext::SetDialogueContext(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant, UMounteaDialogueGraphNode* NewActiveNode, TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes)
@@ -34,4 +34,26 @@ void UMounteaDialogueContext::UpdateActiveDialogueRow(const FDialogueRow& NewAct
 void UMounteaDialogueContext::UpdateActiveDialogueRowDataIndex(const int32 NewIndex)
 {
 	ActiveDialogueRowDataIndex = NewIndex;
+}
+
+void UMounteaDialogueContext::UpdateDialoguePlayerParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant)
+{
+	PlayerDialogueParticipant = NewParticipant;
+}
+
+void UMounteaDialogueContext::UpdateActiveDialogueParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant)
+{
+	if (NewParticipant.GetInterface() == nullptr)
+	{
+		ActiveDialogueParticipant = NewParticipant;
+		return;
+	}
+
+	if (NewParticipant != PlayerDialogueParticipant && NewParticipant != DialogueParticipant)
+	{
+		//TODO: Properly log this
+		return;
+	}
+
+	ActiveDialogueParticipant = NewParticipant;
 }

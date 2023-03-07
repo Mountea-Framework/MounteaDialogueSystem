@@ -22,6 +22,23 @@ void UMounteaDialogueParticipant::BeginPlay()
 	SetParticipantState(GetDefaultParticipantState());
 
 	SetAudioComponent(FindAudioComponent());
+
+	InitializeParticipant_Implementation();
+}
+
+
+void UMounteaDialogueParticipant::InitializeParticipant_Implementation()
+{
+	if (DialogueGraph == nullptr) return;
+
+	TArray<FMounteaDialogueDecorator> Decorators = UMounteaDialogueSystemBFC::GetAllDialogueDecorators(DialogueGraph);
+	for (const auto Itr : Decorators)
+	{
+		if (Itr.DecoratorType)
+		{
+			Itr.DecoratorType->InitializeDecorators(GetWorld());
+		}
+	}
 }
 
 UAudioComponent* UMounteaDialogueParticipant::FindAudioComponent() const

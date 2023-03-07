@@ -5,7 +5,7 @@
 
 bool UMounteaDialogueGraphNodeDecoratorBase::EvaluateDecorator_Implementation()
 {
-	return true;
+	return OwningWorld != nullptr;
 }
 
 void UMounteaDialogueGraphNodeDecoratorBase::ExecuteDecorator_Implementation()

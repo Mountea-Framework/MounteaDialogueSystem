@@ -27,6 +27,13 @@ public:
 
 protected:
 
+	/**
+	 * Helps initialize Participant.
+	 * Is being called in BeginPlay.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue")
+	void InitializeParticipant();
+	virtual void InitializeParticipant_Implementation();
 	virtual void BeginPlay() override;
 
 #pragma region Functions

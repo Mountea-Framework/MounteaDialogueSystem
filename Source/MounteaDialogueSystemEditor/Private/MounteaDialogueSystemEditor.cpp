@@ -240,6 +240,8 @@ void FMounteaDialogueSystemEditor::RegisterAssetTypeAction(IAssetTools& AssetToo
 void FMounteaDialogueSystemEditor::OnGetResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
 	FString ResponseBody;
+	if (Response.Get() == nullptr) return;
+	
 	if (Response.IsValid() && Response->GetResponseCode() == 200)
 	{
 		ResponseBody = Response->GetContentAsString();
@@ -255,7 +257,7 @@ void FMounteaDialogueSystemEditor::OnGetResponse(FHttpRequestPtr Request, FHttpR
 void FMounteaDialogueSystemEditor::SendHTTPGet()
 {
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = Http->CreateRequest();
-
+	
 	Request->OnProcessRequestComplete().BindRaw(this, &FMounteaDialogueSystemEditor::OnGetResponse);
 	Request->SetURL(ChangelogURL);
 
