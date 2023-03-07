@@ -27,29 +27,23 @@ public:
 
 public:
 	
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual UWorld* GetWorld() const override
 	{
-		if (OwningWorld)
-		{
-			return OwningWorld;
-		}
+		if (OwningWorld) return OwningWorld;
 		
 		// CDO objects do not belong to a world
 		// If the actors outer is destroyed or unreachable we are shutting down and the world should be nullptr
-		if
-		(
+		if (
 			!HasAnyFlags(RF_ClassDefaultObject) && ensureMsgf(GetOuter(), TEXT("Actor: %s has a null OuterPrivate in AActor::GetWorld()"), *GetFullName())
 			&& !GetOuter()->HasAnyFlags(RF_BeginDestroyed) && !GetOuter()->IsUnreachable()
-		)
+			)
 		{
 			if (ULevel* Level = GetLevel())
 			{
 				return Level->OwningWorld;
 			}
 		}
-		
-		return GetOuter()->GetWorld();
+		return nullptr;
 	};
 
 public:

@@ -57,3 +57,52 @@ void UMounteaDialogueContext::UpdateActiveDialogueParticipant(TScriptInterface<I
 
 	ActiveDialogueParticipant = NewParticipant;
 }
+
+void UMounteaDialogueContext::SetDialogueContextBP(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant, UMounteaDialogueGraphNode* NewActiveNode,TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes)
+{
+	SetDialogueContext(NewParticipant, NewActiveNode, NewAllowedChildNodes);
+
+	DialogueContextUpdatedFromBlueprint.Broadcast(this);
+}
+
+void UMounteaDialogueContext::UpdateDialogueParticipantBP(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant)
+{
+	UpdateDialogueParticipant(NewParticipant);
+	
+	DialogueContextUpdatedFromBlueprint.Broadcast(this);
+}
+
+void UMounteaDialogueContext::UpdateActiveDialogueNodeBP(UMounteaDialogueGraphNode* NewActiveNode)
+{
+	UpdateActiveDialogueNode(NewActiveNode);
+
+	DialogueContextUpdatedFromBlueprint.Broadcast(this);
+}
+
+void UMounteaDialogueContext::UpdateActiveDialogueRowBP(const FDialogueRow& NewActiveRow)
+{
+	UpdateActiveDialogueRow(NewActiveRow);
+	
+	DialogueContextUpdatedFromBlueprint.Broadcast(this);
+}
+
+void UMounteaDialogueContext::UpdateActiveDialogueRowDataIndexBP(int32 NewIndex)
+{
+	UpdateActiveDialogueRowDataIndex(NewIndex);
+
+	DialogueContextUpdatedFromBlueprint.Broadcast(this);
+}
+
+void UMounteaDialogueContext::UpdateDialoguePlayerParticipantBP(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant)
+{
+	UpdateDialoguePlayerParticipant(NewParticipant);
+
+	DialogueContextUpdatedFromBlueprint.Broadcast(this);
+}
+
+void UMounteaDialogueContext::UpdateActiveDialogueParticipantBP(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant)
+{
+	UpdateActiveDialogueParticipant(NewParticipant);
+
+	DialogueContextUpdatedFromBlueprint.Broadcast(this);
+}

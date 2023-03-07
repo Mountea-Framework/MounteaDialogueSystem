@@ -80,6 +80,9 @@ void UMounteaDialogueManager::OnDialogueInitializedEvent_Internal(UMounteaDialog
 		OnDialogueContextUpdated.Broadcast(Context);
 
 		OnDialogueStarted.Broadcast(Context);
+
+		// No need to refresh all again, just call the Event to BPs
+		Context->DialogueContextUpdatedFromBlueprint.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent);
 	}
 	else
 	{
@@ -347,8 +350,14 @@ void UMounteaDialogueManager::CloseDialogue()
 
 	if (!DialogueContext->GetDialogueParticipant().GetObject()) return;
 
-	// TODO: State MACHINE! Some dialogue might be finished, some might be paused etc.
-	DialogueContext->GetDialogueParticipant()->SetParticipantState(EDialogueParticipantState::EDPS_Enabled);
+	// Clear binding
+	DialogueContext->DialogueContextUpdatedFromBlueprint.RemoveDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent);
+
+	const auto ParticipantDefaultState = DialogueContext->GetDialogueParticipant()->GetDefaultParticipantState();
+	const auto PlayerParticipantDefaultState = DialogueContext->GetDialoguePlayerParticipant()->GetDefaultParticipantState();
+	
+	DialogueContext->GetDialogueParticipant()->SetParticipantState(ParticipantDefaultState);
+	DialogueContext->GetDialoguePlayerParticipant()->SetParticipantState(PlayerParticipantDefaultState);
 	
 	DialogueContext->SetDialogueContext(nullptr, nullptr, TArray<UMounteaDialogueGraphNode*>());
 	DialogueContext->ConditionalBeginDestroy();

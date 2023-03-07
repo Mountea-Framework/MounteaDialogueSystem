@@ -10,6 +10,8 @@
 class IMounteaDialogueParticipantInterface;
 class UMounteaDialogueGraphNode;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueContextUpdatedFromBlueprint, UMounteaDialogueContext*, Context);
+
 /**
  * Dialogue Context.
  * 
@@ -103,4 +105,21 @@ public:
 	virtual void UpdateActiveDialogueRowDataIndex(int32 NewIndex);
 	void UpdateDialoguePlayerParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
 	void UpdateActiveDialogueParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
+
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context")
+	virtual void SetDialogueContextBP(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant, UMounteaDialogueGraphNode* NewActiveNode, TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context")
+	virtual void UpdateDialogueParticipantBP(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context")
+	virtual void UpdateActiveDialogueNodeBP(UMounteaDialogueGraphNode* NewActiveNode);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context")
+	virtual void UpdateActiveDialogueRowBP(const FDialogueRow& NewActiveRow);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context")
+	virtual void UpdateActiveDialogueRowDataIndexBP(int32 NewIndex);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context")
+	void UpdateDialoguePlayerParticipantBP(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context")
+	void UpdateActiveDialogueParticipantBP(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
+
+	FDialogueContextUpdatedFromBlueprint DialogueContextUpdatedFromBlueprint;
 };
