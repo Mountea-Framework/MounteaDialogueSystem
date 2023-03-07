@@ -48,10 +48,24 @@ public:
 
 public:
 
-	void InitializeDecorators(UWorld* World)
+	/**
+	 * Initializes the Decorator.
+	 * In C++ saves the World for later use.
+	 * In Blueprints should be used to cache values to avoid overhead in 'ExecuteDecorator'.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
+	void InitializeDecorators(UWorld* World);
+	virtual void InitializeDecorators_Implementation(UWorld* World)
 	{
 		OwningWorld = World;
 	};
+
+	/**
+	 * Cleans up the Decorator.
+	 * In Blueprints should be used to reset cached values to avoid blocking garbage collector.
+	 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "Mountea|Dialogue|Decorators")
+	void CleanupDecorators();
 
 	/**
 	 * Evaluates the Decorator.
