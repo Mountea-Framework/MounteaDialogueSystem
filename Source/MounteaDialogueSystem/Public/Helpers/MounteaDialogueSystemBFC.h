@@ -198,12 +198,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="close, exit, dialogue"))
 	static bool CloseDialogue(const UObject* WorldContextObject, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant)
 	{
-		if (!GetDialogueManger(WorldContextObject)) return false;
+		if (!GetDialogueManager(WorldContextObject)) return false;
 		
 		UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
 		Context->SetDialogueContext(DialogueParticipant, nullptr, TArray<UMounteaDialogueGraphNode*>());
 		
-		GetDialogueManger(WorldContextObject)->GetDialogueClosedEventHandle().Broadcast(Context);
+		GetDialogueManager(WorldContextObject)->GetDialogueClosedEventHandle().Broadcast(Context);
 		return true;
 	}
 	
@@ -220,7 +220,7 @@ public:
 	{
 		if (Initiator == nullptr || DialogueParticipant.GetInterface() == nullptr) return false;
 
-		if (GetDialogueManger(WorldContextObject) == nullptr) return false;
+		if (GetDialogueManager(WorldContextObject) == nullptr) return false;
 
 		if (DialogueParticipant->CanStartDialogue() == false) return false;
 
@@ -259,7 +259,7 @@ public:
 		if (Context == nullptr) return false;
 		if (IsContextValid(Context) == false) return false;
 
-		GetDialogueManger(WorldContextObject)->GetDialogueInitializedEventHandle().Broadcast(Context);
+		GetDialogueManager(WorldContextObject)->GetDialogueInitializedEventHandle().Broadcast(Context);
 		return true;
 	}
 
@@ -270,7 +270,7 @@ public:
 	 * @param WorldContextObject	World Context Object 
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", CompactNodeTitle="Diaogue Manager", Keywords="manager, dialogue, master, initialize"))
-	static TScriptInterface<IMounteaDialogueManagerInterface> GetDialogueManger(const UObject* WorldContextObject)
+	static TScriptInterface<IMounteaDialogueManagerInterface> GetDialogueManager(const UObject* WorldContextObject)
 	{
 		if (!WorldContextObject) return nullptr;
 

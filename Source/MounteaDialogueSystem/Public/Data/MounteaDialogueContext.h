@@ -95,12 +95,19 @@ public:
 	 */
 	int32 GetActiveDialogueRowDataIndex() const
 	{ return ActiveDialogueRowDataIndex; };
-	
+
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context")
 	virtual void SetDialogueContext(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant, UMounteaDialogueGraphNode* NewActiveNode, TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context")
 	virtual void UpdateDialogueParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context")
 	virtual void UpdateActiveDialogueNode(UMounteaDialogueGraphNode* NewActiveNode);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context")
 	virtual void UpdateActiveDialogueRow(const FDialogueRow& NewActiveRow);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context")
 	virtual void UpdateActiveDialogueRowDataIndex(int32 NewIndex);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context")
 	void UpdateDialoguePlayerParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context")
 	void UpdateActiveDialogueParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
 };
