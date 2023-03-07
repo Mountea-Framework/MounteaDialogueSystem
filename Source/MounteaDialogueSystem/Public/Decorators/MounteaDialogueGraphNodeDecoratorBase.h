@@ -54,8 +54,8 @@ public:
 	 * In Blueprints should be used to cache values to avoid overhead in 'ExecuteDecorator'.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
-	void InitializeDecorators(UWorld* World);
-	virtual void InitializeDecorators_Implementation(UWorld* World)
+	void InitializeDecorator(UWorld* World);
+	virtual void InitializeDecorator_Implementation(UWorld* World)
 	{
 		OwningWorld = World;
 	};
@@ -65,7 +65,7 @@ public:
 	 * In Blueprints should be used to reset cached values to avoid blocking garbage collector.
 	 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Mountea|Dialogue|Decorators")
-	void CleanupDecorators();
+	void CleanupDecorator();
 
 	/**
 	 * Evaluates the Decorator.
