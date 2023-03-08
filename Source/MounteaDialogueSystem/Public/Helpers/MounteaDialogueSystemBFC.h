@@ -230,7 +230,13 @@ public:
 
 		if (Graph->CanStartDialogueGraph() == false) return false;
 
-		TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(Graph->GetStartNode());
+		const UMounteaDialogueGraphNode* NodeToStart = DialogueParticipant->GetSavedStartingNode();
+		if (!NodeToStart || NodeToStart->CanStartNode() == false)
+		{
+			NodeToStart = Graph->GetStartNode();
+		}
+		
+		TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
 
 		if (StartNode_Children.Num() == 0) return false;
 		if (StartNode_Children[0] == nullptr) return false;

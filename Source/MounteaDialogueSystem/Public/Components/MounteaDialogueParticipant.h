@@ -90,6 +90,14 @@ protected:
 	 */
 	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false, NoResetToDefault))
 	UAudioComponent* AudioComponent = nullptr;
+	/**
+	 * Optional Starting Node.
+	 *
+	 * If this value is selected, this Participant's Dialogue will start from Selected Node, if valid!
+	 * Otherwise it will start from Start Node of the Graph.
+	 */
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false, NoResetToDefault))
+	UMounteaDialogueGraphNode* StartingNode = nullptr;
 
 #pragma endregion
 
@@ -109,6 +117,9 @@ protected:
 
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueParticipantAudioComponentChanged OnAudioComponentChanged;
+
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	FParticipantStartingNodeSaved OnStartingNodeSaved;
 
 #pragma endregion 
 
@@ -135,6 +146,12 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual bool CanStartDialogue() const override;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	virtual UMounteaDialogueGraphNode* GetSavedStartingNode() const override
+	{ return StartingNode; };
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	virtual void SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode) override;
 
 	/**
 	 * Returns Dialogue Graph of this Participant.
@@ -175,6 +192,8 @@ public:
 	{ return OnDialogueParticipantStateChanged; };
 	virtual FDialogueParticipantAudioComponentChanged& GetDialogueParticipantAudioComponentChangedEventHandle() override
 	{ return OnAudioComponentChanged; };
+	virtual FParticipantStartingNodeSaved& GetParticipantStartingNodeSavedEventHandle() override
+	{ return OnStartingNodeSaved; };
 	
 #pragma endregion 
 

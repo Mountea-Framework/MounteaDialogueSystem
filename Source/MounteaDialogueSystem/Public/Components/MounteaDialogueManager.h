@@ -188,7 +188,7 @@ protected:
 
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueVoiceEvent OnDialogueVoiceStartRequest;
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintCallable, BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueVoiceEvent OnDialogueVoiceSkipRequest;
 
 #pragma endregion

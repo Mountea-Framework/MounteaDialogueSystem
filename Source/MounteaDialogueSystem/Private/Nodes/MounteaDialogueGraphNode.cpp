@@ -275,6 +275,8 @@ void UMounteaDialogueGraphNode::OnPasted()
 
 FText UMounteaDialogueGraphNode::GetDefaultTooltipBody() const
 {
+	//For some reason this prints out warning that it cannot format Int to Text for some reason
+	
 	const FText InheritsValue = bInheritGraphDecorators ? LOCTEXT("True","Yes") : LOCTEXT("False","No");
 	const FText Inherits = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_InheritsTooltip", "Inherits Graph Decorators: {X}"), InheritsValue);
 

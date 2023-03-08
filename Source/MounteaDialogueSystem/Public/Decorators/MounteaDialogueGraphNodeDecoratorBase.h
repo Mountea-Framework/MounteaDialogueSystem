@@ -7,6 +7,8 @@
 #include "UObject/Object.h"
 #include "MounteaDialogueGraphNodeDecoratorBase.generated.h"
 
+class UMounteaDialogueGraph;
+class UMounteaDialogueGraphNode;
 /**
  *	Mountea Dialogue Node Decorators.
  *
@@ -84,6 +86,45 @@ public:
 	void ExecuteDecorator();
 	virtual void ExecuteDecorator_Implementation();
 
+	/**
+	 * Stores reference to World.
+	 * World is needed to perform World affecting tasks.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Decorators")
+	void StoreWorldReference(UWorld* World)
+	{
+		if (OwningWorld != World) OwningWorld = World;
+	}
+
+	/**
+	 * Returns Owning World this Decorator belongs to.
+	 *
+	 * ❗Should not return Null, but possibly can.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Decorators", meta=(CompactNodeTitle="World"))
+	UWorld* GetOwningWorld() const
+	{ return OwningWorld; };
+
+	/**
+	 * Returns Owning Node of this Decorator.
+	 *
+	 * ❗Might return Null if this Decorator is owned by Graph!
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorators", meta=(CompactNodeTitle="OwningNode"))
+	UMounteaDialogueGraphNode* GetOwningNode() const;
+	/**
+	 * Returns Owning Graph of this Decorator.
+	 *
+	 * ❗Might return Null if this Decorator is owned by Node!
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorators", meta=(CompactNodeTitle="OwningGraph"))
+	UMounteaDialogueGraph* GetOwningGraph() const;
+	/**
+	 * Returns Owning Object of this Decorator.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorators", meta=(CompactNodeTitle="Owner"))
+	UObject* GetOwner() const;
+	
 private:
 
 	UPROPERTY()
@@ -121,6 +162,7 @@ public:
 		if (DecoratorType)
 		{
 			DecoratorType->ExecuteDecorator();
+			return;
 		}
 		
 		LOG_ERROR(TEXT("[ExecuteDecorator] DecoratorType is null (invalid)!"))

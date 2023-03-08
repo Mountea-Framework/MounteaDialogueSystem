@@ -22,6 +22,7 @@ struct FDialogueRow;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueGraphChanged, UMounteaDialogueGraph*, NewGraph);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantStateChanged, const EDialogueParticipantState&, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantAudioComponentChanged, const UAudioComponent*, NewAudioComp);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FParticipantStartingNodeSaved, const UMounteaDialogueGraphNode*, NewSavedNode);
 
 /**
  * Mountea Dialogue Participant Interface.
@@ -41,9 +42,12 @@ public:
 	 * It does come with Native C++ implementation, which can be overriden in child C++ classes.
 	 * ⚠ If you are using Blueprint implementation, don't forget to call Parent Node, which contains all parent implementations.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	bool CanStartDialogueEvent() const;
-	
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	void SaveStartingNode(UMounteaDialogueGraphNode* NewStartingNode);
+
 #pragma endregion
 
 protected:
@@ -64,6 +68,11 @@ protected:
 		return true;
 	};
 
+	virtual void SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode)
+	{
+		//Implement logic in child Blueprints
+	}
+
 #pragma endregion 
 
 public:
@@ -71,6 +80,8 @@ public:
 #pragma region Functions
 	
 	virtual bool CanStartDialogue() const = 0;
+
+	virtual UMounteaDialogueGraphNode* GetSavedStartingNode() const = 0;
 
 	virtual void PlayParticipantVoice(USoundBase* ParticipantVoice) = 0;
 	virtual void SkipParticipantVoice(USoundBase* ParticipantVoice) = 0;
@@ -93,6 +104,7 @@ public:
 	virtual FDialogueGraphChanged& GetDialogueGraphChangedEventHandle() = 0;
 	virtual FDialogueParticipantStateChanged& GetDialogueParticipantStateChangedEventHandle() = 0;
 	virtual FDialogueParticipantAudioComponentChanged& GetDialogueParticipantAudioComponentChangedEventHandle() = 0;
+	virtual FParticipantStartingNodeSaved& GetParticipantStartingNodeSavedEventHandle() = 0;
 
 #pragma endregion 
 };

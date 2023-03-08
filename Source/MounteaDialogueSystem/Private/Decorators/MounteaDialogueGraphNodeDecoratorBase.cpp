@@ -12,3 +12,18 @@ void UMounteaDialogueGraphNodeDecoratorBase::ExecuteDecorator_Implementation()
 {
 	return;
 }
+
+UMounteaDialogueGraphNode* UMounteaDialogueGraphNodeDecoratorBase::GetOwningNode() const
+{
+	return GetTypedOuter<UMounteaDialogueGraphNode>();
+}
+
+UMounteaDialogueGraph* UMounteaDialogueGraphNodeDecoratorBase::GetOwningGraph() const
+{
+	return GetTypedOuter<UMounteaDialogueGraph>();
+}
+
+UObject* UMounteaDialogueGraphNodeDecoratorBase::GetOwner() const
+{
+	return GetOuter();
+}

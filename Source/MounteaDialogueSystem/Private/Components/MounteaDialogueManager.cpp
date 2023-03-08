@@ -41,7 +41,7 @@ void UMounteaDialogueManager::BeginPlay()
 
 	OnDialogueVoiceStartRequest.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal);
 	OnDialogueVoiceSkipRequest.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal);
-
+	
 	SetDialogueManagerState(GetDefaultDialogueManagerState());
 }
 

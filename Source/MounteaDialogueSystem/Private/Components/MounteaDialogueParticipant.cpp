@@ -98,12 +98,25 @@ void UMounteaDialogueParticipant::SkipParticipantVoice(USoundBase* ParticipantVo
 
 bool UMounteaDialogueParticipant::CanStartDialogue() const
 {
-	return
-	Execute_CanStartDialogueEvent(this) &&
-	DialogueGraph != nullptr &&
-	DialogueGraph->CanStartDialogueGraph() &&
-	DialogueGraph->GetStartNode() != nullptr &&
-	DialogueGraph->GetStartNode()->GetChildrenNodes().Num() > 0;
+	if (DialogueGraph == nullptr) return false;
+	if (DialogueGraph->CanStartDialogueGraph() == false) return false;
+
+	const UMounteaDialogueGraphNode* NodeToStart = GetSavedStartingNode();
+	if (!NodeToStart || NodeToStart->CanStartNode() == false)
+	{
+		NodeToStart = DialogueGraph->GetStartNode();
+	}
+
+	if (NodeToStart == nullptr) return false;
+	
+	return NodeToStart->GetChildrenNodes().Num() > 0;
+}
+
+void UMounteaDialogueParticipant::SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode)
+{
+	StartingNode = NewStartingNode;
+
+	OnStartingNodeSaved.Broadcast(StartingNode);
 }
 
 void UMounteaDialogueParticipant::SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph)
