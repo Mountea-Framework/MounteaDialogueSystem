@@ -4,6 +4,19 @@ Current Version: 0.0.0.7
 
 All notable changes to this project will be documented in this file.
 
+**Version 0.0.0.8**
+### Added
+> - Added: Playing audio for Participants
+> - Added: Switching Active Participant from Player to NPC
+> - Added: Decorators World Context and Initialization
+
+### Fixed
+> - Fixed: Mispelled function names
+
+### Changed
+> - Changed: Icons now have shadows
+> - Changed: Example Dialogue Tree
+
 **Version 0.0.0.7**
 ### Added
 > - Added: Node Decorators from array now can be deleted
