@@ -1,4 +1,4 @@
-Current Version: 0.0.0.7
+Current Version: 0.0.0.8
 
 # Changelog
 
@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 > - Added: Playing audio for Participants
 > - Added: Switching Active Participant from Player to NPC
 > - Added: Decorators World Context and Initialization
+> - Added: Example Decorator
 
 ### Fixed
 > - Fixed: Mispelled function names
