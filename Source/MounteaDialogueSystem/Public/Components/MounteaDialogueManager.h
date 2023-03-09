@@ -195,6 +195,42 @@ protected:
 
 #pragma region InterfaceImplementations
 
+public:
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	virtual AActor* GetOwningActor_Implementation() const override;
+
+	/**
+	 * Returns Dialogue Widget Class if any exists already.
+	 * ❗If none specified per Manager will return Class from Project Settings❗
+	 * ❗Could return null❗
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
+	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const override;
+	/**
+	 * Returns Dialogue Widget Pointer if any exists already.
+	 * ❗Could return null❗
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
+	virtual UUserWidget* GetDialogueUIPtr() const override
+	{ return DialogueWidgetPtr; };
+
+	/**
+	 * Returns Dialogue Context if any exists.
+	 * ❗Could return null❗
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="Context, Get"))
+	virtual UMounteaDialogueContext* GetDialogueContext() const override
+	{ return DialogueContext; };
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="Context, Get"))
+	virtual EDialogueManagerState GetDialogueManagerState() const override
+	{ return  ManagerState; };
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="Context, Get"))
+	virtual EDialogueManagerState GetDefaultDialogueManagerState() const override
+	{ return DefaultManagerState; };
+	
 protected:
 
 	virtual bool EvaluateNodeDecorators() override;
@@ -208,42 +244,15 @@ protected:
 
 	virtual bool InvokeDialogueUI(FString& Message) override;
 	
-	/**
-	 * Returns Dialogue Widget Class if any exists already.
-	 * ❗If none specified per Manager will return Class from Project Settings❗
-	 * ❗Could return null❗
-	 */
-	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const override;
 	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) override;
-
-	/**
-	 * Returns Dialogue Widget Pointer if any exists already.
-	 * ❗Could return null❗
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
-	virtual UUserWidget* GetDialogueUIPtr() const override
-	{ return DialogueWidgetPtr; };
 	virtual void SetDialogueUIPtr(UUserWidget* NewDialogueWidgetPtr) override;
 
 	UFUNCTION() virtual void StartExecuteDialogueRow() override;
 	UFUNCTION() virtual void FinishedExecuteDialogueRow() override;
-
-	/**
-	 * Returns Dialogue Context if any exists.
-	 * ❗Could return null❗
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="Context, Get"))
-	virtual UMounteaDialogueContext* GetDialogueContext() const override
-	{ return DialogueContext; };
+	
 	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) override;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="Context, Get"))
-	virtual EDialogueManagerState GetDialogueManagerState() const override
-	{ return  ManagerState; };
+	
 	virtual void SetDialogueManagerState(const EDialogueManagerState NewState) override;
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="Context, Get"))
-	virtual EDialogueManagerState GetDefaultDialogueManagerState() const override
-	{ return DefaultManagerState; };
 	virtual void SetDefaultDialogueManagerState(const EDialogueManagerState NewState) override;
 	
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() override

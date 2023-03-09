@@ -147,3 +147,8 @@ void UMounteaDialogueParticipant::SetAudioComponent(UAudioComponent* NewAudioCom
 
 	OnAudioComponentChanged.Broadcast(AudioComponent);
 }
+
+AActor* UMounteaDialogueParticipant::GetOwningActor_Implementation() const
+{
+	return GetOwner();
+}

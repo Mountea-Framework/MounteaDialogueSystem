@@ -372,9 +372,18 @@ void UMounteaDialogueManager::ProcessNode()
 		return;
 	}
 
+	if (DialogueContext->ActiveNode->GetClass()->IsChildOf(UMounteaDialogueGraphNode_LeadNode::StaticClass()))
+	{
+		DialogueContext->UpdateActiveDialogueParticipant(DialogueContext->GetDialogueParticipant());
+	}
+	else
+	{
+		DialogueContext->UpdateActiveDialogueParticipant(DialogueContext->GetDialoguePlayerParticipant());
+	}
+	
 	UMounteaDialogueSystemBFC::ExecuteDecorators(this, DialogueContext);
 
-	if (UMounteaDialogueGraphNode_AutoCompleteNode* AutoCompleteNode = Cast<UMounteaDialogueGraphNode_AutoCompleteNode>(DialogueContext->ActiveNode) )
+	if (DialogueContext->ActiveNode->GetClass()->IsChildOf(UMounteaDialogueGraphNode_AutoCompleteNode::StaticClass()))
 	{
 		ProcessNode_Complete();
 		return;
@@ -394,15 +403,6 @@ void UMounteaDialogueManager::ProcessNode_Dialogue()
 	{
 		OnDialogueFailed.Broadcast(TEXT("Cannot find World!"));
 		return;
-	}
-
-	if (DialogueContext->ActiveNode->GetClass()->IsChildOf(UMounteaDialogueGraphNode_LeadNode::StaticClass()))
-	{
-		DialogueContext->UpdateActiveDialogueParticipant(DialogueContext->GetDialogueParticipant());
-	}
-	else
-	{
-		DialogueContext->UpdateActiveDialogueParticipant(DialogueContext->GetDialoguePlayerParticipant());
 	}
 	
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
@@ -496,6 +496,11 @@ bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
 	WidgetInterface->Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CreateDialogueWidget);
 	
 	return true;
+}
+
+AActor* UMounteaDialogueManager::GetOwningActor_Implementation() const
+{
+	return GetOwner();
 }
 
 TSubclassOf<UUserWidget> UMounteaDialogueManager::GetDialogueWidgetClass() const

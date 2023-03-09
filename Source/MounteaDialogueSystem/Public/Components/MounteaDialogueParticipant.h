@@ -184,6 +184,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SetAudioComponent(UAudioComponent* NewAudioComponent) override;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	virtual AActor* GetOwningActor_Implementation() const override;
+
 #pragma region EventHandleGetters
 	
 	virtual FDialogueGraphChanged& GetDialogueGraphChangedEventHandle() override

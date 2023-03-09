@@ -49,7 +49,7 @@ public:
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="select, chosen, option"))
 	void CallDialogueNodeSelected(const FGuid& NodeGUID);
-
+	
 	virtual bool EvaluateNodeDecorators() = 0;
 	virtual void ExecuteNodeDecorators() = 0;
 	
@@ -77,6 +77,13 @@ public:
 	{
 		return GetDialogueContext();
 	}
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	AActor* GetOwningActor() const;
+	virtual AActor* GetOwningActor_Implementation() const
+	{
+		return nullptr;
+	};
 	
 	virtual UMounteaDialogueContext* GetDialogueContext() const = 0;
 	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) = 0;

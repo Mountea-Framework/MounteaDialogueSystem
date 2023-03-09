@@ -46,6 +46,9 @@ public:
 	bool CanStartDialogueEvent() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	AActor* GetOwningActor() const;
+		
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	void SaveStartingNode(UMounteaDialogueGraphNode* NewStartingNode);
 
 #pragma endregion
@@ -72,6 +75,11 @@ protected:
 	{
 		//Implement logic in child Blueprints
 	}
+
+	virtual AActor* GetOwningActor_Implementation() const
+	{
+		return nullptr;
+	};
 
 #pragma endregion 
 
