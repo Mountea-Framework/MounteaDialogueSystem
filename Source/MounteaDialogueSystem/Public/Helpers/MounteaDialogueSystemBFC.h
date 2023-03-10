@@ -19,6 +19,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/AudioComponent.h"
+#include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 #include "Sound/SoundBase.h"
 
 #include "MounteaDialogueSystemBFC.generated.h"
@@ -230,19 +231,25 @@ public:
 
 		if (Graph->CanStartDialogueGraph() == false) return false;
 
-		const UMounteaDialogueGraphNode* NodeToStart = DialogueParticipant->GetSavedStartingNode();
+		UMounteaDialogueGraphNode* NodeToStart = DialogueParticipant->GetSavedStartingNode();
 		if (!NodeToStart || NodeToStart->CanStartNode() == false)
 		{
 			NodeToStart = Graph->GetStartNode();
 		}
 		
-		TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
+		if (NodeToStart == nullptr) return false;
+		
+		if (NodeToStart->GetClass()->IsChildOf(UMounteaDialogueGraphNode_StartNode::StaticClass()))
+		{
+			if (GetFirstChildNode(NodeToStart) == nullptr) return false;
 
-		if (StartNode_Children.Num() == 0) return false;
-		if (StartNode_Children[0] == nullptr) return false;
+			NodeToStart = GetFirstChildNode(NodeToStart);
+		}
+
+		TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
 		
 		UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
-		Context->SetDialogueContext(DialogueParticipant, StartNode_Children[0], GetAllowedChildNodes(StartNode_Children[0]));
+		Context->SetDialogueContext(DialogueParticipant, NodeToStart, StartNode_Children);
 		Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(WorldContextObject));
 		
 		return  InitializeDialogueWithContext(WorldContextObject, Initiator, DialogueParticipant, Context);
@@ -328,7 +335,7 @@ public:
 
 		if (ParentNode->GetChildrenNodes().IsValidIndex(0))
 		{
-			return ParentNode->GetChildrenNodes()[0];
+			return ParentNode->GetChildrenNodes()[0]->CanStartNode() ? ParentNode->GetChildrenNodes()[0] : nullptr;
 		}
 
 		return nullptr;
