@@ -56,8 +56,6 @@ public:
 	virtual void StartDialogue() = 0;
 	virtual void CloseDialogue() = 0;
 	virtual void ProcessNode() = 0;
-	virtual void ProcessNode_Complete() = 0;
-	virtual void ProcessNode_Dialogue() = 0;
 
 	virtual bool InvokeDialogueUI(FString& Message) = 0;
 	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const = 0;

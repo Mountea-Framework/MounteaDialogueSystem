@@ -239,8 +239,7 @@ protected:
 	virtual void StartDialogue() override;
 	virtual void CloseDialogue() override;
 	virtual void ProcessNode() override;
-	virtual void ProcessNode_Complete() override;
-	virtual void ProcessNode_Dialogue() override;
+	virtual void ProcessNode_Dialogue();
 
 	virtual bool InvokeDialogueUI(FString& Message) override;
 	

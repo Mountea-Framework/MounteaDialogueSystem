@@ -196,7 +196,8 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 	}
 	
 	const bool bAutoActive = AllowedChildrenDialogueNodes[0]->DoesAutoStart();
-
+	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
+	
 	if (bAutoActive)
 	{
 		const auto NewActiveNode = AllowedChildrenDialogueNodes[0];
@@ -207,7 +208,6 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 		}
 		
 		DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, NewActiveNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(NewActiveNode));
-		DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 		
 		OnDialogueNodeSelected.Broadcast(DialogueContext);
 		return;
@@ -381,20 +381,7 @@ void UMounteaDialogueManager::ProcessNode()
 		DialogueContext->UpdateActiveDialogueParticipant(DialogueContext->GetDialoguePlayerParticipant());
 	}
 	
-	UMounteaDialogueSystemBFC::ExecuteDecorators(this, DialogueContext);
-
-	if (DialogueContext->ActiveNode->GetClass()->IsChildOf(UMounteaDialogueGraphNode_AutoCompleteNode::StaticClass()))
-	{
-		ProcessNode_Complete();
-		return;
-	}
-	
 	ProcessNode_Dialogue();
-}
-
-void UMounteaDialogueManager::ProcessNode_Complete()
-{
-	OnDialogueClosed.Broadcast(DialogueContext);
 }
 
 void UMounteaDialogueManager::ProcessNode_Dialogue()
@@ -411,8 +398,10 @@ void UMounteaDialogueManager::ProcessNode_Dialogue()
 	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.DialogueRowData.Array().IsValidIndex(DialogueContext->GetActiveDialogueRowDataIndex()))
 	{
 		DialogueContext->UpdateActiveDialogueRow(DialogueRow);
-		DialogueContext->UpdateActiveDialogueRowDataIndex(0);
+		DialogueContext->UpdateActiveDialogueRowDataIndex(DialogueContext->ActiveDialogueRowDataIndex);
 		OnDialogueContextUpdated.Broadcast(DialogueContext);
+		
+		UMounteaDialogueSystemBFC::ExecuteDecorators(this, DialogueContext);
 		
 		StartExecuteDialogueRow();
 	}
