@@ -16,12 +16,17 @@
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
+
 #include "Interfaces/IHttpResponse.h"
 #include "Interfaces/IPluginManager.h"
 #include "Popups/MDSPopup.h"
 #include "Serialization/JsonReader.h"
-#include "Serialization/JsonSerializer.h"
 #include "Styling/SlateStyleRegistry.h"
+
+#include "ToolMenus.h"
+#include "HelpButton/MDSCommands.h"
+#include "HelpButton/MDSHelpStyle.h"
+#include "Interfaces/IMainFrameModule.h"
 
 const FString ChangelogURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/4.26_dev/CHANGELOG.md");
 
@@ -180,7 +185,36 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		}
 
 		PropertyModule.NotifyCustomizationModuleChanged();
-	} 
+	}
+
+	// Register Help Button
+	{
+		FMDSHelpStyle::Initialize();
+		FMDSHelpStyle::ReloadTextures();
+
+		FMDSCommands::Register();
+
+		PluginCommands = MakeShareable(new FUICommandList);
+
+		PluginCommands->MapAction
+		(
+			FMDSCommands::Get().PluginAction,
+			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::PluginButtonClicked), 
+			FCanExecuteAction()
+		);
+		/*
+		PluginCommands->MapAction
+		(
+			FMDSCommands::Get().WikiAction,
+			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::PluginButtonClicked), 
+			FCanExecuteAction()
+		);
+		*/
+		IMainFrameModule& mainFrame = FModuleManager::Get().LoadModuleChecked<IMainFrameModule>("MainFrame");
+		mainFrame.GetMainFrameCommandBindings()->Append(PluginCommands.ToSharedRef());
+
+		UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FMounteaDialogueSystemEditor::RegisterMenus));
+	}
 	
 	EditorLOG_WARNING(TEXT("MounteaDialogueSystemEditor module has been loaded"));
 }
@@ -227,6 +261,17 @@ void FMounteaDialogueSystemEditor::ShutdownModule()
 	{
 		FMounteaDialogueGraphEditorStyle::Shutdown();
 	}
+
+	// Help Button Cleanup
+	{
+		UToolMenus::UnRegisterStartupCallback(this);
+
+		UToolMenus::UnregisterOwner(this);
+
+		FMDSHelpStyle::Shutdown();
+
+		FMDSCommands::Unregister();
+	}
 		
 	EditorLOG_WARNING(TEXT("MounteaDialogueSystemEditor module has been unloaded"));
 }
@@ -267,13 +312,76 @@ void FMounteaDialogueSystemEditor::SendHTTPGet()
 	Request->ProcessRequest();
 }
 
-void FMounteaDialogueSystemEditor::HandleNewDialogueGraphCreated(UBlueprint* Blueprint)
+void FMounteaDialogueSystemEditor::PluginButtonClicked()
 {
-	if (!Blueprint)
+	const FString URL = "https://discord.gg/2vXWEEN";
+
+	if (!URL.IsEmpty())
 	{
-		return;
+		FPlatformProcess::LaunchURL(*URL, nullptr, nullptr);
 	}
-	
+}
+
+void FMounteaDialogueSystemEditor::RegisterMenus()
+{
+	// Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
+	FToolMenuOwnerScoped OwnerScoped(this);
+
+	// Register in Window tab
+	{
+		if (UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Help"))
+		{
+			if (Menu->ContainsSection("MounteaFramework") == false)
+			{
+				FToolMenuSection& Section = Menu->FindOrAddSection("Mountea Framework");
+				
+				Section.InsertPosition.Position = EToolMenuInsertType::First;
+				Section.Label = FText::FromString(TEXT("Mountea Framework"));
+				
+				FToolMenuEntry SupportEntry = Section.AddMenuEntryWithCommandList
+				(
+					FMDSCommands::Get().PluginAction,
+					PluginCommands,
+					NSLOCTEXT("MounteaSupport", "TabTitle", "Mountea Support"),
+					NSLOCTEXT("MounteaSupport", "TooltipText", "Opens Mountea Framework Support channel"),
+					FSlateIcon(FMDSHelpStyle::GetStyleSetName(), "MDSHelpStyleSet.Toolbar.HelpIcon.small")
+				);
+				SupportEntry.Name = FName("MounteaFrameworkSupport");
+				
+				/*
+				FToolMenuEntry WikiEntry = Section.AddMenuEntryWithCommandList
+				(
+					FMDSCommands::Get().WikiAction,
+					PluginCommands,
+					NSLOCTEXT("MounteaDialogueWiki", "TabTitle", "Dialogue Wiki"),
+					NSLOCTEXT("MounteaDialogueWiki", "TooltipText", "Opens Mountea Dialogue System Wiki page"),
+					FSlateIcon(FMDSHelpStyle::GetStyleSetName(), "MDSHelpStyleSet.Toolbar.HelpIcon.small")
+				);
+				WikiEntry.Name = FName("MounteaDialogueWiki");
+				*/
+			}
+		}
+	}
+
+	// Register in Level Editor Toolbar
+	{
+		if (UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar"))
+		{
+			if (ToolbarMenu->ContainsSection("MounteaFramework") == false)
+			{
+				FToolMenuSection& Section = ToolbarMenu->FindOrAddSection("Mountea Framework");
+				Section.Label = FText::FromString(TEXT("Mountea Framework"));
+			
+				FToolMenuEntry& Entry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FMDSCommands::Get().PluginAction));
+				Entry.SetCommandList(PluginCommands);
+			
+				Entry.InsertPosition.Position = EToolMenuInsertType::First;
+				Entry.Icon = FSlateIcon(FMDSHelpStyle::GetStyleSetName(), "MDSHelpStyleSet.Toolbar.HelpIcon");
+				Entry.Name = FName("MounteaFrameworkSupport");
+			}
+		}
+
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

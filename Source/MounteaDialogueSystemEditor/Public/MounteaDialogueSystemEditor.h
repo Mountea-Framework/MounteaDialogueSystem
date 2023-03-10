@@ -46,16 +46,14 @@ private:
 	void RegisterAssetTypeAction(IAssetTools& AssetTools, TSharedRef<IAssetTypeActions> Action);
 	
 	void OnGetResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
-	UFUNCTION()
-	void SendHTTPGet();
+	UFUNCTION() void SendHTTPGet();
 
-protected:
-
-	// Handle Blueprint Events
-	void HandleNewDialogueGraphCreated(UBlueprint* Blueprint);
+	void PluginButtonClicked();
+	void RegisterMenus();
 
 private:
 	
+	TSharedPtr<class FUICommandList> PluginCommands;
 	TSharedPtr<FSlateStyleSet> DialogueTreeSet;
 	TSharedPtr<class FMounteaDialogueGraphAssetAction> MounteaDialogueGraphAssetActions;
 	TSharedPtr<class FMounteaDialogueAdditionalDataAssetAction> MounteaDialogueAdditionalDataAssetActions;
