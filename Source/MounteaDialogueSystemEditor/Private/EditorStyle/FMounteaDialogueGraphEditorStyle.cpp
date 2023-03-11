@@ -20,7 +20,7 @@ void FMounteaDialogueGraphEditorStyle::Initialize()
 	const FVector2D Icon16x16(16.0f, 16.0f);
 	const FVector2D Icon40x40(40.0f, 40.0f);
 	const FVector2D Icon64x64(64.0f, 64.0f);
-	const FVector2D Icon128x128(128.f, 128.f);
+	const FVector2D Icon512x512(128.f, 128.f);
 
 	if (StyleSet.IsValid() )
 	{
@@ -62,8 +62,8 @@ void FMounteaDialogueGraphEditorStyle::Initialize()
 	StyleSet->Set("MDSStyleSet.Icon.Error", new IMAGE_BRUSH(TEXT("ErroIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Icon.BulletPoint", new IMAGE_BRUSH(TEXT("CircleBox"), Icon16x16));
 	
-	StyleSet->Set("MDSStyleSet.Graph.CornerImage", new IMAGE_BRUSH(TEXT("Icon128"), Icon128x128));
-
+	StyleSet->Set("MDSStyleSet.Graph.CornerImage", new IMAGE_BRUSH(TEXT("Icon128"), Icon512x512));
+	
 	StyleSet->Set("MDSStyleSet.Icon.Browse", new IMAGE_BRUSH(TEXT("BrowseIcon"), Icon12x12));
 	StyleSet->Set("MDSStyleSet.Icon.Edit", new IMAGE_BRUSH(TEXT("EditIcon"), Icon12x12));
 	
