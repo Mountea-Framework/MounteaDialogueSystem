@@ -6,6 +6,7 @@
 #include "IPropertyUtilities.h"
 #include "PropertyCustomizationHelpers.h"
 #include "SourceCodeNavigation.h"
+#include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 //#include "Decorators/MounteaDialogueGraphNodeDecoratorBase.h"
 //#include "Engine/Selection.h"
 //#include "Helpers/MounteaDialogueGraphEditorHelpers.h"
@@ -89,7 +90,7 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 		.OnClicked(this, &Self::OnBrowseClicked)
 		[
 			SNew(SImage)
-			.Image(FEditorStyle::GetBrush("PropertyWindow.Button_Browse"))
+			.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.Browse"))
 			.ColorAndOpacity(FSlateColor::UseForeground())
 		]
 	];
@@ -109,7 +110,7 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 		.OnClicked(this, &Self::OnOpenClicked)
 		[
 			SNew(SImage)
-			 .Image(FEditorStyle::GetBrush("PropertyWindow.Button_Edit"))
+			.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.Edit"))
 			 .ColorAndOpacity( FSlateColor::UseForeground() )
 		]
 	];
