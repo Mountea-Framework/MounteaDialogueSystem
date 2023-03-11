@@ -220,7 +220,7 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 			int32 ClassAppearance = 1;
 			for (const auto Itr2 : UsedNodeDecorators)
 			{
-				if (Itr != Itr2 && Itr->StaticClass() == Itr2->StaticClass())
+				if (Itr != Itr2 && Itr->GetClass() == Itr2->GetClass())
 				{
 					auto A = Itr->GetClass()->GetName();
 					ClassAppearance++;
