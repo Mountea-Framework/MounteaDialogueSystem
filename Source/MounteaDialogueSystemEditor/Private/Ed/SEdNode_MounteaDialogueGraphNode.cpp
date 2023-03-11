@@ -346,7 +346,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 															  .AutoHeight()
 															[
 																SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-																.Style(FEditorStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
+																.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
 																.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
 																.OnVerifyTextChanged(
 																this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
@@ -1047,7 +1047,7 @@ EVisibility SEdNode_MounteaDialogueGraphNode::GetDragOverMarkerVisibility() cons
 
 const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetNameIcon() const
 {
-	return FEditorStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Icon"));
+	return FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Icon"));
 }
 
 const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetInheritsImageBrush() const

@@ -24,14 +24,14 @@ public:
 
 protected:
 
-	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(RequiredAssetDataTags="RowStructure=DialogueRow", DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(RequiredAssetDataTags="/Script/MounteaDialogueSystem.DialogueRow", DisplayThumbnail=false, NoResetToDefault))
 	UDataTable*	DataTable;
 
 	/** Name of row in the table that we want */
 	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
 	FName RowName;
 
-	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(UIMin=0, ClampMin=0, NoResetToDefault, EditCondition="DataTableHandle.DataTable!=nullptr"))
+	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(UIMin=0, ClampMin=0, NoResetToDefault, EditCondition="DataTable!=nullptr"))
 	int32 RowIndex;
 
 private:

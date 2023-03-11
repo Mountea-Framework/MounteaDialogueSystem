@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "UObject/Object.h"
+#include "Engine/Level.h"
 #include "MounteaDialogueDecoratorBase.generated.h"
 
 class UMounteaDialogueGraph;

@@ -35,7 +35,7 @@ But let's keep it short, here are the cool new features (and bugfixes) of this v
 		const FString InvalidChangelog =FString(R"(
 		
 We are sorry, but there has been an error trying to access online Changelog. We are sorry for this.
-The changelist is available publicly <a id="browser" href="https://github.com/Mountea-Framework/MounteaDialogueSystem/blob/5.0/CHANGELOG.md">on our GitHub</>.
+The changelist is available publicly <a id="browser" href="https://github.com/Mountea-Framework/MounteaDialogueSystem/blob/5.1/CHANGELOG.md">on our GitHub</>.
 		)");
 
 
@@ -140,15 +140,15 @@ void MDSPopup::Open(const FString& Changelog)
 		[
 			SNew(SBorder)
 			.Padding(10)
-			.BorderImage(FEditorStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
 			[
 				SNew(SScrollBox)
 				+ SScrollBox::Slot()
 				[
 					SNew(SRichTextBlock)
 					.Text(FText::FromString(DisplayText))
-					.TextStyle(FEditorStyle::Get(), "NormalText")
-					.DecoratorStyleSet(&FEditorStyle::Get())
+					.TextStyle(FAppStyle::Get(), "NormalText")
+					.DecoratorStyleSet(&FAppStyle::Get())
 					.AutoWrapText(true)
 					+ SRichTextBlock::HyperlinkDecorator(TEXT("browser"), FSlateHyperlinkRun::FOnClick::CreateStatic(&OnBrowserLinkClicked))
 				]

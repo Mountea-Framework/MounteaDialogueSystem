@@ -62,8 +62,8 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 		[
 			SNew(SRichTextBlock)
 			.Text(Itr)
-			.TextStyle(FEditorStyle::Get(), "NormalText")
-			.DecoratorStyleSet(&FEditorStyle::Get())
+			.TextStyle(FAppStyle::Get(), "NormalText")
+			.DecoratorStyleSet(&FAppStyle::Get())
 			.AutoWrapText(true)
 		];
 	}
@@ -74,7 +74,7 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 		[
 			SNew(STextBlock)
 			.Text(FText::FromString("There are no issues with your Graph. You can close this window."))
-			.TextStyle(FEditorStyle::Get(), "NormalText")
+			.TextStyle(FAppStyle::Get(), "NormalText")
 			.AutoWrapText(true)
 		];
 	}
@@ -104,7 +104,7 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 		[
 			SNew(SBorder)
 			.Padding(10)
-			.BorderImage(FEditorStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
 			[
 				ListOfMessages
 			]

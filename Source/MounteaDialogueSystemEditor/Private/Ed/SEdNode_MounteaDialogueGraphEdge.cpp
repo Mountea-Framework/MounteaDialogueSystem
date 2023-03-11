@@ -70,7 +70,7 @@ void SEdNode_MounteaDialogueGraphEdge::UpdateGraphNode()
 			+ SOverlay::Slot()
 			[
 				SNew(SImage)
-				.Image(FEditorStyle::GetBrush("GraphEditor.RefPinIcon"))
+				.Image(FAppStyle::GetBrush("GraphEditor.RefPinIcon"))
 				.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphEdge::GetEdgeColor)
 			]
 		];
