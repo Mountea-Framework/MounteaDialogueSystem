@@ -35,7 +35,7 @@ But let's keep it short, here are the cool new features (and bugfixes) of this v
 		const FString InvalidChangelog =FString(R"(
 		
 We are sorry, but there has been an error trying to access online Changelog. We are sorry for this.
-The changelist is available publicly <a id="browser" href="https://github.com/Mountea-Framework/MounteaDialogueSystem/blob/4.26_dev/CHANGELOG.md">on our GitHub</>.
+The changelist is available publicly <a id="browser" href="https://github.com/Mountea-Framework/MounteaDialogueSystem/blob/4.26/CHANGELOG.md">on our GitHub</>.
 		)");
 
 
