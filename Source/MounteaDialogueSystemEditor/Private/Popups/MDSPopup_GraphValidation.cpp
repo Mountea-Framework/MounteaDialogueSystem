@@ -44,7 +44,7 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 				.SupportsMaximize(false)
 				.SupportsMinimize(false)
 				.SizingRule(ESizingRule::FixedSize)
-				.ClientSize(FVector2D(550, 700))
+				.ClientSize(FVector2D(650, 750))
 				.Title(FText::FromString("Mountea Dialogue System - Graph Validation"))
 				.IsTopmostWindow(true)
 	[

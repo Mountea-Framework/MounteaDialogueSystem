@@ -3,22 +3,22 @@
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Kismet2/SClassPickerDialog.h"
-#include "Toolkits/AssetEditorManager.h"
+
 
 bool FMounteaDialogueGraphEditorUtilities::PickChildrenOfClass(const FText& TitleText, UClass*& OutChosenClass, UClass* Class)
 {
 	// Create filter
-	TSharedPtr<FMounteaDialogueClassViewerFilter> Filter = MakeShareable(new FMounteaDialogueClassViewerFilter);
+	const TSharedPtr<FMounteaDialogueClassViewerFilter> Filter = MakeShareable(new FMounteaDialogueClassViewerFilter);
 	Filter->AllowedChildrenOfClasses.Add(Class);
 
 	// Fill in options
 	FClassViewerInitializationOptions Options;
 	Options.Mode = EClassViewerMode::ClassPicker;
-	Options.ClassFilter = Filter;
 	Options.bShowUnloadedBlueprints = true;
 	Options.bExpandRootNodes = true;
 	Options.DisplayMode = EClassViewerDisplayMode::TreeView;
 	Options.NameTypeToDisplay = EClassViewerNameTypeToDisplay::Dynamic;
+	Options.ClassFilters.Add(Filter.ToSharedRef());
 	
 	return SClassPickerDialog::PickClass(TitleText, Options, OutChosenClass, Class);
 }

@@ -101,7 +101,7 @@ void SEdNode_MounteaDialogueGraphNode::Construct(const FArguments& InArgs, UEdNo
 	GraphNode = InNode;
 	UpdateGraphNode();
 	InNode->SEdNode = this;
-	bIsHovered = false;
+	//bIsHovered = false;
 	
 	GraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>();
 
@@ -113,7 +113,7 @@ void SEdNode_MounteaDialogueGraphNode::Construct(const FArguments& InArgs, UEdNo
 
 void SEdNode_MounteaDialogueGraphNode::OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
-	bIsHovered = true;
+	//bIsHovered = true;
 
 	SetToolTipText(GetTooltipText());
 	OnVisualizeTooltip(GetToolTip()->AsWidget());
@@ -123,7 +123,7 @@ void SEdNode_MounteaDialogueGraphNode::OnMouseEnter(const FGeometry& MyGeometry,
 
 void SEdNode_MounteaDialogueGraphNode::OnMouseLeave(const FPointerEvent& MouseEvent)
 {
-	bIsHovered = false;
+	//bIsHovered = false;
 
 	SetToolTipText(FText::GetEmpty());
 	OnToolTipClosing();

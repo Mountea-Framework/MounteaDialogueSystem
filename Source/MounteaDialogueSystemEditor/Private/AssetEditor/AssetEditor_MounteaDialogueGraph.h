@@ -7,6 +7,8 @@ class UMounteaDialogueGraphEditorSettings;
 class FGGAssetEditorToolbar;
 class FAssetEditorToolbarMounteaDialogueGraph;
 
+static const FName ToolbarTabId("TabID00");
+
 class FAssetEditor_MounteaDialogueGraph : public FAssetEditorToolkit, public FNotifyHook, public FGCObject
 {
 
@@ -107,7 +109,7 @@ private:
 
 	void OnFinishedChangingProperties(const FPropertyChangedEvent& PropertyChangedEvent);
 
-	void OnPackageSaved(const FString& PackageFileName, UObject* Outer);
+	void OnPackageSaved(const FString& PackageFileName, UPackage* Package, FObjectPostSaveContext ObjectSaveContext);
 
 #pragma endregion 
 

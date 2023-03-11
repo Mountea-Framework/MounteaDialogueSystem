@@ -128,9 +128,9 @@ void UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal(UMounteaDialo
 
 	if (DialogueWidgetPtr)
 	{
-		TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;
+		TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface = DialogueWidgetPtr;
 		WidgetInterface.SetObject(DialogueWidgetPtr);
-		WidgetInterface.SetInterface(DialogueWidgetPtr);
+		WidgetInterface.SetInterface(Cast<IMounteaDialogueWBPInterface>(DialogueWidgetPtr));
 		WidgetInterface->Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::RemoveDialogueOptions);
 	}
 	else
@@ -214,9 +214,9 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 	}
 	else
 	{
-		TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;
+		TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface = DialogueWidgetPtr;
 		WidgetInterface.SetObject(DialogueWidgetPtr);
-		WidgetInterface.SetInterface(DialogueWidgetPtr);
+		WidgetInterface.SetInterface(Cast<IMounteaDialogueWBPInterface>(DialogueWidgetPtr));
 		WidgetInterface->Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::AddDialogueOptions);
 
 		return;
@@ -322,9 +322,9 @@ void UMounteaDialogueManager::CloseDialogue()
 {
 	if (DialogueWidgetPtr)
 	{
-		TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;
+		TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface = DialogueWidgetPtr;
 		WidgetInterface.SetObject(DialogueWidgetPtr);
-		WidgetInterface.SetInterface(DialogueWidgetPtr);
+		WidgetInterface.SetInterface(Cast<IMounteaDialogueWBPInterface>(DialogueWidgetPtr));
 		WidgetInterface->Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CloseDialogueWidget);	
 	}
 
@@ -472,9 +472,9 @@ bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
 	PlayerController->SetShowMouseCursor(true);
 	DialogueWidgetPtr->bStopAction = true;
 	
-	TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;
+	TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface = DialogueWidgetPtr;
 	WidgetInterface.SetObject(DialogueWidgetPtr);
-	WidgetInterface.SetInterface(DialogueWidgetPtr);
+	WidgetInterface.SetInterface(Cast<IMounteaDialogueWBPInterface>(DialogueWidgetPtr));
 
 	if (WidgetInterface.GetInterface() == nullptr)
 	{
@@ -550,9 +550,9 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 	{
 		if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->SubtitlesAllowed())
 		{
-			TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;
+			TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface = DialogueWidgetPtr;
 			WidgetInterface.SetObject(DialogueWidgetPtr);
-			WidgetInterface.SetInterface(DialogueWidgetPtr);
+			WidgetInterface.SetInterface(Cast<IMounteaDialogueWBPInterface>(DialogueWidgetPtr));
 			WidgetInterface->Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::ShowDialogueRow);
 		}
 	}

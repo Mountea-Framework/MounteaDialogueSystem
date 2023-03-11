@@ -17,7 +17,7 @@
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "GraphScheme/AssetGraphScheme_MounteaDialogueGraph.h"
-#include "Helpers/MounteaDialogueGraphEditorHelpers.h"
+
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemEditorBFC.h"
 #include "Layout/ForceDirectedSolveLayoutStrategy.h"
@@ -25,6 +25,7 @@
 #include "Layout/TreeSolveLayoutStrategy.h"
 #include "Popups/MDSPopup_GraphValidation.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
+#include "UObject/ObjectSaveContext.h"
 
 #define LOCTEXT_NAMESPACE "AssetEditorMounteaDialogueGraph"
 
@@ -47,12 +48,12 @@ FAssetEditor_MounteaDialogueGraph::FAssetEditor_MounteaDialogueGraph()
 {
 	EditingGraph = nullptr;
 	MounteaDialogueGraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>();
-	OnPackageSavedDelegateHandle = UPackage::PackageSavedEvent.AddRaw(this, &FAssetEditor_MounteaDialogueGraph::OnPackageSaved);
+	OnPackageSavedDelegateHandle = UPackage::PackageSavedWithContextEvent.AddRaw(this, &FAssetEditor_MounteaDialogueGraph::OnPackageSaved);
 }
 
 FAssetEditor_MounteaDialogueGraph::~FAssetEditor_MounteaDialogueGraph()
 {
-	UPackage::PackageSavedEvent.Remove(OnPackageSavedDelegateHandle);
+	UPackage::PackageSavedWithContextEvent.Remove(OnPackageSavedDelegateHandle);
 }
 
 void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UMounteaDialogueGraph* Graph)
@@ -78,16 +79,10 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(cons
 	ToolbarBuilder->AddMounteaDialogueGraphToolbar(ToolbarExtender);
 
 	// Layout
-	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("Standalone_MounteaDialogueGraphEditor_LayoutV0.1")
+	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("Standalone_MounteaDialogueGraphEditor_LayoutV0.3")
 		->AddArea
 		(
 			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
-			->Split
-			(
-				FTabManager::NewStack()
-				->SetSizeCoefficient(0.1f)
-				->AddTab(GetToolbarTabId(), ETabState::OpenedTab)->SetHideTabWell(true)
-			)
 			->Split
 			(
 				FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
@@ -228,8 +223,13 @@ void FAssetEditor_MounteaDialogueGraph::CreateInternalWidgets()
 {
 	ViewportWidget = CreateViewportWidget();
 
-	FDetailsViewArgs Args( false, false, true, FDetailsViewArgs::HideNameArea, false );
-	Args.bShowActorLabel = false;
+	FDetailsViewArgs Args; //( false, false, true, FDetailsViewArgs::HideNameArea, false );
+	Args.bUpdatesFromSelection = false;
+	Args.bLockable = false;
+	Args.bAllowSearch = true;
+	Args.NameAreaSettings = FDetailsViewArgs::HideNameArea;
+	Args.bHideSelectionTip = false;
+	Args.bShowObjectLabel = false;
 
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyWidget = PropertyModule.CreateDetailView(Args);
@@ -831,7 +831,7 @@ void FAssetEditor_MounteaDialogueGraph::OnFinishedChangingProperties(const FProp
 	RebuildMounteaDialogueGraph();
 }
 
-void FAssetEditor_MounteaDialogueGraph::OnPackageSaved(const FString& PackageFileName, UObject* Outer)
+void FAssetEditor_MounteaDialogueGraph::OnPackageSaved(const FString& PackageFileName, UPackage* Package, FObjectPostSaveContext ObjectSaveContext)
 {
 	RebuildMounteaDialogueGraph();
 }
@@ -856,7 +856,7 @@ TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Details(const F
 	check(Args.GetTabId() == FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID);
 
 	return SNew(SDockTab)
-		.Icon(FEditorStyle::GetBrush("LevelEditor.Tabs.Details"))
+		//.Icon(FEditorStyle::GetBrush("LevelEditor.Tabs.Details"))
 		.Label(LOCTEXT("Details_Title", "Property"))
 		[
 			PropertyWidget.ToSharedRef()
