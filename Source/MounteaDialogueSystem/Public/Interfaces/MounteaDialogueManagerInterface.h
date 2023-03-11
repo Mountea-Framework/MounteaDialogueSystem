@@ -76,6 +76,13 @@ public:
 		return GetDialogueContext();
 	}
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
+	UUserWidget* GetDialogueWidget();
+	UUserWidget* GetDialogueWidget_Implementation()
+	{
+		return GetDialogueWidget();
+	};
+	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	AActor* GetOwningActor() const;
 	virtual AActor* GetOwningActor_Implementation() const

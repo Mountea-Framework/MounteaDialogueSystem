@@ -17,6 +17,8 @@ namespace MounteaDialogueWidgetCommands
 	const FString HideDialogueRow				(TEXT("HideDialogueRow"));
 	const FString AddDialogueOptions			(TEXT("AddDialogueOptions"));
 	const FString RemoveDialogueOptions	(TEXT("RemoveDialogueOptions"));
+	const FString ShowSkipUI						(TEXT("ShowSkipUI"));
+	const FString HideSkipUI						(TEXT("HideSkipUI"));
 }
 
 /**

@@ -83,6 +83,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	TArray<FMounteaDialogueDecorator> GetGraphDecorators() const;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	TArray<FMounteaDialogueDecorator> GetAllDecorators() const;
+	
 	bool CanStartDialogueGraph() const;
 	
 public:

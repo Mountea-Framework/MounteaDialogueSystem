@@ -3,6 +3,11 @@
 
 #include "Decorators/MounteaDialogueGraphNodeDecoratorBase.h"
 
+bool UMounteaDialogueGraphNodeDecoratorBase::ValidateDecorator_Implementation()
+{
+	return GetOwner() != nullptr && GetOwningWorld() != nullptr;
+}
+
 bool UMounteaDialogueGraphNodeDecoratorBase::EvaluateDecorator_Implementation()
 {
 	return OwningWorld != nullptr;

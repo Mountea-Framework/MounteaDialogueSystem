@@ -70,6 +70,18 @@ public:
 	void CleanupDecorator();
 
 	/**
+	 * Validates the Decorator.
+	 * Called for each Node it is attached to.
+	 * Works as safety measure to avoid calling broken Decorators with invalid references.
+	 *
+	 * False value stops Dialogue whatsoever.
+	 * Validation is called before Context is initialized!
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
+	bool ValidateDecorator();
+	virtual bool ValidateDecorator_Implementation();
+	
+	/**
 	 * Evaluates the Decorator.
 	 * Called for each Node it is attached to.
 	 * Could enhance Node's 'CanStartNode'. Example would be: BP_RequireItem decorator, which would return true if Player has specific Item in inventory. Otherwise it returns false and its Node is not available in Selection of Answers.
@@ -145,6 +157,17 @@ struct FMounteaDialogueDecorator
 	{};
 
 public:
+
+	bool ValidateDecorator() const
+	{
+		if (DecoratorType)
+		{
+			return DecoratorType->ValidateDecorator();
+		}
+		
+		LOG_ERROR(TEXT("[EvaluateDecorator] DecoratorType is null (invalid)!"))
+		return false;
+	};
 
 	bool EvaluateDecorator() const
 	{

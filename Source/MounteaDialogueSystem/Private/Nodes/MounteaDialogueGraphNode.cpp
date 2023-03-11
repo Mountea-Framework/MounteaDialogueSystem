@@ -106,7 +106,7 @@ bool UMounteaDialogueGraphNode::EvaluateDecorators() const
 
 FText UMounteaDialogueGraphNode::GetNodeTooltipText_Implementation() const
 {
-	return FText::Format(LOCTEXT("MounteaDialogueGraphNode_FinalTooltip", "{A}\n\n{B}"), GetDefaultTooltipBody(), NodeTooltipText);
+	return FText::Format(LOCTEXT("MounteaDialogueGraphNode_FinalTooltip", "{0}\n\n{1}"), GetDefaultTooltipBody(), NodeTooltipText);
 }
 
 FLinearColor UMounteaDialogueGraphNode::GetBackgroundColor() const
@@ -278,15 +278,15 @@ FText UMounteaDialogueGraphNode::GetDefaultTooltipBody() const
 	//For some reason this prints out warning that it cannot format Int to Text for some reason
 	
 	const FText InheritsValue = bInheritGraphDecorators ? LOCTEXT("True","Yes") : LOCTEXT("False","No");
-	const FText Inherits = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_InheritsTooltip", "Inherits Graph Decorators: {X}"), InheritsValue);
+	const FText Inherits = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_InheritsTooltip", "Inherits Graph Decorators: {0}"), InheritsValue);
 
 	FText ImplementsNumber;
 	if (NodeDecorators.Num() == 0) ImplementsNumber = LOCTEXT("None","-");
 	else ImplementsNumber = FText::FromString(FString::FromInt(NodeDecorators.Num()));
 	
-	const FText Implements = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_ImplementsTooltip", "Implements Decorators: {A}"), ImplementsNumber);
+	const FText Implements = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_ImplementsTooltip", "Implements Decorators: {0}"), ImplementsNumber);
 	
-	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{NodeTitle}\n\n{Inherits}\n{Implements}"), InternalName,  Inherits, Implements);
+	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0}\n\n{1}\n{2}"), InternalName,  Inherits, Implements);
 }
 
 #endif

@@ -67,17 +67,37 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraph::GetGraphDecorators() co
 	return Return;
 }
 
+TArray<FMounteaDialogueDecorator> UMounteaDialogueGraph::GetAllDecorators() const
+{
+	TArray<FMounteaDialogueDecorator> TempReturn;
+	TArray<FMounteaDialogueDecorator> Return;
+
+	for (const auto Itr : AllNodes)
+	{
+		if (Itr && Itr->GetNodeDecorators().Num() > 0)
+		{
+			TempReturn.Append(Itr->NodeDecorators);
+		}
+	}
+
+	TempReturn.Append(GetGraphDecorators());
+
+	return TempReturn;
+}
+
 bool UMounteaDialogueGraph::CanStartDialogueGraph() const
 {
 	bool bSatisfied = true;
-	if (GetGraphDecorators().Num() == 0)
+	auto Decorators = GetAllDecorators();
+	
+	if (Decorators.Num() == 0)
 	{
 		return bSatisfied;
 	}
 
-	for (auto Itr : GetGraphDecorators())
+	for (auto Itr : Decorators)
 	{
-		if (Itr.EvaluateDecorator() == false) bSatisfied = false;
+		if (Itr.ValidateDecorator() == false) bSatisfied = false;
 	}
 	
 	return bSatisfied;

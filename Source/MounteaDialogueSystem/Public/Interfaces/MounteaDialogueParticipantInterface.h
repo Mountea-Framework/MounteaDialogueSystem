@@ -59,16 +59,7 @@ protected:
 
 	bool CanStartDialogueEvent_Implementation() const
 	{
-		switch (GetParticipantState())
-		{
-			case EDialogueParticipantState::EDPS_Active:
-			case EDialogueParticipantState::EDPS_Disabled:
-				return false;
-			case EDialogueParticipantState::EDPS_Enabled:
-				return true;
-		}
-
-		return true;
+		return CanStartDialogue();
 	};
 
 	virtual void SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode)

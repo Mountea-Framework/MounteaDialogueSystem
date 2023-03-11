@@ -98,18 +98,16 @@ void UMounteaDialogueParticipant::SkipParticipantVoice(USoundBase* ParticipantVo
 
 bool UMounteaDialogueParticipant::CanStartDialogue() const
 {
-	if (DialogueGraph == nullptr) return false;
-	if (DialogueGraph->CanStartDialogueGraph() == false) return false;
-
-	const UMounteaDialogueGraphNode* NodeToStart = GetSavedStartingNode();
-	if (!NodeToStart || NodeToStart->CanStartNode() == false)
+	switch (GetParticipantState())
 	{
-		NodeToStart = DialogueGraph->GetStartNode();
+		case EDialogueParticipantState::EDPS_Active:
+		case EDialogueParticipantState::EDPS_Disabled:
+			return false;
+		case EDialogueParticipantState::EDPS_Enabled:
+			return true;
 	}
 
-	if (NodeToStart == nullptr) return false;
-	
-	return NodeToStart->GetChildrenNodes().Num() > 0;
+	return true;
 }
 
 void UMounteaDialogueParticipant::SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode)
