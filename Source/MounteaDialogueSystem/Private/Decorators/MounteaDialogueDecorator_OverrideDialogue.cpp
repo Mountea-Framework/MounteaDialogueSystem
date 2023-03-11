@@ -6,13 +6,28 @@
 #include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 
-bool UMounteaDialogueDecorator_OverrideDialogue::ValidateDecorator_Implementation()
+#define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_OverrideDialogue"
+
+bool UMounteaDialogueDecorator_OverrideDialogue::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
 {
-	bool bSatisfied = Super::ValidateDecorator_Implementation();
+	bool bSatisfied = Super::ValidateDecorator_Implementation(ValidationMessages);
+	const FText Name = FText::FromString(GetName());
 	
-	if (DataTable == nullptr) bSatisfied = false;
-	if (RowName.IsNone()) bSatisfied = false;
-	if (RowName.IsNone()) bSatisfied = false;
+	if (DataTable == nullptr)
+	{
+		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_DT", "{0} has no Data Table!"), Name);
+		ValidationMessages.Add(TempText);
+		
+		bSatisfied = false;
+	}
+	
+	if (RowName.IsNone() || RowName.IsNone())
+	{
+		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_DT", "[{0} Validation]: Invalid Row Name!"), Name);
+		ValidationMessages.Add(TempText);
+		
+		bSatisfied = false;
+	}
 	
 	return bSatisfied;
 }
@@ -33,3 +48,5 @@ void UMounteaDialogueDecorator_OverrideDialogue::ExecuteDecorator_Implementation
 	
 	Context->UpdateActiveDialogueRow( UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName) );
 }
+
+#undef LOCTEXT_NAMESPACE

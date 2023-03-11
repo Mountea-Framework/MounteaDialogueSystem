@@ -79,8 +79,8 @@ public:
 	 * Validation is called before Context is initialized!
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
-	bool ValidateDecorator();
-	virtual bool ValidateDecorator_Implementation();
+	bool ValidateDecorator(TArray<FText>& ValidationMessages);
+	virtual bool ValidateDecorator_Implementation(TArray<FText>& ValidationMessages);
 	
 	/**
 	 * Evaluates the Decorator.
@@ -159,11 +159,11 @@ struct FMounteaDialogueDecorator
 
 public:
 
-	bool ValidateDecorator() const
+	bool ValidateDecorator(TArray<FText>& ValidationMessages) const
 	{
 		if (DecoratorType)
 		{
-			return DecoratorType->ValidateDecorator();
+			return DecoratorType->ValidateDecorator(ValidationMessages);
 		}
 		
 		LOG_ERROR(TEXT("[EvaluateDecorator] DecoratorType is null (invalid)!"))

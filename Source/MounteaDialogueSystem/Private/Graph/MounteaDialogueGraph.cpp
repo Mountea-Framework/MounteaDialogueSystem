@@ -95,11 +95,19 @@ bool UMounteaDialogueGraph::CanStartDialogueGraph() const
 		return bSatisfied;
 	}
 
+	TArray<FText> DecoratorValidations;
 	for (auto Itr : Decorators)
 	{
-		if (Itr.ValidateDecorator() == false) bSatisfied = false;
+		if (Itr.ValidateDecorator(DecoratorValidations) == false) bSatisfied = false;
 	}
-	
+
+	if (DecoratorValidations.Num() > 0)
+	{
+		for(auto Itr : DecoratorValidations)
+		{
+			LOG_ERROR(TEXT("%s"), *Itr.ToString());
+		}
+	}
 	return bSatisfied;
 }
 
@@ -242,6 +250,31 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 				Append("x times! Please, avoid duplicates!");
 			
 				ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
+			}
+		}
+	}
+
+	// DECORATORS VALIDATION
+	for (auto Itr : GetAllDecorators())
+	{
+		TArray<FText> DecoratorErrors;
+		if (Itr.ValidateDecorator(DecoratorErrors) == false)
+		{
+			for (auto Error : DecoratorErrors)
+			{
+				const FString ErrorTextRich =
+				FString("* ").
+				Append(TEXT("<RichTextBlock.Bold>Dialogue Graph</>: ")).
+				Append(FString(Error.ToString()));
+
+				const FString ErrorTextSimple =
+				GetName().
+				Append(": ").
+				Append(FString(Error.ToString()));
+		
+				ValidationErrors.Add(FText::FromString(RichTextFormat ? ErrorTextRich : ErrorTextSimple));
+
+				bReturnValue = false;
 			}
 		}
 	}
