@@ -182,7 +182,7 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 
 	// DECORATORS VALIDATION
 	{
-		TArray<UMounteaDialogueGraphNodeDecoratorBase*> UsedNodeDecorators;
+		TArray<UMounteaDialogueDecoratorBase*> UsedNodeDecorators;
 		for (int i = 0; i < NodeDecorators.Num(); i++)
 		{
 			if (NodeDecorators.IsValidIndex(i) && NodeDecorators[i].DecoratorType && UsedNodeDecorators.Contains(NodeDecorators[i].DecoratorType) == false)

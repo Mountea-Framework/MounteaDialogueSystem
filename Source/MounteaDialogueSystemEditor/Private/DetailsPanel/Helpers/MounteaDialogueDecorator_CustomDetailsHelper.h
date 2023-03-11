@@ -3,7 +3,7 @@
 #pragma once
 
 #include "IDetailPropertyRow.h"
-#include "Decorators/MounteaDialogueGraphNodeDecoratorBase.h"
+#include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "Helpers/MounteaDialogueGraphEditorUtilities.h"
 
 // Custom row for Objects that most likely are Blueprints?

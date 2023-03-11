@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Decorators/MounteaDialogueGraphNodeDecoratorBase.h"
+#include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "MounteaDialogueGraphNode.generated.h"
 
 class UMounteaDialogueGraph;

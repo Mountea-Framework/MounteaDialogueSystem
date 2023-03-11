@@ -418,6 +418,19 @@ public:
 		return *Row;
 	};
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Find Dialogue Row", Keywords="row, dialogue"))
+	static FDialogueRow FindDialogueRow(const UDataTable* Table, const FName RowName)
+	{
+		if (Table == nullptr) return FDialogueRow();
+		if (Table->RowStruct->IsChildOf(FDialogueRow::StaticStruct()) == false) return FDialogueRow();
+
+		const FDialogueRow* Row = Table->FindRow<FDialogueRow>(RowName, FString("") );
+		if (!Row) return FDialogueRow();
+		if (IsDialogueRowValid(*Row) == false) return FDialogueRow();
+
+		return *Row;
+	};
+
 	/**
 	 * Returns Duration for each Dialogue Row.
 	 * 

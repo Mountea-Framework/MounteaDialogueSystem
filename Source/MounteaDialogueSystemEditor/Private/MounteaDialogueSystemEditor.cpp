@@ -122,8 +122,8 @@ void FMounteaDialogueSystemEditor::StartupModule()
 				FSlateImageBrush* DialogueDecoratorDataSetClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueDecorator_Small"), TEXT(".png")), FVector2D(16.f, 16.f));
 				if (DialogueDecoratorSetClassThumb && DialogueDecoratorDataSetClassIcon)
 				{
-					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueGraphNodeDecoratorBase", DialogueDecoratorSetClassThumb);
-					DialogueTreeSet->Set("ClassIcon.MounteaDialogueGraphNodeDecoratorBase", DialogueDecoratorDataSetClassIcon);
+					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueDecoratorBase", DialogueDecoratorSetClassThumb);
+					DialogueTreeSet->Set("ClassIcon.MounteaDialogueDecoratorBase", DialogueDecoratorDataSetClassIcon);
 				}
 
 				FSlateImageBrush* DialogueManagerSetClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueManagerIcon"), TEXT(".png")), FVector2D(128.f, 128.f));

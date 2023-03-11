@@ -3,7 +3,7 @@
 
 #include "MounteaDialogueDecoratorAssetFactory.h"
 
-#include "Decorators/MounteaDialogueGraphNodeDecoratorBase.h"
+#include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "Helpers/MounteaDialogueGraphEditorUtilities.h"
 #include "Kismet2/KismetEditorUtilities.h"
 
@@ -12,7 +12,7 @@ UMounteaDialogueDecoratorAssetFactory::UMounteaDialogueDecoratorAssetFactory()
 	bCreateNew = true;
 	bEditAfterNew = true;
 
-	SupportedClass = UMounteaDialogueGraphNodeDecoratorBase::StaticClass();
+	SupportedClass = UMounteaDialogueDecoratorBase::StaticClass();
 }
 
 UObject* UMounteaDialogueDecoratorAssetFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)

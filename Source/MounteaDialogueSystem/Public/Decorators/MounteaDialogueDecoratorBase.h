@@ -5,18 +5,19 @@
 #include "CoreMinimal.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "UObject/Object.h"
-#include "MounteaDialogueGraphNodeDecoratorBase.generated.h"
+#include "MounteaDialogueDecoratorBase.generated.h"
 
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
+
 /**
- *	Mountea Dialogue Node Decorators.
+ *	Mountea Dialogue Decorator
  *
  * Decorators are instanced and exist only as "triggers".
  * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
  */
 UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea, Dialogue"))
-class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNodeDecoratorBase : public UObject
+class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecoratorBase : public UObject
 {
 	GENERATED_BODY()
 
@@ -200,7 +201,7 @@ public:
 	 * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "Mountea|Dialogue", meta=(NoResetToDefault, AllowAbstract = "false", BlueprintBaseOnly = "true"))
-	UMounteaDialogueGraphNodeDecoratorBase* DecoratorType = nullptr;
+	UMounteaDialogueDecoratorBase* DecoratorType = nullptr;
 
 public:
 

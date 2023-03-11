@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Decorators/MounteaDialogueGraphNodeDecoratorBase.h"
+#include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "Factories/Factory.h"
 #include "MounteaDialogueDecoratorAssetFactory.generated.h"
 
@@ -24,5 +24,5 @@ public:
 private:
 	// Holds the template of the class we are building
 	UPROPERTY()
-	TSubclassOf<UMounteaDialogueGraphNodeDecoratorBase> ParentClass;
+	TSubclassOf<UMounteaDialogueDecoratorBase> ParentClass;
 };

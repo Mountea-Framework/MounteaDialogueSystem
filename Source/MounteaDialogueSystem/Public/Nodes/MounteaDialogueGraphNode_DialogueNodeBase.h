@@ -44,7 +44,7 @@ protected:
 	UDataTable*	DataTable;
 
 	/** Name of row in the table that we want */
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault))
+	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
 	FName RowName;
 
 	/** Defines whether this Node will start automatically or if requires input.*/

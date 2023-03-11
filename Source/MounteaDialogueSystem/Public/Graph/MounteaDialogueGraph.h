@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Templates/SubclassOf.h"
 #include "GameplayTagContainer.h"
-#include "Decorators/MounteaDialogueGraphNodeDecoratorBase.h"
+#include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "MounteaDialogueGraph.generated.h"
 
 class UMounteaDialogueGraphNode;

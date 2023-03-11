@@ -4,7 +4,7 @@
 
 #include "IDetailChildrenBuilder.h"
 
-#include "Decorators/MounteaDialogueGraphNodeDecoratorBase.h"
+#include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "DetailsPanel/Helpers/MounteaDialogueDecorator_CustomDetailsHelper.h"
 
 #define LOCTEXT_NAMESPACE "FMounteaDialogueDecorator_DetailsPanel"
@@ -32,7 +32,7 @@ void FMounteaDialogueDecorator_DetailsPanel::CustomizeChildren(TSharedRef<IPrope
 		MounteaDialogueDecorator_CustomDetailsHelper->SetFunctionNameToOpen
 		(
 			EMounteaDialogueBlueprintOpenType::Function,
-			GET_FUNCTION_NAME_CHECKED(UMounteaDialogueGraphNodeDecoratorBase, EvaluateDecorator)
+			GET_FUNCTION_NAME_CHECKED(UMounteaDialogueDecoratorBase, EvaluateDecorator)
 		);
 	}
 }

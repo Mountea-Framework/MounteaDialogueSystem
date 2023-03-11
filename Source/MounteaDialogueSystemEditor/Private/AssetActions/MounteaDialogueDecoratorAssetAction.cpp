@@ -1,6 +1,6 @@
 #include "MounteaDialogueDecoratorAssetAction.h"
 
-#include "Decorators/MounteaDialogueGraphNodeDecoratorBase.h"
+#include "Decorators/MounteaDialogueDecoratorBase.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecoratorAssetAction"
 
@@ -19,7 +19,7 @@ FColor FMounteaDialogueDecoratorAssetAction::GetTypeColor() const
 
 UClass* FMounteaDialogueDecoratorAssetAction::GetSupportedClass() const
 {
-	return UMounteaDialogueGraphNodeDecoratorBase::StaticClass();
+	return UMounteaDialogueDecoratorBase::StaticClass();
 }
 
 uint32 FMounteaDialogueDecoratorAssetAction::GetCategories()

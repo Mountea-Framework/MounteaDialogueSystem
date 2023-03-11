@@ -169,7 +169,7 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 
 	// DECORATORS VALIDATION
 	{
-		TArray<UMounteaDialogueGraphNodeDecoratorBase*> UsedNodeDecorators;
+		TArray<UMounteaDialogueDecoratorBase*> UsedNodeDecorators;
 		for (int i = 0; i < GraphDecorators.Num(); i++)
 		{
 			if (GraphDecorators.IsValidIndex(i) && GraphDecorators[i].DecoratorType)
