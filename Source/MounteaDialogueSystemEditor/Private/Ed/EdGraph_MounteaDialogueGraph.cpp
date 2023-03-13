@@ -39,6 +39,8 @@ void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 
 			Graph->AllNodes.Add(MounteaDialogueGraphNode);
 
+			EdNode->SetDialogueNodeIndex( Graph->AllNodes.Find(EdNode->DialogueGraphNode) );
+
 			for (int PinIdx = 0; PinIdx < EdNode->Pins.Num(); ++PinIdx)
 			{
 				UEdGraphPin* Pin = EdNode->Pins[PinIdx];

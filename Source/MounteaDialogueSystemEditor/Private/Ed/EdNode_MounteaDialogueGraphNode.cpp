@@ -40,7 +40,7 @@ void UEdNode_MounteaDialogueGraphNode::SetMounteaDialogueGraphNode(UMounteaDialo
 UEdGraph_MounteaDialogueGraph* UEdNode_MounteaDialogueGraphNode::GetDialogueGraphEdGraph() const
 {
 	return Cast<UEdGraph_MounteaDialogueGraph>(GetGraph());
-}
+};
 
 void UEdNode_MounteaDialogueGraphNode::AllocateDefaultPins()
 {
