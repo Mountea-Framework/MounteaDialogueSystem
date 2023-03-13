@@ -116,7 +116,7 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(cons
 						->Split
 						(
 							FTabManager::NewStack()
-							->SetSizeCoefficient(0.2f)
+							->SetSizeCoefficient(0.3f)
 							->AddTab(FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID, ETabState::OpenedTab)->SetHideTabWell(true)
 						)
 					)
