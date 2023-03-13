@@ -64,18 +64,6 @@ private:
 	/** Called when user changes commits text to the search box */
 	void HandleSearchTextCommitted(const FText& Text, ETextCommit::Type CommitType);
 
-	/** Called when the find mode checkbox is hit */
-	void HandleFindModeChanged(ECheckBoxState CheckState)
-	{
-		bIsInFindWithinDialogueMode = CheckState == ECheckBoxState::Checked;
-	}
-
-	/** Called to check what the find mode is for the checkbox */
-	ECheckBoxState HandleGetFindModeChecked() const
-	{
-		return bIsInFindWithinDialogueMode ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-	}
-
 	/* Get the children of a row */
 	void HandleGetChildren(TSharedPtr<FMounteaDialogueSearchResult> InItem, TArray<TSharedPtr<FMounteaDialogueSearchResult>>& OutChildren);
 
@@ -115,9 +103,6 @@ private:
 
 	/** The current searach filter */
 	FMounteaDialogueSearchFilter CurrentFilter;
-
-	/** Should we search within the current Dialogue only (rather than all Dialogues) */
-	bool bIsInFindWithinDialogueMode;
 
 	/** Tab hosting this widget. May be invalid. */
 	TWeakPtr<SDockTab> HostTab;

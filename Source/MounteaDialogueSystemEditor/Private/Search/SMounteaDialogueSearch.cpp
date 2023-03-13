@@ -19,14 +19,6 @@ void SMounteaDialogueSearch::Construct(const FArguments& InArgs, const TSharedPt
 		HostTab.Pin()->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateSP(this, &Self::HandleHostTabClosed));
 	}
 
-	if (InArgs._bIsSearchWindow)
-	{
-		//RegisterCommands();
-	}
-
-	// Only search in the current Dialogue
-	bIsInFindWithinDialogueMode = DialogueEditorPtr.IsValid();
-
 	ChildSlot
 	[
 		SAssignNew(MainVerticalBoxWidget, SVerticalBox)
@@ -70,7 +62,7 @@ void SMounteaDialogueSearch::Construct(const FArguments& InArgs, const TSharedPt
 						SNew(STextBlock)
 						.TextStyle(FEditorStyle::Get(), "GenericFilters.TextStyle")
 						.Font(FEditorStyle::Get().GetFontStyle("FontAwesome.9"))
-						.Text(FText::FromString(FString(TEXT("\xf0b0"))) /*fa-filter*/)
+						.Text(FText::FromString(FString(TEXT("\xf0b0"))) )
 					]
 					+SHorizontalBox::Slot()
 					.AutoWidth()
@@ -224,6 +216,11 @@ void SMounteaDialogueSearch::HandleSearchTextChanged(const FText& Text)
 
 void SMounteaDialogueSearch::HandleSearchTextCommitted(const FText& Text, ETextCommit::Type CommitType)
 {
+	if (Text.IsEmpty())
+	{
+		TreeView->RequestTreeRefresh();
+	}
+	
 	if (CommitType == ETextCommit::OnEnter)
 	{
 		CurrentFilter.SearchString = Text.ToString();
@@ -246,43 +243,6 @@ void SMounteaDialogueSearch::HandleTreeSelectionDoubleClicked(TSharedPtr<FMounte
 
 TSharedRef<ITableRow> SMounteaDialogueSearch::HandleGenerateRow(TSharedPtr<FMounteaDialogueSearchResult> InItem, const TSharedRef<STableViewBase>& OwnerTable)
 {
-	const bool bIsCategoryWidget = !bIsInFindWithinDialogueMode && (!InItem->GetParent().IsValid() || (InItem->GetParent().IsValid() && InItem->GetParent().Pin()->IsRoot()));
-
-	// Category entry
-	if (bIsCategoryWidget)
-	{
-		return SNew(STableRow<TSharedPtr<FMounteaDialogueSearchResult>>, OwnerTable)
-			[
-				SNew(SBorder)
-				.VAlign(VAlign_Center)
-				.BorderImage(FEditorStyle::GetBrush("PropertyWindow.CategoryBackground"))
-				.Padding(FMargin(2.0f))
-				.ForegroundColor(FEditorStyle::GetColor("PropertyWindow.CategoryForeground"))
-				[
-					SNew(SHorizontalBox)
-
-					// Icon
-					+SHorizontalBox::Slot()
-					.VAlign(VAlign_Center)
-					.AutoWidth()
-					[
-						InItem->CreateIcon()
-					]
-
-					// Display text
-					+SHorizontalBox::Slot()
-					.AutoWidth()
-					.VAlign(VAlign_Center)
-					.Padding(2, 0)
-					[
-						SNew(STextBlock)
-						.Text(InItem.Get(), &FMounteaDialogueSearchResult::GetDisplayText)
-						.ToolTipText(LOCTEXT("DialogueCatSearchToolTip", "Dialogue"))
-					]
-				]
-			];
-	}
-
 	// Normal entry
 	FText CommentText = FText::GetEmpty();
 	if (!InItem->GetCommentString().IsEmpty())
@@ -295,7 +255,7 @@ TSharedRef<ITableRow> SMounteaDialogueSearch::HandleGenerateRow(TSharedPtr<FMoun
 	FFormatNamedArguments Args;
 	Args.Add(TEXT("Category"), InItem->GetCategory());
 	Args.Add(TEXT("DisplayTitle"), InItem->GetDisplayText());
-	FText Tooltip = FText::Format(LOCTEXT("DialogueResultSearchToolTip", "{Category} : {DisplayTitle}"), Args);
+	const FText Tooltip = FText::Format(LOCTEXT("DialogueResultSearchToolTip", "{Category} : {DisplayTitle}"), Args);
 
 	return SNew(STableRow<TSharedPtr<FMounteaDialogueSearchResult>>, OwnerTable)
 		[
