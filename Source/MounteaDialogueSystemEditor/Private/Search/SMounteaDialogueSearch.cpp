@@ -42,7 +42,7 @@ void SMounteaDialogueSearch::Construct(const FArguments& InArgs, const TSharedPt
 			.FillWidth(1)
 			[
 				SAssignNew(SearchTextBoxWidget, SSearchBox)
-				.HintText(LOCTEXT("DialogueSearchHint", "Enter Node or Decorator name to find references..."))
+				.HintText(LOCTEXT("DialogueSearchHint", "Enter searched text..."))
 				.OnTextChanged(this, &Self::HandleSearchTextChanged)
 				.OnTextCommitted(this, &Self::HandleSearchTextCommitted)
 				.Visibility(EVisibility::Visible)
@@ -57,7 +57,7 @@ void SMounteaDialogueSearch::Construct(const FArguments& InArgs, const TSharedPt
 				.ComboButtonStyle(FEditorStyle::Get(), "GenericFilters.ComboButtonStyle")
 				.ForegroundColor(FLinearColor::White)
 				.ContentPadding(0)
-				.ToolTipText(LOCTEXT("Filters_Tooltip", "Filter options for the Dialogue Search."))
+				.ToolTipText(LOCTEXT("Filters_Tooltip", "Filter options"))
 				.OnGetMenuContent(this, &Self::FillFilterEntries)
 				.HasDownArrow(true)
 				.ContentPadding(FMargin(1, 0))
@@ -134,7 +134,7 @@ void SMounteaDialogueSearch::FocusForUse(const FMounteaDialogueSearchFilter& Sea
 				ItemToFocusOn = ItemToFocusOn->GetChildren()[0];
 			}
 			TreeView->SetSelection(ItemToFocusOn);
-			ItemToFocusOn->OnClick();
+			ItemToFocusOn->OnClick(DialogueEditorPtr);
 		}
 	}
 }
@@ -240,7 +240,7 @@ void SMounteaDialogueSearch::HandleTreeSelectionDoubleClicked(TSharedPtr<FMounte
 {
 	if (Item.IsValid())
 	{
-		Item->OnClick();
+		Item->OnClick(DialogueEditorPtr);
 	}
 }
 

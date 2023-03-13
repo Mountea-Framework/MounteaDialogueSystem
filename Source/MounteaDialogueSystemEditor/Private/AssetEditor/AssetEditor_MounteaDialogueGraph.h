@@ -65,6 +65,14 @@ public:
 	}
 	void SetDialogueBeingEdited(UMounteaDialogueGraph* NewDialogue);
 
+	virtual void JumpToNode( const class UEdGraphNode* JumpToMe, bool bRequestRename = false, bool bSelectNode = true )
+	{
+		if (ViewportWidget.IsValid())
+		{
+			ViewportWidget->JumpToNode(JumpToMe, bRequestRename, bSelectNode);
+		}
+	}
+
 private:
 	
 	void CreateInternalWidgets();

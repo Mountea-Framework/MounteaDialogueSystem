@@ -2,11 +2,12 @@
 
 #include "MounteaDialogueSearchUtils.h"
 
+#include "AssetEditor/AssetEditor_MounteaDialogueGraph.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Toolkits/AssetEditorManager.h"
 
-bool FMounteaDialogueSearchUtils::OpenEditorAndJumpToGraphNode(const UEdGraphNode* GraphNode, bool bFocusIfOpen)
+bool FMounteaDialogueSearchUtils::OpenEditorAndJumpToGraphNode(TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr, const UEdGraphNode* GraphNode, bool bFocusIfOpen)
 {
 	if (!IsValid(GraphNode))
 	{
@@ -14,16 +15,26 @@ bool FMounteaDialogueSearchUtils::OpenEditorAndJumpToGraphNode(const UEdGraphNod
 	}
 
 	// Open if not already.
-	UEdGraph_MounteaDialogueGraph* Dialogue = GetDialogueFromGraphNode(GraphNode);
+	UMounteaDialogueGraph* Dialogue = GetDialogueFromGraphNode(GraphNode);
 	if (!OpenEditorForAsset(Dialogue))
 	{
 		return false;
-	}
+	} 
 
 	// Could still fail focus on the graph node
 	if (IAssetEditorInstance* EditorInstance = FindEditorForAsset(Dialogue, bFocusIfOpen))
 	{
 		EditorInstance->FocusWindow(const_cast<UEdGraphNode*>(GraphNode));
+
+		UEdGraph_MounteaDialogueGraph* GraphEditor = Cast<UEdGraph_MounteaDialogueGraph>(Dialogue->EdGraph);
+		if (GraphEditor)
+		{
+			TSet<const UEdGraphNode*> SelectedNodes;
+			SelectedNodes.Add(GraphNode);
+			
+			GraphEditor->SelectNodeSet(SelectedNodes);
+			DialogueEditorPtr.Pin()->JumpToNode(GraphNode);
+		}
 		return true;
 	}
 
@@ -51,17 +62,17 @@ bool FMounteaDialogueSearchUtils::OpenEditorForAsset(const UObject* Asset)
 }
 
 
-UEdGraph_MounteaDialogueGraph* FMounteaDialogueSearchUtils::GetDialogueFromGraphNode(const UEdGraphNode* GraphNode)
+UMounteaDialogueGraph* FMounteaDialogueSearchUtils::GetDialogueFromGraphNode(const UEdGraphNode* GraphNode)
 {
 	if (const UEdNode_MounteaDialogueGraphNode* DialogueBaseNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
 	{
-		return DialogueBaseNode->GetDialogueGraphEdGraph();
+		return DialogueBaseNode->GetDialogueGraphEdGraph()->GetMounteaDialogueGraph();
 	}
 
 	// Last change
-	if (const UMounteaDialogueGraph* DialogueGraph = Cast<UMounteaDialogueGraph>(GraphNode->GetGraph()))
+	if (const UEdGraph_MounteaDialogueGraph* DialogueGraph = Cast<UEdGraph_MounteaDialogueGraph>(GraphNode->GetGraph()))
 	{
-		return Cast<UEdGraph_MounteaDialogueGraph>(DialogueGraph->EdGraph);
+		return Cast<UMounteaDialogueGraph>(DialogueGraph->GetMounteaDialogueGraph());
 	}
 
 	return nullptr;

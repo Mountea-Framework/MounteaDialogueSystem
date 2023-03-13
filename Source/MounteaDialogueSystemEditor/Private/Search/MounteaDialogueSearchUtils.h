@@ -4,15 +4,16 @@
 
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
 
+class FAssetEditor_MounteaDialogueGraph;
 class UEdNode_MounteaDialogueGraphNode;
 
 class FMounteaDialogueSearchUtils
 {
 public:
 	
-	static bool OpenEditorAndJumpToGraphNode(const UEdGraphNode* GraphNode, bool bFocusIfOpen = false);
+	static bool OpenEditorAndJumpToGraphNode(TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr, const UEdGraphNode* GraphNode, bool bFocusIfOpen = false);
 	
-	static UEdGraph_MounteaDialogueGraph* GetDialogueFromGraphNode(const UEdGraphNode* GraphNode);
+	static UMounteaDialogueGraph* GetDialogueFromGraphNode(const UEdGraphNode* GraphNode);
 	static IAssetEditorInstance* FindEditorForAsset(UObject* Asset, bool bFocusIfOpen);
 	static bool OpenEditorForAsset(const UObject* Asset);
 };

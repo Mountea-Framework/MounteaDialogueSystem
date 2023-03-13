@@ -8,6 +8,8 @@
 #include "Widgets/Views/STreeView.h"
 
 class UMounteaDialogueGraph;
+class FAssetEditor_MounteaDialogueGraph;
+
 /**
  * Template Tree Item Node class.
  */
@@ -25,12 +27,12 @@ public:
 
 #pragma region Click_Functions
 	
-	virtual FReply OnClick()
+	virtual FReply OnClick(TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr)
 	{
 		// If there is a parent, handle it using the parent's functionality
 		if (Parent.IsValid())
 		{
-			return Parent.Pin()->OnClick();
+			return Parent.Pin()->OnClick(DialogueEditorPtr);
 		}
 
 		return FReply::Unhandled();
@@ -192,7 +194,7 @@ class FMounteaDialogueSearchResult_DialogueNode : public FMounteaDialogueSearchR
 public:
 	FMounteaDialogueSearchResult_DialogueNode(const FText& InDisplayText, const TSharedPtr<FMounteaDialogueSearchResult>& InParent);
 
-	virtual FReply OnClick() override;
+	virtual FReply OnClick(TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr) override;
 	virtual TSharedRef<SWidget> CreateIcon() const override;
 	virtual TWeakObjectPtr<const UMounteaDialogueGraph> GetParentDialogue() const override;
 
@@ -212,7 +214,7 @@ class FMounteaDialogueSearchResult_GraphNode : public FMounteaDialogueSearchResu
 public:
 	FMounteaDialogueSearchResult_GraphNode(const FText& InDisplayText, const TSharedPtr<FMounteaDialogueSearchResult>& InParent);
 
-	virtual FReply OnClick() override;
+	virtual FReply OnClick(TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr) override;
 	virtual TSharedRef<SWidget> CreateIcon() const override;
 
 	// GraphNode:

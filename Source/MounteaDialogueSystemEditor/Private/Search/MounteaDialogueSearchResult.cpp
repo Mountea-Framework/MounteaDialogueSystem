@@ -45,7 +45,7 @@ FMounteaDialogueSearchResult_DialogueNode::FMounteaDialogueSearchResult_Dialogue
 
 #pragma region Search_Dialogues
 
-FReply FMounteaDialogueSearchResult_DialogueNode::OnClick()
+FReply FMounteaDialogueSearchResult_DialogueNode::OnClick(TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr)
 {
 	// TODO: Remove
 	return FReply::Unhandled();
@@ -75,11 +75,11 @@ FMounteaDialogueSearchResult_GraphNode::FMounteaDialogueSearchResult_GraphNode(c
 : Super(InDisplayText, InParent)
 {}
 
-FReply FMounteaDialogueSearchResult_GraphNode::OnClick()
+FReply FMounteaDialogueSearchResult_GraphNode::OnClick(TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr)
 {
 	if (GraphNode.IsValid())
 	{
-		return FMounteaDialogueSearchUtils::OpenEditorAndJumpToGraphNode(GraphNode.Get()) ? FReply::Handled() : FReply::Unhandled();
+		return FMounteaDialogueSearchUtils::OpenEditorAndJumpToGraphNode(DialogueEditorPtr, GraphNode.Get()) ? FReply::Handled() : FReply::Unhandled();
 	}
 
 	return FReply::Unhandled();
