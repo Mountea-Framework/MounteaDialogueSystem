@@ -21,6 +21,7 @@ void FMounteaDialogueGraphEditorStyle::Initialize()
 	const FVector2D Icon40x40(40.0f, 40.0f);
 	const FVector2D Icon64x64(64.0f, 64.0f);
 	const FVector2D Icon128x128(128.f, 128.f);
+	const FVector2D Icon200x70(200.f, 70.f);
 
 	if (StyleSet.IsValid() )
 	{
@@ -67,6 +68,16 @@ void FMounteaDialogueGraphEditorStyle::Initialize()
 	StyleSet->Set("MDSStyleSet.Icon.Browse", new IMAGE_BRUSH(TEXT("BrowseIcon"), Icon12x12));
 	StyleSet->Set("MDSStyleSet.Icon.Edit", new IMAGE_BRUSH(TEXT("EditIcon"), Icon12x12));
 	
+	StyleSet->Set("MDSStyleSet.Buttons.Documentation", new IMAGE_BRUSH(TEXT("Documentation"), Icon200x70));
+
+	const FButtonStyle MounteaButtonStyle = FButtonStyle()
+		.SetNormal(BOX_BRUSH("Common/RoundedSelection_16x", 4.0f / 16.0f, FLinearColor(1, 1, 1, 0.1f)))
+		.SetHovered(BOX_BRUSH("Common/RoundedSelection_16x", 4.0f / 16.0f, FLinearColor(1, .55f, 0, 0.2f)))
+		.SetPressed(BOX_BRUSH("Common/RoundedSelection_16x", 4.0f / 16.0f,  FLinearColor(1, .55f, 0, 0.4f)));
+
+	
+	StyleSet->Set("MDSStyleSet.Buttons.Style", MounteaButtonStyle);
+	
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
 }
 
@@ -89,6 +100,7 @@ const FName& FMounteaDialogueGraphEditorStyle::GetStyleSetName()
 {
 	return StyleSet->GetStyleSetName();
 }
+
 
 #undef IMAGE_BRUSH
 #undef BOX_BRUSH

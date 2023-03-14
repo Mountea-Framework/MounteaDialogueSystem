@@ -11,7 +11,7 @@ class UMounteaDialogueGraphNode;
 /**
  * 
  */
-UCLASS(Blueprintable, ClassGroup=("Mountea|Dialogue"))
+UCLASS(ClassGroup=("Mountea|Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphEdge : public UObject
 {
 	GENERATED_BODY()

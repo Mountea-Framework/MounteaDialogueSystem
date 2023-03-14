@@ -49,7 +49,7 @@ bool FMounteaDialogueSearchManager::QueryGraphNode(const FMounteaDialogueSearchF
 
 	if (Node == nullptr) return false;
 	
-	const FString NodeType = Node->InternalName.ToString();
+	const FString NodeType = Node->NodeTypeName.ToString();
 	
 	const FText DisplayText = FText::Format
 	(
@@ -81,16 +81,16 @@ bool FMounteaDialogueSearchManager::QueryGraphNode(const FMounteaDialogueSearchF
 		}
 	}
 
-	// Search by InternalName
+	// Search by NodeTypeName
 	if (SearchFilter.bIncludeNodeType)
 	{
-		if (Node->InternalName.ToString().Contains(SearchFilter.SearchString))
+		if (Node->NodeTypeName.ToString().Contains(SearchFilter.SearchString))
 		{
 			bContainsSearchString = true;
 			MakeChildTextNode
 			(
 				TreeGraphNode,
-				FText::FromName(FName(Node->InternalName.ToString() )),
+				FText::FromName(FName(Node->NodeTypeName.ToString() )),
 				LOCTEXT("NodeTypeKey", "Node Type"),
 				TEXT("Node Type")
 			);
@@ -126,7 +126,7 @@ bool FMounteaDialogueSearchManager::QueryGraphNode(const FMounteaDialogueSearchF
 				MakeChildTextNode
 				(
 					TreeGraphNode,
-					FText::FromName(FName(Node->InternalName.ToString() )),
+					FText::FromName(FName(Node->NodeTypeName.ToString() )),
 					LOCTEXT("NodeDataRowKey", "Node Data"),
 					TEXT("Node Data")
 				);

@@ -16,7 +16,7 @@ class UMounteaDialogueGraphEdge;
  * Does come with ability to define Colours, Name, Description and Title.
  * Contains information about Parent and Children Nodes.
  */
-UCLASS(Abstract, BlueprintType, ClassGroup=("Mountea|Dialogue"), HideCategories=("Hidden", "Private", "Base"), AutoExpandCategories=("Mountea", "Dialogue"))
+UCLASS(Abstract, BlueprintType, Blueprintable, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject
 {
 	GENERATED_BODY()
@@ -30,33 +30,34 @@ public:
 #pragma region ReadOnly
 public:
 	
-	UPROPERTY(BlueprintReadOnly, Category = "Private")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	TArray<UMounteaDialogueGraphNode*> ParentNodes;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Private")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	TArray<UMounteaDialogueGraphNode*> ChildrenNodes;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Private")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	TMap<UMounteaDialogueGraphNode*, UMounteaDialogueGraphEdge*> Edges;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Private")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", meta=(DisplayThumbnail=false))
 	UMounteaDialogueGraph* Graph;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Private")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	int32 NodeIndex = INDEX_NONE;
 
-	UPROPERTY(BlueprintReadOnly, Category="Private")
-	int32 MaxChildrenNodes = -1;
 
 protected:
 
-	UPROPERTY(SaveGame, BlueprintReadOnly, Category="Mountea", AdvancedDisplay)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	FGuid NodeGUID;
 
 #pragma endregion
 
 #pragma region Editable
 public:
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Base")
+	int32 MaxChildrenNodes = -1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	uint8 bInheritGraphDecorators : 1;
@@ -130,6 +131,10 @@ public:
 	FText GetNodeCategory() const;
 	virtual FText GetNodeCategory_Implementation() const;
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	FString GetNodeDocumentationLink() const;
+	virtual FString GetNodeDocumentationLink_Implementation() const;
+
 	
 	virtual void OnCreatedInEditor() {};
 
@@ -138,43 +143,47 @@ public:
 
 #if WITH_EDITORONLY_DATA
 
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowInputNodes;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowOutputNodes;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowCopy;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowCut;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowPaste;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowDelete;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowManualCreate;
 	
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText NodeTitle;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText ContextMenuName;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Editor")
 	TSubclassOf<UMounteaDialogueGraph> CompatibleGraphType;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FLinearColor BackgroundColor;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText NodeTooltipText;
 
-	FText InternalName;
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	FString NodeDocumentationLink;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	FText NodeTypeName;
 
 #endif
 
@@ -186,7 +195,7 @@ public:
 	
 	virtual FLinearColor GetBackgroundColor() const;
 	FText GetInternalName() const
-	{ return InternalName; };
+	{ return NodeTypeName; };
 	
 	virtual void SetNodeTitle(const FText& NewTitle);
 	

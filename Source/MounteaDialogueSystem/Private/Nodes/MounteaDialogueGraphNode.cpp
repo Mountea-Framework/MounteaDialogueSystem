@@ -25,8 +25,10 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
 	bAllowPaste = true;
 	bAllowManualCreate = true;
 
-	InternalName = LOCTEXT("MounteaDialogueNode_InternalName", "MounteaDialogueGraphNode");
+	NodeTypeName = LOCTEXT("MounteaDialogueNode_InternalName", "MounteaDialogueGraphNode");
 	NodeTooltipText = LOCTEXT("MounteaDialogueNode_Tooltip", "Mountea Dialogue Base Node.\n\nChild Nodes provide more Information.");
+
+	NodeDocumentationLink = TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Dialogue-Nodes");
 #endif
 }
 
@@ -43,6 +45,11 @@ FText UMounteaDialogueGraphNode::GetDescription_Implementation() const
 FText UMounteaDialogueGraphNode::GetNodeCategory_Implementation() const
 {
 	return LOCTEXT("NodeCategory", "Mountea Dialogue Tree Node");
+}
+
+FString UMounteaDialogueGraphNode::GetNodeDocumentationLink_Implementation() const
+{
+	return NodeDocumentationLink;
 }
 
 TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators() const
@@ -284,7 +291,7 @@ FText UMounteaDialogueGraphNode::GetDefaultTooltipBody() const
 	
 	const FText Implements = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_ImplementsTooltip", "Implements Decorators: {0}"), ImplementsNumber);
 	
-	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0}\n\n{1}\n{2}"), InternalName,  Inherits, Implements);
+	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0}\n\n{1}\n{2}"), NodeTypeName,  Inherits, Implements);
 }
 
 #endif

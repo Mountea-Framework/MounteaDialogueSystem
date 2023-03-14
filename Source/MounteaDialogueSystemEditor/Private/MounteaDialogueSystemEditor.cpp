@@ -153,7 +153,6 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 
 		//TODO: Implement showing/hiding custom categories in Graph
-		/*
 		{
 			TArray<FOnGetDetailCustomizationInstance> CustomClassLayouts =
 			{
@@ -168,7 +167,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 				PropertyModule.RegisterCustomClassLayout(RegisteredCustomClassLayouts[i], CustomClassLayouts[i]);
 			}
 		}
-		*/
+
 		{
 			TArray<FOnGetPropertyTypeCustomizationInstance> CustomPropertyTypeLayouts =
 		   {

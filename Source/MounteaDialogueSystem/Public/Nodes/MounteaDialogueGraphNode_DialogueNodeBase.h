@@ -15,7 +15,7 @@
  * Enhances 'MounteaDialogueGraphNode' Base class with Dialogue data.
  * Provides DataTable and Row options that define the Dialogue data which will be displayed in UI.
  */
-UCLASS(Abstract, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"), HideCategories=("Base", "Hidden", "Private"))
+UCLASS(Abstract, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_DialogueNodeBase : public UMounteaDialogueGraphNode
 {
 	GENERATED_BODY()
