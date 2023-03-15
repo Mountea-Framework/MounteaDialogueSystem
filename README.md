@@ -40,16 +40,19 @@ This plugin comes with its own Graph Editor! This way you can easily connect nod
 
 
 #### Graph Editor Validations
-We are just humans and we tend to do mistakes. This feature will try its best to track down all issues that might resolve in broken Dialogue Trees and inform you which node has what issues!
-**Bonus:** Graph Validation reflects Themes! You can have Light or Dark one.
+We are just humans and we tend to make mistakes. Graph Validator tries its best to track down all issues in the Editor before the project is packed, therefore saving a bunch of debugging hours for all parties included.
+**Bonus:** Graph Validator reflects Graph Themes!
 <p align="center" width="100%">
     <img width="65%" src="https://user-images.githubusercontent.com/37410226/219807417-a2fa5d61-70be-449d-bbab-d9a8e9ae4793.png">
 </p>
 
+#### Graph Themes Settings
+Dialogue Graph Editor settings contain a lot of settings that might help developers tweak the Dialogue Graph Editor to their liking.
+
 #### Dialogue Previews
-Select any node and see what is inside. No need to search where all the texts are, just click and see.
+To save precious time, Dialogue Previews show the raw context of the Dialogue Data. What is this helpful for? Well, changing Dialogue Data automatically updates the Previews, showing what data will be played for this Node.
 <p align="center" width="100%">
-    <img width="65%" src="https://user-images.githubusercontent.com/37410226/219806723-bd0d407d-77ce-451a-a315-a01dd8f6409e.png">
+    <img width="65%" src="https://user-images.githubusercontent.com/37410226/225457489-1c402962-5412-4b33-aaae-b1f65cf148b9.png">
 </p>
 
 #### Dialogue Decorators
