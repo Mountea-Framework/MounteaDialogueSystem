@@ -96,7 +96,6 @@ bool UMounteaDialogueGraphNode::EvaluateDecorators() const
 
 #if WITH_EDITOR
 
-
 FText UMounteaDialogueGraphNode::GetDescription_Implementation() const
 {
 	return LOCTEXT("NodeDesc", "Mountea Dialogue Graph Node");

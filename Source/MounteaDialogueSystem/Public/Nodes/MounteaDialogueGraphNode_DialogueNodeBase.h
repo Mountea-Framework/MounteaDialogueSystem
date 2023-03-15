@@ -28,8 +28,6 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_DialogueNodeBase : pub
 public:
 
 	UMounteaDialogueGraphNode_DialogueNodeBase();
-
-	virtual FText GetDescription_Implementation() const override;
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual UDataTable* GetDataTable() const;
@@ -75,10 +73,12 @@ protected:
 
 	
 #if WITH_EDITOR
+	
 	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat) override;
 	virtual bool CanCreateConnection(UMounteaDialogueGraphNode* Other, EEdGraphPinDirection Direction, FText& ErrorMessage) override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-
+	virtual FText GetDescription_Implementation() const override;
+	
 public:
 	TArray<FText> GetPreviews() const;
 #endif

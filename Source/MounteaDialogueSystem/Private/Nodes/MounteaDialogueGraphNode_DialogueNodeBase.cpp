@@ -21,11 +21,6 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 	bAutoStarts = false;
 }
 
-FText UMounteaDialogueGraphNode_DialogueNodeBase::GetDescription_Implementation() const
-{
-	return LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseDescription", "Dialogue Base Node has no logic tied to itself.");
-}
-
 UDataTable* UMounteaDialogueGraphNode_DialogueNodeBase::GetDataTable() const
 {
 	return DataTable;
@@ -154,6 +149,11 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::PostEditChangeProperty(FPropert
 		UpdatePreviews();
 		PreviewsUpdated.ExecuteIfBound();
 	}
+}
+
+FText UMounteaDialogueGraphNode_DialogueNodeBase::GetDescription_Implementation() const
+{
+	return LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseDescription", "Dialogue Base Node has no logic tied to itself.");
 }
 
 TArray<FText> UMounteaDialogueGraphNode_DialogueNodeBase::GetPreviews() const

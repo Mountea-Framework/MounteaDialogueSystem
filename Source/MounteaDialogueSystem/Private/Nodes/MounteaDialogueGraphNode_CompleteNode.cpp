@@ -22,6 +22,8 @@ UMounteaDialogueGraphNode_CompleteNode::UMounteaDialogueGraphNode_CompleteNode()
 	bAutoStarts = false;
 }
 
+#if WITH_EDITOR
+
 FText UMounteaDialogueGraphNode_CompleteNode::GetDescription_Implementation() const
 {
 	return LOCTEXT("MounteaDialogueGraphNode_CompleteNodeDescription", "Complete Node is an indication that Dialogue can be manually closed here by Player.");
@@ -32,4 +34,5 @@ FText UMounteaDialogueGraphNode_CompleteNode::GetNodeCategory_Implementation() c
 	return LOCTEXT("MounteaDialogueGraphNode_CompleteNodeCategory", "Mountea Dialogue Nodes");
 }
 
+#endif
 #undef LOCTEXT_NAMESPACE
