@@ -37,21 +37,6 @@ UMounteaDialogueGraph* UMounteaDialogueGraphNode::GetGraph() const
 	return Graph;
 }
 
-FText UMounteaDialogueGraphNode::GetDescription_Implementation() const
-{
-	return LOCTEXT("NodeDesc", "Mountea Dialogue Graph Node");
-}
-
-FText UMounteaDialogueGraphNode::GetNodeCategory_Implementation() const
-{
-	return LOCTEXT("NodeCategory", "Mountea Dialogue Tree Node");
-}
-
-FString UMounteaDialogueGraphNode::GetNodeDocumentationLink_Implementation() const
-{
-	return NodeDocumentationLink;
-}
-
 TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators() const
 {
 	TArray<FMounteaDialogueDecorator> TempReturn;
@@ -110,6 +95,22 @@ bool UMounteaDialogueGraphNode::EvaluateDecorators() const
 }
 
 #if WITH_EDITOR
+
+
+FText UMounteaDialogueGraphNode::GetDescription_Implementation() const
+{
+	return LOCTEXT("NodeDesc", "Mountea Dialogue Graph Node");
+}
+
+FText UMounteaDialogueGraphNode::GetNodeCategory_Implementation() const
+{
+	return LOCTEXT("NodeCategory", "Mountea Dialogue Tree Node");
+}
+
+FString UMounteaDialogueGraphNode::GetNodeDocumentationLink_Implementation() const
+{
+	return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Dialogue-Nodes");
+}
 
 FText UMounteaDialogueGraphNode::GetNodeTooltipText_Implementation() const
 {

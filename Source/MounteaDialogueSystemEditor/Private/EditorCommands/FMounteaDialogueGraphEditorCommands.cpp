@@ -27,7 +27,7 @@ void FMounteaDialogueGraphEditorCommands::RegisterCommands()
 	(
 		FindInDialogue,
 		"Find",
-		"Find references to descriptions, events, condition and variables in the current Dialogue.",
+		"Find references to Nodes and their Decorators in the current Dialogue.",
 		EUserInterfaceActionType::Button,
 		FInputChord(EModifierKey::Control, EKeys::F)
 	);

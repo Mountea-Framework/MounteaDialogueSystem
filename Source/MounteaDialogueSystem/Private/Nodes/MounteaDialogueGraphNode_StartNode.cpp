@@ -27,6 +27,8 @@ UMounteaDialogueGraphNode_StartNode::UMounteaDialogueGraphNode_StartNode()
 	MaxChildrenNodes = 1;
 }
 
+#if WITH_EDITOR
+
 FText UMounteaDialogueGraphNode_StartNode::GetDescription_Implementation() const
 {
 	return LOCTEXT("MounteaDialogueGraphNode_StartNodeDescription", "Start Node is automatically placed Node which cannot be deleted. Indicates starting point of the Dialogue.");
@@ -36,7 +38,6 @@ FText UMounteaDialogueGraphNode_StartNode::GetNodeCategory_Implementation() cons
 {
 	return Super::GetNodeCategory_Implementation();
 }
-#if WITH_EDITOR
 
 bool UMounteaDialogueGraphNode_StartNode::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
 {

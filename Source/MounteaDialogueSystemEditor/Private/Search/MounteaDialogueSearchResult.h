@@ -197,12 +197,10 @@ public:
 	virtual FReply OnClick(TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr) override;
 	virtual TSharedRef<SWidget> CreateIcon() const override;
 	virtual TWeakObjectPtr<const UMounteaDialogueGraph> GetParentDialogue() const override;
-
-	// GraphNode:
+	
 	void SetDialogueGraph(TWeakObjectPtr<const UEdGraph_MounteaDialogueGraph> InDialogueGraph) { DialogueGraph = InDialogueGraph->GetMounteaDialogueGraph(); }
 
 protected:
-	// The GraphNode this represents.
 	TWeakObjectPtr<const UMounteaDialogueGraph> DialogueGraph;
 };
 
@@ -216,11 +214,9 @@ public:
 
 	virtual FReply OnClick(TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr) override;
 	virtual TSharedRef<SWidget> CreateIcon() const override;
-
-	// GraphNode:
+	
 	void SetGraphNode(TWeakObjectPtr<const UEdNode_MounteaDialogueGraphNode> InGraphNode) { GraphNode = InGraphNode; }
 
 protected:
-	// The GraphNode this represents.
 	TWeakObjectPtr<const UEdNode_MounteaDialogueGraphNode> GraphNode;
 };

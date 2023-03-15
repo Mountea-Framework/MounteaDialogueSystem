@@ -9,6 +9,11 @@
 #include "UObject/Object.h"
 #include "MounteaDialogueGraphNode_DialogueNodeBase.generated.h"
 
+// EDITOR EVENTS
+#if WITH_EDITORONLY_DATA
+
+#endif
+
 /**
  * Mountea Dialogue Graph Node abstract Base class.
  * 
@@ -31,12 +36,26 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual FName GetRowName() const
-	{ return RowName; };
-
+	{ return RowName; }
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual bool DoesAutoStart() const
 	{ return bAutoStarts; };
 
+public:
+
+#if WITH_EDITORONLY_DATA
+
+	/**
+	 * ❗Experimental Feature ❗
+	 * Shows read-only Texts with localization of selected Dialogue Row.
+	 */
+	UPROPERTY(Transient, VisibleAnywhere, Category="Base", meta=(MultiLine=true, ShowOnlyInnerProperties))
+	TArray<FText> Preview;
+
+	FSimpleDelegate PreviewsUpdated;
+
+#endif
 
 protected:
 	
@@ -54,21 +73,14 @@ protected:
 	UPROPERTY(SaveGame, EditDefaultsOnly, BlueprintReadOnly, Category="Base")
 	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
 
-#if WITH_EDITORONLY_DATA
-
-	/**
-	 * ❗Experimental Feature ❗
-	 * Shows read-only Texts without localization of selected Dialogue Row.
-	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue", meta=(MultiLine=true, ShowOnlyInnerProperties))
-	TArray<FString> Preview;
-
-#endif
 	
 #if WITH_EDITOR
 	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat) override;
 	virtual bool CanCreateConnection(UMounteaDialogueGraphNode* Other, EEdGraphPinDirection Direction, FText& ErrorMessage) override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+
+public:
+	TArray<FText> GetPreviews() const;
 #endif
 
 #if WITH_EDITORONLY_DATA

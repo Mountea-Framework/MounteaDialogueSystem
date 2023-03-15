@@ -24,6 +24,7 @@
 #include "Styling/SlateStyleRegistry.h"
 
 #include "ToolMenus.h"
+#include "DetailsPanel/MounteaDialogueDecorator_Details.h"
 #include "HelpButton/MDSCommands.h"
 #include "HelpButton/MDSHelpStyle.h"
 #include "Interfaces/IMainFrameModule.h"
@@ -151,16 +152,16 @@ void FMounteaDialogueSystemEditor::StartupModule()
 	//Register custom Buttons for Decorators
 	{
 		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-
-		//TODO: Implement showing/hiding custom categories in Graph
 		{
 			TArray<FOnGetDetailCustomizationInstance> CustomClassLayouts =
 			{
 				FOnGetDetailCustomizationInstance::CreateStatic(&FMounteaDialogueGraphNode_Details::MakeInstance),
+				FOnGetDetailCustomizationInstance::CreateStatic(&FMounteaDialogueDecorator_Details::MakeInstance),
 			};
 			RegisteredCustomClassLayouts =
 			{
 				UMounteaDialogueGraphNode::StaticClass()->GetFName(),
+				UMounteaDialogueDecoratorBase::StaticClass()->GetFName(),
 			};
 			for (int32 i = 0; i < RegisteredCustomClassLayouts.Num(); i++)
 			{

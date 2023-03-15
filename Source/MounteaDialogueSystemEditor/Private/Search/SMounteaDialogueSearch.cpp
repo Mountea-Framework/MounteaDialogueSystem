@@ -102,25 +102,20 @@ SMounteaDialogueSearch::~SMounteaDialogueSearch()
 
 void SMounteaDialogueSearch::FocusForUse(const FMounteaDialogueSearchFilter& SearchFilter, bool bSelectFirstResult)
 {
-	// NOTE: Careful, GeneratePathToWidget can be reentrant in that it can call visibility delegates and such
 	FWidgetPath FilterTextBoxWidgetPath;
 	FSlateApplication::Get().GeneratePathToWidgetUnchecked(SearchTextBoxWidget.ToSharedRef(), FilterTextBoxWidgetPath);
-
-	// Set keyboard focus directly
+	
 	FSlateApplication::Get().SetKeyboardFocus(FilterTextBoxWidgetPath, EFocusCause::SetDirectly);
-
-	// Set the new search terms
+	
 	if (!SearchFilter.SearchString.IsEmpty())
 	{
 		SearchTextBoxWidget->SetText(FText::FromString(SearchFilter.SearchString));
 		MakeSearchQuery(SearchFilter);
-
-		// Select the first result
+		
 		if (bSelectFirstResult && ItemsFound.Num())
 		{
 			auto ItemToFocusOn = ItemsFound[0];
-
-			// Focus the deepest child
+			
 			while (ItemToFocusOn->HasChildren())
 			{
 				ItemToFocusOn = ItemToFocusOn->GetChildren()[0];
@@ -134,15 +129,13 @@ void SMounteaDialogueSearch::FocusForUse(const FMounteaDialogueSearchFilter& Sea
 void SMounteaDialogueSearch::MakeSearchQuery(const FMounteaDialogueSearchFilter& SearchFilter)
 {
 	SearchTextBoxWidget->SetText(FText::FromString(SearchFilter.SearchString));
-
-	// Reset the scroll to the top
+	
 	if (ItemsFound.Num())
 	{
 		TreeView->RequestScrollIntoView(ItemsFound[0]);
 	}
 	ItemsFound.Empty();
-
-	// Nothing to search for :(
+	
 	if (SearchFilter.SearchString.IsEmpty())
 	{
 		return;
@@ -154,13 +147,11 @@ void SMounteaDialogueSearch::MakeSearchQuery(const FMounteaDialogueSearchFilter&
 	if (DialogueEditorPtr.IsValid())
 	{
 		FMounteaDialogueSearchManager::Get()->QuerySingleDialogue(SearchFilter, DialogueEditorPtr.Pin()->GetDialogueBeingEdited(), RootSearchResult);
-
-		// Do now show the Dialogue in the search results.
+		
 		const TArray<TSharedPtr<FMounteaDialogueSearchResult>>& Children = RootSearchResult->GetChildren();
 		if (Children.Num() == 1 && Children[0].IsValid())
 		{
-			// Make the root be the first result (aka de dialogue).
-			// NOTE: we must keep a reference here otherwise it crashes inside the parent reset
+			// we must ensure reference is created so its not garbage collected, usually resulting in crash!
 			TSharedPtr<FMounteaDialogueSearchResult> TempChild = Children[0];
 			RootSearchResult = TempChild;
 			RootSearchResult->ClearParent();
@@ -170,14 +161,12 @@ void SMounteaDialogueSearch::MakeSearchQuery(const FMounteaDialogueSearchFilter&
 	ItemsFound = RootSearchResult->GetChildren();
 	if (ItemsFound.Num() == 0)
 	{
-		// Some Items found
 		ItemsFound.Add(MakeShared<FMounteaDialogueSearchResult>(LOCTEXT("DialogueSearchNoResults", "No Results found"), RootSearchResult));
 		HighlightText = FText::GetEmpty();
 
 	}
 	else
 	{
-		// No Items found
 		RootSearchResult->ExpandAllChildren(TreeView);
 	}
 

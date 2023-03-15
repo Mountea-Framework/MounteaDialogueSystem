@@ -69,7 +69,7 @@ UMounteaDialogueGraph* FMounteaDialogueSearchUtils::GetDialogueFromGraphNode(con
 		return DialogueBaseNode->GetDialogueGraphEdGraph()->GetMounteaDialogueGraph();
 	}
 
-	// Last change
+	// Last chance
 	if (const UEdGraph_MounteaDialogueGraph* DialogueGraph = Cast<UEdGraph_MounteaDialogueGraph>(GraphNode->GetGraph()))
 	{
 		return Cast<UMounteaDialogueGraph>(DialogueGraph->GetMounteaDialogueGraph());

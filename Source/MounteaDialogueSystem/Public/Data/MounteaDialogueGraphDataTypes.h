@@ -150,7 +150,7 @@ public:
 	 * 
 	 * ❗This Text should not be displayed as option to be selected, for that use 'DialogueRow.RowTitle' value
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true, MultiLine=true))
 	FText RowText;
 	/**
 	 * Row Sound.

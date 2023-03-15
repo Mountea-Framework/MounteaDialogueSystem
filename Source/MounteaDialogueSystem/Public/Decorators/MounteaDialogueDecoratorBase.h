@@ -10,6 +10,8 @@
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
 
+#define LOCTEXT_NAMESPACE "NodeDecoratorBase"
+
 /**
  *	Mountea Dialogue Decorator
  *
@@ -47,7 +49,14 @@ public:
 			}
 		}
 		return nullptr;
-	};
+	}
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
+	const FString GetDecoratorDocumentationLink();
+	const FString GetDecoratorDocumentationLink_Implementation()
+	{
+		return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Dialogue-Decorators");
+	}
 
 public:
 
@@ -211,3 +220,5 @@ public:
 	};
 	
 };
+
+#undef LOCTEXT_NAMESPACE

@@ -28,6 +28,8 @@ UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 	MaxChildrenNodes = 1;
 }
 
+#if WITH_EDITOR
+
 FText UMounteaDialogueGraphNode_AnswerNode::GetDescription_Implementation() const
 {
 	return LOCTEXT("MounteaDialogueGraphNode_AnswerNodeDescription", "Answear Node is a Node which usually contains Player parts of the Dialogue.");
@@ -38,7 +40,7 @@ FText UMounteaDialogueGraphNode_AnswerNode::GetNodeCategory_Implementation() con
 	return LOCTEXT("MounteaDialogueGraphNode_AnswearNodeCategory", "Mountea Dialogue Branche Nodes");
 }
 
-#if WITH_EDITOR
+
 bool UMounteaDialogueGraphNode_AnswerNode::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
 {
 	bool Result = Super::ValidateNode(ValidationsMessages, RichFormat);

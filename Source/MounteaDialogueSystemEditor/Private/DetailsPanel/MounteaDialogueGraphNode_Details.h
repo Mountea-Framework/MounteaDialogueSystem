@@ -3,9 +3,10 @@
 #pragma once
 
 #include "IDetailCustomization.h"
-#include "IDetailPropertyRow.h"
 #include "Helpers/MounteaDialogueBase_CustomRowHelper.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
+
+class SScrollBox;
 
 class FMounteaDialogueGraphNode_Details : public IDetailCustomization
 {
@@ -21,15 +22,26 @@ public:
 	FSlateColor GetDocumentationColorOpacity() const;
 	const FSlateBrush* GetBorderImage() const;
 	void OnDocumentationHovered();
+
+	const FSlateBrush* GetPreviewsBrush() const;
+	FSlateColor GetPreviewsBackgroundColor() const;
+	FSlateColor GetPreviewsTextColor() const;
+	
+	void MakePreviewsScrollBox(TArray<FText>& FromTexts);
+
+	void ResetTexts();
 	
 	// IDetailCustomization interface
 	/** Called when details should be customized */
 	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
 
 private:
+	TSharedPtr<SScrollBox> PreviewRows;
 	TSharedPtr<SButton> DocumentationButton;
 	TSharedPtr<SImage> DocumentationImage;
 	
 	FButtonStyle DocumentationButtonStyle;
 	IDetailLayoutBuilder* SavedLayoutBuilder = nullptr;
+
+	UMounteaDialogueGraphNode* EditingNode = nullptr;
 };

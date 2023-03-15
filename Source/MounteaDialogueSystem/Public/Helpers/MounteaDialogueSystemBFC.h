@@ -403,9 +403,9 @@ public:
 	 * @param Node	Node to get Data from.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Get Dialogue Row", Keywords="row, dialogue"))
-	static FDialogueRow GetDialogueRow(UMounteaDialogueGraphNode* Node)
+	static FDialogueRow GetDialogueRow(const UMounteaDialogueGraphNode* Node)
 	{
-		UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNodeBase = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node);
+		const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNodeBase = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node);
 		
 		if (!DialogueNodeBase) return FDialogueRow();
 		if (DialogueNodeBase->GetDataTable() == nullptr) return FDialogueRow();

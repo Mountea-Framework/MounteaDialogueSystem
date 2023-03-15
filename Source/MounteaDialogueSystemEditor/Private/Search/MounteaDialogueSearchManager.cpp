@@ -23,14 +23,7 @@ FMounteaDialogueSearchManager* FMounteaDialogueSearchManager::Get()
 }
 
 FMounteaDialogueSearchManager::FMounteaDialogueSearchManager()
-{
-	// Create the Tab Ids
-	for (int32 TabIdx = 0; TabIdx < UE_ARRAY_COUNT(GlobalFindResultsTabIDs); TabIdx++)
-	{
-		const FName TabID = FName(*FString::Printf(TEXT("GlobalNotYetDialogueFindResults_%02d"), TabIdx + 1));
-		GlobalFindResultsTabIDs[TabIdx] = TabID;
-	}
-}
+{}
 
 FMounteaDialogueSearchManager::~FMounteaDialogueSearchManager()
 {
@@ -53,7 +46,7 @@ bool FMounteaDialogueSearchManager::QueryGraphNode(const FMounteaDialogueSearchF
 	
 	const FText DisplayText = FText::Format
 	(
-		LOCTEXT("TreeGraphNodeCategory", "Found results in {0}"),
+		LOCTEXT("MounteaDialogueNodeCategory", "Found results in {0}"),
 		FText::FromString(NodeType)
 	);
 

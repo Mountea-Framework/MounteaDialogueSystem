@@ -11,11 +11,8 @@ class SMounteaDialogueSearch;
 struct FMounteaDialogueSearchFilter;
 class FMounteaDialogueSearchResult;
 
-static constexpr int32 MAX_GLOBAL_DIALOGUE_SEARCH_RESULTS = 4;
-
 struct FDialogueSearchData
 {
-	/** The Dialogue this search data points to, if available */
 	TWeakObjectPtr<UMounteaDialogueGraph> Dialogue;
 };
 
@@ -61,11 +58,9 @@ public:
 		const UMounteaDialogueGraph* InDialogue,
 		TSharedPtr<FMounteaDialogueSearchResult>& OutParentNode
 	);
-
-	// Initializes the manager. Should only be called once in the FDlgSystemEditorModule::StartupModule()
+	
 	void Initialize(TSharedPtr<FWorkspaceItem> ParentTabCategory = nullptr);
-
-	// UnInitializes the manager. Should only be called once in the FDlgSystemEditorModule::ShutdownModule()
+	
 	void UnInitialize();
 
 	private:
@@ -88,15 +83,6 @@ public:
 		return TextNode;
 	}
 	
-	// Handler for a request to spawn a new global find results tab
-	//TSharedRef<SDockTab> SpawnGlobalFindResultsTab(const FSpawnTabArgs& SpawnTabArgs, int32 TabIdx);
-
-	// Creates and opens a new global find results tab. The next one in the available list.
-	//TSharedPtr<SMounteaDialogueSearch> OpenGlobalFindResultsTab();
-
-	// Builds the cache from all available Dialogues assets that the asset registry has discovered at the time of this function. Occurs on startup.
-	//void BuildCache();
-
 	// Callback hook from the Asset Registry when an asset is added
 	void HandleOnAssetAdded(const FAssetData& InAssetData);
 
@@ -120,15 +106,6 @@ private:
 
 	// Because we are unable to query for the module on another thread, cache it for use later
 	IAssetRegistry* AssetRegistry = nullptr;
-
-	// The tab identifier/instance name for global find results
-	FName GlobalFindResultsTabIDs[MAX_GLOBAL_DIALOGUE_SEARCH_RESULTS];
-
-	// Array of open global find results widgets
-	TArray<TWeakPtr<SMounteaDialogueSearch>> GlobalFindResultsWidgets;
-
-	// Global Find Results workspace menu item
-	TSharedPtr<FWorkspaceItem> GlobalFindResultsMenuItem;
 
 	// Handlers
 	FDelegateHandle OnAssetAddedHandle;

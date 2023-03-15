@@ -20,7 +20,6 @@ public:
 	
 	FMounteaDialogueDecorator_CustomDetailsHelper(IDetailPropertyRow* InPropertyRow);
 	virtual ~FMounteaDialogueDecorator_CustomDetailsHelper() {}
-	
 	// Update the full property row.
 	void Update();
 
@@ -43,6 +42,7 @@ protected:
 	// Reset to default
 	virtual FReply OnBrowseClicked();
 	virtual FReply OnOpenClicked();
+	FReply OnDocumentationClicked() const;
 
 	virtual UObject* GetObject() const;
 	UBlueprint* GetBlueprint() const;
@@ -50,15 +50,17 @@ protected:
 
 	virtual FText GetBrowseObjectText() const;
 	virtual FText GetJumpToObjectText() const;
+	virtual FText GetOpenDocumentationText() const;
 	virtual float GetRowMinimumDesiredWidth() const { return 250.f; }
 
 	EVisibility GetOpenButtonVisibility() const;
 	EVisibility GetBrowseButtonVisibility() const;
+	EVisibility GetOpenDocumentationButtonVisibility() const;
 	virtual bool CanBeVisible() const { return true; }
 
 	void RequestDeleteItem();
 	void OnDeleteItem();
-	
+
 protected:
 
 	TSharedPtr<IPropertyUtilities> PropertyUtils;

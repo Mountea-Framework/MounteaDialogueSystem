@@ -20,6 +20,8 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_LeadNode : public UMou
 	
 	UMounteaDialogueGraphNode_LeadNode();
 
+#if WITH_EDITOR
 	virtual FText GetDescription_Implementation() const override;
 	virtual FText GetNodeCategory_Implementation() const override;
+#endif
 };

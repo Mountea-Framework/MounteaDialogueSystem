@@ -40,6 +40,8 @@ UObject* UMounteaDialogueDecoratorAssetFactory::FactoryCreateNew(UClass* Class, 
 	CreatedBlueprint->HideCategories.Add("Hidden");
 	CreatedBlueprint->HideCategories.Add("Private");
 	CreatedBlueprint->HideCategories.Add("Base");
+	CreatedBlueprint->HideCategories.Add("Hide");
+	CreatedBlueprint->HideCategories.Add("Editor");
 
 	CreatedBlueprint->BlueprintCategory = FString(TEXT("Mountea Dialogue"));
 

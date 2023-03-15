@@ -146,32 +146,43 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::PostEditChangeProperty(FPropert
 	{
 		RowName = FName("");
 		Preview.Empty();
+		PreviewsUpdated.ExecuteIfBound();
 	}
 
 	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_DialogueNodeBase, RowName))
 	{
 		UpdatePreviews();
+		PreviewsUpdated.ExecuteIfBound();
 	}
 }
 
-void UMounteaDialogueGraphNode_DialogueNodeBase::UpdatePreviews()
+TArray<FText> UMounteaDialogueGraphNode_DialogueNodeBase::GetPreviews() const
 {
-	//TODO: use custom window in custom Tab rather than this crap
-	if (!DataTable) Preview.Empty();
-
-	Preview.Empty();
-	const auto Row = UMounteaDialogueSystemBFC::GetDialogueRow(this);
+	TArray<FText> ReturnValues;
+	
+	const auto Row = UMounteaDialogueSystemBFC::GetDialogueRow( this );
 	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(Row))
 	{
 		for (auto Itr : Row.DialogueRowData.Array())
 		{
-			Preview.Add( Itr.RowText.ToString() );
+			ReturnValues.Add( Itr.RowText );
 		}
 	}
 	else
 	{
-		Preview.Empty();
+		ReturnValues.Empty();
 	}
+
+	return ReturnValues;
+}
+
+void UMounteaDialogueGraphNode_DialogueNodeBase::UpdatePreviews()
+{
+	if (!DataTable) Preview.Empty();
+
+	Preview.Empty();
+
+	Preview = GetPreviews();
 }
 
 #endif	

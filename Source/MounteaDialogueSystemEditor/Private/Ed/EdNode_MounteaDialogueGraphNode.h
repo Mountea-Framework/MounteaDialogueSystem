@@ -52,6 +52,7 @@ public:
 	virtual bool CanUserPasteNodes() const;
 
 	virtual FText GetTooltipText() const override;
+	virtual FSlateIcon GetIconAndTint(FLinearColor& OutColor) const override;
 
 #if WITH_EDITOR
 	virtual void PostEditUndo() override;

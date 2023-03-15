@@ -117,27 +117,6 @@ public:
 	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetParentNodes() const
 	{return ParentNodes; };
 
-	
-	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
-	FText GetNodeTitle() const;
-	virtual FText GetNodeTitle_Implementation() const;
-	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
-	FText GetDescription() const;
-	virtual FText GetDescription_Implementation() const;
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
-	FText GetNodeCategory() const;
-	virtual FText GetNodeCategory_Implementation() const;
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
-	FString GetNodeDocumentationLink() const;
-	virtual FString GetNodeDocumentationLink_Implementation() const;
-
-	
-	virtual void OnCreatedInEditor() {};
-
 #pragma endregion 
 
 
@@ -192,6 +171,22 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetNodeTooltipText() const;
 	virtual FText GetNodeTooltipText_Implementation() const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	FText GetNodeTitle() const;
+	virtual FText GetNodeTitle_Implementation() const;
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	FText GetDescription() const;
+	virtual FText GetDescription_Implementation() const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	FText GetNodeCategory() const;
+	virtual FText GetNodeCategory_Implementation() const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	FString GetNodeDocumentationLink() const;
+	virtual FString GetNodeDocumentationLink_Implementation() const;
 	
 	virtual FLinearColor GetBackgroundColor() const;
 	FText GetInternalName() const
@@ -206,6 +201,8 @@ public:
 	virtual void OnPasted();
 
 	FText GetDefaultTooltipBody() const;
+	virtual void OnCreatedInEditor() {};
+
 #endif
 
 };
