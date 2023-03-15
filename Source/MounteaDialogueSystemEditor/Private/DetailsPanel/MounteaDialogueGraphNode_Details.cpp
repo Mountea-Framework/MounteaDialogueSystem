@@ -60,7 +60,7 @@ const FSlateBrush* FMounteaDialogueGraphNode_Details::GetPreviewsBrush() const
 
 FSlateColor FMounteaDialogueGraphNode_Details::GetPreviewsBackgroundColor() const
 {
-	return MounteaDialogueGraphColors::NodeBody::Default;
+	return MounteaDialogueGraphColors::Previews::Normal;
 }
 
 FSlateColor FMounteaDialogueGraphNode_Details::GetPreviewsTextColor() const
@@ -79,7 +79,7 @@ void FMounteaDialogueGraphNode_Details::MakePreviewsScrollBox(TArray<FText>& Fro
 			SNew(SBorder)
 			.Padding(FMargin(1.f))
 			.BorderImage(this, &FMounteaDialogueGraphNode_Details::GetPreviewsBrush)
-			.BorderBackgroundColor(this, &FMounteaDialogueGraphNode_Details::GetPreviewsBackgroundColor)
+			.BorderBackgroundColor(MounteaDialogueGraphColors::Previews::Invalid)
 			[
 				SNew(SBox)
 				.Padding(FMargin(2.5f))
@@ -101,21 +101,25 @@ void FMounteaDialogueGraphNode_Details::MakePreviewsScrollBox(TArray<FText>& Fro
 	{
 		PreviewRows->AddSlot()
 		[
-			SNew(SBorder)
-			.Padding(FMargin(1.f))
-			.BorderImage(this, &FMounteaDialogueGraphNode_Details::GetPreviewsBrush)
-			.BorderBackgroundColor(this, &FMounteaDialogueGraphNode_Details::GetPreviewsBackgroundColor)
+			SNew(SBox)
+			.Padding(FMargin(4.f))
 			[
-				SNew(SBox)
-				.Padding(FMargin(2.5f))
+				SNew(SBorder)
+				.Padding(FMargin(2.f))
+				.BorderImage(this, &FMounteaDialogueGraphNode_Details::GetPreviewsBrush)
+				.BorderBackgroundColor(this, &FMounteaDialogueGraphNode_Details::GetPreviewsBackgroundColor)
 				[
-					SNew(STextBlock)
-					.Text(Itr)
-					.TextStyle(FEditorStyle::Get(), "NormalText")
-					.AutoWrapText(true)
-					.Justification(ETextJustify::Left)
-					.AutoWrapText(true)
-					.ColorAndOpacity(this, &FMounteaDialogueGraphNode_Details::GetPreviewsTextColor)
+					SNew(SBox)
+					.Padding(FMargin(2.5f))
+					[
+						SNew(STextBlock)
+						.Text(Itr)
+						.TextStyle(FEditorStyle::Get(), "NormalText")
+						.AutoWrapText(true)
+						.Justification(ETextJustify::Left)
+						.AutoWrapText(true)
+						.ColorAndOpacity(this, &FMounteaDialogueGraphNode_Details::GetPreviewsTextColor)
+					]
 				]
 			]
 		];
