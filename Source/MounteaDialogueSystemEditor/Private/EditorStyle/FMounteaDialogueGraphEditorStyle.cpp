@@ -13,6 +13,7 @@ TSharedPtr<FSlateStyleSet> FMounteaDialogueGraphEditorStyle::StyleSet = nullptr;
 #define BORDER_BRUSH( RelativePath, ... ) FSlateBorderBrush( StyleSet->RootToContentDir( RelativePath, TEXT(".png") ), __VA_ARGS__ )
 #define TTF_FONT( RelativePath, ... ) FSlateFontInfo( StyleSet->RootToContentDir( RelativePath, TEXT(".ttf") ), __VA_ARGS__ )
 #define OTF_FONT( RelativePath, ... ) FSlateFontInfo( StyleSet->RootToContentDir( RelativePath, TEXT(".otf") ), __VA_ARGS__ )
+#define DEFAULT_FONT(...) FCoreStyle::GetDefaultFontStyle(__VA_ARGS__)
 
 void FMounteaDialogueGraphEditorStyle::Initialize()
 {
@@ -30,6 +31,16 @@ void FMounteaDialogueGraphEditorStyle::Initialize()
 
 	StyleSet = MakeShareable(new FSlateStyleSet("MDSStyleSet"));
 	StyleSet->SetContentRoot(IPluginManager::Get().FindPlugin("MounteaDialogueSystem")->GetBaseDir() / TEXT("Resources"));
+
+	const FTextBlockStyle NormalText = FTextBlockStyle()
+		.SetFont(DEFAULT_FONT("Regular", FCoreStyle::RegularTextSize))
+		.SetColorAndOpacity(FSlateColor::UseForeground())
+		.SetShadowOffset(FVector2D::ZeroVector)
+		.SetShadowColorAndOpacity(FLinearColor::Black)
+		.SetHighlightColor( FLinearColor( 0.02f, 0.3f, 0.0f ) )
+		.SetHighlightShape( BOX_BRUSH( "Common/TextBlockHighlightShape", FMargin(3.f/8.f) ) );
+
+	StyleSet->Set("NormalText", NormalText);
 
 	StyleSet->Set("MDSStyleSet.AutoArrange.small", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.AutoArrange", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon40x40));
@@ -82,6 +93,21 @@ void FMounteaDialogueGraphEditorStyle::Initialize()
 		.SetPressed(BOX_BRUSH("Common/RoundedSelection_16x", 4.0f / 16.0f,  FLinearColor(1, .55f, 0, 0.4f)));
 
 	
+
+	StyleSet->Set( "MDS.NormalText.Bold", FTextBlockStyle(NormalText)
+			.SetFont( DEFAULT_FONT( "Bold", 12 ) )
+			.SetColorAndOpacity( FLinearColor(0.5f,0.5f,0.5f,1.0f) )
+			.SetShadowOffset( FVector2D(1.0f, 1.0f) )
+			.SetShadowColorAndOpacity( FLinearColor(0.f,0.f,0.f,0.8f) )
+		);
+
+	StyleSet->Set( "MDS.NormalText.Regular", FTextBlockStyle(NormalText)
+		.SetFont( DEFAULT_FONT( "Regular", 12 ) )
+		.SetColorAndOpacity( FLinearColor::White )
+		.SetShadowOffset( FVector2D(1.0f, 1.0f) )
+		.SetShadowColorAndOpacity( FLinearColor(0.f,0.f,0.f,0.8f) )
+	);
+	
 	StyleSet->Set("MDSStyleSet.Buttons.Style", MounteaButtonStyle);
 	
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
@@ -113,3 +139,4 @@ const FName& FMounteaDialogueGraphEditorStyle::GetStyleSetName()
 #undef BORDER_BRUSH
 #undef TTF_FONT
 #undef OTF_FONT
+#undef DEFAULT_FONT

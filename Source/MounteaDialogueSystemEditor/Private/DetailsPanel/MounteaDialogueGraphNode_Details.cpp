@@ -86,7 +86,7 @@ void FMounteaDialogueGraphNode_Details::MakePreviewsScrollBox(TArray<FText>& Fro
 				[
 					SNew(STextBlock)
 					.Text(LOCTEXT("FMounteaDialogueGraphNode_Details_Previews_Invalid", "invalid data selected"))
-					.TextStyle(FEditorStyle::Get(), "Profiler.TooltipBold")
+					.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDS.NormalText.Bold")
 					.AutoWrapText(true)
 					.Justification(ETextJustify::Center)
 					.AutoWrapText(true)
@@ -114,7 +114,7 @@ void FMounteaDialogueGraphNode_Details::MakePreviewsScrollBox(TArray<FText>& Fro
 					[
 						SNew(STextBlock)
 						.Text(Itr)
-						.TextStyle(FEditorStyle::Get(), "NormalText")
+						.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDS.NormalText.Regular")
 						.AutoWrapText(true)
 						.Justification(ETextJustify::Left)
 						.AutoWrapText(true)
