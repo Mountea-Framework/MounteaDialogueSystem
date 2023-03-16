@@ -33,20 +33,24 @@ protected:
 	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault))
 	bool bOverridePlayerParticipant;
 	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, EditCondition="bOverridePlayerParticipant"))
-	TWeakObjectPtr<AActor>NewPlayerParticipant;
+	TSoftObjectPtr<AActor>NewPlayerParticipant;
 
 	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault))
 	bool bOverrideDialogueParticipant;
 	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, EditCondition="bOverrideDialogueParticipant"))
-	TWeakObjectPtr<AActor>NewDialogueParticipant;
+	TSoftObjectPtr<AActor>NewDialogueParticipant;
 
 	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault))
 	bool bOverrideActiveParticipant;
 	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, EditCondition="bOverrideActiveParticipant"))
-	TWeakObjectPtr<AActor>NewActiveParticipant;
+	TSoftObjectPtr<AActor>NewActiveParticipant;
 
 private:
 	
 	UMounteaDialogueContext* Context = nullptr;
 	TScriptInterface<IMounteaDialogueManagerInterface> Manager = nullptr;
+
+private:
+
+	bool ValidateInterfaceActor(TSoftObjectPtr<AActor> Actor, TArray<FText>& ValidationMessages) const;
 };

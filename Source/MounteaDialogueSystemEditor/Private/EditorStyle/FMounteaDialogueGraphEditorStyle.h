@@ -20,6 +20,11 @@ public:
 		return StyleSet->GetWidgetStyle< T >( PropertyName, Specifier );
 	}
 
+	static ISlateStyle& Get()
+	{
+		return *(StyleSet.Get());
+	}
+
 private:
 	static TSharedPtr<FSlateStyleSet> StyleSet;
 };
