@@ -7,20 +7,26 @@
 #include "Engine/DataTable.h"
 #include "MounteaDialogueDecorator_OverrideDialogue.generated.h"
 
+class IMounteaDialogueManagerInterface;
 /**
  *	Mountea Dialogue Decorators
  *
  * Implements native support for selecting Dialogue Row data.
  */
-UCLASS( Blueprintable, BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea, Dialogue"), DisplayName="Override Dialogue Row Data")
+UCLASS( NotBlueprintable, BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea, Dialogue"), DisplayName="Override Dialogue Row Data")
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecorator_OverrideDialogue : public UMounteaDialogueDecoratorBase
 {
 	GENERATED_BODY()
 
 public:
 
+	virtual void InitializeDecorator_Implementation(UWorld* World) override;
+	virtual void CleanupDecorator_Implementation() override;
 	virtual bool ValidateDecorator_Implementation(TArray<FText>& ValidationMessages) override;
 	virtual void ExecuteDecorator_Implementation() override;
+
+	virtual const FString GetDecoratorDocumentationLink_Implementation() override
+	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Decorator:-Override-Dialogue-Row-Data"); }
 
 protected:
 
@@ -34,6 +40,11 @@ protected:
 	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(UIMin=0, ClampMin=0, NoResetToDefault, EditCondition="DataTable!=nullptr"))
 	int32 RowIndex;
 
+private:
+	
+	UMounteaDialogueContext* Context = nullptr;
+	TScriptInterface<IMounteaDialogueManagerInterface> Manager = nullptr;
+	
 private:
 
 	UFUNCTION()

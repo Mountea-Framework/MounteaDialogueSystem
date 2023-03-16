@@ -7,6 +7,7 @@
 #include "PropertyCustomizationHelpers.h"
 #include "SourceCodeNavigation.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
+#include "Settings/MounteaDialogueGraphEditorSettings.h"
 //#include "Decorators/MounteaDialogueGraphNodeDecoratorBase.h"
 //#include "Engine/Selection.h"
 //#include "Helpers/MounteaDialogueGraphEditorHelpers.h"
@@ -266,7 +267,14 @@ EVisibility FMounteaDialogueDecorator_CustomDetailsHelper::GetOpenButtonVisibili
 		}
 
 		// Native
-		return FSourceCodeNavigation::CanNavigateToClass(Object->GetClass()) ? EVisibility::Visible : EVisibility::Collapsed;
+		const UMounteaDialogueGraphEditorSettings* EditorSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
+
+		if (!EditorSettings)
+		{
+			return EVisibility::Collapsed;
+		}
+		
+		return EditorSettings->IsNativeDecoratorsEditAllowed() ?  EVisibility::Visible : EVisibility::Collapsed;
 	}
 
 	return EVisibility::Collapsed;
@@ -278,7 +286,7 @@ EVisibility FMounteaDialogueDecorator_CustomDetailsHelper::GetBrowseButtonVisibi
 	{
 		return EVisibility::Collapsed;
 	}
-
+	
 	return IsObjectABlueprint() ? EVisibility::Visible : EVisibility::Collapsed;
 }
 

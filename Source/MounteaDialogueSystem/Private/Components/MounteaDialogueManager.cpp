@@ -128,10 +128,7 @@ void UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal(UMounteaDialo
 
 	if (DialogueWidgetPtr)
 	{
-		TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;
-		WidgetInterface.SetObject(DialogueWidgetPtr);
-		WidgetInterface.SetInterface(DialogueWidgetPtr);
-		WidgetInterface->Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::RemoveDialogueOptions);
+		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::RemoveDialogueOptions);
 	}
 	else
 	{
@@ -214,11 +211,7 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 	}
 	else
 	{
-		TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;
-		WidgetInterface.SetObject(DialogueWidgetPtr);
-		WidgetInterface.SetInterface(DialogueWidgetPtr);
-		WidgetInterface->Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::AddDialogueOptions);
-
+		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::AddDialogueOptions);
 		return;
 	}
 }
@@ -244,7 +237,7 @@ void UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal(UMounteaDialogu
 
 void UMounteaDialogueManager::OnDialogueRowFinishedEvent_Internal(UMounteaDialogueContext* Context)
 {
-	//OnDialogueVoiceSkipRequest.Broadcast(nullptr);
+	//...
 }
 
 void UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal(USoundBase* VoiceToStart)
@@ -322,10 +315,7 @@ void UMounteaDialogueManager::CloseDialogue()
 {
 	if (DialogueWidgetPtr)
 	{
-		TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;
-		WidgetInterface.SetObject(DialogueWidgetPtr);
-		WidgetInterface.SetInterface(DialogueWidgetPtr);
-		WidgetInterface->Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CloseDialogueWidget);	
+		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CloseDialogueWidget);
 	}
 
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -471,18 +461,8 @@ bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
 	// This Component should not be responsible for setting up Player Controller!
 	PlayerController->SetShowMouseCursor(true);
 	DialogueWidgetPtr->bStopAction = true;
-	
-	TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;
-	WidgetInterface.SetObject(DialogueWidgetPtr);
-	WidgetInterface.SetInterface(DialogueWidgetPtr);
 
-	if (WidgetInterface.GetInterface() == nullptr)
-	{
-		Message = TEXT("Invalid Widget Interface!");
-		return false;
-	}
-
-	WidgetInterface->Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CreateDialogueWidget);
+	IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CreateDialogueWidget);
 	
 	return true;
 }
@@ -550,10 +530,7 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 	{
 		if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->SubtitlesAllowed())
 		{
-			TScriptInterface<IMounteaDialogueWBPInterface> WidgetInterface;
-			WidgetInterface.SetObject(DialogueWidgetPtr);
-			WidgetInterface.SetInterface(DialogueWidgetPtr);
-			WidgetInterface->Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::ShowDialogueRow);
+			IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::ShowDialogueRow);
 		}
 	}
 }

@@ -53,7 +53,7 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
 	const FString GetDecoratorDocumentationLink();
-	const FString GetDecoratorDocumentationLink_Implementation()
+	virtual const FString GetDecoratorDocumentationLink_Implementation()
 	{
 		return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Dialogue-Decorators");
 	}
@@ -76,8 +76,9 @@ public:
 	 * Cleans up the Decorator.
 	 * In Blueprints should be used to reset cached values to avoid blocking garbage collector.
 	 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "Mountea|Dialogue|Decorators")
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
 	void CleanupDecorator();
+	virtual void CleanupDecorator_Implementation() {};
 
 	/**
 	 * Validates the Decorator.

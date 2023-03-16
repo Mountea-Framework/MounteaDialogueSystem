@@ -24,8 +24,8 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 	CoolDownRate = 10.f;
 
 	WireWidth = 1.5f;
-	WireStyle = EWiringStyle::EWS_Simple;
-	BubbleDrawRule = EBubbleDrawRule::EBDR_OnSelected;
+	//WireStyle = EWiringStyle::EWS_Simple;
+	//BubbleDrawRule = EBubbleDrawRule::EBDR_OnSelected;
 
 	bAllowRenameNodes = true;
 	bDisplayAutomaticNames = false;
@@ -33,6 +33,8 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 	bShowDetailedInfo_InheritsDecorators = false;
 	bShowDetailedInfo_NumDecorators = true;
 	DecoratorsInfoStyle = EDecoratorsInfoStyle::EDIS_Unified;
+
+	bAllowNativeDecoratorsEdit = false;
 }
 
 #undef LOCTEXT_NAMESPACE

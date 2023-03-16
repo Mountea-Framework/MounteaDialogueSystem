@@ -19,6 +19,9 @@ bool FMounteaDialogueGraphEditorUtilities::PickChildrenOfClass(const FText& Titl
 	Options.bExpandRootNodes = true;
 	Options.DisplayMode = EClassViewerDisplayMode::TreeView;
 	Options.NameTypeToDisplay = EClassViewerNameTypeToDisplay::Dynamic;
+
+	Options.bShowNoneOption = false;
+	Options.InitiallySelectedClass = Class;
 	
 	return SClassPickerDialog::PickClass(TitleText, Options, OutChosenClass, Class);
 }
