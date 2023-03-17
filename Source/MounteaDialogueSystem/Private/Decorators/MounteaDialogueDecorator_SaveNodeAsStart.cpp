@@ -7,9 +7,9 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_SaveNodeAsStart"
 
-void UMounteaDialogueDecorator_SaveNodeAsStart::InitializeDecorator_Implementation(UWorld* World)
+void UMounteaDialogueDecorator_SaveNodeAsStart::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant)
 {
-	Super::InitializeDecorator_Implementation(World);
+	Super::InitializeDecorator_Implementation(World, OwningParticipant);
 
 	if (World)
 	{

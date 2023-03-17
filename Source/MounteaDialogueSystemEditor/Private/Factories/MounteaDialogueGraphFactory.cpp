@@ -20,4 +20,4 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateNew(UClass* Class, UObject* 
 	Name = FName(*NewName); 
 	*/
 	return NewObject<UObject>(InParent, Class, Name, Flags | RF_Transactional);
-} 
+}

@@ -56,7 +56,7 @@ public:
 		// Initialize Decorators
 		for (auto Itr : Participant->GetDialogueGraph()->GetAllDecorators())
 		{
-			Itr.InitializeDecorator(WorldContext);
+			Itr.InitializeDecorator(WorldContext, Participant);
 		}
 	}
 
@@ -286,7 +286,7 @@ public:
 
 		for (auto Itr : Graph->GetAllDecorators())
 		{
-			Itr.InitializeDecorator(TempWorld);
+			Itr.InitializeDecorator(TempWorld, DialogueParticipant);
 		}
 
 		if (Graph->CanStartDialogueGraph() == false) return false;
@@ -305,9 +305,9 @@ public:
 
 			NodeToStart = GetFirstChildNode(NodeToStart);
 		}
-
-		const TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
 		
+		const TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
+
 		UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
 		Context->SetDialogueContext(DialogueParticipant, NodeToStart, StartNode_Children);
 		Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(WorldContextObject));

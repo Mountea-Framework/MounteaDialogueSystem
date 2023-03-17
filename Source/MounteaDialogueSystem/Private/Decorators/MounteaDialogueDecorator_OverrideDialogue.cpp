@@ -8,9 +8,9 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_OverrideDialogue"
 
-void UMounteaDialogueDecorator_OverrideDialogue::InitializeDecorator_Implementation(UWorld* World)
+void UMounteaDialogueDecorator_OverrideDialogue::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant)
 {
-	Super::InitializeDecorator_Implementation(World);
+	Super::InitializeDecorator_Implementation(World, OwningParticipant);
 
 	if (World)
 	{

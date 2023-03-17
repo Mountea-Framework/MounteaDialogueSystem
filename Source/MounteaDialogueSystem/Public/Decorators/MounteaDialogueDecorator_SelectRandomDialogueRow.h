@@ -19,7 +19,7 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecorator_SelectRandomDialogueRo
 
 public:
 
-	virtual void InitializeDecorator_Implementation(UWorld* World) override;
+	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant) override;
 	virtual void CleanupDecorator_Implementation() override;
 	virtual bool ValidateDecorator_Implementation(TArray<FText>& ValidationMessages) override;
 	virtual void ExecuteDecorator_Implementation() override;

@@ -3,18 +3,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Decorators/MounteaDialogueDecoratorBase.h"
-#include "Engine/DataTable.h"
-#include "MounteaDialogueDecorator_OverrideDialogue.generated.h"
+#include "Decorators/MounteaDialogueDecorator_OnlyFirstTime.h"
+#include "MounteaDialogueDecorator_OverrideOnlyFirstTime.generated.h"
 
-class IMounteaDialogueManagerInterface;
 /**
  *	Mountea Dialogue Decorators
  *
- * Implements native support for selecting Dialogue Row data.
+ * Implements native support for triggering logic if Owning node has been entered for the first time.
+ * Overrides Dialogue Data only if Owning Node has been traversed for the first Time.
+ * Does not block Owning node from Evaluation, therefore Owning node is available to selection.
+ *
+ * For proper usage, save Dialogue Participants when saving game!
  */
-UCLASS( BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue"), DisplayName="Override Dialogue Row Data")
-class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecorator_OverrideDialogue : public UMounteaDialogueDecoratorBase
+UCLASS(  BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue"), DisplayName="Override Only First Time")
+class MOUNTEADIALOGUESYSTEM_API  UMounteaDialogueDecorator_OverrideOnlyFirstTime : public UMounteaDialogueDecorator_OnlyFirstTime
 {
 	GENERATED_BODY()
 
@@ -26,12 +28,13 @@ public:
 	virtual void ExecuteDecorator_Implementation() override;
 
 	virtual  FString GetDecoratorDocumentationLink_Implementation() const override
-	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Decorator:-Override-Dialogue-Row-Data"); }
+	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Decorator:-Override-Only-Frist-Time"); }
+
 
 protected:
 
 	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(RequiredAssetDataTags="RowStructure=DialogueRow", DisplayThumbnail=false, NoResetToDefault))
-	UDataTable*	DataTable;
+	UDataTable* DataTable;
 
 	/** Name of row in the table that we want */
 	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
@@ -39,11 +42,6 @@ protected:
 
 	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(UIMin=0, ClampMin=0, NoResetToDefault, EditCondition="DataTable!=nullptr"))
 	int32 RowIndex;
-
-private:
-	
-	UMounteaDialogueContext* Context = nullptr;
-	TScriptInterface<IMounteaDialogueManagerInterface> Manager = nullptr;
 	
 private:
 

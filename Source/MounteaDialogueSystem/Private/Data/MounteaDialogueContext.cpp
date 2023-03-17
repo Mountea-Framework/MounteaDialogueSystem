@@ -26,6 +26,11 @@ void UMounteaDialogueContext::UpdateActiveDialogueNode(UMounteaDialogueGraphNode
 	ActiveNode = NewActiveNode;
 }
 
+void UMounteaDialogueContext::UpdateAllowedChildrenNodes(const TArray<UMounteaDialogueGraphNode*>& NewNodes)
+{
+	AllowedChildNodes = NewNodes;
+}
+
 void UMounteaDialogueContext::UpdateActiveDialogueRow(const FDialogueRow& NewActiveRow)
 {
 	ActiveDialogueRow = NewActiveRow;
