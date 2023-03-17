@@ -10,6 +10,13 @@
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
 
+UENUM(BlueprintType)
+enum class EDecoratorState : uint8
+{
+	Uninitialized,
+	Initialized
+};
+
 #define LOCTEXT_NAMESPACE "NodeDecoratorBase"
 
 /**
@@ -70,6 +77,10 @@ public:
 	virtual void InitializeDecorator_Implementation(UWorld* World)
 	{
 		OwningWorld = World;
+		if (World)
+		{
+			DecoratorState = EDecoratorState::Initialized;
+		}
 	};
 
 	/**
@@ -78,7 +89,10 @@ public:
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
 	void CleanupDecorator();
-	virtual void CleanupDecorator_Implementation() {};
+	virtual void CleanupDecorator_Implementation()
+	{
+		DecoratorState = EDecoratorState::Uninitialized;
+	};
 
 	/**
 	 * Validates the Decorator.
@@ -150,6 +164,9 @@ public:
 	
 private:
 
+	UPROPERTY(VisibleAnywhere, Category="Private", AdvancedDisplay=true)
+	EDecoratorState DecoratorState = EDecoratorState::Uninitialized;
+
 	UPROPERTY()
 	UWorld* OwningWorld = nullptr;
 };
@@ -169,6 +186,18 @@ struct FMounteaDialogueDecorator
 
 public:
 
+	void InitializeDecorator(UWorld* World) const
+	{
+		if (DecoratorType)
+		{
+			DecoratorType->InitializeDecorator(World);
+			return;
+		}
+
+		LOG_ERROR(TEXT("[InitializeDecorator] DecoratorType is null (invalid)!"))
+		return;
+	}
+
 	bool ValidateDecorator(TArray<FText>& ValidationMessages) const
 	{
 		if (DecoratorType)
@@ -178,7 +207,19 @@ public:
 		
 		LOG_ERROR(TEXT("[EvaluateDecorator] DecoratorType is null (invalid)!"))
 		return false;
-	};
+	}
+
+	void CleanupDecorator() const
+	{
+		if (DecoratorType)
+		{
+			DecoratorType->CleanupDecorator();
+			return;
+		}
+
+		LOG_ERROR(TEXT("[CleanupDecorator] DecoratorType is null (invalid)!"))
+		return;
+	}
 
 	bool EvaluateDecorator() const
 	{
@@ -191,7 +232,7 @@ public:
 		return false;
 	};
 	
-	void ExecuteDecorator()
+	void ExecuteDecorator() const
 	{
 		if (DecoratorType)
 		{

@@ -15,9 +15,6 @@ void UMounteaDialogueDecorator_OverrideDialogue::InitializeDecorator_Implementat
 	if (World)
 	{
 		Manager = UMounteaDialogueSystemBFC::GetDialogueManager(GetOwningWorld());
-		
-		// Let's return BP Updatable Context rather than Raw
-		Context = Manager->GetDialogueContext();
 	}
 }
 
@@ -56,6 +53,9 @@ bool UMounteaDialogueDecorator_OverrideDialogue::ValidateDecorator_Implementatio
 void UMounteaDialogueDecorator_OverrideDialogue::ExecuteDecorator_Implementation()
 {
 	Super::ExecuteDecorator_Implementation();
+	
+	// Let's return BP Updatable Context rather than Raw
+	Context = Manager->GetDialogueContext();
 
 	// We assume Context and Manager are already valid, but safety is safety
 	if (!Context|| !Manager.GetInterface() || !UMounteaDialogueSystemBFC::IsContextValid(Context) ) return;

@@ -14,9 +14,6 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::InitializeDecorator_Impl
 	if (World)
 	{
 		Manager = UMounteaDialogueSystemBFC::GetDialogueManager(GetOwningWorld());
-		
-		// Let's return BP Updatable Context rather than Raw
-		Context = Manager->GetDialogueContext();
 	}
 }
 
@@ -47,6 +44,9 @@ bool UMounteaDialogueDecorator_SelectRandomDialogueRow::ValidateDecorator_Implem
 void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Implementation()
 {
 	Super::ExecuteDecorator_Implementation();
+
+	// Let's return BP Updatable Context rather than Raw
+	Context = Manager->GetDialogueContext();
 
 	FIntPoint ClampedRange;
 	if (RandomRange.X > RandomRange.Y)

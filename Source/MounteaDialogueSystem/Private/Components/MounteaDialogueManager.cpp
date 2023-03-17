@@ -340,6 +340,8 @@ void UMounteaDialogueManager::CloseDialogue()
 
 	if (!DialogueContext->GetDialogueParticipant().GetObject()) return;
 
+	UMounteaDialogueSystemBFC::CleanupGraph(this, DialogueContext->GetDialogueParticipant()->GetDialogueGraph());
+
 	// Clear binding
 	DialogueContext->DialogueContextUpdatedFromBlueprint.RemoveDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent);
 

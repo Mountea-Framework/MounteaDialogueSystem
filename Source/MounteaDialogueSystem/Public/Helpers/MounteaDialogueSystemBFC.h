@@ -34,6 +34,31 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSystemBFC : public UBlueprintFun
 	GENERATED_BODY()
 
 public:
+	
+	static void CleanupGraph(const UObject* WorldContextObject, const UMounteaDialogueGraph* GraphToClean)
+	{
+		if (!GraphToClean) return;
+		
+		// Cleanup Decorators
+		for (auto Itr : GraphToClean->GetAllDecorators())
+		{
+			Itr.CleanupDecorator();
+		}
+	}
+
+	static void InitializeDecorators(UWorld* WorldContext, const TScriptInterface<IMounteaDialogueParticipantInterface> Participant)
+	{
+		if (!WorldContext) return;
+		if (!Participant) return;
+
+		if (!Participant->GetDialogueGraph()) return;
+		
+		// Initialize Decorators
+		for (auto Itr : Participant->GetDialogueGraph()->GetAllDecorators())
+		{
+			Itr.InitializeDecorator(WorldContext);
+		}
+	}
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="audio, tag, search"))
 	static UAudioComponent* FindAudioComponentByName(const AActor* ActorContext, const FName& Arg)
@@ -219,7 +244,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="start, initialize, dialogue"))
 	static bool InitializeDialogue(const UObject* WorldContextObject, UObject* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant)
 	{
-		if (Initiator == nullptr || DialogueParticipant.GetInterface() == nullptr) return false;
+		if (!DialogueParticipant) return false;
+
+		if (!DialogueParticipant->Execute_GetOwningActor(DialogueParticipant.GetObject())) return false;
+		
+		UWorld* TempWorld = WorldContextObject->GetWorld();
+		if (!TempWorld) TempWorld = DialogueParticipant->Execute_GetOwningActor(DialogueParticipant.GetObject())->GetWorld();
+		
+		if (Initiator == nullptr && DialogueParticipant.GetInterface() == nullptr) return false;
 
 		if (GetDialogueManager(WorldContextObject) == nullptr) return false;
 
@@ -228,6 +260,11 @@ public:
 		const UMounteaDialogueGraph* Graph = DialogueParticipant->GetDialogueGraph();
 
 		if (Graph == nullptr) return false;
+
+		for (auto Itr : Graph->GetAllDecorators())
+		{
+			Itr.InitializeDecorator(TempWorld);
+		}
 
 		if (Graph->CanStartDialogueGraph() == false) return false;
 

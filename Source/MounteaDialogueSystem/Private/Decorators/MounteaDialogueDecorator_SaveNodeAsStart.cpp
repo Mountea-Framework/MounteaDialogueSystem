@@ -14,9 +14,6 @@ void UMounteaDialogueDecorator_SaveNodeAsStart::InitializeDecorator_Implementati
 	if (World)
 	{
 		Manager = UMounteaDialogueSystemBFC::GetDialogueManager(GetOwningWorld());
-		
-		// Let's return BP Updatable Context rather than Raw
-		Context = Manager->GetDialogueContext();
 	}
 }
 
@@ -48,10 +45,13 @@ void UMounteaDialogueDecorator_SaveNodeAsStart::ExecuteDecorator_Implementation(
 {
 	Super::ExecuteDecorator_Implementation();
 
+	// Let's return BP Updatable Context rather than Raw
+	Context = Manager->GetDialogueContext();
+
 	if (Context)
 	{
 		const auto Participant = Context->GetDialogueParticipant();
-		Participant->SaveStartingNode(GetOwningNode());
+		Participant->Execute_SaveStartingNode(Participant.GetObject(), GetOwningNode());
 	}
 }
 

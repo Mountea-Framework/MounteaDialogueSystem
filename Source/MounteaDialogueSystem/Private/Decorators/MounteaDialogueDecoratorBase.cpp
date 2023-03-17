@@ -31,6 +31,13 @@ bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(TArray<FTex
 		bSatisfied = false;
 	}
 
+	if (DecoratorState == EDecoratorState::Uninitialized && bIsEditorCall == false)
+	{
+		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_Base_Validation_State", "[{0}]: Not Initialized properly!"), Name);
+		ValidationMessages.Add(TempText);
+
+		bSatisfied = false;
+	}
 	
 	if (GetOwner() == nullptr)
 	{
