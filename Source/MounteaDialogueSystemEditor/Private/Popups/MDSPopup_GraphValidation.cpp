@@ -60,11 +60,15 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 	{
 		ListOfMessages->AddSlot()
 		[
-			SNew(SRichTextBlock)
-			.Text(Itr)
-			.TextStyle(FEditorStyle::Get(), "NormalText")
-			.DecoratorStyleSet(&FEditorStyle::Get())
-			.AutoWrapText(true)
+			SNew(SBox)
+			.Padding(FMargin(0.f, 3.5f, 0.f, 3.5f))
+			[
+				SNew(SRichTextBlock)
+				.Text(Itr)
+				.TextStyle(FEditorStyle::Get(), "NormalText")
+				.DecoratorStyleSet(&FEditorStyle::Get())
+				.AutoWrapText(true)
+			]
 		];
 	}
 	

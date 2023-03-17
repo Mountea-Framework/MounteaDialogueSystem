@@ -13,7 +13,7 @@ class IMounteaDialogueManagerInterface;
  *
  * Implements native support for selecting Dialogue Row data.
  */
-UCLASS( NotBlueprintable, BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea, Dialogue"), DisplayName="Override Dialogue Row Data")
+UCLASS( BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea, Dialogue"), DisplayName="Override Dialogue Row Data")
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecorator_OverrideDialogue : public UMounteaDialogueDecoratorBase
 {
 	GENERATED_BODY()

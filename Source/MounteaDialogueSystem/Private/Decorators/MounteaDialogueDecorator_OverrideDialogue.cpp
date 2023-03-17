@@ -32,11 +32,11 @@ void UMounteaDialogueDecorator_OverrideDialogue::CleanupDecorator_Implementation
 bool UMounteaDialogueDecorator_OverrideDialogue::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
 {
 	bool bSatisfied = Super::ValidateDecorator_Implementation(ValidationMessages);
-	const FText Name = FText::FromString(GetName());
+	const FText Name = GetClass()->GetDisplayNameText();
 	
 	if (DataTable == nullptr)
 	{
-		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_DT", "{0} has no Data Table!"), Name);
+		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_DT", "Decorator {0} has no Data Table!"), Name);
 		ValidationMessages.Add(TempText);
 		
 		bSatisfied = false;
@@ -44,7 +44,7 @@ bool UMounteaDialogueDecorator_OverrideDialogue::ValidateDecorator_Implementatio
 	
 	if (RowName.IsNone() || RowName.IsNone())
 	{
-		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_DT", "{0}: Invalid Row Name!"), Name);
+		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_DT", "Decorator {0}: Invalid Row Name!"), Name);
 		ValidationMessages.Add(TempText);
 		
 		bSatisfied = false;
