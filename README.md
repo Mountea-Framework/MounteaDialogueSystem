@@ -26,10 +26,10 @@ Colour | Explanation
 ### Suport Table
 Engine Version | Plugin Version | Support
 -------------- | -------------- | ----
-UE 4.26 | 0.0.0.1 | 🟩
-UE 4.27 | - | 🟨
-UE 5.00 | - | 🟨
-UE 5.1 | - | 🟨
+UE 4.26 | 1.0.0.426 | 🟨
+UE 4.27 | 1.0.0.427 | 🟨
+UE 5.00 | 1.0.0.50 | 🟨
+UE 5.1 | 1.0.0.51 | 🟨
 
 ## Features
 ### Graph Editor
@@ -79,8 +79,3 @@ Download the plugin (either from Releases or from Marketplace). For more detaile
 * Master: A master branch, should be always relevant to most current Engine version and stable.
 * Version Branch: A stable branch for specified Engine version.
 * Version Brach_Dev: A development branch for specified Engine version.
-
-## Additional Documentation and Acknowledgments
-
-* Roadmap: -
-* Documentation: -
