@@ -3,22 +3,48 @@
 
 #include "Decorators/MounteaDialogueDecorator_OverrideOnlyFirstTime.h"
 
-void UMounteaDialogueDecorator_OverrideOnlyFirstTime::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant)
-{
-	Super::InitializeDecorator_Implementation(World, OwningParticipant);
-}
+#include "Data/MounteaDialogueContext.h"
+#include "Helpers/MounteaDialogueSystemBFC.h"
 
-void UMounteaDialogueDecorator_OverrideOnlyFirstTime::CleanupDecorator_Implementation()
-{
-	Super::CleanupDecorator_Implementation();
-}
+#define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_OverrideOnlyFirstTime"
 
 bool UMounteaDialogueDecorator_OverrideOnlyFirstTime::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
 {
-	return Super::ValidateDecorator_Implementation(ValidationMessages);
+	bool bSatisfied = Super::ValidateDecorator_Implementation(ValidationMessages);
+	const FText Name = GetClass()->GetDisplayNameText();
+	
+	if (DataTable == nullptr)
+	{
+		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_OverrideOnlyFirstTime_Validation_DT", "Decorator {0} has no Data Table!"), Name);
+		ValidationMessages.Add(TempText);
+		
+		bSatisfied = false;
+	}
+	
+	if (RowName.IsNone() || RowName.IsNone())
+	{
+		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_OverrideOnlyFirstTime_Validation_DT", "Decorator {0}: Invalid Row Name!"), Name);
+		ValidationMessages.Add(TempText);
+		
+		bSatisfied = false;
+	}
+	
+	return bSatisfied;
 }
 
 void UMounteaDialogueDecorator_OverrideOnlyFirstTime::ExecuteDecorator_Implementation()
 {
 	Super::ExecuteDecorator_Implementation();
+
+	if (const auto TempContext = GetContext())
+	{
+		// We assume Context and Manager are already valid, but safety is safety
+		if (!UMounteaDialogueSystemBFC::IsContextValid(TempContext) ) return;
+
+		const auto NewRow = UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName);
+	
+		TempContext->UpdateActiveDialogueRow( UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName) );
+	}
 }
+
+#undef LOCTEXT_NAMESPACE

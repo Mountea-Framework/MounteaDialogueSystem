@@ -21,9 +21,7 @@ class MOUNTEADIALOGUESYSTEM_API  UMounteaDialogueDecorator_OverrideOnlyFirstTime
 	GENERATED_BODY()
 
 public:
-
-	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant) override;
-	virtual void CleanupDecorator_Implementation() override;
+	
 	virtual bool ValidateDecorator_Implementation(TArray<FText>& ValidationMessages) override;
 	virtual void ExecuteDecorator_Implementation() override;
 
@@ -39,9 +37,6 @@ protected:
 	/** Name of row in the table that we want */
 	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
 	FName RowName;
-
-	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(UIMin=0, ClampMin=0, NoResetToDefault, EditCondition="DataTable!=nullptr"))
-	int32 RowIndex;
 	
 private:
 
