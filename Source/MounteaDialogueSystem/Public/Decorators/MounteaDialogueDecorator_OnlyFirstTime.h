@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "MounteaDialogueDecorator_OnlyFirstTime.generated.h"
+
 class UMounteaDialogueContext;
 class IMounteaDialogueManagerInterface;
 /**
@@ -13,7 +14,11 @@ class IMounteaDialogueManagerInterface;
  * Implements native support for triggering logic if Owning node has been entered for the first time.
  * Base class that should expanded with Child Classes.
  *
- * Does something only if its Owning Node has never been called before.
+ * Child Classes must implement logic!
+ * Should do something only if its Owning Node has never been called before.
+ *
+ * Provides validations and data for Child classes.
+ * By itself has no logic within.
  *
  * For proper usage, save Dialogue Participants when saving game!
  */

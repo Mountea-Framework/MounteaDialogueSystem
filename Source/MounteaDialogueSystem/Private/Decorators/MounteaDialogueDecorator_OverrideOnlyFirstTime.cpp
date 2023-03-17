@@ -41,6 +41,8 @@ void UMounteaDialogueDecorator_OverrideOnlyFirstTime::ExecuteDecorator_Implement
 		// We assume Context and Manager are already valid, but safety is safety
 		if (!UMounteaDialogueSystemBFC::IsContextValid(TempContext) ) return;
 
+		if (!IsFirstTime()) return;
+
 		const auto NewRow = UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName);
 	
 		TempContext->UpdateActiveDialogueRow( UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName) );
