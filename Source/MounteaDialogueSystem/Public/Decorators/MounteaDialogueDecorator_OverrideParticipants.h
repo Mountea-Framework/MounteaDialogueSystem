@@ -17,7 +17,7 @@ class IMounteaDialogueManagerInterface;
  *
  * This Decorator allows skipping from one NPC to another.
  */
-UCLASS( BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea, Dialogue"), DisplayName="Override Dialogue Participants")
+UCLASS( BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue"), DisplayName="Override Dialogue Participants")
 class MOUNTEADIALOGUESYSTEM_API  UMounteaDialogueDecorator_OverrideParticipants : public UMounteaDialogueDecoratorBase
 {
 	GENERATED_BODY()

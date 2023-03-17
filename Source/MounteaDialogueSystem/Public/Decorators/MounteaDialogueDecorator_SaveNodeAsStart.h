@@ -13,7 +13,7 @@ class IMounteaDialogueManagerInterface;
  *
  * Implements native support for Saving its Owning Node as new Start Node.
  */
-UCLASS( BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea, Dialogue"), DisplayName="Save Node as Start Node")
+UCLASS( BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue"), DisplayName="Save Node as Start Node")
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecorator_SaveNodeAsStart : public UMounteaDialogueDecoratorBase
 {
 	GENERATED_BODY()

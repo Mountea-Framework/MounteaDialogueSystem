@@ -164,7 +164,7 @@ public:
 	
 private:
 
-	UPROPERTY(VisibleAnywhere, Category="Private", AdvancedDisplay=true)
+	UPROPERTY()
 	EDecoratorState DecoratorState = EDecoratorState::Uninitialized;
 
 	UPROPERTY()

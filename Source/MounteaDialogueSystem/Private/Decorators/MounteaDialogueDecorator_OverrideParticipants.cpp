@@ -156,17 +156,17 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueDecorator
 
 void UMounteaDialogueDecorator_OverrideParticipants::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueDecorator_OverrideParticipants, bOverridePlayerParticipant))
+	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueDecorator_OverrideParticipants, NewPlayerParticipant))
 	{
 		if (!bOverridePlayerParticipant) NewPlayerParticipant = nullptr;
 	}
 
-	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueDecorator_OverrideParticipants, bOverrideDialogueParticipant))
+	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueDecorator_OverrideParticipants, NewDialogueParticipant))
 	{
 		if (!bOverrideDialogueParticipant) NewDialogueParticipant = nullptr;
 	}
 
-	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueDecorator_OverrideParticipants, bOverrideActiveParticipant))
+	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueDecorator_OverrideParticipants, NewActiveParticipant))
 	{
 		if (!bOverrideActiveParticipant) NewActiveParticipant = nullptr;
 	}

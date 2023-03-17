@@ -306,7 +306,7 @@ public:
 			NodeToStart = GetFirstChildNode(NodeToStart);
 		}
 
-		TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
+		const TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
 		
 		UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
 		Context->SetDialogueContext(DialogueParticipant, NodeToStart, StartNode_Children);
@@ -325,14 +325,17 @@ public:
 	 * @param DialogueParticipant	Other person, could be NPC or other Player
 	 * @param Context					Dialogue Context which is passed to Dialogue Manager
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="start, initialize, dialogue"))
+	//UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="start, initialize, dialogue"))
 	static bool InitializeDialogueWithContext(const UObject* WorldContextObject, UObject* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant, UMounteaDialogueContext* Context)
 	{
 		if (DialogueParticipant == nullptr) return false;
 		if (Context == nullptr) return false;
 		if (IsContextValid(Context) == false) return false;
 
-		GetDialogueManager(WorldContextObject)->GetDialogueInitializedEventHandle().Broadcast(Context);
+		const auto DialogueManager = GetDialogueManager(WorldContextObject);
+		if (DialogueManager == nullptr) return false;
+
+		DialogueManager->GetDialogueInitializedEventHandle().Broadcast(Context);
 		return true;
 	}
 

@@ -12,7 +12,7 @@ class IMounteaDialogueManagerInterface;
  *
  * Implements native support to pick random Row from Dialogue Data.
  */
-UCLASS( BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea, Dialogue"), DisplayName="Use Random Dialogue Row Data")
+UCLASS( BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue"), DisplayName="Use Random Dialogue Row Data")
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecorator_SelectRandomDialogueRow : public UMounteaDialogueDecoratorBase
 {
 	GENERATED_BODY()
