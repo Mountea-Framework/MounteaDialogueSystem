@@ -29,7 +29,7 @@ public:
 	virtual bool ValidateDecorator_Implementation(TArray<FText>& ValidationMessages) override;
 	virtual void ExecuteDecorator_Implementation() override;
 
-	virtual const FString GetDecoratorDocumentationLink_Implementation() override
+	virtual  FString GetDecoratorDocumentationLink_Implementation() const override
 	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Decorator:-Override-Dialogue-Participants"); }
 
 protected:

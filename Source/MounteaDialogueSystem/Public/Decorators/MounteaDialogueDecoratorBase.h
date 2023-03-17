@@ -59,8 +59,8 @@ public:
 	}
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
-	const FString GetDecoratorDocumentationLink();
-	virtual const FString GetDecoratorDocumentationLink_Implementation()
+	FString GetDecoratorDocumentationLink() const;
+	virtual FString GetDecoratorDocumentationLink_Implementation() const
 	{
 		return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Dialogue-Decorators");
 	}
