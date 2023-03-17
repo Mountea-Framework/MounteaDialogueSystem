@@ -69,7 +69,7 @@ protected:
 	/**
 	 * 
 	 */
-	UPROPERTY(Transient, VisibleAnywhere,  Category="Mountea", AdvancedDisplay,  meta=(NoResetToDefault))
+	UPROPERTY(Transient, VisibleAnywhere,  Category="Mountea", AdvancedDisplay="true",  meta=(NoResetToDefault))
 	EDialogueParticipantState ParticipantState;
 
 	/**
@@ -85,10 +85,11 @@ protected:
 	 */
 	UPROPERTY(EditAnywhere, Category="Mountea|Dialogue", meta=(NoResetToDefault))
 	FName AudioComponentIdentification;
+	
 	/**
 	 * 
 	 */
-	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay="true", meta=(DisplayThumbnail=false, NoResetToDefault))
 	UAudioComponent* AudioComponent = nullptr;
 	/**
 	 * Optional Starting Node.
@@ -96,8 +97,15 @@ protected:
 	 * If this value is selected, this Participant's Dialogue will start from Selected Node, if valid!
 	 * Otherwise it will start from Start Node of the Graph.
 	 */
-	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay="true", meta=(DisplayThumbnail=false, NoResetToDefault))
 	UMounteaDialogueGraphNode* StartingNode = nullptr;
+
+	/**
+	 * Contains mapped list of Traversed Nodes by GUIDs.
+	 * To update Performance, this Path is updated only once Dialogue has finished. Temporary Path is stored in Dialogue Context.
+	 */
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay="true", meta=(NoResetToDefault))
+	TMap<FGuid, int32> TraversedPath;
 
 #pragma endregion
 
@@ -186,6 +194,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual AActor* GetOwningActor_Implementation() const override;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	virtual TMap<FGuid,int32> GetTraversedPath() const override
+	{ return TraversedPath; };
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	virtual void SaveTraversedPath_Implementation(TMap<FGuid,int32>& InPath) override;
+	
 
 #pragma region EventHandleGetters
 	

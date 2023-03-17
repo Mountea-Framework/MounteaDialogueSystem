@@ -60,6 +60,29 @@ public:
 		}
 	}
 
+	static void SaveTraversePathToParticipant(TMap<FGuid,int32>& InPath, const TScriptInterface<IMounteaDialogueParticipantInterface> Participant)
+	{
+		if (!Participant || !Participant.GetInterface()) return;
+
+		Participant->Execute_SaveTraversedPath(Participant.GetObject(), InPath);
+	}
+
+	/**
+	 * Returns whether selected Node for selected Participant has been already Traversed or not.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="node, traverse, open, active"))
+	static bool HasNodeBeenTraversed(const UMounteaDialogueGraphNode* Node, const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant)
+	{
+		bool bTraversed = false;
+
+		if (!Node) return bTraversed;
+		if (!Participant || !Participant.GetObject()) return bTraversed;
+
+		bTraversed = Participant->GetTraversedPath().Contains(Node->GetNodeGUID());
+		
+		return bTraversed;
+	}
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="audio, tag, search"))
 	static UAudioComponent* FindAudioComponentByName(const AActor* ActorContext, const FName& Arg)
 	{

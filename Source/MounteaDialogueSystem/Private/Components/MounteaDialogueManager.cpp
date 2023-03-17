@@ -340,8 +340,10 @@ void UMounteaDialogueManager::CloseDialogue()
 
 	if (!DialogueContext->GetDialogueParticipant().GetObject()) return;
 
+	// Cleaning up
 	UMounteaDialogueSystemBFC::CleanupGraph(this, DialogueContext->GetDialogueParticipant()->GetDialogueGraph());
-
+	UMounteaDialogueSystemBFC::SaveTraversePathToParticipant(DialogueContext->TraversedPath, DialogueContext->GetDialogueParticipant());
+	
 	// Clear binding
 	DialogueContext->DialogueContextUpdatedFromBlueprint.RemoveDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent);
 
@@ -364,6 +366,8 @@ void UMounteaDialogueManager::ProcessNode()
 		return;
 	}
 
+	DialogueContext->AddTraversedNode(DialogueContext->ActiveNode);
+	
 	if (DialogueContext->ActiveNode->GetClass()->IsChildOf(UMounteaDialogueGraphNode_LeadNode::StaticClass()))
 	{
 		DialogueContext->UpdateActiveDialogueParticipant(DialogueContext->GetDialogueParticipant());
