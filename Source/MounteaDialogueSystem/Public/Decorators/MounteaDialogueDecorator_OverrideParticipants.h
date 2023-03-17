@@ -11,7 +11,11 @@ class IMounteaDialogueManagerInterface;
 /**
  *	Mountea Dialogue Decorators
  *
- * Implements native support for selecting Dialogue Row data.
+ * Implements native support for selecting new Participants for selected Dialogue.
+ * Useful when Multiple participants are present, for example:
+ * * 2 NPCs are talking
+ *
+ * This Decorator allows skipping from one NPC to another.
  */
 UCLASS( BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea, Dialogue"), DisplayName="Override Dialogue Participants")
 class MOUNTEADIALOGUESYSTEM_API  UMounteaDialogueDecorator_OverrideParticipants : public UMounteaDialogueDecoratorBase
@@ -31,21 +35,21 @@ public:
 protected:
 
 	// Enables setting NewPlayerParticipant to a value
-	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, InlineEditConditionToggle))
 	bool bOverridePlayerParticipant;
 	// Non-nullable reference to Actor from Level. Either must implement 'MounteaDialogueParticipantInterface' or must contain at least 1 component which implements such interface.
 	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, EditCondition="bOverridePlayerParticipant"))
 	TSoftObjectPtr<AActor>NewPlayerParticipant;
 
 	// Enables setting NewDialogueParticipant to a value
-	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, InlineEditConditionToggle))
 	bool bOverrideDialogueParticipant;
 	// Non-nullable reference to Actor from Level. Either must implement 'MounteaDialogueParticipantInterface' or must contain at least 1 component which implements such interface.
 	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, EditCondition="bOverrideDialogueParticipant"))
 	TSoftObjectPtr<AActor>NewDialogueParticipant;
 
 	// Enables setting NewActiveParticipant to a value
-	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, InlineEditConditionToggle))
 	bool bOverrideActiveParticipant;
 	// Non-nullable reference to Actor from Level. Either must implement 'MounteaDialogueParticipantInterface' or must contain at least 1 component which implements such interface.
 	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, EditCondition="bOverrideActiveParticipant"))

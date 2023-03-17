@@ -1,0 +1,58 @@
+// All rights reserved Dominik Pavlicek 2023
+
+
+#include "Decorators/MounteaDialogueDecorator_SaveNodeAsStart.h"
+
+#include "Helpers/MounteaDialogueSystemBFC.h"
+
+#define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_SaveNodeAsStart"
+
+void UMounteaDialogueDecorator_SaveNodeAsStart::InitializeDecorator_Implementation(UWorld* World)
+{
+	Super::InitializeDecorator_Implementation(World);
+
+	if (World)
+	{
+		Manager = UMounteaDialogueSystemBFC::GetDialogueManager(GetOwningWorld());
+		
+		// Let's return BP Updatable Context rather than Raw
+		Context = Manager->GetDialogueContext();
+	}
+}
+
+void UMounteaDialogueDecorator_SaveNodeAsStart::CleanupDecorator_Implementation()
+{
+	Super::CleanupDecorator_Implementation();
+
+	Context = nullptr;
+	Manager = nullptr;
+}
+
+bool UMounteaDialogueDecorator_SaveNodeAsStart::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
+{
+	bool bSatisfied = Super::ValidateDecorator_Implementation(ValidationMessages);
+	const FText Name = GetClass()->GetDisplayNameText();
+
+	if (!GetOwningNode())
+	{
+		bSatisfied = false;
+		
+		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_SaveNodeAsStart_Validation", "Decorator {0}: is not allowed in Graph Decorators!\nAttach this Decorator to Node instead."), Name);
+		ValidationMessages.Add(TempText);
+	}
+
+	return bSatisfied;
+}
+
+void UMounteaDialogueDecorator_SaveNodeAsStart::ExecuteDecorator_Implementation()
+{
+	Super::ExecuteDecorator_Implementation();
+
+	if (Context)
+	{
+		const auto Participant = Context->GetDialogueParticipant();
+		Participant->SaveStartingNode(GetOwningNode());
+	}
+}
+
+#undef LOCTEXT_NAMESPACE

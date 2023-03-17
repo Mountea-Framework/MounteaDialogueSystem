@@ -270,6 +270,33 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 				ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 			}
 		}
+
+		for (auto Itr : GetNodeDecorators())
+		{
+			TArray<FText> DecoratorErrors;
+			if (Itr.ValidateDecorator(DecoratorErrors) == false)
+			{
+				for (auto Error : DecoratorErrors)
+				{
+					const FString ErrorTextRich =
+					FString("* ").
+					Append("<RichTextBlock.Bold>").
+					Append(NodeTitle.ToString()).
+					Append("</>: ").
+					Append(FString(Error.ToString()));
+
+					auto ClassName = GetClass()->GetDisplayNameText().ToString();
+					const FString ErrorTextSimple =
+					ClassName.
+					Append(": ").
+					Append(FString(Error.ToString()));
+		
+					ValidationsMessages.Add(FText::FromString(RichFormat ? ErrorTextRich : ErrorTextSimple));
+
+					bResult = false;
+				}
+			}
+		}
 	}
 	
 	return bResult;
