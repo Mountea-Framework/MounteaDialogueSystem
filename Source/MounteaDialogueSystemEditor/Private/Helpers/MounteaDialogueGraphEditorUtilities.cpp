@@ -16,12 +16,14 @@ bool FMounteaDialogueGraphEditorUtilities::PickChildrenOfClass(const FText& Titl
 	Options.Mode = EClassViewerMode::ClassPicker;
 	Options.ClassFilter = Filter;
 	Options.bShowUnloadedBlueprints = true;
-	Options.bExpandRootNodes = true;
-	Options.DisplayMode = EClassViewerDisplayMode::TreeView;
-	Options.NameTypeToDisplay = EClassViewerNameTypeToDisplay::Dynamic;
 
+	Options.DisplayMode = EClassViewerDisplayMode::TreeView;
+	
 	Options.bShowNoneOption = false;
 	Options.InitiallySelectedClass = Class;
+
+	Options.bExpandRootNodes = true;
+	Options.NameTypeToDisplay = EClassViewerNameTypeToDisplay::DisplayName;
 	
 	return SClassPickerDialog::PickClass(TitleText, Options, OutChosenClass, Class);
 }
