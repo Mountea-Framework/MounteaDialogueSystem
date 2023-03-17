@@ -11,7 +11,7 @@
 bool UMounteaDialogueDecorator_OverrideOnlyFirstTime::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
 {
 	bool bSatisfied = Super::ValidateDecorator_Implementation(ValidationMessages);
-	const FText Name = GetClass()->GetDisplayNameText();
+	const FText Name = GetDecoratorName();
 	
 	if (DataTable == nullptr)
 	{

@@ -29,7 +29,7 @@ void UMounteaDialogueDecorator_OnlyFirstTime::CleanupDecorator_Implementation()
 bool UMounteaDialogueDecorator_OnlyFirstTime::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
 {
 	bool bSatisfied = Super::ValidateDecorator_Implementation(ValidationMessages);
-	const FText Name = GetClass()->GetDisplayNameText();
+	const FText Name = GetDecoratorName();
 
 	if (!GetOwningNode())
 	{

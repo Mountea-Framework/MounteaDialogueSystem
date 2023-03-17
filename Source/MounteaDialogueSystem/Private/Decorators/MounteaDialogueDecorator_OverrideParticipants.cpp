@@ -93,7 +93,7 @@ void UMounteaDialogueDecorator_OverrideParticipants::ExecuteDecorator_Implementa
 bool UMounteaDialogueDecorator_OverrideParticipants::ValidateInterfaceActor(const TSoftObjectPtr<AActor> Actor, TArray<FText>& ValidationMessages) const
 {
 	// Let's assume Class is valid
-	const FText Name = GetClass()->GetDisplayNameText();
+	const FText Name = GetDecoratorName();
 	bool bSatisfied = true;
 
 	const TScriptInterface<IMounteaDialogueParticipantInterface> ParticipantInterface = GetParticipantFromActorRef(Actor);
@@ -154,6 +154,7 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueDecorator
 	return ReturnValue;
 }
 
+#if WITH_EDITOR
 void UMounteaDialogueDecorator_OverrideParticipants::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueDecorator_OverrideParticipants, NewPlayerParticipant))
@@ -171,5 +172,6 @@ void UMounteaDialogueDecorator_OverrideParticipants::PostEditChangeProperty(FPro
 		if (!bOverrideActiveParticipant) NewActiveParticipant = nullptr;
 	}
 }
+#endif
 
 #undef LOCTEXT_NAMESPACE

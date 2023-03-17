@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "UObject/Object.h"
+#include "Engine/Level.h"
 #include "MounteaDialogueDecoratorBase.generated.h"
 
 class IMounteaDialogueParticipantInterface;
@@ -173,6 +174,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorators", meta=(CompactNodeTitle="OwnerParticipant"))
 	TScriptInterface<IMounteaDialogueParticipantInterface> GetOwnerParticipant() const
 	{ return OwnerParticipant; };
+
+	FText GetDecoratorName() const;
 	
 private:
 

@@ -69,6 +69,9 @@ private:
 	bool ValidateInterfaceActor(TSoftObjectPtr<AActor> Actor, TArray<FText>& ValidationMessages) const;
 	TScriptInterface<IMounteaDialogueParticipantInterface> GetParticipantFromActorRef(const TSoftObjectPtr<AActor>& Actor) const;
 
+#if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+	
 };
 

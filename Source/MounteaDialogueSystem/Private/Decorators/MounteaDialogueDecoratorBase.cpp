@@ -75,4 +75,12 @@ UObject* UMounteaDialogueDecoratorBase::GetOwner() const
 	return GetOuter();
 }
 
+FText UMounteaDialogueDecoratorBase::GetDecoratorName() const
+{
+#if WITH_EDITORONLY_DATA
+	return GetClass()->GetDisplayNameText();
+#endif
+	return FText::FromString(GetName());
+}
+
 #undef LOCTEXT_NAMESPACE

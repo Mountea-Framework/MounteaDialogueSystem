@@ -29,7 +29,7 @@ void UMounteaDialogueDecorator_OverrideDialogue::CleanupDecorator_Implementation
 bool UMounteaDialogueDecorator_OverrideDialogue::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
 {
 	bool bSatisfied = Super::ValidateDecorator_Implementation(ValidationMessages);
-	const FText Name = GetClass()->GetDisplayNameText();
+	const FText Name = GetDecoratorName();
 	
 	if (DataTable == nullptr)
 	{

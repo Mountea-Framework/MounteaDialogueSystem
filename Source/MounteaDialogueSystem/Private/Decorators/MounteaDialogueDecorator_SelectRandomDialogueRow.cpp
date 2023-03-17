@@ -28,7 +28,7 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::CleanupDecorator_Impleme
 bool UMounteaDialogueDecorator_SelectRandomDialogueRow::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
 {
 	bool bSatisfied = Super::ValidateDecorator_Implementation(ValidationMessages);
-	const FText Name = GetClass()->GetDisplayNameText();
+	const FText Name = GetDecoratorName();
 
 	if (!GetOwningNode())
 	{
