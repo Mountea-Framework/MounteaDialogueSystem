@@ -3,6 +3,7 @@
 #include "MounteaDialogueSearchResult.h"
 
 #include "MounteaDialogueSearchUtils.h"
+#include "Helpers/MounteaDialogueGraphEditorUtilities.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueSearchResult"
 
@@ -79,7 +80,7 @@ FReply FMounteaDialogueSearchResult_GraphNode::OnClick(TWeakPtr<FAssetEditor_Mou
 {
 	if (GraphNode.IsValid())
 	{
-		return FMounteaDialogueSearchUtils::OpenEditorAndJumpToGraphNode(DialogueEditorPtr, GraphNode.Get()) ? FReply::Handled() : FReply::Unhandled();
+		return FMounteaDialogueGraphEditorUtilities::OpenEditorAndJumpToGraphNode(DialogueEditorPtr, GraphNode.Get()) ? FReply::Handled() : FReply::Unhandled();
 	}
 
 	return FReply::Unhandled();

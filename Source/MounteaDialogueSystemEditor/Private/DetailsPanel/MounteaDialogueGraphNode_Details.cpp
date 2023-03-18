@@ -4,9 +4,11 @@
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
+#include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Helpers/MounteaDialogueGraphColors.h"
+#include "Helpers/MounteaDialogueGraphEditorUtilities.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 #include "Widgets/Layout/SScaleBox.h"
@@ -163,7 +165,18 @@ FText FMounteaDialogueGraphNode_Details::GetPreviewingNodeTitle() const
 
 FReply FMounteaDialogueGraphNode_Details::OnPreviewingNodeClicked()
 {
-	return FReply::Unhandled();
+	if (!EditingNode) return FReply::Unhandled();
+
+	const UMounteaDialogueGraphNode_ReturnToNode* EditingDialogueNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(EditingNode);
+	if (!EditingDialogueNode) return FReply::Unhandled();
+	if (!EditingDialogueNode->SelectedNode) return FReply::Unhandled();
+	
+	const auto EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingNode->GetGraph()->EdGraph);
+	const TSharedPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr = EdGraph->GetAssetEditor();
+
+	const UEdNode_MounteaDialogueGraphNode* EdNode = *EdGraph->NodeMap.Find(EditingDialogueNode->SelectedNode);
+		
+	return FMounteaDialogueGraphEditorUtilities::OpenEditorAndJumpToGraphNode(DialogueEditorPtr, EdNode) ? FReply::Handled() : FReply::Unhandled();
 }
 
 FSlateColor FMounteaDialogueGraphNode_Details::GetPreviewingNodeBackgroundColor() const
@@ -209,13 +222,12 @@ void FMounteaDialogueGraphNode_Details::MakePreviewNode()
 	const FSlateColor DefaultFontColor = MounteaDialogueGraphColors::TextColors::Normal;
 	
 	PreviewNode =  SNew(SBox)
-	.Padding(FMargin(0.f, 5.f, 0.f, 0.f))
+	.Padding(FMargin(0.f, 5.f, 0.f, 5.f))
 	.MinDesiredWidth(FOptionalSize(110.f))
 	.MaxDesiredWidth(FOptionalSize(120.f))
 	.HAlign(HAlign_Center)
-	.MinDesiredHeight(FOptionalSize(50.f))
-	.MaxDesiredHeight(FOptionalSize(75.f))
-	.VAlign(VAlign_Center)
+	.MinDesiredHeight(FOptionalSize(75.f))
+	.VAlign(VAlign_Fill)
 	.ToolTipText(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreviewTooltip","This node is currently selected as Return Node. Upon execution of this Node, Dialogue will move to Selected Node.\n\nClicking on this Preview will select this Node in Graph."))
 	[
 		SNew(SButton)
@@ -268,35 +280,25 @@ void FMounteaDialogueGraphNode_Details::MakePreviewNode()
 						SNew(SVerticalBox)
 						
 						+ SVerticalBox::Slot()
-						.AutoHeight()
+						.VAlign(VAlign_Center)
 						[
 							SNew(SBorder)
 							.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges"))
 							.BorderBackgroundColor(MounteaDialogueGraphColors::DecoratorsBody::Default)
 							.HAlign(HAlign_Fill)
-							.VAlign(VAlign_Fill)
+							.VAlign(VAlign_Center)
 							.Visibility(EVisibility::SelfHitTestInvisible)
 							[
 								SNew(SBox)
 								.MinDesiredWidth(FOptionalSize(145.f))
+								.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 								[
-									SNew(SHorizontalBox)
-									+ SHorizontalBox::Slot()
-									.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
-									[
-										SNew(SVerticalBox)
-										+ SVerticalBox::Slot()
-										  .HAlign(HAlign_Center)
-										  .AutoHeight()
-										[
-											SNew(STextBlock)
-											.Font(FontBold)
-											.Text(this, &FMounteaDialogueGraphNode_Details::GetPreviewingNodeTitle)
-											.Justification(ETextJustify::Center)
-											.Visibility(EVisibility::Visible)
-											.ColorAndOpacity(MounteaDialogueGraphColors::TextColors::Normal)
-										]
-									]
+									SNew(STextBlock)
+									.Font(FontBold)
+									.Text(this, &FMounteaDialogueGraphNode_Details::GetPreviewingNodeTitle)
+									.Justification(ETextJustify::Center)
+									.Visibility(EVisibility::Visible)
+									.ColorAndOpacity(MounteaDialogueGraphColors::TextColors::Normal)
 								]
 							]
 						]
@@ -322,75 +324,78 @@ void FMounteaDialogueGraphNode_Details::MakeInvalidPreviewNode()
 	const FSlateFontInfo FontBold = FCoreStyle::GetDefaultFontStyle("Bold", 12, FFontOutlineSettings(1));
 
 	const FSlateColor DefaultFontColor = MounteaDialogueGraphColors::TextColors::Normal;
-	
-	PreviewNode = SNew(SBox)
-	.Padding(FMargin(0.f, 5.f, 0.f, 0.f))
+
+	PreviewNode =  SNew(SBox)
+	.Padding(FMargin(0.f, 5.f, 0.f, 5.f))
 	.MinDesiredWidth(FOptionalSize(110.f))
 	.MaxDesiredWidth(FOptionalSize(120.f))
 	.HAlign(HAlign_Center)
-	.MinDesiredHeight(FOptionalSize(50.f))
-	.MaxDesiredHeight(FOptionalSize(75.f))
-	.VAlign(VAlign_Center)
-	.ToolTipText(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreviewTooltip","No Node is currently selected as Return Node. Unless fixed, this Graph won't be able to launch!"))
+	.MinDesiredHeight(FOptionalSize(75.f))
+	.VAlign(VAlign_Fill)
+	.ToolTipText(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreviewTooltip","This node is currently selected as Return Node. Upon execution of this Node, Dialogue will move to Selected Node.\n\nClicking on this Preview will select this Node in Graph."))
 	[
-		// OUTER STYLE
-		SNew(SBorder)
-		.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
-		.Padding(3.0f)
-		.BorderBackgroundColor(FSlateColor(FLinearColor::Red))
+		SNew(SButton)
+		.VAlign(VAlign_Fill)
+		.HAlign(HAlign_Fill)
+		.ButtonColorAndOpacity(FSlateColor(FLinearColor(0,0,0,0)))
+		.ContentPadding(FMargin(0))
+		.OnClicked(this, &FMounteaDialogueGraphNode_Details::OnPreviewingNodeClicked)
 		[
-			SNew(SOverlay)
-
-			// Adding some colours so its not so boring
-			+ SOverlay::Slot()
-			.HAlign(HAlign_Fill)
-			.VAlign(VAlign_Fill)
+			// OUTER STYLE
+			SNew(SBorder)
+			.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
+			.Padding(3.0f)
+			.BorderBackgroundColor(FSlateColor(FLinearColor::Red))
 			[
-				// INNER STYLE
-				SNew(SBorder)
-				.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
+				SNew(SOverlay)
+
+				// Adding some colours so its not so boring
+				+ SOverlay::Slot()
 				.HAlign(HAlign_Fill)
-				.VAlign(VAlign_Center)
-				.Visibility(EVisibility::SelfHitTestInvisible)
-				.BorderBackgroundColor(MounteaDialogueGraphColors::Overlay::DarkTheme)
-			]
-		
-			// Pins and node details
-			+ SOverlay::Slot()
-			.HAlign(HAlign_Fill)
-			.VAlign(VAlign_Fill)
-			[
-				SNew(SVerticalBox)
-
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[
-					SNew(SSpacer)
-					.Size(FVector2D(0.f, 10.f))
-				]
-
-				+ SVerticalBox::Slot()
-				.Padding(FMargin(NodePadding.Left, 0.0f, NodePadding.Right, 0.0f))
 				.VAlign(VAlign_Fill)
 				[
+					// INNER STYLE
 					SNew(SBorder)
-					.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges"))
-					.BorderBackgroundColor(MounteaDialogueGraphColors::DecoratorsBody::Default)
+					.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
 					.HAlign(HAlign_Fill)
-					.VAlign(VAlign_Fill)
+					.VAlign(VAlign_Center)
 					.Visibility(EVisibility::SelfHitTestInvisible)
+					.BorderBackgroundColor(MounteaDialogueGraphColors::Overlay::DarkTheme)
+				]
+				
+				// Pins and node details
+				+ SOverlay::Slot()
+				.HAlign(HAlign_Fill)
+				.VAlign(VAlign_Fill)
+				[
+					SNew(SVerticalBox)
+
+					+ SVerticalBox::Slot()
+					.AutoHeight()
 					[
-						SNew(SBox)
-						.MinDesiredWidth(FOptionalSize(145.f))
+						SNew(SSpacer)
+						.Size(FVector2D(0.f, 10.f))
+					]
+
+					+ SVerticalBox::Slot()
+					.Padding(FMargin(NodePadding.Left, 0.0f, NodePadding.Right, 0.0f))
+					.VAlign(VAlign_Fill)
+					[
+						SNew(SVerticalBox)
+						
+						+ SVerticalBox::Slot()
+						.VAlign(VAlign_Center)
 						[
-							SNew(SHorizontalBox)
-							+ SHorizontalBox::Slot()
-							.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+							SNew(SBorder)
+							.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges"))
+							.BorderBackgroundColor(MounteaDialogueGraphColors::DecoratorsBody::Default)
+							.HAlign(HAlign_Fill)
+							.VAlign(VAlign_Center)
+							.Visibility(EVisibility::SelfHitTestInvisible)
 							[
-								SNew(SVerticalBox)
-								+ SVerticalBox::Slot()
-								  .HAlign(HAlign_Center)
-								  .AutoHeight()
+								SNew(SBox)
+								.MinDesiredWidth(FOptionalSize(145.f))
+								.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 								[
 									SNew(STextBlock)
 									.Font(FontBold)
@@ -403,13 +408,13 @@ void FMounteaDialogueGraphNode_Details::MakeInvalidPreviewNode()
 							]
 						]
 					]
-				]
 
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[
-					SNew(SSpacer)
-					.Size(FVector2D(0.f, 10.f))
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(SSpacer)
+						.Size(FVector2D(0.f, 10.f))
+					]
 				]
 			]
 		]

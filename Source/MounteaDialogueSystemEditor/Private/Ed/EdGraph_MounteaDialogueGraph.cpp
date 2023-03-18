@@ -147,6 +147,11 @@ void UEdGraph_MounteaDialogueGraph::PostEditUndo()
 	NotifyGraphChanged();
 }
 
+void UEdGraph_MounteaDialogueGraph::SetAssetEditor(FAssetEditor_MounteaDialogueGraph* NewAssetEditor)
+{
+	AssetEditor = MakeShareable(NewAssetEditor);
+}
+
 void UEdGraph_MounteaDialogueGraph::Clear()
 {
 	UMounteaDialogueGraph* Graph = GetMounteaDialogueGraph();

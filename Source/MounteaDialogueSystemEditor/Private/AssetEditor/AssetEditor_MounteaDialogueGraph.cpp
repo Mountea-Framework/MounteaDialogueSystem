@@ -345,6 +345,13 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 		NewNode->SetFlags(RF_Transactional);
 		
 		MounteaDialogueGraph->RebuildMounteaDialogueGraph();
+		MounteaDialogueGraph->SetAssetEditor(this);
+	}
+	else
+	{
+		// Force override editor Ptr
+		UEdGraph_MounteaDialogueGraph* MounteaDialogueGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
+		MounteaDialogueGraph->SetAssetEditor(this);
 	}
 }
 
