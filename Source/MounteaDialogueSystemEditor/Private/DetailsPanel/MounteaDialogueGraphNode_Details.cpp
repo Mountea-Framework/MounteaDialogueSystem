@@ -228,7 +228,7 @@ void FMounteaDialogueGraphNode_Details::MakePreviewNode()
 	.HAlign(HAlign_Center)
 	.MinDesiredHeight(FOptionalSize(75.f))
 	.VAlign(VAlign_Fill)
-	.ToolTipText(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreviewTooltip","This node is currently selected as Return Node. Upon execution of this Node, Dialogue will move to Selected Node.\n\nClicking on this Preview will select this Node in Graph."))
+	.ToolTipText(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreviewTooltip","This node is currently selected as Return Node.\nUpon execution of Return to Node, Dialogue will move to Selected Node.\n\nClicking on this Preview will select this Node in Graph."))
 	[
 		SNew(SButton)
 		.VAlign(VAlign_Fill)
