@@ -130,6 +130,7 @@ void FMounteaDialogueGraphNode_Details::MakePreviewsScrollBox(TArray<FText>& Fro
 void FMounteaDialogueGraphNode_Details::ResetTexts()
 {
 	if (!EditingNode) return;
+	if (SavedLayoutBuilder) SavedLayoutBuilder->ForceRefreshDetails();
 	if (UMounteaDialogueGraphNode_DialogueNodeBase* EditingDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(EditingNode) )
 	{
 		TArray<FText> PreviewTexts = EditingDialogueNode->GetPreviews();
@@ -141,7 +142,7 @@ void FMounteaDialogueGraphNode_Details::ResetTexts()
 void FMounteaDialogueGraphNode_Details::ResetPreviewingNode()
 {
 	if (!EditingNode) return;
-
+	if (SavedLayoutBuilder) SavedLayoutBuilder->ForceRefreshDetails();
 	if (EditingNode->IsA(UMounteaDialogueGraphNode_ReturnToNode::StaticClass()))
 	{
 		MakePreviewNode();
@@ -160,6 +161,11 @@ FText FMounteaDialogueGraphNode_Details::GetPreviewingNodeTitle() const
 	return EditingDialogueNode->SelectedNode->GetNodeTitle();
 }
 
+FReply FMounteaDialogueGraphNode_Details::OnPreviewingNodeClicked()
+{
+	return FReply::Unhandled();
+}
+
 FSlateColor FMounteaDialogueGraphNode_Details::GetPreviewingNodeBackgroundColor() const
 {
 	if (!EditingNode)  return FLinearColor::Red;
@@ -173,6 +179,11 @@ FSlateColor FMounteaDialogueGraphNode_Details::GetPreviewingNodeBackgroundColor(
 
 void FMounteaDialogueGraphNode_Details::MakePreviewNode()
 {
+	if (PreviewNode.IsValid())
+	{
+		PreviewNode.Reset();
+	}
+	
 	if (!EditingNode)
 	{
 		MakeInvalidPreviewNode();
@@ -212,6 +223,7 @@ void FMounteaDialogueGraphNode_Details::MakePreviewNode()
 		.HAlign(HAlign_Fill)
 		.ButtonColorAndOpacity(FSlateColor(FLinearColor(0,0,0,0)))
 		.ContentPadding(FMargin(0))
+		.OnClicked(this, &FMounteaDialogueGraphNode_Details::OnPreviewingNodeClicked)
 		[
 			// OUTER STYLE
 			SNew(SBorder)
@@ -312,12 +324,13 @@ void FMounteaDialogueGraphNode_Details::MakeInvalidPreviewNode()
 	const FSlateColor DefaultFontColor = MounteaDialogueGraphColors::TextColors::Normal;
 	
 	PreviewNode = SNew(SBox)
+	.Padding(FMargin(0.f, 5.f, 0.f, 0.f))
 	.MinDesiredWidth(FOptionalSize(110.f))
 	.MaxDesiredWidth(FOptionalSize(120.f))
 	.HAlign(HAlign_Center)
 	.MinDesiredHeight(FOptionalSize(50.f))
 	.MaxDesiredHeight(FOptionalSize(75.f))
-	.VAlign(VAlign_Fill)
+	.VAlign(VAlign_Center)
 	.ToolTipText(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreviewTooltip","No Node is currently selected as Return Node. Unless fixed, this Graph won't be able to launch!"))
 	[
 		// OUTER STYLE
