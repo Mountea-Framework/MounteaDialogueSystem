@@ -4,6 +4,7 @@
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_ReturnToNode"
 
@@ -23,6 +24,10 @@ UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode()
 	bAutoStarts = true;
 	
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode::StaticClass());
+
+	// Disable those Node Classes
+	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_ReturnToNode::StaticClass());
+	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_CompleteNode::StaticClass());
 }
 
 FText UMounteaDialogueGraphNode_ReturnToNode::GetNodeCategory_Implementation() const
@@ -87,7 +92,6 @@ void UMounteaDialogueGraphNode_ReturnToNode::PostEditChangeProperty(FPropertyCha
 	{
 		if (SelectedNodeGUID.IsEmpty())
 		{
-			SelectedNodeName = FText();
 			SelectedNode = nullptr;
 		}
 		else
@@ -96,17 +100,10 @@ void UMounteaDialogueGraphNode_ReturnToNode::PostEditChangeProperty(FPropertyCha
 			FGuid::Parse(SelectedNodeGUID, TempNodeGUID);
 
 			SelectedNode = UMounteaDialogueSystemBFC::FindNodeByGUID(Graph, TempNodeGUID);
-			if (SelectedNode)
-			{
-				SelectedNodeName = SelectedNode->GetNodeTitle();
-			}
-			else
-			{
-				SelectedNodeName = FText();
-				SelectedNode = nullptr;
-			}
 		}
 	}
+
+	ReturnNodeUpdated.ExecuteIfBound();
 }
 
 FText UMounteaDialogueGraphNode_ReturnToNode::GetDescription_Implementation() const

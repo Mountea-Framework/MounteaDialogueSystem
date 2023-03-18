@@ -22,21 +22,32 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_ReturnToNode : public 
 
 public:
 
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault))
+	/**
+	 * Shows list of Node GUIDs.
+	 * This is not very user friendly, however, to combat this Preview is generated with ability to click on it and get focused on selected Node.
+	 */
+	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames"))
 	FString SelectedNodeGUID;
 
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", VisibleAnywhere, BlueprintReadOnly, meta=(NoResetToDefault))
-	FText SelectedNodeName;
-
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", VisibleAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, DisplayThumbnail="false"))
+	UPROPERTY(SaveGame, Category="Private", VisibleAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, DisplayThumbnail="false"))
 	UMounteaDialogueGraphNode* SelectedNode;
 
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault))
-	TSubclassOf<UMounteaDialogueGraphNode> AllowedNodesFilter;
-	
+	/**
+	 * Filters OUT all nodes by that class.
+	 */
+	UPROPERTY(SaveGame, Category="Editor", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault))
+	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedNodesFilter;
+
+#if WITH_EDITORONLY_DATA
+
+	FSimpleDelegate ReturnNodeUpdated;
+
+#endif
+
 protected:
 
 #if WITH_EDITOR
+	
 	virtual FText GetNodeCategory_Implementation() const override;
 	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat) override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -57,10 +68,21 @@ private:
 			for (const auto& Itr : Graph->GetAllNodes())
 			{
 				// TODO: Implement allowed Filter
-				if (Itr && Itr != this)
+				if (Itr)
 				{
-					FString NodeName = Itr->GetNodeGUID().ToString();
-					NodesNames.Add(NodeName);
+					// Check if this is allowed class
+					bool bIsAllowed = true;
+					for (auto& ItrClass : AllowedNodesFilter)
+					{
+						if (Itr->IsA(ItrClass)) bIsAllowed = false;
+					}
+					
+					// Show only those allowed
+					if (bIsAllowed)
+					{
+						FString NodeName = Itr->GetNodeGUID().ToString();
+						NodesNames.Add(NodeName);
+					}
 				}
 			}
 

@@ -23,19 +23,30 @@ public:
 	const FSlateBrush* GetBorderImage() const;
 	void OnDocumentationHovered();
 
+#pragma region DialoguePreviews
 	const FSlateBrush* GetPreviewsBrush() const;
 	FSlateColor GetPreviewsBackgroundColor() const;
 	FSlateColor GetPreviewsTextColor() const;
 	
 	void MakePreviewsScrollBox(TArray<FText>& FromTexts);
-
 	void ResetTexts();
+#pragma endregion 
+
+#pragma region ReturnNodePreview
+	void ResetPreviewingNode();
+	
+	FSlateColor GetPreviewingNodeBackgroundColor() const;
+	FText GetPreviewingNodeTitle() const;
+	void MakePreviewNode();
+	void MakeInvalidPreviewNode();
+#pragma endregion 
 	
 	// IDetailCustomization interface
 	/** Called when details should be customized */
 	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
 
 private:
+	TSharedPtr<SBox> PreviewNode;
 	TSharedPtr<SScrollBox> PreviewRows;
 	TSharedPtr<SButton> DocumentationButton;
 	TSharedPtr<SImage> DocumentationImage;
