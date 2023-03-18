@@ -368,6 +368,23 @@ public:
 	}
 
 	/**
+	 * Searches in Graph for Node by GUID.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="guid, node, find, search, get"))
+	static UMounteaDialogueGraphNode* FindNodeByGUID(const UMounteaDialogueGraph* FromGraph, const FGuid ByGUID)
+	{
+		if (!FromGraph) return nullptr;
+		if (!ByGUID.IsValid()) return nullptr;
+
+		for (const auto& Itr : FromGraph->GetAllNodes())
+		{
+			if (Itr && Itr->GetNodeGUID() == ByGUID) return Itr;
+		}
+
+		return nullptr;
+	}
+	
+	/**
 	 * Tries to get Child Node from Dialogue Node at given Index. If none is found, returns null.
 	 * ❗Might return Null❗
 	 * 

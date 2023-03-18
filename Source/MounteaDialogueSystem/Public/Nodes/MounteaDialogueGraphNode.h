@@ -56,6 +56,13 @@ protected:
 #pragma region Editable
 public:
 
+	UPROPERTY(SaveGame, EditDefaultsOnly, BlueprintReadOnly, Category="Base")
+	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
+
+	/** Defines whether this Node will start automatically or if requires input.*/
+	UPROPERTY(SaveGame, EditAnywhere, BlueprintReadOnly, Category="Base")
+	uint8 bAutoStarts : 1;
+	
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Base")
 	int32 MaxChildrenNodes = -1;
 
@@ -121,7 +128,7 @@ public:
 
 
 #if WITH_EDITORONLY_DATA
-
+	
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowInputNodes;
 
@@ -157,9 +164,6 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText NodeTooltipText;
-
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
-	FString NodeDocumentationLink;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText NodeTypeName;

@@ -9,10 +9,6 @@
 #include "UObject/Object.h"
 #include "MounteaDialogueGraphNode_DialogueNodeBase.generated.h"
 
-// EDITOR EVENTS
-#if WITH_EDITORONLY_DATA
-
-#endif
 
 /**
  * Mountea Dialogue Graph Node abstract Base class.
@@ -64,18 +60,9 @@ protected:
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
 	FName RowName;
 
-	/** Defines whether this Node will start automatically or if requires input.*/
-	UPROPERTY(SaveGame, EditAnywhere, BlueprintReadOnly, Category="Base")
-	uint8 bAutoStarts : 1;
-	
-	UPROPERTY(SaveGame, EditDefaultsOnly, BlueprintReadOnly, Category="Base")
-	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
-
-	
 #if WITH_EDITOR
 	
 	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat) override;
-	virtual bool CanCreateConnection(UMounteaDialogueGraphNode* Other, EEdGraphPinDirection Direction, FText& ErrorMessage) override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual FText GetDescription_Implementation() const override;
 	

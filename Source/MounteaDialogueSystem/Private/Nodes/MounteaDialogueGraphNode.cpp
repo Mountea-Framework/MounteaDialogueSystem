@@ -27,9 +27,9 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
 
 	NodeTypeName = LOCTEXT("MounteaDialogueNode_InternalName", "MounteaDialogueGraphNode");
 	NodeTooltipText = LOCTEXT("MounteaDialogueNode_Tooltip", "Mountea Dialogue Base Node.\n\nChild Nodes provide more Information.");
-
-	NodeDocumentationLink = TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Dialogue-Nodes");
 #endif
+
+	bAutoStarts = false;
 }
 
 UMounteaDialogueGraph* UMounteaDialogueGraphNode::GetGraph() const
@@ -141,10 +141,41 @@ bool UMounteaDialogueGraphNode::CanCreateConnection(UMounteaDialogueGraphNode* O
 {
 	if (Other == nullptr)
 	{
-		ErrorMessage = FText::FromString("Invalid Other node!");
+		ErrorMessage = FText::FromString("Invalid Other Node!");
+	}
+
+	if (Other->GetMaxChildNodes() > -1 && Other->ChildrenNodes.Num() >= Other->GetMaxChildNodes())
+	{
+		const FString TextReturn =
+		FString(Other->GetNodeTitle().ToString()).
+		Append(": Cannot have more than ").Append(FString::FromInt(Other->GetMaxChildNodes())).Append(" Children Nodes!");
+
+		ErrorMessage = FText::FromString(TextReturn);
 		return false;
 	}
-	
+
+	if (Direction == EGPD_Output)
+	{
+		
+		// Fast checking for native classes
+		if ( AllowedInputClasses.Contains(Other->GetClass()) )
+		{
+			return true;
+		}
+
+		// Slower iterative checking for child classes
+		for (auto Itr : AllowedInputClasses)
+		{
+			if (Other->GetClass()->IsChildOf(Itr))
+			{
+				return true;
+			}
+		}
+		
+		ErrorMessage = FText::FromString("Invalid Node Connection!");
+		return false;
+	}
+
 	return true;
 }
 

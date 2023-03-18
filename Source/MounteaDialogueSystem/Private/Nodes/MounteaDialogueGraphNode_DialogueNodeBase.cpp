@@ -91,48 +91,6 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 	return bResult;
 }
 
-bool UMounteaDialogueGraphNode_DialogueNodeBase::CanCreateConnection(UMounteaDialogueGraphNode* Other, EEdGraphPinDirection Direction, FText& ErrorMessage)
-{
-	if (Other == nullptr)
-	{
-		ErrorMessage = FText::FromString("Invalid Other Node!");
-	}
-
-	if (Other->GetMaxChildNodes() > -1 && Other->ChildrenNodes.Num() >= Other->GetMaxChildNodes())
-	{
-		const FString TextReturn =
-		FString(Other->GetNodeTitle().ToString()).
-		Append(": Cannot have more than ").Append(FString::FromInt(Other->GetMaxChildNodes())).Append(" Children Nodes!");
-
-		ErrorMessage = FText::FromString(TextReturn);
-		return false;
-	}
-
-	if (Direction == EGPD_Output)
-	{
-		
-		// Fast checking for native classes
-		if ( AllowedInputClasses.Contains(Other->GetClass()) )
-		{
-			return true;
-		}
-
-		// Slower iterative checking for child classes
-		for (auto Itr : AllowedInputClasses)
-		{
-			if (Other->GetClass()->IsChildOf(Itr))
-			{
-				return true;
-			}
-		}
-		
-		ErrorMessage = FText::FromString("Invalid Node Connection!");
-		return false;
-	}
-
-	return true;
-}
-
 void UMounteaDialogueGraphNode_DialogueNodeBase::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
