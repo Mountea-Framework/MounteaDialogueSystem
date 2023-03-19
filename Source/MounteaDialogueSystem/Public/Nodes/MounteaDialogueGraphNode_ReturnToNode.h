@@ -27,11 +27,11 @@ public:
 public:
 
 	/**
-	 * Shows list of Node GUIDs.
+	 * Shows list of Node Indexes.
 	 * This is not very user friendly, however, to combat this Preview is generated with ability to click on it and get focused on selected Node.
 	 */
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames"))
-	FString SelectedNodeGUID;
+	FString SelectedNodeIndex;
 
 	UPROPERTY(SaveGame, Category="Private", VisibleAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, DisplayThumbnail="false"))
 	UMounteaDialogueGraphNode* SelectedNode;
@@ -83,8 +83,8 @@ private:
 					// Show only those allowed
 					if (bIsAllowed)
 					{
-						FString NodeName = Itr->GetNodeGUID().ToString();
-						NodesNames.Add(NodeName);
+						FString AllowedIndex = FString::FromInt(Graph->AllNodes.Find(Itr));
+						NodesNames.Add(AllowedIndex);
 					}
 				}
 			}

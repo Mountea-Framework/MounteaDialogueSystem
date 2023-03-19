@@ -68,7 +68,7 @@ void FMounteaDialogueGraphEditorStyle::Initialize()
 	StyleSet->Set("MDSStyleSet.Node.TextSoftEdges", new BOX_BRUSH( TEXT("TextSoftCorners") , FMargin(16.f/64.f, 25.f/64.f, 16.f/64.f, 16.f/64.f) ));
 	StyleSet->Set("MDSStyleSet.Node.TextHardEdges", new BOX_BRUSH( TEXT("TextHardCorners") , FMargin(16.f/64.f, 25.f/64.f, 16.f/64.f, 16.f/64.f) ));
 
-	StyleSet->Set("MDSStyleSet.Node.IndexCircle", new IMAGE_BRUSH(TEXT("CircleBox"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Node.IndexCircle", new IMAGE_BRUSH(TEXT("IndexIcon"), Icon16x16));
 
 	StyleSet->Set("MDSStyleSet.Icon.OK", new IMAGE_BRUSH(TEXT("OKIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Icon.Error", new IMAGE_BRUSH(TEXT("ErroIcon"), Icon16x16));

@@ -41,7 +41,6 @@ public:
 #if WITH_EDITORONLY_DATA
 
 	/**
-	 * ❗Experimental Feature ❗
 	 * Shows read-only Texts with localization of selected Dialogue Row.
 	 */
 	UPROPERTY(Transient, VisibleAnywhere, Category="Base", meta=(MultiLine=true, ShowOnlyInnerProperties))

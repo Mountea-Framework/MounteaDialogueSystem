@@ -81,7 +81,7 @@ bool UMounteaDialogueGraphNode_ReturnToNode::ValidateNode(TArray<FText>& Validat
 		}
 	}
 
-	if (SelectedNodeGUID.IsEmpty())
+	if (SelectedNodeIndex.IsEmpty())
 	{
 		bSatisfied = false;
 
@@ -106,18 +106,16 @@ void UMounteaDialogueGraphNode_ReturnToNode::PostEditChangeProperty(FPropertyCha
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_ReturnToNode, SelectedNodeGUID))
+	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_ReturnToNode, SelectedNodeIndex))
 	{
-		if (SelectedNodeGUID.IsEmpty())
+		if (SelectedNodeIndex.IsEmpty())
 		{
 			SelectedNode = nullptr;
 		}
 		else
 		{
-			FGuid TempNodeGUID;
-			FGuid::Parse(SelectedNodeGUID, TempNodeGUID);
-
-			SelectedNode = UMounteaDialogueSystemBFC::FindNodeByGUID(Graph, TempNodeGUID);
+			const int32 Index = FCString::Atoi((TEXT("%s"), *SelectedNodeIndex));
+			SelectedNode = Graph->AllNodes[Index];
 		}
 	}
 

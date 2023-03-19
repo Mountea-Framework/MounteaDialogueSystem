@@ -9,7 +9,7 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 {
 	NodeType = ENodeType::ENT_SoftCorners;
 	NodeTheme = ENodeTheme::ENT_DarkTheme;
-	ArrowType = EArrowType::ERT_SimpleArrow;
+	ArrowType = EArrowType::ERT_HollowArrow;
 	
 	CategoryName = TEXT("Mountea Framework");
 	SectionName = TEXT("Mountea Dialogue System (Editor)");
@@ -23,14 +23,14 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 	InitTemperature = 10.f;
 	CoolDownRate = 10.f;
 
-	WireWidth = 1.5f;
+	WireWidth = 0.8f;
 	//WireStyle = EWiringStyle::EWS_Simple;
 	//BubbleDrawRule = EBubbleDrawRule::EBDR_OnSelected;
 
 	bAllowRenameNodes = true;
 	bDisplayAutomaticNames = false;
 
-	bShowDetailedInfo_InheritsDecorators = false;
+	bShowDetailedInfo_InheritsDecorators = true;
 	bShowDetailedInfo_NumDecorators = true;
 	DecoratorsInfoStyle = EDecoratorsInfoStyle::EDIS_Unified;
 
