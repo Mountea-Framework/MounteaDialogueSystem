@@ -166,9 +166,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 
 	const FSlateBrush* CircleBrush = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.IndexCircle"));
 	this->GetOrAddSlot(ENodeZone::Left)
-	//.SlotOffset(FVector2D(-20.f))
 	.SlotOffset(TAttribute<FVector2D>(this, &SEdNode_MounteaDialogueGraphNode::GetIndexSlotOffset))
-	//.SlotSize(FVector2D(24.f))
 	.SlotSize(TAttribute<FVector2D>(this, &SEdNode_MounteaDialogueGraphNode::GetIndexSlotSize))
 	[
 		SNew(SOverlay)

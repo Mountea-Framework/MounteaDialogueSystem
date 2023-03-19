@@ -78,7 +78,6 @@ public:
 	EVisibility GetUnifiedVisibility() const;
 
 	FText GetTooltipText() const;
-	EVisibility GetTooltipTextVisibility() const;
 
 protected:
 	TSharedPtr<SBorder> NodeBody;
