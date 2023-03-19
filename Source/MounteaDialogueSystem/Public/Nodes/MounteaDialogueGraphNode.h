@@ -6,6 +6,7 @@
 #include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "MounteaDialogueGraphNode.generated.h"
 
+class IMounteaDialogueManagerInterface;
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphEdge;
 
@@ -16,7 +17,7 @@ class UMounteaDialogueGraphEdge;
  * Does come with ability to define Colours, Name, Description and Title.
  * Contains information about Parent and Children Nodes.
  */
-UCLASS(Abstract, BlueprintType, Blueprintable, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue"))
+UCLASS(Abstract, BlueprintType, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject
 {
 	GENERATED_BODY()
@@ -51,6 +52,11 @@ protected:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	FGuid NodeGUID;
 
+private:
+
+	UPROPERTY(VisibleAnywhere, Category = "Private")
+	UWorld* OwningWorld;
+
 #pragma endregion
 
 #pragma region Editable
@@ -84,6 +90,13 @@ public:
 #pragma region Functions
 
 public:
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	void InitializeNode(UWorld* InWorld);
+	virtual void InitializeNode_Implementation(UWorld* InWorld);
+	
+	virtual void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
+	virtual void ProcessNode();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	TArray<FMounteaDialogueDecorator> GetNodeDecorators() const;
@@ -123,6 +136,38 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetParentNodes() const
 	{return ParentNodes; };
+
+public:
+
+	FORCEINLINE ULevel* GetLevel() const
+	{
+		return GetTypedOuter<ULevel>();
+	}
+
+	/**
+	 * Provides a way to update Node's owning World.
+	 * Useful for Loading sub-levels.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	virtual void SetNewWorld(UWorld* NewWorld);
+	virtual UWorld* GetWorld() const override
+	{
+		if (OwningWorld) return OwningWorld;
+		
+		// CDO objects do not belong to a world
+		// If the actors outer is destroyed or unreachable we are shutting down and the world should be nullptr
+		if (
+			!HasAnyFlags(RF_ClassDefaultObject) && ensureMsgf(GetOuter(), TEXT("Actor: %s has a null OuterPrivate in AActor::GetWorld()"), *GetFullName())
+			&& !GetOuter()->HasAnyFlags(RF_BeginDestroyed) && !GetOuter()->IsUnreachable()
+			)
+		{
+			if (ULevel* Level = GetLevel())
+			{
+				return Level->OwningWorld;
+			}
+		}
+		return nullptr;
+	}
 
 #pragma endregion 
 

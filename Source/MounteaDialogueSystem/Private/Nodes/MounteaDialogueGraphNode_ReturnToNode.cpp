@@ -14,7 +14,7 @@ UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode()
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeTitle", "Return To Node");
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeInternalTitle", "Return To Node");
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeContextMenu", "Return To Node");
-	BackgroundColor = FLinearColor(FColor::Purple);
+	BackgroundColor = FLinearColor(FColor::White);
 
 	bAllowOutputNodes = false;
 	
@@ -29,6 +29,8 @@ UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode()
 	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_ReturnToNode::StaticClass());
 	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_CompleteNode::StaticClass());
 }
+
+#if WITH_EDITOR
 
 FText UMounteaDialogueGraphNode_ReturnToNode::GetNodeCategory_Implementation() const
 {
@@ -110,5 +112,7 @@ FText UMounteaDialogueGraphNode_ReturnToNode::GetDescription_Implementation() co
 {
 	return LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeDescription", "Provides ability to return from Dialogue Node to different one.");
 }
+
+#endif
 
 #undef LOCTEXT_NAMESPACE

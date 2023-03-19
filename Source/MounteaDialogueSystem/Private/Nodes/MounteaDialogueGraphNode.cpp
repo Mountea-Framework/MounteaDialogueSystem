@@ -3,6 +3,7 @@
 #include "Nodes/MounteaDialogueGraphNode.h"
 
 #include "Graph/MounteaDialogueGraph.h"
+#include "Helpers/MounteaDialogueSystemBFC.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueNode"
 
@@ -35,6 +36,32 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
 UMounteaDialogueGraph* UMounteaDialogueGraphNode::GetGraph() const
 {
 	return Graph;
+}
+
+void UMounteaDialogueGraphNode::SetNewWorld(UWorld* NewWorld)
+{
+	if (!NewWorld) return;
+	if (NewWorld == OwningWorld) return;
+
+	OwningWorld = NewWorld;
+}
+
+void UMounteaDialogueGraphNode::InitializeNode_Implementation(UWorld* InWorld)
+{
+	OwningWorld = InWorld;
+
+	if (Graph) SetNodeIndex(Graph->AllNodes.Find(this));
+}
+
+void UMounteaDialogueGraphNode::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+{
+	const UMounteaDialogueContext* Context = Manager->GetDialogueContext();
+	UMounteaDialogueSystemBFC::ExecuteDecorators(this, Context);
+}
+
+void UMounteaDialogueGraphNode::ProcessNode()
+{
+	// TODO: Implement Nodes logic here
 }
 
 TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators() const
@@ -94,6 +121,12 @@ bool UMounteaDialogueGraphNode::EvaluateDecorators() const
 	return bSatisfied;
 }
 
+void UMounteaDialogueGraphNode::SetNodeIndex(const int32 NewIndex)
+{
+	check(NewIndex>INDEX_NONE);
+	NodeIndex = NewIndex;
+}
+
 #if WITH_EDITOR
 
 FText UMounteaDialogueGraphNode::GetDescription_Implementation() const
@@ -119,12 +152,6 @@ FText UMounteaDialogueGraphNode::GetNodeTooltipText_Implementation() const
 FLinearColor UMounteaDialogueGraphNode::GetBackgroundColor() const
 {
 	return BackgroundColor;
-}
-
-void UMounteaDialogueGraphNode::SetNodeIndex(const int32 NewIndex)
-{
-	check(NewIndex>INDEX_NONE);
-	NodeIndex = NewIndex;
 }
 
 FText UMounteaDialogueGraphNode::GetNodeTitle_Implementation() const

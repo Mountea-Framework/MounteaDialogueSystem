@@ -55,7 +55,6 @@ public:
 	
 	virtual void StartDialogue() = 0;
 	virtual void CloseDialogue() = 0;
-	virtual void ProcessNode() = 0;
 
 	virtual bool InvokeDialogueUI(FString& Message) = 0;
 	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const = 0;
@@ -89,6 +88,10 @@ public:
 	{
 		return nullptr;
 	};
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	void PrepareNode();
+	virtual void PrepareNode_Implementation() {};
 	
 	virtual UMounteaDialogueContext* GetDialogueContext() const = 0;
 	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) = 0;

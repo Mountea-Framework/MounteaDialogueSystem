@@ -136,7 +136,7 @@ void UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal(UMounteaDialo
 		return;
 	}
 
-	ProcessNode();
+	Execute_PrepareNode(this);
 }
 
 void UMounteaDialogueManager::OnDialogueNodeStartedEvent_Internal(UMounteaDialogueContext* Context)
@@ -237,7 +237,7 @@ void UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal(UMounteaDialogu
 
 void UMounteaDialogueManager::OnDialogueRowFinishedEvent_Internal(UMounteaDialogueContext* Context)
 {
-	//...
+	// Not necessary needed, however, provides a nice way to add functionality later on 
 }
 
 void UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal(USoundBase* VoiceToStart)
@@ -308,7 +308,7 @@ void UMounteaDialogueManager::StartDialogue()
 	SetDialogueManagerState(EDialogueManagerState::EDMS_Active);
 	
 	//TODO: Add ability to start from specific Node
-	ProcessNode();
+	Execute_PrepareNode(this);
 }
 
 void UMounteaDialogueManager::CloseDialogue()
@@ -358,7 +358,7 @@ void UMounteaDialogueManager::CloseDialogue()
 	DialogueContext = nullptr;
 }
 
-void UMounteaDialogueManager::ProcessNode()
+void UMounteaDialogueManager::PrepareNode_Implementation()
 {
 	if (!DialogueContext)
 	{
@@ -367,7 +367,13 @@ void UMounteaDialogueManager::ProcessNode()
 	}
 
 	DialogueContext->AddTraversedNode(DialogueContext->ActiveNode);
-	
+
+	// First PreProcess Node
+	DialogueContext->ActiveNode->PreProcessNode(this);
+	// Then Process Node
+	DialogueContext->ActiveNode->ProcessNode();
+
+	/*
 	if (DialogueContext->ActiveNode->GetClass()->IsChildOf(UMounteaDialogueGraphNode_LeadNode::StaticClass()))
 	{
 		DialogueContext->UpdateActiveDialogueParticipant(DialogueContext->GetDialogueParticipant());
@@ -378,10 +384,12 @@ void UMounteaDialogueManager::ProcessNode()
 	}
 	
 	ProcessNode_Dialogue();
+	*/
 }
 
 void UMounteaDialogueManager::ProcessNode_Dialogue()
 {
+	//TODO: Move this to PreProcessNode
 	if (!GetWorld())
 	{
 		OnDialogueFailed.Broadcast(TEXT("Cannot find World!"));

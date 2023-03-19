@@ -21,6 +21,16 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 	bAutoStarts = false;
 }
 
+void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+{
+	Super::PreProcessNode(Manager);
+}
+
+void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode()
+{
+	Super::ProcessNode();
+}
+
 UDataTable* UMounteaDialogueGraphNode_DialogueNodeBase::GetDataTable() const
 {
 	return DataTable;

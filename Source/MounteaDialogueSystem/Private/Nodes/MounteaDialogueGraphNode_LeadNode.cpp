@@ -3,6 +3,8 @@
 
 #include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
 
+#include "Data/MounteaDialogueContext.h"
+#include "Interfaces/MounteaDialogueManagerInterface.h"
 #include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
@@ -24,6 +26,26 @@ UMounteaDialogueGraphNode_LeadNode::UMounteaDialogueGraphNode_LeadNode()
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_AnswerNode::StaticClass());
 
 	bAutoStarts = true;
+}
+
+void UMounteaDialogueGraphNode_LeadNode::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+{
+	// Switch Active Participant to NPC
+	if (Manager.GetInterface())
+	{
+		const auto TempContext = Manager->GetDialogueContext();
+		if (TempContext)
+		{
+			TempContext->UpdateActiveDialogueParticipant(TempContext->GetDialogueParticipant());
+		}
+	}
+	
+	Super::PreProcessNode(Manager);
+}
+
+void UMounteaDialogueGraphNode_LeadNode::ProcessNode()
+{
+	Super::ProcessNode();
 }
 
 #if WITH_EDITOR

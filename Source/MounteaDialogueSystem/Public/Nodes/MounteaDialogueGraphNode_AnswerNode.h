@@ -19,14 +19,15 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_AnswerNode : public UM
 {
 	GENERATED_BODY()
 	
+	UMounteaDialogueGraphNode_AnswerNode();
+
 public:
 
-	UMounteaDialogueGraphNode_AnswerNode();
+	virtual void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
+	virtual void ProcessNode() override;
 
 #if WITH_EDITOR
 	virtual FText GetDescription_Implementation() const override;
 	virtual FText GetNodeCategory_Implementation() const override;
-	
-	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat) override;
 #endif
 };
