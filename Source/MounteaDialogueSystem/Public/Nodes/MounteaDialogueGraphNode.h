@@ -94,6 +94,10 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue")
 	void InitializeNode(UWorld* InWorld);
 	virtual void InitializeNode_Implementation(UWorld* InWorld);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	virtual bool DoesAutoStart() const
+	{ return bAutoStarts; };
 	
 	virtual void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	virtual void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);

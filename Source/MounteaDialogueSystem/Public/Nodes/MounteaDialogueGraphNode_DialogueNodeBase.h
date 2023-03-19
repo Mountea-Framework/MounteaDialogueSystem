@@ -35,10 +35,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual FName GetRowName() const
 	{ return RowName; }
-	
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
-	virtual bool DoesAutoStart() const
-	{ return bAutoStarts; };
 
 public:
 

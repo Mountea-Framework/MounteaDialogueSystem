@@ -18,6 +18,8 @@ UMounteaDialogueManager::UMounteaDialogueManager()
 {
 	DialogueContext = nullptr;
 	DefaultManagerState = EDialogueManagerState::EDMS_Enabled;
+
+	bWasCursorVisible = false;
 }
 
 void UMounteaDialogueManager::BeginPlay()
@@ -169,37 +171,19 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 		OnDialogueClosed.Broadcast(Context);
 	}
 
-	TArray<UMounteaDialogueGraphNode_CompleteNode*> AllowedChildrenCompleteNodes;
-	for (const auto Itr : AllowedChildrenNodes)
-	{
-		if (UMounteaDialogueGraphNode_CompleteNode* TempNode = Cast<UMounteaDialogueGraphNode_CompleteNode>(Itr))
-		{
-			AllowedChildrenCompleteNodes.Add(TempNode);
-		}
-	}
-	
-	TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> AllowedChildrenDialogueNodes;
-	for (const auto Itr : AllowedChildrenNodes)
-	{
-		if (UMounteaDialogueGraphNode_DialogueNodeBase* TempNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Itr))
-		{
-			AllowedChildrenDialogueNodes.Add(TempNode);
-		}
-	}
-
 	// If there are only Complete Nodes left or no DialogueNodes left, just shut it down
-	if (AllowedChildrenDialogueNodes.Num() == 0)
+	if (AllowedChildrenNodes.Num() == 0)
 	{
 		OnDialogueClosed.Broadcast(DialogueContext);
 		return;
 	}
 	
-	const bool bAutoActive = AllowedChildrenDialogueNodes[0]->DoesAutoStart();
+	const bool bAutoActive = AllowedChildrenNodes[0]->DoesAutoStart();
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 	
 	if (bAutoActive)
 	{
-		const auto NewActiveNode = AllowedChildrenDialogueNodes[0];
+		const auto NewActiveNode = AllowedChildrenNodes[0];
 
 		if (!NewActiveNode)
 		{
@@ -282,22 +266,19 @@ void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBas
 	FinishedExecuteDialogueRow();
 }
 
-bool UMounteaDialogueManager::EvaluateNodeDecorators()
-{
-	return true;
-}
-
-void UMounteaDialogueManager::ExecuteNodeDecorators()
-{
-	//TODO: Call BFC to execute all from Context
-}
-
 void UMounteaDialogueManager::StartDialogue()
 {
 	if (!DialogueContext)
 	{
 		OnDialogueFailed.Broadcast(TEXT("Invalid Dialogue Context!"));
 		return;
+	}
+
+	// Cache out Cursor, so we don't hide it if it was visible before
+	const APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (PlayerController != nullptr)
+	{
+		bWasCursorVisible = PlayerController->bShowMouseCursor;
 	}
 
 	FString ErrorMessage;
@@ -309,7 +290,6 @@ void UMounteaDialogueManager::StartDialogue()
 
 	SetDialogueManagerState(EDialogueManagerState::EDMS_Active);
 	
-	//TODO: Add ability to start from specific Node
 	Execute_PrepareNode(this);
 }
 
@@ -326,12 +306,9 @@ void UMounteaDialogueManager::CloseDialogue()
 		OnDialogueFailed.Broadcast(TEXT("No Player Controller found!"));
 		return;
 	}
-
-	//TODO: Cache previous settings to return to them
-	PlayerController->SetInputMode(FInputModeGameOnly());
-	PlayerController->SetShowMouseCursor(false);
 	
-	//TODO: Close dialogue, destroy Context, clean Timer
+	PlayerController->SetShowMouseCursor(bWasCursorVisible);
+	
 	if (!GetWorld()) return;
 
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
@@ -360,6 +337,15 @@ void UMounteaDialogueManager::CloseDialogue()
 	DialogueContext = nullptr;
 }
 
+void UMounteaDialogueManager::ProcessNode()
+{
+	// Then Process Node
+	if (DialogueContext && DialogueContext->ActiveNode)
+	{
+		DialogueContext->ActiveNode->ProcessNode(this);
+	}
+}
+
 void UMounteaDialogueManager::PrepareNode_Implementation()
 {
 	if (!DialogueContext)
@@ -372,52 +358,8 @@ void UMounteaDialogueManager::PrepareNode_Implementation()
 
 	// First PreProcess Node
 	DialogueContext->ActiveNode->PreProcessNode(this);
-	// Then Process Node
-	DialogueContext->ActiveNode->ProcessNode(this);
-
-	/*
-	if (DialogueContext->ActiveNode->GetClass()->IsChildOf(UMounteaDialogueGraphNode_LeadNode::StaticClass()))
-	{
-		DialogueContext->UpdateActiveDialogueParticipant(DialogueContext->GetDialogueParticipant());
-	}
-	else
-	{
-		DialogueContext->UpdateActiveDialogueParticipant(DialogueContext->GetDialoguePlayerParticipant());
-	}
 	
-	ProcessNode_Dialogue();
-	*/
-}
-
-void UMounteaDialogueManager::ProcessNode_Dialogue()
-{
-	//TODO: Move this to PreProcessNode
-	if (!GetWorld())
-	{
-		OnDialogueFailed.Broadcast(TEXT("Cannot find World!"));
-		return;
-	}
-	
-	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
-
-	const FDialogueRow DialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
-	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.DialogueRowData.Array().IsValidIndex(DialogueContext->GetActiveDialogueRowDataIndex()))
-	{
-		DialogueContext->UpdateActiveDialogueRow(DialogueRow);
-		DialogueContext->UpdateActiveDialogueRowDataIndex(DialogueContext->ActiveDialogueRowDataIndex);
-		OnDialogueContextUpdated.Broadcast(DialogueContext);
-		
-		UMounteaDialogueSystemBFC::ExecuteDecorators(this, DialogueContext);
-		
-		StartExecuteDialogueRow();
-	}
-	else
-	{
-		OnDialogueFailed.Broadcast(TEXT("Dialogue Row data contain Invalid Rows!"));
-		return;
-	}
-
-	OnDialogueNodeStarted.Broadcast(DialogueContext);
+	ProcessNode();
 }
 
 bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)

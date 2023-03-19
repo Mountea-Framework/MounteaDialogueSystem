@@ -22,6 +22,10 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_ReturnToNode : public 
 
 public:
 
+	virtual void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
+
+public:
+
 	/**
 	 * Shows list of Node GUIDs.
 	 * This is not very user friendly, however, to combat this Preview is generated with ability to click on it and get focused on selected Node.
@@ -67,7 +71,6 @@ private:
 			TArray<FString> NodesNames;
 			for (const auto& Itr : Graph->GetAllNodes())
 			{
-				// TODO: Implement allowed Filter
 				if (Itr)
 				{
 					// Check if this is allowed class

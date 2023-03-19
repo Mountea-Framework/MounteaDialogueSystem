@@ -236,12 +236,9 @@ public:
 	
 protected:
 
-	virtual bool EvaluateNodeDecorators() override;
-	virtual void ExecuteNodeDecorators() override;
-
 	virtual void StartDialogue() override;
 	virtual void CloseDialogue() override;
-	virtual void ProcessNode_Dialogue();
+	virtual void ProcessNode();
 
 	virtual bool InvokeDialogueUI(FString& Message) override;
 	
@@ -266,7 +263,7 @@ protected:
 	{ return OnDialogueContextUpdated; };
 	virtual FDialogueUserInterfaceChanged& GetDialogueUserInterfaceChangedEventHandle() override
 	{ return OnDialogueUserInterfaceChanged; };
-	virtual FDialogueNodeEvent& GetDialogueNodeSelected() override
+	virtual FDialogueNodeEvent& GetDialogueNodeSelectedEventHandle() override
 	{ return  OnDialogueNodeSelected; };
 	virtual FDialogueNodeEvent& GetDialogueNodeStartedEventHandle() override
 	{ return OnDialogueNodeStarted; };
@@ -321,6 +318,10 @@ protected:
 
 	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	FTimerHandle TimerHandle_RowTimer;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay)
+	uint8 bWasCursorVisible : 1;
+
 #pragma endregion 
 };
 

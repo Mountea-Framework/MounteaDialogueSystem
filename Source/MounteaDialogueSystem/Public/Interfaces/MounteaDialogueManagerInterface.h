@@ -50,9 +50,6 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="select, chosen, option"))
 	void CallDialogueNodeSelected(const FGuid& NodeGUID);
 	
-	virtual bool EvaluateNodeDecorators() = 0;
-	virtual void ExecuteNodeDecorators() = 0;
-	
 	virtual void StartDialogue() = 0;
 	virtual void CloseDialogue() = 0;
 
@@ -108,7 +105,7 @@ public:
 	virtual FDialogueContextUpdated& GetDialogueContextUpdatedEventHande() = 0;
 	virtual FDialogueUserInterfaceChanged& GetDialogueUserInterfaceChangedEventHandle() = 0;
 
-	virtual FDialogueNodeEvent& GetDialogueNodeSelected() = 0;
+	virtual FDialogueNodeEvent& GetDialogueNodeSelectedEventHandle() = 0;
 
 	virtual FDialogueNodeEvent& GetDialogueNodeStartedEventHandle() = 0;
 	virtual FDialogueNodeEvent& GetDialogueNodeFinishedEventHandle() = 0;
