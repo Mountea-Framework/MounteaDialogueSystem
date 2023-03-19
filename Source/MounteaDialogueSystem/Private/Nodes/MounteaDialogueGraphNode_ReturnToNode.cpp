@@ -38,13 +38,6 @@ void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode(const TScriptInterface<
 	{
 		if (const auto Context = Manager->GetDialogueContext())
 		{
-			//Context->UpdateActiveDialogueNode(SelectedNode);
-
-			// We can set even invalid value here and assume either Decorators will cover this or native data will
-			//const auto NewRow = UMounteaDialogueSystemBFC::GetDialogueRow(SelectedNode);
-			//Context->UpdateActiveDialogueRow(NewRow);
-			//Context->UpdateActiveDialogueRowDataIndex(0);
-
 			Context->SetDialogueContext(Context->DialogueParticipant, SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
 			Manager->GetDialogueNodeSelectedEventHandle().Broadcast(Context);
 		}
