@@ -284,6 +284,8 @@ protected:
 	{ return OnDialogueVoiceStartRequest; };
 	virtual FDialogueVoiceEvent& GetDialogueVoiceStartRequestEventHandle() override
 	{ return OnDialogueVoiceSkipRequest; };
+	virtual FTimerHandle& GetDialogueRowTimerHandle() override
+	{ return TimerHandle_RowTimer; }; 
 
 #pragma endregion 
 

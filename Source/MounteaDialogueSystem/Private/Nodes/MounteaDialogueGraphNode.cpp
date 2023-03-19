@@ -55,13 +55,35 @@ void UMounteaDialogueGraphNode::InitializeNode_Implementation(UWorld* InWorld)
 
 void UMounteaDialogueGraphNode::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	const UMounteaDialogueContext* Context = Manager->GetDialogueContext();
-	UMounteaDialogueSystemBFC::ExecuteDecorators(this, Context);
+	// Child Classes Implementations
 }
 
-void UMounteaDialogueGraphNode::ProcessNode()
+void UMounteaDialogueGraphNode::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	// TODO: Implement Nodes logic here
+	if (!Manager) return;
+	
+	if (!GetWorld())
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Cannot find World!"));
+		return;
+	}
+
+	if (!GetGraph())
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid owning Graph!!"));
+		return;
+	}
+	
+	UMounteaDialogueContext* Context = Manager->GetDialogueContext();
+	if (!Context || !UMounteaDialogueSystemBFC::IsContextValid(Context))
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid Dialogue Context!!"));
+		return;
+	}
+	
+	UMounteaDialogueSystemBFC::ExecuteDecorators(this, Context);
+	
+	Manager->GetDialogueNodeStartedEventHandle().Broadcast(Context);
 }
 
 TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators() const

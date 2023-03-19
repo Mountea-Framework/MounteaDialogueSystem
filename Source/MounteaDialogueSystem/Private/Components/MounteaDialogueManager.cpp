@@ -147,6 +147,8 @@ void UMounteaDialogueManager::OnDialogueNodeStartedEvent_Internal(UMounteaDialog
 		return;
 	}
 
+	StartExecuteDialogueRow();
+	
 	OnDialogueNodeStartedEvent(Context);
 }
 
@@ -371,7 +373,7 @@ void UMounteaDialogueManager::PrepareNode_Implementation()
 	// First PreProcess Node
 	DialogueContext->ActiveNode->PreProcessNode(this);
 	// Then Process Node
-	DialogueContext->ActiveNode->ProcessNode();
+	DialogueContext->ActiveNode->ProcessNode(this);
 
 	/*
 	if (DialogueContext->ActiveNode->GetClass()->IsChildOf(UMounteaDialogueGraphNode_LeadNode::StaticClass()))

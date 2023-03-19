@@ -26,9 +26,8 @@ public:
 	UMounteaDialogueGraphNode_DialogueNodeBase();
 
 public:
-
-	virtual void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
-	virtual void ProcessNode() override;
+	
+	virtual void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual UDataTable* GetDataTable() const;

@@ -44,9 +44,9 @@ void UMounteaDialogueGraphNode_AnswerNode::PreProcessNode(const TScriptInterface
 	Super::PreProcessNode(Manager);
 }
 
-void UMounteaDialogueGraphNode_AnswerNode::ProcessNode()
+void UMounteaDialogueGraphNode_AnswerNode::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	Super::ProcessNode();
+	Super::ProcessNode(Manager);
 }
 
 #if WITH_EDITOR

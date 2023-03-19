@@ -121,4 +121,6 @@ public:
 
 	virtual FDialogueVoiceEvent& GetDialogueVoiceStartRequestEventHandle() = 0;
 	virtual FDialogueVoiceEvent& GetDialogueVoiceSkipRequestEventHandle() = 0;
+
+	virtual FTimerHandle& GetDialogueRowTimerHandle() = 0;
 };

@@ -96,7 +96,7 @@ public:
 	virtual void InitializeNode_Implementation(UWorld* InWorld);
 	
 	virtual void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
-	virtual void ProcessNode();
+	virtual void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	TArray<FMounteaDialogueDecorator> GetNodeDecorators() const;

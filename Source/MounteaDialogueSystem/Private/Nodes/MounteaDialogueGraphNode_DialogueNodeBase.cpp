@@ -21,14 +21,25 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 	bAutoStarts = false;
 }
 
-void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	Super::PreProcessNode(Manager);
-}
+	if (Manager)
+	{
+		if (UMounteaDialogueContext* Context = Manager->GetDialogueContext())
+		{
+			GetWorld()->GetTimerManager().ClearTimer(Manager->GetDialogueRowTimerHandle());
 
-void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode()
-{
-	Super::ProcessNode();
+			const FDialogueRow DialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(Context->ActiveNode);
+			if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.DialogueRowData.Array().IsValidIndex(Context->GetActiveDialogueRowDataIndex()))
+			{
+				Context->UpdateActiveDialogueRow(DialogueRow);
+				Context->UpdateActiveDialogueRowDataIndex(Context->ActiveDialogueRowDataIndex);
+				Manager->GetDialogueContextUpdatedEventHande().Broadcast(Context);
+			}
+		}
+	}
+	
+	Super::ProcessNode(Manager);
 }
 
 UDataTable* UMounteaDialogueGraphNode_DialogueNodeBase::GetDataTable() const

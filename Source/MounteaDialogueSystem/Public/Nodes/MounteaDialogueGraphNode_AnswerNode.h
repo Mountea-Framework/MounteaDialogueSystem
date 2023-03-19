@@ -24,7 +24,7 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_AnswerNode : public UM
 public:
 
 	virtual void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
-	virtual void ProcessNode() override;
+	virtual void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 
 #if WITH_EDITOR
 	virtual FText GetDescription_Implementation() const override;
