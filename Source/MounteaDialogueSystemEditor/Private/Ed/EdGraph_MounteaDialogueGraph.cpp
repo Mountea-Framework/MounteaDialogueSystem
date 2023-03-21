@@ -16,6 +16,7 @@ UEdGraph_MounteaDialogueGraph::UEdGraph_MounteaDialogueGraph()
 
 UEdGraph_MounteaDialogueGraph::~UEdGraph_MounteaDialogueGraph()
 {
+	AssetEditor = nullptr;
 }
 
 void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
