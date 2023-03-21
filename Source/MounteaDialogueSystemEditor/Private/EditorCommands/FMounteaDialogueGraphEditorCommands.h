@@ -15,5 +15,7 @@ public:
 	TSharedPtr<FUICommandInfo> AutoArrange;
 	TSharedPtr<FUICommandInfo> ValidateGraph;
 
+	TSharedPtr<FUICommandInfo> FindInDialogue;
+
 	virtual void RegisterCommands() override;
 };

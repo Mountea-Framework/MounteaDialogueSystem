@@ -7,6 +7,7 @@
 #include "PropertyCustomizationHelpers.h"
 #include "SourceCodeNavigation.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
+#include "Settings/MounteaDialogueGraphEditorSettings.h"
 //#include "Decorators/MounteaDialogueGraphNodeDecoratorBase.h"
 //#include "Engine/Selection.h"
 //#include "Helpers/MounteaDialogueGraphEditorHelpers.h"
@@ -114,6 +115,26 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 			 .ColorAndOpacity( FSlateColor::UseForeground() )
 		]
 	];
+
+	// Open Documentation
+	HorizontalBox->AddSlot()
+	.AutoWidth()
+	.VAlign(VAlign_Center)
+	.Padding(4.f, 2.f)
+	[
+		SNew(SButton)
+		.ButtonStyle(FEditorStyle::Get(), "HoverHintOnly")
+		.ToolTipText(this, &Self::GetOpenDocumentationText)
+		.ContentPadding(4.f)
+		.ForegroundColor(FSlateColor::UseForeground())
+		.Visibility(this, &Self::GetOpenDocumentationButtonVisibility)
+		.OnClicked(this, &Self::OnDocumentationClicked)
+		[
+			SNew(SImage)
+			.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Buttons.Documentation.small"))
+			 .ColorAndOpacity( FSlateColor::UseForeground() )
+		]
+	];
 }
 
 FReply FMounteaDialogueDecorator_CustomDetailsHelper::OnBrowseClicked()
@@ -152,6 +173,18 @@ FReply FMounteaDialogueDecorator_CustomDetailsHelper::OnOpenClicked()
 		FSourceCodeNavigation::NavigateToClass(Object->GetClass());
 	}
 	return FReply::Handled();
+}
+
+FReply FMounteaDialogueDecorator_CustomDetailsHelper::OnDocumentationClicked() const
+{
+	UMounteaDialogueDecoratorBase* Decorator = Cast<UMounteaDialogueDecoratorBase>(GetObject());
+
+	if (Decorator)
+	{
+		FPlatformProcess::LaunchURL(*Decorator->GetDecoratorDocumentationLink(), nullptr, nullptr);
+		return FReply::Handled();
+	}
+	return FReply::Unhandled();
 }
 
 UObject* FMounteaDialogueDecorator_CustomDetailsHelper::GetObject() const
@@ -213,6 +246,11 @@ FText FMounteaDialogueDecorator_CustomDetailsHelper::GetJumpToObjectText() const
 	);
 }
 
+FText FMounteaDialogueDecorator_CustomDetailsHelper::GetOpenDocumentationText() const
+{
+	return LOCTEXT("MounteaDialogueDecorator_CustomDetailsHelper_OpenDocumentationText", "Open Documentation page for Node Decorator");
+}
+
 EVisibility FMounteaDialogueDecorator_CustomDetailsHelper::GetOpenButtonVisibility() const
 {
 	if (!CanBeVisible())
@@ -229,7 +267,14 @@ EVisibility FMounteaDialogueDecorator_CustomDetailsHelper::GetOpenButtonVisibili
 		}
 
 		// Native
-		return FSourceCodeNavigation::CanNavigateToClass(Object->GetClass()) ? EVisibility::Visible : EVisibility::Collapsed;
+		const UMounteaDialogueGraphEditorSettings* EditorSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
+
+		if (!EditorSettings)
+		{
+			return EVisibility::Collapsed;
+		}
+		
+		return EditorSettings->IsNativeDecoratorsEditAllowed() ?  EVisibility::Visible : EVisibility::Collapsed;
 	}
 
 	return EVisibility::Collapsed;
@@ -241,8 +286,18 @@ EVisibility FMounteaDialogueDecorator_CustomDetailsHelper::GetBrowseButtonVisibi
 	{
 		return EVisibility::Collapsed;
 	}
-
+	
 	return IsObjectABlueprint() ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
+EVisibility FMounteaDialogueDecorator_CustomDetailsHelper::GetOpenDocumentationButtonVisibility() const
+{
+	if (!CanBeVisible())
+	{
+		return EVisibility::Collapsed;
+	}
+
+	return EVisibility::Visible;
 }
 
 void FMounteaDialogueDecorator_CustomDetailsHelper::RequestDeleteItem()

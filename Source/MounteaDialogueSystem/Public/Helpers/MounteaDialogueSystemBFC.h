@@ -34,7 +34,55 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSystemBFC : public UBlueprintFun
 	GENERATED_BODY()
 
 public:
+	
+	static void CleanupGraph(const UObject* WorldContextObject, const UMounteaDialogueGraph* GraphToClean)
+	{
+		if (!GraphToClean) return;
+		
+		// Cleanup Decorators
+		for (auto Itr : GraphToClean->GetAllDecorators())
+		{
+			Itr.CleanupDecorator();
+		}
+	}
 
+	static void InitializeDecorators(UWorld* WorldContext, const TScriptInterface<IMounteaDialogueParticipantInterface> Participant)
+	{
+		if (!WorldContext) return;
+		if (!Participant) return;
+
+		if (!Participant->GetDialogueGraph()) return;
+		
+		// Initialize Decorators
+		for (auto Itr : Participant->GetDialogueGraph()->GetAllDecorators())
+		{
+			Itr.InitializeDecorator(WorldContext, Participant);
+		}
+	}
+
+	static void SaveTraversePathToParticipant(TMap<FGuid,int32>& InPath, const TScriptInterface<IMounteaDialogueParticipantInterface> Participant)
+	{
+		if (!Participant || !Participant.GetInterface()) return;
+
+		Participant->Execute_SaveTraversedPath(Participant.GetObject(), InPath);
+	}
+
+	/**
+	 * Returns whether selected Node for selected Participant has been already Traversed or not.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="node, traverse, open, active"))
+	static bool HasNodeBeenTraversed(const UMounteaDialogueGraphNode* Node, const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant)
+	{
+		bool bTraversed = false;
+
+		if (!Node) return bTraversed;
+		if (!Participant || !Participant.GetObject()) return bTraversed;
+
+		bTraversed = Participant->GetTraversedPath().Contains(Node->GetNodeGUID());
+		
+		return bTraversed;
+	}
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="audio, tag, search"))
 	static UAudioComponent* FindAudioComponentByName(const AActor* ActorContext, const FName& Arg)
 	{
@@ -145,7 +193,7 @@ public:
 	 * Tries to validate given Dialogue Context.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Is Dialogue Context Valid", Keywords="dialogue, null, validate, valid, check"))
-	static bool IsContextValid(UMounteaDialogueContext* Context)
+	static bool IsContextValid(const UMounteaDialogueContext* Context)
 	{
 		if (Context == nullptr) return false;
 
@@ -219,7 +267,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="start, initialize, dialogue"))
 	static bool InitializeDialogue(const UObject* WorldContextObject, UObject* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant)
 	{
-		if (Initiator == nullptr || DialogueParticipant.GetInterface() == nullptr) return false;
+		if (!DialogueParticipant) return false;
+
+		if (!DialogueParticipant->Execute_GetOwningActor(DialogueParticipant.GetObject())) return false;
+		
+		UWorld* TempWorld = WorldContextObject->GetWorld();
+		if (!TempWorld) TempWorld = DialogueParticipant->Execute_GetOwningActor(DialogueParticipant.GetObject())->GetWorld();
+		
+		if (Initiator == nullptr && DialogueParticipant.GetInterface() == nullptr) return false;
 
 		if (GetDialogueManager(WorldContextObject) == nullptr) return false;
 
@@ -228,6 +283,11 @@ public:
 		const UMounteaDialogueGraph* Graph = DialogueParticipant->GetDialogueGraph();
 
 		if (Graph == nullptr) return false;
+
+		for (auto Itr : Graph->GetAllDecorators())
+		{
+			Itr.InitializeDecorator(TempWorld, DialogueParticipant);
+		}
 
 		if (Graph->CanStartDialogueGraph() == false) return false;
 
@@ -245,9 +305,9 @@ public:
 
 			NodeToStart = GetFirstChildNode(NodeToStart);
 		}
-
-		TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
 		
+		const TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
+
 		UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
 		Context->SetDialogueContext(DialogueParticipant, NodeToStart, StartNode_Children);
 		Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(WorldContextObject));
@@ -265,14 +325,16 @@ public:
 	 * @param DialogueParticipant	Other person, could be NPC or other Player
 	 * @param Context					Dialogue Context which is passed to Dialogue Manager
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="start, initialize, dialogue"))
 	static bool InitializeDialogueWithContext(const UObject* WorldContextObject, UObject* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant, UMounteaDialogueContext* Context)
 	{
 		if (DialogueParticipant == nullptr) return false;
 		if (Context == nullptr) return false;
 		if (IsContextValid(Context) == false) return false;
 
-		GetDialogueManager(WorldContextObject)->GetDialogueInitializedEventHandle().Broadcast(Context);
+		const auto DialogueManager = GetDialogueManager(WorldContextObject);
+		if (DialogueManager == nullptr) return false;
+
+		DialogueManager->GetDialogueInitializedEventHandle().Broadcast(Context);
 		return true;
 	}
 
@@ -304,6 +366,23 @@ public:
 		return ReturnValue;
 	}
 
+	/**
+	 * Searches in Graph for Node by GUID.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="guid, node, find, search, get"))
+	static UMounteaDialogueGraphNode* FindNodeByGUID(const UMounteaDialogueGraph* FromGraph, const FGuid ByGUID)
+	{
+		if (!FromGraph) return nullptr;
+		if (!ByGUID.IsValid()) return nullptr;
+
+		for (const auto& Itr : FromGraph->GetAllNodes())
+		{
+			if (Itr && Itr->GetNodeGUID() == ByGUID) return Itr;
+		}
+
+		return nullptr;
+	}
+	
 	/**
 	 * Tries to get Child Node from Dialogue Node at given Index. If none is found, returns null.
 	 * ❗Might return Null❗
@@ -403,9 +482,9 @@ public:
 	 * @param Node	Node to get Data from.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Get Dialogue Row", Keywords="row, dialogue"))
-	static FDialogueRow GetDialogueRow(UMounteaDialogueGraphNode* Node)
+	static FDialogueRow GetDialogueRow(const UMounteaDialogueGraphNode* Node)
 	{
-		UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNodeBase = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node);
+		const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNodeBase = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node);
 		
 		if (!DialogueNodeBase) return FDialogueRow();
 		if (DialogueNodeBase->GetDataTable() == nullptr) return FDialogueRow();

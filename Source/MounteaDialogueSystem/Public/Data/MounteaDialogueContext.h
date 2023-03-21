@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MounteaDialogueGraphDataTypes.h"
+#include "Nodes/MounteaDialogueGraphNode.h"
 #include "UObject/Object.h"
 #include "MounteaDialogueContext.generated.h"
 
@@ -54,6 +55,13 @@ public:
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	int32 ActiveDialogueRowDataIndex = 0;
+	/**
+	 * Contains mapped list of Traversed Nodes by GUIDs.
+	 * Each time Dialogue is updated, like node is selected or starts itself, this Path is updated.
+	 * Updates Participant once Dialogue is done.
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue", meta=(NoResetToDefault))
+	TMap<FGuid, int32> TraversedPath;
 
 public:
 
@@ -97,14 +105,18 @@ public:
 	 */
 	int32 GetActiveDialogueRowDataIndex() const
 	{ return ActiveDialogueRowDataIndex; };
+	TMap<FGuid, int32> GetTraversedPath() const
+	{ return TraversedPath; };
 	
 	virtual void SetDialogueContext(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant, UMounteaDialogueGraphNode* NewActiveNode, TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes);
 	virtual void UpdateDialogueParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
 	virtual void UpdateActiveDialogueNode(UMounteaDialogueGraphNode* NewActiveNode);
+	virtual void UpdateAllowedChildrenNodes(const TArray<UMounteaDialogueGraphNode*>& NewNodes);
 	virtual void UpdateActiveDialogueRow(const FDialogueRow& NewActiveRow);
 	virtual void UpdateActiveDialogueRowDataIndex(int32 NewIndex);
 	void UpdateDialoguePlayerParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
 	void UpdateActiveDialogueParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
+	void AddTraversedNode(const UMounteaDialogueGraphNode* TraversedNode);
 
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context")
 	virtual void SetDialogueContextBP(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant, UMounteaDialogueGraphNode* NewActiveNode, TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes);

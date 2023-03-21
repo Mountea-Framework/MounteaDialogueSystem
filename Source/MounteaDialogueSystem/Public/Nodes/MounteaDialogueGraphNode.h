@@ -6,6 +6,7 @@
 #include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "MounteaDialogueGraphNode.generated.h"
 
+class IMounteaDialogueManagerInterface;
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphEdge;
 
@@ -16,7 +17,7 @@ class UMounteaDialogueGraphEdge;
  * Does come with ability to define Colours, Name, Description and Title.
  * Contains information about Parent and Children Nodes.
  */
-UCLASS(Abstract, BlueprintType, ClassGroup=("Mountea|Dialogue"), HideCategories=("Hidden", "Private", "Base"), AutoExpandCategories=("Mountea", "Dialogue"))
+UCLASS(Abstract, BlueprintType, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject
 {
 	GENERATED_BODY()
@@ -30,33 +31,46 @@ public:
 #pragma region ReadOnly
 public:
 	
-	UPROPERTY(BlueprintReadOnly, Category = "Private")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	TArray<UMounteaDialogueGraphNode*> ParentNodes;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Private")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	TArray<UMounteaDialogueGraphNode*> ChildrenNodes;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Private")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	TMap<UMounteaDialogueGraphNode*, UMounteaDialogueGraphEdge*> Edges;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Private")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", meta=(DisplayThumbnail=false))
 	UMounteaDialogueGraph* Graph;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Private")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	int32 NodeIndex = INDEX_NONE;
 
-	UPROPERTY(BlueprintReadOnly, Category="Private")
-	int32 MaxChildrenNodes = -1;
 
 protected:
 
-	UPROPERTY(SaveGame, BlueprintReadOnly, Category="Mountea", AdvancedDisplay)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	FGuid NodeGUID;
+
+private:
+
+	UPROPERTY(VisibleAnywhere, Category = "Private")
+	UWorld* OwningWorld;
 
 #pragma endregion
 
 #pragma region Editable
 public:
+
+	UPROPERTY(SaveGame, EditDefaultsOnly, BlueprintReadOnly, Category="Base")
+	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
+
+	/** Defines whether this Node will start automatically or if requires input.*/
+	UPROPERTY(SaveGame, EditAnywhere, BlueprintReadOnly, Category="Base")
+	uint8 bAutoStarts : 1;
+	
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Base")
+	int32 MaxChildrenNodes = -1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	uint8 bInheritGraphDecorators : 1;
@@ -76,6 +90,17 @@ public:
 #pragma region Functions
 
 public:
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	void InitializeNode(UWorld* InWorld);
+	virtual void InitializeNode_Implementation(UWorld* InWorld);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	virtual bool DoesAutoStart() const
+	{ return bAutoStarts; };
+	
+	virtual void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
+	virtual void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	TArray<FMounteaDialogueDecorator> GetNodeDecorators() const;
@@ -116,8 +141,90 @@ public:
 	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetParentNodes() const
 	{return ParentNodes; };
 
+public:
+
+	FORCEINLINE ULevel* GetLevel() const
+	{
+		return GetTypedOuter<ULevel>();
+	}
+
+	/**
+	 * Provides a way to update Node's owning World.
+	 * Useful for Loading sub-levels.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	virtual void SetNewWorld(UWorld* NewWorld);
+	virtual UWorld* GetWorld() const override
+	{
+		if (OwningWorld) return OwningWorld;
+		
+		// CDO objects do not belong to a world
+		// If the actors outer is destroyed or unreachable we are shutting down and the world should be nullptr
+		if (
+			!HasAnyFlags(RF_ClassDefaultObject) && ensureMsgf(GetOuter(), TEXT("Actor: %s has a null OuterPrivate in AActor::GetWorld()"), *GetFullName())
+			&& !GetOuter()->HasAnyFlags(RF_BeginDestroyed) && !GetOuter()->IsUnreachable()
+			)
+		{
+			if (ULevel* Level = GetLevel())
+			{
+				return Level->OwningWorld;
+			}
+		}
+		return nullptr;
+	}
+
+#pragma endregion 
+
+
+#if WITH_EDITORONLY_DATA
 	
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	bool bAllowInputNodes;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	bool bAllowOutputNodes;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	bool bAllowCopy;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	bool bAllowCut;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	bool bAllowPaste;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	bool bAllowDelete;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	bool bAllowManualCreate;
 	
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	FText NodeTitle;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	FText ContextMenuName;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Editor")
+	TSubclassOf<UMounteaDialogueGraph> CompatibleGraphType;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	FLinearColor BackgroundColor;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	FText NodeTooltipText;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	FText NodeTypeName;
+
+#endif
+
+#if WITH_EDITOR
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	FText GetNodeTooltipText() const;
+	virtual FText GetNodeTooltipText_Implementation() const;
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetNodeTitle() const;
 	virtual FText GetNodeTitle_Implementation() const;
@@ -130,63 +237,13 @@ public:
 	FText GetNodeCategory() const;
 	virtual FText GetNodeCategory_Implementation() const;
 
-	
-	virtual void OnCreatedInEditor() {};
-
-#pragma endregion 
-
-
-#if WITH_EDITORONLY_DATA
-
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
-	bool bAllowInputNodes;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
-	bool bAllowOutputNodes;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
-	bool bAllowCopy;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
-	bool bAllowCut;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
-	bool bAllowPaste;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
-	bool bAllowDelete;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
-	bool bAllowManualCreate;
-	
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
-	FText NodeTitle;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
-	FText ContextMenuName;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
-	TSubclassOf<UMounteaDialogueGraph> CompatibleGraphType;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
-	FLinearColor BackgroundColor;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
-	FText NodeTooltipText;
-
-	FText InternalName;
-
-#endif
-
-#if WITH_EDITOR
-
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
-	FText GetNodeTooltipText() const;
-	virtual FText GetNodeTooltipText_Implementation() const;
+	FString GetNodeDocumentationLink() const;
+	virtual FString GetNodeDocumentationLink_Implementation() const;
 	
 	virtual FLinearColor GetBackgroundColor() const;
 	FText GetInternalName() const
-	{ return InternalName; };
+	{ return NodeTypeName; };
 	
 	virtual void SetNodeTitle(const FText& NewTitle);
 	
@@ -197,6 +254,8 @@ public:
 	virtual void OnPasted();
 
 	FText GetDefaultTooltipBody() const;
+	virtual void OnCreatedInEditor() {};
+
 #endif
 
 };

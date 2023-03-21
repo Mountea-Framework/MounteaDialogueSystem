@@ -11,6 +11,7 @@ class UMounteaDialogueGraph;
 class UMounteaDialogueGraphEdge;
 class UEdNode_MounteaDialogueGraphNode;
 class UEdNode_MounteaDialogueGraphEdge;
+class FAssetEditor_MounteaDialogueGraph;
 
 /**
  * 
@@ -32,6 +33,9 @@ public:
 	virtual bool Modify(bool bAlwaysMarkDirty) override;
 	virtual void PostEditUndo() override;
 
+	TSharedPtr<FAssetEditor_MounteaDialogueGraph> GetAssetEditor() const { return AssetEditor ; };
+	void SetAssetEditor(FAssetEditor_MounteaDialogueGraph* NewAssetEditor); 
+
 public:
 
 	UPROPERTY(Transient)
@@ -44,4 +48,8 @@ protected:
 
 	void Clear();
 	void SortNodes(UMounteaDialogueGraphNode* RootNode);
+
+private:
+
+	TSharedPtr<FAssetEditor_MounteaDialogueGraph> AssetEditor;
 };

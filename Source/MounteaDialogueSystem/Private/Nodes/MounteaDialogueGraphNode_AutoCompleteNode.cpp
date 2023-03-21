@@ -9,7 +9,7 @@ UMounteaDialogueGraphNode_AutoCompleteNode::UMounteaDialogueGraphNode_AutoComple
 {
 #if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_AutoCompleteNodeTitle", "Auto Complete Dialogue");
-	InternalName = LOCTEXT("MounteaDialogueGraphNode_AutoCompleteNodeInternalTitle", "Auto Complete Dialogue");
+	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_AutoCompleteNodeInternalTitle", "Auto Complete Dialogue");
 	
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_AutoCompleteNodeContextMenuName", "Auto Complete Dialogue");
 	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_AutoCompleteTooltip", "* This Node will automatically complete Dialogue.\n* Same functionality as Node being left with no branching or children.\n* Does help performance, however, is not required.");
@@ -18,6 +18,8 @@ UMounteaDialogueGraphNode_AutoCompleteNode::UMounteaDialogueGraphNode_AutoComple
 
 	bAutoStarts = true;
 }
+
+#if WITH_EDITOR
 
 FText UMounteaDialogueGraphNode_AutoCompleteNode::GetDescription_Implementation() const
 {
@@ -28,5 +30,7 @@ FText UMounteaDialogueGraphNode_AutoCompleteNode::GetNodeCategory_Implementation
 {
 	return Super::GetNodeCategory_Implementation();
 }
+
+#endif
 
 #undef LOCTEXT_NAMESPACE

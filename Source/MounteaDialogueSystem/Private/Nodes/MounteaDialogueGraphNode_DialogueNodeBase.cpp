@@ -11,7 +11,7 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 {
 #if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseTitle", "Dialogue Node Base");
-	InternalName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseInternalTitle", "Dialogue Node Base");
+	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseInternalTitle", "Dialogue Node Base");
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseContextMenu", "Dialogue Node");
 	BackgroundColor = FLinearColor(FColor::Orange);
 
@@ -21,9 +21,25 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 	bAutoStarts = false;
 }
 
-FText UMounteaDialogueGraphNode_DialogueNodeBase::GetDescription_Implementation() const
+void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	return LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseDescription", "Dialogue Base Node has no logic tied to itself.");
+	if (Manager)
+	{
+		if (UMounteaDialogueContext* Context = Manager->GetDialogueContext())
+		{
+			GetWorld()->GetTimerManager().ClearTimer(Manager->GetDialogueRowTimerHandle());
+
+			const FDialogueRow DialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(Context->ActiveNode);
+			if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.DialogueRowData.Array().IsValidIndex(Context->GetActiveDialogueRowDataIndex()))
+			{
+				Context->UpdateActiveDialogueRow(DialogueRow);
+				Context->UpdateActiveDialogueRowDataIndex(Context->ActiveDialogueRowDataIndex);
+				Manager->GetDialogueContextUpdatedEventHande().Broadcast(Context);
+			}
+		}
+	}
+	
+	Super::ProcessNode(Manager);
 }
 
 UDataTable* UMounteaDialogueGraphNode_DialogueNodeBase::GetDataTable() const
@@ -96,48 +112,6 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 	return bResult;
 }
 
-bool UMounteaDialogueGraphNode_DialogueNodeBase::CanCreateConnection(UMounteaDialogueGraphNode* Other, EEdGraphPinDirection Direction, FText& ErrorMessage)
-{
-	if (Other == nullptr)
-	{
-		ErrorMessage = FText::FromString("Invalid Other Node!");
-	}
-
-	if (Other->GetMaxChildNodes() > -1 && Other->ChildrenNodes.Num() >= Other->GetMaxChildNodes())
-	{
-		const FString TextReturn =
-		FString(Other->GetNodeTitle().ToString()).
-		Append(": Cannot have more than ").Append(FString::FromInt(Other->GetMaxChildNodes())).Append(" Children Nodes!");
-
-		ErrorMessage = FText::FromString(TextReturn);
-		return false;
-	}
-
-	if (Direction == EGPD_Output)
-	{
-		
-		// Fast checking for native classes
-		if ( AllowedInputClasses.Contains(Other->GetClass()) )
-		{
-			return true;
-		}
-
-		// Slower iterative checking for child classes
-		for (auto Itr : AllowedInputClasses)
-		{
-			if (Other->GetClass()->IsChildOf(Itr))
-			{
-				return true;
-			}
-		}
-		
-		ErrorMessage = FText::FromString("Invalid Node Connection!");
-		return false;
-	}
-
-	return true;
-}
-
 void UMounteaDialogueGraphNode_DialogueNodeBase::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -146,32 +120,48 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::PostEditChangeProperty(FPropert
 	{
 		RowName = FName("");
 		Preview.Empty();
+		PreviewsUpdated.ExecuteIfBound();
 	}
 
 	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_DialogueNodeBase, RowName))
 	{
 		UpdatePreviews();
+		PreviewsUpdated.ExecuteIfBound();
 	}
 }
 
-void UMounteaDialogueGraphNode_DialogueNodeBase::UpdatePreviews()
+FText UMounteaDialogueGraphNode_DialogueNodeBase::GetDescription_Implementation() const
 {
-	//TODO: use custom window in custom Tab rather than this crap
-	if (!DataTable) Preview.Empty();
+	return LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseDescription", "Dialogue Base Node has no logic tied to itself.");
+}
 
-	Preview.Empty();
-	const auto Row = UMounteaDialogueSystemBFC::GetDialogueRow(this);
+TArray<FText> UMounteaDialogueGraphNode_DialogueNodeBase::GetPreviews() const
+{
+	TArray<FText> ReturnValues;
+	
+	const auto Row = UMounteaDialogueSystemBFC::GetDialogueRow( this );
 	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(Row))
 	{
 		for (auto Itr : Row.DialogueRowData.Array())
 		{
-			Preview.Add( Itr.RowText.ToString() );
+			ReturnValues.Add( Itr.RowText );
 		}
 	}
 	else
 	{
-		Preview.Empty();
+		ReturnValues.Empty();
 	}
+
+	return ReturnValues;
+}
+
+void UMounteaDialogueGraphNode_DialogueNodeBase::UpdatePreviews()
+{
+	if (!DataTable) Preview.Empty();
+
+	Preview.Empty();
+
+	Preview = GetPreviews();
 }
 
 #endif	

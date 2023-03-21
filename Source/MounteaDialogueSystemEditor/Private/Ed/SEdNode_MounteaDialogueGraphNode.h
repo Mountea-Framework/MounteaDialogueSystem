@@ -19,6 +19,8 @@ public:
 
 	virtual void OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 	virtual void OnMouseLeave(const FPointerEvent& MouseEvent) override;
+
+	const FSlateBrush* GetIndexBrush() const;
 	
 	virtual void UpdateGraphNode() override;
 	virtual void CreatePinWidgets() override;
@@ -47,6 +49,10 @@ public:
 
 	virtual FText GetIndexOverlayTooltipText() const;
 	virtual FText GetIndexText() const;
+	EVisibility GetIndexSlotVisibility() const;
+	FVector2D GetIndexSlotOffset() const;
+	FVector2D GetIndexSlotSize() const;
+	
 	virtual void OnIndexHoverStateChanged(bool bArg) const;
 	virtual FSlateColor GetOverlayWidgetBackgroundColor(bool bArg) const;
 
@@ -72,7 +78,6 @@ public:
 	EVisibility GetUnifiedVisibility() const;
 
 	FText GetTooltipText() const;
-	EVisibility GetTooltipTextVisibility() const;
 
 protected:
 	TSharedPtr<SBorder> NodeBody;
