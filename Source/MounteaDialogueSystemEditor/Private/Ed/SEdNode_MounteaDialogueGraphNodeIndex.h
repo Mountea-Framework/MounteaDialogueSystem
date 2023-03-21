@@ -28,31 +28,21 @@ void Construct(const FArguments& InArgs);
 
 	void OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override
 	{
-		OnHoverStateChangedEvent.ExecuteIfBound(true);
 		SCompoundWidget::OnMouseEnter(MyGeometry, MouseEvent);
 	}
 
 	void OnMouseLeave(const FPointerEvent& MouseEvent) override
 	{
-		OnHoverStateChangedEvent.ExecuteIfBound(false);
 		SCompoundWidget::OnMouseLeave(MouseEvent);
 	}
 
 	/** Get the color we use to display the rounded border */
 	FSlateColor GetBackgroundColor() const
 	{
-		if (OnGetBackgroundColorEvent.IsBound())
-			return OnGetBackgroundColorEvent.Execute(IsHovered());
-
 		return FSlateColor::UseForeground();
 	}
 
 private:
-	/** Delegate event fired when the hover state of this widget changes */
-	FOnHoverStateChanged OnHoverStateChangedEvent;
-
-	/** Delegate used to receive the color of the node, depending on hover state and state of other siblings */
-	FOnGetBackgroundColor OnGetBackgroundColorEvent;
 
 	/** The OverlayBody used for this widget*/
 	TSharedPtr<SWidget> OverlayBody;

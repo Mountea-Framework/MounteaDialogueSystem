@@ -9,13 +9,14 @@
 #include "UObject/Object.h"
 #include "MounteaDialogueGraphNode_DialogueNodeBase.generated.h"
 
+
 /**
  * Mountea Dialogue Graph Node abstract Base class.
  * 
  * Enhances 'MounteaDialogueGraphNode' Base class with Dialogue data.
  * Provides DataTable and Row options that define the Dialogue data which will be displayed in UI.
  */
-UCLASS(Abstract, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"), HideCategories=("Base", "Hidden", "Private"))
+UCLASS(Abstract, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_DialogueNodeBase : public UMounteaDialogueGraphNode
 {
 	GENERATED_BODY()
@@ -24,19 +25,30 @@ public:
 
 	UMounteaDialogueGraphNode_DialogueNodeBase();
 
-	virtual FText GetDescription_Implementation() const override;
+public:
+	
+	virtual void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual UDataTable* GetDataTable() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual FName GetRowName() const
-	{ return RowName; };
+	{ return RowName; }
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
-	virtual bool DoesAutoStart() const
-	{ return bAutoStarts; };
+public:
 
+#if WITH_EDITORONLY_DATA
+
+	/**
+	 * Shows read-only Texts with localization of selected Dialogue Row.
+	 */
+	UPROPERTY(Transient, VisibleAnywhere, Category="Base", meta=(MultiLine=true, ShowOnlyInnerProperties))
+	TArray<FText> Preview;
+
+	FSimpleDelegate PreviewsUpdated;
+
+#endif
 
 protected:
 	
@@ -47,28 +59,14 @@ protected:
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
 	FName RowName;
 
-	/** Defines whether this Node will start automatically or if requires input.*/
-	UPROPERTY(SaveGame, EditAnywhere, BlueprintReadOnly, Category="Base")
-	uint8 bAutoStarts : 1;
-	
-	UPROPERTY(SaveGame, EditDefaultsOnly, BlueprintReadOnly, Category="Base")
-	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
-
-#if WITH_EDITORONLY_DATA
-
-	/**
-	 * ❗Experimental Feature ❗
-	 * Shows read-only Texts without localization of selected Dialogue Row.
-	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue", meta=(MultiLine=true, ShowOnlyInnerProperties))
-	TArray<FString> Preview;
-
-#endif
-	
 #if WITH_EDITOR
+	
 	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat) override;
-	virtual bool CanCreateConnection(UMounteaDialogueGraphNode* Other, EEdGraphPinDirection Direction, FText& ErrorMessage) override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual FText GetDescription_Implementation() const override;
+	
+public:
+	TArray<FText> GetPreviews() const;
 #endif
 
 #if WITH_EDITORONLY_DATA

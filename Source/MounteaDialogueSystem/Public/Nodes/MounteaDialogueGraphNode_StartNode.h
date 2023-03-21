@@ -24,10 +24,10 @@ public:
 
 	UMounteaDialogueGraphNode_StartNode();
 
+#if WITH_EDITOR
 	virtual FText GetDescription_Implementation() const override;
 	virtual FText GetNodeCategory_Implementation() const override;
-
-#if WITH_EDITOR
+	
 	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat);
 #endif
 };

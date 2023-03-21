@@ -175,7 +175,7 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 {
 	bool bReturnValue = true;
 
-	// DECORATORS VALIDATION
+	// GRAPH DECORATORS VALIDATION
 	{
 		TArray<UMounteaDialogueDecoratorBase*> UsedNodeDecorators;
 		for (int i = 0; i < GraphDecorators.Num(); i++)
@@ -254,8 +254,8 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 		}
 	}
 
-	// DECORATORS VALIDATION
-	for (auto Itr : GetAllDecorators())
+	// GRAPH DECORATORS VALIDATION
+	for (auto Itr : GetGraphDecorators())
 	{
 		TArray<FText> DecoratorErrors;
 		if (Itr.ValidateDecorator(DecoratorErrors) == false)

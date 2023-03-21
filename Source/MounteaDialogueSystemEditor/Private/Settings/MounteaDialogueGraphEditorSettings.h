@@ -111,6 +111,14 @@ private:
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings", meta=(ShowTreeView))
 	TMap<TSoftClassPtr<UMounteaDialogueGraphNode>, FLinearColor> OverrideNodeBackgroundColours;
 
+#pragma endregion
+
+#pragma region GraphDecorators
+
+	// Enables 'Edit' button for Native Code Decorators
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
+	bool bAllowNativeDecoratorsEdit;
+
 #pragma endregion 
 
 #pragma region GraphWiring
@@ -120,6 +128,8 @@ private:
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring") //, meta=(ConfigRestartRequired=true))
 	EArrowType ArrowType;
+
+	/* Advanced Wiring doesn't work now
 	
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!"))
 	bool bUseAdvancedWiring;
@@ -136,7 +146,7 @@ private:
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
 	int32 BubbleZoomThreshold;
 
-	/* Space between bubbles on the wires. Default: 20.0 */
+	// Space between bubbles on the wires. Default: 20.0
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta = (ClampMin = "10.0", ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
 	float BubbleSpace = 20.0f;
 
@@ -146,13 +156,15 @@ private:
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta = (ClampMin = "10.0", ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
 	float BubbleSpeed = 2.0f;
 	
-	/* Disable the offset for pins. Default: false */
+	// Disable the offset for pins. Default: false
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
 	bool DisablePinOffset = false;
 
-	/* Fix default zoomed-out wire displacement. Default: true */
+	// Fix default zoomed-out wire displacement. Default: true
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
 	bool FixZoomDisplacement = true;
+
+	*/
 
 #pragma endregion
 
@@ -236,6 +248,14 @@ public:
 
 #pragma endregion 
 
+#pragma region GraphDecorators_Getters
+
+	bool IsNativeDecoratorsEditAllowed() const
+	{ return bAllowNativeDecoratorsEdit; };
+
+#pragma endregion 
+	
+
 #pragma region GraphWiring_Getters
 
 	float GetWireWidth() const
@@ -244,6 +264,7 @@ public:
 	EArrowType GetArrowType() const
 	{ return ArrowType; };
 	
+	/*
 	bool AllowAdvancedWiring() const
 	{ return bUseAdvancedWiring; };
 	
@@ -267,9 +288,10 @@ public:
 
 	float GetBubbleSize() const
 	{ return BubbleSize; };
-
+	*/
 #pragma endregion 
 
+	
 #pragma region GraphArrange_Getters
 	
 	EAutoLayoutStrategyType GetAutoLayoutStrategy() const

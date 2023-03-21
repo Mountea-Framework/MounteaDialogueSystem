@@ -4,10 +4,6 @@
 
 void SEdNode_MounteaDialogueGraphNodeIndex::Construct(const FArguments& InArgs)
 {
-	OnHoverStateChangedEvent = InArgs._OnHoverStateChanged;
-	OnGetBackgroundColorEvent = InArgs._OnGetBackgroundColor;
-	OverlayBody = InArgs._OverlayBody.Get();
-
 	const FSlateBrush* CircleBrush = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.IndexCircle"));
 	ChildSlot
 	[
@@ -32,9 +28,6 @@ void SEdNode_MounteaDialogueGraphNodeIndex::Construct(const FArguments& InArgs)
 			.Padding(FMargin(4.0f))
 			.VAlign(VAlign_Center)
 			.HAlign(HAlign_Center)
-			[
-				OverlayBody.ToSharedRef()
-			]
 		]
 	];
 }

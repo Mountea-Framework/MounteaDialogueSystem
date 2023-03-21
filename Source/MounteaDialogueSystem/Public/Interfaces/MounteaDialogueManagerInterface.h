@@ -50,12 +50,8 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="select, chosen, option"))
 	void CallDialogueNodeSelected(const FGuid& NodeGUID);
 	
-	virtual bool EvaluateNodeDecorators() = 0;
-	virtual void ExecuteNodeDecorators() = 0;
-	
 	virtual void StartDialogue() = 0;
 	virtual void CloseDialogue() = 0;
-	virtual void ProcessNode() = 0;
 
 	virtual bool InvokeDialogueUI(FString& Message) = 0;
 	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const = 0;
@@ -89,6 +85,10 @@ public:
 	{
 		return nullptr;
 	};
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	void PrepareNode();
+	virtual void PrepareNode_Implementation() {};
 	
 	virtual UMounteaDialogueContext* GetDialogueContext() const = 0;
 	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) = 0;
@@ -105,7 +105,7 @@ public:
 	virtual FDialogueContextUpdated& GetDialogueContextUpdatedEventHande() = 0;
 	virtual FDialogueUserInterfaceChanged& GetDialogueUserInterfaceChangedEventHandle() = 0;
 
-	virtual FDialogueNodeEvent& GetDialogueNodeSelected() = 0;
+	virtual FDialogueNodeEvent& GetDialogueNodeSelectedEventHandle() = 0;
 
 	virtual FDialogueNodeEvent& GetDialogueNodeStartedEventHandle() = 0;
 	virtual FDialogueNodeEvent& GetDialogueNodeFinishedEventHandle() = 0;
@@ -118,4 +118,6 @@ public:
 
 	virtual FDialogueVoiceEvent& GetDialogueVoiceStartRequestEventHandle() = 0;
 	virtual FDialogueVoiceEvent& GetDialogueVoiceSkipRequestEventHandle() = 0;
+
+	virtual FTimerHandle& GetDialogueRowTimerHandle() = 0;
 };

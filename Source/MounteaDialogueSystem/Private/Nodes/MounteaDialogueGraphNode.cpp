@@ -3,6 +3,7 @@
 #include "Nodes/MounteaDialogueGraphNode.h"
 
 #include "Graph/MounteaDialogueGraph.h"
+#include "Helpers/MounteaDialogueSystemBFC.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueNode"
 
@@ -25,9 +26,11 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
 	bAllowPaste = true;
 	bAllowManualCreate = true;
 
-	InternalName = LOCTEXT("MounteaDialogueNode_InternalName", "MounteaDialogueGraphNode");
+	NodeTypeName = LOCTEXT("MounteaDialogueNode_InternalName", "MounteaDialogueGraphNode");
 	NodeTooltipText = LOCTEXT("MounteaDialogueNode_Tooltip", "Mountea Dialogue Base Node.\n\nChild Nodes provide more Information.");
 #endif
+
+	bAutoStarts = false;
 }
 
 UMounteaDialogueGraph* UMounteaDialogueGraphNode::GetGraph() const
@@ -35,14 +38,52 @@ UMounteaDialogueGraph* UMounteaDialogueGraphNode::GetGraph() const
 	return Graph;
 }
 
-FText UMounteaDialogueGraphNode::GetDescription_Implementation() const
+void UMounteaDialogueGraphNode::SetNewWorld(UWorld* NewWorld)
 {
-	return LOCTEXT("NodeDesc", "Mountea Dialogue Graph Node");
+	if (!NewWorld) return;
+	if (NewWorld == OwningWorld) return;
+
+	OwningWorld = NewWorld;
 }
 
-FText UMounteaDialogueGraphNode::GetNodeCategory_Implementation() const
+void UMounteaDialogueGraphNode::InitializeNode_Implementation(UWorld* InWorld)
 {
-	return LOCTEXT("NodeCategory", "Mountea Dialogue Tree Node");
+	OwningWorld = InWorld;
+
+	if (Graph) SetNodeIndex(Graph->AllNodes.Find(this));
+}
+
+void UMounteaDialogueGraphNode::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+{
+	// Child Classes Implementations
+}
+
+void UMounteaDialogueGraphNode::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+{
+	if (!Manager) return;
+	
+	if (!GetWorld())
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Cannot find World!"));
+		return;
+	}
+
+	if (!GetGraph())
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid owning Graph!!"));
+		return;
+	}
+	
+	UMounteaDialogueContext* Context = Manager->GetDialogueContext();
+	if (!Context || !UMounteaDialogueSystemBFC::IsContextValid(Context))
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid Dialogue Context!!"));
+		return;
+	}
+	
+	UMounteaDialogueSystemBFC::ExecuteDecorators(this, Context);
+	
+	Manager->GetDialogueNodeStartedEventHandle().Broadcast(Context);
 }
 
 TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators() const
@@ -102,7 +143,28 @@ bool UMounteaDialogueGraphNode::EvaluateDecorators() const
 	return bSatisfied;
 }
 
+void UMounteaDialogueGraphNode::SetNodeIndex(const int32 NewIndex)
+{
+	check(NewIndex>INDEX_NONE);
+	NodeIndex = NewIndex;
+}
+
 #if WITH_EDITOR
+
+FText UMounteaDialogueGraphNode::GetDescription_Implementation() const
+{
+	return LOCTEXT("NodeDesc", "Mountea Dialogue Graph Node");
+}
+
+FText UMounteaDialogueGraphNode::GetNodeCategory_Implementation() const
+{
+	return LOCTEXT("NodeCategory", "Mountea Dialogue Tree Node");
+}
+
+FString UMounteaDialogueGraphNode::GetNodeDocumentationLink_Implementation() const
+{
+	return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Dialogue-Nodes");
+}
 
 FText UMounteaDialogueGraphNode::GetNodeTooltipText_Implementation() const
 {
@@ -112,12 +174,6 @@ FText UMounteaDialogueGraphNode::GetNodeTooltipText_Implementation() const
 FLinearColor UMounteaDialogueGraphNode::GetBackgroundColor() const
 {
 	return BackgroundColor;
-}
-
-void UMounteaDialogueGraphNode::SetNodeIndex(const int32 NewIndex)
-{
-	check(NewIndex>INDEX_NONE);
-	NodeIndex = NewIndex;
 }
 
 FText UMounteaDialogueGraphNode::GetNodeTitle_Implementation() const
@@ -134,10 +190,41 @@ bool UMounteaDialogueGraphNode::CanCreateConnection(UMounteaDialogueGraphNode* O
 {
 	if (Other == nullptr)
 	{
-		ErrorMessage = FText::FromString("Invalid Other node!");
+		ErrorMessage = FText::FromString("Invalid Other Node!");
+	}
+
+	if (Other->GetMaxChildNodes() > -1 && Other->ChildrenNodes.Num() >= Other->GetMaxChildNodes())
+	{
+		const FString TextReturn =
+		FString(Other->GetNodeTitle().ToString()).
+		Append(": Cannot have more than ").Append(FString::FromInt(Other->GetMaxChildNodes())).Append(" Children Nodes!");
+
+		ErrorMessage = FText::FromString(TextReturn);
 		return false;
 	}
-	
+
+	if (Direction == EGPD_Output)
+	{
+		
+		// Fast checking for native classes
+		if ( AllowedInputClasses.Contains(Other->GetClass()) )
+		{
+			return true;
+		}
+
+		// Slower iterative checking for child classes
+		for (auto Itr : AllowedInputClasses)
+		{
+			if (Other->GetClass()->IsChildOf(Itr))
+			{
+				return true;
+			}
+		}
+		
+		ErrorMessage = FText::FromString("Invalid Node Connection!");
+		return false;
+	}
+
 	return true;
 }
 
@@ -263,6 +350,33 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 				ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 			}
 		}
+
+		for (auto Itr : GetNodeDecorators())
+		{
+			TArray<FText> DecoratorErrors;
+			if (Itr.ValidateDecorator(DecoratorErrors) == false)
+			{
+				for (auto Error : DecoratorErrors)
+				{
+					const FString ErrorTextRich =
+					FString("* ").
+					Append("<RichTextBlock.Bold>").
+					Append(NodeTitle.ToString()).
+					Append("</>: ").
+					Append(FString(Error.ToString()));
+
+					auto ClassName = GetClass()->GetDisplayNameText().ToString();
+					const FString ErrorTextSimple =
+					ClassName.
+					Append(": ").
+					Append(FString(Error.ToString()));
+		
+					ValidationsMessages.Add(FText::FromString(RichFormat ? ErrorTextRich : ErrorTextSimple));
+
+					bResult = false;
+				}
+			}
+		}
 	}
 	
 	return bResult;
@@ -284,7 +398,7 @@ FText UMounteaDialogueGraphNode::GetDefaultTooltipBody() const
 	
 	const FText Implements = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_ImplementsTooltip", "Implements Decorators: {0}"), ImplementsNumber);
 	
-	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0}\n\n{1}\n{2}"), InternalName,  Inherits, Implements);
+	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0}\n\n{1}\n{2}"), NodeTypeName,  Inherits, Implements);
 }
 
 #endif
