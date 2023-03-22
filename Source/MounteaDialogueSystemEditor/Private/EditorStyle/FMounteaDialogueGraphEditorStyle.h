@@ -14,6 +14,17 @@ public:
 	static const FSlateBrush * GetBrush(FName PropertyName, const ANSICHAR* Specifier = NULL);
 	static const FName& GetStyleSetName();
 
+	template< class T >            
+	static const T& GetWidgetStyle( FName PropertyName, const ANSICHAR* Specifier = NULL  ) 
+	{
+		return StyleSet->GetWidgetStyle< T >( PropertyName, Specifier );
+	}
+
+	static ISlateStyle& Get()
+	{
+		return *(StyleSet.Get());
+	}
+
 private:
 	static TSharedPtr<FSlateStyleSet> StyleSet;
 };

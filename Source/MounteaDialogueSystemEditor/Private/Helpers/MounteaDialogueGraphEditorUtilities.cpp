@@ -1,24 +1,32 @@
 #include "MounteaDialogueGraphEditorUtilities.h"
 
+#include "AssetEditor/AssetEditor_MounteaDialogueGraph.h"
+#include "Ed/EdGraph_MounteaDialogueGraph.h"
+#include "Ed/EdNode_MounteaDialogueGraphNode.h"
+#include "Graph/MounteaDialogueGraph.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Kismet2/SClassPickerDialog.h"
 
-
 bool FMounteaDialogueGraphEditorUtilities::PickChildrenOfClass(const FText& TitleText, UClass*& OutChosenClass, UClass* Class)
 {
 	// Create filter
-	const TSharedPtr<FMounteaDialogueClassViewerFilter> Filter = MakeShareable(new FMounteaDialogueClassViewerFilter);
+	TSharedPtr<FMounteaDialogueClassViewerFilter> Filter = MakeShareable(new FMounteaDialogueClassViewerFilter);
 	Filter->AllowedChildrenOfClasses.Add(Class);
 
 	// Fill in options
 	FClassViewerInitializationOptions Options;
 	Options.Mode = EClassViewerMode::ClassPicker;
 	Options.bShowUnloadedBlueprints = true;
-	Options.bExpandRootNodes = true;
-	Options.DisplayMode = EClassViewerDisplayMode::TreeView;
-	Options.NameTypeToDisplay = EClassViewerNameTypeToDisplay::Dynamic;
 	Options.ClassFilters.Add(Filter.ToSharedRef());
+
+	Options.DisplayMode = EClassViewerDisplayMode::TreeView;
+	
+	Options.bShowNoneOption = false;
+	Options.InitiallySelectedClass = Class;
+
+	Options.bExpandRootNodes = true;
+	Options.NameTypeToDisplay = EClassViewerNameTypeToDisplay::DisplayName;
 	
 	return SClassPickerDialog::PickClass(TitleText, Options, OutChosenClass, Class);
 }
@@ -180,3 +188,64 @@ bool FMounteaDialogueGraphEditorUtilities::OpenEditorForAsset(const UObject* Ass
 
 	return GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(const_cast<UObject*>(Asset));
 }
+
+bool FMounteaDialogueGraphEditorUtilities::OpenEditorAndJumpToGraphNode(TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr, const UEdGraphNode* GraphNode, bool bFocusIfOpen)
+{
+	if (!IsValid(GraphNode))
+	{
+		return false;
+	}
+
+	// Open if not already.
+	UMounteaDialogueGraph* Dialogue = GetDialogueFromGraphNode(GraphNode);
+	if (!OpenEditorForAsset(Dialogue))
+	{
+		return false;
+	} 
+
+	// Could still fail focus on the graph node
+	if (IAssetEditorInstance* EditorInstance = FindEditorForAsset(Dialogue, bFocusIfOpen))
+	{
+		EditorInstance->FocusWindow(const_cast<UEdGraphNode*>(GraphNode));
+
+		UEdGraph_MounteaDialogueGraph* GraphEditor = Cast<UEdGraph_MounteaDialogueGraph>(Dialogue->EdGraph);
+		if (GraphEditor)
+		{
+			TSet<const UEdGraphNode*> SelectedNodes;
+			SelectedNodes.Add(GraphNode);
+			
+			GraphEditor->SelectNodeSet(SelectedNodes);
+			DialogueEditorPtr.Pin()->JumpToNode(GraphNode);
+		}
+		return true;
+	}
+
+	return false;
+}
+
+UMounteaDialogueGraph* FMounteaDialogueGraphEditorUtilities::GetDialogueFromGraphNode(const UEdGraphNode* GraphNode)
+{
+	if (const UEdNode_MounteaDialogueGraphNode* DialogueBaseNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
+	{
+		return DialogueBaseNode->GetDialogueGraphEdGraph()->GetMounteaDialogueGraph();
+	}
+
+	// Last chance
+	if (const UEdGraph_MounteaDialogueGraph* DialogueGraph = Cast<UEdGraph_MounteaDialogueGraph>(GraphNode->GetGraph()))
+	{
+		return Cast<UMounteaDialogueGraph>(DialogueGraph->GetMounteaDialogueGraph());
+	}
+
+	return nullptr;
+}
+
+IAssetEditorInstance* FMounteaDialogueGraphEditorUtilities::FindEditorForAsset(UObject* Asset, bool bFocusIfOpen)
+{
+	if (!IsValid(Asset) || !GEditor)
+	{
+		return nullptr;
+	}
+
+	return GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->FindEditorForAsset(Asset, bFocusIfOpen);
+}
+

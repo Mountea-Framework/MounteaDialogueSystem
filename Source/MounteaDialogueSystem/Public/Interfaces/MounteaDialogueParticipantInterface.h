@@ -51,6 +51,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	void SaveStartingNode(UMounteaDialogueGraphNode* NewStartingNode);
 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	void SaveTraversedPath(TMap<FGuid,int32>& InPath);
+
 #pragma endregion
 
 protected:
@@ -70,6 +73,11 @@ protected:
 	virtual AActor* GetOwningActor_Implementation() const
 	{
 		return nullptr;
+	};
+
+	virtual void SaveTraversedPath_Implementation(TMap<FGuid,int32>& InPath)
+	{
+		// Implement logic in children
 	};
 
 #pragma endregion 
@@ -95,6 +103,8 @@ public:
 
 	virtual UAudioComponent* GetAudioComponent() const = 0;
 	virtual void SetAudioComponent(UAudioComponent* NewAudioComponent) = 0;
+
+	virtual TMap<FGuid,int32> GetTraversedPath() const = 0;
 
 #pragma endregion
 

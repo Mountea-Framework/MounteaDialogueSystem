@@ -8,14 +8,32 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_OverrideDialogue"
 
+void UMounteaDialogueDecorator_OverrideDialogue::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant)
+{
+	Super::InitializeDecorator_Implementation(World, OwningParticipant);
+
+	if (World)
+	{
+		Manager = UMounteaDialogueSystemBFC::GetDialogueManager(GetOwningWorld());
+	}
+}
+
+void UMounteaDialogueDecorator_OverrideDialogue::CleanupDecorator_Implementation()
+{
+	Super::CleanupDecorator_Implementation();
+
+	Context = nullptr;
+	Manager = nullptr;
+}
+
 bool UMounteaDialogueDecorator_OverrideDialogue::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
 {
 	bool bSatisfied = Super::ValidateDecorator_Implementation(ValidationMessages);
-	const FText Name = FText::FromString(GetName());
+	const FText Name = GetDecoratorName();
 	
 	if (DataTable == nullptr)
 	{
-		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_DT", "{0} has no Data Table!"), Name);
+		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_DT", "Decorator {0} has no Data Table!"), Name);
 		ValidationMessages.Add(TempText);
 		
 		bSatisfied = false;
@@ -23,7 +41,7 @@ bool UMounteaDialogueDecorator_OverrideDialogue::ValidateDecorator_Implementatio
 	
 	if (RowName.IsNone() || RowName.IsNone())
 	{
-		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_DT", "[{0} Validation]: Invalid Row Name!"), Name);
+		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_DT", "Decorator {0}: Invalid Row Name!"), Name);
 		ValidationMessages.Add(TempText);
 		
 		bSatisfied = false;
@@ -35,14 +53,12 @@ bool UMounteaDialogueDecorator_OverrideDialogue::ValidateDecorator_Implementatio
 void UMounteaDialogueDecorator_OverrideDialogue::ExecuteDecorator_Implementation()
 {
 	Super::ExecuteDecorator_Implementation();
-
-	UMounteaDialogueContext* Context = nullptr;
-	const auto Manager = UMounteaDialogueSystemBFC::GetDialogueManager(GetOwningWorld());
-
+	
 	// Let's return BP Updatable Context rather than Raw
 	Context = Manager->GetDialogueContext();
 
-	if (!Context || !UMounteaDialogueSystemBFC::IsContextValid(Context)) return;
+	// We assume Context and Manager are already valid, but safety is safety
+	if (!Context|| !Manager.GetInterface() || !UMounteaDialogueSystemBFC::IsContextValid(Context) ) return;
 
 	const auto NewRow = UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName);
 	

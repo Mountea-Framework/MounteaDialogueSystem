@@ -83,4 +83,10 @@ namespace MounteaDialogueGraphColors
 		constexpr FLinearColor Normal(0.8f, 0.8f, 0.8f, 1.f);
 		constexpr FLinearColor Disabled(0.8f, 0.8f, 0.8f, 0.2f);
 	}
+	
+	namespace Previews
+	{
+		constexpr FLinearColor Normal(0.8f, 0.8f, 0.8f, 0.05f);
+		constexpr FLinearColor Invalid(0.8f, 0.8f, 0.8f, 0.2f);
+	}
 }

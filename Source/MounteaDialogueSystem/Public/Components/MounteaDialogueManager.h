@@ -15,7 +15,7 @@
  * ❔Implements 'IMounteaDialogueManagerInterface'.
  * ❗If attached to non-Controller class, then it will show Dialogue UI to first found Player Controller
  */
-UCLASS(ClassGroup=(Mountea), Blueprintable,  AutoExpandCategories=("Mountea", "Dialogue"), meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Manager"))
+UCLASS(ClassGroup=(Mountea), Blueprintable,  AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"), meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Manager"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueManager : public UActorComponent, public IMounteaDialogueManagerInterface
 {
 	GENERATED_BODY()
@@ -230,16 +230,15 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="Context, Get"))
 	virtual EDialogueManagerState GetDefaultDialogueManagerState() const override
 	{ return DefaultManagerState; };
+
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="prepare, start"))
+	virtual void PrepareNode_Implementation() override;
 	
 protected:
 
-	virtual bool EvaluateNodeDecorators() override;
-	virtual void ExecuteNodeDecorators() override;
-
 	virtual void StartDialogue() override;
 	virtual void CloseDialogue() override;
-	virtual void ProcessNode() override;
-	virtual void ProcessNode_Dialogue();
+	virtual void ProcessNode();
 
 	virtual bool InvokeDialogueUI(FString& Message) override;
 	
@@ -264,7 +263,7 @@ protected:
 	{ return OnDialogueContextUpdated; };
 	virtual FDialogueUserInterfaceChanged& GetDialogueUserInterfaceChangedEventHandle() override
 	{ return OnDialogueUserInterfaceChanged; };
-	virtual FDialogueNodeEvent& GetDialogueNodeSelected() override
+	virtual FDialogueNodeEvent& GetDialogueNodeSelectedEventHandle() override
 	{ return  OnDialogueNodeSelected; };
 	virtual FDialogueNodeEvent& GetDialogueNodeStartedEventHandle() override
 	{ return OnDialogueNodeStarted; };
@@ -282,6 +281,8 @@ protected:
 	{ return OnDialogueVoiceStartRequest; };
 	virtual FDialogueVoiceEvent& GetDialogueVoiceStartRequestEventHandle() override
 	{ return OnDialogueVoiceSkipRequest; };
+	virtual FTimerHandle& GetDialogueRowTimerHandle() override
+	{ return TimerHandle_RowTimer; }; 
 
 #pragma endregion 
 
@@ -317,6 +318,10 @@ protected:
 
 	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	FTimerHandle TimerHandle_RowTimer;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay)
+	uint8 bWasCursorVisible : 1;
+
 #pragma endregion 
 };
 

@@ -2,6 +2,8 @@
 
 #include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
 
+#include "Data/MounteaDialogueContext.h"
+#include "Interfaces/MounteaDialogueManagerInterface.h"
 #include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
@@ -11,7 +13,7 @@ UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 {
 #if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeTitle", "Answer Node");
-	InternalName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeInternalTitle", "Answer Node");
+	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeInternalTitle", "Answer Node");
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeContextMenuName", "Answer Node");
 	
 	BackgroundColor = FLinearColor(FColor::Turquoise);
@@ -23,10 +25,31 @@ UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
 
 	bAutoStarts = false;
-
-	// TODO: Once there are Conditional Decorators, this will be replaced
+	
 	MaxChildrenNodes = 1;
 }
+
+void UMounteaDialogueGraphNode_AnswerNode::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+{
+	// Switch Active Participant to Player
+	if (Manager.GetInterface())
+	{
+		const auto TempContext = Manager->GetDialogueContext();
+		if (TempContext)
+		{
+			TempContext->UpdateActiveDialogueParticipant(TempContext->GetDialoguePlayerParticipant());
+		}
+	}
+	
+	Super::PreProcessNode(Manager);
+}
+
+void UMounteaDialogueGraphNode_AnswerNode::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+{
+	Super::ProcessNode(Manager);
+}
+
+#if WITH_EDITOR
 
 FText UMounteaDialogueGraphNode_AnswerNode::GetDescription_Implementation() const
 {
@@ -36,14 +59,6 @@ FText UMounteaDialogueGraphNode_AnswerNode::GetDescription_Implementation() cons
 FText UMounteaDialogueGraphNode_AnswerNode::GetNodeCategory_Implementation() const
 {
 	return LOCTEXT("MounteaDialogueGraphNode_AnswearNodeCategory", "Mountea Dialogue Branche Nodes");
-}
-
-#if WITH_EDITOR
-bool UMounteaDialogueGraphNode_AnswerNode::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
-{
-	bool Result = Super::ValidateNode(ValidationsMessages, RichFormat);
-	
-	return Result;
 }
 
 #endif

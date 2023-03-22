@@ -4,30 +4,531 @@
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
+#include "Ed/EdGraph_MounteaDialogueGraph.h"
+#include "Ed/EdNode_MounteaDialogueGraphNode.h"
+#include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
+#include "Helpers/MounteaDialogueGraphColors.h"
+#include "Helpers/MounteaDialogueGraphEditorUtilities.h"
+#include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
+#include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
+#include "Widgets/Layout/SScaleBox.h"
+#include "Widgets/Layout/SScrollBox.h"
+
+#define LOCTEXT_NAMESPACE "FMounteaDialogueGraphNode_Details"
+
+FReply FMounteaDialogueGraphNode_Details::OnDocumentationClicked() const
+{
+	if (EditingNode)
+	{
+		FPlatformProcess::LaunchURL(*EditingNode->GetNodeDocumentationLink(), nullptr, nullptr);
+		return FReply::Handled();
+	}
+	return FReply::Unhandled();
+}
+
+const FSlateBrush* FMounteaDialogueGraphNode_Details::GetDocumentationBrush() const
+{
+	return FMounteaDialogueGraphEditorStyle::GetBrush( "MDSStyleSet.Buttons.Documentation" );
+}
+
+FSlateColor FMounteaDialogueGraphNode_Details::GetDocumentationColorOpacity() const
+{
+	return FSlateColor(FLinearColor(0.f, 0.f, 0.f, 0.f));
+}
+
+const FSlateBrush* FMounteaDialogueGraphNode_Details::GetBorderImage() const
+{
+	return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges");
+}
+
+void FMounteaDialogueGraphNode_Details::OnDocumentationHovered()
+{
+	if (!DocumentationButton.IsValid()) return;
+	if (!DocumentationImage.IsValid()) return;
+
+	FSlateRenderTransform Unhovered;
+
+	FSlateRenderTransform Hovered = FSlateRenderTransform
+	(
+		.99f, FVector2D(0.f, 0.f)
+	);
+	
+	DocumentationImage->SetRenderTransform( DocumentationButton->IsHovered() ? Hovered : Unhovered );
+}
+
+const FSlateBrush* FMounteaDialogueGraphNode_Details::GetPreviewsBrush() const
+{
+	return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges");
+}
+
+FSlateColor FMounteaDialogueGraphNode_Details::GetPreviewsBackgroundColor() const
+{
+	return MounteaDialogueGraphColors::Previews::Normal;
+}
+
+FSlateColor FMounteaDialogueGraphNode_Details::GetPreviewsTextColor() const
+{
+	return MounteaDialogueGraphColors::TextColors::Normal;
+}
+
+void FMounteaDialogueGraphNode_Details::MakePreviewsScrollBox(TArray<FText>& FromTexts)
+{
+	PreviewRows->ClearChildren();
+
+	if (FromTexts.Num() == 0)
+	{
+		PreviewRows->AddSlot()
+		[
+			SNew(SBorder)
+			.Padding(FMargin(1.f))
+			.BorderImage(this, &FMounteaDialogueGraphNode_Details::GetPreviewsBrush)
+			.BorderBackgroundColor(MounteaDialogueGraphColors::Previews::Invalid)
+			[
+				SNew(SBox)
+				.Padding(FMargin(2.5f))
+				[
+					SNew(STextBlock)
+					.Text(LOCTEXT("FMounteaDialogueGraphNode_Details_Previews_Invalid", "invalid data selected"))
+					.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDS.NormalText.Bold")
+					.AutoWrapText(true)
+					.Justification(ETextJustify::Center)
+					.AutoWrapText(true)
+					.ColorAndOpacity(this, &FMounteaDialogueGraphNode_Details::GetPreviewsTextColor)
+				]
+			]
+		];
+
+		return;
+	}
+	for (auto Itr : FromTexts)
+	{
+		PreviewRows->AddSlot()
+		[
+			SNew(SBox)
+			.Padding(FMargin(4.f))
+			[
+				SNew(SBorder)
+				.Padding(FMargin(2.f))
+				.BorderImage(this, &FMounteaDialogueGraphNode_Details::GetPreviewsBrush)
+				.BorderBackgroundColor(this, &FMounteaDialogueGraphNode_Details::GetPreviewsBackgroundColor)
+				[
+					SNew(SBox)
+					.Padding(FMargin(2.5f))
+					[
+						SNew(STextBlock)
+						.Text(Itr)
+						.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDS.NormalText.Regular")
+						.AutoWrapText(true)
+						.Justification(ETextJustify::Left)
+						.AutoWrapText(true)
+						.ColorAndOpacity(this, &FMounteaDialogueGraphNode_Details::GetPreviewsTextColor)
+					]
+				]
+			]
+		];
+	}
+}
+
+void FMounteaDialogueGraphNode_Details::ResetTexts()
+{
+	if (!EditingNode) return;
+	if (SavedLayoutBuilder) SavedLayoutBuilder->ForceRefreshDetails();
+	if (UMounteaDialogueGraphNode_DialogueNodeBase* EditingDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(EditingNode) )
+	{
+		TArray<FText> PreviewTexts = EditingDialogueNode->GetPreviews();
+
+		MakePreviewsScrollBox(PreviewTexts);
+	}
+}
+
+void FMounteaDialogueGraphNode_Details::ResetPreviewingNode()
+{
+	if (!EditingNode) return;
+	if (SavedLayoutBuilder) SavedLayoutBuilder->ForceRefreshDetails();
+	if (EditingNode->IsA(UMounteaDialogueGraphNode_ReturnToNode::StaticClass()))
+	{
+		MakePreviewNode();
+	}
+}
+
+FText FMounteaDialogueGraphNode_Details::GetPreviewingNodeTitle() const
+{
+	if (!EditingNode) return FText::FromString("INVALID");
+
+	const UMounteaDialogueGraphNode_ReturnToNode* EditingDialogueNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(EditingNode);
+
+	if (!EditingDialogueNode) return FText::FromString("INVALID");
+	if (!EditingDialogueNode->SelectedNode) return FText::FromString("INVALID");
+	
+	return EditingDialogueNode->SelectedNode->GetNodeTitle();
+}
+
+FReply FMounteaDialogueGraphNode_Details::OnPreviewingNodeClicked()
+{
+	if (!EditingNode) return FReply::Unhandled();
+
+	const UMounteaDialogueGraphNode_ReturnToNode* EditingDialogueNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(EditingNode);
+	if (!EditingDialogueNode) return FReply::Unhandled();
+	if (!EditingDialogueNode->SelectedNode) return FReply::Unhandled();
+	
+	const auto EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingNode->GetGraph()->EdGraph);
+	const TSharedPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr = EdGraph->GetAssetEditor();
+
+	const UEdNode_MounteaDialogueGraphNode* EdNode = *EdGraph->NodeMap.Find(EditingDialogueNode->SelectedNode);
+		
+	return FMounteaDialogueGraphEditorUtilities::OpenEditorAndJumpToGraphNode(DialogueEditorPtr, EdNode) ? FReply::Handled() : FReply::Unhandled();
+}
+
+FSlateColor FMounteaDialogueGraphNode_Details::GetPreviewingNodeBackgroundColor() const
+{
+	if (!EditingNode)  return FLinearColor::Red;
+
+	const UMounteaDialogueGraphNode_ReturnToNode* EditingDialogueNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(EditingNode);
+	if (!EditingDialogueNode) return FLinearColor::Red;
+	if (!EditingDialogueNode->SelectedNode)  return FLinearColor::Red;
+	
+	return EditingDialogueNode->SelectedNode->GetBackgroundColor();
+}
+
+void FMounteaDialogueGraphNode_Details::MakePreviewNode()
+{
+	if (PreviewNode.IsValid())
+	{
+		PreviewNode.Reset();
+	}
+	
+	if (!EditingNode)
+	{
+		MakeInvalidPreviewNode();
+		return;
+	}
+
+	const UMounteaDialogueGraphNode_ReturnToNode* EditingReturnNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(EditingNode);
+	
+	if (!EditingReturnNode)
+	{
+		MakeInvalidPreviewNode();
+		return;
+	}
+	if (!EditingReturnNode->SelectedNode)
+	{
+		MakeInvalidPreviewNode();
+		return;
+	}
+	
+	const FMargin NodePadding = FMargin(2.0f);
+	const FSlateFontInfo FontRegular = FCoreStyle::GetDefaultFontStyle("Bold", 12, FFontOutlineSettings(1));
+	const FSlateFontInfo FontBold = FCoreStyle::GetDefaultFontStyle("Bold", 12, FFontOutlineSettings(1));
+	const FSlateColor DefaultFontColor = MounteaDialogueGraphColors::TextColors::Normal;
+
+	auto PreviewNodeButtonStyle = FMounteaDialogueGraphEditorStyle::GetWidgetStyle<FButtonStyle>(TEXT("MDSStyleSet.Buttons.Style.PreviewNode"));
+	
+	PreviewNode =  SNew(SBox)
+	.Padding(FMargin(0.f, 5.f, 0.f, 5.f))
+	.MinDesiredWidth(FOptionalSize(110.f))
+	.MaxDesiredWidth(FOptionalSize(120.f))
+	.HAlign(HAlign_Center)
+	.MinDesiredHeight(FOptionalSize(75.f))
+	.VAlign(VAlign_Fill)
+	.ToolTipText(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreviewTooltip","This node is currently selected as Return Node.\nUpon execution of Return to Node, Dialogue will move to Selected Node.\n\nClicking on this Preview will select this Node in Graph."))
+	[
+		SNew(SButton)
+		.VAlign(VAlign_Fill)
+		.HAlign(HAlign_Fill)
+		.ButtonColorAndOpacity(FSlateColor(FLinearColor(0,0,0,0)))
+		.ContentPadding(FMargin(0))
+		.ButtonStyle(&PreviewNodeButtonStyle)
+		.OnClicked(this, &FMounteaDialogueGraphNode_Details::OnPreviewingNodeClicked)
+		[
+			// OUTER STYLE
+			SNew(SBorder)
+			.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
+			.Padding(3.0f)
+			.BorderBackgroundColor(this, &FMounteaDialogueGraphNode_Details::GetPreviewingNodeBackgroundColor)
+			[
+				SNew(SOverlay)
+
+				// Adding some colours so its not so boring
+				+ SOverlay::Slot()
+				.HAlign(HAlign_Fill)
+				.VAlign(VAlign_Fill)
+				[
+					// INNER STYLE
+					SNew(SBorder)
+					.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Center)
+					.Visibility(EVisibility::SelfHitTestInvisible)
+					.BorderBackgroundColor(MounteaDialogueGraphColors::Overlay::DarkTheme)
+				]
+				
+				// Pins and node details
+				+ SOverlay::Slot()
+				.HAlign(HAlign_Fill)
+				.VAlign(VAlign_Fill)
+				[
+					SNew(SVerticalBox)
+
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(SSpacer)
+						.Size(FVector2D(0.f, 10.f))
+					]
+
+					+ SVerticalBox::Slot()
+					.Padding(FMargin(NodePadding.Left, 0.0f, NodePadding.Right, 0.0f))
+					.VAlign(VAlign_Fill)
+					[
+						SNew(SVerticalBox)
+						
+						+ SVerticalBox::Slot()
+						.VAlign(VAlign_Center)
+						[
+							SNew(SBorder)
+							.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges"))
+							.BorderBackgroundColor(MounteaDialogueGraphColors::DecoratorsBody::Default)
+							.HAlign(HAlign_Fill)
+							.VAlign(VAlign_Center)
+							.Visibility(EVisibility::SelfHitTestInvisible)
+							[
+								SNew(SBox)
+								.MinDesiredWidth(FOptionalSize(145.f))
+								.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+								[
+									SNew(STextBlock)
+									.Font(FontBold)
+									.Text(this, &FMounteaDialogueGraphNode_Details::GetPreviewingNodeTitle)
+									.Justification(ETextJustify::Center)
+									.Visibility(EVisibility::Visible)
+									.ColorAndOpacity(MounteaDialogueGraphColors::TextColors::Normal)
+								]
+							]
+						]
+					]
+
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(SSpacer)
+						.Size(FVector2D(0.f, 10.f))
+					]
+				]
+			]
+		]
+	];
+}
+
+void FMounteaDialogueGraphNode_Details::MakeInvalidPreviewNode() 
+{
+	const FMargin NodePadding = FMargin(2.0f);
+
+	const FSlateFontInfo FontRegular = FCoreStyle::GetDefaultFontStyle("Bold", 12, FFontOutlineSettings(1));
+	const FSlateFontInfo FontBold = FCoreStyle::GetDefaultFontStyle("Bold", 12, FFontOutlineSettings(1));
+
+	const FSlateColor DefaultFontColor = MounteaDialogueGraphColors::TextColors::Normal;
+
+	PreviewNode =  SNew(SBox)
+	.Padding(FMargin(0.f, 5.f, 0.f, 5.f))
+	.MinDesiredWidth(FOptionalSize(110.f))
+	.MaxDesiredWidth(FOptionalSize(120.f))
+	.HAlign(HAlign_Center)
+	.MinDesiredHeight(FOptionalSize(75.f))
+	.VAlign(VAlign_Fill)
+	.ToolTipText(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreviewTooltip","This node is currently selected as Return Node. Upon execution of this Node, Dialogue will move to Selected Node.\n\nClicking on this Preview will select this Node in Graph."))
+	[
+		SNew(SButton)
+		.VAlign(VAlign_Fill)
+		.HAlign(HAlign_Fill)
+		.ButtonColorAndOpacity(FSlateColor(FLinearColor(0,0,0,0)))
+		.ContentPadding(FMargin(0))
+		.OnClicked(this, &FMounteaDialogueGraphNode_Details::OnPreviewingNodeClicked)
+		[
+			// OUTER STYLE
+			SNew(SBorder)
+			.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
+			.Padding(3.0f)
+			.BorderBackgroundColor(FSlateColor(FLinearColor::Red))
+			[
+				SNew(SOverlay)
+
+				// Adding some colours so its not so boring
+				+ SOverlay::Slot()
+				.HAlign(HAlign_Fill)
+				.VAlign(VAlign_Fill)
+				[
+					// INNER STYLE
+					SNew(SBorder)
+					.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Center)
+					.Visibility(EVisibility::SelfHitTestInvisible)
+					.BorderBackgroundColor(MounteaDialogueGraphColors::Overlay::DarkTheme)
+				]
+				
+				// Pins and node details
+				+ SOverlay::Slot()
+				.HAlign(HAlign_Fill)
+				.VAlign(VAlign_Fill)
+				[
+					SNew(SVerticalBox)
+
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(SSpacer)
+						.Size(FVector2D(0.f, 10.f))
+					]
+
+					+ SVerticalBox::Slot()
+					.Padding(FMargin(NodePadding.Left, 0.0f, NodePadding.Right, 0.0f))
+					.VAlign(VAlign_Fill)
+					[
+						SNew(SVerticalBox)
+						
+						+ SVerticalBox::Slot()
+						.VAlign(VAlign_Center)
+						[
+							SNew(SBorder)
+							.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges"))
+							.BorderBackgroundColor(MounteaDialogueGraphColors::DecoratorsBody::Default)
+							.HAlign(HAlign_Fill)
+							.VAlign(VAlign_Center)
+							.Visibility(EVisibility::SelfHitTestInvisible)
+							[
+								SNew(SBox)
+								.MinDesiredWidth(FOptionalSize(145.f))
+								.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+								[
+									SNew(STextBlock)
+									.Font(FontBold)
+									.Text(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreview_Invalid", "INVALID"))
+									.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDS.NormalText.Bold")
+									.Justification(ETextJustify::Center)
+									.Visibility(EVisibility::Visible)
+									.ColorAndOpacity(MounteaDialogueGraphColors::TextColors::Normal)
+								]
+							]
+						]
+					]
+
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(SSpacer)
+						.Size(FVector2D(0.f, 10.f))
+					]
+				]
+			]
+		]
+	];
+}
 
 void FMounteaDialogueGraphNode_Details::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
-	// TODO: Update default behaviour to Show Advanced categories
-	/*
 	TArray<TWeakObjectPtr<UObject>> ObjectsBeingCustomized;
 	DetailBuilder.GetObjectsBeingCustomized(ObjectsBeingCustomized);
 
 	// Only support one object being customized
 	if (ObjectsBeingCustomized.Num() != 1) return;
 
-	TWeakObjectPtr<UMounteaDialogueGraphNode> WeakGraphNode = Cast<UMounteaDialogueGraphNode>(ObjectsBeingCustomized[0].Get());
+	const TWeakObjectPtr<UMounteaDialogueGraphNode> WeakGraphNode = Cast<UMounteaDialogueGraphNode>(ObjectsBeingCustomized[0].Get());
 	if (!WeakGraphNode.IsValid()) return;
 
-	GraphNode = WeakGraphNode.Get();
-	if (!IsValid(GraphNode)) return;
+	EditingNode = WeakGraphNode.Get();
+	if (!EditingNode) return;
 
-	DetailLayoutBuilder = &DetailBuilder;
-	IDetailCategoryBuilder& BaseDataCategory = DetailLayoutBuilder->EditCategory(TEXT("Dialogue"), FText::GetEmpty(), ECategoryPriority::Important);
-	BaseDataCategory.InitiallyCollapsed(false);
-	const TSharedPtr<IPropertyHandle> PropertyDialogueNode = DetailLayoutBuilder->GetProperty(GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode, NodeDecorators), UMounteaDialogueGraphNode::StaticClass());
+	// Only edit if editing Graph Editor
+	if (DetailBuilder.GetBaseClass()->IsChildOf(UEdNode_MounteaDialogueGraphNode::StaticClass()) == false)
+	{ return; };
+	
+	SavedLayoutBuilder = &DetailBuilder;
 
-	IDetailCategoryBuilder& HiddenDataCategory = DetailLayoutBuilder->EditCategory(TEXT("Hidden"), FText::GetEmpty(), ECategoryPriority::Important);
-	HiddenDataCategory.SetCategoryVisibility(true);
-	HiddenDataCategory.SetShowAdvanced(true);
-	*/
+	DocumentationButtonStyle = FMounteaDialogueGraphEditorStyle::GetWidgetStyle<FButtonStyle>(TEXT("MDSStyleSet.Buttons.Style"));
+
+	IDetailCategoryBuilder& ItrCategoryBuild = DetailBuilder.EditCategory(TEXT("Documentation"), FText::GetEmpty(), ECategoryPriority::Important);
+	ItrCategoryBuild.AddCustomRow(LOCTEXT("MounteaDialogueGraphNode_Details_Documentation", "Node Documentation"), false)
+	.WholeRowWidget
+	[
+		SNew(SBox)
+		.HAlign(HAlign_Fill)
+		[
+			SNew(SScaleBox)
+			.HAlign(EHorizontalAlignment::HAlign_Fill)
+			.Stretch(EStretch::ScaleToFit)
+			[
+				SAssignNew(DocumentationButton, SButton)
+				.HAlign(HAlign_Fill)
+				.Text(LOCTEXT("MounteaDialogueGraphNode_Details_Documentation_Text", "Documentation"))
+				.ToolTipText(LOCTEXT("MounteaDialogueGraphNode_Details_Documentation_Tooltip", "Opens a documentation page for selected Node type.\nIf this Node type has no documentation, link to Mountea Dialogue Wiki will opened instead."))
+				.OnClicked(this, &FMounteaDialogueGraphNode_Details::OnDocumentationClicked)
+				.OnHovered(this, &FMounteaDialogueGraphNode_Details::OnDocumentationHovered)
+				.OnUnhovered(this, &FMounteaDialogueGraphNode_Details::OnDocumentationHovered)
+				.ButtonStyle(&DocumentationButtonStyle)
+				[
+					SNew(SScaleBox)
+					.HAlign(EHorizontalAlignment::HAlign_Left)
+					.Stretch(EStretch::ScaleToFit)
+					[
+						SAssignNew(DocumentationImage, SImage)
+					.Image(this, &FMounteaDialogueGraphNode_Details::GetDocumentationBrush)
+					]
+				]
+			]
+		]
+	];
+
+	if (UMounteaDialogueGraphNode_DialogueNodeBase* EditingDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(EditingNode) )
+	{
+		EditingDialogueNode->PreviewsUpdated.BindSP(this, &FMounteaDialogueGraphNode_Details::ResetTexts);
+
+		PreviewRows = SNew(SScrollBox).ToolTipText(LOCTEXT("FMounteaDialogueGraphNode_Details_PreviewsTootlip", "Localized preview of selected Node's Dialogue Data."));
+		TArray<FText> PreviewTexts = EditingDialogueNode->GetPreviews();
+		
+		MakePreviewsScrollBox(PreviewTexts);
+	
+		IDetailCategoryBuilder& PreviewCategoryBuilder = DetailBuilder.EditCategory(TEXT("Previews"), FText::GetEmpty(), ECategoryPriority::Uncommon);
+		PreviewCategoryBuilder.AddCustomRow(LOCTEXT("MounteaDialogueGraphNode_Details_Preview", "Node Dialogue Preview"), false)
+		.WholeRowWidget
+		[
+			SNew(SBox)
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			.MinDesiredWidth(250.f)
+			[
+				SNew(SScrollBox)
+				+ SScrollBox::Slot()
+				[
+					PreviewRows.ToSharedRef()
+				]
+			]
+		];
+		
+		DetailBuilder.HideProperty(GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_DialogueNodeBase, Preview));
+	}
+
+	if (UMounteaDialogueGraphNode_ReturnToNode* EditingReturnNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(EditingNode))
+	{
+		EditingReturnNode->ReturnNodeUpdated.BindSP(this, &FMounteaDialogueGraphNode_Details::ResetPreviewingNode);
+
+		IDetailCategoryBuilder& PreviewCategoryBuilder = DetailBuilder.EditCategory(TEXT("Return"), FText::GetEmpty(), ECategoryPriority::Uncommon);
+
+		MakePreviewNode();
+		PreviewCategoryBuilder.AddCustomRow(LOCTEXT("MounteaDialogueGraphNode_Details_Preview", "Node Dialogue Preview"), false)
+		.WholeRowWidget
+		[
+			PreviewNode.ToSharedRef()
+		];
+		
+		DetailBuilder.HideProperty(GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_ReturnToNode, SelectedNode));
+	}
+
+	// Hide those categories in Graph Editor
+	DetailBuilder.HideCategory("Base");
+	DetailBuilder.HideCategory("Private");
+	DetailBuilder.HideCategory("Hidden");
+	DetailBuilder.HideCategory("Hide");
+	DetailBuilder.HideCategory("Editor");
 }
+
+#undef LOCTEXT_NAMESPACE
