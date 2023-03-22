@@ -5,6 +5,7 @@
 
 #include "Helpers/MounteaDialogueSystemEditorBFC.h"
 #include "EdGraph_MounteaDialogueGraph.h"
+#include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 
@@ -40,7 +41,7 @@ void UEdNode_MounteaDialogueGraphNode::SetMounteaDialogueGraphNode(UMounteaDialo
 UEdGraph_MounteaDialogueGraph* UEdNode_MounteaDialogueGraphNode::GetDialogueGraphEdGraph() const
 {
 	return Cast<UEdGraph_MounteaDialogueGraph>(GetGraph());
-}
+};
 
 void UEdNode_MounteaDialogueGraphNode::AllocateDefaultPins()
 {
@@ -161,6 +162,13 @@ FText UEdNode_MounteaDialogueGraphNode::GetTooltipText() const
 	}
 	
 	return NSLOCTEXT("UEdNode_MounteaDialogueGraphNode", "DefaultToolTip", "Mountea Dialogue Node");
+}
+
+FSlateIcon UEdNode_MounteaDialogueGraphNode::GetIconAndTint(FLinearColor& OutColor) const
+{
+	static const FSlateIcon Icon = FSlateIcon(FMounteaDialogueGraphEditorStyle::GetStyleSetName(), "MDSStyleSet.Node.Icon.small");
+	OutColor = DialogueGraphNode->GetBackgroundColor();
+	return Icon;
 }
 
 void UEdNode_MounteaDialogueGraphNode::PostEditUndo()

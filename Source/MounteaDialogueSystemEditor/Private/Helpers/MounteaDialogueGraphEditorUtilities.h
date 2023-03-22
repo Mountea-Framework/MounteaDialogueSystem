@@ -2,6 +2,9 @@
 #include "ClassViewerFilter.h"
 #include "K2Node_Event.h"
 
+class UMounteaDialogueGraph;
+class FAssetEditor_MounteaDialogueGraph;
+
 enum class EMounteaDialogueBlueprintOpenType : uint8
 {
 	None = 0,
@@ -94,6 +97,12 @@ public:
 
 		return OutNativeClasses.Num() > 0 || OutBlueprintClasses.Num() > 0;
 	}
+
+	static bool OpenEditorAndJumpToGraphNode(TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr, const UEdGraphNode* GraphNode, bool bFocusIfOpen = false);
+
+	static UMounteaDialogueGraph* GetDialogueFromGraphNode(const UEdGraphNode* GraphNode);
+
+	static IAssetEditorInstance* FindEditorForAsset(UObject* Asset, bool bFocusIfOpen);
 };
 
 

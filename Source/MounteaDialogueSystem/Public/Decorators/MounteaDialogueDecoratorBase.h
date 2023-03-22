@@ -5,10 +5,21 @@
 #include "CoreMinimal.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "UObject/Object.h"
+#include "Engine/Level.h"
 #include "MounteaDialogueDecoratorBase.generated.h"
 
+class IMounteaDialogueParticipantInterface;
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
+
+UENUM(BlueprintType)
+enum class EDecoratorState : uint8
+{
+	Uninitialized,
+	Initialized
+};
+
+#define LOCTEXT_NAMESPACE "NodeDecoratorBase"
 
 /**
  *	Mountea Dialogue Decorator
@@ -47,7 +58,14 @@ public:
 			}
 		}
 		return nullptr;
-	};
+	}
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
+	FString GetDecoratorDocumentationLink() const;
+	virtual FString GetDecoratorDocumentationLink_Implementation() const
+	{
+		return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Dialogue-Decorators");
+	}
 
 public:
 
@@ -57,18 +75,31 @@ public:
 	 * In Blueprints should be used to cache values to avoid overhead in 'ExecuteDecorator'.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
-	void InitializeDecorator(UWorld* World);
-	virtual void InitializeDecorator_Implementation(UWorld* World)
+	void InitializeDecorator(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant);
+	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant)
 	{
 		OwningWorld = World;
+		if (World)
+		{
+			DecoratorState = EDecoratorState::Initialized;
+		}
+
+		if (OwningParticipant)
+		{
+			OwnerParticipant = OwningParticipant;
+		}
 	};
 
 	/**
 	 * Cleans up the Decorator.
 	 * In Blueprints should be used to reset cached values to avoid blocking garbage collector.
 	 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "Mountea|Dialogue|Decorators")
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
 	void CleanupDecorator();
+	virtual void CleanupDecorator_Implementation()
+	{
+		DecoratorState = EDecoratorState::Uninitialized;
+	};
 
 	/**
 	 * Validates the Decorator.
@@ -137,11 +168,24 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorators", meta=(CompactNodeTitle="Owner"))
 	UObject* GetOwner() const;
+	/**
+	 * Returns Owner Participant Interface.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorators", meta=(CompactNodeTitle="OwnerParticipant"))
+	TScriptInterface<IMounteaDialogueParticipantInterface> GetOwnerParticipant() const
+	{ return OwnerParticipant; };
+
+	FText GetDecoratorName() const;
 	
 private:
 
 	UPROPERTY()
+	EDecoratorState DecoratorState = EDecoratorState::Uninitialized;
+
+	UPROPERTY()
 	UWorld* OwningWorld = nullptr;
+	UPROPERTY()
+	TScriptInterface<IMounteaDialogueParticipantInterface> OwnerParticipant = nullptr;
 };
 
 
@@ -159,6 +203,18 @@ struct FMounteaDialogueDecorator
 
 public:
 
+	void InitializeDecorator(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant) const
+	{
+		if (DecoratorType)
+		{
+			DecoratorType->InitializeDecorator(World, OwningParticipant);
+			return;
+		}
+
+		LOG_ERROR(TEXT("[InitializeDecorator] DecoratorType is null (invalid)!"))
+		return;
+	}
+
 	bool ValidateDecorator(TArray<FText>& ValidationMessages) const
 	{
 		if (DecoratorType)
@@ -168,7 +224,19 @@ public:
 		
 		LOG_ERROR(TEXT("[EvaluateDecorator] DecoratorType is null (invalid)!"))
 		return false;
-	};
+	}
+
+	void CleanupDecorator() const
+	{
+		if (DecoratorType)
+		{
+			DecoratorType->CleanupDecorator();
+			return;
+		}
+
+		LOG_ERROR(TEXT("[CleanupDecorator] DecoratorType is null (invalid)!"))
+		return;
+	}
 
 	bool EvaluateDecorator() const
 	{
@@ -181,7 +249,7 @@ public:
 		return false;
 	};
 	
-	void ExecuteDecorator()
+	void ExecuteDecorator() const
 	{
 		if (DecoratorType)
 		{
@@ -211,3 +279,5 @@ public:
 	};
 	
 };
+
+#undef LOCTEXT_NAMESPACE

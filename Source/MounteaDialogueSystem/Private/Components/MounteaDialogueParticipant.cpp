@@ -23,7 +23,7 @@ void UMounteaDialogueParticipant::BeginPlay()
 
 	SetAudioComponent(FindAudioComponent());
 
-	InitializeParticipant_Implementation();
+	InitializeParticipant();
 }
 
 
@@ -31,12 +31,20 @@ void UMounteaDialogueParticipant::InitializeParticipant_Implementation()
 {
 	if (DialogueGraph == nullptr) return;
 
+	for (const auto& Itr : DialogueGraph->GetAllNodes())
+	{
+		if (Itr)
+		{
+			Itr->InitializeNode(GetWorld());
+		}
+	}
+	
 	TArray<FMounteaDialogueDecorator> Decorators = UMounteaDialogueSystemBFC::GetAllDialogueDecorators(DialogueGraph);
 	for (const auto Itr : Decorators)
 	{
 		if (Itr.DecoratorType)
 		{
-			Itr.DecoratorType->InitializeDecorator(GetWorld());
+			Itr.DecoratorType->InitializeDecorator(GetWorld(), this);
 		}
 	}
 }
@@ -149,4 +157,34 @@ void UMounteaDialogueParticipant::SetAudioComponent(UAudioComponent* NewAudioCom
 AActor* UMounteaDialogueParticipant::GetOwningActor_Implementation() const
 {
 	return GetOwner();
+}
+
+//TODO: instead of the Actor handling this logic realtime, make FRunnable queue and let data be calculated async way
+void UMounteaDialogueParticipant::SaveTraversedPath_Implementation(TMap<FGuid, int32>& InPath)
+{
+	TMap<FGuid, int32> CurrentPath = TraversedPath;
+	TMap<FGuid, int32> OuterJoin;
+	TraversedPath.Empty();
+
+	// Increase those Paths that have been passes in past
+	for (auto& Itr : InPath)
+	{
+		if (CurrentPath.Contains(Itr.Key))
+		{
+			Itr.Value += CurrentPath[Itr.Key];
+		}
+	}
+
+	// Now we have two maps - current path and new path, make outer-join
+	for (auto& Itr : CurrentPath)
+	{
+		if (!InPath.Contains(Itr.Key))
+		{
+			OuterJoin.Add(Itr);
+		}
+	}
+
+	// Append both, new path and paths that have been passed before but are not in current iteration
+	TraversedPath.Append(InPath);
+	TraversedPath.Append(OuterJoin);
 }

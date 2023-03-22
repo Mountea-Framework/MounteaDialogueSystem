@@ -7,7 +7,7 @@
 #include "TreeSolveLayoutStrategy.generated.h"
 
 class UMounteaDialogueGraphNode;
-class UEdNode_MounteaDialogueGraphNode;
+//class UEdNode_MounteaDialogueGraphNode;
 
 /**
  * 

@@ -116,8 +116,6 @@ public:
 	virtual bool ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat);
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
 
-#endif
-	
 public:
 
 	// Construct and initialize a node within this Dialogue.
@@ -129,4 +127,6 @@ public:
 		DialogueNode->OnCreatedInEditor();
 		return DialogueNode;
 	}
+
+#endif
 };
