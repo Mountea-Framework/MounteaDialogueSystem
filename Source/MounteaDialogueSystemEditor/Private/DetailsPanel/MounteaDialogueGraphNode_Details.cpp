@@ -163,7 +163,7 @@ FText FMounteaDialogueGraphNode_Details::GetPreviewingNodeTitle() const
 	return EditingDialogueNode->SelectedNode->GetNodeTitle();
 }
 
-FReply FMounteaDialogueGraphNode_Details::OnPreviewingNodeClicked()
+FReply FMounteaDialogueGraphNode_Details::OnPreviewingNodeClicked(const FGeometry& Geometry, const FPointerEvent& PointerEvent) const
 {
 	if (!EditingNode) return FReply::Unhandled();
 
@@ -230,89 +230,81 @@ void FMounteaDialogueGraphNode_Details::MakePreviewNode()
 	.HAlign(HAlign_Center)
 	.MinDesiredHeight(FOptionalSize(75.f))
 	.VAlign(VAlign_Fill)
-	.ToolTipText(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreviewTooltip","This node is currently selected as Return Node.\nUpon execution of Return to Node, Dialogue will move to Selected Node.\n\nClicking on this Preview will select this Node in Graph."))
+	.ToolTipText(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreviewTooltip","This node is currently selected as Return Node.\nUpon execution of Return to Node, Dialogue will move to Selected Node.\n\nDouble click on this Preview to focus on this Node in Graph."))
 	[
-		SNew(SButton)
-		.VAlign(VAlign_Fill)
-		.HAlign(HAlign_Fill)
-		.ButtonColorAndOpacity(FSlateColor(FLinearColor(0,0,0,0)))
-		.ContentPadding(FMargin(0))
-		.ButtonStyle(&PreviewNodeButtonStyle)
-		.OnClicked(this, &FMounteaDialogueGraphNode_Details::OnPreviewingNodeClicked)
+		// OUTER STYLE
+		SNew(SBorder)
+		.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
+		.Padding(3.0f)
+		.BorderBackgroundColor(this, &FMounteaDialogueGraphNode_Details::GetPreviewingNodeBackgroundColor)
+		.OnMouseDoubleClick(this, &FMounteaDialogueGraphNode_Details::OnPreviewingNodeClicked)
 		[
-			// OUTER STYLE
-			SNew(SBorder)
-			.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
-			.Padding(3.0f)
-			.BorderBackgroundColor(this, &FMounteaDialogueGraphNode_Details::GetPreviewingNodeBackgroundColor)
-			[
-				SNew(SOverlay)
+			SNew(SOverlay)
 
-				// Adding some colours so its not so boring
-				+ SOverlay::Slot()
+			// Adding some colours so its not so boring
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			[
+				// INNER STYLE
+				SNew(SBorder)
+				.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
 				.HAlign(HAlign_Fill)
-				.VAlign(VAlign_Fill)
+				.VAlign(VAlign_Center)
+				.Visibility(EVisibility::SelfHitTestInvisible)
+				.BorderBackgroundColor(MounteaDialogueGraphColors::Overlay::DarkTheme)
+			]
+			
+			// Pins and node details
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			[
+				SNew(SVerticalBox)
+
+				+ SVerticalBox::Slot()
+				.AutoHeight()
 				[
-					// INNER STYLE
-					SNew(SBorder)
-					.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
-					.HAlign(HAlign_Fill)
-					.VAlign(VAlign_Center)
-					.Visibility(EVisibility::SelfHitTestInvisible)
-					.BorderBackgroundColor(MounteaDialogueGraphColors::Overlay::DarkTheme)
+					SNew(SSpacer)
+					.Size(FVector2D(0.f, 10.f))
 				]
-				
-				// Pins and node details
-				+ SOverlay::Slot()
-				.HAlign(HAlign_Fill)
+
+				+ SVerticalBox::Slot()
+				.Padding(FMargin(NodePadding.Left, 0.0f, NodePadding.Right, 0.0f))
 				.VAlign(VAlign_Fill)
 				[
 					SNew(SVerticalBox)
-
+					
 					+ SVerticalBox::Slot()
-					.AutoHeight()
+					.VAlign(VAlign_Center)
 					[
-						SNew(SSpacer)
-						.Size(FVector2D(0.f, 10.f))
-					]
-
-					+ SVerticalBox::Slot()
-					.Padding(FMargin(NodePadding.Left, 0.0f, NodePadding.Right, 0.0f))
-					.VAlign(VAlign_Fill)
-					[
-						SNew(SVerticalBox)
-						
-						+ SVerticalBox::Slot()
+						SNew(SBorder)
+						.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges"))
+						.BorderBackgroundColor(MounteaDialogueGraphColors::DecoratorsBody::Default)
+						.HAlign(HAlign_Fill)
 						.VAlign(VAlign_Center)
+						.Visibility(EVisibility::SelfHitTestInvisible)
 						[
-							SNew(SBorder)
-							.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges"))
-							.BorderBackgroundColor(MounteaDialogueGraphColors::DecoratorsBody::Default)
-							.HAlign(HAlign_Fill)
-							.VAlign(VAlign_Center)
-							.Visibility(EVisibility::SelfHitTestInvisible)
+							SNew(SBox)
+							.MinDesiredWidth(FOptionalSize(145.f))
+							.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 							[
-								SNew(SBox)
-								.MinDesiredWidth(FOptionalSize(145.f))
-								.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
-								[
-									SNew(STextBlock)
-									.Font(FontBold)
-									.Text(this, &FMounteaDialogueGraphNode_Details::GetPreviewingNodeTitle)
-									.Justification(ETextJustify::Center)
-									.Visibility(EVisibility::Visible)
-									.ColorAndOpacity(MounteaDialogueGraphColors::TextColors::Normal)
-								]
+								SNew(STextBlock)
+								.Font(FontBold)
+								.Text(this, &FMounteaDialogueGraphNode_Details::GetPreviewingNodeTitle)
+								.Justification(ETextJustify::Center)
+								.Visibility(EVisibility::Visible)
+								.ColorAndOpacity(MounteaDialogueGraphColors::TextColors::Normal)
 							]
 						]
 					]
+				]
 
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					[
-						SNew(SSpacer)
-						.Size(FVector2D(0.f, 10.f))
-					]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[
+					SNew(SSpacer)
+					.Size(FVector2D(0.f, 10.f))
 				]
 			]
 		]
@@ -337,87 +329,79 @@ void FMounteaDialogueGraphNode_Details::MakeInvalidPreviewNode()
 	.VAlign(VAlign_Fill)
 	.ToolTipText(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreviewTooltip","This node is currently selected as Return Node. Upon execution of this Node, Dialogue will move to Selected Node.\n\nClicking on this Preview will select this Node in Graph."))
 	[
-		SNew(SButton)
-		.VAlign(VAlign_Fill)
-		.HAlign(HAlign_Fill)
-		.ButtonColorAndOpacity(FSlateColor(FLinearColor(0,0,0,0)))
-		.ContentPadding(FMargin(0))
-		.OnClicked(this, &FMounteaDialogueGraphNode_Details::OnPreviewingNodeClicked)
+		// OUTER STYLE
+		SNew(SBorder)
+		.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
+		.Padding(3.0f)
+		.BorderBackgroundColor(FSlateColor(FLinearColor::Red))
 		[
-			// OUTER STYLE
-			SNew(SBorder)
-			.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
-			.Padding(3.0f)
-			.BorderBackgroundColor(FSlateColor(FLinearColor::Red))
-			[
-				SNew(SOverlay)
+			SNew(SOverlay)
 
-				// Adding some colours so its not so boring
-				+ SOverlay::Slot()
+			// Adding some colours so its not so boring
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			[
+				// INNER STYLE
+				SNew(SBorder)
+				.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
 				.HAlign(HAlign_Fill)
-				.VAlign(VAlign_Fill)
+				.VAlign(VAlign_Center)
+				.Visibility(EVisibility::SelfHitTestInvisible)
+				.BorderBackgroundColor(MounteaDialogueGraphColors::Overlay::DarkTheme)
+			]
+			
+			// Pins and node details
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			[
+				SNew(SVerticalBox)
+
+				+ SVerticalBox::Slot()
+				.AutoHeight()
 				[
-					// INNER STYLE
-					SNew(SBorder)
-					.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
-					.HAlign(HAlign_Fill)
-					.VAlign(VAlign_Center)
-					.Visibility(EVisibility::SelfHitTestInvisible)
-					.BorderBackgroundColor(MounteaDialogueGraphColors::Overlay::DarkTheme)
+					SNew(SSpacer)
+					.Size(FVector2D(0.f, 10.f))
 				]
-				
-				// Pins and node details
-				+ SOverlay::Slot()
-				.HAlign(HAlign_Fill)
+
+				+ SVerticalBox::Slot()
+				.Padding(FMargin(NodePadding.Left, 0.0f, NodePadding.Right, 0.0f))
 				.VAlign(VAlign_Fill)
 				[
 					SNew(SVerticalBox)
-
+					
 					+ SVerticalBox::Slot()
-					.AutoHeight()
+					.VAlign(VAlign_Center)
 					[
-						SNew(SSpacer)
-						.Size(FVector2D(0.f, 10.f))
-					]
-
-					+ SVerticalBox::Slot()
-					.Padding(FMargin(NodePadding.Left, 0.0f, NodePadding.Right, 0.0f))
-					.VAlign(VAlign_Fill)
-					[
-						SNew(SVerticalBox)
-						
-						+ SVerticalBox::Slot()
+						SNew(SBorder)
+						.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges"))
+						.BorderBackgroundColor(MounteaDialogueGraphColors::DecoratorsBody::Default)
+						.HAlign(HAlign_Fill)
 						.VAlign(VAlign_Center)
+						.Visibility(EVisibility::SelfHitTestInvisible)
 						[
-							SNew(SBorder)
-							.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges"))
-							.BorderBackgroundColor(MounteaDialogueGraphColors::DecoratorsBody::Default)
-							.HAlign(HAlign_Fill)
-							.VAlign(VAlign_Center)
-							.Visibility(EVisibility::SelfHitTestInvisible)
+							SNew(SBox)
+							.MinDesiredWidth(FOptionalSize(145.f))
+							.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 							[
-								SNew(SBox)
-								.MinDesiredWidth(FOptionalSize(145.f))
-								.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
-								[
-									SNew(STextBlock)
-									.Font(FontBold)
-									.Text(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreview_Invalid", "INVALID"))
-									.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDS.NormalText.Bold")
-									.Justification(ETextJustify::Center)
-									.Visibility(EVisibility::Visible)
-									.ColorAndOpacity(MounteaDialogueGraphColors::TextColors::Normal)
-								]
+								SNew(STextBlock)
+								.Font(FontBold)
+								.Text(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreview_Invalid", "INVALID"))
+								.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDS.NormalText.Bold")
+								.Justification(ETextJustify::Center)
+								.Visibility(EVisibility::Visible)
+								.ColorAndOpacity(MounteaDialogueGraphColors::TextColors::Normal)
 							]
 						]
 					]
+				]
 
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					[
-						SNew(SSpacer)
-						.Size(FVector2D(0.f, 10.f))
-					]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[
+					SNew(SSpacer)
+					.Size(FVector2D(0.f, 10.f))
 				]
 			]
 		]

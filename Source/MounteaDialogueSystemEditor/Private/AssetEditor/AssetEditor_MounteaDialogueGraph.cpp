@@ -151,17 +151,17 @@ void FAssetEditor_MounteaDialogueGraph::RegisterTabSpawners(const TSharedRef<FTa
 	InTabManager->RegisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::ViewportID, FOnSpawnTab::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::SpawnTab_Viewport))
 		.SetDisplayName(LOCTEXT("GraphCanvasTab", "Viewport"))
 		.SetGroup(WorkspaceMenuCategoryRef)
-		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "GraphEditor.EventGraph_16x"));
+		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.EventGraph_16x"));
 
 	InTabManager->RegisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID, FOnSpawnTab::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::SpawnTab_Details))
 		.SetDisplayName(LOCTEXT("DetailsTab", "Property"))
 		.SetGroup(WorkspaceMenuCategoryRef)
-		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.Tabs.Details"));
+		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
 
 	InTabManager->RegisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID, FOnSpawnTab::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::SpawnTab_Search))
 		.SetDisplayName(LOCTEXT("SearchTab", "Search"))
 		.SetGroup(WorkspaceMenuCategoryRef)
-		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "Kismet.Tabs.FindResults"));
+		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.FindResults"));
 }
 
 void FAssetEditor_MounteaDialogueGraph::UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
@@ -237,6 +237,11 @@ void FAssetEditor_MounteaDialogueGraph::AddReferencedObjects(FReferenceCollector
 {
 	Collector.AddReferencedObject(EditingGraph);
 	Collector.AddReferencedObject(EditingGraph->EdGraph);
+}
+
+FString FAssetEditor_MounteaDialogueGraph::GetReferencerName() const
+{
+	return TEXT("FAssetEditor_MounteaDialogueGraph");
 }
 
 void FAssetEditor_MounteaDialogueGraph::SetDialogueBeingEdited(UMounteaDialogueGraph* NewDialogue)
@@ -950,7 +955,7 @@ TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Search(const FS
 		FindResultsView.ToSharedRef()
 	];
 
-	SpawnTab.Get().SetTabIcon(FEditorStyle::GetBrush("Kismet.Tabs.FindResults"));
+	SpawnTab.Get().SetTabIcon(FAppStyle::GetBrush("Kismet.Tabs.FindResults"));
 
 	return SpawnTab;
 }

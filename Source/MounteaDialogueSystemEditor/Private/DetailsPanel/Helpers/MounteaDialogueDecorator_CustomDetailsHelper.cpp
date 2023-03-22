@@ -123,7 +123,7 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 	.Padding(4.f, 2.f)
 	[
 		SNew(SButton)
-		.ButtonStyle(FEditorStyle::Get(), "HoverHintOnly")
+		.ButtonStyle(FAppStyle::Get(), "HoverHintOnly")
 		.ToolTipText(this, &Self::GetOpenDocumentationText)
 		.ContentPadding(4.f)
 		.ForegroundColor(FSlateColor::UseForeground())
