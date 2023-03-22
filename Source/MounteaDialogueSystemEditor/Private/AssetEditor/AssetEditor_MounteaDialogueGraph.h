@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "Search/SMounteaDialogueSearch.h"
+
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphEditorSettings;
 class FGGAssetEditorToolbar;
@@ -23,7 +25,6 @@ public:
 #pragma region ToolkitInterface
 	
 public:
-
 	// IToolkit interface
 	virtual void RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager) override;
 	virtual void UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager) override;
@@ -58,6 +59,28 @@ public:
 
 #pragma endregion
 
+#pragma region FGCObject
+
+	virtual FString GetReferencerName() const override;
+
+#pragma endregion 
+	
+	// Gets/Sets the dialogue being edited
+	UMounteaDialogueGraph* GetDialogueBeingEdited()
+	{
+		check(EditingGraph);
+		return EditingGraph;
+	}
+	void SetDialogueBeingEdited(UMounteaDialogueGraph* NewDialogue);
+
+	virtual void JumpToNode( const class UEdGraphNode* JumpToMe, bool bRequestRename = false, bool bSelectNode = true )
+	{
+		if (ViewportWidget.IsValid())
+		{
+			ViewportWidget->JumpToNode(JumpToMe, bRequestRename, bSelectNode);
+		}
+	}
+
 private:
 	
 	void CreateInternalWidgets();
@@ -72,6 +95,8 @@ private:
 	FGraphPanelSelectionSet GetSelectedNodes() const;
 
 	void RebuildMounteaDialogueGraph();
+
+	void SummonSearchUI(FString NewSearch = FString(), bool bSelectFirstResult = false);
 
 #pragma region GraphEditorCommands
 
@@ -119,6 +144,7 @@ private:
 
 	TSharedRef<SDockTab> SpawnTab_Viewport(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_Details(const FSpawnTabArgs& Args);
+	TSharedRef<SDockTab> SpawnTab_Search(const FSpawnTabArgs& Args);
 
 	UMounteaDialogueGraphEditorSettings* MounteaDialogueGraphEditorSettings;
 
@@ -132,6 +158,7 @@ private:
 
 	TSharedPtr<SGraphEditor> ViewportWidget;
 	TSharedPtr<class IDetailsView> PropertyWidget;
+	TSharedPtr<SMounteaDialogueSearch> FindResultsView;
 
 	/** The command list for this editor */
 	TSharedPtr<FUICommandList> GraphEditorCommands;

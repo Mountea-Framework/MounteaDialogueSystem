@@ -3,9 +3,10 @@
 #pragma once
 
 #include "IDetailCustomization.h"
-#include "IDetailPropertyRow.h"
 #include "Helpers/MounteaDialogueBase_CustomRowHelper.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
+
+class SScrollBox;
 
 class FMounteaDialogueGraphNode_Details : public IDetailCustomization
 {
@@ -14,24 +15,46 @@ class FMounteaDialogueGraphNode_Details : public IDetailCustomization
 public:
 	// Makes a new instance of this detail layout class for a specific detail view requesting it
 	static TSharedRef<IDetailCustomization> MakeInstance() { return MakeShared<Self>(); }
+	
+	FReply OnDocumentationClicked() const;
 
+	const FSlateBrush* GetDocumentationBrush() const;
+	FSlateColor GetDocumentationColorOpacity() const;
+	const FSlateBrush* GetBorderImage() const;
+	void OnDocumentationHovered();
+
+#pragma region DialoguePreviews
+	const FSlateBrush* GetPreviewsBrush() const;
+	FSlateColor GetPreviewsBackgroundColor() const;
+	FSlateColor GetPreviewsTextColor() const;
+	
+	void MakePreviewsScrollBox(TArray<FText>& FromTexts);
+	void ResetTexts();
+#pragma endregion 
+
+#pragma region ReturnNodePreview
+	void ResetPreviewingNode();
+	
+	FSlateColor GetPreviewingNodeBackgroundColor() const;
+	FText GetPreviewingNodeTitle() const;
+	FReply OnPreviewingNodeClicked(const FGeometry& Geometry, const FPointerEvent& PointerEvent) const;
+	void MakePreviewNode();
+	void MakeInvalidPreviewNode();
+#pragma endregion 
+	
 	// IDetailCustomization interface
 	/** Called when details should be customized */
 	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
 
 private:
-	/** Hold the reference to the Graph Node this represents */
-	UMounteaDialogueGraphNode* GraphNode = nullptr;
+	TSharedPtr<SBox> PreviewNode;
+	TSharedPtr<SScrollBox> PreviewRows;
+	TSharedPtr<SButton> DocumentationButton;
+	TSharedPtr<SImage> DocumentationImage;
+
 	
-	// Property Handles
-	TSharedPtr<IPropertyHandle> TextPropertyHandle;
+	FButtonStyle DocumentationButtonStyle;
+	IDetailLayoutBuilder* SavedLayoutBuilder = nullptr;
 
-	// Property rows
-	IDetailPropertyRow* NodeDataPropertyRow = nullptr;
-	TSharedPtr<FMounteaDialogueBase_CustomRowHelper> NodeDataPropertyRow_CustomDisplay;
-	IDetailPropertyRow* GenericDataPropertyRow = nullptr;
-	IDetailPropertyRow* ChildrenPropertyRow = nullptr;
-
-	/** The details panel layout builder reference. */
-	IDetailLayoutBuilder* DetailLayoutBuilder = nullptr;
+	UMounteaDialogueGraphNode* EditingNode = nullptr;
 };

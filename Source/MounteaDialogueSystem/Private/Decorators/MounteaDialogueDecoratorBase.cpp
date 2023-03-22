@@ -31,6 +31,13 @@ bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(TArray<FTex
 		bSatisfied = false;
 	}
 
+	if (DecoratorState == EDecoratorState::Uninitialized && bIsEditorCall == false)
+	{
+		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_Base_Validation_State", "[{0}]: Not Initialized properly!"), Name);
+		ValidationMessages.Add(TempText);
+
+		bSatisfied = false;
+	}
 	
 	if (GetOwner() == nullptr)
 	{
@@ -66,6 +73,14 @@ UMounteaDialogueGraph* UMounteaDialogueDecoratorBase::GetOwningGraph() const
 UObject* UMounteaDialogueDecoratorBase::GetOwner() const
 {
 	return GetOuter();
+}
+
+FText UMounteaDialogueDecoratorBase::GetDecoratorName() const
+{
+#if WITH_EDITORONLY_DATA
+	return GetClass()->GetDisplayNameText();
+#endif
+	return FText::FromString(GetName());
 }
 
 #undef LOCTEXT_NAMESPACE

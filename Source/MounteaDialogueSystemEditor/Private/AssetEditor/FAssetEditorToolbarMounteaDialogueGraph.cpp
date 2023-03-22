@@ -28,7 +28,7 @@ void FAssetEditorToolbarMounteaDialogueGraph::FillMounteaDialogueGraphToolbar(FT
 		ToolbarBuilder.AddToolBarButton(FMounteaDialogueGraphEditorCommands::Get().AutoArrange,
 			NAME_None,
 			LOCTEXT("AutoArrange_Label", "Auto Arrange"),
-			LOCTEXT("AutoArrange_ToolTip", "Tries its best to arrange Graph Nodes. Don't judge too harshly please."),
+			LOCTEXT("AutoArrange_ToolTip", "ALPHA version!\n\nTries its best to arrange Graph Nodes. Don't judge too harshly please."),
 			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetStyleSetName(), "MDSStyleSet.AutoArrange"));
 
 		ToolbarBuilder.AddToolBarButton(FMounteaDialogueGraphEditorCommands::Get().ValidateGraph,

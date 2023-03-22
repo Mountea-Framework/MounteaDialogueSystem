@@ -16,6 +16,7 @@ UEdGraph_MounteaDialogueGraph::UEdGraph_MounteaDialogueGraph()
 
 UEdGraph_MounteaDialogueGraph::~UEdGraph_MounteaDialogueGraph()
 {
+	AssetEditor = nullptr;
 }
 
 void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
@@ -38,6 +39,8 @@ void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 			NodeMap.Add(MounteaDialogueGraphNode, EdNode);
 
 			Graph->AllNodes.Add(MounteaDialogueGraphNode);
+
+			EdNode->SetDialogueNodeIndex( Graph->AllNodes.Find(EdNode->DialogueGraphNode) );
 
 			for (int PinIdx = 0; PinIdx < EdNode->Pins.Num(); ++PinIdx)
 			{
@@ -143,6 +146,11 @@ void UEdGraph_MounteaDialogueGraph::PostEditUndo()
 	Super::PostEditUndo();
 
 	NotifyGraphChanged();
+}
+
+void UEdGraph_MounteaDialogueGraph::SetAssetEditor(FAssetEditor_MounteaDialogueGraph* NewAssetEditor)
+{
+	AssetEditor = MakeShareable(NewAssetEditor);
 }
 
 void UEdGraph_MounteaDialogueGraph::Clear()

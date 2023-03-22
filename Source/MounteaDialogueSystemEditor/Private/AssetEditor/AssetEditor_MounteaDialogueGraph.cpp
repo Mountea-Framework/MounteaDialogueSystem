@@ -24,6 +24,7 @@
 #include "Layout/MounteaDialogueGraphLayoutStrategy.h"
 #include "Layout/TreeSolveLayoutStrategy.h"
 #include "Popups/MDSPopup_GraphValidation.h"
+#include "Search/MounteaDialogueSearchUtils.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
 #include "UObject/ObjectSaveContext.h"
 
@@ -34,6 +35,7 @@ struct FAssetEditorTabs_MounteaDialogueGraph
 	// Tab identifiers
 	static const FName MounteaDialogueGraphPropertyID;
 	static const FName ViewportID;
+	static const FName SearchToolbarID;
 };
 
 #pragma region ConstantNames
@@ -41,6 +43,7 @@ struct FAssetEditorTabs_MounteaDialogueGraph
 const FName MounteaDialogueGraphEditorAppName = FName(TEXT("MounteaDialogueGraphEditorApp"));
 const FName FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID(TEXT("MounteaDialogueGraphProperty"));
 const FName FAssetEditorTabs_MounteaDialogueGraph::ViewportID(TEXT("Viewport"));
+const FName FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID(TEXT("Search"));
 
 #pragma endregion 
 
@@ -97,9 +100,20 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(cons
 					FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)
 					->Split
 					(
-						FTabManager::NewStack()
-						->SetSizeCoefficient(0.9f)
-						->AddTab(FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID, ETabState::OpenedTab)->SetHideTabWell(true)
+					FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)
+						->Split
+						(
+							FTabManager::NewStack()
+							->SetSizeCoefficient(0.9f)
+							->AddTab(FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID, ETabState::OpenedTab)->SetHideTabWell(true)
+						)
+
+						->Split
+						(
+							FTabManager::NewStack()
+							->SetSizeCoefficient(0.3f)
+							->AddTab(FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID, ETabState::OpenedTab)
+						)
 					)
 				)
 			)
@@ -143,6 +157,11 @@ void FAssetEditor_MounteaDialogueGraph::RegisterTabSpawners(const TSharedRef<FTa
 		.SetDisplayName(LOCTEXT("DetailsTab", "Property"))
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
+
+	InTabManager->RegisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID, FOnSpawnTab::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::SpawnTab_Search))
+		.SetDisplayName(LOCTEXT("SearchTab", "Search"))
+		.SetGroup(WorkspaceMenuCategoryRef)
+		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.FindResults"));
 }
 
 void FAssetEditor_MounteaDialogueGraph::UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
@@ -151,6 +170,7 @@ void FAssetEditor_MounteaDialogueGraph::UnregisterTabSpawners(const TSharedRef<F
 
 	InTabManager->UnregisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::ViewportID);
 	InTabManager->UnregisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID);
+	InTabManager->UnregisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID);
 }
 
 FName FAssetEditor_MounteaDialogueGraph::GetToolkitFName() const
@@ -219,6 +239,23 @@ void FAssetEditor_MounteaDialogueGraph::AddReferencedObjects(FReferenceCollector
 	Collector.AddReferencedObject(EditingGraph->EdGraph);
 }
 
+FString FAssetEditor_MounteaDialogueGraph::GetReferencerName() const
+{
+	return TEXT("FAssetEditor_MounteaDialogueGraph");
+}
+
+void FAssetEditor_MounteaDialogueGraph::SetDialogueBeingEdited(UMounteaDialogueGraph* NewDialogue)
+{
+	if (NewDialogue == nullptr) return;
+	if (NewDialogue == EditingGraph) return;
+
+	UMounteaDialogueGraph* Previous = EditingGraph;
+	EditingGraph = NewDialogue;
+
+	RemoveEditingObject(Previous);
+	AddEditingObject(NewDialogue);
+}
+
 void FAssetEditor_MounteaDialogueGraph::CreateInternalWidgets()
 {
 	ViewportWidget = CreateViewportWidget();
@@ -236,6 +273,8 @@ void FAssetEditor_MounteaDialogueGraph::CreateInternalWidgets()
 	PropertyWidget->SetObject(EditingGraph);
 	
 	PropertyWidget->OnFinishedChangingProperties().AddSP(this, &FAssetEditor_MounteaDialogueGraph::OnFinishedChangingProperties);
+
+	FindResultsView = SNew(SMounteaDialogueSearch, SharedThis(this));
 }
 
 TSharedRef<SGraphEditor> FAssetEditor_MounteaDialogueGraph::CreateViewportWidget()
@@ -263,14 +302,24 @@ TSharedRef<SGraphEditor> FAssetEditor_MounteaDialogueGraph::CreateViewportWidget
 
 void FAssetEditor_MounteaDialogueGraph::BindCommands()
 {
-	ToolkitCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().AutoArrange,
+	ToolkitCommands->MapAction
+	(
+		FMounteaDialogueGraphEditorCommands::Get().AutoArrange,
 		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::AutoArrange),
 		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::CanAutoArrange)
 	);
 
-	ToolkitCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().ValidateGraph,
+	ToolkitCommands->MapAction
+	(
+		FMounteaDialogueGraphEditorCommands::Get().ValidateGraph,
 		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::ValidateGraph),
 		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::CanValidateGraph)
+	);
+	
+	ToolkitCommands->MapAction
+	(
+		FMounteaDialogueGraphEditorCommands::Get().FindInDialogue,
+		FExecuteAction::CreateLambda([this] { SummonSearchUI(); })
 	);
 }
 
@@ -302,6 +351,13 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 		NewNode->SetFlags(RF_Transactional);
 		
 		MounteaDialogueGraph->RebuildMounteaDialogueGraph();
+		MounteaDialogueGraph->SetAssetEditor(this);
+	}
+	else
+	{
+		// Force override editor Ptr
+		UEdGraph_MounteaDialogueGraph* MounteaDialogueGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
+		MounteaDialogueGraph->SetAssetEditor(this);
 	}
 }
 
@@ -360,6 +416,12 @@ void FAssetEditor_MounteaDialogueGraph::CreateCommandList()
 		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::OnRenameNode),
 		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::CanRenameNodes)
 	);
+
+	ToolkitCommands->MapAction
+	(
+		FMounteaDialogueGraphEditorCommands::Get().FindInDialogue,
+		FExecuteAction::CreateLambda([this] { SummonSearchUI(); })
+	);
 }
 
 TSharedPtr<SGraphEditor> FAssetEditor_MounteaDialogueGraph::GetCurrGraphEditor() const
@@ -391,6 +453,20 @@ void FAssetEditor_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 	check(EdGraph != nullptr);
 
 	EdGraph->RebuildMounteaDialogueGraph();
+}
+
+void FAssetEditor_MounteaDialogueGraph::SummonSearchUI(FString NewSearch, bool bSelectFirstResult)
+{
+	TSharedPtr<SMounteaDialogueSearch> FindResultsToUse;
+	FindResultsToUse = FindResultsView;
+	FMounteaDialogueSearchHelpers::InvokeTab(TabManager, FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID);
+
+	if (FindResultsToUse.IsValid())
+	{
+		FMounteaDialogueSearchFilter Filter;
+		Filter.SearchString = NewSearch;
+		FindResultsToUse->FocusForUse(Filter, bSelectFirstResult);
+	}
 }
 
 void FAssetEditor_MounteaDialogueGraph::SelectAllNodes()
@@ -622,6 +698,9 @@ void FAssetEditor_MounteaDialogueGraph::PasteNodesHere(const FVector2D& Location
 		AvgNodePosition.X *= InvNumNodes;
 		AvgNodePosition.Y *= InvNumNodes;
 
+		// 0 is always Start Node!
+		int32 SharedIndex = EditingGraph->GetAllNodes().Num();
+
 		for (TSet<UEdGraphNode*>::TIterator It(PastedNodes); It; ++It)
 		{
 			UEdGraphNode* Node = *It;
@@ -640,8 +719,10 @@ void FAssetEditor_MounteaDialogueGraph::PasteNodesHere(const FVector2D& Location
 				if (MounteaNode->DialogueGraphNode)
 				{
 					MounteaNode->DialogueGraphNode->OnPasted();
+					MounteaNode->SetDialogueNodeIndex(SharedIndex);
 				}
-				
+
+				SharedIndex++;
 			}
 		}
 	}
@@ -861,6 +942,22 @@ TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Details(const F
 		[
 			PropertyWidget.ToSharedRef()
 		];
+}
+
+TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Search(const FSpawnTabArgs& Args)
+{
+	check(Args.GetTabId() == FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID);
+
+	TSharedRef<SDockTab> SpawnTab = 
+	SNew(SDockTab)
+	.Label(LOCTEXT("Search_Title", "Search"))
+	[
+		FindResultsView.ToSharedRef()
+	];
+
+	SpawnTab.Get().SetTabIcon(FAppStyle::GetBrush("Kismet.Tabs.FindResults"));
+
+	return SpawnTab;
 }
 
 #undef LOCTEXT_NAMESPACE

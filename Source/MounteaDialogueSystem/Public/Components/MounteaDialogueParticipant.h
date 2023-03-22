@@ -16,7 +16,7 @@ class UMounteaDialogueGraphNode_DialogueNodeBase;
  * ❔This Component allows any Actor to be Dialogue Participant.
  * ❗Requires Dialogue Graph to work.
  */
-UCLASS(ClassGroup=(Mountea), Blueprintable, hideCategories=(Collision, AssetUserData, Cooking, Activation, Rendering, Sockets), meta=(BlueprintSpawnableComponent, DisplayName = "Mountea Dialogue Participant"))
+UCLASS(ClassGroup=(Mountea), Blueprintable, hideCategories=(Collision, AssetUserData, Cooking, Activation, Rendering, Sockets), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"), meta=(BlueprintSpawnableComponent, DisplayName = "Mountea Dialogue Participant"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueParticipant : public UActorComponent, public IMounteaDialogueParticipantInterface
 {
 	GENERATED_BODY()
@@ -85,6 +85,7 @@ protected:
 	 */
 	UPROPERTY(EditAnywhere, Category="Mountea|Dialogue", meta=(NoResetToDefault))
 	FName AudioComponentIdentification;
+	
 	/**
 	 * 
 	 */
@@ -98,6 +99,13 @@ protected:
 	 */
 	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false, NoResetToDefault))
 	UMounteaDialogueGraphNode* StartingNode = nullptr;
+
+	/**
+	 * Contains mapped list of Traversed Nodes by GUIDs.
+	 * To update Performance, this Path is updated only once Dialogue has finished. Temporary Path is stored in Dialogue Context.
+	 */
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(NoResetToDefault))
+	TMap<FGuid, int32> TraversedPath;
 
 #pragma endregion
 
@@ -186,6 +194,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual AActor* GetOwningActor_Implementation() const override;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	virtual TMap<FGuid,int32> GetTraversedPath() const override
+	{ return TraversedPath; };
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	virtual void SaveTraversedPath_Implementation(TMap<FGuid,int32>& InPath) override;
+	
 
 #pragma region EventHandleGetters
 	
