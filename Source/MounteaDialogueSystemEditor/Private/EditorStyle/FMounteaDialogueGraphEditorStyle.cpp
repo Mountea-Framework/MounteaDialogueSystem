@@ -38,7 +38,7 @@ void FMounteaDialogueGraphEditorStyle::Initialize()
 		.SetShadowOffset(FVector2D::ZeroVector)
 		.SetShadowColorAndOpacity(FLinearColor::Black)
 		.SetHighlightColor( FLinearColor( 0.02f, 0.3f, 0.0f ) )
-		.SetHighlightShape( BOX_BRUSH( "Common/TextBlockHighlightShape", FMargin(3.f/8.f) ) );
+		.SetHighlightShape( BOX_BRUSH( "TextBlockHighlightShape", FMargin(3.f/8.f) ) );
 
 	StyleSet->Set("NormalText", NormalText);
 
@@ -85,30 +85,35 @@ void FMounteaDialogueGraphEditorStyle::Initialize()
 	StyleSet->Set("MDSStyleSet.Node.Icon.large", new IMAGE_BRUSH(TEXT("DialogueNodeIcon"), Icon64x64));
 	StyleSet->Set("MDSStyleSet.Node.Icon", new IMAGE_BRUSH(TEXT("DialogueNodeIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Node.Icon.small", new IMAGE_BRUSH(TEXT("DialogueNodeIcon"), Icon12x12));
-	
 
-	const FButtonStyle MounteaButtonStyle = FButtonStyle()
-		.SetNormal(BOX_BRUSH("Common/RoundedSelection_16x", 4.0f / 16.0f, FLinearColor(1, 1, 1, 0.1f)))
-		.SetHovered(BOX_BRUSH("Common/RoundedSelection_16x", 4.0f / 16.0f, FLinearColor(1, .55f, 0, 0.2f)))
-		.SetPressed(BOX_BRUSH("Common/RoundedSelection_16x", 4.0f / 16.0f,  FLinearColor(1, .55f, 0, 0.4f)));
-
-	
-
-	StyleSet->Set( "MDS.NormalText.Bold", FTextBlockStyle(NormalText)
+	StyleSet->Set
+	( "MDS.NormalText.Bold", FTextBlockStyle(NormalText)
 			.SetFont( DEFAULT_FONT( "Bold", 12 ) )
 			.SetColorAndOpacity( FLinearColor(0.5f,0.5f,0.5f,1.0f) )
 			.SetShadowOffset( FVector2D(1.0f, 1.0f) )
 			.SetShadowColorAndOpacity( FLinearColor(0.f,0.f,0.f,0.8f) )
 		);
 
-	StyleSet->Set( "MDS.NormalText.Regular", FTextBlockStyle(NormalText)
+	StyleSet->Set
+	( "MDS.NormalText.Regular", FTextBlockStyle(NormalText)
 		.SetFont( DEFAULT_FONT( "Regular", 12 ) )
 		.SetColorAndOpacity( FLinearColor::White )
 		.SetShadowOffset( FVector2D(1.0f, 1.0f) )
 		.SetShadowColorAndOpacity( FLinearColor(0.f,0.f,0.f,0.8f) )
 	);
+
+	const FButtonStyle MounteaDocumentationButtonStyle = FButtonStyle()
+	.SetNormal(BOX_BRUSH("RoundedSelection_16x", 4.0f / 16.0f, FLinearColor(1, 1, 1, 0.1f)))
+	.SetHovered(BOX_BRUSH("RoundedSelection_16x", 4.0f / 16.0f, FLinearColor(1, .55f, 0, 0.2f)))
+	.SetPressed(BOX_BRUSH("RoundedSelection_16x", 4.0f / 16.0f,  FLinearColor(1, .55f, 0, 0.4f)));
 	
-	StyleSet->Set("MDSStyleSet.Buttons.Style", MounteaButtonStyle);
+	const FButtonStyle MounteaPreviewNodeButtonStyle = FButtonStyle()
+	.SetNormal(BOX_BRUSH("NodeSoftCorners", 4.0f / 16.0f, FLinearColor(1, 1, 1, 0)))
+	.SetHovered(BOX_BRUSH("NodeSoftCorners", 4.0f / 16.0f, FLinearColor(1, .55f, 0, 0.2f)))
+	.SetPressed(BOX_BRUSH("NodeSoftCorners", 4.0f / 16.0f,  FLinearColor(1, .55f, 0, 0.4f)));
+
+	StyleSet->Set("MDSStyleSet.Buttons.Style", MounteaDocumentationButtonStyle);
+	StyleSet->Set("MDSStyleSet.Buttons.Style.PreviewNode", MounteaPreviewNodeButtonStyle);
 	
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
 }

@@ -7,7 +7,6 @@
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Kismet2/SClassPickerDialog.h"
-#include "Toolkits/AssetEditorManager.h"
 
 bool FMounteaDialogueGraphEditorUtilities::PickChildrenOfClass(const FText& TitleText, UClass*& OutChosenClass, UClass* Class)
 {
@@ -18,8 +17,8 @@ bool FMounteaDialogueGraphEditorUtilities::PickChildrenOfClass(const FText& Titl
 	// Fill in options
 	FClassViewerInitializationOptions Options;
 	Options.Mode = EClassViewerMode::ClassPicker;
-	Options.ClassFilter = Filter;
 	Options.bShowUnloadedBlueprints = true;
+	Options.ClassFilters.Add(Filter.ToSharedRef());
 
 	Options.DisplayMode = EClassViewerDisplayMode::TreeView;
 	

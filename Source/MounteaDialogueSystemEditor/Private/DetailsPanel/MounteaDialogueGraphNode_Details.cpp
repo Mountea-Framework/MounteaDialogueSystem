@@ -220,6 +220,8 @@ void FMounteaDialogueGraphNode_Details::MakePreviewNode()
 	const FSlateFontInfo FontRegular = FCoreStyle::GetDefaultFontStyle("Bold", 12, FFontOutlineSettings(1));
 	const FSlateFontInfo FontBold = FCoreStyle::GetDefaultFontStyle("Bold", 12, FFontOutlineSettings(1));
 	const FSlateColor DefaultFontColor = MounteaDialogueGraphColors::TextColors::Normal;
+
+	auto PreviewNodeButtonStyle = FMounteaDialogueGraphEditorStyle::GetWidgetStyle<FButtonStyle>(TEXT("MDSStyleSet.Buttons.Style.PreviewNode"));
 	
 	PreviewNode =  SNew(SBox)
 	.Padding(FMargin(0.f, 5.f, 0.f, 5.f))
@@ -235,6 +237,7 @@ void FMounteaDialogueGraphNode_Details::MakePreviewNode()
 		.HAlign(HAlign_Fill)
 		.ButtonColorAndOpacity(FSlateColor(FLinearColor(0,0,0,0)))
 		.ContentPadding(FMargin(0))
+		.ButtonStyle(&PreviewNodeButtonStyle)
 		.OnClicked(this, &FMounteaDialogueGraphNode_Details::OnPreviewingNodeClicked)
 		[
 			// OUTER STYLE

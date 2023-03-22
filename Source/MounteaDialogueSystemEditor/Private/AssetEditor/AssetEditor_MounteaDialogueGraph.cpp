@@ -943,12 +943,16 @@ TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Search(const FS
 {
 	check(Args.GetTabId() == FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID);
 
-	return SNew(SDockTab)
-		.Icon(FEditorStyle::GetBrush("Kismet.Tabs.FindResults"))
-		.Label(LOCTEXT("Search_Title", "Search"))
-		[
-			FindResultsView.ToSharedRef()
-		];
+	TSharedRef<SDockTab> SpawnTab = 
+	SNew(SDockTab)
+	.Label(LOCTEXT("Search_Title", "Search"))
+	[
+		FindResultsView.ToSharedRef()
+	];
+
+	SpawnTab.Get().SetTabIcon(FEditorStyle::GetBrush("Kismet.Tabs.FindResults"));
+
+	return SpawnTab;
 }
 
 #undef LOCTEXT_NAMESPACE

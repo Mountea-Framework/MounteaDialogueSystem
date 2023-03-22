@@ -5,7 +5,6 @@
 #include "AssetEditor/AssetEditor_MounteaDialogueGraph.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "Graph/MounteaDialogueGraph.h"
-#include "Toolkits/AssetEditorManager.h"
 
 TSharedPtr<SDockTab> FMounteaDialogueSearchHelpers::InvokeTab(TSharedPtr<FTabManager> TabManager, const FTabId& TabID)
 {
