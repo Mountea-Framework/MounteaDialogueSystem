@@ -14,11 +14,6 @@ UEdGraph_MounteaDialogueGraph::UEdGraph_MounteaDialogueGraph()
 {
 }
 
-UEdGraph_MounteaDialogueGraph::~UEdGraph_MounteaDialogueGraph()
-{
-	AssetEditor = nullptr;
-}
-
 void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 {
 	EditorLOG_INFO(TEXT("UMounteaDialogueGraphEdGraph::RebuildMounteaDialogueGraph has been called"));

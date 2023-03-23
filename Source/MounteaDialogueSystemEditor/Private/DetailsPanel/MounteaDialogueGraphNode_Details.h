@@ -37,7 +37,7 @@ public:
 	
 	FSlateColor GetPreviewingNodeBackgroundColor() const;
 	FText GetPreviewingNodeTitle() const;
-	FReply OnPreviewingNodeClicked();
+	FReply OnPreviewingNodeDoubleClicked(const FGeometry& Geometry, const FPointerEvent& PointerEvent);
 	void MakePreviewNode();
 	void MakeInvalidPreviewNode();
 #pragma endregion 

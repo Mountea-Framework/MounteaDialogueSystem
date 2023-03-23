@@ -244,6 +244,11 @@ void FAssetEditor_MounteaDialogueGraph::AddReferencedObjects(FReferenceCollector
 	Collector.AddReferencedObject(EditingGraph->EdGraph);
 }
 
+FString FAssetEditor_MounteaDialogueGraph::GetReferencerName() const
+{
+	return TEXT("FAssetEditor_MounteaDialogueGraph");
+}
+
 void FAssetEditor_MounteaDialogueGraph::SetDialogueBeingEdited(UMounteaDialogueGraph* NewDialogue)
 {
 	if (NewDialogue == nullptr) return;

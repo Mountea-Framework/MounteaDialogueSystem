@@ -24,7 +24,6 @@ class MOUNTEADIALOGUESYSTEMEDITOR_API UEdGraph_MounteaDialogueGraph : public UEd
 public:
 
 	UEdGraph_MounteaDialogueGraph();
-	virtual ~UEdGraph_MounteaDialogueGraph() override;
 
 	virtual void RebuildMounteaDialogueGraph();
 

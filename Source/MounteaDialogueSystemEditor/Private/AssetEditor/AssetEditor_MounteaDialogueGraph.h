@@ -57,6 +57,12 @@ public:
 
 #pragma endregion
 
+#pragma region FGCObject
+
+	virtual FString GetReferencerName() const override;
+
+#pragma endregion 
+	
 	// Gets/Sets the dialogue being edited
 	UMounteaDialogueGraph* GetDialogueBeingEdited()
 	{

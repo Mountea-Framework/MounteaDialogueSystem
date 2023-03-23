@@ -69,7 +69,7 @@ protected:
 	/**
 	 * 
 	 */
-	UPROPERTY(Transient, VisibleAnywhere,  Category="Mountea", AdvancedDisplay="true",  meta=(NoResetToDefault))
+	UPROPERTY(Transient, VisibleAnywhere,  Category="Mountea", AdvancedDisplay,  meta=(NoResetToDefault))
 	EDialogueParticipantState ParticipantState;
 
 	/**
@@ -89,7 +89,7 @@ protected:
 	/**
 	 * 
 	 */
-	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay="true", meta=(DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false, NoResetToDefault))
 	UAudioComponent* AudioComponent = nullptr;
 	/**
 	 * Optional Starting Node.
@@ -97,14 +97,14 @@ protected:
 	 * If this value is selected, this Participant's Dialogue will start from Selected Node, if valid!
 	 * Otherwise it will start from Start Node of the Graph.
 	 */
-	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay="true", meta=(DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false, NoResetToDefault))
 	UMounteaDialogueGraphNode* StartingNode = nullptr;
 
 	/**
 	 * Contains mapped list of Traversed Nodes by GUIDs.
 	 * To update Performance, this Path is updated only once Dialogue has finished. Temporary Path is stored in Dialogue Context.
 	 */
-	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay="true", meta=(NoResetToDefault))
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(NoResetToDefault))
 	TMap<FGuid, int32> TraversedPath;
 
 #pragma endregion

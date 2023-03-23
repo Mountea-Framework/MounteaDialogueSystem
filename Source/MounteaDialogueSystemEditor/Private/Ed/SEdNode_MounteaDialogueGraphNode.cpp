@@ -143,8 +143,8 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 	const FMargin NodePadding = FMargin(2.0f);
 	const FMargin UnifiedRowsPadding = FMargin(0.f, 1.15f, 0.f, 0.f);
 
-	const FSlateFontInfo FontRegular = FCoreStyle::GetDefaultFontStyle("Regular", 8);
-	const FSlateFontInfo FontBold = FCoreStyle::GetDefaultFontStyle("Bold", 8);
+	FSlateFontInfo FontRegular = FCoreStyle::GetDefaultFontStyle("Regular", 8);
+	FSlateFontInfo FontBold = FCoreStyle::GetDefaultFontStyle("Bold", 8);
 
 	const FSlateColor DefaultFontColor = MounteaDialogueGraphColors::TextColors::Normal;
 
@@ -163,7 +163,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 	TSharedPtr<SVerticalBox> UniformBox;
 		
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
-
+	
 	const FSlateBrush* CircleBrush = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.IndexCircle"));
 	this->GetOrAddSlot(ENodeZone::Left)
 	.SlotOffset(TAttribute<FVector2D>(this, &SEdNode_MounteaDialogueGraphNode::GetIndexSlotOffset))
