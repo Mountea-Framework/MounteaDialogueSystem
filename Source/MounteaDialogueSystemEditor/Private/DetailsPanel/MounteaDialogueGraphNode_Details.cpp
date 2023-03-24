@@ -174,6 +174,8 @@ FReply FMounteaDialogueGraphNode_Details::OnPreviewingNodeDoubleClicked(const FG
 	const auto EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingNode->GetGraph()->EdGraph);
 	const TSharedPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr = EdGraph->GetAssetEditor();
 
+	if (!EdGraph->NodeMap.Contains(EditingDialogueNode->SelectedNode)) return FReply::Unhandled();
+	
 	const UEdNode_MounteaDialogueGraphNode* EdNode = *EdGraph->NodeMap.Find(EditingDialogueNode->SelectedNode);
 		
 	return FMounteaDialogueGraphEditorUtilities::OpenEditorAndJumpToGraphNode(DialogueEditorPtr, EdNode) ? FReply::Handled() : FReply::Unhandled();
@@ -211,6 +213,16 @@ void FMounteaDialogueGraphNode_Details::MakePreviewNode()
 		return;
 	}
 	if (!EditingReturnNode->SelectedNode)
+	{
+		MakeInvalidPreviewNode();
+		return;
+	}
+
+	const auto EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingNode->GetGraph()->EdGraph);
+	if (!EdGraph) return;
+
+	const UMounteaDialogueGraphNode_ReturnToNode* EditingDialogueNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(EditingNode);
+	if (!EdGraph->NodeMap.Contains(EditingDialogueNode->SelectedNode))
 	{
 		MakeInvalidPreviewNode();
 		return;
