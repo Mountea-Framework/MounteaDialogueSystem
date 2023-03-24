@@ -64,7 +64,7 @@ public:
 #pragma endregion 
 	
 	// Gets/Sets the dialogue being edited
-	UMounteaDialogueGraph* GetDialogueBeingEdited()
+	UMounteaDialogueGraph* GetEditingGraphSafe()
 	{
 		check(EditingGraph);
 		return EditingGraph;

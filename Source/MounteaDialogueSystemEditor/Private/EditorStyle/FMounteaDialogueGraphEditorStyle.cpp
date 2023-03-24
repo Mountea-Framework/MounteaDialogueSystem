@@ -6,16 +6,30 @@
 #include "Styling/SlateStyleRegistry.h"
 #include "Misc/Paths.h"
 
-TSharedPtr<FSlateStyleSet> FMounteaDialogueGraphEditorStyle::StyleSet = nullptr;
-
 #define IMAGE_BRUSH( RelativePath, ... ) FSlateImageBrush( StyleSet->RootToContentDir( RelativePath, TEXT(".png") ), __VA_ARGS__ )
 #define BOX_BRUSH( RelativePath, ... ) FSlateBoxBrush( StyleSet->RootToContentDir( RelativePath, TEXT(".png") ), __VA_ARGS__ )
 #define BORDER_BRUSH( RelativePath, ... ) FSlateBorderBrush( StyleSet->RootToContentDir( RelativePath, TEXT(".png") ), __VA_ARGS__ )
-#define TTF_FONT( RelativePath, ... ) FSlateFontInfo( StyleSet->RootToContentDir( RelativePath, TEXT(".ttf") ), __VA_ARGS__ )
-#define OTF_FONT( RelativePath, ... ) FSlateFontInfo( StyleSet->RootToContentDir( RelativePath, TEXT(".otf") ), __VA_ARGS__ )
 #define DEFAULT_FONT(...) FCoreStyle::GetDefaultFontStyle(__VA_ARGS__)
 
+TSharedPtr<FSlateStyleSet> FMounteaDialogueGraphEditorStyle::StyleSet = nullptr;
+
 void FMounteaDialogueGraphEditorStyle::Initialize()
+{
+	if (!StyleSet.IsValid() )
+	{
+		Create();
+		FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
+	}
+}
+
+void FMounteaDialogueGraphEditorStyle::Shutdown()
+{
+	FSlateStyleRegistry::UnRegisterSlateStyle(*StyleSet.Get());
+	ensure(StyleSet.IsUnique());
+	StyleSet.Reset();
+}
+
+void FMounteaDialogueGraphEditorStyle::Create()
 {
 	const FVector2D Icon12x12(12.0f, 12.0f);
 	const FVector2D Icon16x16(16.0f, 16.0f);
@@ -23,13 +37,8 @@ void FMounteaDialogueGraphEditorStyle::Initialize()
 	const FVector2D Icon64x64(64.0f, 64.0f);
 	const FVector2D Icon128x128(128.f, 128.f);
 	const FVector2D Icon200x70(200.f, 70.f);
-
-	if (StyleSet.IsValid() )
-	{
-		return;
-	}
-
-	StyleSet = MakeShareable(new FSlateStyleSet("MDSStyleSet"));
+	
+	StyleSet = MakeShareable(new FSlateStyleSet(GetStyleSetName()));
 	StyleSet->SetContentRoot(IPluginManager::Get().FindPlugin("MounteaDialogueSystem")->GetBaseDir() / TEXT("Resources"));
 
 	StyleSet->Set("MDSStyleSet.AutoArrange.small", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon16x16));
@@ -83,35 +92,9 @@ void FMounteaDialogueGraphEditorStyle::Initialize()
 		.SetPressed(BOX_BRUSH("RoundedSelection_16x", 4.0f / 16.0f,  FLinearColor(1, .55f, 0, 0.4f)));
 	
 	StyleSet->Set("MDSStyleSet.Buttons.Style", MounteaButtonStyle);
-	
-	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
 }
-
-void FMounteaDialogueGraphEditorStyle::Shutdown()
-{
-	if (StyleSet.IsValid())
-	{
-		FSlateStyleRegistry::UnRegisterSlateStyle(*StyleSet.Get());
-		ensure(StyleSet.IsUnique());
-		StyleSet.Reset();
-	}
-}
-
-const FSlateBrush* FMounteaDialogueGraphEditorStyle::GetBrush(FName PropertyName, const ANSICHAR* Specifier)
-{
-	return StyleSet->GetBrush(PropertyName, Specifier);
-}
-
-const FName& FMounteaDialogueGraphEditorStyle::GetStyleSetName()
-{
-	return StyleSet->GetStyleSetName();
-}
-
-
 
 #undef IMAGE_BRUSH
 #undef BOX_BRUSH
 #undef BORDER_BRUSH
-#undef TTF_FONT
-#undef OTF_FONT
 #undef DEFAULT_FONT
