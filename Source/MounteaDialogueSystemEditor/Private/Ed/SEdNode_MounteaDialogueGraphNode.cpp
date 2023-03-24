@@ -143,9 +143,6 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 	const FMargin NodePadding = FMargin(2.0f);
 	const FMargin UnifiedRowsPadding = FMargin(0.f, 1.15f, 0.f, 0.f);
 
-	FSlateFontInfo FontRegular = FCoreStyle::GetDefaultFontStyle("Regular", 8);
-	FSlateFontInfo FontBold = FCoreStyle::GetDefaultFontStyle("Bold", 8);
-
 	const FSlateColor DefaultFontColor = MounteaDialogueGraphColors::TextColors::Normal;
 
 	InputPins.Empty();
@@ -191,7 +188,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 			.HAlign(HAlign_Center)
 			[
 				SNew(STextBlock)
-				.Font(FontRegular)
+				.Font(FCoreStyle::GetDefaultFontStyle("Regular", 8))
 				.Text(this, &SEdNode_MounteaDialogueGraphNode::GetIndexText)
 				.Visibility(this, &SEdNode_MounteaDialogueGraphNode::GetIndexSlotVisibility)
 			]
@@ -451,7 +448,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 													[
 														SNew(STextBlock)
 														.Text(LOCTEXT("A", "DECORATORS"))
-														.Font(FontBold)
+														.Font(FCoreStyle::GetDefaultFontStyle("Bold", 8))
 														.ColorAndOpacity(DefaultFontColor)
 													]
 #pragma endregion 
@@ -501,7 +498,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 																[
 																	SNew(STextBlock)
 																	.Text(LOCTEXT("B", "inherits"))
-																	.Font(FontRegular)
+																	.Font(FCoreStyle::GetDefaultFontStyle("Regular", 8))
 																	.Justification(ETextJustify::Left)
 																	.ColorAndOpacity(DefaultFontColor)
 																]
@@ -558,7 +555,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 													[
 														SNew(STextBlock)
 														.Text(LOCTEXT("A", "DECORATORS"))
-														.Font(FontBold)
+														.Font(FCoreStyle::GetDefaultFontStyle("Bold", 8))
 														.ColorAndOpacity(DefaultFontColor)
 													]
 #pragma endregion 
@@ -609,7 +606,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 																[
 																	SNew(STextBlock)
 																	.Text(LOCTEXT("C", "implements"))
-																	.Font(FontRegular)
+																	.Font(FCoreStyle::GetDefaultFontStyle("Regular", 8))
 																	.Justification(ETextJustify::Left)
 																	.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetImplementsRowColor)
 																]
@@ -642,7 +639,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 														[
 															SNew(STextBlock)
 															.Text(this, &SEdNode_MounteaDialogueGraphNode::GetNumberOfDecorators)
-															.Font(FontRegular)
+															.Font(FCoreStyle::GetDefaultFontStyle("Regular", 8))
 															.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetImplementsRowColor)
 															.Justification(ETextJustify::Center)
 														]
@@ -675,7 +672,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 													[
 														SNew(STextBlock)
 														.Text(LOCTEXT("A", "DECORATORS"))
-														.Font(FontBold)
+														.Font(FCoreStyle::GetDefaultFontStyle("Bold", 8))
 														.ColorAndOpacity(DefaultFontColor)
 													]
 #pragma endregion 
@@ -725,7 +722,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 																[
 																	SNew(STextBlock)
 																	.Text(LOCTEXT("B", "inherits"))
-																	.Font(FontRegular)
+																	.Font(FCoreStyle::GetDefaultFontStyle("Regular", 8))
 																	.Justification(ETextJustify::Left)
 																	.ColorAndOpacity(DefaultFontColor)
 																]
@@ -801,7 +798,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 																[
 																	SNew(STextBlock)
 																	.Text(LOCTEXT("C", "implements"))
-																	.Font(FontRegular)
+																	.Font(FCoreStyle::GetDefaultFontStyle("Regular", 8))
 																	.Justification(ETextJustify::Left)
 																	.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetImplementsRowColor)
 																]
@@ -834,7 +831,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 														[
 															SNew(STextBlock)
 															.Text(this, &SEdNode_MounteaDialogueGraphNode::GetNumberOfDecorators)
-															.Font(FontRegular)
+															.Font(FCoreStyle::GetDefaultFontStyle("Regular", 8))
 															.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetImplementsRowColor)
 															.Justification(ETextJustify::Center)
 														]
