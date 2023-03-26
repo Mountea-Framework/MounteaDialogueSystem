@@ -18,6 +18,7 @@
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "GraphScheme/AssetGraphScheme_MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
+#include "Layout/AssetEditorTabs.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemEditorBFC.h"
 #include "Layout/ForceDirectedSolveLayoutStrategy.h"
@@ -28,14 +29,6 @@
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
 
 #define LOCTEXT_NAMESPACE "AssetEditorMounteaDialogueGraph"
-
-struct FAssetEditorTabs_MounteaDialogueGraph
-{
-	// Tab identifiers
-	static const FName MounteaDialogueGraphPropertyID;
-	static const FName ViewportID;
-	static const FName SearchToolbarID;
-};
 
 #pragma region ConstantNames
 
@@ -55,14 +48,21 @@ FAssetEditor_MounteaDialogueGraph::FAssetEditor_MounteaDialogueGraph()
 
 FAssetEditor_MounteaDialogueGraph::~FAssetEditor_MounteaDialogueGraph()
 {
+	EditingGraph = nullptr;
 	UPackage::PackageSavedEvent.Remove(OnPackageSavedDelegateHandle);
+
+	FGenericCommands::Unregister();
+	FGraphEditorCommands::Unregister();
+	FMounteaDialogueGraphEditorCommands::Unregister();
+
+	ToolbarBuilder.Reset();
 }
 
 void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UMounteaDialogueGraph* Graph)
 {
 	EditingGraph = Graph;
 	CreateEdGraph();
-
+	
 	FGenericCommands::Register();
 	FGraphEditorCommands::Register();
 	FMounteaDialogueGraphEditorCommands::Register();
@@ -178,6 +178,22 @@ void FAssetEditor_MounteaDialogueGraph::UnregisterTabSpawners(const TSharedRef<F
 	InTabManager->UnregisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID);
 }
 
+bool FAssetEditor_MounteaDialogueGraph::CloseWindow()
+{
+	const bool bSatisfied = FAssetEditorToolkit::CloseWindow();
+
+	if (EditingGraph)
+	{
+		if (EditingGraph->EdGraph)
+		{
+			UEdGraph_MounteaDialogueGraph* EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
+			if (EdGraph->GetDialogueEditorPtr().HasSameObject(this))	EdGraph->ResetDialogueEditorPtr();
+		}
+	}
+
+	return bSatisfied;
+}
+
 FName FAssetEditor_MounteaDialogueGraph::GetToolkitFName() const
 {
 	return FName("FMounteaDialogueGraphEditor");
@@ -242,6 +258,11 @@ void FAssetEditor_MounteaDialogueGraph::AddReferencedObjects(FReferenceCollector
 {
 	Collector.AddReferencedObject(EditingGraph);
 	Collector.AddReferencedObject(EditingGraph->EdGraph);
+}
+
+FString FAssetEditor_MounteaDialogueGraph::GetReferencerName() const
+{
+	return TEXT("FAssetEditor_MounteaDialogueGraph");
 }
 
 void FAssetEditor_MounteaDialogueGraph::SetDialogueBeingEdited(UMounteaDialogueGraph* NewDialogue)
@@ -345,13 +366,12 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 		NewNode->SetFlags(RF_Transactional);
 		
 		MounteaDialogueGraph->RebuildMounteaDialogueGraph();
-		MounteaDialogueGraph->SetAssetEditor(this);
 	}
-	else
+
+	if (UEdGraph_MounteaDialogueGraph* EdMounteaGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph))
 	{
-		// Force override editor Ptr
-		UEdGraph_MounteaDialogueGraph* MounteaDialogueGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
-		MounteaDialogueGraph->SetAssetEditor(this);
+		EdMounteaGraph->SetDialogueEditorPtr(SharedThis(this));
+		EdMounteaGraph->RebuildMounteaDialogueGraph();
 	}
 }
 
@@ -363,10 +383,6 @@ void FAssetEditor_MounteaDialogueGraph::CreateCommandList()
 	}
 
 	GraphEditorCommands = MakeShareable(new FUICommandList);
-
-	// Can't use CreateSP here because derived editor are already implementing TSharedFromThis<FAssetEditorToolkit>
-	// however it should be safe, since commands are being used only within this editor
-	// if it ever crashes, this function will have to go away and be reimplemented in each derived class
 
 	GraphEditorCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().AutoArrange,
 		FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::AutoArrange),

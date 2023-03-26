@@ -13,9 +13,6 @@ class UEdNode_MounteaDialogueGraphNode;
 class UEdNode_MounteaDialogueGraphEdge;
 class FAssetEditor_MounteaDialogueGraph;
 
-/**
- * 
- */
 UCLASS()
 class MOUNTEADIALOGUESYSTEMEDITOR_API UEdGraph_MounteaDialogueGraph : public UEdGraph
 {
@@ -33,8 +30,13 @@ public:
 	virtual bool Modify(bool bAlwaysMarkDirty) override;
 	virtual void PostEditUndo() override;
 
-	TSharedPtr<FAssetEditor_MounteaDialogueGraph> GetAssetEditor() const { return AssetEditor ; };
-	void SetAssetEditor(FAssetEditor_MounteaDialogueGraph* NewAssetEditor); 
+	TWeakPtr<FAssetEditor_MounteaDialogueGraph> GetDialogueEditorPtr() const
+	{ return DialogueEditorPtr; };
+	void SetDialogueEditorPtr(TWeakPtr<FAssetEditor_MounteaDialogueGraph> NewPtr);
+	void ResetDialogueEditorPtr()
+	{ DialogueEditorPtr.Reset(); };
+	
+	bool JumpToNode(const UMounteaDialogueGraphNode* Node);
 
 public:
 
@@ -45,11 +47,12 @@ public:
 	TMap<UMounteaDialogueGraphEdge*, UEdNode_MounteaDialogueGraphEdge*> EdgeMap;
 
 protected:
-
+	
 	void Clear();
 	void SortNodes(UMounteaDialogueGraphNode* RootNode);
 
 private:
 
-	TSharedPtr<FAssetEditor_MounteaDialogueGraph> AssetEditor;
+	/** Pointer back to the Dialogue editor that owns us */
+	TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr;
 };

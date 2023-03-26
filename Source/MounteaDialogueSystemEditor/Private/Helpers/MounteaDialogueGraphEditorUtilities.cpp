@@ -7,6 +7,7 @@
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Kismet2/SClassPickerDialog.h"
+#include "Layout/AssetEditorTabs.h"
 #include "Toolkits/AssetEditorManager.h"
 
 bool FMounteaDialogueGraphEditorUtilities::PickChildrenOfClass(const FText& TitleText, UClass*& OutChosenClass, UClass* Class)
@@ -193,6 +194,11 @@ bool FMounteaDialogueGraphEditorUtilities::OpenEditorForAsset(const UObject* Ass
 bool FMounteaDialogueGraphEditorUtilities::OpenEditorAndJumpToGraphNode(TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr, const UEdGraphNode* GraphNode, bool bFocusIfOpen)
 {
 	if (!IsValid(GraphNode))
+	{
+		return false;
+	}
+
+	if (!DialogueEditorPtr.IsValid())
 	{
 		return false;
 	}

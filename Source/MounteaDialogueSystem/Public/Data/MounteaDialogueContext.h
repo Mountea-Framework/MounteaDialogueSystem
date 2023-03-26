@@ -69,7 +69,7 @@ public:
 	virtual bool IsValid() const;
 
 	TScriptInterface<IMounteaDialogueParticipantInterface> GetActiveDialogueParticipant() const
-	{ return PlayerDialogueParticipant; };
+	{ return ActiveDialogueParticipant; };
 	TScriptInterface<IMounteaDialogueParticipantInterface> GetDialoguePlayerParticipant() const
 	{ return PlayerDialogueParticipant; };
 	TScriptInterface<IMounteaDialogueParticipantInterface> GetDialogueParticipant() const
