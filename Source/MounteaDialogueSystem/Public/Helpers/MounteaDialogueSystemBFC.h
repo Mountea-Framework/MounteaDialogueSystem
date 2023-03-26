@@ -224,11 +224,13 @@ public:
 		{
 			return false;
 		}
-		
-		TArray<FMounteaDialogueDecorator> AllDecorators;
-		AllDecorators.Append(DialogueContext->DialogueParticipant->GetDialogueGraph()->GetGraphDecorators());
-		AllDecorators.Append(DialogueContext->GetActiveNode()->GetNodeDecorators());
 
+		// First process Node Decorators, then Graph Decorators
+		// TODO: all weight to them so we can sort them by Weight and execute in correct order
+		TArray<FMounteaDialogueDecorator> AllDecorators;
+		AllDecorators.Append(DialogueContext->GetActiveNode()->GetNodeDecorators());
+		AllDecorators.Append(DialogueContext->DialogueParticipant->GetDialogueGraph()->GetGraphDecorators());
+		
 		for (auto Itr : AllDecorators)
 		{
 			Itr.ExecuteDecorator();

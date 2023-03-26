@@ -9,14 +9,14 @@ class UMounteaDialogueGraphEditorSettings;
 class FGGAssetEditorToolbar;
 class FAssetEditorToolbarMounteaDialogueGraph;
 
-class FAssetEditor_MounteaDialogueGraph : public FAssetEditorToolkit, public FNotifyHook, public FGCObject
+class MOUNTEADIALOGUESYSTEMEDITOR_API FAssetEditor_MounteaDialogueGraph : public FAssetEditorToolkit, public FNotifyHook, public FGCObject
 {
 
 public:
 
 	FAssetEditor_MounteaDialogueGraph();
 	virtual ~FAssetEditor_MounteaDialogueGraph() override;
-
+	
 	void InitMounteaDialogueGraphAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UMounteaDialogueGraph* Graph);
 	UMounteaDialogueGraphEditorSettings* GetSettings() const;
 	
@@ -26,6 +26,8 @@ public:
 	// IToolkit interface
 	virtual void RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager) override;
 	virtual void UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager) override;
+
+	virtual bool CloseWindow() override;
 	// End of IToolkit interface
 
 #pragma endregion
@@ -78,7 +80,7 @@ public:
 			ViewportWidget->JumpToNode(JumpToMe, bRequestRename, bSelectNode);
 		}
 	}
-
+	
 private:
 	
 	void CreateInternalWidgets();

@@ -6,6 +6,7 @@
 #include "DetailLayoutBuilder.h"
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
+#include "EditorCommands/FMounteaDialogueGraphEditorCommands.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Helpers/MounteaDialogueGraphColors.h"
 #include "Helpers/MounteaDialogueGraphEditorUtilities.h"
@@ -172,13 +173,10 @@ FReply FMounteaDialogueGraphNode_Details::OnPreviewingNodeDoubleClicked(const FG
 	if (!EditingDialogueNode->SelectedNode) return FReply::Unhandled();
 	
 	const auto EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingNode->GetGraph()->EdGraph);
-	const TSharedPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr = EdGraph->GetAssetEditor();
 
 	if (!EdGraph->NodeMap.Contains(EditingDialogueNode->SelectedNode)) return FReply::Unhandled();
-	
-	const UEdNode_MounteaDialogueGraphNode* EdNode = *EdGraph->NodeMap.Find(EditingDialogueNode->SelectedNode);
-		
-	return FMounteaDialogueGraphEditorUtilities::OpenEditorAndJumpToGraphNode(DialogueEditorPtr, EdNode) ? FReply::Handled() : FReply::Unhandled();
+
+	return EdGraph->JumpToNode(EditingDialogueNode->SelectedNode) ? FReply::Handled() : FReply::Unhandled();
 }
 
 FSlateColor FMounteaDialogueGraphNode_Details::GetPreviewingNodeBackgroundColor() const

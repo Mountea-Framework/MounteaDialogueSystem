@@ -9,8 +9,14 @@
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
+#include "Helpers/MounteaDialogueGraphEditorUtilities.h"
+#include "Helpers/MounteaDialogueSystemEditorBFC.h"
 
 UEdGraph_MounteaDialogueGraph::UEdGraph_MounteaDialogueGraph()
+{
+}
+
+UEdGraph_MounteaDialogueGraph::~UEdGraph_MounteaDialogueGraph()
 {
 }
 
@@ -143,9 +149,9 @@ void UEdGraph_MounteaDialogueGraph::PostEditUndo()
 	NotifyGraphChanged();
 }
 
-void UEdGraph_MounteaDialogueGraph::SetAssetEditor(FAssetEditor_MounteaDialogueGraph* NewAssetEditor)
+bool UEdGraph_MounteaDialogueGraph::JumpToNode(const UMounteaDialogueGraphNode* Node)
 {
-	AssetEditor = MakeShareable(NewAssetEditor);
+	return FMounteaDialogueGraphEditorUtilities::OpenEditorAndJumpToGraphNode(DialogueEditorPtr, *NodeMap.Find(Node));
 }
 
 void UEdGraph_MounteaDialogueGraph::Clear()
