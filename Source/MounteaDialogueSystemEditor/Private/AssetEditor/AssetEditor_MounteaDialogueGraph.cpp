@@ -371,6 +371,7 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 	if (UEdGraph_MounteaDialogueGraph* EdMounteaGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph))
 	{
 		EdMounteaGraph->DialogueEditorPtr = SharedThis(this);
+		EdMounteaGraph->RebuildMounteaDialogueGraph();
 	}
 }
 
