@@ -187,7 +187,7 @@ bool FAssetEditor_MounteaDialogueGraph::CloseWindow()
 		if (EditingGraph->EdGraph)
 		{
 			UEdGraph_MounteaDialogueGraph* EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
-			if (EdGraph->DialogueEditorPtr.HasSameObject(this))	EdGraph->DialogueEditorPtr.Reset();
+			if (EdGraph->GetDialogueEditorPtr().HasSameObject(this))	EdGraph->ResetDialogueEditorPtr();
 		}
 	}
 
@@ -370,7 +370,7 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 
 	if (UEdGraph_MounteaDialogueGraph* EdMounteaGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph))
 	{
-		EdMounteaGraph->DialogueEditorPtr = SharedThis(this);
+		EdMounteaGraph->SetDialogueEditorPtr(SharedThis(this));
 		EdMounteaGraph->RebuildMounteaDialogueGraph();
 	}
 }

@@ -149,6 +149,11 @@ void UEdGraph_MounteaDialogueGraph::PostEditUndo()
 	NotifyGraphChanged();
 }
 
+void UEdGraph_MounteaDialogueGraph::SetDialogueEditorPtr(TWeakPtr<FAssetEditor_MounteaDialogueGraph> NewPtr)
+{
+	DialogueEditorPtr = NewPtr;
+}
+
 bool UEdGraph_MounteaDialogueGraph::JumpToNode(const UMounteaDialogueGraphNode* Node)
 {
 	return FMounteaDialogueGraphEditorUtilities::OpenEditorAndJumpToGraphNode(DialogueEditorPtr, *NodeMap.Find(Node));

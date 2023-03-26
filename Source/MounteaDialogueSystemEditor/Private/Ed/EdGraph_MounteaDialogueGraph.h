@@ -29,6 +29,12 @@ public:
 
 	virtual bool Modify(bool bAlwaysMarkDirty) override;
 	virtual void PostEditUndo() override;
+
+	TWeakPtr<FAssetEditor_MounteaDialogueGraph> GetDialogueEditorPtr() const
+	{ return DialogueEditorPtr; };
+	void SetDialogueEditorPtr(TWeakPtr<FAssetEditor_MounteaDialogueGraph> NewPtr);
+	void ResetDialogueEditorPtr()
+	{ DialogueEditorPtr.Reset(); };
 	
 	bool JumpToNode(const UMounteaDialogueGraphNode* Node);
 
@@ -47,7 +53,6 @@ protected:
 
 private:
 
-public:
 	/** Pointer back to the Dialogue editor that owns us */
 	TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr;
 };
