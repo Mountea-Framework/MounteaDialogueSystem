@@ -30,30 +30,54 @@ public:
 
 #pragma region ReadOnly
 public:
-	
+	/**
+	 * Array of parent nodes for the current active node in the dialogue traversal.
+	 *❗ Parent nodes are nodes that have a directed edge pointing to the current active node.
+	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	TArray<UMounteaDialogueGraphNode*> ParentNodes;
-
+	/**
+	 * The array of child nodes of the current dialogue node.
+	 *❗ The order of the children nodes matter and determines the order in which the options are presented to the player.
+	 *❔ Can be used to traverse the graph and to create UI to display the dialogue options.
+	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	TArray<UMounteaDialogueGraphNode*> ChildrenNodes;
-
+	/**
+	 * Map of edges connecting this Node in the Mountea Dialogue Graph.
+	 *❗ The key of the map is the source node, and the value is the edge connecting it to its target node.
+	 *❔ Can be used to traverse the graph, get information about node connections...
+	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	TMap<UMounteaDialogueGraphNode*, UMounteaDialogueGraphEdge*> Edges;
-
+	/**
+	 * Pointer to the parent dialogue graph of this node.
+	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", meta=(DisplayThumbnail=false))
 	UMounteaDialogueGraph* Graph;
-
+	/**
+	 * Temporary NodeIndex.
+	 * This variable will be deleted.
+	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	int32 NodeIndex = INDEX_NONE;
 
 
 protected:
-
+	/**
+	 * The unique identifier for this Dialogue Graph Node.
+	 *❗ This is used to differentiate between nodes, and must be unique within the graph.
+	 *❔ Can be used for debugging and tracing purposes.
+	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	FGuid NodeGUID;
 
 private:
-
+	/**
+	 * The world that owns this Dialogue Graph Node.
+	 *❗ This is the world in which this Dialogue Graph Node is currently running.
+	 *❔ Can be used for accessing world-related functionality.
+	 */
 	UPROPERTY(VisibleAnywhere, Category = "Private")
 	UWorld* OwningWorld;
 
@@ -61,17 +85,29 @@ private:
 
 #pragma region Editable
 public:
-
+	/**
+	 * The array of allowed input classes for this Dialogue Node.
+	 *❗ Only nodes with classes from this array can be connected as inputs to this node.
+	 *❔ Can be used to restrict the types of inputs this node can accept.
+	 */
 	UPROPERTY(SaveGame, EditDefaultsOnly, BlueprintReadOnly, Category="Base")
 	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
 
 	/** Defines whether this Node will start automatically or if requires input.*/
 	UPROPERTY(SaveGame, EditAnywhere, BlueprintReadOnly, Category="Base")
 	uint8 bAutoStarts : 1;
-	
+	/**
+	 * The maximum number of children nodes that this node can have.
+	 *❗ If this value is -1, then there is no limit on the number of children nodes.
+	 *❔ Can be used to enforce a maximum number of connections for certain types of nodes.
+	 */
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Base")
 	int32 MaxChildrenNodes = -1;
-
+	/**
+	 * Indicates whether this node inherits the decorators from its parent Graph.
+	 *❗ If true, the decorators of the parent Graph will be inherited and applied to this node during processing.
+	 *❔ This flag can be used to control the inheritance of decorators for nodes in the dialogue graph.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	uint8 bInheritGraphDecorators : 1;
 
@@ -90,29 +126,56 @@ public:
 #pragma region Functions
 
 public:
-
+	/**
+	 * Initializes the node with the given world.
+	 *
+	 * @param InWorld The world to use for initialization.
+	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue")
 	void InitializeNode(UWorld* InWorld);
 	virtual void InitializeNode_Implementation(UWorld* InWorld);
-
+	/**
+	 * Checks if the node should automatically start when the dialogue is played.
+	 * @return true if the node should automatically start, false otherwise.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual bool DoesAutoStart() const
 	{ return bAutoStarts; };
 	
 	virtual void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	virtual void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
-
+	/**
+	 * Gets the decorators for this Dialogue Graph Node.
+	 *❔ Returns only Valid decorators!
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	TArray<FMounteaDialogueDecorator> GetNodeDecorators() const;
-
+	/**
+	 * Returns true if the node can be started.
+	 *❗ The implementation of this function is up to the subclass.
+	 *❔ Can be used to validate if a node can be started before attempting to start it.
+	 *❔ This can be further enhanced by Decorators.
+	 * @return True if the node can be started, false otherwise.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual bool CanStartNode() const;
 	virtual bool EvaluateDecorators() const;
-	
+	/**
+	 * Returns whether this node inherits decorators from the dialogue graph.
+	 * If this is set to true, this node will receive all decorators assigned to the graph.
+	 * If it's set to false, the node will only have its own decorators.
+	 *
+	 * @return Whether this node inherits decorators from the graph.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	bool DoesInheritDecorators() const
 	{ return bInheritGraphDecorators; };
-
+	/**
+	 * Returns how many Children Nodes this Node allows to have.
+	 *❔ -1 means no limits.
+	 *
+	 * @return MaxChildrenNodes
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	int32 GetMaxChildNodes() const
 	{ return MaxChildrenNodes; };

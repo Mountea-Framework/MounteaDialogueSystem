@@ -366,6 +366,7 @@ protected:
 	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	FTimerHandle TimerHandle_RowTimer;
 
+	 /**
 	 * Is saved once Dialogue starts.
 	 * Once Dialogue ends, cached value is set back again.
 	 */

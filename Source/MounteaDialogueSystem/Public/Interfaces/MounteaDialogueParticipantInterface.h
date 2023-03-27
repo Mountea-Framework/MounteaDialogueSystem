@@ -40,17 +40,32 @@ public:
 	/*
 	 * A way to determine whether the Dialogue can even start.
 	 * It does come with Native C++ implementation, which can be overriden in child C++ classes.
-	 * ⚠ If you are using Blueprint implementation, don't forget to call Parent Node, which contains all parent implementations.
+	 * ❗ If you are using Blueprint implementation, don't forget to call Parent Node, which contains all parent implementations.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	bool CanStartDialogueEvent() const;
 
+	/**
+	 * Returns the owning actor for this Dialogue Participant Component.
+	 *
+	 * @return The owning actor for this Dialogue Participant Component.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	AActor* GetOwningActor() const;
-		
+
+	/**
+	 * Saves the starting node for this Dialogue Participant Component.
+	 *
+	 * @param NewStartingNode The node to set as the starting node
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	void SaveStartingNode(UMounteaDialogueGraphNode* NewStartingNode);
-
+	/**
+	 * Saves the traversed path for this Dialogue Participant Component.
+	 * This function is called once Dialogue ends and is updated from Dialogue Context.
+	 *
+	 * @param InPath The traversed path of the dialogue graph to be saved.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	void SaveTraversedPath(TMap<FGuid,int32>& InPath);
 

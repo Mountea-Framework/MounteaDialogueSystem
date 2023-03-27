@@ -45,7 +45,9 @@ class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueManagerInterface
 public:
 
 	/**
-	 * 
+	 * Notifies the Dialogue  that a node has been selected.
+	 *
+	 * @param NodeGUID The GUID of the selected node.
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="select, chosen, option"))
 	void CallDialogueNodeSelected(const FGuid& NodeGUID);
@@ -63,7 +65,9 @@ public:
 	virtual void FinishedExecuteDialogueRow() = 0;
 
 	/**
-	 * Returns Dialogue Context if any exists.
+	 * Retrieves the current dialogue context associated with this dialogue instance.
+	 *
+	 * @return The dialogue context object for this instance.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	UMounteaDialogueContext* GetDialogueContextEvent() const;
@@ -71,14 +75,24 @@ public:
 	{
 		return GetDialogueContext();
 	}
-
+	
+	/**
+	 * Returns the widget used to display the current dialogue.
+	 *
+	 * @return The widget used to display the current dialogue.
+	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
 	UUserWidget* GetDialogueWidget();
 	UUserWidget* GetDialogueWidget_Implementation()
 	{
 		return GetDialogueWidget();
 	};
-	
+
+	/**
+	 * Returns the owning actor for this Dialogue Manager Component.
+	 *
+	 * @return The owning actor for this Dialogue Manager Component.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	AActor* GetOwningActor() const;
 	virtual AActor* GetOwningActor_Implementation() const
@@ -86,6 +100,10 @@ public:
 		return nullptr;
 	};
 
+	/**
+	 * Prepare the node for execution.
+	 * Asks Active Node to 'PreProcessNode' and then to 'ProcessNode'.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	void PrepareNode();
 	virtual void PrepareNode_Implementation() {};
