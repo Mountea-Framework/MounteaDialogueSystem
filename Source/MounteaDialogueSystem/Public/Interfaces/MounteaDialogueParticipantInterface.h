@@ -101,14 +101,49 @@ public:
 
 #pragma region Functions
 	
+	/**
+	 * Checks if the Participant can be start Dialogue.
+	 * ❔ To enhance this, you can implement 'CanStartDialogueEvent' and add custom checks to that function.
+	 *
+	 * @return Whether the dialogue can be started
+	 */
 	virtual bool CanStartDialogue() const = 0;
 
+	/**
+	 * Gets the saved starting node for this Dialogue Participant.
+	 * ❗ Could be null
+	 * 
+	 * @return The saved starting node, or nullptr if there is none
+	 */
 	virtual UMounteaDialogueGraphNode* GetSavedStartingNode() const = 0;
 
+	/**
+	 * Tries to play the specified sound as the voice of this dialogue participant.
+	 *
+	 * @param ParticipantVoice The sound to play as the voice of this dialogue participant
+	 */
 	virtual void PlayParticipantVoice(USoundBase* ParticipantVoice) = 0;
+	/**
+	 * Tries to skip the specified sound this participant is playing as voice.
+	 *
+	 * @param ParticipantVoice The sound to skip this participant is playing as voice.
+	 */
 	virtual void SkipParticipantVoice(USoundBase* ParticipantVoice) = 0;
 
+	/**
+	 * Returns the dialogue graph assigned to this Participant.
+	 * ❔ Could be updated using 'SetDialogueGraph', providing ability to swith Dialogue graphs on fly
+	 * ❗ Could be null
+	 *
+	 * @return A pointer to the dialogue graph
+	 */
 	virtual UMounteaDialogueGraph* GetDialogueGraph() const = 0;
+	/**
+	 * Sets new Dialogue graph for this Participant.
+	 * ❗ Should not be null
+	 *
+	 * @param NewDialogueGraph	A pointer to the dialogue graph to be used
+	 */
 	virtual void SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph) = 0;
 
 	virtual EDialogueParticipantState GetParticipantState() const = 0;
