@@ -146,14 +146,44 @@ public:
 	 */
 	virtual void SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph) = 0;
 
+	/**
+	 * Returns the current state of the Dialogue Participant.
+	 */
 	virtual EDialogueParticipantState GetParticipantState() const = 0;
+	/**
+	 * Sets the state of the dialogue participant to the given state.
+	 * 
+	 * @param NewState The new state to set the dialogue participant to
+	 */
 	virtual void SetParticipantState(const EDialogueParticipantState NewState) = 0;
+	/**
+	 * Returns the default state of the Dialogue Participant.
+	 */
 	virtual EDialogueParticipantState GetDefaultParticipantState() const = 0;
+	/**
+	 * Sets the Default state of the dialogue participant to the given state.
+	 * 
+	 * @param NewState The new state to set the dialogue participant to
+	 */
 	virtual void SetDefaultParticipantState(const EDialogueParticipantState NewState) = 0;
 
+	/**
+	 * Returns the audio component used to play the participant voices.
+	 * ❗ Could be null
+	 */
 	virtual UAudioComponent* GetAudioComponent() const = 0;
+	/**
+	 * Sets the audio component used to play dialogue audio.
+	 *
+	 * @param NewAudioComponent The new audio component to use for dialogue audio.
+	 */
 	virtual void SetAudioComponent(UAudioComponent* NewAudioComponent) = 0;
 
+	/**
+	 * Returns the map of nodes traversed during the dialogue.
+	 * 
+	 * @return The map of nodes traversed during the dialogue.
+	 */
 	virtual TMap<FGuid,int32> GetTraversedPath() const = 0;
 
 #pragma endregion
