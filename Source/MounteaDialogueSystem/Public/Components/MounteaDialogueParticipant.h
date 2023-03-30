@@ -215,14 +215,14 @@ public:
 
 	/**
 	 * Returns Dialogue Graph of this Participant.
-	 * ❗Might return Null❗
+	 * ❗ Might return Null❗
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual UMounteaDialogueGraph* GetDialogueGraph() const override
 	{ return DialogueGraph; };
 	/**
 	 * Overrides Dialogue Graph for this Participant.
-	 * ❗Accepts Null values❗
+	 * ❗ Accepts Null values❗
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph) override;

@@ -181,25 +181,55 @@ public:
 	{ return MaxChildrenNodes; };
 
 
-	
+	/**
+	 * Gets the index of the node within the dialogue graph.
+	 *
+	 * @return The index of the node.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	FORCEINLINE int32 GetNodeIndex() const
 	{ return NodeIndex; };
+	/**
+	 * Sets the index of this dialogue node in the dialogue graph.
+	 *
+	 * @param NewIndex The new index to set.
+	 */
 	void SetNodeIndex(const int32 NewIndex);
-	
+
+	/**
+	 * Gets the GUID of the node.
+	 *
+	 * @return The GUID of the node.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	FORCEINLINE FGuid GetNodeGUID() const
 	{ return NodeGUID; };
 
+	/**
+	 * Gets the owning Graph of the node.
+	 *❗ Might be null
+	 *
+	 * @return The owning Graph of the node.
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
 	UMounteaDialogueGraph* GetGraph() const;
 
 	
-
+	/**
+	 * Gets children Nodes this one has,
+	 *❗ Might be empty
+	 *
+	 * @return Amount of children Nodes
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetChildrenNodes() const
 	{ return ChildrenNodes; };
-
+	/**
+	 * Gets how many parent Nodes point to this one
+	 *❗ Might be empty
+	 *
+	 * @return Amount of how parent Nodes
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetParentNodes() const
 	{return ParentNodes; };
@@ -240,43 +270,56 @@ public:
 
 
 #if WITH_EDITORONLY_DATA
-	
+
+	// Defines whether this Node type allows inputs
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowInputNodes;
 
+	// Defines whether this Node type allows outputs
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowOutputNodes;
 
+	// Defines whether this Node can be copied
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowCopy;
 
+	// Defines whether this Node can be cut
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowCut;
 
+	// Defines whether this Node can be pasted
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowPaste;
 
+	// Defines whether this Node can be deleted
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowDelete;
 
+	// Defines whether this Node can be manually created
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowManualCreate;
-	
+
+	// Display title of the Node
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText NodeTitle;
 
+	// Display name of the Node menu category
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText ContextMenuName;
 
+	// List of compatible graph types
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Editor")
-	TSubclassOf<UMounteaDialogueGraph> CompatibleGraphType;
+	TSubclassOf<UObject> CompatibleGraphType;
 
+	// Defines background colour of this Node
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FLinearColor BackgroundColor;
 
+	// Contains Node Tooltip text
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText NodeTooltipText;
 
+	// User friendly node type name
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText NodeTypeName;
 
@@ -284,38 +327,74 @@ public:
 
 #if WITH_EDITOR
 
+	/**
+	 * Returns the tooltip text for this graph node.
+	 *
+	 * @return The tooltip text for this node.
+	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetNodeTooltipText() const;
 	virtual FText GetNodeTooltipText_Implementation() const;
 
+	/**
+	 * Returns the Title text for this graph node.
+	 *
+	 * @return The Title text for this node.
+	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetNodeTitle() const;
 	virtual FText GetNodeTitle_Implementation() const;
-	
+
+	/**
+	 * Returns the Description text for this graph node.
+	 *
+	 * @return The Description text for this node.
+	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetDescription() const;
 	virtual FText GetDescription_Implementation() const;
 
+	/**
+	 * Returns the Node Category text for this graph node.
+	 *
+	 * @return The Node Category text for this node.
+	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetNodeCategory() const;
 	virtual FText GetNodeCategory_Implementation() const;
 
+	/**
+	 * Returns the Documentation Link for this graph node.
+	 *
+	 * @return The Documentation Link for this node.
+	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FString GetNodeDocumentationLink() const;
 	virtual FString GetNodeDocumentationLink_Implementation() const;
-	
+
+	/**
+	 * Returns the Background Colour for this graph node.
+	 *
+	 * @return The Background Colour for this node.
+	 */
 	virtual FLinearColor GetBackgroundColor() const;
 	FText GetInternalName() const
 	{ return NodeTypeName; };
-	
+
+	// Allows setting up the Node Title
 	virtual void SetNodeTitle(const FText& NewTitle);
-	
+
+	// Allows advanced filtering if Node can be connected from other Node
 	virtual bool CanCreateConnection(UMounteaDialogueGraphNode* Other, enum EEdGraphPinDirection Direction, FText& ErrorMessage);
 
+	// Validation function responsible for generating user friendly validation messages
 	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat);
 
+	// Once Node is pasted, this function is called
 	virtual void OnPasted();
 
+	// Generates default Tooltip body text used for all Nodes
+	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetDefaultTooltipBody() const;
 	virtual void OnCreatedInEditor() {};
 
