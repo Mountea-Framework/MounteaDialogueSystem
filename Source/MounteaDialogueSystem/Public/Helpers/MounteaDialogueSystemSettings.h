@@ -37,7 +37,7 @@ protected:
 
 	/**
 	 * User Widget class to be set as default one if requested.
-	 * ❗Must implement MounteaDialogueWBPInterface❗
+	 * ❗ Must implement MounteaDialogueWBPInterface❗
 	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "UserInterface", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
 	TSoftClassPtr<UUserWidget> DefaultDialogueWidgetClass;
@@ -51,7 +51,7 @@ protected:
 	/**
 	 * Defines how often Dialogue Widgets update per second.
 	 * Effectively can replaces Tick.
-	 * ❔Units: seconds
+	 * ❔ Units: seconds
 	 * ❗Lower the value higher the performance impact❗
 	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles", meta=(UIMin=0.01f, ClampMin=0.01f, UIMax=1.f, ClampMax=1.f, Units="seconds"))
@@ -66,7 +66,7 @@ protected:
 	/**
 	 * List of Dialogue commands.
 	 * Dialogue Commands are used to provide information what action should happen.
-	 * ❔Some values are hardcoded and cannot be deleted, thos are used for C++ requests
+	 * ❔ Some values are hardcoded and cannot be deleted, thos are used for C++ requests
 	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles")
 	TSet<FString> DialogueWidgetCommands;
@@ -114,7 +114,7 @@ public:
 
 	/**
 	 * Returns Default Dialogue Widget if any is defined.
-	 * ❗Might return Null❗
+	 * ❗ Might return Null❗
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	TSoftClassPtr<UUserWidget> GetDefaultDialogueWidget() const

@@ -146,7 +146,7 @@ void SMounteaDialogueSearch::MakeSearchQuery(const FMounteaDialogueSearchFilter&
 
 	if (DialogueEditorPtr.IsValid())
 	{
-		FMounteaDialogueSearchManager::Get()->QuerySingleDialogue(SearchFilter, DialogueEditorPtr.Pin()->GetDialogueBeingEdited(), RootSearchResult);
+		FMounteaDialogueSearchManager::Get()->QuerySingleDialogue(SearchFilter, DialogueEditorPtr.Pin()->GetEditingGraphSafe(), RootSearchResult);
 		
 		const TArray<TSharedPtr<FMounteaDialogueSearchResult>>& Children = RootSearchResult->GetChildren();
 		if (Children.Num() == 1 && Children[0].IsValid())
@@ -195,7 +195,7 @@ void SMounteaDialogueSearch::CloseHostTab()
 
 void SMounteaDialogueSearch::HandleHostTabClosed(TSharedRef<SDockTab> DockTab)
 {
-	//...
+	// Clear cache
 }
 
 void SMounteaDialogueSearch::HandleSearchTextChanged(const FText& Text)

@@ -9,6 +9,8 @@
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
+#include "Helpers/MounteaDialogueGraphEditorUtilities.h"
+#include "Helpers/MounteaDialogueSystemEditorBFC.h"
 
 UEdGraph_MounteaDialogueGraph::UEdGraph_MounteaDialogueGraph()
 {
@@ -16,7 +18,6 @@ UEdGraph_MounteaDialogueGraph::UEdGraph_MounteaDialogueGraph()
 
 UEdGraph_MounteaDialogueGraph::~UEdGraph_MounteaDialogueGraph()
 {
-	AssetEditor = nullptr;
 }
 
 void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
@@ -148,9 +149,14 @@ void UEdGraph_MounteaDialogueGraph::PostEditUndo()
 	NotifyGraphChanged();
 }
 
-void UEdGraph_MounteaDialogueGraph::SetAssetEditor(FAssetEditor_MounteaDialogueGraph* NewAssetEditor)
+void UEdGraph_MounteaDialogueGraph::SetDialogueEditorPtr(TWeakPtr<FAssetEditor_MounteaDialogueGraph> NewPtr)
 {
-	AssetEditor = MakeShareable(NewAssetEditor);
+	DialogueEditorPtr = NewPtr;
+}
+
+bool UEdGraph_MounteaDialogueGraph::JumpToNode(const UMounteaDialogueGraphNode* Node)
+{
+	return FMounteaDialogueGraphEditorUtilities::OpenEditorAndJumpToGraphNode(DialogueEditorPtr, *NodeMap.Find(Node));
 }
 
 void UEdGraph_MounteaDialogueGraph::Clear()

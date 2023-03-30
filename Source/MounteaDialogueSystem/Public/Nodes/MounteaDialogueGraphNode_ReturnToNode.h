@@ -33,6 +33,9 @@ public:
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames"))
 	FString SelectedNodeIndex;
 
+	/**
+	 * Dialogue Node to which this Node leads to.
+	 */
 	UPROPERTY(SaveGame, Category="Private", VisibleAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, DisplayThumbnail="false"))
 	UMounteaDialogueGraphNode* SelectedNode;
 

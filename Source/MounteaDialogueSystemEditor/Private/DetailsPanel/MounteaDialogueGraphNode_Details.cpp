@@ -6,6 +6,7 @@
 #include "DetailLayoutBuilder.h"
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
+#include "EditorCommands/FMounteaDialogueGraphEditorCommands.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Helpers/MounteaDialogueGraphColors.h"
 #include "Helpers/MounteaDialogueGraphEditorUtilities.h"
@@ -89,7 +90,7 @@ void FMounteaDialogueGraphNode_Details::MakePreviewsScrollBox(TArray<FText>& Fro
 				[
 					SNew(STextBlock)
 					.Text(LOCTEXT("FMounteaDialogueGraphNode_Details_Previews_Invalid", "invalid data selected"))
-					.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDS.NormalText.Bold")
+					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
 					.AutoWrapText(true)
 					.Justification(ETextJustify::Center)
 					.AutoWrapText(true)
@@ -117,7 +118,7 @@ void FMounteaDialogueGraphNode_Details::MakePreviewsScrollBox(TArray<FText>& Fro
 					[
 						SNew(STextBlock)
 						.Text(Itr)
-						.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDS.NormalText.Regular")
+						.Font(FCoreStyle::GetDefaultFontStyle("Regular", 10))
 						.AutoWrapText(true)
 						.Justification(ETextJustify::Left)
 						.AutoWrapText(true)
@@ -163,7 +164,7 @@ FText FMounteaDialogueGraphNode_Details::GetPreviewingNodeTitle() const
 	return EditingDialogueNode->SelectedNode->GetNodeTitle();
 }
 
-FReply FMounteaDialogueGraphNode_Details::OnPreviewingNodeClicked(const FGeometry& Geometry, const FPointerEvent& PointerEvent) const
+FReply FMounteaDialogueGraphNode_Details::OnPreviewingNodeDoubleClicked(const FGeometry& Geometry, const FPointerEvent& PointerEvent)
 {
 	if (!EditingNode) return FReply::Unhandled();
 
@@ -172,11 +173,34 @@ FReply FMounteaDialogueGraphNode_Details::OnPreviewingNodeClicked(const FGeometr
 	if (!EditingDialogueNode->SelectedNode) return FReply::Unhandled();
 	
 	const auto EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingNode->GetGraph()->EdGraph);
-	const TSharedPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr = EdGraph->GetAssetEditor();
 
-	const UEdNode_MounteaDialogueGraphNode* EdNode = *EdGraph->NodeMap.Find(EditingDialogueNode->SelectedNode);
-		
-	return FMounteaDialogueGraphEditorUtilities::OpenEditorAndJumpToGraphNode(DialogueEditorPtr, EdNode) ? FReply::Handled() : FReply::Unhandled();
+	if (!EdGraph->NodeMap.Contains(EditingDialogueNode->SelectedNode)) return FReply::Unhandled();
+
+	return EdGraph->JumpToNode(EditingDialogueNode->SelectedNode) ? FReply::Handled() : FReply::Unhandled();
+}
+
+void FMounteaDialogueGraphNode_Details::OnPreviewingNodeMouseEnter(const FGeometry& Geometry, const FPointerEvent& PointerEvent)
+{
+	if (!PreviewNode.IsValid()) return;
+
+	FSlateRenderTransform Hovered = FSlateRenderTransform
+	(
+		.95f, FVector2D(0.f, 0.f)
+	);
+	
+	PreviewNode->SetRenderTransform( Hovered );
+	PreviewNode->SetRenderTransformPivot(FVector2D(0.5f));
+}
+
+void FMounteaDialogueGraphNode_Details::OnPreviewingNodeMouseLeave(const FPointerEvent& PointerEvent)
+{
+	FSlateRenderTransform UnHovered = FSlateRenderTransform
+	(
+		1.0f, FVector2D(0.f, 0.f)
+	);
+	
+	PreviewNode->SetRenderTransform( UnHovered );
+	PreviewNode->SetRenderTransformPivot(FVector2D(0.5f));
 }
 
 FSlateColor FMounteaDialogueGraphNode_Details::GetPreviewingNodeBackgroundColor() const
@@ -215,29 +239,37 @@ void FMounteaDialogueGraphNode_Details::MakePreviewNode()
 		MakeInvalidPreviewNode();
 		return;
 	}
+
+	const auto EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingNode->GetGraph()->EdGraph);
+	if (!EdGraph) return;
+
+	const UMounteaDialogueGraphNode_ReturnToNode* EditingDialogueNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(EditingNode);
+	if (!EdGraph->NodeMap.Contains(EditingDialogueNode->SelectedNode))
+	{
+		MakeInvalidPreviewNode();
+		return;
+	}
 	
 	const FMargin NodePadding = FMargin(2.0f);
-	const FSlateFontInfo FontRegular = FCoreStyle::GetDefaultFontStyle("Bold", 12, FFontOutlineSettings(1));
-	const FSlateFontInfo FontBold = FCoreStyle::GetDefaultFontStyle("Bold", 12, FFontOutlineSettings(1));
 	const FSlateColor DefaultFontColor = MounteaDialogueGraphColors::TextColors::Normal;
-
-	auto PreviewNodeButtonStyle = FMounteaDialogueGraphEditorStyle::GetWidgetStyle<FButtonStyle>(TEXT("MDSStyleSet.Buttons.Style.PreviewNode"));
 	
 	PreviewNode =  SNew(SBox)
 	.Padding(FMargin(0.f, 5.f, 0.f, 5.f))
-	.MinDesiredWidth(FOptionalSize(110.f))
+	.MinDesiredWidth(FOptionalSize(120.f))
 	.MaxDesiredWidth(FOptionalSize(120.f))
 	.HAlign(HAlign_Center)
 	.MinDesiredHeight(FOptionalSize(75.f))
+	.MaxDesiredHeight(FOptionalSize(90.f))
 	.VAlign(VAlign_Fill)
 	.ToolTipText(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreviewTooltip","This node is currently selected as Return Node.\nUpon execution of Return to Node, Dialogue will move to Selected Node.\n\nDouble click on this Preview to focus on this Node in Graph."))
 	[
 		// OUTER STYLE
 		SNew(SBorder)
+		.HAlign(HAlign_Fill)
 		.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
 		.Padding(3.0f)
 		.BorderBackgroundColor(this, &FMounteaDialogueGraphNode_Details::GetPreviewingNodeBackgroundColor)
-		.OnMouseDoubleClick(this, &FMounteaDialogueGraphNode_Details::OnPreviewingNodeClicked)
+		.OnMouseDoubleClick(this, &FMounteaDialogueGraphNode_Details::OnPreviewingNodeDoubleClicked)
 		[
 			SNew(SOverlay)
 
@@ -290,7 +322,7 @@ void FMounteaDialogueGraphNode_Details::MakePreviewNode()
 							.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 							[
 								SNew(STextBlock)
-								.Font(FontBold)
+								.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
 								.Text(this, &FMounteaDialogueGraphNode_Details::GetPreviewingNodeTitle)
 								.Justification(ETextJustify::Center)
 								.Visibility(EVisibility::Visible)
@@ -309,14 +341,21 @@ void FMounteaDialogueGraphNode_Details::MakePreviewNode()
 			]
 		]
 	];
+
+
+	FSimpleNoReplyPointerEventHandler OnPreviewingNodeMouseLeaveEventHandle;
+	OnPreviewingNodeMouseLeaveEventHandle.BindSP(this, &FMounteaDialogueGraphNode_Details::OnPreviewingNodeMouseLeave);
+
+	FNoReplyPointerEventHandler OnPreviewingNodeMouseEnterEventHandle;
+	OnPreviewingNodeMouseEnterEventHandle.BindSP(this, &FMounteaDialogueGraphNode_Details::OnPreviewingNodeMouseEnter);
+	
+	PreviewNode->SetOnMouseLeave(OnPreviewingNodeMouseLeaveEventHandle);
+	PreviewNode->SetOnMouseEnter(OnPreviewingNodeMouseEnterEventHandle);
 }
 
 void FMounteaDialogueGraphNode_Details::MakeInvalidPreviewNode() 
 {
 	const FMargin NodePadding = FMargin(2.0f);
-
-	const FSlateFontInfo FontRegular = FCoreStyle::GetDefaultFontStyle("Bold", 12, FFontOutlineSettings(1));
-	const FSlateFontInfo FontBold = FCoreStyle::GetDefaultFontStyle("Bold", 12, FFontOutlineSettings(1));
 
 	const FSlateColor DefaultFontColor = MounteaDialogueGraphColors::TextColors::Normal;
 
@@ -327,7 +366,7 @@ void FMounteaDialogueGraphNode_Details::MakeInvalidPreviewNode()
 	.HAlign(HAlign_Center)
 	.MinDesiredHeight(FOptionalSize(75.f))
 	.VAlign(VAlign_Fill)
-	.ToolTipText(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreviewTooltip","This node is currently selected as Return Node. Upon execution of this Node, Dialogue will move to Selected Node.\n\nClicking on this Preview will select this Node in Graph."))
+	.ToolTipText(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreviewTooltip","There is currently no Node selected or is invalid!\n\nPlease fix this as this Dialogue Graph will be invalidated upon start!"))
 	[
 		// OUTER STYLE
 		SNew(SBorder)
@@ -386,9 +425,8 @@ void FMounteaDialogueGraphNode_Details::MakeInvalidPreviewNode()
 							.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 							[
 								SNew(STextBlock)
-								.Font(FontBold)
 								.Text(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreview_Invalid", "INVALID"))
-								.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDS.NormalText.Bold")
+								.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
 								.Justification(ETextJustify::Center)
 								.Visibility(EVisibility::Visible)
 								.ColorAndOpacity(MounteaDialogueGraphColors::TextColors::Normal)

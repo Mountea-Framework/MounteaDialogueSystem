@@ -28,10 +28,22 @@ public:
 public:
 	
 	virtual void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
-	
+
+	/**
+	 * Returns the Dialogue Data Table for this graph node.
+	 * ❗ Might be null
+	 *
+	 * @return The Dialogue Data Table for this graph node.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual UDataTable* GetDataTable() const;
 
+	/**
+	 * Returns the Dialogue Data Row name.
+	 * ❗ Might be invalid
+	 *
+	 * @return The Dialogue Data Row name.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual FName GetRowName() const
 	{ return RowName; }
@@ -51,8 +63,12 @@ public:
 #endif
 
 protected:
-	
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(RequiredAssetDataTags="/Script/MounteaDialogueSystem.DialogueRow", DisplayThumbnail=false, NoResetToDefault))
+
+	/**
+	 * The data table containing the dialogue rows.
+	 * ❗ Strongly suggested to use 'DialogueRow' based Data Tables
+	 */
+	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(RequiredAssetDataTags="RowStructure=DialogueRow", DisplayThumbnail=false, NoResetToDefault))
 	UDataTable*	DataTable;
 
 	/** Name of row in the table that we want */
