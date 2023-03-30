@@ -143,7 +143,7 @@ public:
 	/**
 	 * Returns Owning World this Decorator belongs to.
 	 *
-	 * ❗Should not return Null, but possibly can.
+	 * ❗ Should not return Null, but possibly can.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Decorators", meta=(CompactNodeTitle="World"))
 	UWorld* GetOwningWorld() const
@@ -152,14 +152,14 @@ public:
 	/**
 	 * Returns Owning Node of this Decorator.
 	 *
-	 * ❗Might return Null if this Decorator is owned by Graph!
+	 * ❗ Might return Null if this Decorator is owned by Graph!
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorators", meta=(CompactNodeTitle="OwningNode"))
 	UMounteaDialogueGraphNode* GetOwningNode() const;
 	/**
 	 * Returns Owning Graph of this Decorator.
 	 *
-	 * ❗Might return Null if this Decorator is owned by Node!
+	 * ❗ Might return Null if this Decorator is owned by Node!
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorators", meta=(CompactNodeTitle="OwningGraph"))
 	UMounteaDialogueGraph* GetOwningGraph() const;
@@ -264,7 +264,7 @@ public:
 public:
 
 	/**
-	 * A list of Decorators that can help out with enhancing the Dialogue flow.
+	 * Decorators can help out with enhancing the Dialogue flow.
 	 * Those Decorators are instanced and exist only as "triggers".
 	 * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
 	 */

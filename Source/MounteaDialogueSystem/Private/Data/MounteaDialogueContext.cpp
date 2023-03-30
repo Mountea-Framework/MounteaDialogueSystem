@@ -48,12 +48,6 @@ void UMounteaDialogueContext::UpdateDialoguePlayerParticipant(const TScriptInter
 
 void UMounteaDialogueContext::UpdateActiveDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant)
 {
-	if (NewParticipant.GetInterface() == nullptr)
-	{
-		ActiveDialogueParticipant = NewParticipant;
-		return;
-	}
-
 	if (NewParticipant != PlayerDialogueParticipant && NewParticipant != DialogueParticipant)
 	{
 		//TODO: Properly log this
