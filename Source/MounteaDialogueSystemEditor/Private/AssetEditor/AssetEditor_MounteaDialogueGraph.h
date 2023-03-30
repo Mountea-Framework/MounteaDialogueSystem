@@ -9,16 +9,14 @@ class UMounteaDialogueGraphEditorSettings;
 class FGGAssetEditorToolbar;
 class FAssetEditorToolbarMounteaDialogueGraph;
 
-static const FName ToolbarTabId("TabID00");
-
-class FAssetEditor_MounteaDialogueGraph : public FAssetEditorToolkit, public FNotifyHook, public FGCObject
+class MOUNTEADIALOGUESYSTEMEDITOR_API FAssetEditor_MounteaDialogueGraph : public FAssetEditorToolkit, public FNotifyHook, public FGCObject
 {
 
 public:
 
 	FAssetEditor_MounteaDialogueGraph();
 	virtual ~FAssetEditor_MounteaDialogueGraph() override;
-
+	
 	void InitMounteaDialogueGraphAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UMounteaDialogueGraph* Graph);
 	UMounteaDialogueGraphEditorSettings* GetSettings() const;
 	
@@ -28,6 +26,8 @@ public:
 	// IToolkit interface
 	virtual void RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager) override;
 	virtual void UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager) override;
+
+	virtual bool CloseWindow() override;
 	// End of IToolkit interface
 
 #pragma endregion
@@ -59,8 +59,14 @@ public:
 
 #pragma endregion
 
+#pragma region FGCObject
+
+	virtual FString GetReferencerName() const override;
+
+#pragma endregion 
+	
 	// Gets/Sets the dialogue being edited
-	UMounteaDialogueGraph* GetDialogueBeingEdited()
+	UMounteaDialogueGraph* GetEditingGraphSafe()
 	{
 		check(EditingGraph);
 		return EditingGraph;
@@ -74,7 +80,7 @@ public:
 			ViewportWidget->JumpToNode(JumpToMe, bRequestRename, bSelectNode);
 		}
 	}
-
+	
 private:
 	
 	void CreateInternalWidgets();
@@ -128,7 +134,7 @@ private:
 
 	void OnFinishedChangingProperties(const FPropertyChangedEvent& PropertyChangedEvent);
 
-	void OnPackageSaved(const FString& PackageFileName, UPackage* Package, FObjectPostSaveContext ObjectSaveContext);
+	void OnPackageSaved(const FString& PackageFileName, UObject* Outer);
 
 #pragma endregion 
 

@@ -226,6 +226,11 @@ void FMounteaDialogueSystemEditor::ShutdownModule()
 		FSlateStyleRegistry::UnRegisterSlateStyle(DialogueTreeSet->GetStyleSetName());
 	}
 
+	// Style Shutdown
+	{
+		FMounteaDialogueGraphEditorStyle::Shutdown();
+	}
+
 	// Asset Types Cleanup
 	{
 		if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
@@ -257,11 +262,6 @@ void FMounteaDialogueSystemEditor::ShutdownModule()
 		}
 	}
 	
-	// Button Icons
-	{
-		FMounteaDialogueGraphEditorStyle::Shutdown();
-	}
-
 	// Help Button Cleanup
 	{
 		UToolMenus::UnRegisterStartupCallback(this);
