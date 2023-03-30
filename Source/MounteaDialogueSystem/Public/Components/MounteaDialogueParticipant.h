@@ -13,8 +13,8 @@ class UMounteaDialogueGraphNode_DialogueNodeBase;
 /**
  * Mountea Dialogue Participant Component.
  *
- * ❔This Component allows any Actor to be Dialogue Participant.
- * ❗Requires Dialogue Graph to work.
+ * ❔ This Component allows any Actor to be Dialogue Participant.
+ * ❗ Requires Dialogue Graph to work.
  */
 UCLASS(ClassGroup=(Mountea), Blueprintable, hideCategories=(Collision, AssetUserData, Cooking, Activation, Rendering, Sockets), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"), meta=(BlueprintSpawnableComponent, DisplayName = "Mountea Dialogue Participant"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueParticipant : public UActorComponent, public IMounteaDialogueParticipantInterface
@@ -29,7 +29,7 @@ protected:
 
 	/**
 	 * Helps initialize Participant.
-	 * Is being called in BeginPlay.
+	 * ❔ Is being called in BeginPlay.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue")
 	void InitializeParticipant();
@@ -40,11 +40,45 @@ protected:
 
 protected:
 
+	/**
+	 * Finds an audio component using FindAudioComponentByName or FindAudioComponentByTag.
+	 * ❗ Returns null if 'AudioComponentIdentification' is invalid!
+	 * 
+	 * @param Arg The Name to search for.
+	 * @return The found audio component, or nullptr if not found.
+ 	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	UAudioComponent* FindAudioComponent() const;
+	
+	/**
+	 * Finds an audio component by the specified Name.
+	 * 
+	 * @param Arg The Name to search for.
+	 * @return The found audio component, or nullptr if not found.
+ 	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	UAudioComponent* FindAudioComponentByName(const FName& Arg) const;
+	
+	/**
+	 * Finds an audio component by the specified tag.
+	 * 
+	 * @param Arg The tag to search for.
+	 * @return The found audio component, or nullptr if not found.
+ 	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	UAudioComponent* FindAudioComponentByTag(const FName& Arg) const;
 
+	/**
+	 * Plays the given participant voice sound.
+	 * @param ParticipantVoice The sound to play.
+	 * ❗ The sound should be a valid USoundBase object, otherwise nothing will be played.
+	 */ 
 	virtual void PlayParticipantVoice(USoundBase* ParticipantVoice) override;
+	/**
+	 * Skips the given participant voice sound.
+	 * @param ParticipantVoice The sound to skip.
+	 * ❗ The sound should be a valid USoundBase object, otherwise nothing will be skipped.
+	 */ 
 	virtual  void SkipParticipantVoice(USoundBase* ParticipantVoice) override;
 
 #pragma endregion 
@@ -55,20 +89,25 @@ protected:
 
 	/**
 	 * Mountea Dialogue Graph.
-	 * ❗In order to start Dialogue, this value must be filled.
-	 * ❔Can be updated using SetDialogueGraph function.
+	 * ❗ In order to start Dialogue, this value must be filled.
+	 * ❔ Can be updated using SetDialogueGraph function.
 	 */
 	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(DisplayThumbnail=false, NoResetToDefault))
 	UMounteaDialogueGraph* DialogueGraph = nullptr;
 
 	/**
-	 * 
+	 * Mountea Dialogue Participant Default State.
+	 * ❔ Is used in BeginPlay to set ParticipantState.
+	 * ❔ Is used as fallback value once Dialogue Ends.
 	 */
 	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(NoResetToDefault))
 	EDialogueParticipantState DefaultParticipantState;
+
 	/**
-	 * 
-	 */
+	* State of the Dialogue Participant.
+	* ❗ In order to start Dialogue, this value must not be Disabled.
+	* ❔ Can be updated using SetDialogueParticipantState function.
+	*/
 	UPROPERTY(Transient, VisibleAnywhere,  Category="Mountea", AdvancedDisplay,  meta=(NoResetToDefault))
 	EDialogueParticipantState ParticipantState;
 
@@ -87,10 +126,12 @@ protected:
 	FName AudioComponentIdentification;
 	
 	/**
-	 * 
+	 * Audio Component for Dialogue Participant Voice.
+	 * ❗ Is populated by FindAudioComponent is called.
 	 */
 	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false, NoResetToDefault))
 	UAudioComponent* AudioComponent = nullptr;
+	
 	/**
 	 * Optional Starting Node.
 	 *
@@ -119,13 +160,20 @@ protected:
 	 */
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueGraphChanged OnDialogueGraphChanged;
-
+	/**
+	 * Event called once Participant State has changed.
+	 */
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueParticipantStateChanged OnDialogueParticipantStateChanged;
-
+	/**
+	 * Event called once Audio Component has changed.
+	 * ❗ Output AudioComponent could be Null
+	 */
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueParticipantAudioComponentChanged OnAudioComponentChanged;
-
+	/**
+	 * Event called once Starting Node has saved.
+	 */
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FParticipantStartingNodeSaved OnStartingNodeSaved;
 
@@ -154,7 +202,11 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual bool CanStartDialogue() const override;
-
+	/**
+	 * Returns the starting node of the Mountea Dialogue Graph saved during runtime.
+	 * ❗ In order to have a saved starting node, the function 'SaveStartingNode' must have been called at least once.
+	 * ❔ The saved starting node can be updated using 'SaveStartingNode' function.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual UMounteaDialogueGraphNode* GetSavedStartingNode() const override
 	{ return StartingNode; };
@@ -163,38 +215,64 @@ public:
 
 	/**
 	 * Returns Dialogue Graph of this Participant.
-	 * ❗Might return Null❗
+	 * ❗ Might return Null❗
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual UMounteaDialogueGraph* GetDialogueGraph() const override
 	{ return DialogueGraph; };
 	/**
 	 * Overrides Dialogue Graph for this Participant.
-	 * ❗Accepts Null values❗
+	 * ❗ Accepts Null values❗
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph) override;
-
+	/**
+	 * Returns the current state of the Dialogue Participant.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual EDialogueParticipantState GetParticipantState() const override
 	{ return  ParticipantState; };
+	/**
+	 * Sets the current state of the dialogue participant to the given state.
+	 * @param NewState The new state to set the dialogue participant to.
+	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SetParticipantState(const EDialogueParticipantState NewState) override;
+	/**
+	 * Returns the Default state of the Dialogue Participant.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual EDialogueParticipantState GetDefaultParticipantState() const override
 	{ return  DefaultParticipantState; };
+	/**
+	 * Sets the Default state of the dialogue participant to the given state.
+	 * @param NewState The new state to set the dialogue participant to.
+	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SetDefaultParticipantState(const EDialogueParticipantState NewState) override;
 
+	/**
+	 * Returns the audio component used to play the participant voices.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual UAudioComponent* GetAudioComponent() const override
 	{ return AudioComponent; };
+	/**
+	 * Sets the audio component used to play dialogue audio.
+	 *
+	 * @param NewAudioComponent The new audio component to use for dialogue audio.
+	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SetAudioComponent(UAudioComponent* NewAudioComponent) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual AActor* GetOwningActor_Implementation() const override;
-
+	
+	/**
+	 * Returns the map of nodes traversed during the dialogue.
+	 * 
+	 * @return The map of nodes traversed during the dialogue.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual TMap<FGuid,int32> GetTraversedPath() const override
 	{ return TraversedPath; };

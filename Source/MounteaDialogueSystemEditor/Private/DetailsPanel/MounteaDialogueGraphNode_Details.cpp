@@ -179,6 +179,30 @@ FReply FMounteaDialogueGraphNode_Details::OnPreviewingNodeDoubleClicked(const FG
 	return EdGraph->JumpToNode(EditingDialogueNode->SelectedNode) ? FReply::Handled() : FReply::Unhandled();
 }
 
+void FMounteaDialogueGraphNode_Details::OnPreviewingNodeMouseEnter(const FGeometry& Geometry, const FPointerEvent& PointerEvent)
+{
+	if (!PreviewNode.IsValid()) return;
+
+	FSlateRenderTransform Hovered = FSlateRenderTransform
+	(
+		.95f, FVector2D(0.f, 0.f)
+	);
+	
+	PreviewNode->SetRenderTransform( Hovered );
+	PreviewNode->SetRenderTransformPivot(FVector2D(0.5f));
+}
+
+void FMounteaDialogueGraphNode_Details::OnPreviewingNodeMouseLeave(const FPointerEvent& PointerEvent)
+{
+	FSlateRenderTransform UnHovered = FSlateRenderTransform
+	(
+		1.0f, FVector2D(0.f, 0.f)
+	);
+	
+	PreviewNode->SetRenderTransform( UnHovered );
+	PreviewNode->SetRenderTransformPivot(FVector2D(0.5f));
+}
+
 FSlateColor FMounteaDialogueGraphNode_Details::GetPreviewingNodeBackgroundColor() const
 {
 	if (!EditingNode)  return FLinearColor::Red;
@@ -231,15 +255,17 @@ void FMounteaDialogueGraphNode_Details::MakePreviewNode()
 	
 	PreviewNode =  SNew(SBox)
 	.Padding(FMargin(0.f, 5.f, 0.f, 5.f))
-	.MinDesiredWidth(FOptionalSize(110.f))
+	.MinDesiredWidth(FOptionalSize(120.f))
 	.MaxDesiredWidth(FOptionalSize(120.f))
 	.HAlign(HAlign_Center)
 	.MinDesiredHeight(FOptionalSize(75.f))
+	.MaxDesiredHeight(FOptionalSize(90.f))
 	.VAlign(VAlign_Fill)
 	.ToolTipText(LOCTEXT("MounteaDialogueGraphNode_Details_SlectedNodePreviewTooltip","This node is currently selected as Return Node.\nUpon execution of Return to Node, Dialogue will move to Selected Node.\n\nDouble click on this Preview to focus on this Node in Graph."))
 	[
 		// OUTER STYLE
 		SNew(SBorder)
+		.HAlign(HAlign_Fill)
 		.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges"))
 		.Padding(3.0f)
 		.BorderBackgroundColor(this, &FMounteaDialogueGraphNode_Details::GetPreviewingNodeBackgroundColor)
@@ -315,6 +341,16 @@ void FMounteaDialogueGraphNode_Details::MakePreviewNode()
 			]
 		]
 	];
+
+
+	FSimpleNoReplyPointerEventHandler OnPreviewingNodeMouseLeaveEventHandle;
+	OnPreviewingNodeMouseLeaveEventHandle.BindSP(this, &FMounteaDialogueGraphNode_Details::OnPreviewingNodeMouseLeave);
+
+	FNoReplyPointerEventHandler OnPreviewingNodeMouseEnterEventHandle;
+	OnPreviewingNodeMouseEnterEventHandle.BindSP(this, &FMounteaDialogueGraphNode_Details::OnPreviewingNodeMouseEnter);
+	
+	PreviewNode->SetOnMouseLeave(OnPreviewingNodeMouseLeaveEventHandle);
+	PreviewNode->SetOnMouseEnter(OnPreviewingNodeMouseEnterEventHandle);
 }
 
 void FMounteaDialogueGraphNode_Details::MakeInvalidPreviewNode() 

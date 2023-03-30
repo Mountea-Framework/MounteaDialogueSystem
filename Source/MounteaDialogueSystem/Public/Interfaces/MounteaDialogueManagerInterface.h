@@ -45,25 +45,76 @@ class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueManagerInterface
 public:
 
 	/**
-	 * 
+	 * Notifies the Dialogue  that a node has been selected.
+	 *
+	 * @param NodeGUID The GUID of the selected node.
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="select, chosen, option"))
 	void CallDialogueNodeSelected(const FGuid& NodeGUID);
 	
+	/**
+	 * Starts the Dialogue if possible.
+	 */
 	virtual void StartDialogue() = 0;
+	/**
+	 * Closes the Dialogue if is active.
+	 */
 	virtual void CloseDialogue() = 0;
 
+	/**
+	 * Tries to Invoke Dialogue UI.
+	 * This function servers a purpose to try showing Dialogue UI to player.
+	 * ❔ If this function fails, Message will be populated with error message explaining what went wrong.
+	 * 
+	 * @param Message InMessage to be populated with error message explaining why returns false
+	 * @return true if UI can be added to screen, false if cannot
+	 */
 	virtual bool InvokeDialogueUI(FString& Message) = 0;
+	/**
+	 * Gets the widget class used to display Dialogue UI.
+	 * 
+	 * @return The widget class used to display Dialogue UI.
+	 */
 	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const = 0;
+	/**
+	 * Sets the widget class for the Dialogue UI.
+	 * ❗ This is a pure virtual function that must be implemented in derived classes.
+	 *
+	 * @param NewWidgetClass	The new widget class to set.
+	 */
 	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) = 0;
+	/**
+	 * Returns Dialogue UI pointer.
+	 * 
+	 * ❗ Could be null
+	 * @return UserWidget pointer to created UI
+	 */
 	virtual UUserWidget* GetDialogueUIPtr() const = 0;
+	/**
+	 * Sets Dialogue UI pointer.
+	 * 
+	 * ❔ Using null value resets saved value
+	 * @param DialogueUIPtr	UserWidget pointer to be saved as Dialogue UI
+	 */
 	virtual void SetDialogueUIPtr(UUserWidget* DialogueUIPtr) = 0;
 
+	/**
+	 * Starts Dialogue Row execution.
+	 * ❔ Dialogue Data contain Dialogue Data Rows, which are individual dialogue lines, which can be skipped.
+	 * ❔ Once all Dialogue Data Rows are finished, Dialogue Data is finished as well.
+	 */
 	virtual void StartExecuteDialogueRow() = 0;
+	/**
+	 * Function responsible for cleanup once Dialogue Row is finished.
+	 * ❔ Dialogue Data contain Dialogue Data Rows, which are individual dialogue lines, which can be skipped.
+	 * ❔ Once all Dialogue Data Rows are finished, Dialogue Data is finished as well.
+	 */
 	virtual void FinishedExecuteDialogueRow() = 0;
 
 	/**
-	 * Returns Dialogue Context if any exists.
+	 * Retrieves the current dialogue context associated with this dialogue instance.
+	 *
+	 * @return The dialogue context object for this instance.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	UMounteaDialogueContext* GetDialogueContextEvent() const;
@@ -71,14 +122,24 @@ public:
 	{
 		return GetDialogueContext();
 	}
-
+	
+	/**
+	 * Returns the widget used to display the current dialogue.
+	 *
+	 * @return The widget used to display the current dialogue.
+	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
 	UUserWidget* GetDialogueWidget();
 	UUserWidget* GetDialogueWidget_Implementation()
 	{
 		return GetDialogueWidget();
 	};
-	
+
+	/**
+	 * Returns the owning actor for this Dialogue Manager Component.
+	 *
+	 * @return The owning actor for this Dialogue Manager Component.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	AActor* GetOwningActor() const;
 	virtual AActor* GetOwningActor_Implementation() const
@@ -86,16 +147,55 @@ public:
 		return nullptr;
 	};
 
+	/**
+	 * Prepares the node for execution.
+	 * Asks Active Node to 'PreProcessNode' and then to 'ProcessNode'.
+	 * In this preparation stage, Nodes are asked to process all Decorators.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	void PrepareNode();
 	virtual void PrepareNode_Implementation() {};
 	
+	/**
+	 * Retrieves current Dialogue Context.
+	 * 
+	 * ❗ Could be null
+	 * @return DialogueContext	Dialogue Context is transient data holder for current dialogue instance.
+	 */
 	virtual UMounteaDialogueContext* GetDialogueContext() const = 0;
+	/**
+	 * Sets new Dialogue Context.
+	 * 
+	 * ❔ Null value clears saved data
+	 * @param NewContext	Dialogue Context to be set as Dialogue Context
+	 */
 	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) = 0;
 
+	/**
+	 * Retrieves current Dialogue Manager State.
+	 * State defines whether Manager can start/close dialogue or not.
+	 * 
+	 * @return ManagerState	Manager state value
+	 */
 	virtual EDialogueManagerState GetDialogueManagerState() const = 0;
+	/**
+	 * Sets new Dialogue Manager State.
+	 * 
+	 * @param NewState	Manager State to be set as Manager State
+	 */
 	virtual void SetDialogueManagerState(const EDialogueManagerState NewState) = 0;
+	/**
+	 * Retrieves current Default Dialogue Manager State.
+	 * Default Dialogue Manager State sets Dialogue Manager state upon BeginPlay and is used as fallback once Dialogue ends.
+	 * 
+	 * @return ManagerState	Default Manager state value
+	 */
 	virtual EDialogueManagerState GetDefaultDialogueManagerState() const = 0;
+	/**
+	 * Sets new Default Dialogue Manager State.
+	 * 
+	 * @param NewState	Manager State to be set as Default Manager State
+	 */
 	virtual void SetDefaultDialogueManagerState(const EDialogueManagerState NewState) = 0;
 	
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() = 0;

@@ -38,6 +38,8 @@ public:
 	FSlateColor GetPreviewingNodeBackgroundColor() const;
 	FText GetPreviewingNodeTitle() const;
 	FReply OnPreviewingNodeDoubleClicked(const FGeometry& Geometry, const FPointerEvent& PointerEvent);
+	void OnPreviewingNodeMouseEnter(const FGeometry& Geometry, const FPointerEvent& PointerEvent);
+	void OnPreviewingNodeMouseLeave(const FPointerEvent& PointerEvent);
 	void MakePreviewNode();
 	void MakeInvalidPreviewNode();
 #pragma endregion 
@@ -57,3 +59,4 @@ private:
 
 	UMounteaDialogueGraphNode* EditingNode = nullptr;
 };
+

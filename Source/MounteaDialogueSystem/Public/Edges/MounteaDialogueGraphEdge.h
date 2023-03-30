@@ -9,9 +9,11 @@ class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
 
 /**
- * 
+ * Mountea Dialogue Edges.
+ *
+ * Currently those Edges are just connecting objects with no advanced logic.
  */
-UCLASS(ClassGroup=("Mountea|Dialogue"))
+UCLASS(ClassGroup=("Mountea|Dialogue"), NotBlueprintType)
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphEdge : public UObject
 {
 	GENERATED_BODY()
@@ -35,7 +37,7 @@ public:
 #pragma region Functions
 public:
 	
-	UFUNCTION(BlueprintPure, Category = "Mountea|Dialogue")
+	//UFUNCTION(BlueprintPure, Category = "Mountea|Dialogue")
 	UMounteaDialogueGraph* GetGraph() const;
 
 #pragma endregion 
