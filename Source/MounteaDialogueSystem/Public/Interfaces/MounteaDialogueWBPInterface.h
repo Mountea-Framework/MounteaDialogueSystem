@@ -31,12 +31,16 @@ public:
 	 * This event should be called when you want to refresh UI data.
 	 * 
 	 * @param DialogueManager	Dialogue Manager Interface reference. Request 'GetDialogueContext' to retrieve data to display.
-	 * @param Command			String command. All commands are defined in ProjectSettings/MounteaFramework/MounteaDilaogueSystem.
+	 * @param Command			String command. All commands are defined in ProjectSettings/MounteaFramework/MounteaDialogueSystem.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Mountea|Dialogue")
 	void RefreshDialogueWidget(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command);
 
-	
+	/**
+	 * Called when an option has been selected.
+	 * 
+	 * @param SelectionGUID The GUID of the selected option.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Mountea|Dialogue")
 	void OnOptionSelected(const FGuid& SelectionGUID);
 };

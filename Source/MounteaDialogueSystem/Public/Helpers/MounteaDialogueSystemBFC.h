@@ -127,7 +127,7 @@ public:
 
 	/**
 	 * Returns first 'Mountea Dialogue Particiapnt' Component from Player Pawn.
-	 * ❗Might return Null❗
+	 * ❗ Might return Null❗
 	 * 
 	 * @param WorldContextObject	World Context Object 
 	 */
@@ -157,7 +157,7 @@ public:
 	
 	/**
 	 * Returns Dialogue System Settings.
-	 * ❗Might return null❗
+	 * ❗ Might return null❗
 	 */
 	static const UMounteaDialogueSystemSettings* GetDialogueSystemSettings_Internal()
 	{
@@ -166,7 +166,7 @@ public:
 	
 	/**
 	 * Returns Dialogue System Settings.
-	 * ❗Might return null❗
+	 * ❗ Might return null❗
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="settings, setup, config"))
 	static UMounteaDialogueSystemSettings* GetDialogueSystemSettings()
@@ -177,8 +177,8 @@ public:
 	/**
 	 * Tries to get default Dialogue Widget from Project Settings.
 	 * 
-	 * ❗Will return null if settings are not accessible❗
-	 * ❗Will return null if no Default Widget is selected❗
+	 * ❗ Will return null if settings are not accessible❗
+	 * ❗ Will return null if no Default Widget is selected❗
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="widget, UI"))
 	static TSubclassOf<UUserWidget>  GetDefaultDialogueWidget()
@@ -224,11 +224,13 @@ public:
 		{
 			return false;
 		}
-		
-		TArray<FMounteaDialogueDecorator> AllDecorators;
-		AllDecorators.Append(DialogueContext->DialogueParticipant->GetDialogueGraph()->GetGraphDecorators());
-		AllDecorators.Append(DialogueContext->GetActiveNode()->GetNodeDecorators());
 
+		// First process Node Decorators, then Graph Decorators
+		// TODO: all weight to them so we can sort them by Weight and execute in correct order
+		TArray<FMounteaDialogueDecorator> AllDecorators;
+		AllDecorators.Append(DialogueContext->GetActiveNode()->GetNodeDecorators());
+		AllDecorators.Append(DialogueContext->DialogueParticipant->GetDialogueGraph()->GetGraphDecorators());
+		
 		for (auto Itr : AllDecorators)
 		{
 			Itr.ExecuteDecorator();
@@ -240,7 +242,7 @@ public:
 	/**
 	 * Tries to close Dialogue.
 	 * 
-	 * ❗Returns false if Dialogue Manager is not accessible❗
+	 * ❗ Returns false if Dialogue Manager is not accessible❗
 	 * @param WorldContextObject	World Context Object
 	 * @param DialogueParticipant	Dialogue with which Participant to close
 	 */
@@ -258,7 +260,7 @@ public:
 	
 	/**
 	 * Tries to initialize Dialogue.
-	 * ❗Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
+	 * ❗ Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
 	 * 
 	 * @param WorldContextObject	World Context Object
 	 * @param Initiator						Usually Player Controller
@@ -317,8 +319,8 @@ public:
 	
 	/**
 	 * Tries to initialize Dialogue with given Context.
-	 * ❗Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
-	 * ❗Preferred way to Initialize Dialogue is to call 'InitializeDialogue' instead❗
+	 * ❗ Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
+	 * ❗ Preferred way to Initialize Dialogue is to call 'InitializeDialogue' instead❗
 	 * 
 	 * @param WorldContextObject	World Context Object
 	 * @param Initiator						Usually Player Controller
@@ -340,7 +342,7 @@ public:
 
 	/**
 	 * Returns first 'Mountea Dialogue Manager' Component from Player Controller.
-	 * ❗Might return Null❗
+	 * ❗ Might return Null❗
 	 * 
 	 * @param WorldContextObject	World Context Object 
 	 */
@@ -385,7 +387,7 @@ public:
 	
 	/**
 	 * Tries to get Child Node from Dialogue Node at given Index. If none is found, returns null.
-	 * ❗Might return Null❗
+	 * ❗ Might return Null❗
 	 * 
 	 * @param Index			Index of the Node to be returned.
 	 * @param ParentNode	Parent Node which should contain the Node to be returned.
@@ -403,7 +405,7 @@ public:
 
 	/**
 	 * Tries to get first Dialogue Node from Children Nodes. If none is found, returns null.
-	 * ❗Might return Null❗
+	 * ❗ Might return Null❗
 	 * 
 	 * @param ParentNode	Node to read from.
 	 */
@@ -476,7 +478,7 @@ public:
 	
 	/**
 	 * Returns Dialogue Row for Given Node.
-	 * ❗Might return invalid Row❗
+	 * ❗ Might return invalid Row❗
 	 * ❗Only 'UMounteaDialogueGraphNode_DialogueNodeBase' classes have Dialogue data❗
 	 * 
 	 * @param Node	Node to get Data from.
