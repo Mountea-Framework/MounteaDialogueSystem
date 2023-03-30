@@ -26,7 +26,7 @@ Colour | Explanation
 ### Suport Table
 Engine Version | Plugin Version | Support
 -------------- | -------------- | ----
-UE 4.26 | 1.0.0.426 | 🟨
+UE 4.26 | 1.0.0.426 | 🟥
 UE 4.27 | 1.0.0.427 | 🟨
 UE 5.00 | 1.0.0.50 | 🟨
 UE 5.1 | 1.0.0.51 | 🟨
