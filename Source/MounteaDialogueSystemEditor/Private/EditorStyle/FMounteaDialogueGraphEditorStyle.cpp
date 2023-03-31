@@ -84,7 +84,12 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.Node.Icon.large", new IMAGE_BRUSH(TEXT("DialogueNodeIcon"), Icon64x64));
 	StyleSet->Set("MDSStyleSet.Node.Icon", new IMAGE_BRUSH(TEXT("DialogueNodeIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Node.Icon.small", new IMAGE_BRUSH(TEXT("DialogueNodeIcon"), Icon12x12));
-	
+
+	StyleSet->Set("MDSStyleSet.Icon.Close", new IMAGE_BRUSH(TEXT("CloseIcon"), Icon12x12));
+	StyleSet->Set("MDSStyleSet.Icon.SupportDiscord", new IMAGE_BRUSH(TEXT("DiscordIcon"), Icon12x12));
+	StyleSet->Set("MDSStyleSet.Icon.HeartIcon", new IMAGE_BRUSH(TEXT("HeartIcon"), Icon12x12));
+	StyleSet->Set("MDSStyleSet.Icon.UBIcon", new IMAGE_BRUSH(TEXT("UnrealBucketIcon"), Icon12x12));
+	StyleSet->Set("MDSStyleSet.Icon.MoneyIcon", new IMAGE_BRUSH(TEXT("MoneyIcon"), Icon12x12));
 
 	const FButtonStyle MounteaButtonStyle = FButtonStyle()
 		.SetNormal(BOX_BRUSH("RoundedSelection_16x", 4.0f / 16.0f, FLinearColor(1, 1, 1, 0.1f)))
