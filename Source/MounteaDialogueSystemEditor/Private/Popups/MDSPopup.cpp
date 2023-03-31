@@ -4,6 +4,8 @@
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Text/SRichTextBlock.h"
 #include "SWebBrowser.h"
+#include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
+#include "Helpers/MounteaDialogueGraphColors.h"
 #include "Interfaces/IPluginManager.h"
 
 void MDSPopup::OnBrowserLinkClicked(const FSlateHyperlinkRun::FMetadata& Metadata)
@@ -113,7 +115,7 @@ void MDSPopup::Open(const FString& Changelog)
 				.SupportsMaximize(false)
 				.SupportsMinimize(false)
 				.SizingRule(ESizingRule::FixedSize)
-				.ClientSize(FVector2D(800, 600))
+				.ClientSize(FVector2D(850, 600))
 				.Title(FText::FromString("Mountea Dialogue System"))
 				.IsTopmostWindow(true)
 	[
@@ -162,7 +164,6 @@ void MDSPopup::Open(const FString& Changelog)
 			+ SHorizontalBox::Slot().FillWidth(1.0f)
 			[
 				SNew(SButton)
-				.Text(FText::FromString("Leave a review <3"))
 				.HAlign(HAlign_Center)
 				.OnClicked_Lambda([]()
 				{
@@ -171,6 +172,29 @@ void MDSPopup::Open(const FString& Changelog)
 
 					return FReply::Handled();
 				})
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString("Leave a review"))
+					]
+
+					+ SHorizontalBox::Slot()
+					[
+						SNew(SSpacer)
+						.Size(FVector2D(5, 0))
+					]
+			
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(SImage)
+						.ColorAndOpacity(FLinearColor::Red)
+						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.HeartIcon"))
+					]
+				]
 			]
 			+ SHorizontalBox::Slot().AutoWidth()
 			[
@@ -180,7 +204,6 @@ void MDSPopup::Open(const FString& Changelog)
 			+ SHorizontalBox::Slot().FillWidth(1.0f)
 			[
 				SNew(SButton)
-				.Text(FText::FromString("Support our work"))
 				.HAlign(HAlign_Center)
 				.OnClicked_Lambda([]()
 				{
@@ -189,6 +212,28 @@ void MDSPopup::Open(const FString& Changelog)
 
 					return FReply::Handled();
 				})
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString("Support Us"))
+					]
+
+					+ SHorizontalBox::Slot()
+					[
+						SNew(SSpacer)
+						.Size(FVector2D(5, 0))
+					]
+			
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(SImage)
+						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.MoneyIcon"))
+					]
+				]
 			]
 			+ SHorizontalBox::Slot().AutoWidth()
 			[
@@ -198,7 +243,6 @@ void MDSPopup::Open(const FString& Changelog)
 			+ SHorizontalBox::Slot().FillWidth(1.0f)
 			[
 				SNew(SButton)
-				.Text(FText::FromString("Join support Discord"))
 				.HAlign(HAlign_Center)
 				.OnClicked_Lambda([]()
 				{
@@ -207,6 +251,28 @@ void MDSPopup::Open(const FString& Changelog)
 
 					return FReply::Handled();
 				})
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString("Support Discord"))
+					]
+
+					+ SHorizontalBox::Slot()
+					[
+						SNew(SSpacer)
+						.Size(FVector2D(5, 0))
+					]
+			
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(SImage)
+						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.SupportDiscord"))
+					]
+				]
 			]
 			+ SHorizontalBox::Slot().AutoWidth()
 			[
@@ -216,7 +282,6 @@ void MDSPopup::Open(const FString& Changelog)
 			+ SHorizontalBox::Slot().FillWidth(1.0f)
 			[
 				SNew(SButton)
-				.Text(FText::FromString("Unreal Bucket"))
 				.HAlign(HAlign_Center)
 				.OnClicked_Lambda([Window]()
 				{
@@ -225,6 +290,28 @@ void MDSPopup::Open(const FString& Changelog)
 
 					return FReply::Handled();
 				})
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString("Unreal Bucket"))
+					]
+
+					+ SHorizontalBox::Slot()
+					[
+						SNew(SSpacer)
+						.Size(FVector2D(5, 0))
+					]
+			
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(SImage)
+						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.UBIcon"))
+					]
+				]
 			]
 			+ SHorizontalBox::Slot().AutoWidth()
 			[
@@ -234,7 +321,6 @@ void MDSPopup::Open(const FString& Changelog)
 			+ SHorizontalBox::Slot().FillWidth(1.0f)
 			[
 				SNew(SButton)
-				.Text(FText::FromString("Close window"))
 				.HAlign(HAlign_Center)
 				.OnClicked_Lambda([Window]()
 				{
@@ -242,6 +328,29 @@ void MDSPopup::Open(const FString& Changelog)
 
 					return FReply::Handled();
 				})
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString("Close window"))
+					]
+
+					+ SHorizontalBox::Slot()
+					[
+						SNew(SSpacer)
+						.Size(FVector2D(5, 0))
+					]
+			
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(SImage)
+						.ColorAndOpacity(FLinearColor::Red)
+						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.Close"))
+					]
+				]
 			]
 		];
 

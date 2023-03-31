@@ -121,8 +121,6 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 			+ SHorizontalBox::Slot().FillWidth(1.0f)
 			[
 				SNew(SButton)
-				.Text(FText::FromString("Get Help"))
-				.ToolTipText(LOCTEXT("MDSPopup_GraphValidation_Help", "Will get you to Support Discord"))
 				.HAlign(HAlign_Center)
 				.OnClicked_Lambda([]()
 				{
@@ -131,6 +129,28 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 
 					return FReply::Handled();
 				})
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString("Support Discord"))
+					]
+
+					+ SHorizontalBox::Slot()
+					[
+						SNew(SSpacer)
+						.Size(FVector2D(5, 0))
+					]
+			
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(SImage)
+						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.SupportDiscord"))
+					]
+				]
 			]
 			+ SHorizontalBox::Slot().AutoWidth()
 			[
@@ -140,8 +160,6 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 			+ SHorizontalBox::Slot().FillWidth(1.0f)
 			[
 				SNew(SButton)
-				.Text(FText::FromString("Leave a review <3"))
-				.ToolTipText(LOCTEXT("MDSPopup_GraphValidation_Review", "Will open Marketplace page for this plugin"))
 				.HAlign(HAlign_Center)
 				.OnClicked_Lambda([]()
 				{
@@ -150,6 +168,29 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 
 					return FReply::Handled();
 				})
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString("Leave a review"))
+					]
+
+					+ SHorizontalBox::Slot()
+					[
+						SNew(SSpacer)
+						.Size(FVector2D(5, 0))
+					]
+			
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(SImage)
+						.ColorAndOpacity(FLinearColor::Red)
+						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.HeartIcon"))
+					]
+				]
 			]
 			+ SHorizontalBox::Slot().AutoWidth()
 			[
@@ -159,8 +200,6 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 			+ SHorizontalBox::Slot().FillWidth(1.0f)
 			[
 				SNew(SButton)
-				.Text(FText::FromString("Support our work"))
-				.ToolTipText(LOCTEXT("MDSPopup_GraphValidation_Sponsor", "Will open GitHub Sponsors page"))
 				.HAlign(HAlign_Center)
 				.OnClicked_Lambda([]()
 				{
@@ -169,6 +208,28 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 
 					return FReply::Handled();
 				})
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString("Support Us"))
+					]
+
+					+ SHorizontalBox::Slot()
+					[
+						SNew(SSpacer)
+						.Size(FVector2D(5, 0))
+					]
+			
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(SImage)
+						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.MoneyIcon"))
+					]
+				]
 			]
 			+ SHorizontalBox::Slot().AutoWidth()
 			[
@@ -178,8 +239,6 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 			+ SHorizontalBox::Slot().FillWidth(1.0f)
 			[
 				SNew(SButton)
-				.Text(FText::FromString("Close window"))
-				.ToolTipText(LOCTEXT("MDSPopup_GraphValidation_Close", "Will close this Validation window"))
 				.HAlign(HAlign_Center)
 				.OnClicked_Lambda([Window]()
 				{
@@ -187,6 +246,29 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 
 					return FReply::Handled();
 				})
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString("Close window"))
+					]
+
+					+ SHorizontalBox::Slot()
+					[
+						SNew(SSpacer)
+						.Size(FVector2D(5, 0))
+					]
+			
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(SImage)
+						.ColorAndOpacity(FLinearColor::Red)
+						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.Close"))
+					]
+				]
 			]
 		];
 
