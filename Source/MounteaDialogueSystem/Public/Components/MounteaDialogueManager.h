@@ -219,8 +219,7 @@ protected:
 #pragma region InterfaceImplementations
 
 public:
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	
 	virtual AActor* GetOwningActor_Implementation() const override;
 
 	/**
