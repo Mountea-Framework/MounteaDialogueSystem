@@ -80,7 +80,7 @@ protected:
 	 * ❗ The sound should be a valid USoundBase object, otherwise nothing will be skipped.
 	 */ 
 	virtual  void SkipParticipantVoice(USoundBase* ParticipantVoice) override;
-
+	
 #pragma endregion 
 
 #pragma region Variables
@@ -210,7 +210,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual UMounteaDialogueGraphNode* GetSavedStartingNode() const override
 	{ return StartingNode; };
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	
 	virtual void SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode) override;
 
 	/**
@@ -223,6 +223,8 @@ public:
 	/**
 	 * Overrides Dialogue Graph for this Participant.
 	 * ❗ Accepts Null values❗
+	 *
+	 * Set Graph is allowed only outside active Dialogue.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph) override;
@@ -264,8 +266,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SetAudioComponent(UAudioComponent* NewAudioComponent) override;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	
 	virtual AActor* GetOwningActor_Implementation() const override;
 	
 	/**
