@@ -31,7 +31,6 @@ protected:
 #pragma region EventFunctions
 	
 protected:
-
 	virtual void CallDialogueNodeSelected_Implementation(const FGuid& NodeGUID) override;
 
 	/**
@@ -221,6 +220,7 @@ protected:
 
 public:
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual AActor* GetOwningActor_Implementation() const override;
 
 	/**
@@ -262,6 +262,7 @@ public:
 	virtual EDialogueManagerState GetDefaultDialogueManagerState() const override
 	{ return DefaultManagerState; };
 
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="prepare, start"))
 	virtual void PrepareNode_Implementation() override;
 	
 protected:

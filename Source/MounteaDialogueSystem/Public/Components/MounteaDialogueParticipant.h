@@ -210,6 +210,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual UMounteaDialogueGraphNode* GetSavedStartingNode() const override
 	{ return StartingNode; };
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode) override;
 
 	/**
@@ -264,6 +265,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SetAudioComponent(UAudioComponent* NewAudioComponent) override;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual AActor* GetOwningActor_Implementation() const override;
 	
 	/**
@@ -274,7 +276,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual TMap<FGuid,int32> GetTraversedPath() const override
 	{ return TraversedPath; };
-
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SaveTraversedPath_Implementation(TMap<FGuid,int32>& InPath) override;
 	
 
