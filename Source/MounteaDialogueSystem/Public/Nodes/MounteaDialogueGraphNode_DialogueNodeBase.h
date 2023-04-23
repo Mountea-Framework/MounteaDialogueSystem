@@ -68,7 +68,7 @@ protected:
 	 * The data table containing the dialogue rows.
 	 * ❗ Strongly suggested to use 'DialogueRow' based Data Tables
 	 */
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(RequiredAssetDataTags="RowStructure=DialogueRow", DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault))
 	UDataTable*	DataTable;
 
 	/** Name of row in the table that we want */
