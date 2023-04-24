@@ -91,6 +91,8 @@ protected:
 	 * Mountea Dialogue Graph.
 	 * ❗ In order to start Dialogue, this value must be filled.
 	 * ❔ Can be updated using SetDialogueGraph function.
+	 *
+	 * Set Graph is allowed only outside active Dialogue.
 	 */
 	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(DisplayThumbnail=false, NoResetToDefault))
 	UMounteaDialogueGraph* DialogueGraph = nullptr;
@@ -210,7 +212,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual UMounteaDialogueGraphNode* GetSavedStartingNode() const override
 	{ return StartingNode; };
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode) override;
 
 	/**
@@ -264,8 +265,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SetAudioComponent(UAudioComponent* NewAudioComponent) override;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	
 	virtual AActor* GetOwningActor_Implementation() const override;
 	
 	/**
@@ -276,7 +276,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual TMap<FGuid,int32> GetTraversedPath() const override
 	{ return TraversedPath; };
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SaveTraversedPath_Implementation(TMap<FGuid,int32>& InPath) override;
 	
 

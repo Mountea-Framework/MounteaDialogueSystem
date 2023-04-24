@@ -120,6 +120,9 @@ bool UMounteaDialogueParticipant::CanStartDialogue() const
 
 void UMounteaDialogueParticipant::SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode)
 {
+	if (!DialogueGraph) return;
+	if (!DialogueGraph->GetAllNodes().Contains(NewStartingNode)) return;
+
 	StartingNode = NewStartingNode;
 
 	OnStartingNodeSaved.Broadcast(StartingNode);
@@ -127,6 +130,8 @@ void UMounteaDialogueParticipant::SaveStartingNode_Implementation(UMounteaDialog
 
 void UMounteaDialogueParticipant::SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph)
 {
+	if (ParticipantState == EDialogueParticipantState::EDPS_Active) return;
+	
 	if (NewDialogueGraph != DialogueGraph)
 	{
 		DialogueGraph = NewDialogueGraph;
