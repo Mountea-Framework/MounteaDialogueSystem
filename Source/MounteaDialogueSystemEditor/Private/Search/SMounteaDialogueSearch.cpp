@@ -46,7 +46,7 @@ void SMounteaDialogueSearch::Construct(const FArguments& InArgs, const TSharedPt
 			.Padding(2.0f, 2.0f)
 			[
 				SNew(SComboButton)
-				.ComboButtonStyle(FAppStyle::Get(), "GenericFilters.ComboButtonStyle")
+				.ComboButtonStyle(FEditorStyle::Get(), "GenericFilters.ComboButtonStyle")
 				.ForegroundColor(FLinearColor::White)
 				.ContentPadding(0)
 				.ToolTipText(LOCTEXT("Filters_Tooltip", "Filter options"))
@@ -60,8 +60,8 @@ void SMounteaDialogueSearch::Construct(const FArguments& InArgs, const TSharedPt
 					.AutoWidth()
 					[
 						SNew(STextBlock)
-						.TextStyle(FAppStyle::Get(), "GenericFilters.TextStyle")
-						.Font(FAppStyle::Get().GetFontStyle("FontAwesome.9"))
+						.TextStyle(FEditorStyle::Get(), "GenericFilters.TextStyle")
+						.Font(FEditorStyle::Get().GetFontStyle("FontAwesome.9"))
 						.Text(FText::FromString(FString(TEXT("\xf0b0"))) )
 					]
 					+SHorizontalBox::Slot()
@@ -69,7 +69,7 @@ void SMounteaDialogueSearch::Construct(const FArguments& InArgs, const TSharedPt
 					.Padding(2, 0, 0, 0)
 					[
 						SNew(STextBlock)
-						.TextStyle(FAppStyle::Get(), "GenericFilters.TextStyle")
+						.TextStyle(FEditorStyle::Get(), "GenericFilters.TextStyle")
 						.Text(LOCTEXT("Filters", "Filters"))
 					]
 				]
@@ -82,7 +82,7 @@ void SMounteaDialogueSearch::Construct(const FArguments& InArgs, const TSharedPt
 		.Padding(0.f, 4.f, 0.f, 0.f)
 		[
 			SNew(SBorder)
-			.BorderImage(FAppStyle::GetBrush("Menu.Background"))
+			.BorderImage(FEditorStyle::GetBrush("Menu.Background"))
 			[
 				SAssignNew(TreeView, STreeView<TSharedPtr<FMounteaDialogueSearchResult>>)
 				.ItemHeight(24)

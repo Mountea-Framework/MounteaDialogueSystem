@@ -142,15 +142,15 @@ void MDSPopup::Open(const FString& Changelog)
 		[
 			SNew(SBorder)
 			.Padding(10)
-			.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+			.BorderImage(FEditorStyle::GetBrush("ToolPanel.DarkGroupBorder"))
 			[
 				SNew(SScrollBox)
 				+ SScrollBox::Slot()
 				[
 					SNew(SRichTextBlock)
 					.Text(FText::FromString(DisplayText))
-					.TextStyle(FAppStyle::Get(), "NormalText")
-					.DecoratorStyleSet(&FAppStyle::Get())
+					.TextStyle(FEditorStyle::Get(), "NormalText")
+					.DecoratorStyleSet(&FEditorStyle::Get())
 					.AutoWrapText(true)
 					+ SRichTextBlock::HyperlinkDecorator(TEXT("browser"), FSlateHyperlinkRun::FOnClick::CreateStatic(&OnBrowserLinkClicked))
 				]

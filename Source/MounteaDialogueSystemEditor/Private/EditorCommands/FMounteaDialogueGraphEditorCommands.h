@@ -2,14 +2,13 @@
 
 #include "CoreMinimal.h"
 
-
 class FMounteaDialogueGraphEditorCommands : public TCommands<FMounteaDialogueGraphEditorCommands>
 {
 
 public:
 
 	FMounteaDialogueGraphEditorCommands()
-	: TCommands<FMounteaDialogueGraphEditorCommands>("MounteaDialogueGraphEditor", NSLOCTEXT("Contexts", "MounteaDialogueGraphEditor", "Mountea Dialogue Graph Editor"), NAME_None, FAppStyle::GetAppStyleSetName())
+	: TCommands<FMounteaDialogueGraphEditorCommands>("MounteaDialogueGraphEditor", NSLOCTEXT("Contexts", "MounteaDialogueGraphEditor", "Mountea Dialogue Graph Editor"), NAME_None, FEditorStyle::GetStyleSetName())
 	{
 	}
 	

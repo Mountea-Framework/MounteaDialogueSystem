@@ -34,8 +34,7 @@ public:
 			FilterAddNativeParentClassPath(InFilter, ChildNativeClass);
 		}
 
-		InFilter.ClassPaths.Add(UBlueprint::StaticClass()->GetClassPathName()); 
-		//InFilter.ClassNames.Add(UBlueprint::StaticClass()->GetFName());
+		InFilter.ClassNames.Add(UBlueprint::StaticClass()->GetFName());
 		InFilter.bRecursiveClasses = true;
 	};
 	static void FilterAddNativeParentClassPath(FARFilter& InFilter, const UClass* Class)
