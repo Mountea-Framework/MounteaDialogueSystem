@@ -19,7 +19,7 @@ public:
 	/** @return The Slate style set for the Actor Interaction Plugin Help Button */
 	static const ISlateStyle& Get();
 
-	static FName GetStyleSetName();
+	static FName GetAppStyleSetName();
 
 private:
 

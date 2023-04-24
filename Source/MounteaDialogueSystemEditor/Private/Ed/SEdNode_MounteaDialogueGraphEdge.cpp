@@ -64,13 +64,13 @@ void SEdNode_MounteaDialogueGraphEdge::UpdateGraphNode()
 			/*+ SOverlay::Slot()
 			[
 				SNew(SImage)
-				.Image(FEditorStyle::GetBrush("Graph.TransitionNode.ColorSpill"))
+				.Image(FAppStyle::GetBrush("Graph.TransitionNode.ColorSpill"))
 				.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphEdge::GetEdgeColor)
 			]*/
 			+ SOverlay::Slot()
 			[
 				SNew(SImage)
-				.Image(FEditorStyle::GetBrush("GraphEditor.RefPinIcon"))
+				.Image(FAppStyle::GetBrush("GraphEditor.RefPinIcon"))
 				.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphEdge::GetEdgeColor)
 			]
 		];

@@ -166,7 +166,7 @@ FText UEdNode_MounteaDialogueGraphNode::GetTooltipText() const
 
 FSlateIcon UEdNode_MounteaDialogueGraphNode::GetIconAndTint(FLinearColor& OutColor) const
 {
-	static const FSlateIcon Icon = FSlateIcon(FMounteaDialogueGraphEditorStyle::GetStyleSetName(), "MDSStyleSet.Node.Icon.small");
+	static const FSlateIcon Icon = FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Node.Icon.small");
 	OutColor = DialogueGraphNode->GetBackgroundColor();
 	return Icon;
 }

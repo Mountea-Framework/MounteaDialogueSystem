@@ -344,7 +344,7 @@ void FMounteaDialogueSystemEditor::RegisterMenus()
 					PluginCommands,
 					NSLOCTEXT("MounteaSupport", "TabTitle", "Mountea Support"),
 					NSLOCTEXT("MounteaSupport", "TooltipText", "Opens Mountea Framework Support channel"),
-					FSlateIcon(FMDSHelpStyle::GetStyleSetName(), "MDSHelpStyleSet.Toolbar.HelpIcon.small")
+					FSlateIcon(FMDSHelpStyle::GetAppStyleSetName(), "MDSHelpStyleSet.Toolbar.HelpIcon.small")
 				);
 				SupportEntry.Name = FName("MounteaFrameworkSupport");
 				
@@ -355,7 +355,7 @@ void FMounteaDialogueSystemEditor::RegisterMenus()
 					PluginCommands,
 					NSLOCTEXT("MounteaDialogueWiki", "TabTitle", "Dialogue Wiki"),
 					NSLOCTEXT("MounteaDialogueWiki", "TooltipText", "Opens Mountea Dialogue System Wiki page"),
-					FSlateIcon(FMDSHelpStyle::GetStyleSetName(), "MDSHelpStyleSet.Toolbar.HelpIcon.small")
+					FSlateIcon(FMDSHelpStyle::GetAppStyleSetName(), "MDSHelpStyleSet.Toolbar.HelpIcon.small")
 				);
 				WikiEntry.Name = FName("MounteaDialogueWiki");
 				*/
@@ -376,7 +376,7 @@ void FMounteaDialogueSystemEditor::RegisterMenus()
 				Entry.SetCommandList(PluginCommands);
 			
 				Entry.InsertPosition.Position = EToolMenuInsertType::First;
-				Entry.Icon = FSlateIcon(FMDSHelpStyle::GetStyleSetName(), "MDSHelpStyleSet.Toolbar.HelpIcon");
+				Entry.Icon = FSlateIcon(FMDSHelpStyle::GetAppStyleSetName(), "MDSHelpStyleSet.Toolbar.HelpIcon");
 				Entry.Name = FName("MounteaFrameworkSupport");
 			}
 		}

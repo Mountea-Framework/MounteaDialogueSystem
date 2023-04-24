@@ -36,7 +36,7 @@ FConnectionDrawingPolicy_MounteaDialogueGraph::FConnectionDrawingPolicy_MounteaD
 	}
 	else
 	{
-		ArrowImage = FEditorStyle::GetBrush( TEXT("GenericPlay") );
+		ArrowImage = FAppStyle::GetBrush( TEXT("GenericPlay") );
 	}
 	
 	ArrowRadius = ArrowImage ? ArrowImage->ImageSize * ZoomFactor * 0.5f : FVector2D(0.f);
@@ -44,7 +44,7 @@ FConnectionDrawingPolicy_MounteaDialogueGraph::FConnectionDrawingPolicy_MounteaD
 	MidpointRadius = FVector2D::ZeroVector;
 	HoverDeemphasisDarkFraction = 0.8f;
 
-	BubbleImage = FEditorStyle::GetBrush( TEXT("Graph.Arrow") );
+	BubbleImage = FAppStyle::GetBrush( TEXT("Graph.Arrow") );
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FConnectionParams& Params)

@@ -8,7 +8,7 @@ class FMounteaDialogueGraphEditorCommands : public TCommands<FMounteaDialogueGra
 public:
 
 	FMounteaDialogueGraphEditorCommands()
-	: TCommands<FMounteaDialogueGraphEditorCommands>("MounteaDialogueGraphEditor", NSLOCTEXT("Contexts", "MounteaDialogueGraphEditor", "Mountea Dialogue Graph Editor"), NAME_None, FEditorStyle::GetStyleSetName())
+	: TCommands<FMounteaDialogueGraphEditorCommands>("MounteaDialogueGraphEditor", NSLOCTEXT("Contexts", "MounteaDialogueGraphEditor", "Mountea Dialogue Graph Editor"), NAME_None, FAppStyle::GetAppStyleSetName())
 	{
 	}
 	

@@ -11,7 +11,7 @@ class FMDSCommands : public TCommands<FMDSCommands>
 public:
 
 	FMDSCommands()
-	: TCommands<FMDSCommands>(TEXT("MounteaSupport"), NSLOCTEXT("Contexts", "Support", "Mountea Dialogue System"), NAME_None, FMDSHelpStyle::GetStyleSetName())
+	: TCommands<FMDSCommands>(TEXT("MounteaSupport"), NSLOCTEXT("Contexts", "Support", "Mountea Dialogue System"), NAME_None, FMDSHelpStyle::GetAppStyleSetName())
 	{
 	}
 
