@@ -541,7 +541,13 @@ public:
 				break;
 			case ERowDurationMode::EDRM_Add:
 				{
-					ReturnValue = Row.RowDuration + Row.RowDurationOverride;
+					if (Row.RowSound)
+					{
+						ReturnValue = Row.RowSound->Duration;
+						ReturnValue = ReturnValue + Row.RowDurationOverride;
+						break;
+					}
+					ReturnValue = Row.RowDurationOverride;
 				}
 				break;
 			case ERowDurationMode::ERDM_AutoCalculate:

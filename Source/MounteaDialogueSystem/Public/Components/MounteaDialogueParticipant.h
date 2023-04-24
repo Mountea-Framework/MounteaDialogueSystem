@@ -80,7 +80,7 @@ protected:
 	 * ❗ The sound should be a valid USoundBase object, otherwise nothing will be skipped.
 	 */ 
 	virtual  void SkipParticipantVoice(USoundBase* ParticipantVoice) override;
-	
+
 #pragma endregion 
 
 #pragma region Variables
@@ -91,6 +91,8 @@ protected:
 	 * Mountea Dialogue Graph.
 	 * ❗ In order to start Dialogue, this value must be filled.
 	 * ❔ Can be updated using SetDialogueGraph function.
+	 *
+	 * Set Graph is allowed only outside active Dialogue.
 	 */
 	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(DisplayThumbnail=false, NoResetToDefault))
 	UMounteaDialogueGraph* DialogueGraph = nullptr;
@@ -210,7 +212,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual UMounteaDialogueGraphNode* GetSavedStartingNode() const override
 	{ return StartingNode; };
-	
 	virtual void SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode) override;
 
 	/**
@@ -223,8 +224,6 @@ public:
 	/**
 	 * Overrides Dialogue Graph for this Participant.
 	 * ❗ Accepts Null values❗
-	 *
-	 * Set Graph is allowed only outside active Dialogue.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph) override;
@@ -277,7 +276,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual TMap<FGuid,int32> GetTraversedPath() const override
 	{ return TraversedPath; };
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	virtual void SaveTraversedPath_Implementation(TMap<FGuid,int32>& InPath) override;
 	
 
