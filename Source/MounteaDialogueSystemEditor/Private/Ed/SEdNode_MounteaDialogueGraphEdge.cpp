@@ -64,7 +64,7 @@ void SEdNode_MounteaDialogueGraphEdge::UpdateGraphNode()
 			/*+ SOverlay::Slot()
 			[
 				SNew(SImage)
-				.Image(FAppStyle::GetBrush("Graph.TransitionNode.ColorSpill"))
+				.Image(FEditorStyle::GetBrush("Graph.TransitionNode.ColorSpill"))
 				.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphEdge::GetEdgeColor)
 			]*/
 			+ SOverlay::Slot()
