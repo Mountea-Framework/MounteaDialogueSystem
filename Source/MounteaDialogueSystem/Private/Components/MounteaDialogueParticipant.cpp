@@ -122,7 +122,7 @@ void UMounteaDialogueParticipant::SaveStartingNode_Implementation(UMounteaDialog
 {
 	if (!DialogueGraph) return;
 	if (!DialogueGraph->GetAllNodes().Contains(NewStartingNode)) return;
-	
+
 	StartingNode = NewStartingNode;
 
 	OnStartingNodeSaved.Broadcast(StartingNode);

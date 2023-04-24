@@ -298,6 +298,7 @@ TSharedRef<SGraphEditor> FAssetEditor_MounteaDialogueGraph::CreateViewportWidget
 	FGraphAppearanceInfo AppearanceInfo;
 	AppearanceInfo.CornerText = LOCTEXT("AppearanceCornerText_MounteaDialogueGraph", "Mountea Dialogue Tree");
 	AppearanceInfo.CornerImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.CornerImage"));
+	AppearanceInfo.InstructionText = LOCTEXT("InstructionText_MounteaDialogueGraph", "Place Dialogue Nodes by right clicking and selecting them from Menu.");
 
 	CreateCommandList();
 
