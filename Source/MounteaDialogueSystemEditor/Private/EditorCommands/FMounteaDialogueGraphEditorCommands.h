@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 
-
 class FMounteaDialogueGraphEditorCommands : public TCommands<FMounteaDialogueGraphEditorCommands>
 {
 

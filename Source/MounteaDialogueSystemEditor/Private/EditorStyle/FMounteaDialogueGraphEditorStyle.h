@@ -22,7 +22,7 @@ public:
 		return StyleSet->GetBrush(PropertyName, Specifier);
 	};
 	
-	static const FName& GetStyleSetName()
+	static const FName& GetAppStyleSetName()
 	{
 		static FName StyleSetName(TEXT("MounteaDialogueEditorStyle"));
 		return StyleSetName;

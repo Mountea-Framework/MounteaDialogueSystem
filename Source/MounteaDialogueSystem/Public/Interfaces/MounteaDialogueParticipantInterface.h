@@ -69,6 +69,16 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	void SaveTraversedPath(TMap<FGuid,int32>& InPath);
 
+	/**
+	 * Interface call.
+	 * Retrieves current Dialogue Participant State.
+	 * State defines whether Participant can start/close dialogue or not.
+	 * 
+	 * @return ParticipantState	Participant state value
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	EDialogueParticipantState GetState() const;
+
 #pragma endregion
 
 protected:
@@ -94,6 +104,9 @@ protected:
 	{
 		// Implement logic in children
 	};
+
+	EDialogueParticipantState GetState_Implementation() const
+	{ return GetParticipantState(); };
 
 #pragma endregion 
 

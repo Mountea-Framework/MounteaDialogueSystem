@@ -38,7 +38,7 @@ const ISlateStyle& FMDSHelpStyle::Get()
 	return *StyleInstance;
 }
 
-FName FMDSHelpStyle::GetStyleSetName()
+FName FMDSHelpStyle::GetAppStyleSetName()
 {
 	static FName StyleSetName(TEXT("MDSHelpStyleSet"));
 	return StyleSetName;

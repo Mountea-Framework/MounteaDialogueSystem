@@ -172,6 +172,17 @@ public:
 	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) = 0;
 
 	/**
+	 * Interface call.
+	 * Retrieves current Dialogue Manager State.
+	 * State defines whether Manager can start/close dialogue or not.
+	 * 
+	 * @return ManagerState	Manager state value
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	EDialogueManagerState GetState() const;
+	EDialogueManagerState GetState_Implementation() const
+	{ return GetDialogueManagerState(); };
+	/**
 	 * Retrieves current Dialogue Manager State.
 	 * State defines whether Manager can start/close dialogue or not.
 	 * 
@@ -197,18 +208,6 @@ public:
 	 * @param NewState	Manager State to be set as Default Manager State
 	 */
 	virtual void SetDefaultDialogueManagerState(const EDialogueManagerState NewState) = 0;
-
-	/**
-	 * Interface call.
-	 * Retrieves current Dialogue Manager State.
-	 * State defines whether Manager can start/close dialogue or not.
-	 * 
-	 * @return ManagerState	Manager state value
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
-	EDialogueManagerState GetState() const;
-	EDialogueManagerState GetState_Implementation() const
-	{ return GetDialogueManagerState(); };
 	
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() = 0;

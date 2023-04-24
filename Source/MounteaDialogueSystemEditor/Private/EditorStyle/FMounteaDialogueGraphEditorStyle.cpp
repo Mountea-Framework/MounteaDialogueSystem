@@ -38,7 +38,7 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	const FVector2D Icon128x128(128.f, 128.f);
 	const FVector2D Icon200x70(200.f, 70.f);
 	
-	StyleSet = MakeShareable(new FSlateStyleSet(GetStyleSetName()));
+	StyleSet = MakeShareable(new FSlateStyleSet(GetAppStyleSetName()));
 	StyleSet->SetContentRoot(IPluginManager::Get().FindPlugin("MounteaDialogueSystem")->GetBaseDir() / TEXT("Resources"));
 
 	StyleSet->Set("MDSStyleSet.AutoArrange.small", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon16x16));
