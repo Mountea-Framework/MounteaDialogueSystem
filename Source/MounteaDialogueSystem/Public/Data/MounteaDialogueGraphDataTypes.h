@@ -200,19 +200,15 @@ public:
 public:
 
 	FDialogueRowData()
-		: RowText(LOCTEXT("FDialogueRowData_RowText", "Dialogue Example")), RowSound(nullptr), RowDurationMode(ERowDurationMode::ERDM_Duration), RowDuration(0), RowDurationOverride(0)
-	{
-		RowGUID = FGuid::NewGuid();
-	}
+		: RowText(LOCTEXT("FDialogueRowData_RowText", "Dialogue Example")), RowSound(nullptr), RowDurationMode(ERowDurationMode::ERDM_Duration), RowDuration(0), RowDurationOverride(0), RowGUID(FGuid::NewGuid())
+	{};
 
 	FDialogueRowData
 	(
 		const FText& InText, USoundBase* InSound, const ERowDurationMode InRowDurationMode, const float InDuration, const float InDurationOverride
 	)
-	: RowText(InText), RowSound(InSound), RowDurationMode(InRowDurationMode), RowDuration(InDuration), RowDurationOverride(InDurationOverride)
-	{
-		RowGUID = FGuid::NewGuid();
-	}
+	: RowText(InText), RowSound(InSound), RowDurationMode(InRowDurationMode), RowDuration(InDuration), RowDurationOverride(InDurationOverride), RowGUID(FGuid::NewGuid())
+	{};
 
 public:
 
