@@ -8,7 +8,7 @@
 	"CreatedBy": "Dominik Pavlicek",
 	"CreatedByURL": "https://github.com/Mountea-Framework",
 	"DocsURL": "https://github.com/Mountea-Framework/ActorInteractionPlugin/wiki",
-	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/a8913233ba144e518cffc6a75502971d",
+	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/ea38ae1f87b24807a66fdf4fa65ef521",
 	"SupportURL": "https://bit.ly/DominikPavlicek_SupportServer",
 	"EngineVersion": "4.27.0",
 	"CanContainContent": true,
@@ -19,12 +19,30 @@
 		{
 			"Name": "MounteaDialogueSystem",
 			"Type": "Runtime",
-			"LoadingPhase": "PreDefault"
+			"LoadingPhase": "PreDefault",
+			"WhitelistPlatforms": 
+			[
+				"Linux",
+				"Mac",
+				"PS4",
+				"Win32",
+				"Win64",
+				"XboxOne"
+			]
 		},
 		{
 			"Name": "MounteaDialogueSystemEditor",
 			"Type": "Editor",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms":
+			[
+				"Linux",
+				"Mac",
+				"PS4",
+				"Win32",
+				"Win64",
+				"XboxOne"
+			]
 		}
 	]
 }
