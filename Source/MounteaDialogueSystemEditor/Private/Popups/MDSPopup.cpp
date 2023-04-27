@@ -23,9 +23,9 @@ void MDSPopup::FormatChangelog(FString& InChangelog)
 	FString WelcomeMessage = FString(R"(
 <LargeText>Hello and thank you for using Mountea Dialogue System!</>
 
-First thing first, if you've been enjoying using it, it would mean a lot if you could just drop <a id="browser" href="https://bit.ly/MDS_UE4Marketplace">a small review on the marketplace page</> :).
+First thing first, if you've been enjoying using it, it would mean a lot if you could just drop <a id="browser" href="https://www.unrealengine.com/marketplace/en-US/product/ea38ae1f87b24807a66fdf4fa65ef521">a small review on the marketplace page</> :).
 
-I also made a paid <a id="browser" href="https://bit.ly/ModularSwordsPack_UE4Marketplace">Modular Sword Pack</>. It's a simple yet powerful tool that allows creating thousands upon thousands of unique swords with a simple click, now with a free upgrade of Modular Scabbard System!
+I also made a paid <a id="browser" href="https://www.unrealengine.com/marketplace/en-US/product/fbe5d74e46b846f0aeb8ca759e64b71d">Modular Sword Pack</>. It's a simple yet powerful tool that allows creating thousands upon thousands of unique swords with a simple click, now with a free upgrade of Modular Scabbard System!
 
 But let's keep it short, here are the cool new features (and bugfixes) of this version!
 
@@ -167,7 +167,7 @@ void MDSPopup::Open(const FString& Changelog)
 				.HAlign(HAlign_Center)
 				.OnClicked_Lambda([]()
 				{
-					const FString URL = "https://bit.ly/MDS_UE4Marketplace";
+					const FString URL = "https://www.unrealengine.com/marketplace/en-US/product/ea38ae1f87b24807a66fdf4fa65ef521";
 					FPlatformProcess::LaunchURL(*URL, nullptr, nullptr);
 
 					return FReply::Handled();
