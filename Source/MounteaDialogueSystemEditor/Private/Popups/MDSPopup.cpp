@@ -167,7 +167,7 @@ void MDSPopup::Open(const FString& Changelog)
 				.HAlign(HAlign_Center)
 				.OnClicked_Lambda([]()
 				{
-					const FString URL = "https://bit.ly/MDS_UE4Marketplace";
+					const FString URL = "https://www.unrealengine.com/marketplace/en-US/product/ea38ae1f87b24807a66fdf4fa65ef521";
 					FPlatformProcess::LaunchURL(*URL, nullptr, nullptr);
 
 					return FReply::Handled();
