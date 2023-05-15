@@ -415,7 +415,6 @@ bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
 	
 	// This Component should not be responsible for setting up Player Controller!
 	PlayerController->SetShowMouseCursor(true);
-	DialogueWidgetPtr->bStopAction = true;
 
 	IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CreateDialogueWidget);
 	
