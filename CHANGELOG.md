@@ -1,10 +1,10 @@
-Current Version: 1.0.0.51
+Current Version: 1.0.0.52
 
 # Changelog
 
 All notable changes to this project will be documented in this file.
 
-**Version 1.0.0.51**
+**Version 1.0.0.52**
 ### Added
 > - Added: Mountea Dialogue Graph
 > - Added: Mountea Dialogue Node

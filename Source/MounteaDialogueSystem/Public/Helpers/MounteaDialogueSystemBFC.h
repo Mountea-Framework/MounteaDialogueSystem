@@ -22,6 +22,8 @@
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 #include "Sound/SoundBase.h"
 
+#include "GameFramework/Pawn.h"
+
 #include "MounteaDialogueSystemBFC.generated.h"
 
 
