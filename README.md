@@ -26,10 +26,11 @@ Colour | Explanation
 ### Suport Table
 Engine Version | Plugin Version | Support
 -------------- | -------------- | ----
-UE 4.26 | 1.0.0.426 | 🟥
-UE 4.27 | 1.0.0.427 | 🟩
-UE 5.00 | 1.0.0.50 | 🟩
-UE 5.1 | 1.0.0.51 | 🟩
+UE 4.26 | [1.0.0.426](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.426) | 🟥
+UE 4.27 | [1.0.0.427](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.427) | 🟥
+UE 5.00 | [1.0.0.50](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.50) | 🟩
+UE 5.1 | [1.0.0.51](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.51) | 🟩
+UE 5.2 | [1.0.0.52](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.52) | 🟩
 
 ## Features
 ### Graph Editor
