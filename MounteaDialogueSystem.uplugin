@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "1.0.0.51",
+	"VersionName": "1.0.1.51",
 	"FriendlyName": "Mountea Dialogue System",
 	"Description": "Mountea Dialogue System is an Open-source Mountea Framework tool for Unreal Engine for creating (not just) complex dialogues! Provides its own Dialogue Tree editor and validation system.",
 	"Category": "Mountea Framework",
