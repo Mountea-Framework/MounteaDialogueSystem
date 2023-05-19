@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DialogueAdditionalData.h"
+#include "GameplayTagContainer.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/DataTable.h"
 #include "UObject/Object.h"
@@ -253,6 +255,15 @@ struct FDialogueRow : public FTableRowBase
 
 public:
 	/**
+	 * List of GameplayTags which distinguish participants. 
+	 * 
+	 * ❗ Optional value in version 1.0.1.X.
+	 * ❔ Each unique dialogue Participant should be using different Tag, if generic, then use something like `Dialogue.NPC`
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
+	FGameplayTagContainer CompatibleTags;
+	
+	/**
 	 * Optional Row type ID.
 	 * 
 	 * ❗ Optional value.
@@ -311,8 +322,8 @@ public:
 	 * This data could be used for Decorators or UI in general.
 	 * Any Data Asset can be used here and no logic is tied to this attribute.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
-	UDataAsset* DialogueRowAdditionalData = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(AllowAbstract=false))
+	TSubclassOf<UDialogueAdditionalData> DialogueRowAdditionalData = nullptr;
 	/**
 	 * Row GUID.
 	 * 
@@ -338,7 +349,7 @@ public:
 		RowGUID = FGuid::NewGuid();
 	};
 
-	FDialogueRow(const int32 NewUIRowID, UTexture* InRowIcon, const FText& InText, const FText& InParticipant, const TSet<FDialogueRowData>& InData, UDataAsset* NewData)
+	FDialogueRow(const int32 NewUIRowID, UTexture* InRowIcon, const FText& InText, const FText& InParticipant, const TSet<FDialogueRowData>& InData, const TSubclassOf<UDialogueAdditionalData> NewData)
 		: UIRowID(NewUIRowID), RowOptionalIcon(InRowIcon), DialogueParticipant(InParticipant), RowTitle(InText), DialogueRowData(InData), DialogueRowAdditionalData(NewData)
 	{
 		RowGUID = FGuid::NewGuid();
