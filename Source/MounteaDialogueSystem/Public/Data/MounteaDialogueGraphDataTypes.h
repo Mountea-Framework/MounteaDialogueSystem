@@ -236,7 +236,7 @@ public:
 		return !(*this == Other);
 	}
 	
-	static friend uint32 GetTypeHash(const FDialogueRowData& ActionKeyData)
+	friend uint32 GetTypeHash(const FDialogueRowData& ActionKeyData)
 	{
 		return FCrc::MemCrc32(&ActionKeyData.RowGUID, sizeof(FGuid));
 	}
@@ -381,7 +381,7 @@ public:
 		return !(*this == Other);
 	}
 	
-	static friend uint32 GetTypeHash(const FDialogueRow& Row)
+	friend uint32 GetTypeHash(const FDialogueRow& Row)
 	{
 		return FCrc::MemCrc32(&Row.RowGUID, sizeof(FGuid));
 	}

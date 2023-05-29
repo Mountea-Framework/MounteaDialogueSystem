@@ -48,7 +48,7 @@ void UMounteaDialogueGraphNode::SetNewWorld(UWorld* NewWorld)
 
 void UMounteaDialogueGraphNode::InitializeNode_Implementation(UWorld* InWorld)
 {
-	OwningWorld = InWorld;
+	SetNewWorld(InWorld);
 
 	if (Graph) SetNodeIndex(Graph->AllNodes.Find(this));
 }
