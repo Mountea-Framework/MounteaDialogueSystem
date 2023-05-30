@@ -48,6 +48,8 @@ public:
 	virtual FName GetRowName() const
 	{ return RowName; }
 
+	virtual bool ValidateNodeRuntime_Implementation() const override;
+
 public:
 
 #if WITH_EDITORONLY_DATA

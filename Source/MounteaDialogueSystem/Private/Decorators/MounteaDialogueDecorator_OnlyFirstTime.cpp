@@ -14,7 +14,7 @@ void UMounteaDialogueDecorator_OnlyFirstTime::InitializeDecorator_Implementation
 	if (World)
 	{
 		Manager = UMounteaDialogueSystemBFC::GetDialogueManager(GetOwningWorld());
-		Context = Manager->GetDialogueContext();
+		if (Manager) Context = Manager->GetDialogueContext();
 	}
 }
 
