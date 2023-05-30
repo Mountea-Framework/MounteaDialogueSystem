@@ -88,6 +88,25 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraph::GetAllDecorators() cons
 bool UMounteaDialogueGraph::CanStartDialogueGraph() const
 {
 	bool bSatisfied = true;
+	
+	if (AllNodes.Num() == 0)
+	{
+		return false;
+	}
+	
+	for (const auto Itr : AllNodes)
+	{
+		if (!Itr)
+		{
+			return false;
+		}
+
+		if (Itr->ValidateNodeRuntime() == false)
+		{
+			return false;
+		}
+	}
+	
 	auto Decorators = GetAllDecorators();
 	
 	if (Decorators.Num() == 0)

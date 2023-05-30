@@ -286,6 +286,14 @@ public:
 
 		if (Graph == nullptr) return false;
 
+		for (const auto Itr : Graph->GetAllNodes())
+		{
+			if (Itr)
+			{
+				Itr->InitializeNode(TempWorld);
+			}
+		}
+
 		for (auto Itr : Graph->GetAllDecorators())
 		{
 			Itr.InitializeDecorator(TempWorld, DialogueParticipant);
