@@ -136,6 +136,8 @@ void UMounteaDialogueParticipant::SetDialogueGraph(UMounteaDialogueGraph* NewDia
 	{
 		DialogueGraph = NewDialogueGraph;
 
+		InitializeParticipant();
+		
 		OnDialogueGraphChanged.Broadcast(NewDialogueGraph);
 	}
 }
