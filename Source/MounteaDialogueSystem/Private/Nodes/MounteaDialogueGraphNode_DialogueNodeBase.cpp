@@ -146,7 +146,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 	}
 
 	const FString Context;
-	const FDialogueRow* SelectedRow = DataTable->FindRow<FDialogueRow>(RowName, Context);
+	const FDialogueRow* SelectedRow = DataTable!=nullptr ? DataTable->FindRow<FDialogueRow>(RowName, Context) : nullptr;
 
 	if (SelectedRow == nullptr)
 	{
