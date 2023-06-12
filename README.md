@@ -8,10 +8,12 @@ Mountea Dialogue System is an Open-source Mountea Framework Unreal Engine tool f
 [![Discord](https://badgen.net/discord/members/2vXWEEN?label=Discord&logo=discord&logoColor=ffffff&color=7389D8)](https://discord.com/invite/2vXWEEN)
 
 ## Discord Channel
-
-[![Discord LINK](https://static.wikia.nocookie.net/siivagunner/images/9/9f/Discord_icon.svg/revision/latest?cb=20210814160101)](https://discord.gg/2vXWEEN)
+<a href="https://discord.gg/2vXWEEN"><img src="https://static.wikia.nocookie.net/siivagunner/images/9/9f/Discord_icon.svg/revision/latest?cb=20210814160101" alt="Discord LINK" width="100" height="100"></a>
 
 Join support and community Discord!
+
+## Tutorial videos
+<a href="https://www.youtube.com/playlist?list=PLIU53wA8zZmg5eBKEcpZr7G8JBBZ4QPKq"><img src="https://img.talkandroid.com/uploads/2016/06/youtube-logo-450x450.png" alt="TUTORIAL playlist" width="100" height="100"></a>
 
 ## Compatible Engine Version
 
