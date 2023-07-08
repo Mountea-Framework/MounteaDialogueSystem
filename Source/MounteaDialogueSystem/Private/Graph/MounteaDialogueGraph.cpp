@@ -72,7 +72,7 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraph::GetAllDecorators() cons
 	TArray<FMounteaDialogueDecorator> TempReturn;
 	TArray<FMounteaDialogueDecorator> Return;
 
-	for (const auto Itr : AllNodes)
+	for (const auto& Itr : AllNodes)
 	{
 		if (Itr && Itr->GetNodeDecorators().Num() > 0)
 		{
@@ -94,7 +94,7 @@ bool UMounteaDialogueGraph::CanStartDialogueGraph() const
 		return false;
 	}
 	
-	for (const auto Itr : AllNodes)
+	for (const auto& Itr : AllNodes)
 	{
 		if (!Itr)
 		{
@@ -227,10 +227,10 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 		}
 		
 		TMap<UClass*, int32> DuplicatedDecoratorsMap;
-		for (const auto Itr : UsedNodeDecorators)
+		for (const auto& Itr : UsedNodeDecorators)
 		{
 			int32 ClassAppearance = 1;
-			for (const auto Itr2 : UsedNodeDecorators)
+			for (const auto& Itr2 : UsedNodeDecorators)
 			{
 				if (Itr != Itr2 && Itr->GetClass() == Itr2->GetClass())
 				{
@@ -247,7 +247,7 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 		
 		if (DuplicatedDecoratorsMap.Num() > 0)
 		{
-			for (const auto Itr : DuplicatedDecoratorsMap)
+			for (const auto& Itr : DuplicatedDecoratorsMap)
 			{
 				bReturnValue = false;
 			

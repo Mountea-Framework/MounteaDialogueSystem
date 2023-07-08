@@ -27,10 +27,12 @@ public:
 protected:
 	
 	virtual void BeginPlay() override;
-
+	
+public:
+	
 #pragma region EventFunctions
 	
-protected:
+public:
 	
 	virtual void CallDialogueNodeSelected_Implementation(const FGuid& NodeGUID) override;
 
@@ -126,6 +128,8 @@ protected:
 
 #pragma endregion
 
+protected:
+	
 #pragma region EventVariables
 	
 protected:
@@ -265,7 +269,7 @@ public:
 	
 	virtual void PrepareNode_Implementation() override;
 	
-protected:
+public:
 
 	virtual void StartDialogue() override;
 	virtual void CloseDialogue() override;

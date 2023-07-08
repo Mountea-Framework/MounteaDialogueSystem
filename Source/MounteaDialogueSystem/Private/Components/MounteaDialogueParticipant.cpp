@@ -40,7 +40,7 @@ void UMounteaDialogueParticipant::InitializeParticipant_Implementation()
 	}
 	
 	TArray<FMounteaDialogueDecorator> Decorators = UMounteaDialogueSystemBFC::GetAllDialogueDecorators(DialogueGraph);
-	for (const auto Itr : Decorators)
+	for (const auto& Itr : Decorators)
 	{
 		if (Itr.DecoratorType)
 		{
@@ -194,4 +194,9 @@ void UMounteaDialogueParticipant::SaveTraversedPath_Implementation(TMap<FGuid, i
 	// Append both, new path and paths that have been passed before but are not in current iteration
 	TraversedPath.Append(InPath);
 	TraversedPath.Append(OuterJoin);
+}
+
+FGameplayTag UMounteaDialogueParticipant::GetParticipantTag() const
+{
+	return ParticipantTag;
 }

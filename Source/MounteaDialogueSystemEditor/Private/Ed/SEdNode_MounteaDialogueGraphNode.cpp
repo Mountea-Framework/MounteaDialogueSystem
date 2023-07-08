@@ -383,7 +383,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 														  .AutoHeight()
 														[
 															SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-															.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
+															.Style(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitleInlineEditableText")
 															.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
 															.OnVerifyTextChanged(
 															this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
@@ -1189,7 +1189,7 @@ bool SEdNode_MounteaDialogueGraphNode::HasGraphDecorators() const
 	{
 		if (EdParentNode->DialogueGraphNode && EdParentNode->DialogueGraphNode->Graph)
 		{
-			for (const auto Itr :  EdParentNode->DialogueGraphNode->Graph->GetGraphDecorators())
+			for (const auto& Itr :  EdParentNode->DialogueGraphNode->Graph->GetGraphDecorators())
 			{
 				if (Itr.DecoratorType != nullptr)
 				{
@@ -1212,7 +1212,7 @@ bool SEdNode_MounteaDialogueGraphNode::HasNodeDecorators() const
 			{
 				bool bAllValid = true;
 
-				for (const auto Itr : EdParentNode->DialogueGraphNode->GetNodeDecorators())
+				for (const auto& Itr : EdParentNode->DialogueGraphNode->GetNodeDecorators())
 				{
 					if (Itr.DecoratorType == nullptr)
 					{

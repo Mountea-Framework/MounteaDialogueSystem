@@ -8,7 +8,7 @@
 #include "MounteaDialogueParticipantInterface.generated.h"
 
 // This class does not need to be modified.
-UINTERFACE(BlueprintType, Blueprintable)
+UINTERFACE(MinimalAPI, BlueprintType, Blueprintable)
 class UMounteaDialogueParticipantInterface : public UInterface
 {
 	GENERATED_BODY()
@@ -79,6 +79,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	EDialogueParticipantState GetState() const;
 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	FGameplayTag GetTag() const;
 #pragma endregion
 
 protected:
@@ -107,6 +109,9 @@ protected:
 
 	EDialogueParticipantState GetState_Implementation() const
 	{ return GetParticipantState(); };
+
+	FGameplayTag GetTag_Implementation() const
+	{ return GetParticipantTag(); }
 
 #pragma endregion 
 
@@ -198,6 +203,8 @@ public:
 	 * @return The map of nodes traversed during the dialogue.
 	 */
 	virtual TMap<FGuid,int32> GetTraversedPath() const = 0;
+
+	virtual FGameplayTag GetParticipantTag() const = 0;
 
 #pragma endregion
 

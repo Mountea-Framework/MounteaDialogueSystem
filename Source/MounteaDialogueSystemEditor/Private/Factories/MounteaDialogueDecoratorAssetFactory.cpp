@@ -48,7 +48,7 @@ UObject* UMounteaDialogueDecoratorAssetFactory::FactoryCreateNew(UClass* Class, 
 
 bool UMounteaDialogueDecoratorAssetFactory::ConfigureProperties()
 {
-	static const FText TitleText = FText::FromString(TEXT("Pick Parent  Class for new Mountea Dialogue Decorator Object"));
+	static const FText TitleText = FText::FromString(TEXT("Pick Parent Class for new Mountea Dialogue Decorator Object"));
 	ParentClass = nullptr;
 
 	UClass* ChosenClass = nullptr;

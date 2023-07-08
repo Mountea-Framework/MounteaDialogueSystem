@@ -94,7 +94,7 @@ public:
 	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
 
 	/** Defines whether this Node will start automatically or if requires input.*/
-	UPROPERTY(SaveGame, EditAnywhere, BlueprintReadOnly, Category="Base")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	uint8 bAutoStarts : 1;
 	/**
 	 * The maximum number of children nodes that this node can have.
