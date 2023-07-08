@@ -133,7 +133,9 @@ void FMounteaDialogueGraphNode_Details::MakePreviewsScrollBox(TArray<FText>& Fro
 void FMounteaDialogueGraphNode_Details::ResetTexts()
 {
 	if (!EditingNode) return;
+	
 	if (SavedLayoutBuilder) SavedLayoutBuilder->ForceRefreshDetails();
+	
 	if (UMounteaDialogueGraphNode_DialogueNodeBase* EditingDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(EditingNode) )
 	{
 		TArray<FText> PreviewTexts = EditingDialogueNode->GetPreviews();
@@ -145,7 +147,9 @@ void FMounteaDialogueGraphNode_Details::ResetTexts()
 void FMounteaDialogueGraphNode_Details::ResetPreviewingNode()
 {
 	if (!EditingNode) return;
+	
 	if (SavedLayoutBuilder) SavedLayoutBuilder->ForceRefreshDetails();
+	
 	if (EditingNode->IsA(UMounteaDialogueGraphNode_ReturnToNode::StaticClass()))
 	{
 		MakePreviewNode();

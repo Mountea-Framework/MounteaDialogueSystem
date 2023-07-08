@@ -254,13 +254,14 @@ struct FDialogueRow : public FTableRowBase
 	GENERATED_BODY()
 
 public:
+	
 	/**
 	 * List of GameplayTags which distinguish participants. 
 	 * 
-	 * ❗ Optional value in version 1.0.1.X.
+	 * ❗ New feature in version 1.0.5.X.
 	 * ❔ Each unique dialogue Participant should be using different Tag, if generic, then use something like `Dialogue.NPC`
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", DisplayName="Compatible Participants Tags")
 	FGameplayTagContainer CompatibleTags;
 	
 	/**

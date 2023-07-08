@@ -56,8 +56,8 @@ FAssetEditor_MounteaDialogueGraph::~FAssetEditor_MounteaDialogueGraph()
 	EditingGraph = nullptr;
 	UPackage::PackageSavedWithContextEvent.Remove(OnPackageSavedDelegateHandle);
 
-	FGenericCommands::Unregister();
-	FGraphEditorCommands::Unregister();
+	//FGenericCommands::Unregister();
+	//FGraphEditorCommands::Unregister();
 	FMounteaDialogueGraphEditorCommands::Unregister();
 
 	ToolbarBuilder.Reset();
@@ -68,8 +68,8 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(cons
 	EditingGraph = Graph;
 	CreateEdGraph();
 	
-	FGenericCommands::Register();
-	FGraphEditorCommands::Register();
+	//FGenericCommands::Register();
+	//FGraphEditorCommands::Register();
 	FMounteaDialogueGraphEditorCommands::Register();
 
 	if (!ToolbarBuilder.IsValid())

@@ -144,9 +144,9 @@ bool UEdGraph_MounteaDialogueGraph::Modify(bool bAlwaysMarkDirty)
 
 void UEdGraph_MounteaDialogueGraph::PostEditUndo()
 {
-	Super::PostEditUndo();
-
 	NotifyGraphChanged();
+	
+	Super::PostEditUndo();
 }
 
 void UEdGraph_MounteaDialogueGraph::SetDialogueEditorPtr(TWeakPtr<FAssetEditor_MounteaDialogueGraph> NewPtr)
