@@ -93,7 +93,7 @@ public:
 	
 		if (OwnerComponents.Num() == 0) return nullptr;
 
-		for (const auto Itr : OwnerComponents)
+		for (const auto& Itr : OwnerComponents)
 		{
 			if (Itr && Itr->GetName().Equals(Arg.ToString()))
 			{
@@ -114,7 +114,7 @@ public:
 	
 		if (OwnerComponents.Num() == 0) return nullptr;
 		
-		for (const auto Itr : OwnerComponents)
+		for (const auto& Itr : OwnerComponents)
 		{
 			if (Itr && Itr->ComponentHasTag(Arg))
 			{
@@ -286,7 +286,7 @@ public:
 
 		if (Graph == nullptr) return false;
 
-		for (const auto Itr : Graph->GetAllNodes())
+		for (const auto& Itr : Graph->GetAllNodes())
 		{
 			if (Itr)
 			{
@@ -593,7 +593,7 @@ public:
 		
 		Decorators.Append(FromGraph->GetGraphDecorators());
 
-		for (const auto Itr : FromGraph->GetAllNodes())
+		for (const auto& Itr : FromGraph->GetAllNodes())
 		{
 			if (Itr)
 			{

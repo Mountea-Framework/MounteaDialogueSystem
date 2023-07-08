@@ -95,8 +95,41 @@ void FMounteaDialogueGraphEditorStyle::Create()
 		.SetNormal(BOX_BRUSH("RoundedSelection_16x", 4.0f / 16.0f, FLinearColor(1, 1, 1, 0.1f)))
 		.SetHovered(BOX_BRUSH("RoundedSelection_16x", 4.0f / 16.0f, FLinearColor(1, .55f, 0, 0.2f)))
 		.SetPressed(BOX_BRUSH("RoundedSelection_16x", 4.0f / 16.0f,  FLinearColor(1, .55f, 0, 0.4f)));
-	
+
 	StyleSet->Set("MDSStyleSet.Buttons.Style", MounteaButtonStyle);
+
+	{
+		const FScrollBarStyle ScrollBar = GetWidgetStyle<FScrollBarStyle>( "ScrollBar" );
+
+		FTextBlockStyle NormalText = FTextBlockStyle()
+			.SetFont(DEFAULT_FONT("Regular", FCoreStyle::RegularTextSize))
+			.SetColorAndOpacity(FSlateColor::UseForeground())
+			.SetShadowOffset(FVector2D::ZeroVector)
+			.SetShadowColorAndOpacity(FLinearColor::Black)
+			.SetHighlightColor( FLinearColor( 0.02f, 0.3f, 0.0f ) )
+			.SetHighlightShape( BOX_BRUSH( "Common/TextBlockHighlightShape", FMargin(3.f/8.f) ) );
+		
+		FTextBlockStyle NodeTitle = FTextBlockStyle(NormalText)
+			.SetFont( DEFAULT_FONT( "Bold", 14 ) )
+			.SetColorAndOpacity( FLinearColor(230.0f/255.0f,230.0f/255.0f,230.0f/255.0f) )
+			.SetShadowOffset( FVector2D( 2,2 ) )
+			.SetShadowColorAndOpacity( FLinearColor(0.f,0.f,0.f, 0.7f) );
+		StyleSet->Set( "MDSStyleSet.NodeTitle", NodeTitle );
+
+		FEditableTextBoxStyle NodeTitleEditableText = FEditableTextBoxStyle()
+			.SetFont(NormalText.Font)
+			.SetBackgroundImageNormal( BOX_BRUSH( "Common/TextBox", FMargin(4.0f/16.0f) ) )
+			.SetBackgroundImageHovered( BOX_BRUSH( "Common/TextBox_Hovered", FMargin(4.0f/16.0f) ) )
+			.SetBackgroundImageFocused( BOX_BRUSH( "Common/TextBox_Hovered", FMargin(4.0f/16.0f) ) )
+			.SetBackgroundImageReadOnly( BOX_BRUSH( "Common/TextBox_ReadOnly", FMargin(4.0f/16.0f) ) )
+			.SetScrollBarStyle( ScrollBar );
+		StyleSet->Set( "MDSStyleSet.NodeTitleEditableText", NodeTitleEditableText );
+
+		StyleSet->Set( "MDSStyleSet.NodeTitleInlineEditableText", FInlineEditableTextBlockStyle()
+			.SetTextStyle(NodeTitle)
+			.SetEditableTextBoxStyle(NodeTitleEditableText)
+			);
+	}
 }
 
 #undef IMAGE_BRUSH

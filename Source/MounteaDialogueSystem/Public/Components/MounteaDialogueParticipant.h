@@ -38,7 +38,7 @@ protected:
 
 #pragma region Functions
 
-protected:
+public:
 
 	/**
 	 * Finds an audio component using FindAudioComponentByName or FindAudioComponentByTag.
@@ -149,6 +149,13 @@ protected:
 	 */
 	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(NoResetToDefault))
 	TMap<FGuid, int32> TraversedPath;
+
+	/**
+	 * Gameplay tag identifying this Participant.
+	 * Servers a purpose of being unique ID for Dialogues with multiple Participants.
+	 */
+	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(NoResetToDefault))
+	FGameplayTag ParticipantTag;
 
 #pragma endregion
 
@@ -277,8 +284,9 @@ public:
 	virtual TMap<FGuid,int32> GetTraversedPath() const override
 	{ return TraversedPath; };
 	virtual void SaveTraversedPath_Implementation(TMap<FGuid,int32>& InPath) override;
-	
 
+	virtual FGameplayTag GetParticipantTag() const override;
+	
 #pragma region EventHandleGetters
 	
 	virtual FDialogueGraphChanged& GetDialogueGraphChangedEventHandle() override
