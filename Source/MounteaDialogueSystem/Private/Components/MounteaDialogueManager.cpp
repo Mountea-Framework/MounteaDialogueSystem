@@ -58,10 +58,14 @@ void UMounteaDialogueManager::CallDialogueNodeSelected_Implementation(const FGui
 			}
 		}
 	}
+	else
+	{
+		OnDialogueFailed.Broadcast(TEXT("[CallDialogueNodeSelected] Invalid Context!"));
+	}
 
 	if (!SelectedNode)
 	{
-		OnDialogueFailed.Broadcast(TEXT("Cannot find Selected Option!"));
+		OnDialogueFailed.Broadcast(TEXT("[CallDialogueNodeSelected] Cannot find Selected Option!"));
 	}
 		
 	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
