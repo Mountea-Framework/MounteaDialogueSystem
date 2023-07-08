@@ -1084,7 +1084,7 @@ EVisibility SEdNode_MounteaDialogueGraphNode::GetDragOverMarkerVisibility() cons
 
 const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetNameIcon() const
 {
-	return FEditorStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Icon"));
+	return FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Icon"));
 }
 
 const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetInheritsImageBrush() const
