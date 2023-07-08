@@ -326,12 +326,14 @@ void UMounteaDialogueManager::CloseDialogue()
 	
 	// Clear binding
 	DialogueContext->DialogueContextUpdatedFromBlueprint.RemoveDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent);
-
-	const auto ParticipantDefaultState = DialogueContext->GetDialogueParticipant()->GetDefaultParticipantState();
-	const auto PlayerParticipantDefaultState = DialogueContext->GetDialoguePlayerParticipant()->GetDefaultParticipantState();
 	
-	DialogueContext->GetDialogueParticipant()->SetParticipantState(ParticipantDefaultState);
-	DialogueContext->GetDialoguePlayerParticipant()->SetParticipantState(PlayerParticipantDefaultState);
+	for (const auto& Participant : DialogueContext->GetDialogueParticipants())
+	{
+		if (Participant.GetObject())
+		{
+			Participant->SetParticipantState(Participant->GetDefaultParticipantState());
+		}
+	}
 	
 	DialogueContext->SetDialogueContext(nullptr, nullptr, TArray<UMounteaDialogueGraphNode*>());
 	DialogueContext->ConditionalBeginDestroy();

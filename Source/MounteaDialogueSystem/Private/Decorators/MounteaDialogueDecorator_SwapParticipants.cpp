@@ -36,7 +36,8 @@ void UMounteaDialogueDecorator_SwapParticipants::ExecuteDecorator_Implementation
 
 	if (!Context) return;
 
-	const bool bIsPlayerActive = Context->GetActiveDialogueParticipant()== Context->GetDialoguePlayerParticipant();
+	const bool bIsPlayerActive = Context->GetActiveDialogueParticipant() == Context->GetDialoguePlayerParticipant();
+	
 	const TScriptInterface<IMounteaDialogueParticipantInterface> NewActiveParticipant =
 		bIsPlayerActive
 		?

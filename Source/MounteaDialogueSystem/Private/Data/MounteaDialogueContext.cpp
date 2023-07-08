@@ -15,7 +15,10 @@ void UMounteaDialogueContext::SetDialogueContext(const TScriptInterface<IMountea
 	ActiveNode = NewActiveNode;
 	AllowedChildNodes = NewAllowedChildNodes;
 
-	DialogueParticipants.Add(NewParticipant);
+	if (!DialogueParticipants.Contains(NewParticipant))
+	{
+		DialogueParticipants.Add(NewParticipant);
+	}
 }
 
 void UMounteaDialogueContext::UpdateDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant)
