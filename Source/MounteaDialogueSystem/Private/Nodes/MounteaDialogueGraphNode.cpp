@@ -302,10 +302,10 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 		}
 
 		TMap<UClass*, int32> DuplicatedDecoratorsMap;
-		for (const auto Itr : UsedNodeDecorators)
+		for (const auto& Itr : UsedNodeDecorators)
 		{
 			int32 ClassAppearance = 1;
-			for (const auto Itr2 : UsedNodeDecorators)
+			for (const auto& Itr2 : UsedNodeDecorators)
 			{
 				if (Itr != Itr2 && Itr->GetClass() == Itr2->GetClass())
 				{
@@ -322,7 +322,7 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 
 		if (DuplicatedDecoratorsMap.Num() > 0)
 		{
-			for (const auto Itr : DuplicatedDecoratorsMap)
+			for (const auto& Itr : DuplicatedDecoratorsMap)
 			{
 				bResult = false;
 		
@@ -385,6 +385,10 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 void UMounteaDialogueGraphNode::OnPasted()
 {
 	NodeGUID = FGuid::NewGuid();
+
+	ParentNodes.Empty();
+	ChildrenNodes.Empty();
+	Edges.Empty();
 }
 
 FText UMounteaDialogueGraphNode::GetDefaultTooltipBody() const

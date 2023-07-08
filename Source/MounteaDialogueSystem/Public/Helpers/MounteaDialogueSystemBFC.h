@@ -93,7 +93,7 @@ public:
 	
 		if (OwnerComponents.Num() == 0) return nullptr;
 
-		for (const auto Itr : OwnerComponents)
+		for (const auto& Itr : OwnerComponents)
 		{
 			if (Itr && Itr->GetName().Equals(Arg.ToString()))
 			{
@@ -114,7 +114,7 @@ public:
 	
 		if (OwnerComponents.Num() == 0) return nullptr;
 		
-		for (const auto Itr : OwnerComponents)
+		for (const auto& Itr : OwnerComponents)
 		{
 			if (Itr && Itr->ComponentHasTag(Arg))
 			{
@@ -220,7 +220,8 @@ public:
 			return false;
 		}
 
-		if (DialogueContext->GetActiveNode() == nullptr)
+		const auto ActiveNode = DialogueContext->GetActiveNode();
+		if (ActiveNode == nullptr)
 		{
 			return false;
 		}
@@ -228,8 +229,12 @@ public:
 		// First process Node Decorators, then Graph Decorators
 		// TODO: all weight to them so we can sort them by Weight and execute in correct order
 		TArray<FMounteaDialogueDecorator> AllDecorators;
+
 		AllDecorators.Append(DialogueContext->GetActiveNode()->GetNodeDecorators());
-		AllDecorators.Append(DialogueContext->DialogueParticipant->GetDialogueGraph()->GetGraphDecorators());
+		if (ActiveNode->DoesInheritDecorators())
+		{
+			AllDecorators.Append(DialogueContext->DialogueParticipant->GetDialogueGraph()->GetGraphDecorators());
+		}
 		
 		for (auto Itr : AllDecorators)
 		{
@@ -267,7 +272,7 @@ public:
 	 * @param DialogueParticipant	Other person, could be NPC or other Player
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="start, initialize, dialogue"))
-	static bool InitializeDialogue(const UObject* WorldContextObject, UObject* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant)
+	static bool InitializeDialogue(const UObject* WorldContextObject, UObject* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& DialogueParticipant)
 	{
 		if (!DialogueParticipant) return false;
 
@@ -286,7 +291,7 @@ public:
 
 		if (Graph == nullptr) return false;
 
-		for (const auto Itr : Graph->GetAllNodes())
+		for (const auto& Itr : Graph->GetAllNodes())
 		{
 			if (Itr)
 			{
@@ -348,6 +353,44 @@ public:
 		return true;
 	}
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", CompactNodeTitle="Dialogue Manager", Keywords="manager, dialogue, master, initialize"))
+	static bool AddParticipants(const UObject* WorldContextObject, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants)
+	{
+		const TScriptInterface<IMounteaDialogueManagerInterface> Manager = GetDialogueManager(WorldContextObject);
+		if (!Manager)
+		{
+			return false;
+		}
+
+		UMounteaDialogueContext* Context = Manager->GetDialogueContext();
+
+		if (!Context)
+		{
+			return false;
+		}
+
+		return Context->AddDialogueParticipants(NewParticipants);		
+	}
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", CompactNodeTitle="Dialogue Manager", Keywords="manager, dialogue, master, initialize"))
+	static bool RemoveParticipants(const UObject* WorldContextObject, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants)
+	{
+		const TScriptInterface<IMounteaDialogueManagerInterface> Manager = GetDialogueManager(WorldContextObject);
+		if (!Manager)
+		{
+			return false;
+		}
+
+		UMounteaDialogueContext* Context = Manager->GetDialogueContext();
+
+		if (!Context)
+		{
+			return false;
+		}
+
+		return Context->RemoveDialogueParticipants(NewParticipants);		
+	}
+
 	/**
 	 * Returns first 'Mountea Dialogue Manager' Component from Player Controller.
 	 * ❗ Might return Null❗
@@ -374,6 +417,50 @@ public:
 		ReturnValue.SetInterface(Cast<IMounteaDialogueManagerInterface>(Components[0]));
 
 		return ReturnValue;
+	}
+
+	/**
+	 * Find the best matching dialogue participant based on the active dialogue node and context.
+	 *
+	 * This static function searches for the best matching dialogue participant given the active dialogue node and context.
+	 * It checks the compatibility of each participant's gameplay tag with the tags specified in the active dialogue node's dialogue row.
+	 * The participant with a compatible tag is considered the best match and returned as a TScriptInterface<IMounteaDialogueParticipantInterface>.
+	 *
+	 * @param WorldContextObject The world context object from which to retrieve the dialogue participants.
+	 * @param Context The Mountea dialogue context containing the active node and participants.
+	 * @return The best matching dialogue participant, or nullptr if no match is found.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="get,find"))
+	static TScriptInterface<IMounteaDialogueParticipantInterface> FindBestMatchingParticipant(const UObject* WorldContextObject, const UMounteaDialogueContext* Context)
+	{
+		if (!Context)
+		{
+			return nullptr;
+		}
+
+		if (!Context->ActiveNode)
+		{
+			return nullptr;
+		}
+
+		const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Context->ActiveNode);
+		if (!DialogueNode)
+		{
+			return nullptr;
+		}
+
+		for (auto const& Participant : Context->GetDialogueParticipants())
+		{
+			const FGameplayTag Tag = Participant->Execute_GetTag(Participant.GetObject());
+
+			const FDialogueRow Row = GetDialogueRow(DialogueNode);
+			if (Row.CompatibleTags.HasTagExact(Tag))
+			{
+				return Participant;
+			}
+		}
+
+		return nullptr;
 	}
 
 	/**
@@ -593,7 +680,7 @@ public:
 		
 		Decorators.Append(FromGraph->GetGraphDecorators());
 
-		for (const auto Itr : FromGraph->GetAllNodes())
+		for (const auto& Itr : FromGraph->GetAllNodes())
 		{
 			if (Itr)
 			{
