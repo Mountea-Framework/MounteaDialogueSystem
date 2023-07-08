@@ -107,7 +107,7 @@ void FMounteaDialogueGraphEditorStyle::Create()
 			.SetShadowOffset(FVector2D::ZeroVector)
 			.SetShadowColorAndOpacity(FLinearColor::Black)
 			.SetHighlightColor( FLinearColor( 0.02f, 0.3f, 0.0f ) )
-			.SetHighlightShape( BOX_BRUSH( "Common/TextBlockHighlightShape", FMargin(3.f/8.f) ) );
+			.SetHighlightShape( BOX_BRUSH( "TextBlockHighlightShape", FMargin(3.f/8.f) ) );
 		
 		FTextBlockStyle NodeTitle = FTextBlockStyle(NormalText)
 			.SetFont( DEFAULT_FONT( "Bold", 14 ) )
@@ -118,10 +118,10 @@ void FMounteaDialogueGraphEditorStyle::Create()
 
 		FEditableTextBoxStyle NodeTitleEditableText = FEditableTextBoxStyle()
 			.SetFont(NormalText.Font)
-			.SetBackgroundImageNormal( BOX_BRUSH( "Common/TextBox", FMargin(4.0f/16.0f) ) )
-			.SetBackgroundImageHovered( BOX_BRUSH( "Common/TextBox_Hovered", FMargin(4.0f/16.0f) ) )
-			.SetBackgroundImageFocused( BOX_BRUSH( "Common/TextBox_Hovered", FMargin(4.0f/16.0f) ) )
-			.SetBackgroundImageReadOnly( BOX_BRUSH( "Common/TextBox_ReadOnly", FMargin(4.0f/16.0f) ) )
+			.SetBackgroundImageNormal( BOX_BRUSH( "TextBox", FMargin(4.0f/16.0f) ) )
+			.SetBackgroundImageHovered( BOX_BRUSH( "TextBox_Hovered", FMargin(4.0f/16.0f) ) )
+			.SetBackgroundImageFocused( BOX_BRUSH( "TextBox_Hovered", FMargin(4.0f/16.0f) ) )
+			.SetBackgroundImageReadOnly( BOX_BRUSH( "TextBox_ReadOnly", FMargin(4.0f/16.0f) ) )
 			.SetScrollBarStyle( ScrollBar );
 		StyleSet->Set( "MDSStyleSet.NodeTitleEditableText", NodeTitleEditableText );
 
