@@ -19,6 +19,7 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 #endif
 	
 	bAutoStarts = false;
+	bUseGameplayTags = true;
 }
 
 void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
@@ -40,6 +41,25 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode(const TScriptInterf
 	}
 	
 	Super::ProcessNode(Manager);
+}
+
+void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+{
+	if (bUseGameplayTags)
+	{
+		// Switch Participants based on Tags
+		if (Manager.GetInterface())
+		{
+			if (const auto TempContext = Manager->GetDialogueContext())
+			{
+				const TScriptInterface<IMounteaDialogueParticipantInterface> BestMatchingParticipant = UMounteaDialogueSystemBFC::FindBestMatchingParticipant(Manager.GetObject(), TempContext);
+				
+				TempContext->UpdateActiveDialogueParticipant(BestMatchingParticipant);
+			}
+		}
+	}
+	
+	Super::PreProcessNode(Manager);
 }
 
 UDataTable* UMounteaDialogueGraphNode_DialogueNodeBase::GetDataTable() const
