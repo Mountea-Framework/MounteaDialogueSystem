@@ -30,7 +30,7 @@ public:
 
 protected:
 
-	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(RequiredAssetDataTags="RowStructure=DialogueRow", DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault))
 	UDataTable*	DataTable;
 
 	/** Name of row in the table that we want */

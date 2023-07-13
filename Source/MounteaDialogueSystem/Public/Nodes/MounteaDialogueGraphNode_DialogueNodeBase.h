@@ -29,6 +29,8 @@ public:
 	
 	virtual void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 
+	virtual void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
+
 	/**
 	 * Returns the Dialogue Data Table for this graph node.
 	 * ❗ Might be null
@@ -47,6 +49,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual FName GetRowName() const
 	{ return RowName; }
+
+	virtual bool ValidateNodeRuntime_Implementation() const override;
 
 public:
 
@@ -68,12 +72,33 @@ protected:
 	 * The data table containing the dialogue rows.
 	 * ❗ Strongly suggested to use 'DialogueRow' based Data Tables
 	 */
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(RequiredAssetDataTags="RowStructure=DialogueRow", DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault))
 	UDataTable*	DataTable;
 
 	/** Name of row in the table that we want */
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
 	FName RowName;
+
+	/**
+	 * Flag defining how the Participant is searched for.
+	 * Default: False
+	 * 
+	 * If True:
+	 * * Participant will be found by its Gameplay Tag, compared to Dialogue Row Data.
+	 * * ❗Only exact match is considered success
+	 * * ❗ First found is used, so use unique Tags when working with multiple Participants (Player01, Player02, NPC.Andrew etc.)
+	 * 
+	 * If False:
+	 * * Participant will be found using Node Type
+	 * * Lead Node will use NPC
+	 * * Answer Node will use Player
+	 * * ❗ This system will be deprecated
+	 * 
+	 * ❗ New feature in version 1.0.5.X.
+	 * ❔ Each unique dialogue Participant should be using different Tag, if generic, then use something like `Dialogue.NPC`
+	 */
+	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault))
+	uint8 bUseGameplayTags : 1;
 
 #if WITH_EDITOR
 	

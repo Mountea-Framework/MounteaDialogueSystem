@@ -19,6 +19,7 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 #endif
 	
 	bAutoStarts = false;
+	bUseGameplayTags = true;
 }
 
 void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
@@ -42,9 +43,64 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode(const TScriptInterf
 	Super::ProcessNode(Manager);
 }
 
+void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+{
+	if (bUseGameplayTags)
+	{
+		// Switch Participants based on Tags
+		if (Manager.GetInterface())
+		{
+			if (const auto TempContext = Manager->GetDialogueContext())
+			{
+				const TScriptInterface<IMounteaDialogueParticipantInterface> BestMatchingParticipant = UMounteaDialogueSystemBFC::FindBestMatchingParticipant(Manager.GetObject(), TempContext);
+				
+				TempContext->UpdateActiveDialogueParticipant(BestMatchingParticipant);
+			}
+		}
+	}
+	
+	Super::PreProcessNode(Manager);
+}
+
 UDataTable* UMounteaDialogueGraphNode_DialogueNodeBase::GetDataTable() const
 {
 	return DataTable;
+}
+
+bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNodeRuntime_Implementation() const
+{
+	if (DataTable == nullptr)
+	{
+		return false;
+	}
+
+	if (RowName.IsNone())
+	{
+		return false;
+	}
+
+	if (MaxChildrenNodes > -1 && ChildrenNodes.Num() > MaxChildrenNodes)
+	{
+		return false;
+	}
+
+	const FString Context;
+	const FDialogueRow* SelectedRow = DataTable->FindRow<FDialogueRow>(RowName, Context);
+
+	if (SelectedRow == nullptr)
+	{
+		return false;
+	}
+
+	if (SelectedRow)
+	{
+		if (SelectedRow->DialogueRowData.Num() == 0)
+		{
+			return false;
+		}
+	}
+	
+	return true;
 }
 
 #if WITH_EDITOR
@@ -109,6 +165,48 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
+	const FString Context;
+	const FDialogueRow* SelectedRow = DataTable!=nullptr ? DataTable->FindRow<FDialogueRow>(RowName, Context) : nullptr;
+
+	if (SelectedRow == nullptr)
+	{
+		bResult = false;
+
+		const FString RichTextReturn =
+		FString("* ").
+		Append("<RichTextBlock.Bold>").
+		Append(NodeTitle.ToString()).
+		Append("</>").
+		Append(": Invalid Selected Row!");
+
+		const FString TextReturn =
+		FString(NodeTitle.ToString()).
+		Append(": Invalid Selected Row!");
+	
+		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+	}
+
+	if (SelectedRow)
+	{
+		if (SelectedRow->DialogueRowData.Num() == 0)
+		{
+			bResult = false;
+
+			const FString RichTextReturn =
+			FString("* ").
+			Append("<RichTextBlock.Bold>").
+			Append(NodeTitle.ToString()).
+			Append("</>").
+			Append(": Invalid Selected Row! No Dialogue Data Rows inside!");
+
+			const FString TextReturn =
+			FString(NodeTitle.ToString()).
+			Append(": Invalid Selected Row! No Dialogue Data Rows inside!");
+	
+			ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		}
+	}
+	
 	return bResult;
 }
 

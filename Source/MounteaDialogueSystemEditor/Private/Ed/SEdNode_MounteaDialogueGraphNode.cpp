@@ -101,7 +101,7 @@ void SEdNode_MounteaDialogueGraphNode::Construct(const FArguments& InArgs, UEdNo
 	GraphNode = InNode;
 	UpdateGraphNode();
 	InNode->SEdNode = this;
-	bIsHovered = false;
+	//bIsHovered = false;
 	
 	GraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>();
 
@@ -113,7 +113,7 @@ void SEdNode_MounteaDialogueGraphNode::Construct(const FArguments& InArgs, UEdNo
 
 void SEdNode_MounteaDialogueGraphNode::OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
-	bIsHovered = true;
+	//bIsHovered = true;
 
 	SetToolTipText(GetTooltipText());
 	OnVisualizeTooltip(GetToolTip()->AsWidget());
@@ -123,7 +123,7 @@ void SEdNode_MounteaDialogueGraphNode::OnMouseEnter(const FGeometry& MyGeometry,
 
 void SEdNode_MounteaDialogueGraphNode::OnMouseLeave(const FPointerEvent& MouseEvent)
 {
-	bIsHovered = false;
+	//bIsHovered = false;
 
 	SetToolTipText(FText::GetEmpty());
 	OnToolTipClosing();
@@ -383,7 +383,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 														  .AutoHeight()
 														[
 															SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-															.Style(FEditorStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
+															.Style(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitleInlineEditableText")
 															.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
 															.OnVerifyTextChanged(
 															this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
@@ -1189,7 +1189,7 @@ bool SEdNode_MounteaDialogueGraphNode::HasGraphDecorators() const
 	{
 		if (EdParentNode->DialogueGraphNode && EdParentNode->DialogueGraphNode->Graph)
 		{
-			for (const auto Itr :  EdParentNode->DialogueGraphNode->Graph->GetGraphDecorators())
+			for (const auto& Itr :  EdParentNode->DialogueGraphNode->Graph->GetGraphDecorators())
 			{
 				if (Itr.DecoratorType != nullptr)
 				{
@@ -1212,7 +1212,7 @@ bool SEdNode_MounteaDialogueGraphNode::HasNodeDecorators() const
 			{
 				bool bAllValid = true;
 
-				for (const auto Itr : EdParentNode->DialogueGraphNode->GetNodeDecorators())
+				for (const auto& Itr : EdParentNode->DialogueGraphNode->GetNodeDecorators())
 				{
 					if (Itr.DecoratorType == nullptr)
 					{

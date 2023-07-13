@@ -114,10 +114,6 @@ bool UMounteaDialogueDecorator_OverrideParticipants::ValidateInterfaceActor(cons
 		ValidationMessages.Add(TempText);
 		bSatisfied = false;
 	}
-	else
-	{
-		bSatisfied = false;
-	}
 
 	return bSatisfied;
 }
@@ -139,7 +135,7 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueDecorator
 
 	// Get All Components and return first found
 	TArray<UActorComponent*> ActorComponents =	Actor->GetComponentsByInterface(UMounteaDialogueParticipantInterface::StaticClass());
-	for (const auto Itr : ActorComponents)
+	for (const auto& Itr : ActorComponents)
 	{
 		if (Itr && Itr->Implements<UMounteaDialogueParticipantInterface>())
 		{

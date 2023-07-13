@@ -17,7 +17,6 @@
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "GraphScheme/AssetGraphScheme_MounteaDialogueGraph.h"
-#include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Layout/AssetEditorTabs.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemEditorBFC.h"
@@ -50,9 +49,7 @@ FAssetEditor_MounteaDialogueGraph::~FAssetEditor_MounteaDialogueGraph()
 {
 	EditingGraph = nullptr;
 	UPackage::PackageSavedEvent.Remove(OnPackageSavedDelegateHandle);
-
-	FGenericCommands::Unregister();
-	FGraphEditorCommands::Unregister();
+	
 	FMounteaDialogueGraphEditorCommands::Unregister();
 
 	ToolbarBuilder.Reset();
@@ -63,8 +60,6 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(cons
 	EditingGraph = Graph;
 	CreateEdGraph();
 	
-	FGenericCommands::Register();
-	FGraphEditorCommands::Register();
 	FMounteaDialogueGraphEditorCommands::Register();
 
 	if (!ToolbarBuilder.IsValid())
@@ -85,12 +80,6 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(cons
 		->AddArea
 		(
 			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
-			->Split
-			(
-				FTabManager::NewStack()
-				->SetSizeCoefficient(0.1f)
-				->AddTab(GetToolbarTabId(), ETabState::OpenedTab)->SetHideTabWell(true)
-			)
 			->Split
 			(
 				FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
@@ -281,7 +270,12 @@ void FAssetEditor_MounteaDialogueGraph::CreateInternalWidgets()
 {
 	ViewportWidget = CreateViewportWidget();
 
-	FDetailsViewArgs Args( false, false, true, FDetailsViewArgs::HideNameArea, false );
+	FDetailsViewArgs Args; //( false, false, true, FDetailsViewArgs::HideNameArea, false );
+	Args.bUpdatesFromSelection = false;
+	Args.bLockable = false;
+	Args.bAllowSearch = true;
+	Args.NameAreaSettings = FDetailsViewArgs::HideNameArea;
+	Args.bHideSelectionTip = false;
 	Args.bShowActorLabel = false;
 
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
@@ -909,7 +903,6 @@ void FAssetEditor_MounteaDialogueGraph::OnSelectedNodesChanged(const TSet<UObjec
 
 void FAssetEditor_MounteaDialogueGraph::OnNodeDoubleClicked(UEdGraphNode* Node)
 {
-	// TODO StartRenaming
 	GraphEditorCommands->TryExecuteAction(FGenericCommands::Get().Rename.ToSharedRef());
 }
 
@@ -947,24 +940,28 @@ TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Details(const F
 {
 	check(Args.GetTabId() == FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID);
 
-	return SNew(SDockTab)
-		.Icon(FEditorStyle::GetBrush("LevelEditor.Tabs.Details"))
+	auto DockTab = SNew(SDockTab)
 		.Label(LOCTEXT("Details_Title", "Property"))
 		[
 			PropertyWidget.ToSharedRef()
 		];
+
+	DockTab->SetTabIcon(FEditorStyle::GetBrush("LevelEditor.Tabs.Details"));
+	return DockTab;
 }
 
 TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Search(const FSpawnTabArgs& Args)
 {
 	check(Args.GetTabId() == FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID);
 
-	return SNew(SDockTab)
-		.Icon(FEditorStyle::GetBrush("Kismet.Tabs.FindResults"))
+	auto DockTab = SNew(SDockTab)
 		.Label(LOCTEXT("Search_Title", "Search"))
 		[
 			FindResultsView.ToSharedRef()
 		];
+
+	DockTab->SetTabIcon(FEditorStyle::GetBrush("Kismet.Tabs.FindResults"));
+	return  DockTab;
 }
 
 #undef LOCTEXT_NAMESPACE

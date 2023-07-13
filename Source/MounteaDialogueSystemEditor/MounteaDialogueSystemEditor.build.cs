@@ -13,15 +13,15 @@ public class MounteaDialogueSystemEditor : ModuleRules
 		bUsePrecompiled = false;
 
 		PublicDependencyModuleNames.AddRange
-			(new string[]
-				{
-					"Core", 
-					"CoreUObject", 
-					"Engine", 
-					"UnrealEd",
-					"AssetTools"
-				}
-			);
+		(new string[]
+			{
+				"Core", 
+				"CoreUObject", 
+				"Engine", 
+				"UnrealEd",
+				"AssetTools"
+			}
+		);
 		
 		PrivateDependencyModuleNames.AddRange
 		(
@@ -43,7 +43,7 @@ public class MounteaDialogueSystemEditor : ModuleRules
 				"Projects", 
 				
 				"WebBrowser",
-				"Http", 
+				"HTTP", 
 				"Json", 
 				"JsonUtilities",
 				

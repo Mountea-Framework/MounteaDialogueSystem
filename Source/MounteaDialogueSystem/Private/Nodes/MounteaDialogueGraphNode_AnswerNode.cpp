@@ -25,19 +25,22 @@ UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
 
 	bAutoStarts = false;
+	bUseGameplayTags = false;
 	
 	MaxChildrenNodes = 1;
 }
 
 void UMounteaDialogueGraphNode_AnswerNode::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	// Switch Active Participant to Player
-	if (Manager.GetInterface())
+	if (!bUseGameplayTags)
 	{
-		const auto TempContext = Manager->GetDialogueContext();
-		if (TempContext)
+		// Switch Active Participant to Player
+		if (Manager.GetInterface())
 		{
-			TempContext->UpdateActiveDialogueParticipant(TempContext->GetDialoguePlayerParticipant());
+			if (const auto TempContext = Manager->GetDialogueContext())
+			{
+				TempContext->UpdateActiveDialogueParticipant(TempContext->GetDialoguePlayerParticipant());
+			}
 		}
 	}
 	

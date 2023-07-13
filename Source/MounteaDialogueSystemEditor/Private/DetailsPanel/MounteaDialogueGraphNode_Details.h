@@ -53,6 +53,7 @@ private:
 	TSharedPtr<SScrollBox> PreviewRows;
 	TSharedPtr<SButton> DocumentationButton;
 	TSharedPtr<SImage> DocumentationImage;
+
 	
 	FButtonStyle DocumentationButtonStyle;
 	IDetailLayoutBuilder* SavedLayoutBuilder = nullptr;

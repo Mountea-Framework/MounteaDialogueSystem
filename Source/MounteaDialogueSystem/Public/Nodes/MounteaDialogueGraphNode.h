@@ -94,7 +94,7 @@ public:
 	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
 
 	/** Defines whether this Node will start automatically or if requires input.*/
-	UPROPERTY(SaveGame, EditAnywhere, BlueprintReadOnly, Category="Base")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	uint8 bAutoStarts : 1;
 	/**
 	 * The maximum number of children nodes that this node can have.
@@ -234,6 +234,15 @@ public:
 	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetParentNodes() const
 	{return ParentNodes; };
 
+	/**
+	 * Serves purpose of validating Node before Dialogue gets Started.
+	 * Any broken Node results in non-starting Dialogue to avoid crashes.
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue")
+	bool ValidateNodeRuntime() const;
+	virtual bool ValidateNodeRuntime_Implementation() const
+	{ return true; };
+	
 public:
 
 	FORCEINLINE ULevel* GetLevel() const
