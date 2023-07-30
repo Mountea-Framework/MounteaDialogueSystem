@@ -24,10 +24,10 @@ void UMounteaDialogueManager::BeginPlay()
 	Super::BeginPlay();
 
 	OnDialogueInitialized.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueInitializedEvent_Internal);
-	
+
 	OnDialogueContextUpdated.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent_Internal);
 	OnDialogueUserInterfaceChanged.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueUserInterfaceChangedEvent_Internal);
-	
+
 	OnDialogueStarted.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueStartedEvent_Internal);
 	OnDialogueClosed.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueClosedEvent_Internal);
 
@@ -40,7 +40,7 @@ void UMounteaDialogueManager::BeginPlay()
 
 	OnDialogueVoiceStartRequest.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal);
 	OnDialogueVoiceSkipRequest.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal);
-	
+
 	SetDialogueManagerState(GetDefaultDialogueManagerState());
 }
 
@@ -67,10 +67,10 @@ void UMounteaDialogueManager::CallDialogueNodeSelected_Implementation(const FGui
 	{
 		OnDialogueFailed.Broadcast(TEXT("[CallDialogueNodeSelected] Cannot find Selected Option!"));
 	}
-		
+
 	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
-	
+
 	OnDialogueNodeSelected.Broadcast(DialogueContext);
 }
 
@@ -119,7 +119,7 @@ void UMounteaDialogueManager::OnDialogueClosedEvent_Internal(UMounteaDialogueCon
 		case EDialogueManagerState::EDMS_Enabled:
 			return;
 	}
-	
+
 	OnDialogueClosedEvent(DialogueContext);
 
 	CloseDialogue();
@@ -151,7 +151,7 @@ void UMounteaDialogueManager::OnDialogueNodeStartedEvent_Internal(UMounteaDialog
 	}
 
 	StartExecuteDialogueRow();
-	
+
 	OnDialogueNodeStartedEvent(Context);
 }
 
@@ -162,7 +162,7 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 		OnDialogueFailed.Broadcast(TEXT("Invalid Dialogue Context!"));
 		return;
 	}
-	
+
 	OnDialogueNodeFinishedEvent(Context);
 
 	const TArray<UMounteaDialogueGraphNode*> AllowedChildrenNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(Context->ActiveNode);
@@ -178,21 +178,21 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 		OnDialogueClosed.Broadcast(DialogueContext);
 		return;
 	}
-	
+
 	const bool bAutoActive = AllowedChildrenNodes[0]->DoesAutoStart();
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
-	
+
 	if (bAutoActive)
 	{
 		const auto NewActiveNode = AllowedChildrenNodes[0];
 
 		if (!NewActiveNode)
 		{
-			OnDialogueClosed.Broadcast(DialogueContext);	
+			OnDialogueClosed.Broadcast(DialogueContext);
 		}
-		
+
 		DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, NewActiveNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(NewActiveNode));
-		
+
 		OnDialogueNodeSelected.Broadcast(DialogueContext);
 		return;
 	}
@@ -224,7 +224,7 @@ void UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal(UMounteaDialogu
 
 void UMounteaDialogueManager::OnDialogueRowFinishedEvent_Internal(UMounteaDialogueContext* Context)
 {
-	// Not necessary needed, however, provides a nice way to add functionality later on 
+	// Not necessary needed, however, provides a nice way to add functionality later on
 }
 
 void UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal(USoundBase* VoiceToStart)
@@ -240,8 +240,8 @@ void UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal(USoundBa
 		OnDialogueFailed.Broadcast(TEXT("[DialogueVoiceStartRequestEvent] Invalid Dialogue Participant!"));
 		return;
 	}
-	
-	DialogueContext->ActiveDialogueParticipant->PlayParticipantVoice(VoiceToStart);
+
+	DialogueContext->DialogueParticipant->PlayParticipantVoice(VoiceToStart);
 	OnDialogueVoiceStartRequestEvent(VoiceToStart);
 }
 
@@ -259,11 +259,11 @@ void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBas
 		return;
 	}
 
-	
-	DialogueContext->ActiveDialogueParticipant->SkipParticipantVoice(VoiceToSkip);
+
+	DialogueContext->DialogueParticipant->SkipParticipantVoice(VoiceToSkip);
 
 	OnDialogueVoiceSkipRequestEvent(VoiceToSkip);
-	
+
 	FinishedExecuteDialogueRow();
 }
 
@@ -290,7 +290,7 @@ void UMounteaDialogueManager::StartDialogue()
 	}
 
 	SetDialogueManagerState(EDialogueManagerState::EDMS_Active);
-	
+
 	Execute_PrepareNode(this);
 }
 
@@ -307,9 +307,9 @@ void UMounteaDialogueManager::CloseDialogue()
 		OnDialogueFailed.Broadcast(TEXT("No Player Controller found!"));
 		return;
 	}
-	
+
 	PlayerController->SetShowMouseCursor(bWasCursorVisible);
-	
+
 	if (!GetWorld()) return;
 
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
@@ -323,10 +323,10 @@ void UMounteaDialogueManager::CloseDialogue()
 	// Cleaning up
 	UMounteaDialogueSystemBFC::CleanupGraph(this, DialogueContext->GetDialogueParticipant()->GetDialogueGraph());
 	UMounteaDialogueSystemBFC::SaveTraversePathToParticipant(DialogueContext->TraversedPath, DialogueContext->GetDialogueParticipant());
-	
+
 	// Clear binding
 	DialogueContext->DialogueContextUpdatedFromBlueprint.RemoveDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent);
-	
+
 	for (const auto& Participant : DialogueContext->GetDialogueParticipants())
 	{
 		if (Participant.GetObject())
@@ -334,7 +334,7 @@ void UMounteaDialogueManager::CloseDialogue()
 			Participant->SetParticipantState(Participant->GetDefaultParticipantState());
 		}
 	}
-	
+
 	DialogueContext->SetDialogueContext(nullptr, nullptr, TArray<UMounteaDialogueGraphNode*>());
 	DialogueContext->ConditionalBeginDestroy();
 	DialogueContext = nullptr;
@@ -361,7 +361,7 @@ void UMounteaDialogueManager::PrepareNode_Implementation()
 
 	// First PreProcess Node
 	DialogueContext->ActiveNode->PreProcessNode(this);
-	
+
 	ProcessNode();
 }
 
@@ -377,13 +377,13 @@ bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
 	{
 		return true;
 	}
-	
+
 	if (GetDialogueWidgetClass() == nullptr)
 	{
 		Message = TEXT("Invalid Widget Class! Setup Widget class at least in Project settings!");
 		return false;
 	}
-	
+
 	if (!GetWorld())
 	{
 		Message = TEXT("Invalid World!");
@@ -396,7 +396,7 @@ bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
 		Message = TEXT("Invalid Player Controller!");
 		return false;
 	}
-	
+
 	DialogueWidgetPtr = CreateWidget<UUserWidget>(PlayerController,  GetDialogueWidgetClass());
 	if (DialogueWidgetPtr->Implements<UMounteaDialogueWBPInterface>() == false)
 	{
@@ -418,12 +418,12 @@ bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
 
 	// This event should be responsible for calling logic in Player Controller
 	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidgetPtr);
-	
+
 	// This Component should not be responsible for setting up Player Controller!
 	PlayerController->SetShowMouseCursor(true);
 
 	IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CreateDialogueWidget);
-	
+
 	return true;
 }
 
@@ -467,7 +467,7 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 	{
 		OnDialogueFailed.Broadcast("Invalid Dialogue Widget Pointer!");
 	}
-	
+
 	FTimerDelegate Delegate;
 	Delegate.BindUObject(this, &UMounteaDialogueManager::FinishedExecuteDialogueRow);
 
@@ -482,7 +482,7 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 		UMounteaDialogueSystemBFC::GetRowDuration(RowData),
 		false
 	);
-	
+
 	OnDialogueRowStarted.Broadcast(DialogueContext);
 
 	// Show Subtitle Row only if allowed
@@ -514,7 +514,7 @@ void UMounteaDialogueManager::FinishedExecuteDialogueRow()
 	{
 		DialogueContext->UpdateActiveDialogueRowDataIndex(IncreasedIndex);
 		OnDialogueContextUpdated.Broadcast(DialogueContext);
-		
+
 		StartExecuteDialogueRow();
 	}
 	else
@@ -535,7 +535,7 @@ void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewCon
 void UMounteaDialogueManager::SetDialogueManagerState(const EDialogueManagerState NewState)
 {
 	ManagerState = NewState;
-	
+
 	OnDialogueManagerStateChanged.Broadcast(NewState);
 }
 
