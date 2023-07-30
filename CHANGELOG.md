@@ -1,10 +1,10 @@
-Current Version: 1.0.5.50
+Current Version: 1.0.5.51
 
 # Changelog
 
 All notable changes to this project will be documented in this file.
 
-**Version 1.0.5.50**
+**Version 1.0.5.51**
 ### Added
 > - Added: Added support for Gameplay Tags (beta)
 
@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 > - Changed: Exposed `bDoesAutoStart` for Dialogue Nodes
 
-**Version 1.0.0.50**
+**Version 1.0.0.51**
 ### Added
 > - Added: Mountea Dialogue Graph
 > - Added: Mountea Dialogue Node
