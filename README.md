@@ -22,17 +22,18 @@ Colour | Explanation
 -------------- | --------------
 🟩 | Supported
 🟨 | WIP
-🟪 | Deprecated (abaddoned)
+🟪 | Deprecated (abandoned)
 🟥 | Partially supported ([Epic Games Policies](https://www.unrealengine.com/en-US/marketplace-guidelines#263d)) 
 
-### Suport Table
+### Support Table
 Engine Version | Plugin Version | Support
 -------------- | -------------- | ----
-UE 4.26 | [1.0.0.426](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.426) | 🟥
-UE 4.27 | [1.0.0.427](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.427) | 🟥
-UE 5.00 | [1.0.0.50](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.50) | 🟩
+UE 4.26 | [1.0.0.426](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.426) | 🟪
+UE 4.27 | [1.0.0.427](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.427) | 🟪
+UE 5.00 | [1.0.0.50](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.50) | 🟥
 UE 5.1 | [1.0.0.51](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.51) | 🟩
 UE 5.2 | [1.0.0.52](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.52) | 🟩
+UE 5.3 | [1.0.0.53](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.53) | 🟩
 
 ## Features
 ### Graph Editor
@@ -58,29 +59,29 @@ To save precious time, Dialogue Previews show the raw context of the Dialogue Da
 </p>
 
 #### Dialogue Decorators
-Introducing *Decorators*, a powerful yet versitale tool of Blueprint based events that could be triggered per Dialogue Node! This provides a simple way to trigger cutscenes, switch cameras, end dialogues when being attacked or anything you like!
+Introducing *Decorators*, a powerful yet versatile tool of Blueprint-based events that could be triggered per Dialogue Node! This provides a simple way to trigger cutscenes, switch cameras, end dialogues when being attacked or anything you like!
 <p align="center" width="100%">
     <img width="65%" src="https://user-images.githubusercontent.com/37410226/233844834-a3e7522f-b38c-49b7-9dcb-e3725f3a5208.png">
 </p>
 
 #### Dialogue Node Details
-A new feature droped in, and that is Node Style now supporting indications how many Decorators each Node implements and whether it inherits Decorators from Graph or not. This will come handy for debugging dialogues, showing that some nodes might not implement required Decorators!
+A new feature dropped in, and that is Node Style now supporting indications of how many Decorators each Node implements and whether it inherits Decorators from Graph or not. This will come handy for debugging dialogues, showing that some nodes might not implement required Decorators!
 <p align="center" width="100%">
     <img width="65%" src="https://user-images.githubusercontent.com/37410226/233844886-4414e2f6-788d-48da-a643-8b275c083f09.png">
 </p>
 
 ## Installation
 
-Download the plugin (either from Releases or from Marketplace). For more detailed guide take a look at Wiki page.
+Download the plugin (either from Releases or from Marketplace). For a more detailed guide take a look at the Wiki page.
 
 1. Download the branch release you are interested in
 2. Instal the plugin to your Game Project (within /Plugin folder)
 
 ## Branches
 
-* Master: A master branch, should be always relevant to most current Engine version and stable.
+* Master: A master branch, should always be relevant to the most current Engine version and stable.
 * Version Branch: A stable branch for specified Engine version.
-* Version Brach_Dev: A development branch for specified Engine version.
+* Version Brach_Dev: A development branch for a specified Engine version.
 
 ## Star History
 
