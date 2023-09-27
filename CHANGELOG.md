@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 > - Added: Mountea Dialogue Graph Validator
 > - Added: Mountea Dialogue Graph Arranger Alpha
 > - Added: Mountea Dialogue Decorators
+> - Added: Added support for Gameplay Tags (beta)
+> - Added: Exposed `bDoesAutoStart` for Dialogue Nodes
 
 ### Fixed
 > - Fixed: -
