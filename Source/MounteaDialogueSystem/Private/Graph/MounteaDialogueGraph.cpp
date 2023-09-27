@@ -3,6 +3,7 @@
 #include "Graph/MounteaDialogueGraph.h"
 
 #include "Edges/MounteaDialogueGraphEdge.h"
+#include "Misc/DataValidation.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
@@ -190,7 +191,7 @@ void UMounteaDialogueGraph::PostInitProperties()
 
 #if WITH_EDITOR
 
-bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat)
+bool UMounteaDialogueGraph::ValidateGraph(FDataValidationContext& Context, bool RichTextFormat) const
 {
 	bool bReturnValue = true;
 
@@ -220,7 +221,7 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 				Append(FString::FromInt(i )).
 				Append(".");
 		
-				ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
+				Context.AddError(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
 
 				bReturnValue = false;
 			}
@@ -268,7 +269,7 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 				Append(FString::FromInt(Itr.Value)).
 				Append("x times! Please, avoid duplicates!");
 			
-				ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
+				Context.AddError(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
 			}
 		}
 	}
@@ -291,7 +292,7 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 				Append(": ").
 				Append(FString(Error.ToString()));
 		
-				ValidationErrors.Add(FText::FromString(RichTextFormat ? ErrorTextRich : ErrorTextSimple));
+				Context.AddError(FText::FromString(RichTextFormat ? ErrorTextRich : ErrorTextSimple));
 
 				bReturnValue = false;
 			}
@@ -309,14 +310,14 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 		GetName().
 		Append(": Has no Start Node!");
 		
-		ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
+		Context.AddError(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
 
 		bReturnValue = false;
 	}
 
 	for (UMounteaDialogueGraphNode* Itr : AllNodes)
 	{
-		if (Itr != nullptr && (Itr->ValidateNode(ValidationErrors, RichTextFormat) == false))
+		if (Itr != nullptr && (Itr->ValidateNode(Context, RichTextFormat) == false))
 		{
 			bReturnValue = false;
 		}
@@ -325,9 +326,9 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 	return bReturnValue;
 }
 
-EDataValidationResult UMounteaDialogueGraph::IsDataValid(TArray<FText>& ValidationErrors)
+EDataValidationResult UMounteaDialogueGraph::IsDataValid(FDataValidationContext& Context) const
 {
-	if (ValidateGraph(ValidationErrors, false))
+	if (ValidateGraph(Context, false))
 	{
 		return EDataValidationResult::Valid;
 	}

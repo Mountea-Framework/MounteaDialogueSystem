@@ -157,8 +157,8 @@ public:
 
 #if WITH_EDITOR
 
-	virtual bool ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat);
-	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
+	virtual bool ValidateGraph(FDataValidationContext& Context, bool RichTextFormat) const;
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 
 public:
 

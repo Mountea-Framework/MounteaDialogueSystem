@@ -235,7 +235,7 @@ void UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal(USoundBa
 		return;
 	}
 
-	if (DialogueContext->ActiveDialogueParticipant.GetInterface() == nullptr)
+	if (DialogueContext->DialogueParticipant.GetInterface() == nullptr)
 	{
 		OnDialogueFailed.Broadcast(TEXT("[DialogueVoiceStartRequestEvent] Invalid Dialogue Participant!"));
 		return;
@@ -253,7 +253,7 @@ void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBas
 		return;
 	}
 
-	if (DialogueContext->ActiveDialogueParticipant.GetInterface() == nullptr)
+	if (DialogueContext->DialogueParticipant.GetInterface() == nullptr)
 	{
 		OnDialogueFailed.Broadcast(TEXT("[DialogueVoiceSkipRequestEvent] Invalid Dialogue Participant!"));
 		return;

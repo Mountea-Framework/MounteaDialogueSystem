@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "1.0.2.52",
+	"VersionName": "1.0.5.53",
 	"FriendlyName": "Mountea Dialogue System",
 	"Description": "Mountea Dialogue System is an Open-source Mountea Framework tool for Unreal Engine for creating (not just) complex dialogues! Provides its own Dialogue Tree editor and validation system.",
 	"Category": "Mountea Framework",
@@ -10,7 +10,7 @@
 	"DocsURL": "https://github.com/Mountea-Framework/ActorInteractionPlugin/wiki",
 	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/ea38ae1f87b24807a66fdf4fa65ef521",
 	"SupportURL": "https://bit.ly/DominikPavlicek_SupportServer",
-	"EngineVersion": "5.2.0",
+	"EngineVersion": "5.3.0",
 	"CanContainContent": true,
 	"IsBetaVersion": true,
 	"IsExperimentalVersion": true,
@@ -21,9 +21,9 @@
 			"Type": "Runtime",
 			"LoadingPhase": "PreDefault",
 			"PlatformAllowList": [
-				"Linux",
+				"Win64",
 				"Mac",
-				"Win64"
+				"Linux"
 			]
 		},
 		{
@@ -31,9 +31,9 @@
 			"Type": "Editor",
 			"LoadingPhase": "Default",
 			"PlatformAllowList": [
-				"Linux",
+				"Win64",
 				"Mac",
-				"Win64"
+				"Linux"
 			]
 		}
 	]
