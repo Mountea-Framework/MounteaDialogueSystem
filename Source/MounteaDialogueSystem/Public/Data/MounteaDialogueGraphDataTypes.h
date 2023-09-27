@@ -324,7 +324,7 @@ public:
 	 * Any Data Asset can be used here and no logic is tied to this attribute.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(AllowAbstract=false))
-	TSubclassOf<UDialogueAdditionalData> DialogueRowAdditionalData = nullptr;
+	UDialogueAdditionalData* DialogueRowAdditionalData = nullptr;
 	/**
 	 * Row GUID.
 	 * 
@@ -350,7 +350,7 @@ public:
 		RowGUID = FGuid::NewGuid();
 	};
 
-	FDialogueRow(const int32 NewUIRowID, UTexture* InRowIcon, const FText& InText, const FText& InParticipant, const TSet<FDialogueRowData>& InData, const TSubclassOf<UDialogueAdditionalData> NewData)
+	FDialogueRow(const int32 NewUIRowID, UTexture* InRowIcon, const FText& InText, const FText& InParticipant, const TSet<FDialogueRowData>& InData, UDialogueAdditionalData* NewData)
 		: UIRowID(NewUIRowID), RowOptionalIcon(InRowIcon), DialogueParticipant(InParticipant), RowTitle(InText), DialogueRowData(InData), DialogueRowAdditionalData(NewData)
 	{
 		RowGUID = FGuid::NewGuid();
