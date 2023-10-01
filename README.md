@@ -12,6 +12,9 @@ Mountea Dialogue System is an Open-source Mountea Framework Unreal Engine tool f
 
 Join support and community Discord!
 
+## Documentation
+Online [Documentation](https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Getting-Started) including a Quick Start guide which will help you set up the plugin in a few easy-to-follow steps.
+
 ## Tutorial videos
 <a href="https://www.youtube.com/playlist?list=PLIU53wA8zZmg5eBKEcpZr7G8JBBZ4QPKq"><img src="https://img.talkandroid.com/uploads/2016/06/youtube-logo-450x450.png" alt="TUTORIAL playlist" width="100" height="100"></a>
 
