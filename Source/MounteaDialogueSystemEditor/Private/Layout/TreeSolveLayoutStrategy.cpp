@@ -31,6 +31,8 @@ void UTreeSolveLayoutStrategy::Layout(UEdGraph* InEdGraph)
 		MaxIteration = Settings->GetMaxIteration();
 		bFirstPassOnly = Settings->IsFirstPassOnly();
 	}
+	
+	processedNodes.Empty();
 
 	FVector2D Anchor(0.f, 0.f);
 	for (int32 i = 0; i < Graph->RootNodes.Num(); ++i)
@@ -62,6 +64,13 @@ void UTreeSolveLayoutStrategy::Layout(UEdGraph* InEdGraph)
 
 void UTreeSolveLayoutStrategy::InitPass(UMounteaDialogueGraphNode* RootNode, const FVector2D& Anchor)
 {
+	if (processedNodes.Contains(RootNode))
+	{
+		return;
+	}
+
+	processedNodes.Add(RootNode);
+	
 	UEdNode_MounteaDialogueGraphNode* EdNode_RootNode = EdGraph->NodeMap[RootNode];
 
 	FVector2D ChildAnchor(FVector2D(0.f, GetNodeHeight(EdNode_RootNode) + OptimalDistance + Anchor.Y));
