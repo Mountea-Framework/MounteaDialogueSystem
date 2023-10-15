@@ -191,27 +191,26 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(c
 	const float HorizontalThreshold = 10.f;
 	const float VerticalThreshold = 10.f;
 	
-	const bool ConditionForScenario1 = 
-	FMath::Abs(StartPoint.X - EndPoint.X) <= HorizontalThreshold;
+	const UMounteaDialogueGraphEditorSettings* GraphSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
+	if (GraphSettings == nullptr || GraphSettings->AllowAdvancedWiring() == false)
+	{
+		DrawConnection(WireLayerID, StartPoint, EndPoint, Params);
+		return;
+	}
 
-	const bool ConditionForScenario2 = 
+	const bool bGoesDown = 
 		EndPoint.Y < StartPoint.Y &&
 		FMath::Abs(StartPoint.X - EndPoint.X) > HorizontalThreshold;
 
-	const bool ConditionForScenario3 = 
+	const bool bGoesUp = 
 		EndPoint.Y >= StartPoint.Y;
-
-	
+		
 	// Choose connection drawing method based on conditions
-	if (ConditionForScenario1)
-	{
-		DrawConnection(WireLayerID, StartPoint, EndPoint, Params);
-	}
-	else if (ConditionForScenario2)
+	if (bGoesUp)
 	{
 		DrawConnectionDown(WireLayerID, StartPoint, EndPoint, Params);
 	}
-	else if (ConditionForScenario3)
+	else if (bGoesDown)
 	{
 		DrawConnectionUp(WireLayerID, StartPoint, EndPoint, Params);
 	}
@@ -224,7 +223,7 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(c
 	if (ArrowImage)
 	{
 		const FVector2D ArrowDrawPos = EndPoint - ArrowRadius;
-		const float AngleInRadians = FMath::Atan2(DeltaPos.Y, DeltaPos.X);
+		const float AngleInRadians = FMath::DegreesToRadians(90.f);
 
 		FSlateDrawElement::MakeRotatedBox(
 			DrawElementsList,
@@ -242,29 +241,18 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(c
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnectionDown(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
 {
-	// Constants which might need fine-tuning
-	constexpr float NodeBoxOffset = 20.0f;
+	// Constants for Bezier control points
+	FVector2D ControlPoint1 = FVector2D(Start.X, Start.Y + (End.Y - Start.Y) / 3); // Adjust to create a smooth curve
+	FVector2D ControlPoint2 = FVector2D(End.X, End.Y - (End.Y - Start.Y) / 3);
 
-	const FVector2D UnitDelta = (End - Start).GetSafeNormal();
-	const FVector2D StartOffset = FVector2D(0, NodeBoxOffset * UnitDelta.Y).GetSafeNormal();
-	const FVector2D EndOffset = -StartOffset;
-
-	FVector2D AdjustedStart = Start + StartOffset;
-	FVector2D AdjustedEnd = End + EndOffset;
-
-	// Calculate the control points for the bezier curve.
-	FVector2D ControlPoint1 = AdjustedStart;
-	FVector2D ControlPoint2 = FVector2D(End.X, AdjustedEnd.Y + 5.f); // a slight offset for better curve appeal
-
-	// Draw the bezier curve with the control points.
 	FSlateDrawElement::MakeCubicBezierSpline(
 		DrawElementsList,
 		LayerId,
 		FPaintGeometry(),
-		AdjustedStart,
+		Start,
 		ControlPoint1,
 		ControlPoint2,
-		AdjustedEnd,
+		End,
 		Params.WireThickness,
 		ESlateDrawEffect::None,
 		Params.WireColor
@@ -316,122 +304,3 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnection(int32 LayerId
 {
 	FKismetConnectionDrawingPolicy::DrawConnection(LayerId, Start, End, Params);
 }
-
-/*
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
-{
-	const UMounteaDialogueGraphEditorSettings* EditorSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
-	if (EditorSettings == nullptr || EditorSettings->AllowAdvancedWiring() == false)
-	{
-		FKismetConnectionDrawingPolicy::DrawConnection(LayerId, Start, End, Params);
-	}
-	else
-	{
-		//TODO: maybe parametrize those values?
-		constexpr float HorizontalThreshold = 20.0f;
-		constexpr float VerticalThreshold = 20.0f;
-
-		if (FMath::Abs(Start.X - End.X) <= HorizontalThreshold || FMath::Abs(Start.Y - End.Y) <= VerticalThreshold)
-		{
-			FKismetConnectionDrawingPolicy::DrawConnection(LayerId, Start, End, Params);
-			return;
-		}
-		
-		constexpr float NodeBoxOffset = 20.0f;
-
-		const FVector2D UnitDelta = (End - Start).GetSafeNormal();
-
-		FVector2D StartOffset = FVector2D(0, NodeBoxOffset * UnitDelta.Y).GetSafeNormal();
-		FVector2D EndOffset = -StartOffset;
-
-		FVector2D AdjustedStart = Start + StartOffset;
-		FVector2D AdjustedEnd = End + EndOffset;
-
-		FVector2D ControlPoint1;
-		FVector2D ControlPoint2;
-
-		// Calculate middle X
-		float MiddleX = (AdjustedStart.X + AdjustedEnd.X) / 2;
-
-		// If the child node is above the source node in terms of Y coordinate.
-		if (End.Y < Start.Y)
-		{
-			ControlPoint1 = FVector2D(AdjustedStart.X, AdjustedStart.Y);
-			ControlPoint2 = FVector2D(End.X, AdjustedEnd.Y + 5.f);
-		}
-		else
-		{
-			ControlPoint1 = FVector2D(MiddleX, AdjustedStart.Y);
-			ControlPoint2 = FVector2D(MiddleX, AdjustedEnd.Y + 5.f);
-		}
-
-		FVector2D MiddleControlStart = FVector2D((AdjustedStart.X + ControlPoint1.X) / 2, ControlPoint1.Y);
-		FVector2D MiddleControlEnd = FVector2D((AdjustedEnd.X + ControlPoint2.X) / 2, ControlPoint2.Y);
-
-
-		FSlateDrawElement::MakeLines(
-			DrawElementsList,
-			LayerId,
-			FPaintGeometry(),
-			TArray<FVector2D>{ AdjustedStart, MiddleControlStart, ControlPoint1, ControlPoint2, MiddleControlEnd, AdjustedEnd },
-			ESlateDrawEffect::None,
-			Params.WireColor,
-			true,   // bAntialias
-			Params.WireThickness
-		);
-
-	    if (Params.bDrawBubbles || (MidpointImage != nullptr))
-	    {
-	        // This table maps distance along curve to alpha
-	        FInterpCurve<float> SplineReparamTable;
-	        const float SplineLength = (End - Start).Size(); // Manhattan connections are straight, so just use the distance
-
-	        // Draw bubbles on the spline
-	        if (Params.bDrawBubbles)
-	        {
-	            const float BubbleSpacing = 64.f * ZoomFactor;
-	            const float BubbleSpeed = 192.f * ZoomFactor;
-	            const FVector2D BubbleSize = BubbleImage->ImageSize * ZoomFactor * 0.2f * Params.WireThickness;
-
-	            float Time = (FPlatformTime::Seconds() - GStartTime);
-	            const float BubbleOffset = FMath::Fmod(Time * BubbleSpeed, BubbleSpacing);
-	            const int32 NumBubbles = FMath::CeilToInt(SplineLength / BubbleSpacing);
-	            for (int32 i = 0; i < NumBubbles; ++i)
-	            {
-	                const float Distance = ((float)i * BubbleSpacing) + BubbleOffset;
-	                if (Distance < SplineLength)
-	                {
-	                    const float Alpha = Distance / SplineLength; // Since it's a straight line
-	                    FVector2D BubblePos = FMath::Lerp(Start, End, Alpha) - (BubbleSize * 0.5f);
-
-	                    FSlateDrawElement::MakeBox(
-	                        DrawElementsList,
-	                        LayerId,
-	                        FPaintGeometry(BubblePos, BubbleSize, ZoomFactor),
-	                        BubbleImage,
-	                        ESlateDrawEffect::None,
-	                        Params.WireColor
-	                    );
-	                }
-	            }
-	        }
-
-	        // Draw the midpoint image
-	        if (MidpointImage != nullptr)
-	        {
-	            const FVector2D Midpoint = FMath::Lerp(Start, End, 0.5f); // Midpoint of a straight line
-	            const FVector2D MidpointDrawPos = Midpoint - MidpointRadius;
-
-	            FSlateDrawElement::MakeBox(
-	                DrawElementsList,
-	                LayerId,
-	                FPaintGeometry(MidpointDrawPos, MidpointImage->ImageSize * ZoomFactor, ZoomFactor),
-	                MidpointImage,
-	                ESlateDrawEffect::None,
-	                Params.WireColor
-	            );
-	        }
-	    }
-	}
-}
-*/
