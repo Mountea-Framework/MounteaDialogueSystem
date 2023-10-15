@@ -186,11 +186,7 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(c
 	const FVector2D LengthBias = ArrowRadius.X * UnitDelta;
 	const FVector2D StartPoint = StartAnchorPoint + DirectionBias + LengthBias;
 	const FVector2D EndPoint = EndAnchorPoint + DirectionBias - LengthBias;
-
-	// this will be exposed as settings variable
-	const float HorizontalThreshold = 10.f;
-	const float VerticalThreshold = 10.f;
-	
+		
 	const UMounteaDialogueGraphEditorSettings* GraphSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
 	if (GraphSettings == nullptr || GraphSettings->AllowAdvancedWiring() == false)
 	{
@@ -198,34 +194,24 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(c
 		return;
 	}
 
-	const bool bGoesDown = 
-		EndPoint.Y < StartPoint.Y &&
-		FMath::Abs(StartPoint.X - EndPoint.X) > HorizontalThreshold;
-
-	const bool bGoesUp = 
-		EndPoint.Y >= StartPoint.Y;
+	const bool bIsAligned = FMath::IsNearlyEqual(EndPoint.X, StartPoint.X, GraphSettings->GetControlPointDistance());
 		
 	// Choose connection drawing method based on conditions
-	if (bGoesUp)
+	if (bIsAligned)
 	{
-		DrawConnectionDown(WireLayerID, StartPoint, EndPoint, Params);
-	}
-	else if (bGoesDown)
-	{
-		DrawConnectionUp(WireLayerID, StartPoint, EndPoint, Params);
+		DrawConnection(WireLayerID, StartPoint, EndPoint, Params);
 	}
 	else
 	{
-		DrawConnection(WireLayerID, StartPoint, EndPoint, Params);
+		DrawCurvedConnection(WireLayerID, StartPoint, EndPoint, Params);
 	}
 
 	// Draw the arrow
 	if (ArrowImage)
 	{
-		FVector2D ArrowDrawPos = EndPoint - ArrowRadius;
-		ArrowDrawPos.Y -= 10.f;
+		const FVector2D ArrowDrawPos = EndPoint - ArrowRadius;
 		
-		const float AngleInRadians = FMath::DegreesToRadians(90.f);
+		const float AngleInRadians = FMath::DegreesToRadians(90.f); //FMath::Atan2(DeltaPos.Y, DeltaPos.X);
 
 		FSlateDrawElement::MakeRotatedBox(
 			DrawElementsList,
@@ -241,6 +227,7 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(c
 	}
 }
 
+/*
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnectionDown(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
 {
 	// Constants for Bezier control points
@@ -259,22 +246,20 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnectionDown(int32 Lay
 		ESlateDrawEffect::None,
 		Params.WireColor
 	);
-
-	// TODO: Add bubbles and midpoint image logic here if needed
 }
+*/
 
-
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnectionUp(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawCurvedConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
 {
 	const UMounteaDialogueGraphEditorSettings* GraphSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
 
-	FVector2D LeaveTangent = GraphSettings->GetLeaveTangent().GetAbs();
-	FVector2D ArriveTangent = GraphSettings->GetArriveTangent().GetAbs();
+	FVector2D LeaveTangent = GraphSettings->GetAdvancedWiringConnectionTangent().GetAbs();
+	FVector2D ArriveTangent = GraphSettings->GetAdvancedWiringConnectionTangent().GetAbs();
 	
 	const int32 SideValue = End.X >= 0 ? 1 : -1;
 
-	LeaveTangent.X *= SideValue;
-	ArriveTangent.X *= -SideValue;
+	LeaveTangent.X *= -SideValue;
+	ArriveTangent.X *= SideValue;
 
 	LeaveTangent.Y *= SideValue;
 	ArriveTangent.Y *= -SideValue;

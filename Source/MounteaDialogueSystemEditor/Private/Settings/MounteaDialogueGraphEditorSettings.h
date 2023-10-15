@@ -132,16 +132,10 @@ private:
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]"))
 	bool bUseAdvancedWiring;
 
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]"))
-	FVector2D LeaveTangents = FVector2D(0.f, 220.f);
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]"))
-	FVector2D ArriveTangent = FVector2D(0.0f, -220.f);
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]"))
+	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]", EditCondition="bUseAdvancedWiring"))
 	FVector2D AdvancedWiringConnectionTangent = FVector2D(0.0f, 220.f);
 
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]"))
+	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]", EditCondition="bUseAdvancedWiring"))
 	float ControlPointDistance = 150.0f;
 	
 	/* Advanced Wiring doesn't work now
@@ -279,14 +273,11 @@ public:
 	bool AllowAdvancedWiring() const
 	{ return bUseAdvancedWiring; };
 
-	FVector2D GetLeaveTangent() const
-	{ return LeaveTangents; };
-
-	FVector2D GetArriveTangent() const
-	{ return ArriveTangent; };
-
 	FVector2D GetAdvancedWiringConnectionTangent() const
 	{ return AdvancedWiringConnectionTangent; };
+
+	float GetControlPointDistance() const
+	{ return ControlPointDistance; };
 	
 	/*
 	EWiringStyle GetWireStyle() const

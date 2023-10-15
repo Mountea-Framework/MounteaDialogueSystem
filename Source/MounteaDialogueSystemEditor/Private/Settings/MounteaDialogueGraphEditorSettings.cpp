@@ -43,18 +43,11 @@ void UMounteaDialogueGraphEditorSettings::PostEditChangeProperty(FPropertyChange
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphEditorSettings, LeaveTangents))
+	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphEditorSettings, AdvancedWiringConnectionTangent))
 	{
-		if (FMath::IsNearlyZero(LeaveTangents.Y, 0.01f))
+		if (FMath::IsNearlyZero(AdvancedWiringConnectionTangent.Y, 0.01f))
 		{
-			LeaveTangents.Y = -1.f;
-		}
-	}
-	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphEditorSettings, ArriveTangent))
-	{
-		if (FMath::IsNearlyZero(ArriveTangent.Y, 0.01f))
-		{
-			LeaveTangents.Y = 1.f;
+			AdvancedWiringConnectionTangent.Y = 1.f;
 		}
 	}
 }
