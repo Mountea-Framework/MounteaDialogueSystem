@@ -131,6 +131,18 @@ private:
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]"))
 	bool bUseAdvancedWiring;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]"))
+	FVector2D LeaveTangents = FVector2D(0.f, 220.f);
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]"))
+	FVector2D ArriveTangent = FVector2D(0.0f, -220.f);
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]"))
+	FVector2D AdvancedWiringConnectionTangent = FVector2D(0.0f, 220.f);
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]"))
+	float ControlPointDistance = 150.0f;
 	
 	/* Advanced Wiring doesn't work now
 	
@@ -266,6 +278,15 @@ public:
 
 	bool AllowAdvancedWiring() const
 	{ return bUseAdvancedWiring; };
+
+	FVector2D GetLeaveTangent() const
+	{ return LeaveTangents; };
+
+	FVector2D GetArriveTangent() const
+	{ return ArriveTangent; };
+
+	FVector2D GetAdvancedWiringConnectionTangent() const
+	{ return AdvancedWiringConnectionTangent; };
 	
 	/*
 	EWiringStyle GetWireStyle() const
@@ -316,5 +337,14 @@ public:
 	{ return CoolDownRate; };
 
 #pragma endregion 
-};
 
+#pragma region EDITOR
+	
+#if WITH_EDITOR
+
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	
+#endif
+	
+#pragma endregion 
+};

@@ -222,7 +222,9 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(c
 	// Draw the arrow
 	if (ArrowImage)
 	{
-		const FVector2D ArrowDrawPos = EndPoint - ArrowRadius;
+		FVector2D ArrowDrawPos = EndPoint - ArrowRadius;
+		ArrowDrawPos.Y -= 10.f;
+		
 		const float AngleInRadians = FMath::DegreesToRadians(90.f);
 
 		FSlateDrawElement::MakeRotatedBox(
@@ -264,41 +266,37 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnectionDown(int32 Lay
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnectionUp(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
 {
-	// Constants which might need fine-tuning
-	constexpr float NodeBoxOffset = 20.0f;
-	constexpr float ControlPointDistance = 50.0f;  // The distance the control points are from the start and end, can adjust for a tighter or looser loop
+	const UMounteaDialogueGraphEditorSettings* GraphSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
 
-	const FVector2D UnitDelta = (End - Start).GetSafeNormal();
-	FVector2D StartOffset = FVector2D(0, NodeBoxOffset * UnitDelta.Y).GetSafeNormal();
-	FVector2D EndOffset = -StartOffset;
+	FVector2D LeaveTangent = GraphSettings->GetLeaveTangent().GetAbs();
+	FVector2D ArriveTangent = GraphSettings->GetArriveTangent().GetAbs();
+	
+	const int32 SideValue = End.X >= 0 ? 1 : -1;
 
-	FVector2D AdjustedStart = Start + StartOffset;
-	FVector2D AdjustedEnd = End + EndOffset;
+	LeaveTangent.X *= SideValue;
+	ArriveTangent.X *= -SideValue;
 
-	// Calculate control points for the cubic bezier spline.
-	FVector2D ControlPoint1 = AdjustedStart - FVector2D(0, ControlPointDistance);
-	FVector2D ControlPoint2 = AdjustedEnd - FVector2D(0, ControlPointDistance);
+	LeaveTangent.Y *= SideValue;
+	ArriveTangent.Y *= -SideValue;
+	
+	// Control points derived from the tangents
+	FVector2D ControlPoint1 = Start + (LeaveTangent * ZoomFactor);
+	FVector2D ControlPoint2 = End + (ArriveTangent * ZoomFactor);
 
-	// Further control points to smooth the loop
-	FVector2D ControlPointMid1 = (AdjustedStart + ControlPoint1) * 0.5f;
-	FVector2D ControlPointMid2 = (AdjustedEnd + ControlPoint2) * 0.5f;
-
-	// Draw the bezier curve with the control points.
 	FSlateDrawElement::MakeCubicBezierSpline(
 		DrawElementsList,
 		LayerId,
 		FPaintGeometry(),
-		AdjustedStart,
+		Start,
 		ControlPoint1,
 		ControlPoint2,
-		AdjustedEnd,
+		End,
 		Params.WireThickness,
 		ESlateDrawEffect::None,
 		Params.WireColor
 	);
-
-	// [Optional] Add bubbles and midpoint image logic here if needed, as in the original function.
 }
+
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
 {

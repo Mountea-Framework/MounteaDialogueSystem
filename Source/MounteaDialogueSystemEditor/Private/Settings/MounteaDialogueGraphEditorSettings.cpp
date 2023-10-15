@@ -37,4 +37,28 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 	bAllowNativeDecoratorsEdit = false;
 }
 
+#if WITH_EDITOR
+
+void UMounteaDialogueGraphEditorSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphEditorSettings, LeaveTangents))
+	{
+		if (FMath::IsNearlyZero(LeaveTangents.Y, 0.01f))
+		{
+			LeaveTangents.Y = -1.f;
+		}
+	}
+	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphEditorSettings, ArriveTangent))
+	{
+		if (FMath::IsNearlyZero(ArriveTangent.Y, 0.01f))
+		{
+			LeaveTangents.Y = 1.f;
+		}
+	}
+}
+
+#endif
+
 #undef LOCTEXT_NAMESPACE
