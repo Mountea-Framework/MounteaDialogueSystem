@@ -129,10 +129,10 @@ private:
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring") //, meta=(ConfigRestartRequired=true))
 	EArrowType ArrowType;
 
-	/* Advanced Wiring doesn't work now
-	
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!"))
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]"))
 	bool bUseAdvancedWiring;
+	
+	/* Advanced Wiring doesn't work now
 	
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
 	EWiringStyle WireStyle;
@@ -263,11 +263,11 @@ public:
 
 	EArrowType GetArrowType() const
 	{ return ArrowType; };
-	
-	/*
+
 	bool AllowAdvancedWiring() const
 	{ return bUseAdvancedWiring; };
 	
+	/*
 	EWiringStyle GetWireStyle() const
 	{ return WireStyle; };
 
