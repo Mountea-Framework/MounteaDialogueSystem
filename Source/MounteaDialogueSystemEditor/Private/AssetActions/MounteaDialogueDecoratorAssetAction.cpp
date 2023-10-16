@@ -9,7 +9,7 @@ FMounteaDialogueDecoratorAssetAction::FMounteaDialogueDecoratorAssetAction()
 
 FText FMounteaDialogueDecoratorAssetAction::GetName() const
 {
-	return LOCTEXT("MounteaDialogueDecoratorAssetAction_Name", "3. Mountea Dialogue Node Decorators");
+	return LOCTEXT("MounteaDialogueDecoratorAssetAction_Name", "Mountea Dialogue Node Decorators");
 }
 
 FColor FMounteaDialogueDecoratorAssetAction::GetTypeColor() const
@@ -30,6 +30,15 @@ uint32 FMounteaDialogueDecoratorAssetAction::GetCategories()
 	}
 	
 	return  EAssetTypeCategories::Misc;
+}
+
+const TArray<FText>& FMounteaDialogueDecoratorAssetAction::GetSubMenus() const
+{
+	static const TArray<FText> AssetTypeActionSubMenu
+	{
+		FText::FromString("1. Node Decorators")
+	};
+	return AssetTypeActionSubMenu;
 };
 
 #undef LOCTEXT_NAMESPACE

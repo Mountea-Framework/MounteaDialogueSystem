@@ -192,6 +192,13 @@ protected:
 	 */
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueRowEvent OnDialogueRowFinished;
+	/**
+	 * Event called once Dialogue Row Data update has been requested.
+	 * Is never called from Code and is bound to `FinishedExecuteDialogueRow` function.
+	 * Should be used carefully. Suggested usage is with Dialogue Row Data which are using `RowDurationMode::Manual`.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	FDialogueRowEvent OnNextDialogueRowDataRequested;
 
 	/**
 	 * Event called if Dialogue fails to execute.
@@ -282,6 +289,7 @@ public:
 
 	UFUNCTION() virtual void StartExecuteDialogueRow() override;
 	UFUNCTION() virtual void FinishedExecuteDialogueRow() override;
+	UFUNCTION() void NextDialogueRowDataRequested(UMounteaDialogueContext* Context);
 	
 	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) override;
 	
