@@ -35,6 +35,7 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 	DecoratorsInfoStyle = EDecoratorsInfoStyle::EDIS_Unified;
 
 	bAllowNativeDecoratorsEdit = false;
+	bUseAdvancedWiring = true;
 }
 
 #if WITH_EDITOR
