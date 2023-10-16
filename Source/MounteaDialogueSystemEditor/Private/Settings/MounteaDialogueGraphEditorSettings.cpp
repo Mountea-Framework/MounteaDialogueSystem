@@ -35,6 +35,24 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 	DecoratorsInfoStyle = EDecoratorsInfoStyle::EDIS_Unified;
 
 	bAllowNativeDecoratorsEdit = false;
+	bUseAdvancedWiring = true;
 }
+
+#if WITH_EDITOR
+
+void UMounteaDialogueGraphEditorSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphEditorSettings, AdvancedWiringConnectionTangent))
+	{
+		if (FMath::IsNearlyZero(AdvancedWiringConnectionTangent.Y, 0.01f))
+		{
+			AdvancedWiringConnectionTangent.Y = 1.f;
+		}
+	}
+}
+
+#endif
 
 #undef LOCTEXT_NAMESPACE
