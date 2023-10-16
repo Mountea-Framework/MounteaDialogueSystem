@@ -75,7 +75,6 @@ DerivedDataCache/*
 
 # Ignore project specific files
 *.png~
-Config/FilterPlugin.ini
 Config/MDSConfig.ini
 Config/UpdateConfig.ini
 *.zip
