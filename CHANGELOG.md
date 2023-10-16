@@ -1,10 +1,10 @@
-Current Version: 1.0.6.52
+Current Version: 1.0.6.53
 
 # Changelog
 
 All notable changes to this project will be documented in this file.
 
-**Version 1.0.6.52**
+**Version 1.0.6.53**
 ### Added
 > - Added: Advanced Wiring Style for Nodes
 > - Added: More robust logs for `InitializeDialogue`
