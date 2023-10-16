@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 > - Added: More robust logs for `InitializeDialogue`
 > - Added: New Dialogue Row Data Duration Mode `Manual` to allow Manual skipping of Row Datas
 > - Added: New and nicer Menu Selector
+> - Added: Default GameplayTags
 
 ### Fixed
 > - Fixed: Editor Crash fix for Auto Arrange
