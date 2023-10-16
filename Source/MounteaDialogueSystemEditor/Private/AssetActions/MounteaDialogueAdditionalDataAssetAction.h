@@ -14,6 +14,7 @@ public:
 	virtual FColor GetTypeColor() const override;
 	virtual UClass* GetSupportedClass() const override;
 	virtual uint32 GetCategories() override;
+	virtual const TArray<FText>& GetSubMenus() const override;
 
 	/*
 	virtual FText GetAssetDescription(const FAssetData& AssetData) const override;

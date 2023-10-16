@@ -24,6 +24,7 @@ UMounteaDialogueGraphNode_LeadNode::UMounteaDialogueGraphNode_LeadNode()
 	
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_AnswerNode::StaticClass());
+	AllowedInputClasses.Add(UMounteaDialogueGraphNode_LeadNode::StaticClass());
 
 	bAutoStarts = true;
 	bUseGameplayTags = false;

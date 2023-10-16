@@ -23,11 +23,10 @@ UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 	
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_LeadNode::StaticClass());
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
+	AllowedInputClasses.Add(UMounteaDialogueGraphNode_AnswerNode::StaticClass());
 
 	bAutoStarts = false;
 	bUseGameplayTags = false;
-	
-	MaxChildrenNodes = 1;
 }
 
 void UMounteaDialogueGraphNode_AnswerNode::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
