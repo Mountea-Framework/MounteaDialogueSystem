@@ -26,9 +26,9 @@ class UDataAsset;
 UENUM(BlueprintType)
 enum class EDialogueManagerState : uint8
 {
-	EDMS_Disabled		UMETA(DisplayName="Disabled",			Tooltip="Disabled. Dialogue cannot start."),
+	EDMS_Disabled			UMETA(DisplayName="Disabled",			Tooltip="Disabled. Dialogue cannot start."),
 	EDMS_Enabled			UMETA(DisplayName="Enabled",			Tooltip="Enabled. Dialogue can start."),
-	EDMS_Active			UMETA(DisplayName="Active",				Tooltip="Active. Is in Diaologue."),
+	EDMS_Active				UMETA(DisplayName="Active",				Tooltip="Active. Is in Diaologue."),
 };
 
 /**
@@ -41,7 +41,7 @@ enum class EDialogueParticipantState : uint8
 {
 	EDPS_Disabled		UMETA(DisplayName="Disabled",			Tooltip="Disabled. Dialogue cannot start."),
 	EDPS_Enabled		UMETA(DisplayName="Enabled",			Tooltip="Enabled. Dialogue can start."),
-	EDPS_Active		UMETA(DisplayName="Active",				Tooltip="Active. Is in Diaologue."),
+	EDPS_Active			UMETA(DisplayName="Active",				Tooltip="Active. Is in Diaologue."),
 };
 
 /**
@@ -52,10 +52,11 @@ enum class EDialogueParticipantState : uint8
 UENUM(BlueprintType)
 enum class ERowDurationMode : uint8
 {
+	ERDM_Manual					UMETA(DisplayName="Manual",				Tooltip="Row won't start automatically and will wait for `NextDialogueRow` request."),
 	ERDM_Duration				UMETA(DisplayName="Duration",			Tooltip="Uses either duration of 'Row Sound' or value from 'Duration'."),
 	EDRM_Override				UMETA(DisplayName="Override",			Tooltip="Uses 'Duration Override' value."),
-	EDRM_Add					UMETA(DisplayName="Add Time",			Tooltip="Adds 'Duration Override' value to 'Duration'."),
-	ERDM_AutoCalculate	UMETA(DisplayName="Calculate",			Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds.")
+	EDRM_Add						UMETA(DisplayName="Add Time",			Tooltip="Adds 'Duration Override' value to 'Duration'."),
+	ERDM_AutoCalculate		UMETA(DisplayName="Calculate",			Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds.")
 };
 
 /**
@@ -324,7 +325,7 @@ public:
 	 * Any Data Asset can be used here and no logic is tied to this attribute.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(AllowAbstract=false))
-	TSubclassOf<UDialogueAdditionalData> DialogueRowAdditionalData = nullptr;
+	UDialogueAdditionalData* DialogueRowAdditionalData = nullptr;
 	/**
 	 * Row GUID.
 	 * 
@@ -350,7 +351,7 @@ public:
 		RowGUID = FGuid::NewGuid();
 	};
 
-	FDialogueRow(const int32 NewUIRowID, UTexture* InRowIcon, const FText& InText, const FText& InParticipant, const TSet<FDialogueRowData>& InData, const TSubclassOf<UDialogueAdditionalData> NewData)
+	FDialogueRow(const int32 NewUIRowID, UTexture* InRowIcon, const FText& InText, const FText& InParticipant, const TSet<FDialogueRowData>& InData, UDialogueAdditionalData* NewData)
 		: UIRowID(NewUIRowID), RowOptionalIcon(InRowIcon), DialogueParticipant(InParticipant), RowTitle(InText), DialogueRowData(InData), DialogueRowAdditionalData(NewData)
 	{
 		RowGUID = FGuid::NewGuid();
