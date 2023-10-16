@@ -129,10 +129,16 @@ private:
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring") //, meta=(ConfigRestartRequired=true))
 	EArrowType ArrowType;
 
-	/* Advanced Wiring doesn't work now
-	
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!"))
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]"))
 	bool bUseAdvancedWiring;
+
+	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]", EditCondition="bUseAdvancedWiring"))
+	FVector2D AdvancedWiringConnectionTangent = FVector2D(0.0f, 220.f);
+
+	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]", EditCondition="bUseAdvancedWiring"))
+	float ControlPointDistance = 150.0f;
+	
+	/* Advanced Wiring doesn't work now
 	
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
 	EWiringStyle WireStyle;
@@ -263,11 +269,17 @@ public:
 
 	EArrowType GetArrowType() const
 	{ return ArrowType; };
-	
-	/*
+
 	bool AllowAdvancedWiring() const
 	{ return bUseAdvancedWiring; };
+
+	FVector2D GetAdvancedWiringConnectionTangent() const
+	{ return AdvancedWiringConnectionTangent; };
+
+	float GetControlPointDistance() const
+	{ return ControlPointDistance; };
 	
+	/*
 	EWiringStyle GetWireStyle() const
 	{ return WireStyle; };
 
@@ -316,5 +328,14 @@ public:
 	{ return CoolDownRate; };
 
 #pragma endregion 
-};
 
+#pragma region EDITOR
+	
+#if WITH_EDITOR
+
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	
+#endif
+	
+#pragma endregion 
+};
