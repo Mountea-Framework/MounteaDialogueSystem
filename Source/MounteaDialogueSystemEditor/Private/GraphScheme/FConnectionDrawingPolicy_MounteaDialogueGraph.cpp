@@ -91,11 +91,15 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FG
 	const FVector2D EndCenter = FGeometryHelper::CenterOf(EndGeom);
 	const FVector2D SeedPoint = (StartCenter + EndCenter) * 0.5f;
 
+	/*
 	// Find the (approximate) closest points between the two boxes
 	const FVector2D StartAnchorPoint = FGeometryHelper::FindClosestPointOnGeom(StartGeom, SeedPoint);
 	const FVector2D EndAnchorPoint = FGeometryHelper::FindClosestPointOnGeom(EndGeom, SeedPoint);
 
 	DrawSplineWithArrow(StartAnchorPoint, EndAnchorPoint, Params);
+	*/
+
+	DrawSplineWithArrow(StartCenter, EndCenter, Params);
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)
@@ -182,15 +186,32 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(c
 	const FVector2D LengthBias = ArrowRadius.X * UnitDelta;
 	const FVector2D StartPoint = StartAnchorPoint + DirectionBias + LengthBias;
 	const FVector2D EndPoint = EndAnchorPoint + DirectionBias - LengthBias;
+		
+	const UMounteaDialogueGraphEditorSettings* GraphSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
+	if (GraphSettings == nullptr || GraphSettings->AllowAdvancedWiring() == false)
+	{
+		DrawConnection(WireLayerID, StartPoint, EndPoint, Params);
+		return;
+	}
 
-	// Draw a line/spline
-	DrawConnection(WireLayerID, StartPoint, EndPoint, Params);
-	
+	const bool bIsAligned = FMath::IsNearlyEqual(EndPoint.X, StartPoint.X, GraphSettings->GetControlPointDistance());
+		
+	// Choose connection drawing method based on conditions
+	if (bIsAligned)
+	{
+		DrawConnection(WireLayerID, StartPoint, EndPoint, Params);
+	}
+	else
+	{
+		DrawCurvedConnection(WireLayerID, StartPoint, EndPoint, Params);
+	}
+
 	// Draw the arrow
 	if (ArrowImage)
 	{
 		const FVector2D ArrowDrawPos = EndPoint - ArrowRadius;
-		const float AngleInRadians = FMath::Atan2(DeltaPos.Y, DeltaPos.X);
+		
+		const float AngleInRadians = FMath::DegreesToRadians(90.f); //FMath::Atan2(DeltaPos.Y, DeltaPos.X);
 
 		FSlateDrawElement::MakeRotatedBox(
 			DrawElementsList,
@@ -204,4 +225,65 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(c
 			Params.WireColor
 		);
 	}
+}
+
+/*
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnectionDown(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
+{
+	// Constants for Bezier control points
+	FVector2D ControlPoint1 = FVector2D(Start.X, Start.Y + (End.Y - Start.Y) / 3); // Adjust to create a smooth curve
+	FVector2D ControlPoint2 = FVector2D(End.X, End.Y - (End.Y - Start.Y) / 3);
+
+	FSlateDrawElement::MakeCubicBezierSpline(
+		DrawElementsList,
+		LayerId,
+		FPaintGeometry(),
+		Start,
+		ControlPoint1,
+		ControlPoint2,
+		End,
+		Params.WireThickness,
+		ESlateDrawEffect::None,
+		Params.WireColor
+	);
+}
+*/
+
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawCurvedConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
+{
+	const UMounteaDialogueGraphEditorSettings* GraphSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
+
+	FVector2D LeaveTangent = GraphSettings->GetAdvancedWiringConnectionTangent().GetAbs();
+	FVector2D ArriveTangent = GraphSettings->GetAdvancedWiringConnectionTangent().GetAbs();
+	
+	const int32 SideValue = End.X >= 0 ? 1 : -1;
+
+	LeaveTangent.X *= -SideValue;
+	ArriveTangent.X *= SideValue;
+
+	LeaveTangent.Y *= SideValue;
+	ArriveTangent.Y *= -SideValue;
+	
+	// Control points derived from the tangents
+	FVector2D ControlPoint1 = Start + (LeaveTangent * ZoomFactor);
+	FVector2D ControlPoint2 = End + (ArriveTangent * ZoomFactor);
+
+	FSlateDrawElement::MakeCubicBezierSpline(
+		DrawElementsList,
+		LayerId,
+		FPaintGeometry(),
+		Start,
+		ControlPoint1,
+		ControlPoint2,
+		End,
+		Params.WireThickness,
+		ESlateDrawEffect::None,
+		Params.WireColor
+	);
+}
+
+
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
+{
+	FKismetConnectionDrawingPolicy::DrawConnection(LayerId, Start, End, Params);
 }

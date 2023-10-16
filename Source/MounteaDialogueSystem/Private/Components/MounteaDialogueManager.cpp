@@ -40,6 +40,8 @@ void UMounteaDialogueManager::BeginPlay()
 
 	OnDialogueVoiceStartRequest.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal);
 	OnDialogueVoiceSkipRequest.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal);
+
+	OnNextDialogueRowDataRequested.AddUniqueDynamic(this, &UMounteaDialogueManager::NextDialogueRowDataRequested);
 	
 	SetDialogueManagerState(GetDefaultDialogueManagerState());
 }
@@ -467,6 +469,9 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 	{
 		OnDialogueFailed.Broadcast("Invalid Dialogue Widget Pointer!");
 	}
+
+	// TODO: Add new Duration mode "Manual Input" and if this one is selected, dont start and just wait for
+	// Make a new public function to activate Next Row
 	
 	FTimerDelegate Delegate;
 	Delegate.BindUObject(this, &UMounteaDialogueManager::FinishedExecuteDialogueRow);
@@ -475,13 +480,16 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 	const auto Row = DialogueContext->GetActiveDialogueRow();
 	const auto RowData = Row.DialogueRowData.Array()[Index];
 
-	GetWorld()->GetTimerManager().SetTimer
-	(
-		TimerHandle_RowTimer,
-		Delegate,
-		UMounteaDialogueSystemBFC::GetRowDuration(RowData),
-		false
-	);
+	if (RowData.RowDurationMode != ERowDurationMode::ERDM_Manual)
+	{
+		GetWorld()->GetTimerManager().SetTimer
+		(
+			TimerHandle_RowTimer,
+			Delegate,
+			UMounteaDialogueSystemBFC::GetRowDuration(RowData),
+			false
+		);
+	}
 	
 	OnDialogueRowStarted.Broadcast(DialogueContext);
 
@@ -523,6 +531,11 @@ void UMounteaDialogueManager::FinishedExecuteDialogueRow()
 	}
 
 	OnDialogueRowFinished.Broadcast(DialogueContext);
+}
+
+void UMounteaDialogueManager::NextDialogueRowDataRequested(UMounteaDialogueContext* Context)
+{
+	FinishedExecuteDialogueRow();
 }
 
 void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewContext)
