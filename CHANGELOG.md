@@ -1,10 +1,40 @@
-Current Version: 1.0.0.51
+Current Version: 1.0.6.50
 
 # Changelog
 
 All notable changes to this project will be documented in this file.
 
-**Version 1.0.0.51**
+**Version 1.0.6.50**
+### Added
+> - Added: Advanced Wiring Style for Nodes
+> - Added: More robust logs for `InitializeDialogue`
+> - Added: New Dialogue Row Data Duration Mode `Manual` to allow Manual skipping of Row Datas
+> - Added: New and nicer Menu Selector
+
+### Fixed
+> - Fixed: Editor Crash fix for Auto Arrange
+> - Fixed: Dialogue Row UI now support Class/ID coloring settings
+> - Fixed: Missing `Additional Data` class Description
+
+### Changed
+> - Changed: Additional Dialogue Data is now `DataAsset` instead of Class Picker
+> - Changed: Lead Node now can point to multiple Answer Nodes
+> - Changed: Answer Node now can point to multiple Lead Nodes
+
+**Version 1.0.5.50**
+### Added
+> - Added: Added support for Gameplay Tags (beta)
+
+### Fixed
+> - Fixed: Editor Crash fix
+> - Fixed: Interfaces C++ access fix
+> - Fixed: OverrideParticipants Decorator Fix
+> - Fixed: Linux/Mac Build fix
+
+### Changed
+> - Changed: Exposed `bDoesAutoStart` for Dialogue Nodes
+
+**Version 1.0.0.50**
 ### Added
 > - Added: Mountea Dialogue Graph
 > - Added: Mountea Dialogue Node
