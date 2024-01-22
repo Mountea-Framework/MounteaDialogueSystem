@@ -213,15 +213,22 @@ void UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal(UMounteaDialogu
 		return;
 	}
 
-	if (Context->GetActiveDialogueRow().DialogueRowData.Array().IsValidIndex(Context->GetActiveDialogueRowDataIndex()) == false)
+	const int32 Index = Context->GetActiveDialogueRowDataIndex();
+	const FDialogueRow& DialogueRow = Context->GetActiveDialogueRow();
+	
+	if (DialogueRow.DialogueRowData.Array().IsValidIndex(Index) == false)
 	{
 		OnDialogueFailed.Broadcast(TEXT("[DialogueRowStartedEvent] Trying to Access Invalid Dialogue Row data!"));
 		return;
 	}
-
+	
 	// Let's hope we are not approaching invalid indexes
-	USoundBase* SoundToStart =  Context->GetActiveDialogueRow().DialogueRowData.Array()[Context->GetActiveDialogueRowDataIndex()].RowSound;
-	OnDialogueVoiceStartRequest.Broadcast(SoundToStart);
+	USoundBase* SoundToStart =  DialogueRow.DialogueRowData.Array()[Index].RowSound;
+
+	if (SoundToStart)
+	{
+		OnDialogueVoiceStartRequest.Broadcast(SoundToStart);
+	}
 }
 
 void UMounteaDialogueManager::OnDialogueRowFinishedEvent_Internal(UMounteaDialogueContext* Context)
