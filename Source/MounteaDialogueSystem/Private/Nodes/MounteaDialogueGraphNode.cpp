@@ -7,7 +7,7 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueNode"
 
-UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
+UMounteaDialogueGraphNode::UMounteaDialogueGraphNode(): Graph(nullptr), OwningWorld(nullptr)
 {
 	NodeGUID = FGuid::NewGuid();
 	bInheritGraphDecorators = true;
@@ -27,7 +27,8 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
 	bAllowManualCreate = true;
 
 	NodeTypeName = LOCTEXT("MounteaDialogueNode_InternalName", "MounteaDialogueGraphNode");
-	NodeTooltipText = LOCTEXT("MounteaDialogueNode_Tooltip", "Mountea Dialogue Base Node.\n\nChild Nodes provide more Information.");
+	NodeTooltipText = LOCTEXT("MounteaDialogueNode_Tooltip",
+	                          "Mountea Dialogue Base Node.\n\nChild Nodes provide more Information.");
 #endif
 
 	bAutoStarts = false;
@@ -44,6 +45,27 @@ void UMounteaDialogueGraphNode::SetNewWorld(UWorld* NewWorld)
 	if (NewWorld == OwningWorld) return;
 
 	OwningWorld = NewWorld;
+}
+
+void UMounteaDialogueGraphNode::RegisterTick_Implementation( const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+{
+	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
+	{
+		ParentTickable->GetMounteaDialogueTickHandle().AddUniqueDynamic(this, &UMounteaDialogueGraphNode::TickMounteaEvent);
+	}
+}
+
+void UMounteaDialogueGraphNode::UnregisterTick_Implementation( const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+{
+	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
+	{
+		ParentTickable->GetMounteaDialogueTickHandle().RemoveDynamic(this, &UMounteaDialogueGraphNode::TickMounteaEvent);
+	}
+}
+
+void UMounteaDialogueGraphNode::TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime)
+{
+	NodeTickEvent.Broadcast(this, ParentTick, DeltaTime);
 }
 
 void UMounteaDialogueGraphNode::InitializeNode_Implementation(UWorld* InWorld)

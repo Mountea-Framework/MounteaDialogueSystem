@@ -6,6 +6,7 @@
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "UObject/Object.h"
 #include "Engine/Level.h"
+#include "Interfaces/MounteaDialogueTickableObject.h"
 #include "MounteaDialogueDecoratorBase.generated.h"
 
 class IMounteaDialogueParticipantInterface;
@@ -28,7 +29,7 @@ enum class EDecoratorState : uint8
  * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
  */
 UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea, Dialogue"))
-class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecoratorBase : public UObject
+class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecoratorBase : public UObject, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()
 
@@ -176,6 +177,19 @@ public:
 	{ return OwnerParticipant; };
 
 	FText GetDecoratorName() const;
+
+#pragma region TickableInterface
+	
+public:
+	virtual void RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
+	virtual void UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
+	virtual void TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime) override;
+	virtual FMounteaDialogueTick& GetMounteaDialogueTickHandle() override {return DecoratorTickEvent; };
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	FMounteaDialogueTick DecoratorTickEvent;
+	
+#pragma endregion
 	
 private:
 

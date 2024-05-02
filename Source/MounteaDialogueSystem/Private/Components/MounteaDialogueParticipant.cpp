@@ -11,6 +11,13 @@
 UMounteaDialogueParticipant::UMounteaDialogueParticipant()
 {
 	DefaultParticipantState = EDialogueParticipantState::EDPS_Enabled;
+
+	SetIsReplicatedByDefault(true);
+	SetActiveFlag(true);
+
+	bAutoActivate = true;
+
+	PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
 void UMounteaDialogueParticipant::BeginPlay()
@@ -24,6 +31,16 @@ void UMounteaDialogueParticipant::BeginPlay()
 	SetAudioComponent(FindAudioComponent());
 
 	InitializeParticipant();
+}
+
+void UMounteaDialogueParticipant::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (ParticipantState == EDialogueParticipantState::EDPS_Active)
+	{
+		Execute_TickMounteaEvent(this, this, nullptr, DeltaTime);
+	}
 }
 
 
@@ -199,4 +216,19 @@ void UMounteaDialogueParticipant::SaveTraversedPath_Implementation(TMap<FGuid, i
 FGameplayTag UMounteaDialogueParticipant::GetParticipantTag() const
 {
 	return ParticipantTag;
+}
+
+void UMounteaDialogueParticipant::RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+{
+	SetComponentTickEnabled(true);
+}
+
+void UMounteaDialogueParticipant::UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+{
+	SetComponentTickEnabled(false);
+}
+
+void UMounteaDialogueParticipant::TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick,float DeltaTime)
+{
+	ParticipantTickEvent.Broadcast(SelfRef, ParentTick, DeltaTime);
 }

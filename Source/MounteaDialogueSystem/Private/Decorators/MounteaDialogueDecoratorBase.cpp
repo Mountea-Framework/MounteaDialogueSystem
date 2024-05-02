@@ -83,4 +83,25 @@ FText UMounteaDialogueDecoratorBase::GetDecoratorName() const
 	return FText::FromString(GetName());
 }
 
+void UMounteaDialogueDecoratorBase::RegisterTick_Implementation( const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+{
+	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
+	{
+		ParentTickable->GetMounteaDialogueTickHandle().AddUniqueDynamic(this, &UMounteaDialogueDecoratorBase::TickMounteaEvent);
+	}
+}
+
+void UMounteaDialogueDecoratorBase::UnregisterTick_Implementation( const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+{
+	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
+	{
+		ParentTickable->GetMounteaDialogueTickHandle().RemoveDynamic(this, &UMounteaDialogueDecoratorBase::TickMounteaEvent);
+	}
+}
+
+void UMounteaDialogueDecoratorBase::TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime)
+{
+	DecoratorTickEvent.Broadcast(SelfRef, ParentTick, DeltaTime);
+}
+
 #undef LOCTEXT_NAMESPACE

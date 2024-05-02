@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Interfaces/MounteaDialogueParticipantInterface.h"
+#include "Interfaces/MounteaDialogueTickableObject.h"
 #include "MounteaDialogueParticipant.generated.h"
 
 class UMounteaDialogueGraphNode_CompleteNode;
@@ -17,7 +18,7 @@ class UMounteaDialogueGraphNode_DialogueNodeBase;
  * ❗ Requires Dialogue Graph to work.
  */
 UCLASS(ClassGroup=(Mountea), Blueprintable, hideCategories=(Collision, AssetUserData, Cooking, Activation, Rendering, Sockets), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"), meta=(BlueprintSpawnableComponent, DisplayName = "Mountea Dialogue Participant"))
-class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueParticipant : public UActorComponent, public IMounteaDialogueParticipantInterface
+class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueParticipant : public UActorComponent, public IMounteaDialogueParticipantInterface, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()
 
@@ -34,7 +35,9 @@ protected:
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue")
 	void InitializeParticipant();
 	virtual void InitializeParticipant_Implementation();
-	virtual void BeginPlay() override;
+	
+	virtual void BeginPlay() override;	
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 #pragma region Functions
 
@@ -44,7 +47,6 @@ public:
 	 * Finds an audio component using FindAudioComponentByName or FindAudioComponentByTag.
 	 * ❗ Returns null if 'AudioComponentIdentification' is invalid!
 	 * 
-	 * @param Arg The Name to search for.
 	 * @return The found audio component, or nullptr if not found.
  	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
@@ -300,6 +302,19 @@ public:
 	
 #pragma endregion 
 
+#pragma endregion
+
+#pragma region TickableInterface
+	
+public:
+	virtual void RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
+	virtual void UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
+	virtual void TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime) override;
+	virtual FMounteaDialogueTick& GetMounteaDialogueTickHandle() override {return ParticipantTickEvent; };
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	FMounteaDialogueTick ParticipantTickEvent;
+	
 #pragma endregion
 	
 };

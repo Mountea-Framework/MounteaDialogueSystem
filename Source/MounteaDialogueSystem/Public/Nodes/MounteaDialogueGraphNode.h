@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Decorators/MounteaDialogueDecoratorBase.h"
+#include "Interfaces/MounteaDialogueTickableObject.h"
 #include "MounteaDialogueGraphNode.generated.h"
 
 class IMounteaDialogueManagerInterface;
@@ -17,8 +18,8 @@ class UMounteaDialogueGraphEdge;
  * Does come with ability to define Colours, Name, Description and Title.
  * Contains information about Parent and Children Nodes.
  */
-UCLASS(Abstract, BlueprintType, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"))
-class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject
+UCLASS(Abstract, BlueprintType, Blueprintable, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"))
+class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()
 
@@ -277,7 +278,19 @@ public:
 
 #pragma endregion 
 
+#pragma region TickableInterface
+	
+public:
+	virtual void RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
+	virtual void UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
+	virtual void TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime) override;
+	virtual FMounteaDialogueTick& GetMounteaDialogueTickHandle() override {return NodeTickEvent; };
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	FMounteaDialogueTick NodeTickEvent;
+	
+#pragma endregion
+	
 #if WITH_EDITORONLY_DATA
 
 	// Defines whether this Node type allows inputs
