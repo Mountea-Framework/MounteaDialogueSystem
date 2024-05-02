@@ -9,6 +9,7 @@
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/MounteaDialogueWBPInterface.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 
 UMounteaDialogueManager::UMounteaDialogueManager()
@@ -298,6 +299,18 @@ void UMounteaDialogueManager::StartDialogue()
 	}
 
 	SetDialogueManagerState(EDialogueManagerState::EDMS_Active);
+
+	for (const auto& Itr : DialogueContext->DialogueParticipants)
+	{
+		if (!Itr.GetObject() || !Itr.GetInterface()) continue;
+
+		TScriptInterface<IMounteaDialogueTickableObject> TickableObject = Itr.GetObject();
+		if (TickableObject.GetInterface() && TickableObject.GetObject())
+		{
+			// Register ticks for participants, no need to define Parent as Participants are the most paren ones
+			TickableObject->Execute_RegisterTick(TickableObject.GetObject(), nullptr);
+		}
+	}
 	
 	Execute_PrepareNode(this);
 }
@@ -568,4 +581,16 @@ void UMounteaDialogueManager::SetDialogueManagerState(const EDialogueManagerStat
 void UMounteaDialogueManager::SetDefaultDialogueManagerState(const EDialogueManagerState NewState)
 {
 	DefaultManagerState = NewState;
+}
+
+void UMounteaDialogueManager::OnRep_ManagerState()
+{
+	// TODO: Call client updates
+}
+
+void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UMounteaDialogueManager, ManagerState); 
 }
