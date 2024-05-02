@@ -164,6 +164,12 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 		OnDialogueFailed.Broadcast(TEXT("Invalid Dialogue Context!"));
 		return;
 	}
+
+	// Stop Ticking Active Node and read Ticking from parent Graph
+	if (DialogueContext && DialogueContext->ActiveNode)
+	{
+		DialogueContext->ActiveNode->Execute_UnregisterTick(DialogueContext->ActiveNode, DialogueContext->ActiveNode->Graph);
+	}
 	
 	OnDialogueNodeFinishedEvent(Context);
 
@@ -469,6 +475,12 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 	if (!DialogueWidgetPtr)
 	{
 		OnDialogueFailed.Broadcast("Invalid Dialogue Widget Pointer!");
+	}
+
+	// Start Ticking Active Node and read Ticking from parent Graph
+	if (DialogueContext && DialogueContext->ActiveNode)
+	{
+		DialogueContext->ActiveNode->Execute_RegisterTick(DialogueContext->ActiveNode, DialogueContext->ActiveNode->Graph);
 	}
 
 	// TODO: Add new Duration mode "Manual Input" and if this one is selected, dont start and just wait for

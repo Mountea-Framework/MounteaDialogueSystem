@@ -221,11 +221,21 @@ FGameplayTag UMounteaDialogueParticipant::GetParticipantTag() const
 void UMounteaDialogueParticipant::RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
 {
 	SetComponentTickEnabled(true);
+
+	if (GetDialogueGraph())
+	{
+		GetDialogueGraph()->Execute_RegisterTick(GetDialogueGraph(), this);
+	}
 }
 
 void UMounteaDialogueParticipant::UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
 {
 	SetComponentTickEnabled(false);
+
+	if (GetDialogueGraph())
+	{
+		GetDialogueGraph()->Execute_UnregisterTick(GetDialogueGraph(), this);
+	}
 }
 
 void UMounteaDialogueParticipant::TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick,float DeltaTime)
