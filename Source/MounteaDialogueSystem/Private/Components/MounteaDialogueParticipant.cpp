@@ -163,14 +163,26 @@ void UMounteaDialogueParticipant::SaveStartingNode_Implementation(UMounteaDialog
 void UMounteaDialogueParticipant::SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph)
 {
 	if (ParticipantState == EDialogueParticipantState::EDPS_Active) return;
-	
-	if (NewDialogueGraph != DialogueGraph)
+
+	if (NewDialogueGraph == DialogueGraph) return;;
+
+	if (!GetOwner())
+	{
+		LOG_ERROR(TEXT("[SetParticipantState] Component has no Owner!"))
+		return;
+	}
+
+	if (GetOwner()->HasAuthority())
 	{
 		DialogueGraph = NewDialogueGraph;
 
 		InitializeParticipant();
 		
 		OnDialogueGraphChanged.Broadcast(NewDialogueGraph);
+	}
+	else
+	{
+		SetDialogueGraph_Server(NewDialogueGraph);
 	}
 }
 
@@ -184,6 +196,8 @@ void UMounteaDialogueParticipant::SetParticipantState(const EDialogueParticipant
 	if (GetOwner()->HasAuthority())
 	{
 		ParticipantState = NewState;
+
+		UpdateParticipantTick();
 
 		OnDialogueParticipantStateChanged.Broadcast(NewState);
 	}
@@ -212,9 +226,23 @@ void UMounteaDialogueParticipant::SetDefaultParticipantState(const EDialoguePart
 
 void UMounteaDialogueParticipant::SetAudioComponent(UAudioComponent* NewAudioComponent)
 {
-	AudioComponent = NewAudioComponent;
+	if (AudioComponent == NewAudioComponent) return;
+	
+	if (!GetOwner())
+	{
+		LOG_ERROR(TEXT("[SetAudioComponent] Component has no Owner!"))
+		return;
+	}
+	if (GetOwner()->HasAuthority())
+	{
+		AudioComponent = NewAudioComponent;
 
-	OnAudioComponentChanged.Broadcast(AudioComponent);
+		OnAudioComponentChanged.Broadcast(AudioComponent);
+	}
+	else
+	{
+		SetAudioComponent_Server(NewAudioComponent);
+	}
 }
 
 AActor* UMounteaDialogueParticipant::GetOwningActor_Implementation() const
@@ -284,6 +312,42 @@ void UMounteaDialogueParticipant::UnregisterTick_Implementation(const TScriptInt
 void UMounteaDialogueParticipant::TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick,float DeltaTime)
 {
 	ParticipantTickEvent.Broadcast(SelfRef, ParentTick, DeltaTime);
+}
+
+void UMounteaDialogueParticipant::OnRep_DialogueGraph()
+{
+	InitializeParticipant();
+}
+
+void UMounteaDialogueParticipant::UpdateParticipantTick()
+{
+	switch (ParticipantState)
+	{
+	case EDialogueParticipantState::EDPS_Disabled:
+		Execute_UnregisterTick(this, nullptr);
+		break;
+	case EDialogueParticipantState::EDPS_Enabled:
+		Execute_UnregisterTick(this, nullptr);
+		break;
+	case EDialogueParticipantState::EDPS_Active:
+		Execute_RegisterTick(this, nullptr);
+		break;
+	}
+}
+
+void UMounteaDialogueParticipant::OnResp_ParticipantState()
+{
+	UpdateParticipantTick();
+}
+
+void UMounteaDialogueParticipant::SetDialogueGraph_Server_Implementation(UMounteaDialogueGraph* NewGraph)
+{
+	SetDialogueGraph(NewGraph);
+}
+
+void UMounteaDialogueParticipant::SetAudioComponent_Server_Implementation(UAudioComponent* NewAudioComponent)
+{
+	SetAudioComponent(NewAudioComponent	);
 }
 
 void UMounteaDialogueParticipant::SetDefaultParticipantState_Server_Implementation(const EDialogueParticipantState NewState)

@@ -100,7 +100,7 @@ protected:
 	 *
 	 * Set Graph is allowed only outside active Dialogue.
 	 */
-	UPROPERTY(Replicated, SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(ReplicatedUsing=OnRep_DialogueGraph, SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(DisplayThumbnail=false, NoResetToDefault))
 	UMounteaDialogueGraph* DialogueGraph = nullptr;
 
 	/**
@@ -116,7 +116,7 @@ protected:
 	* ❗ In order to start Dialogue, this value must not be Disabled.
 	* ❔ Can be updated using SetDialogueParticipantState function.
 	*/
-	UPROPERTY(Replicated, Transient, VisibleAnywhere,  Category="Mountea", AdvancedDisplay,  meta=(NoResetToDefault))
+	UPROPERTY(ReplicatedUsing=OnResp_ParticipantState, Transient, VisibleAnywhere,  Category="Mountea", AdvancedDisplay,  meta=(NoResetToDefault))
 	EDialogueParticipantState ParticipantState;
 
 	/**
@@ -335,10 +335,20 @@ public:
 
 protected:
 
+	virtual void UpdateParticipantTick();
+	
+	UFUNCTION()
+	void OnRep_DialogueGraph();
+	UFUNCTION()
+	void OnResp_ParticipantState();
 	UFUNCTION(Server, Reliable)
 	void SetParticipantState_Server(const EDialogueParticipantState NewState);
 	UFUNCTION(Server, Reliable)
 	void SetDefaultParticipantState_Server(const EDialogueParticipantState NewState);
+	UFUNCTION(Server, Reliable)
+	void SetAudioComponent_Server(UAudioComponent* NewAudioComponent);
+	UFUNCTION(Server, Reliable)
+	void SetDialogueGraph_Server(UMounteaDialogueGraph* NewGraph);
 
 #pragma endregion
 };
