@@ -308,7 +308,14 @@ float UMounteaDialogueSystemBFC::GetRowDuration(const FDialogueRowData& Row)
 		case ERowDurationMode::ERDM_AutoCalculate:
 			{
 				//TODO: Make 8:100 ratio editable in Settings!
-				ReturnValue= ((Row.RowText.ToString().Len() * 8.f) / 100.f);
+				if (GetDialogueSystemSettings_Internal())
+				{
+					ReturnValue= ((Row.RowText.ToString().Len() * GetDialogueSystemSettings_Internal()->GetDurationCoefficient()) / 100.f);
+				}
+				else
+				{
+					ReturnValue= ((Row.RowText.ToString().Len() * 8.f) / 100.f);
+				}
 				break;
 			}
 	}

@@ -47,6 +47,12 @@ protected:
 	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "UserInterface")
 	EInputMode InputMode;
+
+	/**
+	 * Defines coefficient of speed per 100 characters for `Automatic` `RowDurationMode`.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "UserInterface")
+	float DurationCoefficient = 8.f;
 	
 	/**
 	 * Defines how often Dialogue Widgets update per second.
@@ -130,6 +136,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	EInputMode GetDialogueInputMode() const
 	{ return InputMode; };
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	float GetDurationCoefficient() const
+	{ return DurationCoefficient; };
 	
 	/**
 	 * Returns whether Subtitles are allowed or not.
