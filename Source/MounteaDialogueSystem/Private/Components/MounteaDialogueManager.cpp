@@ -473,9 +473,26 @@ TSubclassOf<UUserWidget> UMounteaDialogueManager::GetDialogueWidgetClass() const
 
 void UMounteaDialogueManager::SetDialogueWidgetClass(const TSubclassOf<UUserWidget> NewWidgetClass)
 {
-	DialogueWidgetClass = NewWidgetClass;
+	if (NewWidgetClass == DialogueWidgetClass) return;
 
-	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidgetPtr);
+	if (!GetOwner())
+	{
+		LOG_ERROR(TEXT("[SetDialogueWidgetClass] Dialogue Manager has no Owner!"))
+		return;
+	}
+
+	if (GetOwner()->HasAuthority())
+	{
+		DialogueWidgetClass = NewWidgetClass;
+
+		OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidgetPtr);
+	}
+	else
+	{
+		SetDialogueWidgetClass_Server(NewWidgetClass);
+
+		//TODO: Client event?
+	}
 }
 
 void UMounteaDialogueManager::SetDialogueUIPtr(UUserWidget* NewDialogueWidgetPtr)
@@ -639,6 +656,11 @@ void UMounteaDialogueManager::SetDialogueDefaultManagerState_Server_Implementati
 void UMounteaDialogueManager::SetDialogueContext_Server_Implementation(UMounteaDialogueContext* NewContext)
 {
 	SetDialogueContext(NewContext);
+}
+
+void UMounteaDialogueManager::SetDialogueWidgetClass_Server_Implementation(TSubclassOf<UUserWidget> NewDialogueWidgetClass)
+{
+	SetDialogueWidgetClass(NewDialogueWidgetClass);
 }
 
 void UMounteaDialogueManager::OnRep_ManagerState()

@@ -397,6 +397,8 @@ protected:
 	void SetDialogueDefaultManagerState_Server(const EDialogueManagerState NewState);
 	UFUNCTION(Server, Reliable)
 	void SetDialogueContext_Server(UMounteaDialogueContext* NewContext);
+	UFUNCTION(Server, Reliable)
+	void SetDialogueWidgetClass_Server(TSubclassOf<UUserWidget> NewDialogueWidgetClass);
 
 	UFUNCTION()
 	void OnRep_ManagerState();
