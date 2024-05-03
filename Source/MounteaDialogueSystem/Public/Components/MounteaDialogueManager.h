@@ -353,7 +353,7 @@ protected:
 	* ❗ In order to start Dialogue, this value must not be Disabled.
 	* ❔ Can be updated using SetDialogueManagerState function.
 	*/
-	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea|Dialogue", ReplicatedUsing="OnRep_ManagerState")
+	UPROPERTY(ReplicatedUsing=OnResp_ManagerState, SaveGame, VisibleAnywhere, Category="Mountea|Dialogue", ReplicatedUsing="OnRep_ManagerState")
 	EDialogueManagerState ManagerState;
 	
 	/**
@@ -366,7 +366,7 @@ protected:
 	/**
 	 * Dialogue Context which is used to contain temporary data.
 	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
+	UPROPERTY(Replicated, Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	UMounteaDialogueContext* DialogueContext = nullptr;
 
 	/**
@@ -395,6 +395,8 @@ protected:
 	void SetDialogueManagerState_Server(const EDialogueManagerState NewState);
 	UFUNCTION(Server, Reliable)
 	void SetDialogueDefaultManagerState_Server(const EDialogueManagerState NewState);
+	UFUNCTION(Server, Reliable)
+	void SetDialogueContext_Server(UMounteaDialogueContext* NewContext);
 
 	UFUNCTION()
 	void OnRep_ManagerState();

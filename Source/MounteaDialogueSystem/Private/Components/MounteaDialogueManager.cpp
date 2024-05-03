@@ -565,13 +565,29 @@ void UMounteaDialogueManager::NextDialogueRowDataRequested(UMounteaDialogueConte
 
 void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewContext)
 {
-	DialogueContext = NewContext;
+	if (NewContext == DialogueContext) return;
 
-	OnDialogueContextUpdatedEvent(DialogueContext);
+	if (!GetOwner())
+	{
+		LOG_ERROR(TEXT("[SetDialogueContext] Dialogue Manager has no Owner!"))
+		return;
+	}
+	if (GetOwner()->HasAuthority())
+	{
+		DialogueContext = NewContext;
+
+		OnDialogueContextUpdatedEvent(DialogueContext);
+	}
+	else
+	{
+		SetDialogueContext_Server(NewContext);
+	}
 }
 
 void UMounteaDialogueManager::SetDialogueManagerState(const EDialogueManagerState NewState)
 {
+	if (NewState == ManagerState) return;
+	
 	if (!GetOwner())
 	{
 		LOG_ERROR(TEXT("[SetDialogueManagerState] Dialogue Manager has no Owner!"))
@@ -592,6 +608,8 @@ void UMounteaDialogueManager::SetDialogueManagerState(const EDialogueManagerStat
 
 void UMounteaDialogueManager::SetDefaultDialogueManagerState(const EDialogueManagerState NewState)
 {
+	if (NewState == DefaultManagerState) return;
+	
 	if (!GetOwner())
 	{
 		LOG_ERROR(TEXT("[SetDefaultDialogueManagerState] Dialogue Manager has no Owner!"))
@@ -618,6 +636,11 @@ void UMounteaDialogueManager::SetDialogueDefaultManagerState_Server_Implementati
 	SetDefaultDialogueManagerState(NewState);
 }
 
+void UMounteaDialogueManager::SetDialogueContext_Server_Implementation(UMounteaDialogueContext* NewContext)
+{
+	SetDialogueContext(NewContext);
+}
+
 void UMounteaDialogueManager::OnRep_ManagerState()
 {
 	// TODO: Call client updates that needs to be done on Clients only
@@ -627,5 +650,6 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(UMounteaDialogueManager, ManagerState); 
+	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, ManagerState, COND_AutonomousOnly);
+	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, DialogueContext, COND_AutonomousOnly); 
 }
