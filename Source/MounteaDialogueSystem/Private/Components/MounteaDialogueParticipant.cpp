@@ -121,6 +121,13 @@ void UMounteaDialogueParticipant::SkipParticipantVoice(USoundBase* ParticipantVo
 	}
 }
 
+void UMounteaDialogueParticipant::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	
+}
+
 bool UMounteaDialogueParticipant::CanStartDialogue() const
 {
 	switch (GetParticipantState())
@@ -184,33 +191,37 @@ AActor* UMounteaDialogueParticipant::GetOwningActor_Implementation() const
 }
 
 //TODO: instead of the Actor handling this logic realtime, make FRunnable queue and let data be calculated async way
-void UMounteaDialogueParticipant::SaveTraversedPath_Implementation(TMap<FGuid, int32>& InPath)
+void UMounteaDialogueParticipant::SaveTraversedPath_Implementation(TArray<FDialogueTraversePath>& InPath)
 {
-	TMap<FGuid, int32> CurrentPath = TraversedPath;
-	TMap<FGuid, int32> OuterJoin;
+	TMap<FGuid, FDialogueTraversePath> PathMap;
+
+	// Insert or update existing entries from CurrentPath
+	for (auto& Path : TraversedPath)
+	{
+		PathMap.Add(Path.NodeGuid, Path);
+	}
+
+	// Update counts or add new entries from InPath
+	for (auto& Path : InPath)
+	{
+		if (FDialogueTraversePath* FoundPath = PathMap.Find(Path.NodeGuid))
+		{
+			FoundPath->TraverseCount += Path.TraverseCount; // Increment existing count
+		}
+		else
+		{
+			PathMap.Add(Path.NodeGuid, Path); // Add new entry
+		}
+	}
+
+	// Convert map back to array
 	TraversedPath.Empty();
-
-	// Increase those Paths that have been passes in past
-	for (auto& Itr : InPath)
+	for (const auto& Pair : PathMap)
 	{
-		if (CurrentPath.Contains(Itr.Key))
-		{
-			Itr.Value += CurrentPath[Itr.Key];
-		}
+		TraversedPath.Add(Pair.Value);
 	}
 
-	// Now we have two maps - current path and new path, make outer-join
-	for (auto& Itr : CurrentPath)
-	{
-		if (!InPath.Contains(Itr.Key))
-		{
-			OuterJoin.Add(Itr);
-		}
-	}
-
-	// Append both, new path and paths that have been passed before but are not in current iteration
-	TraversedPath.Append(InPath);
-	TraversedPath.Append(OuterJoin);
+	// Traverse path has been updated! Great job.
 }
 
 FGameplayTag UMounteaDialogueParticipant::GetParticipantTag() const

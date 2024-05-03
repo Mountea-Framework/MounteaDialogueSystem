@@ -573,19 +573,55 @@ void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewCon
 
 void UMounteaDialogueManager::SetDialogueManagerState(const EDialogueManagerState NewState)
 {
-	ManagerState = NewState;
+	if (!GetOwner())
+	{
+		UE_LOG(LogActorComponent, Error, TEXT("[SetDialogueManagerState] Dialogue Manager has no Owner!"))
+		return;
+	}
 	
-	OnDialogueManagerStateChanged.Broadcast(NewState);
+	if (GetOwner()->HasAuthority())
+	{
+		ManagerState = NewState;
+	
+		OnDialogueManagerStateChanged.Broadcast(NewState);
+	}
+	else
+	{
+		SetDialogueManagerState_Server(NewState);
+	}
 }
 
 void UMounteaDialogueManager::SetDefaultDialogueManagerState(const EDialogueManagerState NewState)
 {
-	DefaultManagerState = NewState;
+	if (!GetOwner())
+	{
+		UE_LOG(LogActorComponent, Error, TEXT("[SetDefaultDialogueManagerState] Dialogue Manager has no Owner!"))
+		return;
+	}
+	
+	if (GetOwner()->HasAuthority())
+	{
+		DefaultManagerState = NewState;
+	}
+	else
+	{
+		SetDialogueDefaultManagerState_Server(NewState);
+	}
+}
+
+void UMounteaDialogueManager::SetDialogueManagerState_Server_Implementation(const EDialogueManagerState NewState)
+{
+	SetDialogueManagerState(NewState);
+}
+
+void UMounteaDialogueManager::SetDialogueDefaultManagerState_Server_Implementation(const EDialogueManagerState NewState)
+{
+	SetDefaultDialogueManagerState(NewState);
 }
 
 void UMounteaDialogueManager::OnRep_ManagerState()
 {
-	// TODO: Call client updates
+	// TODO: Call client updates that needs to be done on Clients only
 }
 
 void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

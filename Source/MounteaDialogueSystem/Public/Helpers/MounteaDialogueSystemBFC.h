@@ -60,7 +60,7 @@ public:
 		}
 	}
 
-	static void SaveTraversePathToParticipant(TMap<FGuid,int32>& InPath, const TScriptInterface<IMounteaDialogueParticipantInterface> Participant)
+	static void SaveTraversePathToParticipant(TArray<FDialogueTraversePath>& InPath, const TScriptInterface<IMounteaDialogueParticipantInterface> Participant)
 	{
 		if (!Participant || !Participant.GetInterface()) return;
 

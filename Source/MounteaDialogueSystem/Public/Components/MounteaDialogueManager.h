@@ -353,7 +353,7 @@ protected:
 	* ❗ In order to start Dialogue, this value must not be Disabled.
 	* ❔ Can be updated using SetDialogueManagerState function.
 	*/
-	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea|Dialogue")
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea|Dialogue", ReplicatedUsing="OnRep_ManagerState")
 	EDialogueManagerState ManagerState;
 	
 	/**
@@ -385,5 +385,21 @@ protected:
 	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay)
 	uint8 bWasCursorVisible : 1;
 
-#pragma endregion 
+#pragma endregion
+
+#pragma region Functions
+
+protected:
+
+	UFUNCTION(Server, Reliable)
+	void SetDialogueManagerState_Server(const EDialogueManagerState NewState);
+	UFUNCTION(Server, Reliable)
+	void SetDialogueDefaultManagerState_Server(const EDialogueManagerState NewState);
+
+	UFUNCTION()
+	void OnRep_ManagerState();
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+#pragma endregion
 };

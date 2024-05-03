@@ -8,6 +8,7 @@
 #include "UObject/Object.h"
 #include "MounteaDialogueContext.generated.h"
 
+struct FDialogueTraversePath;
 class IMounteaDialogueParticipantInterface;
 class UMounteaDialogueGraphNode;
 
@@ -89,7 +90,7 @@ public:
 	 * Updates Participant once Dialogue is done.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue", meta=(NoResetToDefault))
-	TMap<FGuid, int32> TraversedPath;
+	TArray<FDialogueTraversePath> TraversedPath;
 
 public:
 
@@ -140,7 +141,7 @@ public:
 	 * 
 	 * @return The map of nodes traversed during this dialogue instance.
 	 */
-	TMap<FGuid, int32> GetTraversedPath() const
+	TArray<FDialogueTraversePath> GetTraversedPath() const
 	{ return TraversedPath; };
 	
 	virtual void SetDialogueContext(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant, UMounteaDialogueGraphNode* NewActiveNode, TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes);

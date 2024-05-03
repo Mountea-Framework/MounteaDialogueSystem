@@ -3,6 +3,8 @@
 
 #include "Data/MounteaDialogueContext.h"
 
+#include "Interfaces/MounteaDialogueParticipantInterface.h"
+
 
 bool UMounteaDialogueContext::IsValid() const
 {
@@ -73,11 +75,19 @@ void UMounteaDialogueContext::AddTraversedNode(const UMounteaDialogueGraphNode* 
 	// If we have already passed over this Node, then just increase the counter
 	if (TraversedPath.Contains(TraversedNode->GetNodeGUID()))
 	{
-		TraversedPath[TraversedNode->GetNodeGUID()]++;
+		if (FDialogueTraversePath* ExistingRow = TraversedPath.FindByKey(TraversedNode->GetNodeGUID()))
+		{
+			ExistingRow->TraverseCount++;
+		}
 	}
 	else
 	{
-		TraversedPath.Add(TraversedNode->GetNodeGUID(), 1);
+		FDialogueTraversePath NewRow;
+		{
+			NewRow.NodeGuid = TraversedNode->GetNodeGUID();
+			NewRow.TraverseCount = 1;
+		}
+		TraversedPath.Add(NewRow);
 	}
 }
 

@@ -25,6 +25,52 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantAudioComponentCh
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FParticipantStartingNodeSaved, const UMounteaDialogueGraphNode*, NewSavedNode);
 
 /**
+ * 
+ */
+USTRUCT(BlueprintType)
+struct FDialogueTraversePath
+{
+	GENERATED_BODY()
+
+	FDialogueTraversePath() : NodeGuid(FGuid::NewGuid()), TraverseCount(0) {}
+	FDialogueTraversePath(const FGuid& Guid, const int32 AddCount) : NodeGuid(Guid), TraverseCount(0)
+	{
+		TraverseCount += FMath::Max(0, AddCount);
+	};
+	FDialogueTraversePath(const FGuid& Guid, const int32& Count) : NodeGuid(Guid), TraverseCount(Count) {};
+
+public:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	FGuid NodeGuid;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	int32 TraverseCount;
+
+public:
+
+	bool operator==(const FDialogueTraversePath& Other) const
+	{
+		return Other.NodeGuid == NodeGuid;
+	}
+
+	bool operator==(const FGuid& Other) const
+	{
+		return Other == NodeGuid;
+	}
+
+	bool operator!=(const FDialogueTraversePath& Other) const
+	{
+		return !(*this == Other);
+	}
+
+	friend uint32 GetTypeHash(const FDialogueTraversePath& Path)
+	{
+		return GetTypeHash(Path.NodeGuid);
+	}
+};
+
+/**
  * Mountea Dialogue Participant Interface.
  * Interface connecting Mountea Dialogue Graph with Mountea Dialogue Manager Component.
  * Mountea Dialogue Participant Component is implementing this Interface.
@@ -67,7 +113,7 @@ public:
 	 * @param InPath The traversed path of the dialogue graph to be saved.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
-	void SaveTraversedPath(TMap<FGuid,int32>& InPath);
+	void SaveTraversedPath(TArray<FDialogueTraversePath>& InPath);
 
 	/**
 	 * Interface call.
@@ -102,7 +148,7 @@ protected:
 		return nullptr;
 	};
 
-	virtual void SaveTraversedPath_Implementation(TMap<FGuid,int32>& InPath)
+	virtual void SaveTraversedPath_Implementation(TArray<FDialogueTraversePath>& InPath)
 	{
 		// Implement logic in children
 	};
@@ -202,7 +248,7 @@ public:
 	 * 
 	 * @return The map of nodes traversed during the dialogue.
 	 */
-	virtual TMap<FGuid,int32> GetTraversedPath() const = 0;
+	virtual TArray<FDialogueTraversePath> GetTraversedPath() const = 0;
 
 	virtual FGameplayTag GetParticipantTag() const = 0;
 
