@@ -43,7 +43,7 @@ void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode_Implementation(const TS
 		}
 	}
 	
-	Super::ProcessNode(Manager);
+	Super::ProcessNode_Implementation(Manager);
 }
 
 #if WITH_EDITOR

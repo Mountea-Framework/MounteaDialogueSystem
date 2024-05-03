@@ -293,6 +293,7 @@ void UMounteaDialogueManager::StartDialogue()
 		bWasCursorVisible = PlayerController->bShowMouseCursor;
 	}
 
+	// TODO: Move this to CLIENT only scope
 	FString ErrorMessage;
 	if (!InvokeDialogueUI(ErrorMessage))
 	{
@@ -421,15 +422,16 @@ bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
 	}
 	
 	DialogueWidgetPtr = CreateWidget<UUserWidget>(PlayerController,  GetDialogueWidgetClass());
-	if (DialogueWidgetPtr->Implements<UMounteaDialogueWBPInterface>() == false)
-	{
-		Message = TEXT("Does not implement Diaogue Widget Interface!");
-		return false;
-	}
-
+	
 	if (DialogueWidgetPtr == nullptr)
 	{
 		Message = TEXT("Cannot spawn Dialogue Widget!");
+		return false;
+	}
+	
+	if (DialogueWidgetPtr->Implements<UMounteaDialogueWBPInterface>() == false)
+	{
+		Message = TEXT("Does not implement Diaogue Widget Interface!");
 		return false;
 	}
 

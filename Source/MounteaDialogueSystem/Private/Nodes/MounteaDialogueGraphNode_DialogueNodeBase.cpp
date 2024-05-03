@@ -40,7 +40,7 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode_Implementation(cons
 		}
 	}
 	
-	Super::ProcessNode(Manager);
+	Super::ProcessNode_Implementation(Manager);
 }
 
 void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
@@ -58,8 +58,6 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode_Implementation(c
 			}
 		}
 	}
-	
-	Super::PreProcessNode(Manager);
 }
 
 UDataTable* UMounteaDialogueGraphNode_DialogueNodeBase::GetDataTable() const

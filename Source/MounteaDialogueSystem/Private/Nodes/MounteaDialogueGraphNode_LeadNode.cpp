@@ -43,13 +43,13 @@ void UMounteaDialogueGraphNode_LeadNode::PreProcessNode_Implementation(const TSc
 			}
 		}
 	}
-	
-	Super::PreProcessNode(Manager);
+
+	Super::PreProcessNode_Implementation(Manager);
 }
 
 void UMounteaDialogueGraphNode_LeadNode::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	Super::ProcessNode(Manager);
+	Super::ProcessNode_Implementation(Manager);
 }
 
 #if WITH_EDITOR

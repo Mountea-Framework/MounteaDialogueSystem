@@ -149,7 +149,7 @@ public:
 	 * @param Manager 
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue")
-	 void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
+	void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	virtual void PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 
 	/**
@@ -157,7 +157,7 @@ public:
 	 * @param Manager 
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue")
-	 void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
+	void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	
 	/**
