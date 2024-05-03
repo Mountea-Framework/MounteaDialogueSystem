@@ -8,19 +8,13 @@
 #include "Data/MounteaDialogueContext.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
 
-#include "Graph/MounteaDialogueGraph.h"
+
 
 #include "Interfaces/MounteaDialogueManagerInterface.h"
 #include "Interfaces/MounteaDialogueParticipantInterface.h"
 
-#include "Nodes/MounteaDialogueGraphNode.h"
-#include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
-
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Blueprint/UserWidget.h"
-#include "Components/AudioComponent.h"
-#include "Nodes/MounteaDialogueGraphNode_StartNode.h"
-#include "Sound/SoundBase.h"
 
 #include "MounteaDialogueSystemBFC.generated.h"
 
@@ -35,30 +29,9 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSystemBFC : public UBlueprintFun
 
 public:
 	
-	static void CleanupGraph(const UObject* WorldContextObject, const UMounteaDialogueGraph* GraphToClean)
-	{
-		if (!GraphToClean) return;
-		
-		// Cleanup Decorators
-		for (auto Itr : GraphToClean->GetAllDecorators())
-		{
-			Itr.CleanupDecorator();
-		}
-	}
+	static void CleanupGraph(const UObject* WorldContextObject, const UMounteaDialogueGraph* GraphToClean);
 
-	static void InitializeDecorators(UWorld* WorldContext, const TScriptInterface<IMounteaDialogueParticipantInterface> Participant)
-	{
-		if (!WorldContext) return;
-		if (!Participant) return;
-
-		if (!Participant->GetDialogueGraph()) return;
-		
-		// Initialize Decorators
-		for (auto Itr : Participant->GetDialogueGraph()->GetAllDecorators())
-		{
-			Itr.InitializeDecorator(WorldContext, Participant);
-		}
-	}
+	static void InitializeDecorators(UWorld* WorldContext, const TScriptInterface<IMounteaDialogueParticipantInterface> Participant);
 
 	static void SaveTraversePathToParticipant(TArray<FDialogueTraversePath>& InPath, const TScriptInterface<IMounteaDialogueParticipantInterface> Participant)
 	{
@@ -84,46 +57,10 @@ public:
 	}
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="audio, tag, search"))
-	static UAudioComponent* FindAudioComponentByName(const AActor* ActorContext, const FName& Arg)
-	{
-		if (ActorContext == nullptr) return nullptr;
-
-		TArray<UAudioComponent*> OwnerComponents;
-		ActorContext->GetComponents<UAudioComponent>(OwnerComponents);
-	
-		if (OwnerComponents.Num() == 0) return nullptr;
-
-		for (const auto& Itr : OwnerComponents)
-		{
-			if (Itr && Itr->GetName().Equals(Arg.ToString()))
-			{
-				return Itr;
-			}
-		}
-	
-		return nullptr;
-	}
+	static UAudioComponent* FindAudioComponentByName(const AActor* ActorContext, const FName& Arg);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="audio, tag, search"))
-	static UAudioComponent* FindAudioComponentByTag(const AActor* ActorContext, const FName& Arg)
-	{
-		if (ActorContext == nullptr) return nullptr;
-
-		TArray<UAudioComponent*> OwnerComponents;
-		ActorContext->GetComponents<UAudioComponent>(OwnerComponents);
-	
-		if (OwnerComponents.Num() == 0) return nullptr;
-		
-		for (const auto& Itr : OwnerComponents)
-		{
-			if (Itr && Itr->ComponentHasTag(Arg))
-			{
-				return Itr;
-			}
-		}
-	
-		return nullptr;
-	}
+	static UAudioComponent* FindAudioComponentByTag(const AActor* ActorContext, const FName& Arg);
 
 	/**
 	 * Returns first 'Mountea Dialogue Particiapnt' Component from Player Pawn.
@@ -203,46 +140,7 @@ public:
 	/**
 	 * Requests Execution for all Decorators for Graph and Context Node
 	 */
-	static bool ExecuteDecorators(const UObject* WorldContextObject, const UMounteaDialogueContext* DialogueContext)
-	{
-		if (DialogueContext == nullptr)
-		{
-			return false;
-		}
-
-		if (DialogueContext->DialogueParticipant.GetInterface() == nullptr)
-		{
-			return false;
-		}
-
-		if (DialogueContext->DialogueParticipant->GetDialogueGraph() == nullptr)
-		{
-			return false;
-		}
-
-		const auto ActiveNode = DialogueContext->GetActiveNode();
-		if (ActiveNode == nullptr)
-		{
-			return false;
-		}
-
-		// First process Node Decorators, then Graph Decorators
-		// TODO: all weight to them so we can sort them by Weight and execute in correct order
-		TArray<FMounteaDialogueDecorator> AllDecorators;
-
-		AllDecorators.Append(DialogueContext->GetActiveNode()->GetNodeDecorators());
-		if (ActiveNode->DoesInheritDecorators())
-		{
-			AllDecorators.Append(DialogueContext->DialogueParticipant->GetDialogueGraph()->GetGraphDecorators());
-		}
-		
-		for (auto Itr : AllDecorators)
-		{
-			Itr.ExecuteDecorator();
-		}
-
-		return true;
-	}
+	static bool ExecuteDecorators(const UObject* WorldContextObject, const UMounteaDialogueContext* DialogueContext);
 	
 	/**
 	 * Tries to close Dialogue.
@@ -276,99 +174,7 @@ public:
 	 * @param DialogueParticipant	Other person, could be NPC or other Player
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="start, initialize, dialogue"))
-	static bool InitializeDialogue(const UObject* WorldContextObject, UObject* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& DialogueParticipant)
-	{
-		if (!DialogueParticipant)
-		{
-			LOG_ERROR(TEXT("[InitializeDialogue] Missing DialogueParticipant. Cannot Initialize dialogue."));
-			return false;
-		}
-
-		if (!DialogueParticipant->Execute_GetOwningActor(DialogueParticipant.GetObject()))
-		{
-			LOG_ERROR(TEXT("[InitializeDialogue] Dialogue Participant found no Owning Actor. Check whether function `GetOwningActor` is implemented. Cannot Initialize dialogue."));
-			return false;
-		}
-		
-		UWorld* TempWorld = WorldContextObject->GetWorld();
-		if (!TempWorld) TempWorld = DialogueParticipant->Execute_GetOwningActor(DialogueParticipant.GetObject())->GetWorld();
-		
-		if (Initiator == nullptr && DialogueParticipant.GetInterface() == nullptr)
-		{
-			LOG_ERROR(TEXT("[InitializeDialogue] Initiator is empty AND Participant is invalid. Cannot Initialize dialogue."));
-			return false;
-		}
-
-		if (GetDialogueManager(WorldContextObject) == nullptr)
-		{
-			LOG_ERROR(TEXT("[InitializeDialogue] WorldContextObject is Invalid. Cannot Initialize dialogue."));
-			return false;
-		}
-
-		if (DialogueParticipant->CanStartDialogue() == false)
-		{
-			LOG_ERROR(TEXT("[InitializeDialogue] WorldContextObject is Invalid. Cannot Initialize dialogue."));
-			return false;
-		}
-
-		const UMounteaDialogueGraph* Graph = DialogueParticipant->GetDialogueGraph();
-
-		if (Graph == nullptr)
-		{
-			LOG_ERROR(TEXT("[InitializeDialogue] Dialogue participant has no Graph. Cannot Initialize dialogue."));
-			return false;
-		}
-
-		for (const auto& Itr : Graph->GetAllNodes())
-		{
-			if (Itr)
-			{
-				Itr->InitializeNode(TempWorld);
-			}
-		}
-
-		for (auto Itr : Graph->GetAllDecorators())
-		{
-			Itr.InitializeDecorator(TempWorld, DialogueParticipant);
-		}
-
-		if (Graph->CanStartDialogueGraph() == false)
-		{
-			LOG_ERROR(TEXT("[InitializeDialogue] Dialogue Graph cannot Start. Cannot Initialize dialogue."));
-			return false;
-		}
-
-		UMounteaDialogueGraphNode* NodeToStart = DialogueParticipant->GetSavedStartingNode();
-		if (!NodeToStart || NodeToStart->CanStartNode() == false)
-		{
-			NodeToStart = Graph->GetStartNode();
-		}
-		
-		if (NodeToStart == nullptr)
-		{
-			LOG_ERROR(TEXT("[InitializeDialogue] Dialogue Graph has no Nodes to start. Cannot Initialize dialogue."));
-			return false;
-		}
-		
-		if (NodeToStart->GetClass()->IsChildOf(UMounteaDialogueGraphNode_StartNode::StaticClass()))
-		{
-			if (GetFirstChildNode(NodeToStart) == nullptr)
-			{
-				LOG_ERROR(TEXT("[InitializeDialogue] Dialogue Graph has only Start Node and no Nodes to start. Cannot Initialize dialogue."));
-				return false;
-			}
-
-			NodeToStart = GetFirstChildNode(NodeToStart);
-		}
-		
-		const TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
-
-		UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
-		Context->SetDialogueContext(DialogueParticipant, NodeToStart, StartNode_Children);
-		Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(WorldContextObject));
-		
-		return  InitializeDialogueWithContext(WorldContextObject, Initiator, DialogueParticipant, Context);
-	}
+	static bool InitializeDialogue(const UObject* WorldContextObject, UObject* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& DialogueParticipant);
 	
 	/**
 	 * Tries to initialize Dialogue with given Context.
@@ -487,54 +293,13 @@ public:
 	 * @return The best matching dialogue participant, or nullptr if no match is found.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="get,find"))
-	static TScriptInterface<IMounteaDialogueParticipantInterface> FindBestMatchingParticipant(const UObject* WorldContextObject, const UMounteaDialogueContext* Context)
-	{
-		if (!Context)
-		{
-			return nullptr;
-		}
-
-		if (!Context->ActiveNode)
-		{
-			return nullptr;
-		}
-
-		const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Context->ActiveNode);
-		if (!DialogueNode)
-		{
-			return nullptr;
-		}
-
-		for (auto const& Participant : Context->GetDialogueParticipants())
-		{
-			const FGameplayTag Tag = Participant->Execute_GetTag(Participant.GetObject());
-
-			const FDialogueRow Row = GetDialogueRow(DialogueNode);
-			if (Row.CompatibleTags.HasTagExact(Tag))
-			{
-				return Participant;
-			}
-		}
-
-		return nullptr;
-	}
+	static TScriptInterface<IMounteaDialogueParticipantInterface> FindBestMatchingParticipant(const UObject* WorldContextObject, const UMounteaDialogueContext* Context);
 
 	/**
 	 * Searches in Graph for Node by GUID.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="guid, node, find, search, get"))
-	static UMounteaDialogueGraphNode* FindNodeByGUID(const UMounteaDialogueGraph* FromGraph, const FGuid ByGUID)
-	{
-		if (!FromGraph) return nullptr;
-		if (!ByGUID.IsValid()) return nullptr;
-
-		for (const auto& Itr : FromGraph->GetAllNodes())
-		{
-			if (Itr && Itr->GetNodeGUID() == ByGUID) return Itr;
-		}
-
-		return nullptr;
-	}
+	static UMounteaDialogueGraphNode* FindNodeByGUID(const UMounteaDialogueGraph* FromGraph, const FGuid ByGUID);
 	
 	/**
 	 * Tries to get Child Node from Dialogue Node at given Index. If none is found, returns null.
@@ -635,20 +400,7 @@ public:
 	 * @param Node	Node to get Data from.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Get Dialogue Row", Keywords="row, dialogue"))
-	static FDialogueRow GetDialogueRow(const UMounteaDialogueGraphNode* Node)
-	{
-		const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNodeBase = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node);
-		
-		if (!DialogueNodeBase) return FDialogueRow();
-		if (DialogueNodeBase->GetDataTable() == nullptr) return FDialogueRow();
-		if (DialogueNodeBase->GetDataTable()->RowStruct->IsChildOf(FDialogueRow::StaticStruct()) == false) return FDialogueRow();
-
-		const FDialogueRow* Row = DialogueNodeBase->GetDataTable()->FindRow<FDialogueRow>(DialogueNodeBase->GetRowName(), FString("") );
-		if (!Row) return FDialogueRow();
-		if (IsDialogueRowValid(*Row) == false) return FDialogueRow();
-
-		return *Row;
-	};
+	static FDialogueRow GetDialogueRow(const UMounteaDialogueGraphNode* Node);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Find Dialogue Row", Keywords="row, dialogue"))
 	static FDialogueRow FindDialogueRow(const UDataTable* Table, const FName RowName)
@@ -669,50 +421,7 @@ public:
 	 * @param Row	Row for the Duration to be calculated from.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Duration", Keywords="dialogue, duration, long, time"))
-	static float GetRowDuration(const struct FDialogueRowData& Row)
-	{
-		float ReturnValue = 1.f;
-		switch (Row.RowDurationMode)
-		{
-			case ERowDurationMode::ERDM_Duration:
-				{
-					if (Row.RowSound)
-					{
-						ReturnValue = Row.RowSound->Duration;
-						break;
-					}
-					
-					ReturnValue =  Row.RowDuration;
-				}
-				break;
-			case ERowDurationMode::EDRM_Override:
-				{
-					ReturnValue = Row.RowDurationOverride;
-				}
-				break;
-			case ERowDurationMode::EDRM_Add:
-				{
-					if (Row.RowSound)
-					{
-						ReturnValue = Row.RowSound->Duration;
-						ReturnValue = ReturnValue + Row.RowDurationOverride;
-						break;
-					}
-					ReturnValue = Row.RowDurationOverride;
-				}
-				break;
-			case ERowDurationMode::ERDM_AutoCalculate:
-				{
-					//TODO: Make 8:100 ratio editable in Settings!
-					ReturnValue= ((Row.RowText.ToString().Len() * 8.f) / 100.f);
-					break;
-				}
-		}
-
-		ReturnValue = FMath::Max(1.f, ReturnValue);
-		
-		return ReturnValue;
-	}
+	static float GetRowDuration(const struct FDialogueRowData& Row);
 
 	/**
 	 * 
@@ -728,22 +437,7 @@ public:
 		return GetDialogueSystemSettings_Internal()->GetSubtitlesSettings(OptionalFilterClass);
 	}
 
-	static TArray<FMounteaDialogueDecorator> GetAllDialogueDecorators(const UMounteaDialogueGraph* FromGraph)
-	{
-		TArray<FMounteaDialogueDecorator> Decorators;
+	static TArray<FMounteaDialogueDecorator> GetAllDialogueDecorators(const UMounteaDialogueGraph* FromGraph);
 
-		if (FromGraph == nullptr) return Decorators;
-		
-		Decorators.Append(FromGraph->GetGraphDecorators());
-
-		for (const auto& Itr : FromGraph->GetAllNodes())
-		{
-			if (Itr)
-			{
-				Decorators.Append(Itr->GetNodeDecorators());
-			}
-		}
-		
-		return Decorators;
-	}
+	static bool CanExecuteCosmeticEvents(const UWorld* WorldContext);
 };

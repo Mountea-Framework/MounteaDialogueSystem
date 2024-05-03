@@ -4,6 +4,7 @@
 #include "Decorators/MounteaDialogueDecorator_OnlyFirstTime.h"
 
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_OnlyFirstTime"
 

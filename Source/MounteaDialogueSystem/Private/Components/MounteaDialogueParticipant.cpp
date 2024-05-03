@@ -6,6 +6,8 @@
 #include "Components/AudioComponent.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Net/UnrealNetwork.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 
 UMounteaDialogueParticipant::UMounteaDialogueParticipant()
@@ -105,6 +107,13 @@ UAudioComponent* UMounteaDialogueParticipant::FindAudioComponentByTag(const FNam
 
 void UMounteaDialogueParticipant::PlayParticipantVoice(USoundBase* ParticipantVoice)
 {
+	// Audio is cosmetic -> Do not play on Dedicated server!
+	if(!UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
+	{
+		LOG_INFO(TEXT("[PlayParticipantVoice] Voice cannot be played at Dedicated Server!"))
+		return;
+	}
+	
 	if (AudioComponent)
 	{
 		AudioComponent->SetSound(ParticipantVoice);
@@ -114,18 +123,17 @@ void UMounteaDialogueParticipant::PlayParticipantVoice(USoundBase* ParticipantVo
 
 void UMounteaDialogueParticipant::SkipParticipantVoice(USoundBase* ParticipantVoice)
 {
+	if(!UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
+	{
+		LOG_INFO(TEXT("[PlayParticipantVoice] Voice cannot be played at Dedicated Server!"))
+		return;
+	}
+	
 	if (AudioComponent)
 	{
 		AudioComponent->SetSound(nullptr);
 		AudioComponent->StopDelayed(UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->GetSkipFadeDuration());
 	}
-}
-
-void UMounteaDialogueParticipant::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	
 }
 
 bool UMounteaDialogueParticipant::CanStartDialogue() const
@@ -168,14 +176,38 @@ void UMounteaDialogueParticipant::SetDialogueGraph(UMounteaDialogueGraph* NewDia
 
 void UMounteaDialogueParticipant::SetParticipantState(const EDialogueParticipantState NewState)
 {
-	ParticipantState = NewState;
+	if (!GetOwner())
+	{
+		LOG_ERROR(TEXT("[SetParticipantState] Component has no Owner!"))
+		return;
+	}
+	if (GetOwner()->HasAuthority())
+	{
+		ParticipantState = NewState;
 
-	OnDialogueParticipantStateChanged.Broadcast(NewState);
+		OnDialogueParticipantStateChanged.Broadcast(NewState);
+	}
+	else
+	{
+		SetParticipantState_Server(NewState);
+	}
 }
 
 void UMounteaDialogueParticipant::SetDefaultParticipantState(const EDialogueParticipantState NewState)
 {
-	DefaultParticipantState = NewState;
+	if (!GetOwner())
+	{
+		LOG_ERROR(TEXT("[SetDefaultParticipantState] Component has no Owner!"))
+		return;
+	}
+	if (GetOwner()->HasAuthority())
+	{
+		DefaultParticipantState = NewState;
+	}
+	else
+	{
+		SetDefaultParticipantState_Server(NewState);
+	}
 }
 
 void UMounteaDialogueParticipant::SetAudioComponent(UAudioComponent* NewAudioComponent)
@@ -252,4 +284,27 @@ void UMounteaDialogueParticipant::UnregisterTick_Implementation(const TScriptInt
 void UMounteaDialogueParticipant::TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick,float DeltaTime)
 {
 	ParticipantTickEvent.Broadcast(SelfRef, ParentTick, DeltaTime);
+}
+
+void UMounteaDialogueParticipant::SetDefaultParticipantState_Server_Implementation(const EDialogueParticipantState NewState)
+{
+	SetDefaultParticipantState(NewState);
+}
+
+void UMounteaDialogueParticipant::SetParticipantState_Server_Implementation(const EDialogueParticipantState NewState)
+{
+	SetParticipantState(NewState);
+}
+
+void UMounteaDialogueParticipant::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(UMounteaDialogueParticipant, DialogueGraph, COND_AutonomousOnly);
+	DOREPLIFETIME_CONDITION(UMounteaDialogueParticipant, DefaultParticipantState, COND_AutonomousOnly);
+	DOREPLIFETIME_CONDITION(UMounteaDialogueParticipant, TraversedPath, COND_AutonomousOnly);
+	DOREPLIFETIME_CONDITION(UMounteaDialogueParticipant, StartingNode, COND_AutonomousOnly);
+	
+	DOREPLIFETIME(UMounteaDialogueParticipant, ParticipantState);
+	DOREPLIFETIME(UMounteaDialogueParticipant, ParticipantTag);
 }

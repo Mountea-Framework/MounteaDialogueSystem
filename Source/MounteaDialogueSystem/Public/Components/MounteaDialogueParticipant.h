@@ -213,7 +213,6 @@ public:
 
 	/**
 	 * Returns whether Dialogue Can start or not.
-	 * Returns CanStartDialogueEvent.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual bool CanStartDialogue() const override;
@@ -330,5 +329,16 @@ public:
 	FMounteaDialogueTick ParticipantTickEvent;
 	
 #pragma endregion
-	
+
+
+#pragma region Functions
+
+protected:
+
+	UFUNCTION(Server, Reliable)
+	void SetParticipantState_Server(const EDialogueParticipantState NewState);
+	UFUNCTION(Server, Reliable)
+	void SetDefaultParticipantState_Server(const EDialogueParticipantState NewState);
+
+#pragma endregion
 };

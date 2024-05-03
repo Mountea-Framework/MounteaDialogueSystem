@@ -4,6 +4,8 @@
 
 #include "TimerManager.h"
 
+#include "Graph/MounteaDialogueGraph.h"
+
 #include "Data/MounteaDialogueContext.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
@@ -495,16 +497,13 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 	{
 		DialogueContext->ActiveNode->Execute_RegisterTick(DialogueContext->ActiveNode, DialogueContext->ActiveNode->Graph);
 	}
-
-	// TODO: Add new Duration mode "Manual Input" and if this one is selected, dont start and just wait for
-	// Make a new public function to activate Next Row
 	
-	FTimerDelegate Delegate;
-	Delegate.BindUObject(this, &UMounteaDialogueManager::FinishedExecuteDialogueRow);
-
 	const int32 Index = DialogueContext->GetActiveDialogueRowDataIndex();
 	const auto Row = DialogueContext->GetActiveDialogueRow();
 	const auto RowData = Row.DialogueRowData.Array()[Index];
+
+	FTimerDelegate Delegate;
+	Delegate.BindUObject(this, &UMounteaDialogueManager::FinishedExecuteDialogueRow);
 
 	if (RowData.RowDurationMode != ERowDurationMode::ERDM_Manual)
 	{
@@ -575,7 +574,7 @@ void UMounteaDialogueManager::SetDialogueManagerState(const EDialogueManagerStat
 {
 	if (!GetOwner())
 	{
-		UE_LOG(LogActorComponent, Error, TEXT("[SetDialogueManagerState] Dialogue Manager has no Owner!"))
+		LOG_ERROR(TEXT("[SetDialogueManagerState] Dialogue Manager has no Owner!"))
 		return;
 	}
 	
@@ -595,7 +594,7 @@ void UMounteaDialogueManager::SetDefaultDialogueManagerState(const EDialogueMana
 {
 	if (!GetOwner())
 	{
-		UE_LOG(LogActorComponent, Error, TEXT("[SetDefaultDialogueManagerState] Dialogue Manager has no Owner!"))
+		LOG_ERROR(TEXT("[SetDefaultDialogueManagerState] Dialogue Manager has no Owner!"))
 		return;
 	}
 	
