@@ -32,7 +32,7 @@ UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode()
 	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_CompleteNode::StaticClass());
 }
 
-void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	if (SelectedNode && Manager)
 	{

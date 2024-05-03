@@ -75,12 +75,12 @@ void UMounteaDialogueGraphNode::InitializeNode_Implementation(UWorld* InWorld)
 	if (Graph) SetNodeIndex(Graph->AllNodes.Find(this));
 }
 
-void UMounteaDialogueGraphNode::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	// Child Classes Implementations
 }
 
-void UMounteaDialogueGraphNode::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	if (!Manager) return;
 	
@@ -132,12 +132,12 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators()
 	return Return;
 }
 
-bool UMounteaDialogueGraphNode::CanStartNode() const
+bool UMounteaDialogueGraphNode::CanStartNode_Implementation() const
 {
 	return EvaluateDecorators();
 }
 
-bool UMounteaDialogueGraphNode::EvaluateDecorators() const
+bool UMounteaDialogueGraphNode::EvaluateDecorators_Implementation() const
 {
 	if (GetGraph() == nullptr)
 	{

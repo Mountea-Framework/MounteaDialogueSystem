@@ -22,7 +22,7 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 	bUseGameplayTags = true;
 }
 
-void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	if (Manager)
 	{
@@ -43,7 +43,7 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode(const TScriptInterf
 	Super::ProcessNode(Manager);
 }
 
-void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	if (bUseGameplayTags)
 	{
