@@ -63,7 +63,7 @@ void UMounteaDialogueParticipant::InitializeParticipant_Implementation()
 	{
 		if (Itr.DecoratorType)
 		{
-			Itr.DecoratorType->InitializeDecorator(GetWorld(), this);
+			Itr.DecoratorType->InitializeDecorator(GetWorld(), this, nullptr);
 		}
 	}
 }

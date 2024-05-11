@@ -7,13 +7,13 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_OverrideParticipants"
 
-void UMounteaDialogueDecorator_OverrideParticipants::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant)
+void UMounteaDialogueDecorator_OverrideParticipants::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager)
 {
-	Super::InitializeDecorator_Implementation(World, OwningParticipant);
+	Super::InitializeDecorator_Implementation(World, OwningParticipant, nullptr);
 
 	if (World)
 	{
-		Manager = UMounteaDialogueSystemBFC::GetDialogueManager(GetOwningWorld());
+		Manager = OwningManager;
 
 		// Keep in mind that override cannot override nulls!
 		if (bOverridePlayerParticipant)

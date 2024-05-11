@@ -25,20 +25,6 @@ void UMounteaDialogueSystemBFC::CleanupGraph(const UObject* WorldContextObject, 
 	}
 }
 
-void UMounteaDialogueSystemBFC::InitializeDecorators(UWorld* WorldContext, const TScriptInterface<IMounteaDialogueParticipantInterface> Participant)
-{
-	if (!WorldContext) return;
-	if (!Participant) return;
-
-	if (!Participant->GetDialogueGraph()) return;
-		
-	// Initialize Decorators
-	for (auto Itr : Participant->GetDialogueGraph()->GetAllDecorators())
-	{
-		Itr.InitializeDecorator(WorldContext, Participant);
-	}
-}
-
 UAudioComponent* UMounteaDialogueSystemBFC::FindAudioComponentByName(const AActor* ActorContext, const FName& Arg)
 {
 	if (ActorContext == nullptr) return nullptr;
@@ -250,7 +236,7 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 
 	for (auto Itr : Graph->GetAllDecorators())
 	{
-		Itr.InitializeDecorator(TempWorld, MainParticipant);
+		Itr.InitializeDecorator(TempWorld, MainParticipant, DialogueManager);
 	}
 	
 	return true;
@@ -279,7 +265,8 @@ bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextOb
 		return false;
 	}
 
-	if (GetDialogueManager(Initiator) == nullptr)
+	TScriptInterface<IMounteaDialogueManagerInterface> DialogueManager = GetDialogueManager(Initiator);
+	if (DialogueManager== nullptr)
 	{
 		LOG_ERROR(TEXT("[InitializeDialogue] WorldContextObject is Invalid. Cannot Initialize dialogue."));
 		return false;
@@ -309,7 +296,7 @@ bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextOb
 
 	for (auto Itr : Graph->GetAllDecorators())
 	{
-		Itr.InitializeDecorator(TempWorld, DialogueParticipant);
+		Itr.InitializeDecorator(TempWorld, DialogueParticipant, DialogueManager);
 	}
 
 	if (Graph->CanStartDialogueGraph() == false)
@@ -364,8 +351,8 @@ TScriptInterface<IMounteaDialogueManagerInterface> UMounteaDialogueSystemBFC::Ge
 	
 	if (AActor* ActorContext = Cast<AActor>(WorldContextObject))
 	{
-		// Make sure we check Context first
-		if (UActorComponent* ManagerComponent = ActorContext->FindComponentByInterface(UMounteaDialogueManagerInterface::StaticClass()))
+		UActorComponent* ManagerComponent = ActorContext->FindComponentByInterface(UMounteaDialogueManagerInterface::StaticClass());
+		if (ManagerComponent)
 		{
 			return ManagerComponent;
 		}

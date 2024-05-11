@@ -8,15 +8,11 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_OnlyFirstTime"
 
-void UMounteaDialogueDecorator_OnlyFirstTime::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant)
+void UMounteaDialogueDecorator_OnlyFirstTime::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager)
 {
-	Super::InitializeDecorator_Implementation(World, OwningParticipant);
+	Super::InitializeDecorator_Implementation(World, OwningParticipant, nullptr);
 
-	if (World)
-	{
-		Manager = UMounteaDialogueSystemBFC::GetDialogueManager(GetOwningWorld());
-		if (Manager) Context = Manager->GetDialogueContext();
-	}
+	Manager = OwningManager;
 }
 
 void UMounteaDialogueDecorator_OnlyFirstTime::CleanupDecorator_Implementation()

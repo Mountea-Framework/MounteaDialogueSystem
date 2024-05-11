@@ -9,6 +9,7 @@
 #include "Interfaces/MounteaDialogueTickableObject.h"
 #include "MounteaDialogueDecoratorBase.generated.h"
 
+class IMounteaDialogueManagerInterface;
 class IMounteaDialogueParticipantInterface;
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
@@ -76,8 +77,8 @@ public:
 	 * In Blueprints should be used to cache values to avoid overhead in 'ExecuteDecorator'.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
-	void InitializeDecorator(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant);
-	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant)
+	void InitializeDecorator(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager);
+	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager)
 	{
 		OwningWorld = World;
 		if (World)
@@ -217,11 +218,11 @@ struct FMounteaDialogueDecorator
 
 public:
 
-	void InitializeDecorator(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant) const
+	void InitializeDecorator(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager) const
 	{
 		if (DecoratorType)
 		{
-			DecoratorType->InitializeDecorator(World, OwningParticipant);
+			DecoratorType->InitializeDecorator(World, OwningParticipant, OwningManager);
 			return;
 		}
 
