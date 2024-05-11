@@ -11,6 +11,7 @@
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 #include "Components/AudioComponent.h"
+#include "GameFramework/PlayerState.h"
 #include "Sound/SoundBase.h"
 
 void UMounteaDialogueSystemBFC::CleanupGraph(const UObject* WorldContextObject, const UMounteaDialogueGraph* GraphToClean)
@@ -119,7 +120,7 @@ bool UMounteaDialogueSystemBFC::ExecuteDecorators(const UObject* WorldContextObj
 	return true;
 }
 
-bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject, APlayerController* Initiator,TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants)
+bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject, APlayerState* Initiator,TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants)
 {
 	if (!WorldContextObject)
 	{

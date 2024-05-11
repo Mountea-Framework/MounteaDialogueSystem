@@ -278,13 +278,14 @@ public:
 	
 public:
 
-	virtual void InitializeDialogue_Implementation(APlayerController* OwningPlayerController, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants) override;
+	virtual void InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants) override;
 
-	virtual void StartDialogue() override;
-	virtual void CloseDialogue() override;
+	virtual void StartDialogue_Implementation() override;
+	virtual void CloseDialogue_Implementation() override;
 	virtual void ProcessNode();
 	
-	virtual bool InvokeDialogueUI(FString& Message) override;
+	virtual bool InvokeDialogueUI_Implementation(FString& Message) override;
+	virtual bool CloseDialogueUI_Implementation() override;
 	
 	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) override;
 	virtual void SetDialogueUIPtr(UUserWidget* NewDialogueWidgetPtr) override;
@@ -404,8 +405,12 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void StartDialogue_Server();
+	UFUNCTION(Server, Reliable)
+	void CloseDialogue_Server();
 	UFUNCTION(Client, Reliable)
 	void InvokeDialogueUI_Client();
+	UFUNCTION(Client, Reliable)
+	void CloseDialogueUI_Client();
 
 	UFUNCTION()
 	void OnRep_ManagerState();

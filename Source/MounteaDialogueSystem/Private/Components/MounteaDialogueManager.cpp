@@ -285,12 +285,12 @@ void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBas
 	FinishedExecuteDialogueRow();
 }
 
-void UMounteaDialogueManager::InitializeDialogue_Implementation(APlayerController* OwningPlayerController, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants)
+void UMounteaDialogueManager::InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants)
 {
 	
 }
 
-void UMounteaDialogueManager::StartDialogue()
+void UMounteaDialogueManager::StartDialogue_Implementation()
 {
 	if (!GetOwner())
 	{
@@ -310,19 +310,12 @@ void UMounteaDialogueManager::StartDialogue()
 		return;
 	}
 
-	// Cache out Cursor, so we don't hide it if it was visible before
-	const APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	if (PlayerController != nullptr)
-	{
-		bWasCursorVisible = PlayerController->bShowMouseCursor;
-	}
-
 	if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
 	{
 		FString ErrorMessage;
 		if (GetOwner()->HasAuthority())
 		{
-			InvokeDialogueUI(ErrorMessage);
+			Execute_InvokeDialogueUI(this, ErrorMessage);
 		}
 		else
 		{
@@ -351,24 +344,37 @@ void UMounteaDialogueManager::StartDialogue()
 	Execute_PrepareNode(this);
 }
 
-void UMounteaDialogueManager::CloseDialogue()
+void UMounteaDialogueManager::CloseDialogue_Implementation()
 {
-	if (DialogueWidgetPtr)
+	if (!GetOwner())
 	{
-		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CloseDialogueWidget);
-	}
-
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	if (PlayerController == nullptr)
-	{
-		OnDialogueFailed.Broadcast(TEXT("No Player Controller found!"));
+		LOG_ERROR(TEXT("[CloseDialogue] Invalid owner!"))
 		return;
 	}
-	
-	PlayerController->SetShowMouseCursor(bWasCursorVisible);
-	
-	if (!GetWorld()) return;
 
+	if (!GetOwner()->HasAuthority())
+	{
+		CloseDialogue_Server();
+	}
+
+	if (!GetWorld()) return;
+	
+	if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
+	{
+		if (GetOwner()->HasAuthority())
+		{
+			Execute_CloseDialogueUI(this);
+		}
+		else
+		{
+			CloseDialogueUI_Client();
+		}
+	}
+	else
+	{
+		CloseDialogueUI_Client();
+	}
+	
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 
 	SetDialogueManagerState(EDialogueManagerState::EDMS_Enabled);
@@ -422,7 +428,7 @@ void UMounteaDialogueManager::PrepareNode_Implementation()
 	ProcessNode();
 }
 
-bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
+bool UMounteaDialogueManager::InvokeDialogueUI_Implementation(FString& Message)
 {
 	if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal() == nullptr)
 	{
@@ -473,6 +479,8 @@ bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
 		Message = TEXT("Cannot display Dialogue Widget!");
 		return false;
 	}
+	
+	bWasCursorVisible = PlayerController->bShowMouseCursor;
 
 	// This event should be responsible for calling logic in Player Controller
 	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidgetPtr);
@@ -483,6 +491,38 @@ bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
 
 	IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CreateDialogueWidget);
 	
+	return true;
+}
+
+bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
+{
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (PlayerController == nullptr)
+	{
+		LOG_ERROR(TEXT("[CloseDialogueUI] No Player Controller Found!"))
+		return false;
+	}
+	
+	if (!DialogueWidgetPtr)
+	{
+		LOG_ERROR(TEXT("[CloseDialogueUI] No Dialogue UI Found!"))
+		return false;
+	}
+
+	PlayerController->SetShowMouseCursor(bWasCursorVisible);
+
+	if (DialogueWidgetPtr->Implements<UMounteaDialogueWBPInterface>())
+	{
+		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CloseDialogueWidget);
+
+		return true;
+	}
+	
+	LOG_WARNING(TEXT("[CloseDialogueUI] Using non-supported Dialogue UI, therefore brute-forcing is used to close the widget!"))
+		
+	DialogueWidgetPtr->RemoveFromParent();
+	DialogueWidgetPtr = nullptr;
+
 	return true;
 }
 
@@ -707,17 +747,26 @@ void UMounteaDialogueManager::SetDialogueWidgetClass_Server_Implementation(TSubc
 
 void UMounteaDialogueManager::InvokeDialogueUI_Client_Implementation()
 {
-	LOG_ERROR(TEXT("RPC CALLED"))
 	FString ErrorMessage;
-	if (!InvokeDialogueUI(ErrorMessage))
+	if (!Execute_InvokeDialogueUI(this, ErrorMessage))
 	{
 		LOG_ERROR(TEXT("[InvokeDialogueUI_Client] %s"), *ErrorMessage)
 	}
 }
 
+void UMounteaDialogueManager::CloseDialogueUI_Client_Implementation()
+{
+	Execute_CloseDialogueUI(this);
+}
+
 void UMounteaDialogueManager::StartDialogue_Server_Implementation()
 {
-	StartDialogue();
+	Execute_StartDialogue(this);
+}
+
+void UMounteaDialogueManager::CloseDialogue_Server_Implementation()
+{
+	Execute_CloseDialogue(this);
 }
 
 void UMounteaDialogueManager::OnRep_ManagerState()
@@ -729,6 +778,6 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(UMounteaDialogueManager, ManagerState);//, COND_AutonomousOnly);
-	DOREPLIFETIME(UMounteaDialogueManager, DialogueContext);//, COND_AutonomousOnly); 
+	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, ManagerState, COND_AutonomousOnly);
+	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, DialogueContext, COND_AutonomousOnly); 
 }

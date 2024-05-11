@@ -56,11 +56,15 @@ public:
 	/**
 	 * Starts the Dialogue if possible.
 	 */
-	virtual void StartDialogue() = 0;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="show, widget"))
+	void StartDialogue();
+	virtual void StartDialogue_Implementation() = 0;
 	/**
 	 * Closes the Dialogue if is active.
 	 */
-	virtual void CloseDialogue() = 0;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="show, widget"))
+	void CloseDialogue();
+	virtual void CloseDialogue_Implementation() = 0;
 
 	/**
 	 * Tries to Invoke Dialogue UI.
@@ -70,7 +74,20 @@ public:
 	 * @param Message InMessage to be populated with error message explaining why returns false
 	 * @return true if UI can be added to screen, false if cannot
 	 */
-	virtual bool InvokeDialogueUI(FString& Message) = 0;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="show, widget"))
+	bool InvokeDialogueUI(FString& Message);
+	virtual bool InvokeDialogueUI_Implementation(FString& Message) = 0;
+
+	/**
+	 * Tries to Close Dialogue UI.
+	 * This function servers a purpose to try tear down Dialogue UI from player.
+	 * 
+	 * @return true if UI can be removed from screen, false if cannot
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="close, exit, stop, widget"))
+	bool CloseDialogueUI();
+	virtual bool CloseDialogueUI_Implementation() = 0;
+	
 	/**
 	 * Gets the widget class used to display Dialogue UI.
 	 * 
@@ -211,8 +228,8 @@ public:
 	virtual void SetDefaultDialogueManagerState(const EDialogueManagerState NewState) = 0;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
-	void InitializeDialogue(APlayerController* OwningPlayerController, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
-	virtual void InitializeDialogue_Implementation(APlayerController* OwningPlayerController, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants) = 0;
+	void InitializeDialogue(APlayerState* OwningPlayerState, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
+	virtual void InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants) = 0;
 	
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() = 0;

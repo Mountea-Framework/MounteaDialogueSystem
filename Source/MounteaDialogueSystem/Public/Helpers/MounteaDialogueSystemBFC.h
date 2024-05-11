@@ -175,7 +175,7 @@ public:
 	 * @param DialogueParticipants	Other participants, could be NPCs or other Players
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="start, initialize, dialogue"))
-	static bool StartDialogue(const UObject* WorldContextObject, APlayerController* Initiator, TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants);
+	static bool StartDialogue(const UObject* WorldContextObject, APlayerState* Initiator, TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants);
 	
 	/**
 	 * Tries to initialize Dialogue.
@@ -279,25 +279,22 @@ public:
 		if (WorldContextObject->GetWorld() == nullptr) return nullptr;
 
 		// Make sure we check Context first
-		if (const APlayerController* PlayerController = Cast<APlayerController>(WorldContextObject))
+		if (const AActor* ActorContext = Cast<AActor>(WorldContextObject))
 		{
-			if (UActorComponent* ManagerComponent = PlayerController->FindComponentByInterface(UMounteaDialogueManagerInterface::StaticClass()))
+			if (UActorComponent* ManagerComponent = ActorContext->FindComponentByInterface(UMounteaDialogueManagerInterface::StaticClass()))
 			{
 				return ManagerComponent;
 			}
 		}
-			
+
+		// TODO: change!
 		const APlayerController* PlayerController = WorldContextObject->GetWorld()->GetFirstPlayerController();
 
 		if (!PlayerController) return nullptr;
 
 		if (UActorComponent* ManagerComponent = PlayerController->FindComponentByInterface(UMounteaDialogueManagerInterface::StaticClass()))
 		{
-			TScriptInterface<IMounteaDialogueManagerInterface> ReturnValue;
-			ReturnValue.SetObject(ManagerComponent);
-			ReturnValue.SetInterface(Cast<IMounteaDialogueManagerInterface>(ManagerComponent));
-
-			return ReturnValue;
+			return ManagerComponent;
 		}
 		
 		LOG_ERROR(TEXT("[GetDialogueManager] Unable to find Dialogue Manager."));
