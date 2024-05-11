@@ -118,7 +118,7 @@ void UMounteaDialogueManager::OnDialogueUserInterfaceChangedEvent_Internal(TSubc
 
 void UMounteaDialogueManager::OnDialogueStartedEvent_Internal(UMounteaDialogueContext* Context)
 {
-	StartDialogue();
+	Execute_StartDialogue(this);
 
 	OnDialogueStartedEvent(Context);
 }
@@ -134,7 +134,7 @@ void UMounteaDialogueManager::OnDialogueClosedEvent_Internal(UMounteaDialogueCon
 	
 	OnDialogueClosedEvent(DialogueContext);
 
-	CloseDialogue();
+	Execute_CloseDialogue(this);
 }
 
 void UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal(UMounteaDialogueContext* Context)
@@ -216,7 +216,8 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 	}
 	else
 	{
-		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::AddDialogueOptions);
+		//TODO: FIX
+		//IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::AddDialogueOptions);
 		return;
 	}
 }
@@ -771,13 +772,26 @@ void UMounteaDialogueManager::CloseDialogue_Server_Implementation()
 
 void UMounteaDialogueManager::OnRep_ManagerState()
 {
-	// TODO: Call client updates that needs to be done on Clients only
+	switch (ManagerState)
+	{
+		case EDialogueManagerState::EDMS_Disabled:
+			Execute_CloseDialogueUI(this);
+			break;
+		case EDialogueManagerState::EDMS_Enabled:
+			Execute_CloseDialogueUI(this);
+			break;
+		case EDialogueManagerState::EDMS_Active:
+			break;
+	}
 }
 
 void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, ManagerState, COND_AutonomousOnly);
-	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, DialogueContext, COND_AutonomousOnly); 
+	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, ManagerState, COND_InitialOrOwner);
+	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, DialogueContext, COND_AutonomousOnly);
+
+	//DOREPLIFETIME(UMounteaDialogueManager, ManagerState);
+	//DOREPLIFETIME(UMounteaDialogueManager, DialogueContext); 
 }

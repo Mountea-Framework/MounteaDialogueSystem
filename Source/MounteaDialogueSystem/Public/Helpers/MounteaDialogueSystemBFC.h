@@ -68,29 +68,8 @@ public:
 	 * 
 	 * @param WorldContextObject	World Context Object 
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", CompactNodeTitle="Player Participant", Keywords="participant, dialogue, player"))
-	static TScriptInterface<IMounteaDialogueParticipantInterface> GetPlayerDialogueParticipant(const UObject* WorldContextObject)
-	{
-		if (WorldContextObject == nullptr) return nullptr;
-
-		const APlayerController* PlayerController = WorldContextObject->GetWorld()->GetFirstPlayerController();
-
-		if (!PlayerController) return nullptr;
-
-		const APawn* PlayerPawn = PlayerController->GetPawn();
-
-		if (PlayerPawn == nullptr) return nullptr;
-
-		auto Components = PlayerPawn->GetComponentsByInterface(UMounteaDialogueParticipantInterface::StaticClass());
-
-		if (Components.Num() == 0) return nullptr;
-
-		TScriptInterface<IMounteaDialogueParticipantInterface> ReturnValue;
-		ReturnValue.SetObject(Components[0]);
-		ReturnValue.SetInterface(Cast<IMounteaDialogueParticipantInterface>(Components[0]));
-
-		return ReturnValue;
-	}
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Player Participant", Keywords="participant, dialogue, player"))
+	static TScriptInterface<IMounteaDialogueParticipantInterface> GetPlayerDialogueParticipant(AActor* WorldContextObject);
 	
 	/**
 	 * Returns Dialogue System Settings.
@@ -149,8 +128,8 @@ public:
 	 * @param WorldContextObject	World Context Object
 	 * @param DialogueParticipant	Dialogue with which Participant to close
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="close, exit, dialogue"))
-	static bool CloseDialogue(const UObject* WorldContextObject, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant)
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="close, exit, dialogue"))
+	static bool CloseDialogue(AActor* WorldContextObject, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant)
 	{
 		if (!GetDialogueManager(WorldContextObject))
 		{
@@ -174,7 +153,7 @@ public:
 	 * @param MainParticipant			Main participant, the one who owns the Dialogue Graph
 	 * @param DialogueParticipants	Other participants, could be NPCs or other Players
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="start, initialize, dialogue"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="start, initialize, dialogue"))
 	static bool StartDialogue(const UObject* WorldContextObject, APlayerState* Initiator, TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants);
 	
 	/**
@@ -185,8 +164,8 @@ public:
 	 * @param Initiator						Usually Player Controller
 	 * @param DialogueParticipant	Other person, could be NPC or other Player
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="start, initialize, dialogue"))
-	static bool InitializeDialogue(const UObject* WorldContextObject, UObject* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& DialogueParticipant);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="start, initialize, dialogue"))
+	static bool InitializeDialogue(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& DialogueParticipant);
 	
 	/**
 	 * Tries to initialize Dialogue with given Context.
@@ -198,7 +177,7 @@ public:
 	 * @param DialogueParticipant	Other person, could be NPC or other Player
 	 * @param Context					Dialogue Context which is passed to Dialogue Manager
 	 */
-	static bool InitializeDialogueWithContext(const UObject* WorldContextObject, UObject* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant, UMounteaDialogueContext* Context)
+	static bool InitializeDialogueWithContext(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant, UMounteaDialogueContext* Context)
 	{
 		if (DialogueParticipant == nullptr)
 		{
@@ -216,7 +195,7 @@ public:
 			return false;
 		}
 
-		const auto DialogueManager = GetDialogueManager(WorldContextObject);
+		const auto DialogueManager = GetDialogueManager(Initiator);
 		if (DialogueManager == nullptr)
 		{
 			LOG_ERROR(TEXT("[InitializeDialogueWithContext] Dialogue Manager is Invalid. Cannot Initialize dialogue."));
@@ -227,8 +206,8 @@ public:
 		return true;
 	}
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", CompactNodeTitle="Dialogue Manager", Keywords="manager, dialogue, master, initialize"))
-	static bool AddParticipants(const UObject* WorldContextObject, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants)
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Dialogue Manager", Keywords="manager, dialogue, master, initialize"))
+	static bool AddParticipants(AActor* WorldContextObject, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants)
 	{
 		const TScriptInterface<IMounteaDialogueManagerInterface> Manager = GetDialogueManager(WorldContextObject);
 		if (!Manager)
@@ -246,8 +225,8 @@ public:
 		return Context->AddDialogueParticipants(NewParticipants);		
 	}
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", CompactNodeTitle="Dialogue Manager", Keywords="manager, dialogue, master, initialize"))
-	static bool RemoveParticipants(const UObject* WorldContextObject, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants)
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Dialogue Manager", Keywords="manager, dialogue, master, initialize"))
+	static bool RemoveParticipants(AActor* WorldContextObject, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants)
 	{
 		const TScriptInterface<IMounteaDialogueManagerInterface> Manager = GetDialogueManager(WorldContextObject);
 		if (!Manager)
@@ -271,35 +250,8 @@ public:
 	 * 
 	 * @param WorldContextObject	World Context Object 
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", CompactNodeTitle="Dialogue Manager", Keywords="manager, dialogue, master, initialize"))
-	static TScriptInterface<IMounteaDialogueManagerInterface> GetDialogueManager(const UObject* WorldContextObject)
-	{
-		if (!WorldContextObject) return nullptr;
-
-		if (WorldContextObject->GetWorld() == nullptr) return nullptr;
-
-		// Make sure we check Context first
-		if (const AActor* ActorContext = Cast<AActor>(WorldContextObject))
-		{
-			if (UActorComponent* ManagerComponent = ActorContext->FindComponentByInterface(UMounteaDialogueManagerInterface::StaticClass()))
-			{
-				return ManagerComponent;
-			}
-		}
-
-		// TODO: change!
-		const APlayerController* PlayerController = WorldContextObject->GetWorld()->GetFirstPlayerController();
-
-		if (!PlayerController) return nullptr;
-
-		if (UActorComponent* ManagerComponent = PlayerController->FindComponentByInterface(UMounteaDialogueManagerInterface::StaticClass()))
-		{
-			return ManagerComponent;
-		}
-		
-		LOG_ERROR(TEXT("[GetDialogueManager] Unable to find Dialogue Manager."));
-		return nullptr;
-	}
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Dialogue Manager", Keywords="manager, dialogue, master, initialize"))
+	static TScriptInterface<IMounteaDialogueManagerInterface> GetDialogueManager(UObject* WorldContextObject);
 
 	/**
 	 * Find the best matching dialogue participant based on the active dialogue node and context.
@@ -312,7 +264,7 @@ public:
 	 * @param Context The Mountea dialogue context containing the active node and participants.
 	 * @return The best matching dialogue participant, or nullptr if no match is found.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="get,find"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="get,find"))
 	static TScriptInterface<IMounteaDialogueParticipantInterface> FindBestMatchingParticipant(const UObject* WorldContextObject, const UMounteaDialogueContext* Context);
 
 	/**

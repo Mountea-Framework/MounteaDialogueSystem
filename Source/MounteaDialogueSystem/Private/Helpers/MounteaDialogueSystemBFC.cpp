@@ -79,6 +79,31 @@ UAudioComponent* UMounteaDialogueSystemBFC::FindAudioComponentByTag(const AActor
 	return nullptr;
 }
 
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC::GetPlayerDialogueParticipant(AActor* WorldContextObject)
+{
+	if (WorldContextObject == nullptr) return nullptr;
+	
+	if (WorldContextObject->Implements<UMounteaDialogueParticipantInterface>())
+	{
+		return WorldContextObject;
+	}
+
+	if (UActorComponent* ParticipantComp = WorldContextObject->FindComponentByInterface(UMounteaDialogueParticipantInterface::StaticClass()))
+	{
+		return ParticipantComp;
+	}
+	
+	const APlayerController* PlayerController = WorldContextObject->GetWorld()->GetFirstPlayerController();
+
+	if (!PlayerController) return nullptr;
+
+	const APawn* PlayerPawn = PlayerController->GetPawn();
+
+	if (PlayerPawn == nullptr) return nullptr;
+
+	return PlayerPawn->FindComponentByInterface(UMounteaDialogueParticipantInterface::StaticClass());
+}
+
 bool UMounteaDialogueSystemBFC::ExecuteDecorators(const UObject* WorldContextObject, const UMounteaDialogueContext* DialogueContext)
 {
 	if (DialogueContext == nullptr)
@@ -231,7 +256,7 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 	return true;
 }
 
-bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextObject, UObject* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& DialogueParticipant)
+bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& DialogueParticipant)
 {
 	if (!DialogueParticipant)
 	{
@@ -245,7 +270,7 @@ bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextOb
 		return false;
 	}
 	
-	UWorld* TempWorld = WorldContextObject->GetWorld();
+	UWorld* TempWorld = Initiator->GetWorld();
 	if (!TempWorld) TempWorld = DialogueParticipant->Execute_GetOwningActor(DialogueParticipant.GetObject())->GetWorld();
 	
 	if (Initiator == nullptr && DialogueParticipant.GetInterface() == nullptr)
@@ -254,7 +279,7 @@ bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextOb
 		return false;
 	}
 
-	if (GetDialogueManager(WorldContextObject) == nullptr)
+	if (GetDialogueManager(Initiator) == nullptr)
 	{
 		LOG_ERROR(TEXT("[InitializeDialogue] WorldContextObject is Invalid. Cannot Initialize dialogue."));
 		return false;
@@ -320,9 +345,46 @@ bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextOb
 
 	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
 	Context->SetDialogueContext(DialogueParticipant, NodeToStart, StartNode_Children);
-	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(WorldContextObject));
+	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(Initiator));
 	
 	return  InitializeDialogueWithContext(WorldContextObject, Initiator, DialogueParticipant, Context);
+}
+
+TScriptInterface<IMounteaDialogueManagerInterface> UMounteaDialogueSystemBFC::GetDialogueManager(UObject* WorldContextObject)
+{
+	if (!WorldContextObject) return nullptr;
+
+	if (WorldContextObject->GetWorld() == nullptr) return nullptr;
+
+	if (WorldContextObject->Implements<UMounteaDialogueManagerInterface>())
+	{
+		return WorldContextObject;
+	}
+
+	
+	if (AActor* ActorContext = Cast<AActor>(WorldContextObject))
+	{
+		// Make sure we check Context first
+		if (UActorComponent* ManagerComponent = ActorContext->FindComponentByInterface(UMounteaDialogueManagerInterface::StaticClass()))
+		{
+			return ManagerComponent;
+		}
+	}
+	
+
+	LOG_WARNING(TEXT("[GetDialogueManager] Cannot find Dialogue Manager the easy way."))
+	
+	const APlayerController* PlayerController = WorldContextObject->GetWorld()->GetFirstPlayerController();
+
+	if (!PlayerController) return nullptr;
+
+	if (UActorComponent* ManagerComponent = PlayerController->FindComponentByInterface(UMounteaDialogueManagerInterface::StaticClass()))
+	{
+		return ManagerComponent;
+	}
+		
+	LOG_ERROR(TEXT("[GetDialogueManager] Unable to find Dialogue Manager."));
+	return nullptr;
 }
 
 TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC::FindBestMatchingParticipant(const UObject* WorldContextObject, const UMounteaDialogueContext* Context)
