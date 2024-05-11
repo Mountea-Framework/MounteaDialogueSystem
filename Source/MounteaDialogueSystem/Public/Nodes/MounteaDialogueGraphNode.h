@@ -314,7 +314,7 @@ public:
 	virtual void TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime) override;
 	virtual FMounteaDialogueTick& GetMounteaDialogueTickHandle() override {return NodeTickEvent; };
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
 	FMounteaDialogueTick NodeTickEvent;
 	
 #pragma endregion

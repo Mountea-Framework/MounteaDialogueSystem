@@ -77,7 +77,7 @@ protected:
 
 	/** Name of row in the table that we want */
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
-	FName RowName;
+	FName				RowName;
 
 	/**
 	 * Flag defining how the Participant is searched for.
@@ -98,7 +98,7 @@ protected:
 	 * ❔ Each unique dialogue Participant should be using different Tag, if generic, then use something like `Dialogue.NPC`
 	 */
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault))
-	uint8 bUseGameplayTags : 1;
+	uint8					bUseGameplayTags : 1;
 
 #if WITH_EDITOR
 	
