@@ -20,6 +20,13 @@ UMounteaDialogueManager::UMounteaDialogueManager()
 	DefaultManagerState = EDialogueManagerState::EDMS_Enabled;
 
 	bWasCursorVisible = false;
+
+	SetIsReplicatedByDefault(true);
+	SetActiveFlag(true);
+
+	bAutoActivate = true;
+
+	PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
 void UMounteaDialogueManager::BeginPlay()
@@ -278,8 +285,25 @@ void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBas
 	FinishedExecuteDialogueRow();
 }
 
+void UMounteaDialogueManager::InitializeDialogue_Implementation(APlayerController* OwningPlayerController, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants)
+{
+	
+}
+
 void UMounteaDialogueManager::StartDialogue()
 {
+	if (!GetOwner())
+	{
+		OnDialogueFailed.Broadcast(TEXT("No Owner!"));
+		return;
+	}
+	
+	if (!GetOwner()->HasAuthority())
+	{
+		StartDialogue_Server();
+		return;
+	}
+
 	if (!DialogueContext)
 	{
 		OnDialogueFailed.Broadcast(TEXT("Invalid Dialogue Context!"));
@@ -293,14 +317,23 @@ void UMounteaDialogueManager::StartDialogue()
 		bWasCursorVisible = PlayerController->bShowMouseCursor;
 	}
 
-	// TODO: Move this to CLIENT only scope
-	FString ErrorMessage;
-	if (!InvokeDialogueUI(ErrorMessage))
+	if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
 	{
-		OnDialogueFailed.Broadcast(ErrorMessage);
-		return;
+		FString ErrorMessage;
+		if (GetOwner()->HasAuthority())
+		{
+			InvokeDialogueUI(ErrorMessage);
+		}
+		else
+		{
+			InvokeDialogueUI_Client();
+		}
 	}
-
+	else
+	{
+		InvokeDialogueUI_Client();
+	}
+	
 	SetDialogueManagerState(EDialogueManagerState::EDMS_Active);
 
 	for (const auto& Itr : DialogueContext->DialogueParticipants)
@@ -537,12 +570,19 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 	
 	OnDialogueRowStarted.Broadcast(DialogueContext);
 
-	// Show Subtitle Row only if allowed
-	if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal())
+	if (GetOwner()->HasAuthority())
 	{
-		if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->SubtitlesAllowed())
+		
+	}
+	else
+	{
+		// Show Subtitle Row only if allowed
+		if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal())
 		{
-			IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::ShowDialogueRow);
+			if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->SubtitlesAllowed())
+			{
+				IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::ShowDialogueRow);
+			}
 		}
 	}
 }
@@ -665,6 +705,21 @@ void UMounteaDialogueManager::SetDialogueWidgetClass_Server_Implementation(TSubc
 	SetDialogueWidgetClass(NewDialogueWidgetClass);
 }
 
+void UMounteaDialogueManager::InvokeDialogueUI_Client_Implementation()
+{
+	LOG_ERROR(TEXT("RPC CALLED"))
+	FString ErrorMessage;
+	if (!InvokeDialogueUI(ErrorMessage))
+	{
+		LOG_ERROR(TEXT("[InvokeDialogueUI_Client] %s"), *ErrorMessage)
+	}
+}
+
+void UMounteaDialogueManager::StartDialogue_Server_Implementation()
+{
+	StartDialogue();
+}
+
 void UMounteaDialogueManager::OnRep_ManagerState()
 {
 	// TODO: Call client updates that needs to be done on Clients only
@@ -674,6 +729,6 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, ManagerState, COND_AutonomousOnly);
-	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, DialogueContext, COND_AutonomousOnly); 
+	DOREPLIFETIME(UMounteaDialogueManager, ManagerState);//, COND_AutonomousOnly);
+	DOREPLIFETIME(UMounteaDialogueManager, DialogueContext);//, COND_AutonomousOnly); 
 }

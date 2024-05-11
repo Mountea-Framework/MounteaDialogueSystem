@@ -92,6 +92,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue", meta=(NoResetToDefault))
 	TArray<FDialogueTraversePath> TraversedPath;
 
+	UPROPERTY(VisibleAnywhere, Category="Mountea|Dialogue")
+	int32 RepKey = 0;
+
 public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Debug")
@@ -159,6 +162,12 @@ public:
 	virtual bool RemoveDialogueParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 	virtual bool RemoveDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant);
 	virtual void ClearDialogueParticipants();
+
+	//virtual bool IsNameStableForNetworking() const override {return true;};
+	//virtual bool IsFullNameStableForNetworking() const override { return true; };
+	virtual bool IsSupportedForNetworking() const override {return true;} ;
+	int GetRepKey() const
+	{ return RepKey; }
 	
 	/**
 	 * Sets the dialogue context.

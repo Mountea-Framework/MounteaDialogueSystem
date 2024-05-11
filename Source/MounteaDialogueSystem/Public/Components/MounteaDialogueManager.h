@@ -278,10 +278,12 @@ public:
 	
 public:
 
+	virtual void InitializeDialogue_Implementation(APlayerController* OwningPlayerController, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants) override;
+
 	virtual void StartDialogue() override;
 	virtual void CloseDialogue() override;
 	virtual void ProcessNode();
-
+	
 	virtual bool InvokeDialogueUI(FString& Message) override;
 	
 	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) override;
@@ -366,7 +368,7 @@ protected:
 	/**
 	 * Dialogue Context which is used to contain temporary data.
 	 */
-	UPROPERTY(Replicated, Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
+	UPROPERTY(Replicated, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	UMounteaDialogueContext* DialogueContext = nullptr;
 
 	/**
@@ -399,6 +401,11 @@ protected:
 	void SetDialogueContext_Server(UMounteaDialogueContext* NewContext);
 	UFUNCTION(Server, Reliable)
 	void SetDialogueWidgetClass_Server(TSubclassOf<UUserWidget> NewDialogueWidgetClass);
+
+	UFUNCTION(Server, Reliable)
+	void StartDialogue_Server();
+	UFUNCTION(Client, Reliable)
+	void InvokeDialogueUI_Client();
 
 	UFUNCTION()
 	void OnRep_ManagerState();

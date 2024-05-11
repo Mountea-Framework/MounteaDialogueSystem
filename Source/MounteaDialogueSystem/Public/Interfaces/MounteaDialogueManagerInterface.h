@@ -7,6 +7,7 @@
 #include "UObject/Interface.h"
 #include "MounteaDialogueManagerInterface.generated.h"
 
+class IMounteaDialogueParticipantInterface;
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI, BlueprintType, Blueprintable)
 class UMounteaDialogueManagerInterface : public UInterface
@@ -208,6 +209,10 @@ public:
 	 * @param NewState	Manager State to be set as Default Manager State
 	 */
 	virtual void SetDefaultDialogueManagerState(const EDialogueManagerState NewState) = 0;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
+	void InitializeDialogue(APlayerController* OwningPlayerController, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
+	virtual void InitializeDialogue_Implementation(APlayerController* OwningPlayerController, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants) = 0;
 	
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() = 0;

@@ -164,6 +164,18 @@ public:
 		GetDialogueManager(WorldContextObject)->GetDialogueClosedEventHandle().Broadcast(Context);
 		return true;
 	}
+
+	/**
+	 * Tries to initialize Dialogue.
+	 * ❗ Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
+	 * 
+	 * @param WorldContextObject	World Context Object
+	 * @param Initiator							Player Controller
+	 * @param MainParticipant			Main participant, the one who owns the Dialogue Graph
+	 * @param DialogueParticipants	Other participants, could be NPCs or other Players
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(WorldContext="WorldContextObject", DefaultToSelf="WorldContextObject", Keywords="start, initialize, dialogue"))
+	static bool StartDialogue(const UObject* WorldContextObject, APlayerController* Initiator, TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants);
 	
 	/**
 	 * Tries to initialize Dialogue.
@@ -265,20 +277,31 @@ public:
 		if (!WorldContextObject) return nullptr;
 
 		if (WorldContextObject->GetWorld() == nullptr) return nullptr;
+
+		// Make sure we check Context first
+		if (const APlayerController* PlayerController = Cast<APlayerController>(WorldContextObject))
+		{
+			if (UActorComponent* ManagerComponent = PlayerController->FindComponentByInterface(UMounteaDialogueManagerInterface::StaticClass()))
+			{
+				return ManagerComponent;
+			}
+		}
 			
 		const APlayerController* PlayerController = WorldContextObject->GetWorld()->GetFirstPlayerController();
 
 		if (!PlayerController) return nullptr;
 
-		auto Components = PlayerController->GetComponentsByInterface(UMounteaDialogueManagerInterface::StaticClass());
+		if (UActorComponent* ManagerComponent = PlayerController->FindComponentByInterface(UMounteaDialogueManagerInterface::StaticClass()))
+		{
+			TScriptInterface<IMounteaDialogueManagerInterface> ReturnValue;
+			ReturnValue.SetObject(ManagerComponent);
+			ReturnValue.SetInterface(Cast<IMounteaDialogueManagerInterface>(ManagerComponent));
 
-		if (Components.Num() == 0) return nullptr;
-
-		TScriptInterface<IMounteaDialogueManagerInterface> ReturnValue;
-		ReturnValue.SetObject(Components[0]);
-		ReturnValue.SetInterface(Cast<IMounteaDialogueManagerInterface>(Components[0]));
-
-		return ReturnValue;
+			return ReturnValue;
+		}
+		
+		LOG_ERROR(TEXT("[GetDialogueManager] Unable to find Dialogue Manager."));
+		return nullptr;
 	}
 
 	/**
