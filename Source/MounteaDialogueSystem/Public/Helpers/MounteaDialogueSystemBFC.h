@@ -177,7 +177,7 @@ public:
 	 */
 	static bool InitializeDialogueWithContext(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant, UMounteaDialogueContext* Context)
 	{
-		if (DialogueParticipant == nullptr)
+ 		if (DialogueParticipant == nullptr)
 		{
 			LOG_ERROR(TEXT("[InitializeDialogueWithContext] Missing DialogueParticipant. Cannot Initialize dialogue."));
 			return false;

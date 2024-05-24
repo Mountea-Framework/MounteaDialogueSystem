@@ -225,6 +225,31 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 		LOG_ERROR(TEXT("[StartDialogue] Dialogue Graph cannot Start. Cannot Initialize dialogue."));
 		return false;
 	}
+
+	UMounteaDialogueGraphNode* NodeToStart = MainParticipant->GetSavedStartingNode();
+	if (!NodeToStart || NodeToStart->CanStartNode() == false)
+	{
+		NodeToStart = Graph->GetStartNode();
+	}
+	
+	if (NodeToStart == nullptr)
+	{
+		LOG_ERROR(TEXT("[StartDialogue] Dialogue Graph has no Nodes to start. Cannot start dialogue."));
+		return false;
+	}
+	
+	if (NodeToStart->GetClass()->IsChildOf(UMounteaDialogueGraphNode_StartNode::StaticClass()))
+	{
+		if (GetFirstChildNode(NodeToStart) == nullptr)
+		{
+			LOG_ERROR(TEXT("[StartDialogue] Dialogue Graph has only Start Node and no Nodes to start. Cannot start dialogue."));
+			return false;
+		}
+
+		NodeToStart = GetFirstChildNode(NodeToStart);
+	}
+	
+	const TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
 	
 	for (const auto& Itr : Graph->GetAllNodes())
 	{
@@ -238,8 +263,13 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 	{
 		Itr.InitializeDecorator(TempWorld, MainParticipant, DialogueManager);
 	}
+
+	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
+	Context->SetDialogueContext(MainParticipant, NodeToStart, StartNode_Children);
+	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(Initiator));
+	Context->AddDialogueParticipants(DialogueParticipants);
 	
-	return true;
+	return InitializeDialogueWithContext(WorldContextObject, Initiator, MainParticipant, Context);
 }
 
 bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& DialogueParticipant)
@@ -265,7 +295,7 @@ bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextOb
 		return false;
 	}
 
-	TScriptInterface<IMounteaDialogueManagerInterface> DialogueManager = GetDialogueManager(Initiator);
+	const TScriptInterface<IMounteaDialogueManagerInterface> DialogueManager = GetDialogueManager(Initiator);
 	if (DialogueManager== nullptr)
 	{
 		LOG_ERROR(TEXT("[InitializeDialogue] WorldContextObject is Invalid. Cannot Initialize dialogue."));
