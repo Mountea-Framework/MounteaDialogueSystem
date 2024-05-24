@@ -5,10 +5,7 @@
 #include "CoreMinimal.h"
 #include "MounteaDialogueSystemSettings.h"
 
-#include "Data/MounteaDialogueContext.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
-
-
 
 #include "Interfaces/MounteaDialogueManagerInterface.h"
 #include "Interfaces/MounteaDialogueParticipantInterface.h"
@@ -18,6 +15,7 @@
 
 #include "MounteaDialogueSystemBFC.generated.h"
 
+struct FMounteaDialogueDecorator;
 
 /**
  * Runtime helper functions library for Mountea Dialogue System.
@@ -42,17 +40,7 @@ public:
 	 * Returns whether selected Node for selected Participant has been already Traversed or not.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="node, traverse, open, active"))
-	static bool HasNodeBeenTraversed(const UMounteaDialogueGraphNode* Node, const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant)
-	{
-		bool bTraversed = false;
-
-		if (!Node) return bTraversed;
-		if (!Participant || !Participant.GetObject()) return bTraversed;
-
-		bTraversed = Participant->GetTraversedPath().Contains(Node->GetNodeGUID());
-		
-		return bTraversed;
-	}
+	static bool HasNodeBeenTraversed(const UMounteaDialogueGraphNode* Node, const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="audio, tag, search"))
 	static UAudioComponent* FindAudioComponentByName(const AActor* ActorContext, const FName& Arg);
@@ -107,12 +95,7 @@ public:
 	 * Tries to validate given Dialogue Context.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Is Dialogue Context Valid", Keywords="dialogue, null, validate, valid, check"))
-	static bool IsContextValid(const UMounteaDialogueContext* Context)
-	{
-		if (Context == nullptr) return false;
-
-		return Context->IsValid();
-	}
+	static bool IsContextValid(const UMounteaDialogueContext* Context);
 
 	/**
 	 * Requests Execution for all Decorators for Graph and Context Node
@@ -127,20 +110,7 @@ public:
 	 * @param DialogueParticipant	Dialogue with which Participant to close
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="close, exit, dialogue"))
-	static bool CloseDialogue(AActor* WorldContextObject, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant)
-	{
-		if (!GetDialogueManager(WorldContextObject))
-		{
-			LOG_ERROR(TEXT("[CloseDialogue] Cannot find Dialogue Manager. Cannot close dialogue."));
-			return false;
-		}
-		
-		UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
-		Context->SetDialogueContext(DialogueParticipant, nullptr, TArray<UMounteaDialogueGraphNode*>());
-		
-		GetDialogueManager(WorldContextObject)->GetDialogueClosedEventHandle().Broadcast(Context);
-		return true;
-	}
+	static bool CloseDialogue(AActor* WorldContextObject, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant);
 
 	/**
 	 * Tries to initialize Dialogue.
@@ -175,72 +145,13 @@ public:
 	 * @param DialogueParticipant	Other person, could be NPC or other Player
 	 * @param Context					Dialogue Context which is passed to Dialogue Manager
 	 */
-	static bool InitializeDialogueWithContext(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant, UMounteaDialogueContext* Context)
-	{
- 		if (DialogueParticipant == nullptr)
-		{
-			LOG_ERROR(TEXT("[InitializeDialogueWithContext] Missing DialogueParticipant. Cannot Initialize dialogue."));
-			return false;
-		}
-		if (Context == nullptr)
-		{
-			LOG_ERROR(TEXT("[InitializeDialogueWithContext] Missing Dialogue Context. Cannot Initialize dialogue."));
-			return false;
-		}
-		if (IsContextValid(Context) == false)
-		{
-			LOG_ERROR(TEXT("[InitializeDialogueWithContext] Dialogue Context is Invalid. Cannot Initialize dialogue."));
-			return false;
-		}
-
-		const auto DialogueManager = GetDialogueManager(Initiator);
-		if (DialogueManager == nullptr)
-		{
-			LOG_ERROR(TEXT("[InitializeDialogueWithContext] Dialogue Manager is Invalid. Cannot Initialize dialogue."));
-			return false;
-		}
-
-		DialogueManager->GetDialogueInitializedEventHandle().Broadcast(Context);
-		return true;
-	}
+	static bool InitializeDialogueWithContext(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant, UMounteaDialogueContext* Context);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Dialogue Manager", Keywords="manager, dialogue, master, initialize"))
-	static bool AddParticipants(AActor* WorldContextObject, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants)
-	{
-		const TScriptInterface<IMounteaDialogueManagerInterface> Manager = GetDialogueManager(WorldContextObject);
-		if (!Manager)
-		{
-			return false;
-		}
-
-		UMounteaDialogueContext* Context = Manager->GetDialogueContext();
-
-		if (!Context)
-		{
-			return false;
-		}
-
-		return Context->AddDialogueParticipants(NewParticipants);		
-	}
+	static bool AddParticipants(AActor* WorldContextObject, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Dialogue Manager", Keywords="manager, dialogue, master, initialize"))
-	static bool RemoveParticipants(AActor* WorldContextObject, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants)
-	{
-		const TScriptInterface<IMounteaDialogueManagerInterface> Manager = GetDialogueManager(WorldContextObject);
-		if (!Manager)
-		{
-			return false;
-		}
-
-		UMounteaDialogueContext* Context = Manager->GetDialogueContext();
-
-		if (!Context)
-		{
-			return false;
-		}
-
-		return Context->RemoveDialogueParticipants(NewParticipants);		
-	}
+	static bool RemoveParticipants(AActor* WorldContextObject, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 
 	/**
 	 * Returns first 'Mountea Dialogue Manager' Component from Player Controller.
@@ -279,15 +190,7 @@ public:
 	 * @param ParentNode	Parent Node which should contain the Node to be returned.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="dialogue, child, node, index"))
-	static UMounteaDialogueGraphNode* GetChildrenNodeFromIndex(const int32 Index, const UMounteaDialogueGraphNode* ParentNode)
-	{
-		if (ParentNode->GetChildrenNodes().IsValidIndex(Index))
-		{
-			return ParentNode->GetChildrenNodes()[Index];
-		}
-
-		return nullptr;
-	}
+	static UMounteaDialogueGraphNode* GetChildrenNodeFromIndex(const int32 Index, const UMounteaDialogueGraphNode* ParentNode);
 
 	/**
 	 * Tries to get first Dialogue Node from Children Nodes. If none is found, returns null.
@@ -296,17 +199,7 @@ public:
 	 * @param ParentNode	Node to read from.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="dialogue, child, node, first"))
-	static UMounteaDialogueGraphNode* GetFirstChildNode(const UMounteaDialogueGraphNode* ParentNode)
-	{
-		if (ParentNode == nullptr) return nullptr;
-
-		if (ParentNode->GetChildrenNodes().IsValidIndex(0))
-		{
-			return ParentNode->GetChildrenNodes()[0]->CanStartNode() ? ParentNode->GetChildrenNodes()[0] : nullptr;
-		}
-
-		return nullptr;
-	}
+	static UMounteaDialogueGraphNode* GetFirstChildNode(const UMounteaDialogueGraphNode* ParentNode);
 
 	/**
 	 * Returns all Allowed Child Nodes for given Parent Node
@@ -315,24 +208,7 @@ public:
 	 * @param ParentNode	Node to get all Children From
 	 */ 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="diaogue, child, nodes"))
-	static TArray<UMounteaDialogueGraphNode*> GetAllowedChildNodes(const UMounteaDialogueGraphNode* ParentNode)
-	{
-		TArray<UMounteaDialogueGraphNode*> ReturnNodes;
-
-		if (!ParentNode) return ReturnNodes;
-
-		if (ParentNode->GetChildrenNodes().Num() == 0) return ReturnNodes;
-
-		for (UMounteaDialogueGraphNode* Itr : ParentNode->GetChildrenNodes())
-		{
-			if (Itr && Itr->CanStartNode())
-			{
-				ReturnNodes.Add(Itr);
-			}
-		}
-
-		return ReturnNodes;
-	}
+	static TArray<UMounteaDialogueGraphNode*> GetAllowedChildNodes(const UMounteaDialogueGraphNode* ParentNode);
 
 	/**
 	 * Returns whether Dialogue Row is valid or not.
