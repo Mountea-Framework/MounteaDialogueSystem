@@ -97,6 +97,19 @@ public:
 	virtual bool InvokeDialogueUI_Implementation(FString& Message) = 0;
 
 	/**
+	 * Tries to Update Dialogue UI.
+	 * This function servers a purpose to try update Dialogue UI to player using given command.
+	 * ❔ If this function fails, Message will be populated with error message explaining what went wrong.
+	 * 
+	 * @param Message				InMessage to be populated with error message explaining why returns false
+	 * @param Command				Command to be processed.
+	 * @return								true if UI can be update, false if cannot
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="show, widget"))
+	bool UpdateDialogueUI(FString& Message, const FString& Command);
+	virtual bool UpdateDialogueUI_Implementation(FString& Message, const FString& Command) = 0;
+
+	/**
 	 * Tries to Close Dialogue UI.
 	 * This function servers a purpose to try tear down Dialogue UI from player.
 	 * 

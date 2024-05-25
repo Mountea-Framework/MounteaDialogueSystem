@@ -3,6 +3,7 @@
 
 #include "Decorators/MounteaIDialogueDecorator_SwapParticipants.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Data/MounteaDialogueContext.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_SwapParticipants"
 

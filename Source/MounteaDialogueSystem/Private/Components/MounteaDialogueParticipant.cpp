@@ -171,7 +171,7 @@ void UMounteaDialogueParticipant::SetDialogueGraph(UMounteaDialogueGraph* NewDia
 		LOG_ERROR(TEXT("[SetParticipantState] Component has no Owner!"))
 		return;
 	}
-
+	
 	if (GetOwner()->HasAuthority())
 	{
 		DialogueGraph = NewDialogueGraph;

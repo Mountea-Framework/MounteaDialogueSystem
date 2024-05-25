@@ -286,6 +286,7 @@ public:
 	virtual void ProcessNode();
 	
 	virtual bool InvokeDialogueUI_Implementation(FString& Message) override;
+	virtual bool UpdateDialogueUI_Implementation(FString& Message, const FString& Command) override;
 	virtual bool CloseDialogueUI_Implementation() override;
 	
 	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) override;
@@ -413,7 +414,12 @@ protected:
 	UFUNCTION(Client, Reliable)
 	void InvokeDialogueUI_Client();
 	UFUNCTION(Client, Reliable)
+	void UpdateDialogueUI_Client(const FString& Command);
+	UFUNCTION(Client, Reliable)
 	void CloseDialogueUI_Client();
+
+	UFUNCTION(Server, Reliable)
+	void PostUIInitialized();
 
 	UFUNCTION()
 	void OnRep_ManagerState();

@@ -361,23 +361,6 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 		OnDialogueFailed.Broadcast(TEXT("Invalid Dialogue Context!"));
 		return;
 	}
-
-	if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
-	{
-		FString ErrorMessage;
-		if (GetOwner()->HasAuthority())
-		{
-			Execute_InvokeDialogueUI(this, ErrorMessage);
-		}
-		else
-		{
-			InvokeDialogueUI_Client(); // This line should never be called! How did you even get here!
-		}
-	}
-	else
-	{
-		InvokeDialogueUI_Client();
-	}
 	
 	SetDialogueManagerState(EDialogueManagerState::EDMS_Active);
 
@@ -392,8 +375,6 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 			TickableObject->Execute_RegisterTick(TickableObject.GetObject(), nullptr);
 		}
 	}
-	
-	Execute_PrepareNode(this);
 }
 
 void UMounteaDialogueManager::CloseDialogue_Implementation()
@@ -480,104 +461,6 @@ void UMounteaDialogueManager::PrepareNode_Implementation()
 	ProcessNode();
 }
 
-bool UMounteaDialogueManager::InvokeDialogueUI_Implementation(FString& Message)
-{
-	if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal() == nullptr)
-	{
-		Message = TEXT("Cannot find Dialogue Settings!");
-		return false;
-	}
-
-	if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->SubtitlesAllowed() == false)
-	{
-		return true;
-	}
-	
-	if (GetDialogueWidgetClass() == nullptr)
-	{
-		Message = TEXT("Invalid Widget Class! Setup Widget class at least in Project settings!");
-		return false;
-	}
-	
-	if (!GetWorld())
-	{
-		Message = TEXT("Invalid World!");
-		return false;
-	}
-
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	if (PlayerController == nullptr)
-	{
-		Message = TEXT("Invalid Player Controller!");
-		return false;
-	}
-	
-	DialogueWidgetPtr = CreateWidget<UUserWidget>(PlayerController,  GetDialogueWidgetClass());
-	
-	if (DialogueWidgetPtr == nullptr)
-	{
-		Message = TEXT("Cannot spawn Dialogue Widget!");
-		return false;
-	}
-	
-	if (DialogueWidgetPtr->Implements<UMounteaDialogueWBPInterface>() == false)
-	{
-		Message = TEXT("Does not implement Diaogue Widget Interface!");
-		return false;
-	}
-
-	if (DialogueWidgetPtr->AddToPlayerScreen() == false)
-	{
-		Message = TEXT("Cannot display Dialogue Widget!");
-		return false;
-	}
-	
-	bWasCursorVisible = PlayerController->bShowMouseCursor;
-
-	// This event should be responsible for calling logic in Player Controller
-	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidgetPtr);
-	
-	// This Component should not be responsible for setting up Player Controller!
-	PlayerController->SetShowMouseCursor(true);
-	DialogueWidgetPtr->bStopAction = true;
-
-	IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CreateDialogueWidget);
-	
-	return true;
-}
-
-bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
-{
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	if (PlayerController == nullptr)
-	{
-		LOG_ERROR(TEXT("[CloseDialogueUI] No Player Controller Found!"))
-		return false;
-	}
-	
-	if (!DialogueWidgetPtr)
-	{
-		LOG_ERROR(TEXT("[CloseDialogueUI] No Dialogue UI Found!"))
-		return false;
-	}
-
-	PlayerController->SetShowMouseCursor(bWasCursorVisible);
-
-	if (DialogueWidgetPtr->Implements<UMounteaDialogueWBPInterface>())
-	{
-		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CloseDialogueWidget);
-
-		return true;
-	}
-	
-	LOG_WARNING(TEXT("[CloseDialogueUI] Using non-supported Dialogue UI, therefore brute-forcing is used to close the widget!"))
-		
-	DialogueWidgetPtr->RemoveFromParent();
-	DialogueWidgetPtr = nullptr;
-
-	return true;
-}
-
 AActor* UMounteaDialogueManager::GetOwningActor_Implementation() const
 {
 	return GetOwner();
@@ -661,21 +544,10 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 	}
 	
 	OnDialogueRowStarted.Broadcast(DialogueContext);
-
+	
 	if (GetOwner()->HasAuthority())
 	{
-		
-	}
-	else
-	{
-		// Show Subtitle Row only if allowed
-		if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal())
-		{
-			if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->SubtitlesAllowed())
-			{
-				IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::ShowDialogueRow);
-			}
-		}
+		UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::ShowDialogueRow);
 	}
 }
 
@@ -750,6 +622,29 @@ void UMounteaDialogueManager::SetDialogueManagerState(const EDialogueManagerStat
 		ManagerState = NewState;
 	
 		OnDialogueManagerStateChanged.Broadcast(NewState);
+
+		// Invoke UI on Standalone Client directly, as OnRep does not work
+		if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
+		{
+			FString ErrorMessage;
+			if (GetOwner()->HasAuthority())
+			{
+				switch (ManagerState)
+				{
+				case EDialogueManagerState::EDMS_Disabled:
+					Execute_CloseDialogueUI(this);
+					break;
+				case EDialogueManagerState::EDMS_Enabled:
+					Execute_CloseDialogueUI(this);
+					break;
+				case EDialogueManagerState::EDMS_Active:
+					FString resultMessage;
+					Execute_InvokeDialogueUI(this, resultMessage);
+					PostUIInitialized();
+					break;
+				}
+			}
+		}
 	}
 	else
 	{
@@ -797,6 +692,118 @@ void UMounteaDialogueManager::SetDialogueWidgetClass_Server_Implementation(TSubc
 	SetDialogueWidgetClass(NewDialogueWidgetClass);
 }
 
+#pragma region UI_Functions
+
+bool UMounteaDialogueManager::InvokeDialogueUI_Implementation(FString& Message)
+{
+	if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal() == nullptr)
+	{
+		Message = TEXT("Cannot find Dialogue Settings!");
+		return false;
+	}
+
+	if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->SubtitlesAllowed() == false)
+	{
+		return true;
+	}
+	
+	if (GetDialogueWidgetClass() == nullptr)
+	{
+		Message = TEXT("Invalid Widget Class! Setup Widget class at least in Project settings!");
+		return false;
+	}
+	
+	if (!GetWorld())
+	{
+		Message = TEXT("Invalid World!");
+		return false;
+	}
+
+	// TODO: For standalone this should not be used! Rather get Controller from Owner!
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (PlayerController == nullptr)
+	{
+		Message = TEXT("Invalid Player Controller!");
+		return false;
+	}
+	
+	DialogueWidgetPtr = CreateWidget<UUserWidget>(PlayerController,  GetDialogueWidgetClass());
+	
+	if (DialogueWidgetPtr == nullptr)
+	{
+		Message = TEXT("Cannot spawn Dialogue Widget!");
+		return false;
+	}
+	
+	if (DialogueWidgetPtr->Implements<UMounteaDialogueWBPInterface>() == false)
+	{
+		Message = TEXT("Does not implement Diaogue Widget Interface!");
+		return false;
+	}
+
+	if (DialogueWidgetPtr->AddToPlayerScreen() == false)
+	{
+		Message = TEXT("Cannot display Dialogue Widget!");
+		return false;
+	}
+	
+	bWasCursorVisible = PlayerController->bShowMouseCursor;
+
+	// This event should be responsible for calling logic in Player Controller
+	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidgetPtr);
+	
+	// This Component should not be responsible for setting up Player Controller!
+	PlayerController->SetShowMouseCursor(true);
+	DialogueWidgetPtr->bStopAction = true;
+
+	
+	return Execute_UpdateDialogueUI(this, Message, MounteaDialogueWidgetCommands::CreateDialogueWidget);
+}
+
+bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, const FString& Command)
+{
+	LOG_INFO(TEXT("[Dialogue Command Requested] %s"), *Command)
+	if (DialogueWidgetPtr)
+	{
+		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, Command);
+		return true;
+	}
+	return true;
+}
+
+bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
+{
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (PlayerController == nullptr)
+	{
+		LOG_ERROR(TEXT("[CloseDialogueUI] No Player Controller Found!"))
+		return false;
+	}
+	
+	if (!DialogueWidgetPtr)
+	{
+		LOG_ERROR(TEXT("[CloseDialogueUI] No Dialogue UI Found!"))
+		return false;
+	}
+
+	PlayerController->SetShowMouseCursor(bWasCursorVisible);
+
+	if (DialogueWidgetPtr->Implements<UMounteaDialogueWBPInterface>())
+	{
+		FString errorMessage;
+		Execute_UpdateDialogueUI(this, errorMessage, MounteaDialogueWidgetCommands::CloseDialogueWidget);
+
+		return true;
+	}
+	
+	LOG_WARNING(TEXT("[CloseDialogueUI] Using non-supported Dialogue UI, therefore brute-forcing is used to close the widget!"))
+		
+	DialogueWidgetPtr->RemoveFromParent();
+	DialogueWidgetPtr = nullptr;
+
+	return true;
+}
+
 void UMounteaDialogueManager::InvokeDialogueUI_Client_Implementation()
 {
 	FString ErrorMessage;
@@ -809,6 +816,16 @@ void UMounteaDialogueManager::InvokeDialogueUI_Client_Implementation()
 void UMounteaDialogueManager::CloseDialogueUI_Client_Implementation()
 {
 	Execute_CloseDialogueUI(this);
+}
+
+void UMounteaDialogueManager::UpdateDialogueUI_Client_Implementation(const FString& Command)
+{
+	LOG_INFO(TEXT("[UPDATE UI] Command: %s"),*Command)
+	FString errorMessage;
+	if (!Execute_UpdateDialogueUI(this, errorMessage, Command))
+	{
+		LOG_ERROR(TEXT("%s"), *errorMessage)
+	}
 }
 
 void UMounteaDialogueManager::StartDialogue_Server_Implementation()
@@ -826,6 +843,13 @@ void UMounteaDialogueManager::InitializeDialogue_Server_Implementation(APlayerSt
 	Execute_InitializeDialogue(this, OwningPlayerState, Participants);
 }
 
+#pragma endregion
+
+void UMounteaDialogueManager::PostUIInitialized_Implementation()
+{
+	Execute_PrepareNode(this);
+}
+
 void UMounteaDialogueManager::OnRep_ManagerState()
 {
 	switch (ManagerState)
@@ -837,6 +861,9 @@ void UMounteaDialogueManager::OnRep_ManagerState()
 			Execute_CloseDialogueUI(this);
 			break;
 		case EDialogueManagerState::EDMS_Active:
+			FString resultMessage;
+			Execute_InvokeDialogueUI(this, resultMessage);
+			PostUIInitialized();
 			break;
 	}
 }
@@ -847,7 +874,4 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 
 	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, ManagerState, COND_InitialOrOwner);
 	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, DialogueContext, COND_AutonomousOnly);
-
-	//DOREPLIFETIME(UMounteaDialogueManager, ManagerState);
-	//DOREPLIFETIME(UMounteaDialogueManager, DialogueContext); 
 }
