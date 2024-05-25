@@ -286,8 +286,14 @@ void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBas
 	FinishedExecuteDialogueRow();
 }
 
-void UMounteaDialogueManager::InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const TArray<AActor*>& Participants)
+void UMounteaDialogueManager::InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const FDialogueParticipants& Participants)
 {
+	if (Participants.MainParticipant == nullptr)
+	{
+		LOG_ERROR(TEXT("[InitializeDialogue] Main Participant is not valid!"))
+		return;
+	}
+	
 	if (!GetOwner())
 	{
 		OnDialogueFailed.Broadcast(TEXT("No Owner!"));
@@ -300,21 +306,40 @@ void UMounteaDialogueManager::InitializeDialogue_Implementation(APlayerState* Ow
 		return;
 	}
 
-	TSet<TScriptInterface<IMounteaDialogueParticipantInterface> > DialogueParticipants; 
-	for (AActor* Itr : Participants)
+	TSet<TScriptInterface<IMounteaDialogueParticipantInterface> > dialogueParticipants; 
+	{
+		bool bMainParticipantFound = false;
+		TScriptInterface<IMounteaDialogueParticipantInterface> mainParticipantInterface = UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(Participants.MainParticipant, bMainParticipantFound);
+
+		if (!bMainParticipantFound)
+		{
+			LOG_ERROR(TEXT("[InitializeDialogue] Main Dialogue Participant is not valid!"))
+			return;
+		}
+		
+		dialogueParticipants.Add(mainParticipantInterface);
+	}
+
+	for (AActor* Itr : Participants.OtherParticipants)
 	{
 		bool bParticipantFound = false;
 		auto foundParticipant = UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(Itr, bParticipantFound);
 
 		if (bParticipantFound)
 		{
-			DialogueParticipants.Add(foundParticipant);
+			dialogueParticipants.Add(foundParticipant);
 		}
 	}
 
-	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipantsArray = DialogueParticipants.Array();
+	if (dialogueParticipants.Num() == 0)
+	{
+		LOG_ERROR(TEXT("[InitializeDialogue] No valid Participant found!"))
+		return;
+	}
 	
-	UMounteaDialogueSystemBFC::StartDialogue(GetWorld(), OwningPlayerState, DialogueParticipantsArray[0], DialogueParticipantsArray);
+	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipantsArray = dialogueParticipants.Array();
+	
+	UMounteaDialogueSystemBFC::StartDialogue(GetOwner(), OwningPlayerState, DialogueParticipantsArray[0], DialogueParticipantsArray);
 }
 
 void UMounteaDialogueManager::StartDialogue_Implementation()
@@ -346,7 +371,7 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 		}
 		else
 		{
-			InvokeDialogueUI_Client();
+			InvokeDialogueUI_Client(); // This line should never be called! How did you even get here!
 		}
 	}
 	else
@@ -796,7 +821,7 @@ void UMounteaDialogueManager::CloseDialogue_Server_Implementation()
 	Execute_CloseDialogue(this);
 }
 
-void UMounteaDialogueManager::InitializeDialogue_Server_Implementation(APlayerState* OwningPlayerState, const TArray<AActor*>& Participants)
+void UMounteaDialogueManager::InitializeDialogue_Server_Implementation(APlayerState* OwningPlayerState, const FDialogueParticipants& Participants)
 {
 	Execute_InitializeDialogue(this, OwningPlayerState, Participants);
 }

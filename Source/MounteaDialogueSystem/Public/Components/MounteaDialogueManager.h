@@ -7,6 +7,7 @@
 #include "Interfaces/MounteaDialogueManagerInterface.h"
 #include "MounteaDialogueManager.generated.h"
 
+
 /**
  *  Mountea Dialogue Manager Component
  * 
@@ -278,7 +279,7 @@ public:
 	
 public:
 
-	virtual void InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const TArray<AActor*>& Participants) override;
+	virtual void InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const FDialogueParticipants& Participants) override;
 
 	virtual void StartDialogue_Implementation() override;
 	virtual void CloseDialogue_Implementation() override;
@@ -403,7 +404,7 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void SetDialogueWidgetClass_Server(TSubclassOf<UUserWidget> NewDialogueWidgetClass);
 	UFUNCTION(Server, Reliable)
-	void InitializeDialogue_Server(APlayerState* OwningPlayerState, const TArray<AActor*>& Participants);
+	void InitializeDialogue_Server(APlayerState* OwningPlayerState, const FDialogueParticipants& Participants);
 
 	UFUNCTION(Server, Reliable)
 	void StartDialogue_Server();

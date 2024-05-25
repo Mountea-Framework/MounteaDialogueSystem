@@ -8,6 +8,24 @@
 #include "MounteaDialogueManagerInterface.generated.h"
 
 class IMounteaDialogueParticipantInterface;
+
+/**
+ * A helper structure that provides easy way to move Participants around.
+ */
+USTRUCT(BlueprintType)
+struct FDialogueParticipants
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue")
+	TObjectPtr<AActor> MainParticipant = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue")
+	TArray<TObjectPtr<AActor>> OtherParticipants;
+};
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI, BlueprintType, Blueprintable)
 class UMounteaDialogueManagerInterface : public UInterface
@@ -228,8 +246,8 @@ public:
 	virtual void SetDefaultDialogueManagerState(const EDialogueManagerState NewState) = 0;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
-	void InitializeDialogue(APlayerState* OwningPlayerState, const TArray<AActor*>& Participants);
-	virtual void InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const TArray<AActor*>& Participants) = 0;
+	void InitializeDialogue(APlayerState* OwningPlayerState, const FDialogueParticipants& Participants);
+	virtual void InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const FDialogueParticipants& Participants) = 0;
 	
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() = 0;
