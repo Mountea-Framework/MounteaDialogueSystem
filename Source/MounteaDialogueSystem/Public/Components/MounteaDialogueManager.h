@@ -390,6 +390,12 @@ protected:
 	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay)
 	uint8 bWasCursorVisible : 1;
 
+	/**
+	 * 
+	 */
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay)
+	int DialogueContextReplicationKey = 0;
+
 #pragma endregion
 
 #pragma region Functions
@@ -425,6 +431,7 @@ protected:
 	void OnRep_ManagerState();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	
 #pragma endregion
 };

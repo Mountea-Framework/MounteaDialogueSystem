@@ -297,4 +297,6 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="get, find, retrieve"))
 	static TScriptInterface<IMounteaDialogueParticipantInterface> FindDialogueParticipantInterface(AActor* ParticipantActor, bool& bResult);
+
+	static APlayerController* FindPlayerController(AActor* ForActor);
 };

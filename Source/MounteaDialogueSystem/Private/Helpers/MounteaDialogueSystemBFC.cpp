@@ -719,3 +719,29 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC
 	bResult = true;
 	return resultValue;
 }
+
+APlayerController* UMounteaDialogueSystemBFC::FindPlayerController(AActor* ForActor)
+{
+	if (APlayerController* playerController = Cast<APlayerController>(ForActor))
+	{
+		return playerController;
+	}
+
+	if (APlayerState* playerState = Cast<APlayerState>(ForActor))
+	{
+		return playerState->GetPlayerController();
+	}
+
+	if (APawn* actorPawn = Cast<APawn>(ForActor))
+	{
+		return Cast<APlayerController>(actorPawn->GetController());
+	}
+	
+	// Check the owner recursively, sorry performance :(
+	if (AActor* ownerActor = ForActor->GetOwner())
+	{
+		return FindPlayerController(ownerActor);
+	}
+	
+	return nullptr;
+}

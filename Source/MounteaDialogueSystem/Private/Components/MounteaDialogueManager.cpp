@@ -8,6 +8,7 @@
 
 #include "Data/MounteaDialogueContext.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
+#include "Engine/ActorChannel.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/MounteaDialogueWBPInterface.h"
 #include "Kismet/GameplayStatics.h"
@@ -27,6 +28,8 @@ UMounteaDialogueManager::UMounteaDialogueManager()
 	bAutoActivate = true;
 
 	PrimaryComponentTick.bStartWithTickEnabled = false;
+
+	DialogueContextReplicationKey = 0;
 }
 
 void UMounteaDialogueManager::BeginPlay()
@@ -82,6 +85,8 @@ void UMounteaDialogueManager::CallDialogueNodeSelected_Implementation(const FGui
 		
 	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
+
+	DialogueContextReplicationKey++;
 	
 	OnDialogueNodeSelected.Broadcast(DialogueContext);
 }
@@ -212,6 +217,9 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 		DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, NewActiveNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(NewActiveNode));
 		
 		OnDialogueNodeSelected.Broadcast(DialogueContext);
+
+		DialogueContextReplicationKey++;
+		
 		return;
 	}
 	else
@@ -248,6 +256,8 @@ void UMounteaDialogueManager::OnDialogueRowFinishedEvent_Internal(UMounteaDialog
 
 void UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal(USoundBase* VoiceToStart)
 {
+	// TODO: CLIENT
+	
 	if (DialogueContext == nullptr)
 	{
 		OnDialogueFailed.Broadcast(TEXT("[DialogueVoiceStartRequestEvent] Invalid Dialogue Context!"));
@@ -266,6 +276,8 @@ void UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal(USoundBa
 
 void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBase* VoiceToSkip)
 {
+	// TODO: CLIENT
+	
 	if (DialogueContext == nullptr)
 	{
 		OnDialogueFailed.Broadcast(TEXT("[DialogueVoiceSkipRequestEvent] Invalid Dialogue Context!"));
@@ -434,6 +446,8 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 	DialogueContext->SetDialogueContext(nullptr, nullptr, TArray<UMounteaDialogueGraphNode*>());
 	DialogueContext->ConditionalBeginDestroy();
 	DialogueContext = nullptr;
+
+	DialogueContextReplicationKey++;
 }
 
 void UMounteaDialogueManager::ProcessNode()
@@ -455,6 +469,8 @@ void UMounteaDialogueManager::PrepareNode_Implementation()
 
 	DialogueContext->AddTraversedNode(DialogueContext->ActiveNode);
 
+	DialogueContextReplicationKey++;
+	
 	// First PreProcess Node
 	DialogueContext->ActiveNode->PreProcessNode(this);
 	
@@ -570,6 +586,8 @@ void UMounteaDialogueManager::FinishedExecuteDialogueRow()
 	{
 		DialogueContext->UpdateActiveDialogueRowDataIndex(IncreasedIndex);
 		OnDialogueContextUpdated.Broadcast(DialogueContext);
+
+		DialogueContextReplicationKey++;
 		
 		StartExecuteDialogueRow();
 	}
@@ -599,6 +617,8 @@ void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewCon
 	{
 		DialogueContext = NewContext;
 
+		DialogueContextReplicationKey++;
+		
 		OnDialogueContextUpdatedEvent(DialogueContext);
 	}
 	else
@@ -718,9 +738,8 @@ bool UMounteaDialogueManager::InvokeDialogueUI_Implementation(FString& Message)
 		Message = TEXT("Invalid World!");
 		return false;
 	}
-
-	// TODO: For standalone this should not be used! Rather get Controller from Owner!
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	
+	APlayerController* PlayerController = UMounteaDialogueSystemBFC::FindPlayerController(GetOwner());
 	if (PlayerController == nullptr)
 	{
 		Message = TEXT("Invalid Player Controller!");
@@ -755,7 +774,6 @@ bool UMounteaDialogueManager::InvokeDialogueUI_Implementation(FString& Message)
 	// This Component should not be responsible for setting up Player Controller!
 	PlayerController->SetShowMouseCursor(true);
 	DialogueWidgetPtr->bStopAction = true;
-
 	
 	return Execute_UpdateDialogueUI(this, Message, MounteaDialogueWidgetCommands::CreateDialogueWidget);
 }
@@ -874,4 +892,20 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 
 	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, ManagerState, COND_InitialOrOwner);
 	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, DialogueContext, COND_AutonomousOnly);
+}
+
+bool UMounteaDialogueManager::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	bool bUpdated = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	//Check if the array of items needs to replicate
+	if (Channel->KeyNeedsToReplicate(0, DialogueContextReplicationKey))
+	{
+		if (DialogueContext && Channel->KeyNeedsToReplicate(DialogueContext->GetUniqueID(), DialogueContext->GetRepKey()))
+		{
+			bUpdated |= Channel->ReplicateSubobject(DialogueContext, *Bunch, *RepFlags);
+		}
+	}
+
+	return bUpdated;
 }
