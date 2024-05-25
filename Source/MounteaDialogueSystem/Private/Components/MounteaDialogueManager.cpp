@@ -286,9 +286,35 @@ void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBas
 	FinishedExecuteDialogueRow();
 }
 
-void UMounteaDialogueManager::InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants)
+void UMounteaDialogueManager::InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const TArray<AActor*>& Participants)
 {
+	if (!GetOwner())
+	{
+		OnDialogueFailed.Broadcast(TEXT("No Owner!"));
+		return;
+	}
 	
+	if (!GetOwner()->HasAuthority())
+	{
+		InitializeDialogue_Server(OwningPlayerState, Participants);
+		return;
+	}
+
+	TSet<TScriptInterface<IMounteaDialogueParticipantInterface> > DialogueParticipants; 
+	for (AActor* Itr : Participants)
+	{
+		bool bParticipantFound = false;
+		auto foundParticipant = UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(Itr, bParticipantFound);
+
+		if (bParticipantFound)
+		{
+			DialogueParticipants.Add(foundParticipant);
+		}
+	}
+
+	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipantsArray = DialogueParticipants.Array();
+	
+	UMounteaDialogueSystemBFC::StartDialogue(GetWorld(), OwningPlayerState, DialogueParticipantsArray[0], DialogueParticipantsArray);
 }
 
 void UMounteaDialogueManager::StartDialogue_Implementation()
@@ -768,6 +794,11 @@ void UMounteaDialogueManager::StartDialogue_Server_Implementation()
 void UMounteaDialogueManager::CloseDialogue_Server_Implementation()
 {
 	Execute_CloseDialogue(this);
+}
+
+void UMounteaDialogueManager::InitializeDialogue_Server_Implementation(APlayerState* OwningPlayerState, const TArray<AActor*>& Participants)
+{
+	Execute_InitializeDialogue(this, OwningPlayerState, Participants);
 }
 
 void UMounteaDialogueManager::OnRep_ManagerState()

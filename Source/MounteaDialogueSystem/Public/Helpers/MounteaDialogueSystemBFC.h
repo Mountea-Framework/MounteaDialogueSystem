@@ -122,7 +122,7 @@ public:
 	 * @param DialogueParticipants	Other participants, could be NPCs or other Players
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="start, initialize, dialogue"))
-	static bool StartDialogue(const UObject* WorldContextObject, APlayerState* Initiator, TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants);
+	static bool StartDialogue(const UObject* WorldContextObject, APlayerState* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants);
 	
 	/**
 	 * Tries to initialize Dialogue.
@@ -286,4 +286,15 @@ public:
 	static TArray<FMounteaDialogueDecorator> GetAllDialogueDecorators(const UMounteaDialogueGraph* FromGraph);
 
 	static bool CanExecuteCosmeticEvents(const UWorld* WorldContext);
+
+	/**
+	 * Function to retrieve Dialogue Participant Interface reference from any Actor.
+	 * Actors can implement that interface themselves or contain a child component that implements the interface.
+	 * If none is found null is returned and error is printed to console.
+	 * 
+	 * @param ParticipantActor	Actor who should implement the Participant interface
+	 * @return								Mountea Dialogue Participant reference
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="get, find, retrieve"))
+	static TScriptInterface<IMounteaDialogueParticipantInterface> FindDialogueParticipantInterface(AActor* ParticipantActor, bool& bResult);
 };

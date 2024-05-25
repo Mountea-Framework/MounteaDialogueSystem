@@ -166,7 +166,7 @@ bool UMounteaDialogueSystemBFC::CloseDialogue(AActor* WorldContextObject, const 
 	return true;
 }
 
-bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject, APlayerState* Initiator,TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants)
+bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject, APlayerState* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants)
 {
 	if (!WorldContextObject)
 	{
@@ -192,24 +192,32 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 		return false;
 	}
 
-	if (DialogueParticipants.Contains(MainParticipant) == false)
+	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> AllDialogueParticipants = DialogueParticipants;
+	if (AllDialogueParticipants.Contains(MainParticipant) == false)
 	{
-		DialogueParticipants.Add(MainParticipant);
+		AllDialogueParticipants.Add(MainParticipant);
 	}
 
 	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> UnavailableParticipants;
-	for (const auto Itr : DialogueParticipants)
+	for (auto Itr : AllDialogueParticipants)
 	{
+		if (Itr.GetInterface() == nullptr && Itr.GetObject() != nullptr)
+		{
+			// When passing interfaces through array sometimes they loose the interface pointer, this might solve the issue - however its dirty af
+			Itr.SetInterface(Cast<IMounteaDialogueParticipantInterface>(Itr.GetObject()));
+		}
 		if (Itr.GetInterface() == nullptr || Itr.GetObject() == nullptr)
 		{
-			LOG_ERROR(TEXT("[StartDialogue] Dialogue Participant %d is invalid! Cannot Initialize dialogue."), DialogueParticipants.Find(Itr));
-			return false;
+			UnavailableParticipants.Add(Itr);
+			LOG_ERROR(TEXT("[StartDialogue] Dialogue Participant %d is invalid! Participant will be ignored."), DialogueParticipants.Find(Itr));
+			continue;
 		}
 		
 		if (!Itr->Execute_GetOwningActor(Itr.GetObject()))
 		{
-			LOG_ERROR(TEXT("[StartDialogue] Dialogue Participant %d has no Owning Actor. Check whether function `GetOwningActor` is implemented. Cannot Initialize dialogue."), DialogueParticipants.Find(Itr));
-			return false;
+			UnavailableParticipants.Add(Itr);
+			LOG_ERROR(TEXT("[StartDialogue] Dialogue Participant %d has no Owning Actor. Check whether function `GetOwningActor` is implemented. Participant will be ignored."), DialogueParticipants.Find(Itr));
+			continue;
 		}
 
 		if (!Itr->Execute_CanStartDialogueEvent(Itr.GetObject()))
@@ -219,12 +227,12 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 		}
 	}
 
-	if (UnavailableParticipants.Num() == DialogueParticipants.Num())
+	if (UnavailableParticipants.Num() == AllDialogueParticipants.Num())
 	{
 		LOG_ERROR(TEXT("[StartDialogue] None of %d Dialogue Participants can Start Dialogue! Dialogue will not launch!"), DialogueParticipants.Num())
 		return false;
 	}
-
+	
 	UWorld* TempWorld = WorldContextObject->GetWorld();
 	if (!TempWorld) TempWorld = Initiator->GetWorld();
 
@@ -680,4 +688,34 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueSystemBFC::GetAllDialogueDecor
 bool UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(const UWorld* WorldContext)
 {
 	return !UKismetSystemLibrary::IsDedicatedServer(WorldContext);
+}
+
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(AActor* ParticipantActor, bool& bResult)
+{
+	bResult = false;
+	
+	if (ParticipantActor == nullptr)
+	{
+		LOG_ERROR(TEXT("[FindDialogueParticipantInterface] Participating Actor is empty! Returning null."))
+		return nullptr;
+	}
+
+	TScriptInterface<IMounteaDialogueParticipantInterface> resultValue;
+	if (ParticipantActor->Implements<UMounteaDialogueParticipantInterface>())
+	{
+		resultValue = ParticipantActor;
+		bResult = true;
+		return resultValue;
+	}
+
+	TArray<UActorComponent*> actorComponets = ParticipantActor->GetComponentsByInterface(UMounteaDialogueParticipantInterface::StaticClass());
+	if (actorComponets.Num() == 0)
+	{
+		LOG_ERROR(TEXT("[FindDialogueParticipantInterface] Actor %s has no Dialogue Participant Component!"), *ParticipantActor->GetName())
+		return nullptr;
+	}
+
+	resultValue = actorComponets[0];
+	bResult = true;
+	return resultValue;
 }

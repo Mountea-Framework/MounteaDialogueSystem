@@ -228,8 +228,8 @@ public:
 	virtual void SetDefaultDialogueManagerState(const EDialogueManagerState NewState) = 0;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
-	void InitializeDialogue(APlayerState* OwningPlayerState, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
-	virtual void InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants) = 0;
+	void InitializeDialogue(APlayerState* OwningPlayerState, const TArray<AActor*>& Participants);
+	virtual void InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const TArray<AActor*>& Participants) = 0;
 	
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() = 0;

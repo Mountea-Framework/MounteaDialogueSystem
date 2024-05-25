@@ -278,7 +278,7 @@ public:
 	
 public:
 
-	virtual void InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants) override;
+	virtual void InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const TArray<AActor*>& Participants) override;
 
 	virtual void StartDialogue_Implementation() override;
 	virtual void CloseDialogue_Implementation() override;
@@ -402,6 +402,8 @@ protected:
 	void SetDialogueContext_Server(UMounteaDialogueContext* NewContext);
 	UFUNCTION(Server, Reliable)
 	void SetDialogueWidgetClass_Server(TSubclassOf<UUserWidget> NewDialogueWidgetClass);
+	UFUNCTION(Server, Reliable)
+	void InitializeDialogue_Server(APlayerState* OwningPlayerState, const TArray<AActor*>& Participants);
 
 	UFUNCTION(Server, Reliable)
 	void StartDialogue_Server();
