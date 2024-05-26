@@ -87,6 +87,7 @@ void UMounteaDialogueManager::CallDialogueNodeSelected_Implementation(const FGui
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 
 	DialogueContextReplicationKey++;
+	DialogueContext->IncreaseRepKey();
 	
 	OnDialogueNodeSelected.Broadcast(DialogueContext);
 }
@@ -219,6 +220,7 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 		OnDialogueNodeSelected.Broadcast(DialogueContext);
 
 		DialogueContextReplicationKey++;
+	DialogueContext->IncreaseRepKey();
 		
 		return;
 	}
@@ -448,6 +450,7 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 	DialogueContext = nullptr;
 
 	DialogueContextReplicationKey++;
+	DialogueContext->IncreaseRepKey();
 }
 
 void UMounteaDialogueManager::ProcessNode()
@@ -470,6 +473,7 @@ void UMounteaDialogueManager::PrepareNode_Implementation()
 	DialogueContext->AddTraversedNode(DialogueContext->ActiveNode);
 
 	DialogueContextReplicationKey++;
+	DialogueContext->IncreaseRepKey();
 	
 	// First PreProcess Node
 	DialogueContext->ActiveNode->PreProcessNode(this);
@@ -545,6 +549,8 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 	const auto Row = DialogueContext->GetActiveDialogueRow();
 	const auto RowData = Row.DialogueRowData.Array()[Index];
 
+	DialogueContext->ActiveDialogueRow.SerializeDialogueRowData();
+
 	FTimerDelegate Delegate;
 	Delegate.BindUObject(this, &UMounteaDialogueManager::FinishedExecuteDialogueRow);
 
@@ -588,6 +594,8 @@ void UMounteaDialogueManager::FinishedExecuteDialogueRow()
 		OnDialogueContextUpdated.Broadcast(DialogueContext);
 
 		DialogueContextReplicationKey++;
+		DialogueContext->IncreaseRepKey();
+		DialogueContext->ActiveDialogueRow.SerializeDialogueRowData();
 		
 		StartExecuteDialogueRow();
 	}
@@ -618,6 +626,7 @@ void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewCon
 		DialogueContext = NewContext;
 
 		DialogueContextReplicationKey++;
+	DialogueContext->IncreaseRepKey();
 		
 		OnDialogueContextUpdatedEvent(DialogueContext);
 	}
@@ -886,24 +895,33 @@ void UMounteaDialogueManager::OnRep_ManagerState()
 	}
 }
 
+void UMounteaDialogueManager::OnRep_DialogueContext()
+{
+	if (DialogueContext)
+	{
+		DialogueContext->ActiveDialogueRow.DeserializeDialogueRowData();
+	}
+}
+
 void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, ManagerState, COND_InitialOrOwner);
-	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, DialogueContext, COND_AutonomousOnly);
+	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, DialogueContext, COND_InitialOrOwner);
 }
 
 bool UMounteaDialogueManager::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
 	bool bUpdated = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
-
-	//Check if the array of items needs to replicate
+	
 	if (Channel->KeyNeedsToReplicate(0, DialogueContextReplicationKey))
 	{
 		if (DialogueContext && Channel->KeyNeedsToReplicate(DialogueContext->GetUniqueID(), DialogueContext->GetRepKey()))
 		{
 			bUpdated |= Channel->ReplicateSubobject(DialogueContext, *Bunch, *RepFlags);
+
+			LOG_INFO(TEXT("[Replication] Dialogue Context Replicated"))
 		}
 	}
 

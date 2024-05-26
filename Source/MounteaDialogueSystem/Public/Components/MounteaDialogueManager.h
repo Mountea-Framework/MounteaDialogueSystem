@@ -371,7 +371,7 @@ protected:
 	/**
 	 * Dialogue Context which is used to contain temporary data.
 	 */
-	UPROPERTY(Replicated, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
+	UPROPERTY(ReplicatedUsing=OnRep_DialogueContext, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	UMounteaDialogueContext* DialogueContext = nullptr;
 
 	/**
@@ -393,7 +393,7 @@ protected:
 	/**
 	 * 
 	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay)
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="Mountea", AdvancedDisplay)
 	int DialogueContextReplicationKey = 0;
 
 #pragma endregion
@@ -429,6 +429,8 @@ protected:
 
 	UFUNCTION()
 	void OnRep_ManagerState();
+	UFUNCTION()
+	void OnRep_DialogueContext();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;

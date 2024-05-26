@@ -4,6 +4,7 @@
 #include "Data/MounteaDialogueContext.h"
 
 #include "Interfaces/MounteaDialogueParticipantInterface.h"
+#include "Net/UnrealNetwork.h"
 
 
 bool UMounteaDialogueContext::IsValid() const
@@ -43,6 +44,8 @@ void UMounteaDialogueContext::UpdateAllowedChildrenNodes(const TArray<UMounteaDi
 void UMounteaDialogueContext::UpdateActiveDialogueRow(const FDialogueRow& NewActiveRow)
 {
 	ActiveDialogueRow = NewActiveRow;
+
+	ActiveDialogueRow.SerializeDialogueRowData();
 }
 
 void UMounteaDialogueContext::UpdateActiveDialogueRowDataIndex(const int32 NewIndex)
@@ -233,4 +236,19 @@ bool UMounteaDialogueContext::RemoveDialogueParticipantsBP(const TArray<TScriptI
 	}
 
 	return false;
+}
+
+void UMounteaDialogueContext::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	UObject::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueParticipant);
+	DOREPLIFETIME(UMounteaDialogueContext, PlayerDialogueParticipant);
+	DOREPLIFETIME(UMounteaDialogueContext, DialogueParticipant);
+	DOREPLIFETIME(UMounteaDialogueContext, DialogueParticipants);
+	DOREPLIFETIME(UMounteaDialogueContext, ActiveNode);
+	DOREPLIFETIME(UMounteaDialogueContext, AllowedChildNodes);
+	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueRow);
+	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueRowDataIndex);
+	DOREPLIFETIME(UMounteaDialogueContext, TraversedPath);
 }
