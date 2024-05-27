@@ -97,6 +97,9 @@ public:
 
 public:
 
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Debug", meta=(CompactNodeTitle="To String"))
+	virtual FString ToString() const;
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Debug")
 	virtual bool IsValid() const;
 

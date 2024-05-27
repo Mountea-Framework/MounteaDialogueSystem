@@ -918,6 +918,8 @@ void UMounteaDialogueManager::OnRep_DialogueContext()
 	{
 		// Find data locally
 		DialogueContext->ActiveDialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
+
+		LOG_WARNING(TEXT("%s"), *DialogueContext->ToString())
 	}
 }
 
