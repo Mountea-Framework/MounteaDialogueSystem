@@ -3,6 +3,7 @@
 
 #include "Data/MounteaDialogueGraphDataTypes.h"
 
+/* Serialization is not needed, data can be found locally for Clients -> saving bandwith as well
 void FDialogueRow::SerializeDialogueRowData()
 {
 	ReplicatedDialogueRowData.Reset();
@@ -20,3 +21,4 @@ void FDialogueRow::DeserializeDialogueRowData()
 		DialogueRowData.Add(RowData);
 	}
 }
+*/

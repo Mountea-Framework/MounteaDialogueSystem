@@ -44,8 +44,6 @@ void UMounteaDialogueContext::UpdateAllowedChildrenNodes(const TArray<UMounteaDi
 void UMounteaDialogueContext::UpdateActiveDialogueRow(const FDialogueRow& NewActiveRow)
 {
 	ActiveDialogueRow = NewActiveRow;
-
-	ActiveDialogueRow.SerializeDialogueRowData();
 }
 
 void UMounteaDialogueContext::UpdateActiveDialogueRowDataIndex(const int32 NewIndex)
@@ -248,7 +246,6 @@ void UMounteaDialogueContext::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	DOREPLIFETIME(UMounteaDialogueContext, DialogueParticipants);
 	DOREPLIFETIME(UMounteaDialogueContext, ActiveNode);
 	DOREPLIFETIME(UMounteaDialogueContext, AllowedChildNodes);
-	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueRow);
 	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueRowDataIndex);
 	DOREPLIFETIME(UMounteaDialogueContext, TraversedPath);
 }

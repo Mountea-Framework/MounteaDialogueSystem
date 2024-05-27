@@ -75,7 +75,7 @@ public:
 	/**
 	 * Active Dialogue Row from Active Node. 
 	 */
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	FDialogueRow ActiveDialogueRow;
 	
 	/**
@@ -163,13 +163,12 @@ public:
 	virtual bool RemoveDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant);
 	virtual void ClearDialogueParticipants();
 	
-	virtual bool IsSupportedForNetworking() const override {return true;} ;
+	
 	int GetRepKey() const
 	{ return RepKey; }
 	void IncreaseRepKey()
 	{ RepKey++; };
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
+		
 	/**
 	 * Sets the dialogue context.
 	 *
@@ -240,4 +239,9 @@ public:
 	virtual bool RemoveDialogueParticipantsBP(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 	
 	FDialogueContextUpdatedFromBlueprint DialogueContextUpdatedFromBlueprint;
+
+protected:
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual bool IsSupportedForNetworking() const override {return true;} ;
 };

@@ -318,12 +318,6 @@ public:
 	UPROPERTY(NotReplicated, EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(TitleProperty="RowText", ToolTip="Authority only!\nIn case of replicated scenario, use 'ReplicatedDialogueRowData' instead."))
 	TSet<FDialogueRowData> DialogueRowData;
 	/**
-	 * Array used for replication only.
-	 * Cannot be edited manually!
-	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", meta=(TitleProperty="RowText"))
-	TArray<FDialogueRowData> ReplicatedDialogueRowData;
-	/**
 	 * Additional Row Data
 	 * 
 	 * Generic Data Asset reference which could hold some more data.
@@ -393,10 +387,6 @@ public:
 	{
 		return FCrc::MemCrc32(&Row.RowGUID, sizeof(FGuid));
 	}
-
-	// Functions to serialize and deserialize the set
-	void SerializeDialogueRowData();
-	void DeserializeDialogueRowData();
 };
 #undef LOCTEXT_NAMESPACE
 

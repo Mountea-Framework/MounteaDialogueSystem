@@ -549,8 +549,6 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 	const auto Row = DialogueContext->GetActiveDialogueRow();
 	const auto RowData = Row.DialogueRowData.Array()[Index];
 
-	DialogueContext->ActiveDialogueRow.SerializeDialogueRowData();
-
 	FTimerDelegate Delegate;
 	Delegate.BindUObject(this, &UMounteaDialogueManager::FinishedExecuteDialogueRow);
 
@@ -595,7 +593,6 @@ void UMounteaDialogueManager::FinishedExecuteDialogueRow()
 
 		DialogueContextReplicationKey++;
 		DialogueContext->IncreaseRepKey();
-		DialogueContext->ActiveDialogueRow.SerializeDialogueRowData();
 		
 		StartExecuteDialogueRow();
 	}
@@ -899,7 +896,8 @@ void UMounteaDialogueManager::OnRep_DialogueContext()
 {
 	if (DialogueContext)
 	{
-		DialogueContext->ActiveDialogueRow.DeserializeDialogueRowData();
+		// Find data locally
+		DialogueContext->ActiveDialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
 	}
 }
 
@@ -920,8 +918,6 @@ bool UMounteaDialogueManager::ReplicateSubobjects(UActorChannel* Channel, FOutBu
 		if (DialogueContext && Channel->KeyNeedsToReplicate(DialogueContext->GetUniqueID(), DialogueContext->GetRepKey()))
 		{
 			bUpdated |= Channel->ReplicateSubobject(DialogueContext, *Bunch, *RepFlags);
-
-			LOG_INFO(TEXT("[Replication] Dialogue Context Replicated"))
 		}
 	}
 
