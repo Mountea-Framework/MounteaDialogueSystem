@@ -147,14 +147,21 @@ void UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal(UMounteaDialo
 {
 	OnDialogueNodeSelectedEvent(Context);
 
-	if (DialogueWidgetPtr)
+	if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
 	{
-		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::RemoveDialogueOptions);
+		if (GetOwner()->HasAuthority())
+		{
+			FString resultMessage;
+			Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::RemoveDialogueOptions);
+		}
+		else
+		{
+			UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::RemoveDialogueOptions);
+		}
 	}
 	else
 	{
-		OnDialogueFailed.Broadcast(TEXT("No Dialogue Widget!"));
-		return;
+		UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::RemoveDialogueOptions);
 	}
 
 	Execute_PrepareNode(this);
@@ -220,15 +227,26 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 		OnDialogueNodeSelected.Broadcast(DialogueContext);
 
 		DialogueContextReplicationKey++;
-	DialogueContext->IncreaseRepKey();
-		
-		return;
+		DialogueContext->IncreaseRepKey();
 	}
 	else
 	{
-		//TODO: FIX
-		//IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::AddDialogueOptions);
-		return;
+		if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
+		{
+			if (GetOwner()->HasAuthority())
+			{
+				FString resultMessage;
+				Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::AddDialogueOptions);
+			}
+			else
+			{
+				UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::AddDialogueOptions);
+			}
+		}
+		else
+		{
+			UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::AddDialogueOptions);
+		}
 	}
 }
 
@@ -601,6 +619,8 @@ void UMounteaDialogueManager::FinishedExecuteDialogueRow()
 		OnDialogueNodeFinished.Broadcast(DialogueContext);
 	}
 
+	LOG_INFO(TEXT("[FinishedExecuteDialogueRow] Dialogue Row Finished"))
+
 	OnDialogueRowFinished.Broadcast(DialogueContext);
 }
 
@@ -623,7 +643,7 @@ void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewCon
 		DialogueContext = NewContext;
 
 		DialogueContextReplicationKey++;
-	DialogueContext->IncreaseRepKey();
+		DialogueContext->IncreaseRepKey();
 		
 		OnDialogueContextUpdatedEvent(DialogueContext);
 	}

@@ -303,7 +303,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
 	FText RowTitle;
 	/**
-	 * List of Dialogue Row Data.
+	 * List of Dialogue Row Data. Not replicated, must be found locally for each Client from replicated Active Node!
 	 * 
 	 * ❔ Each Dialogue Row can contain multiple of those, where each Data Row represents:
 	 * * What Sound should be played
@@ -315,7 +315,7 @@ public:
 	 * 
 	 * Each Data Row has its Duration, which could be based on the Sound, directly set, calculated on generic formula or added atop of the sound duration.
 	 */
-	UPROPERTY(NotReplicated, EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(TitleProperty="RowText", ToolTip="Authority only!\nIn case of replicated scenario, use 'ReplicatedDialogueRowData' instead."))
+	UPROPERTY(NotReplicated, EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(TitleProperty="RowText"))
 	TSet<FDialogueRowData> DialogueRowData;
 	/**
 	 * Additional Row Data

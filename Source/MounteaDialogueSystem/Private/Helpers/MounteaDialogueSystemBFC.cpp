@@ -15,6 +15,15 @@
 #include "GameFramework/PlayerState.h"
 #include "Sound/SoundBase.h"
 
+bool UMounteaDialogueSystemBFC::IsEditor()
+{
+#if WITH_EDITOR
+	return true;
+#endif
+
+	return false;
+}
+
 void UMounteaDialogueSystemBFC::CleanupGraph(const UObject* WorldContextObject, const UMounteaDialogueGraph* GraphToClean)
 {
 	if (!GraphToClean) return;

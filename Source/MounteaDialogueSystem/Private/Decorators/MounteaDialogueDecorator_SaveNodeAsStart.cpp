@@ -3,6 +3,7 @@
 
 #include "Decorators/MounteaDialogueDecorator_SaveNodeAsStart.h"
 
+#include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_SaveNodeAsStart"

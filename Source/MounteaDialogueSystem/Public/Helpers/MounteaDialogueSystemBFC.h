@@ -26,6 +26,9 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSystemBFC : public UBlueprintFun
 	GENERATED_BODY()
 
 public:
+
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	static bool IsEditor();
 	
 	static void CleanupGraph(const UObject* WorldContextObject, const UMounteaDialogueGraph* GraphToClean);
 
