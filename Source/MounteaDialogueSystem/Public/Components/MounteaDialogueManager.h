@@ -366,13 +366,13 @@ protected:
 	 * ❔ Transient, for actual runtime only.
 	 */
 	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
-	UUserWidget* DialogueWidgetPtr = nullptr;
+	TObjectPtr<UUserWidget> DialogueWidgetPtr = nullptr;
 
 	/**
 	 * Dialogue Context which is used to contain temporary data.
 	 */
 	UPROPERTY(ReplicatedUsing=OnRep_DialogueContext, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
-	UMounteaDialogueContext* DialogueContext = nullptr;
+	TObjectPtr<UMounteaDialogueContext> DialogueContext = nullptr;
 
 	/**
 	 * TimerHandle managing Dialogue Row.
@@ -412,6 +412,9 @@ protected:
 	void SetDialogueWidgetClass_Server(TSubclassOf<UUserWidget> NewDialogueWidgetClass);
 	UFUNCTION(Server, Reliable)
 	void InitializeDialogue_Server(APlayerState* OwningPlayerState, const FDialogueParticipants& Participants);
+	
+	UFUNCTION(Client, Reliable)
+	void UpdateDialogueContext_Client(UMounteaDialogueContext* NewDialogueContext);
 
 	UFUNCTION(Server, Reliable)
 	void StartDialogue_Server();

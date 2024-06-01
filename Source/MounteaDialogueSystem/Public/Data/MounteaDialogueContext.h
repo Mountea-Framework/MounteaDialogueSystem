@@ -92,6 +92,9 @@ public:
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue", meta=(NoResetToDefault))
 	TArray<FDialogueTraversePath> TraversedPath;
 
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue", meta=(NoResetToDefault))
+	FString DialogueWidgetCommand;
+
 	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue")
 	int32 RepKey = 0;
 

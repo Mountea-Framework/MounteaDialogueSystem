@@ -156,11 +156,13 @@ void UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal(UMounteaDialo
 		}
 		else
 		{
+			UpdateDialogueContext_Client(DialogueContext);
 			UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::RemoveDialogueOptions);
 		}
 	}
 	else
 	{
+		UpdateDialogueContext_Client(DialogueContext);
 		UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::RemoveDialogueOptions);
 	}
 
@@ -240,11 +242,13 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 			}
 			else
 			{
+				UpdateDialogueContext_Client(DialogueContext);
 				UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::AddDialogueOptions);
 			}
 		}
 		else
 		{
+			UpdateDialogueContext_Client(DialogueContext);
 			UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::AddDialogueOptions);
 		}
 	}
@@ -432,11 +436,13 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 		}
 		else
 		{
+			UpdateDialogueContext_Client(DialogueContext);
 			CloseDialogueUI_Client();
 		}
 	}
 	else
 	{
+		UpdateDialogueContext_Client(DialogueContext);
 		CloseDialogueUI_Client();
 	}
 	
@@ -466,9 +472,6 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 	DialogueContext->SetDialogueContext(nullptr, nullptr, TArray<UMounteaDialogueGraphNode*>());
 	DialogueContext->ConditionalBeginDestroy();
 	DialogueContext = nullptr;
-
-	DialogueContextReplicationKey++;
-	DialogueContext->IncreaseRepKey();
 }
 
 void UMounteaDialogueManager::ProcessNode()
@@ -552,11 +555,6 @@ void UMounteaDialogueManager::SetDialogueUIPtr(UUserWidget* NewDialogueWidgetPtr
 
 void UMounteaDialogueManager::StartExecuteDialogueRow()
 {
-	if (!DialogueWidgetPtr)
-	{
-		OnDialogueFailed.Broadcast("Invalid Dialogue Widget Pointer!");
-	}
-
 	// Start Ticking Active Node and read Ticking from parent Graph
 	if (DialogueContext && DialogueContext->ActiveNode)
 	{
@@ -566,12 +564,13 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 	const int32 Index = DialogueContext->GetActiveDialogueRowDataIndex();
 	const auto Row = DialogueContext->GetActiveDialogueRow();
 	const auto RowData = Row.DialogueRowData.Array()[Index];
-
-	FTimerDelegate Delegate;
-	Delegate.BindUObject(this, &UMounteaDialogueManager::FinishedExecuteDialogueRow);
-
+	
+	// TODO: timer should be moved to Client, as Client should request end of dialogue parts
 	if (RowData.RowDurationMode != ERowDurationMode::ERDM_Manual)
 	{
+		FTimerDelegate Delegate;
+		Delegate.BindUObject(this, &UMounteaDialogueManager::FinishedExecuteDialogueRow);
+		
 		GetWorld()->GetTimerManager().SetTimer
 		(
 			TimerHandle_RowTimer,
@@ -580,13 +579,31 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 			false
 		);
 	}
+
+	DialogueContext->DialogueWidgetCommand = MounteaDialogueWidgetCommands::ShowDialogueRow;
+	DialogueContextReplicationKey++;
+	DialogueContext->IncreaseRepKey();
 	
-	OnDialogueRowStarted.Broadcast(DialogueContext);
-	
-	if (GetOwner()->HasAuthority())
+	if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
 	{
+		if (GetOwner()->HasAuthority())
+		{
+			FString resultMessage;
+			Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::ShowDialogueRow);
+		}
+		else
+		{
+			UpdateDialogueContext_Client(DialogueContext);
+			UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::ShowDialogueRow);
+		}
+	}
+	else
+	{
+		UpdateDialogueContext_Client(DialogueContext);
 		UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::ShowDialogueRow);
 	}
+
+	OnDialogueRowStarted.Broadcast(DialogueContext);
 }
 
 void UMounteaDialogueManager::FinishedExecuteDialogueRow()
@@ -806,12 +823,22 @@ bool UMounteaDialogueManager::InvokeDialogueUI_Implementation(FString& Message)
 
 bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, const FString& Command)
 {
+	if (!DialogueWidgetPtr)
+	{
+		LOG_ERROR(TEXT("[Dialogue Command Request] Invalid Dialogue Widget!"))
+
+		return false;
+	}
+
+	
 	LOG_INFO(TEXT("[Dialogue Command Requested] %s"), *Command)
+	
 	if (DialogueWidgetPtr)
 	{
 		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, Command);
 		return true;
 	}
+	
 	return true;
 }
 
@@ -894,6 +921,21 @@ void UMounteaDialogueManager::PostUIInitialized_Implementation()
 	Execute_PrepareNode(this);
 }
 
+void UMounteaDialogueManager::UpdateDialogueContext_Client_Implementation(UMounteaDialogueContext* NewDialogueContext)
+{
+	LOG_INFO(TEXT("[UpdateDialogueContext] Dialogue Context updated\nNew dialogue context:\n%s"), *(NewDialogueContext ?  NewDialogueContext->ToString() : TEXT("EMPTY")))
+	DialogueContext = NewDialogueContext;
+
+	if (DialogueContext)
+	{
+		// Find data locally
+		DialogueContext->ActiveDialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
+
+		FString errorMessage;
+		//Execute_UpdateDialogueUI(this, errorMessage, DialogueContext->DialogueWidgetCommand);
+	}
+}
+
 void UMounteaDialogueManager::OnRep_ManagerState()
 {
 	switch (ManagerState)
@@ -920,6 +962,9 @@ void UMounteaDialogueManager::OnRep_DialogueContext()
 		DialogueContext->ActiveDialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
 
 		LOG_WARNING(TEXT("%s"), *DialogueContext->ToString())
+
+		FString errorMessage;
+		Execute_UpdateDialogueUI(this, errorMessage, DialogueContext->DialogueWidgetCommand);
 	}
 }
 
@@ -928,7 +973,7 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, ManagerState, COND_InitialOrOwner);
-	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, DialogueContext, COND_InitialOrOwner);
+	//DOREPLIFETIME(UMounteaDialogueManager, DialogueContext);
 }
 
 bool UMounteaDialogueManager::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
