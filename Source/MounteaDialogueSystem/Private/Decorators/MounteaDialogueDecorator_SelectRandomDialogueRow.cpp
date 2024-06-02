@@ -37,6 +37,7 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Impleme
 	Super::ExecuteDecorator_Implementation();
 
 	if (!OwningManager) return;
+	if (!Context) Context = OwningManager->GetDialogueContext();
 
 	FIntPoint ClampedRange;
 	if (RandomRange.X > RandomRange.Y)
