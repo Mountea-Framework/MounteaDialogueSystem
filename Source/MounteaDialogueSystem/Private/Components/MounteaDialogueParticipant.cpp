@@ -5,6 +5,7 @@
 
 #include "Components/AudioComponent.h"
 #include "Graph/MounteaDialogueGraph.h"
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"

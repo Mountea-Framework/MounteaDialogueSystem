@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "UObject/Object.h"
 #include "Engine/Level.h"
 #include "Interfaces/MounteaDialogueTickableObject.h"
@@ -75,24 +74,11 @@ public:
 	 * Initializes the Decorator.
 	 * In C++ saves the World for later use.
 	 * In Blueprints should be used to cache values to avoid overhead in 'ExecuteDecorator'.
+	 * Dialogue Manager will not override if empty. If need to override with nullptr use `SetOwningManager` instead.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
 	void InitializeDecorator(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager);
-	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
-	{
-		OwningWorld = World;
-		if (World)
-		{
-			DecoratorState = EDecoratorState::Initialized;
-		}
-
-		if (OwningParticipant)
-		{
-			OwnerParticipant = OwningParticipant;
-		}
-
-		OwningManager = NewOwningManager;
-	};
+	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager);
 
 	/**
 	 * @return Owning Dialogue Manager.
@@ -214,14 +200,14 @@ public:
 protected:
 
 	UPROPERTY()
-	EDecoratorState DecoratorState = EDecoratorState::Uninitialized;
+	EDecoratorState																	DecoratorState			= EDecoratorState::Uninitialized;
 
 	UPROPERTY()
-	UWorld* OwningWorld = nullptr;
+	UWorld*																				OwningWorld				= nullptr;
 	UPROPERTY()
-	TScriptInterface<IMounteaDialogueParticipantInterface> OwnerParticipant = nullptr;
+	TScriptInterface<IMounteaDialogueParticipantInterface>	OwnerParticipant		= nullptr;
 	UPROPERTY()
-	TScriptInterface<IMounteaDialogueManagerInterface> OwningManager = nullptr;
+	TScriptInterface<IMounteaDialogueManagerInterface>		OwningManager			= nullptr;
 };
 
 
@@ -239,63 +225,15 @@ struct FMounteaDialogueDecorator
 
 public:
 
-	void InitializeDecorator(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager) const
-	{
-		if (DecoratorType)
-		{
-			DecoratorType->InitializeDecorator(World, OwningParticipant, OwningManager);
-			return;
-		}
+	void InitializeDecorator(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager) const;
 
-		LOG_ERROR(TEXT("[InitializeDecorator] DecoratorType is null (invalid)!"))
-		return;
-	}
+	bool ValidateDecorator(TArray<FText>& ValidationMessages) const;
 
-	bool ValidateDecorator(TArray<FText>& ValidationMessages) const
-	{
-		if (DecoratorType)
-		{
-			return DecoratorType->ValidateDecorator(ValidationMessages);
-		}
-		
-		LOG_ERROR(TEXT("[EvaluateDecorator] DecoratorType is null (invalid)!"))
-		return false;
-	}
+	void CleanupDecorator() const;
 
-	void CleanupDecorator() const
-	{
-		if (DecoratorType)
-		{
-			DecoratorType->CleanupDecorator();
-			return;
-		}
-
-		LOG_ERROR(TEXT("[CleanupDecorator] DecoratorType is null (invalid)!"))
-		return;
-	}
-
-	bool EvaluateDecorator() const
-	{
-		if (DecoratorType)
-		{
-			return DecoratorType->EvaluateDecorator();
-		}
-		
-		LOG_ERROR(TEXT("[EvaluateDecorator] DecoratorType is null (invalid)!"))
-		return false;
-	};
+	bool EvaluateDecorator() const;
 	
-	void ExecuteDecorator() const
-	{
-		if (DecoratorType)
-		{
-			DecoratorType->ExecuteDecorator();
-			return;
-		}
-		
-		LOG_ERROR(TEXT("[ExecuteDecorator] DecoratorType is null (invalid)!"))
-		return;
-	};
+	void ExecuteDecorator() const;
 
 public:
 
@@ -305,13 +243,13 @@ public:
 	 * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "Mountea|Dialogue", meta=(NoResetToDefault, AllowAbstract = "false", BlueprintBaseOnly = "true"))
-	UMounteaDialogueDecoratorBase* DecoratorType = nullptr;
+	TObjectPtr<UMounteaDialogueDecoratorBase>					DecoratorType		= nullptr;
 
 public:
 
 	bool operator==(const FMounteaDialogueDecorator& Other) const
 	{
-		return DecoratorType == Other.DecoratorType;	
+		return DecoratorType == Other.DecoratorType;
 	};
 	
 };

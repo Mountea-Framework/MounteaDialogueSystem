@@ -9,6 +9,7 @@
 #include "Data/MounteaDialogueContext.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
 #include "Engine/ActorChannel.h"
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/MounteaDialogueWBPInterface.h"
 #include "Kismet/GameplayStatics.h"
