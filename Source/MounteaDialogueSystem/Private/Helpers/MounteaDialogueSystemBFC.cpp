@@ -302,6 +302,15 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 
 		NodeToStart = GetFirstChildNode(NodeToStart);
 	}
+
+	const TArray<FMounteaDialogueDecorator> graphDecorators = Graph->GetAllDecorators();
+	for (const auto& Itr : graphDecorators)
+	{
+		if (Itr.DecoratorType)
+		{
+			Itr.DecoratorType->SetOwningManager(DialogueManager);
+		}
+	}
 	
 	const TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
 	

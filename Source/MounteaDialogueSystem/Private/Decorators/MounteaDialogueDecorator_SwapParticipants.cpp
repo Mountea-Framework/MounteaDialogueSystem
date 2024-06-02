@@ -7,11 +7,9 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_SwapParticipants"
 
-void UMounteaDialogueDecorator_SwapParticipants::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager)
+void UMounteaDialogueDecorator_SwapParticipants::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
 {
 	Super::InitializeDecorator_Implementation(World, OwningParticipant, nullptr);
-
-	Manager = OwningManager;
 }
 
 void UMounteaDialogueDecorator_SwapParticipants::CleanupDecorator_Implementation()
@@ -19,17 +17,19 @@ void UMounteaDialogueDecorator_SwapParticipants::CleanupDecorator_Implementation
 	Super::CleanupDecorator_Implementation();
 
 	Context = nullptr;
-	Manager = nullptr;
+	OwningManager = nullptr;
 }
 
 void UMounteaDialogueDecorator_SwapParticipants::ExecuteDecorator_Implementation()
 {
 	Super::ExecuteDecorator_Implementation();
 
+	if (!OwningManager) return;
+
 	if (!Context)
 	{
 		// Let's return BP Updatable Context rather than Raw
-		Context = Manager->GetDialogueContext();
+		Context = OwningManager->GetDialogueContext();
 	}
 
 	if (!Context) return;

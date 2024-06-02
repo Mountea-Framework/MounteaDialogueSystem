@@ -9,6 +9,11 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecoratorBase"
 
+void UMounteaDialogueDecoratorBase::SetOwningManager_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
+{
+	OwningManager = NewOwningManager;
+}
+
 bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
 {
 	bool bSatisfied = true;
@@ -57,6 +62,11 @@ bool UMounteaDialogueDecoratorBase::EvaluateDecorator_Implementation()
 
 void UMounteaDialogueDecoratorBase::ExecuteDecorator_Implementation()
 {
+	if (!OwningManager)
+	{
+		LOG_ERROR(TEXT("[ExecuteDecorator] Decorator %s has no Manager!"), *GetDecoratorName().ToString())
+	}
+	
 	return;
 }
 

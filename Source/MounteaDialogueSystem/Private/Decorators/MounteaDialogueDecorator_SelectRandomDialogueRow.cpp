@@ -8,11 +8,9 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_SelectRandomDialogueRow"
 
-void UMounteaDialogueDecorator_SelectRandomDialogueRow::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager)
+void UMounteaDialogueDecorator_SelectRandomDialogueRow::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
 {
 	Super::InitializeDecorator_Implementation(World, OwningParticipant, nullptr);
-
-	Manager = OwningManager;
 }
 
 void UMounteaDialogueDecorator_SelectRandomDialogueRow::CleanupDecorator_Implementation()
@@ -20,7 +18,7 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::CleanupDecorator_Impleme
 	Super::CleanupDecorator_Implementation();
 
 	Context = nullptr;
-	Manager = nullptr;
+	OwningManager = nullptr;
 }
 
 bool UMounteaDialogueDecorator_SelectRandomDialogueRow::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
@@ -43,8 +41,7 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Impleme
 {
 	Super::ExecuteDecorator_Implementation();
 
-	// Let's return BP Updatable Context rather than Raw
-	Context = Manager->GetDialogueContext();
+	if (!OwningManager) return;
 
 	FIntPoint ClampedRange;
 	if (RandomRange.X > RandomRange.Y)

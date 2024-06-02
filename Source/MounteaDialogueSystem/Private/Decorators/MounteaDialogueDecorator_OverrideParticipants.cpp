@@ -7,13 +7,13 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_OverrideParticipants"
 
-void UMounteaDialogueDecorator_OverrideParticipants::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager)
+void UMounteaDialogueDecorator_OverrideParticipants::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
 {
 	Super::InitializeDecorator_Implementation(World, OwningParticipant, nullptr);
 
 	if (World)
 	{
-		Manager = OwningManager;
+		OwningManager = NewOwningManager;
 
 		// Keep in mind that override cannot override nulls!
 		if (bOverridePlayerParticipant)
@@ -36,7 +36,7 @@ void UMounteaDialogueDecorator_OverrideParticipants::CleanupDecorator_Implementa
 	Super::CleanupDecorator_Implementation();
 
 	Context = nullptr;
-	Manager = nullptr;
+	OwningManager = nullptr;
 
 	Override_PlayerParticipantInterface = nullptr;
 	Override_ParticipantInterface = nullptr;
@@ -67,12 +67,14 @@ bool UMounteaDialogueDecorator_OverrideParticipants::ValidateDecorator_Implement
 void UMounteaDialogueDecorator_OverrideParticipants::ExecuteDecorator_Implementation()
 {
 	Super::ExecuteDecorator_Implementation();
-
+	
+	if (!OwningManager) return;
+	
 	// Let's return BP Updatable Context rather than Raw
-	Context = Manager->GetDialogueContext();
+	Context = OwningManager->GetDialogueContext();
 
 	// We assume Context and Manager are already valid, but safety is safety
-	if (!Context|| !Manager.GetInterface() || !UMounteaDialogueSystemBFC::IsContextValid(Context) ) return;
+	if (!Context|| !OwningManager.GetInterface() || !UMounteaDialogueSystemBFC::IsContextValid(Context) ) return;
 	
 	if (bOverridePlayerParticipant)
 	{

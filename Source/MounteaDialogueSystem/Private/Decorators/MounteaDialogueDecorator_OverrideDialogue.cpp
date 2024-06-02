@@ -8,11 +8,9 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_OverrideDialogue"
 
-void UMounteaDialogueDecorator_OverrideDialogue::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager)
+void UMounteaDialogueDecorator_OverrideDialogue::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
 {
 	Super::InitializeDecorator_Implementation(World, OwningParticipant, nullptr);
-
-	Manager = OwningManager;
 }
 
 void UMounteaDialogueDecorator_OverrideDialogue::CleanupDecorator_Implementation()
@@ -20,7 +18,6 @@ void UMounteaDialogueDecorator_OverrideDialogue::CleanupDecorator_Implementation
 	Super::CleanupDecorator_Implementation();
 
 	Context = nullptr;
-	Manager = nullptr;
 }
 
 bool UMounteaDialogueDecorator_OverrideDialogue::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
@@ -50,13 +47,15 @@ bool UMounteaDialogueDecorator_OverrideDialogue::ValidateDecorator_Implementatio
 void UMounteaDialogueDecorator_OverrideDialogue::ExecuteDecorator_Implementation()
 {
 	Super::ExecuteDecorator_Implementation();
+
+	if (!OwningManager) return;
 	
 	// Let's return BP Updatable Context rather than Raw
-	Context = Manager->GetDialogueContext();
+	Context = OwningManager->GetDialogueContext();
 
 	// We assume Context and Manager are already valid, but safety is safety
-	if (!Context|| !Manager.GetInterface() || !UMounteaDialogueSystemBFC::IsContextValid(Context) ) return;
-
+	if (!Context || !OwningManager.GetInterface() || !UMounteaDialogueSystemBFC::IsContextValid(Context) ) return;
+	
 	const auto NewRow = UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName);
 	
 	Context->UpdateActiveDialogueRow( UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName) );

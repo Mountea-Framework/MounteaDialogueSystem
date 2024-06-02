@@ -51,7 +51,8 @@ public class MounteaDialogueSystem : ModuleRules
 				"GameplayTags",
 				"DeveloperSettings",
 				"UMG",
-				"Projects"
+				"Projects",
+				"NetCore"
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);

@@ -21,7 +21,7 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecorator_OverrideDialogue : pub
 
 public:
 
-	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager) override;
+	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager) override;
 	virtual void CleanupDecorator_Implementation() override;
 	virtual bool ValidateDecorator_Implementation(TArray<FText>& ValidationMessages) override;
 	virtual void ExecuteDecorator_Implementation() override;
@@ -32,19 +32,18 @@ public:
 protected:
 
 	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, RequiredAssetDataTags = "RowStructure=/Script/MounteaDialogueSystem.DialogueRow"))
-	UDataTable*	DataTable;
+	UDataTable*											DataTable;
 
 	/** Name of row in the table that we want */
 	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
-	FName RowName;
+	FName														RowName;
 
 	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(UIMin=0, ClampMin=0, NoResetToDefault, EditCondition="DataTable!=nullptr"))
-	int32 RowIndex;
+	int32														RowIndex;
 
 private:
 	
-	UMounteaDialogueContext* Context = nullptr;
-	TScriptInterface<IMounteaDialogueManagerInterface> Manager = nullptr;
+	TObjectPtr<UMounteaDialogueContext> Context = nullptr;
 	
 private:
 

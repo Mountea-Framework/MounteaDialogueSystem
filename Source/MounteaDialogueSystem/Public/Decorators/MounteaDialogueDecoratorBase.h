@@ -77,8 +77,8 @@ public:
 	 * In Blueprints should be used to cache values to avoid overhead in 'ExecuteDecorator'.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
-	void InitializeDecorator(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager);
-	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager)
+	void InitializeDecorator(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager);
+	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
 	{
 		OwningWorld = World;
 		if (World)
@@ -90,7 +90,25 @@ public:
 		{
 			OwnerParticipant = OwningParticipant;
 		}
+
+		OwningManager = NewOwningManager;
 	};
+
+	/**
+	 * @return Owning Dialogue Manager.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
+	TScriptInterface<IMounteaDialogueManagerInterface> GetManager() const;
+	virtual TScriptInterface<IMounteaDialogueManagerInterface> GetManager_Implementation() const
+	{ return OwningManager; };
+
+	/**
+	 *	Updates Owning Manager. Can be used to clean the decorator.
+	 * @param NewOwningManager			Owning Manager that will handle this Decorator.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators")
+	void SetOwningManager(const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager);
+	virtual void SetOwningManager_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager);
 
 	/**
 	 * Cleans up the Decorator.
@@ -101,6 +119,7 @@ public:
 	virtual void CleanupDecorator_Implementation()
 	{
 		DecoratorState = EDecoratorState::Uninitialized;
+		OwningManager = nullptr;
 	};
 
 	/**
@@ -192,7 +211,7 @@ public:
 	
 #pragma endregion
 	
-private:
+protected:
 
 	UPROPERTY()
 	EDecoratorState DecoratorState = EDecoratorState::Uninitialized;
@@ -201,6 +220,8 @@ private:
 	UWorld* OwningWorld = nullptr;
 	UPROPERTY()
 	TScriptInterface<IMounteaDialogueParticipantInterface> OwnerParticipant = nullptr;
+	UPROPERTY()
+	TScriptInterface<IMounteaDialogueManagerInterface> OwningManager = nullptr;
 };
 
 

@@ -3,16 +3,15 @@
 
 #include "Decorators/MounteaDialogueDecorator_OnlyFirstTime.h"
 
+#include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_OnlyFirstTime"
 
-void UMounteaDialogueDecorator_OnlyFirstTime::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager)
+void UMounteaDialogueDecorator_OnlyFirstTime::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
 {
-	Super::InitializeDecorator_Implementation(World, OwningParticipant, nullptr);
-
-	Manager = OwningManager;
+	Super::InitializeDecorator_Implementation(World, OwningParticipant, NewOwningManager);
 }
 
 void UMounteaDialogueDecorator_OnlyFirstTime::CleanupDecorator_Implementation()
@@ -20,7 +19,6 @@ void UMounteaDialogueDecorator_OnlyFirstTime::CleanupDecorator_Implementation()
 	Super::CleanupDecorator_Implementation();
 
 	Context = nullptr;
-	Manager = nullptr;
 }
 
 bool UMounteaDialogueDecorator_OnlyFirstTime::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
@@ -53,7 +51,7 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::EvaluateDecorator_Implementation()
 	// Let's return BP Updatable Context rather than Raw
 	if (!Context)
 	{
-		Context = Manager->GetDialogueContext();
+		Context = OwningManager->GetDialogueContext();
 	}
 
 	// We can live for a moment without Context, because this Decorator might be called before Context is initialized
@@ -65,9 +63,11 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::EvaluateDecorator_Implementation()
 void UMounteaDialogueDecorator_OnlyFirstTime::ExecuteDecorator_Implementation()
 {
 	Super::ExecuteDecorator_Implementation();
+	
+	if (!OwningManager) return;
 
 	// Let's return BP Updatable Context rather than Raw
-	if (!Context) Context = Manager->GetDialogueContext();
+	if (!Context) Context = OwningManager->GetDialogueContext();
 }
 
 bool UMounteaDialogueDecorator_OnlyFirstTime::IsFirstTime() const

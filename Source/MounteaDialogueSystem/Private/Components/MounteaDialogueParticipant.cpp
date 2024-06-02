@@ -32,7 +32,7 @@ void UMounteaDialogueParticipant::BeginPlay()
 
 	SetAudioComponent(FindAudioComponent());
 
-	InitializeParticipant();
+	Execute_InitializeParticipant(this);
 }
 
 void UMounteaDialogueParticipant::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -176,7 +176,7 @@ void UMounteaDialogueParticipant::SetDialogueGraph(UMounteaDialogueGraph* NewDia
 	{
 		DialogueGraph = NewDialogueGraph;
 
-		InitializeParticipant();
+		Execute_InitializeParticipant(this);
 		
 		OnDialogueGraphChanged.Broadcast(NewDialogueGraph);
 	}
@@ -316,7 +316,7 @@ void UMounteaDialogueParticipant::TickMounteaEvent_Implementation(UObject* SelfR
 
 void UMounteaDialogueParticipant::OnRep_DialogueGraph()
 {
-	InitializeParticipant();
+	Execute_InitializeParticipant(this);
 }
 
 void UMounteaDialogueParticipant::UpdateParticipantTick()
