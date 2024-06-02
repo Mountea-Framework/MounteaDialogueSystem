@@ -474,13 +474,15 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 		return;
 	}
 
+	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
+
 	if (!GetOwner()->HasAuthority())
 	{
 		CloseDialogue_Server();
 	}
 
 	if (!GetWorld()) return;
-	
+		
 	if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
 	{
 		if (GetOwner()->HasAuthority())
@@ -489,18 +491,26 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 		}
 		else
 		{
+			if (DialogueWidgetPtr)
+			{
+				DialogueWidgetPtr->RemoveFromParent();
+				DialogueWidgetPtr = nullptr;
+			}
 			UpdateDialogueContext_Client(FMounteaDialogueContextReplicatedStruct(nullptr));
 			CloseDialogueUI_Client();
 		}
 	}
 	else
 	{
+		if (DialogueWidgetPtr)
+		{
+			DialogueWidgetPtr->RemoveFromParent();
+			DialogueWidgetPtr = nullptr;
+		}
 		UpdateDialogueContext_Client(FMounteaDialogueContextReplicatedStruct(nullptr));
 		CloseDialogueUI_Client();
 	}
 	
-	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
-
 	SetDialogueManagerState(EDialogueManagerState::EDMS_Enabled);
 
 	if(!DialogueContext) return;
@@ -927,11 +937,13 @@ bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
 		FString errorMessage;
 		Execute_UpdateDialogueUI(this, errorMessage, MounteaDialogueWidgetCommands::CloseDialogueWidget);
 
+		DialogueWidgetPtr = nullptr;
+
 		return true;
 	}
 	
 	LOG_WARNING(TEXT("[CloseDialogueUI] Using non-supported Dialogue UI, therefore brute-forcing is used to close the widget!"))
-		
+	
 	DialogueWidgetPtr->RemoveFromParent();
 	DialogueWidgetPtr = nullptr;
 
@@ -1112,7 +1124,6 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, ManagerState, COND_InitialOrOwner);
-	//DOREPLIFETIME(UMounteaDialogueManager, ReplicatedDialogueContext);
 }
 
 bool UMounteaDialogueManager::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
