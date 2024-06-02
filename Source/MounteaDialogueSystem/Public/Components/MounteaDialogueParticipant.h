@@ -27,21 +27,15 @@ public:
 	UMounteaDialogueParticipant();
 
 protected:
-
-	/**
-	 * Helps initialize Participant.
-	 * ❔ Is being called in BeginPlay.
-	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue")
-	void InitializeParticipant();
-	virtual void InitializeParticipant_Implementation();
-	
+		
 	virtual void BeginPlay() override;	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 #pragma region Functions
 
 public:
+	
+	virtual void InitializeParticipant_Implementation() override;
 
 	/**
 	 * Finds an audio component using FindAudioComponentByName or FindAudioComponentByTag.

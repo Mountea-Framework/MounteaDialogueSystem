@@ -127,9 +127,17 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	FGameplayTag GetTag() const;
+
+	/**
+	 * Helps initialize Participant.
+	 * ❔ Is being called in BeginPlay.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue")
+	void InitializeParticipant();
+	
 #pragma endregion
 
-protected:
+public:
 
 #pragma region EventFunctions_Implementations
 

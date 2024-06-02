@@ -234,6 +234,8 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 			UnavailableParticipants.Add(Itr);
 			LOG_INFO(TEXT("[StartDialogue] Dialogie Participant %d cannot Start Dialogue, so it will be ignored"), DialogueParticipants.Find(Itr))
 		}
+
+		Itr->Execute_InitializeParticipant(Itr.GetObject());
 	}
 
 	if (UnavailableParticipants.Num() == AllDialogueParticipants.Num())
@@ -747,6 +749,7 @@ APlayerController* UMounteaDialogueSystemBFC::FindPlayerController(AActor* ForAc
 	}
 	
 	// Check the owner recursively, sorry performance :(
+	// TODO: Limit depth!
 	if (AActor* ownerActor = ForActor->GetOwner())
 	{
 		return FindPlayerController(ownerActor);
