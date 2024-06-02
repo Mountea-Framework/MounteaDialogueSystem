@@ -28,7 +28,7 @@ public:
 protected:
 	
 	virtual void BeginPlay() override;
-	
+
 public:
 	
 #pragma region EventFunctions
@@ -371,8 +371,12 @@ protected:
 	/**
 	 * Dialogue Context which is used to contain temporary data.
 	 */
-	UPROPERTY(ReplicatedUsing=OnRep_DialogueContext, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
+	UPROPERTY(/*ReplicatedUsing=OnRep_DialogueContext,*/ VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	TObjectPtr<UMounteaDialogueContext> DialogueContext = nullptr;
+
+	/** replicated struct*/
+	UPROPERTY()
+	FMounteaDialogueContextReplicatedStruct ReplicatedDialogueContext;
 
 	/**
 	 * TimerHandle managing Dialogue Row.
@@ -412,9 +416,12 @@ protected:
 	void SetDialogueWidgetClass_Server(TSubclassOf<UUserWidget> NewDialogueWidgetClass);
 	UFUNCTION(Server, Reliable)
 	void InitializeDialogue_Server(APlayerState* OwningPlayerState, const FDialogueParticipants& Participants);
+
+	UFUNCTION(Server, Reliable)
+	void CallDialogueNodeSelected_Server(const FGuid& NodeGuid);
 	
 	UFUNCTION(Client, Reliable)
-	void UpdateDialogueContext_Client(UMounteaDialogueContext* NewDialogueContext);
+	void UpdateDialogueContext_Client(const FMounteaDialogueContextReplicatedStruct& NewDialogueContext);
 
 	UFUNCTION(Server, Reliable)
 	void StartDialogue_Server();
@@ -428,12 +435,23 @@ protected:
 	void CloseDialogueUI_Client();
 
 	UFUNCTION(Server, Reliable)
+	void FinishedExecuteDialogueRow_Server();
+	UFUNCTION(Client, Reliable)
+	void StartExecuteDialogueRow_Client();
+	UFUNCTION(Client, Unreliable)
+	void RequestVoiceStart_Client(USoundBase* SoundBase);
+	UFUNCTION(Client, Unreliable)
+	void RequestVoiceStop_Client(USoundBase* SoundBase);
+
+	UFUNCTION(Server, Reliable)
 	void PostUIInitialized();
 
 	UFUNCTION()
 	void OnRep_ManagerState();
-	UFUNCTION()
-	void OnRep_DialogueContext();
+	/*UFUNCTION()
+	void OnRep_DialogueContext();*/
+
+	void NetPushDialogueContext();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;

@@ -14,6 +14,9 @@
 
 #include "MounteaDialogueGraphDataTypes.generated.h"
 
+class UMounteaDialogueContext;
+class IMounteaDialogueParticipantInterface;
+class UMounteaDialogueGraphNode;
 class USoundBase;
 class UTexture;
 class UDataAsset;
@@ -427,4 +430,31 @@ public:
 	{
 		return FCrc::MemCrc32(&RowID.RowWidgetClass, sizeof(FUIRowID)) + RowID.UIRowID;
 	}
+};
+
+USTRUCT()
+struct FMounteaDialogueContextReplicatedStruct
+{
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	TScriptInterface<IMounteaDialogueParticipantInterface> ActiveDialogueParticipant;
+	UPROPERTY()
+	TScriptInterface<IMounteaDialogueParticipantInterface> PlayerDialogueParticipant;
+	UPROPERTY()
+	TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant;
+	UPROPERTY()
+	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipants;
+	UPROPERTY()
+	TObjectPtr<UMounteaDialogueGraphNode> ActiveNode = nullptr;
+	UPROPERTY()
+	TArray<TObjectPtr<UMounteaDialogueGraphNode>> AllowedChildNodes;
+	UPROPERTY()
+	int32 ActiveDialogueRowDataIndex = 0;
+
+	FMounteaDialogueContextReplicatedStruct();
+	explicit FMounteaDialogueContextReplicatedStruct(UMounteaDialogueContext* Source);
+
+	void SetData(class UMounteaDialogueContext* Source);
+	bool IsValid() const;
 };

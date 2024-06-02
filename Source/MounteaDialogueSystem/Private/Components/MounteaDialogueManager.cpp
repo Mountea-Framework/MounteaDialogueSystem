@@ -16,21 +16,20 @@
 
 
 UMounteaDialogueManager::UMounteaDialogueManager()
+	: DefaultManagerState(EDialogueManagerState::EDMS_Enabled)
+	, DialogueContext(nullptr)
+	, ReplicatedDialogueContext(nullptr)
+	, bWasCursorVisible(false)
+	, DialogueContextReplicationKey(0)
 {
-	DialogueContext = nullptr;
-	DefaultManagerState = EDialogueManagerState::EDMS_Enabled;
-
-	bWasCursorVisible = false;
-
+	bAutoActivate = true;
+	
 	SetIsReplicatedByDefault(true);
 	SetActiveFlag(true);
 
-	bAutoActivate = true;
-
 	PrimaryComponentTick.bStartWithTickEnabled = false;
-
-	DialogueContextReplicationKey = 0;
 }
+
 
 void UMounteaDialogueManager::BeginPlay()
 {
@@ -59,38 +58,63 @@ void UMounteaDialogueManager::BeginPlay()
 	SetDialogueManagerState(GetDefaultDialogueManagerState());
 }
 
+void UMounteaDialogueManager::NetPushDialogueContext()
+{
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		DialogueContextReplicationKey++;
+		if (DialogueContext)
+		{
+			DialogueContext->IncreaseRepKey();
+		}
+
+		UpdateDialogueContext_Client(FMounteaDialogueContextReplicatedStruct(DialogueContext));
+	}
+}
+
 void UMounteaDialogueManager::CallDialogueNodeSelected_Implementation(const FGuid& NodeGUID)
 {
-	UMounteaDialogueGraphNode* SelectedNode = nullptr;
+	if (!GetOwner())
+	{
+		LOG_ERROR(TEXT("[CallDialogueNodeSelected] No owner!"))
+		return;
+	}
+
+	if (!GetOwner()->HasAuthority())
+	{
+		CallDialogueNodeSelected_Server(NodeGUID);
+		return;
+	}
+	
+	UMounteaDialogueGraphNode* selectedNode = nullptr;
 	if (DialogueContext)
 	{
-		for (UMounteaDialogueGraphNode* Itr : DialogueContext->GetChildrenNodes())
+		selectedNode = *DialogueContext->GetChildrenNodes().FindByPredicate([NodeGUID](const UMounteaDialogueGraphNode* Node)
 		{
-			if (Itr && Itr->GetNodeGUID() == NodeGUID)
-			{
-				SelectedNode = Itr;
-				break;
-			}
-		}
+			return Node && Node->GetNodeGUID() == NodeGUID;
+		});
 	}
 	else
 	{
 		OnDialogueFailed.Broadcast(TEXT("[CallDialogueNodeSelected] Invalid Context!"));
+		return;
 	}
 
-	if (!SelectedNode)
+	if (!selectedNode)
 	{
 		OnDialogueFailed.Broadcast(TEXT("[CallDialogueNodeSelected] Cannot find Selected Option!"));
+		return;
 	}
 		
-	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
+	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, selectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(selectedNode));
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 
-	DialogueContextReplicationKey++;
-	DialogueContext->IncreaseRepKey();
+	NetPushDialogueContext();
 	
 	OnDialogueNodeSelected.Broadcast(DialogueContext);
 }
+
+#pragma region InternalEvents
 
 void UMounteaDialogueManager::OnDialogueInitializedEvent_Internal(UMounteaDialogueContext* Context)
 {
@@ -136,6 +160,8 @@ void UMounteaDialogueManager::OnDialogueClosedEvent_Internal(UMounteaDialogueCon
 		case EDialogueManagerState::EDMS_Disabled:
 		case EDialogueManagerState::EDMS_Enabled:
 			return;
+		case EDialogueManagerState::EDMS_Active:
+			break;
 	}
 	
 	OnDialogueClosedEvent(DialogueContext);
@@ -147,6 +173,8 @@ void UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal(UMounteaDialo
 {
 	OnDialogueNodeSelectedEvent(Context);
 
+	NetPushDialogueContext();
+	
 	if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
 	{
 		if (GetOwner()->HasAuthority())
@@ -156,13 +184,13 @@ void UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal(UMounteaDialo
 		}
 		else
 		{
-			UpdateDialogueContext_Client(DialogueContext);
+			UpdateDialogueContext_Client(FMounteaDialogueContextReplicatedStruct(DialogueContext));
 			UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::RemoveDialogueOptions);
 		}
 	}
 	else
 	{
-		UpdateDialogueContext_Client(DialogueContext);
+		UpdateDialogueContext_Client(FMounteaDialogueContextReplicatedStruct(DialogueContext));
 		UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::RemoveDialogueOptions);
 	}
 
@@ -196,28 +224,23 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 		DialogueContext->ActiveNode->Execute_UnregisterTick(DialogueContext->ActiveNode, DialogueContext->ActiveNode->Graph);
 	}
 	
-	OnDialogueNodeFinishedEvent(Context);
+	OnDialogueNodeFinishedEvent(DialogueContext);
 
-	const TArray<UMounteaDialogueGraphNode*> AllowedChildrenNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(Context->ActiveNode);
-
-	if (AllowedChildrenNodes.Num() == 0)
-	{
-		OnDialogueClosed.Broadcast(Context);
-	}
+	const TArray<UMounteaDialogueGraphNode*> allowedChildrenNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(DialogueContext->ActiveNode);
 
 	// If there are only Complete Nodes left or no DialogueNodes left, just shut it down
-	if (AllowedChildrenNodes.Num() == 0)
+	if (allowedChildrenNodes.Num() == 0)
 	{
 		OnDialogueClosed.Broadcast(DialogueContext);
 		return;
 	}
 	
-	const bool bAutoActive = AllowedChildrenNodes[0]->DoesAutoStart();
+	const bool bAutoActive = allowedChildrenNodes[0]->DoesAutoStart();
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 	
 	if (bAutoActive)
 	{
-		const auto NewActiveNode = AllowedChildrenNodes[0];
+		const auto NewActiveNode = allowedChildrenNodes[0];
 
 		if (!NewActiveNode)
 		{
@@ -228,11 +251,12 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 		
 		OnDialogueNodeSelected.Broadcast(DialogueContext);
 
-		DialogueContextReplicationKey++;
-		DialogueContext->IncreaseRepKey();
+		NetPushDialogueContext();
 	}
 	else
 	{
+		NetPushDialogueContext();
+		
 		if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
 		{
 			if (GetOwner()->HasAuthority())
@@ -242,13 +266,13 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 			}
 			else
 			{
-				UpdateDialogueContext_Client(DialogueContext);
+				UpdateDialogueContext_Client(FMounteaDialogueContextReplicatedStruct(DialogueContext));
 				UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::AddDialogueOptions);
 			}
 		}
 		else
 		{
-			UpdateDialogueContext_Client(DialogueContext);
+			UpdateDialogueContext_Client(FMounteaDialogueContextReplicatedStruct(DialogueContext));
 			UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::AddDialogueOptions);
 		}
 	}
@@ -269,8 +293,23 @@ void UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal(UMounteaDialogu
 	}
 
 	// Let's hope we are not approaching invalid indexes
-	USoundBase* SoundToStart =  Context->GetActiveDialogueRow().DialogueRowData.Array()[Context->GetActiveDialogueRowDataIndex()].RowSound;
-	OnDialogueVoiceStartRequest.Broadcast(SoundToStart);
+	USoundBase* soundToStart =  Context->GetActiveDialogueRow().DialogueRowData.Array()[Context->GetActiveDialogueRowDataIndex()].RowSound;
+	
+	if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
+	{
+		if (GetOwner()->HasAuthority())
+		{
+			OnDialogueVoiceStartRequest.Broadcast(soundToStart);
+		}
+		else
+		{
+			RequestVoiceStart_Client(soundToStart);
+		}
+	}
+	else
+	{
+		RequestVoiceStart_Client(soundToStart);
+	}
 }
 
 void UMounteaDialogueManager::OnDialogueRowFinishedEvent_Internal(UMounteaDialogueContext* Context)
@@ -280,8 +319,6 @@ void UMounteaDialogueManager::OnDialogueRowFinishedEvent_Internal(UMounteaDialog
 
 void UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal(USoundBase* VoiceToStart)
 {
-	// TODO: CLIENT
-	
 	if (DialogueContext == nullptr)
 	{
 		OnDialogueFailed.Broadcast(TEXT("[DialogueVoiceStartRequestEvent] Invalid Dialogue Context!"));
@@ -300,27 +337,41 @@ void UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal(USoundBa
 
 void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBase* VoiceToSkip)
 {
-	// TODO: CLIENT
-	
+	if (!GetOwner())
+	{
+		LOG_ERROR(TEXT("[OnDialogueVoiceSkipRequest] No owner!"))
+		return;
+	}
+
 	if (DialogueContext == nullptr)
 	{
 		OnDialogueFailed.Broadcast(TEXT("[DialogueVoiceSkipRequestEvent] Invalid Dialogue Context!"));
 		return;
 	}
 
-	if (DialogueContext->ActiveDialogueParticipant.GetInterface() == nullptr)
+	if (DialogueContext->ActiveDialogueParticipant.GetInterface() == nullptr || DialogueContext->ActiveDialogueParticipant.GetObject() == nullptr)
 	{
 		OnDialogueFailed.Broadcast(TEXT("[DialogueVoiceSkipRequestEvent] Invalid Dialogue Participant!"));
 		return;
 	}
-
 	
-	DialogueContext->ActiveDialogueParticipant->SkipParticipantVoice(VoiceToSkip);
-
-	OnDialogueVoiceSkipRequestEvent(VoiceToSkip);
+	if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
+	{
+		if (GetOwner()->HasAuthority())
+		{
+			DialogueContext->ActiveDialogueParticipant->SkipParticipantVoice(VoiceToSkip);
+			OnDialogueVoiceSkipRequestEvent(VoiceToSkip);
+		}
+		else
+		{
+			RequestVoiceStop_Client(VoiceToSkip);
+		}
+	}
 	
 	FinishedExecuteDialogueRow();
 }
+
+#pragma endregion
 
 void UMounteaDialogueManager::InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const FDialogueParticipants& Participants)
 {
@@ -373,9 +424,9 @@ void UMounteaDialogueManager::InitializeDialogue_Implementation(APlayerState* Ow
 		return;
 	}
 	
-	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipantsArray = dialogueParticipants.Array();
+	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> dialogueParticipantsArray = dialogueParticipants.Array();
 	
-	UMounteaDialogueSystemBFC::StartDialogue(GetOwner(), OwningPlayerState, DialogueParticipantsArray[0], DialogueParticipantsArray);
+	UMounteaDialogueSystemBFC::StartDialogue(GetOwner(), OwningPlayerState, dialogueParticipantsArray[0], dialogueParticipantsArray);
 }
 
 void UMounteaDialogueManager::StartDialogue_Implementation()
@@ -404,12 +455,14 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 	{
 		if (!Itr.GetObject() || !Itr.GetInterface()) continue;
 
-		TScriptInterface<IMounteaDialogueTickableObject> TickableObject = Itr.GetObject();
-		if (TickableObject.GetInterface() && TickableObject.GetObject())
+		TScriptInterface<IMounteaDialogueTickableObject> tickableObject = Itr.GetObject();
+		if (tickableObject.GetInterface() && tickableObject.GetObject())
 		{
 			// Register ticks for participants, no need to define Parent as Participants are the most paren ones
-			TickableObject->Execute_RegisterTick(TickableObject.GetObject(), nullptr);
+			tickableObject->Execute_RegisterTick(tickableObject.GetObject(), nullptr);
 		}
+
+		Itr->SetParticipantState(EDialogueParticipantState::EDPS_Active);
 	}
 }
 
@@ -436,13 +489,13 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 		}
 		else
 		{
-			UpdateDialogueContext_Client(DialogueContext);
+			UpdateDialogueContext_Client(FMounteaDialogueContextReplicatedStruct(nullptr));
 			CloseDialogueUI_Client();
 		}
 	}
 	else
 	{
-		UpdateDialogueContext_Client(DialogueContext);
+		UpdateDialogueContext_Client(FMounteaDialogueContextReplicatedStruct(nullptr));
 		CloseDialogueUI_Client();
 	}
 	
@@ -452,6 +505,20 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 
 	if(!DialogueContext) return;
 
+	for (const auto& Itr : DialogueContext->DialogueParticipants)
+	{
+		if (!Itr.GetObject() || !Itr.GetInterface()) continue;
+
+		TScriptInterface<IMounteaDialogueTickableObject> tickableObject = Itr.GetObject();
+		if (tickableObject.GetInterface() && tickableObject.GetObject())
+		{
+			// Register ticks for participants, no need to define Parent as Participants are the most paren ones
+			tickableObject->Execute_UnregisterTick(tickableObject.GetObject(), nullptr);
+		}
+
+		Itr->SetParticipantState(Itr->GetDefaultParticipantState());
+	}
+	
 	if (!DialogueContext->GetDialogueParticipant().GetObject()) return;
 
 	// Cleaning up
@@ -461,17 +528,11 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 	// Clear binding
 	DialogueContext->DialogueContextUpdatedFromBlueprint.RemoveDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent);
 	
-	for (const auto& Participant : DialogueContext->GetDialogueParticipants())
-	{
-		if (Participant.GetObject())
-		{
-			Participant->SetParticipantState(Participant->GetDefaultParticipantState());
-		}
-	}
-	
 	DialogueContext->SetDialogueContext(nullptr, nullptr, TArray<UMounteaDialogueGraphNode*>());
-	DialogueContext->ConditionalBeginDestroy();
+	DialogueContext->MarkAsGarbage();
 	DialogueContext = nullptr;
+
+	NetPushDialogueContext();
 }
 
 void UMounteaDialogueManager::ProcessNode()
@@ -493,8 +554,7 @@ void UMounteaDialogueManager::PrepareNode_Implementation()
 
 	DialogueContext->AddTraversedNode(DialogueContext->ActiveNode);
 
-	DialogueContextReplicationKey++;
-	DialogueContext->IncreaseRepKey();
+	NetPushDialogueContext();
 	
 	// First PreProcess Node
 	DialogueContext->ActiveNode->PreProcessNode(this);
@@ -555,34 +615,25 @@ void UMounteaDialogueManager::SetDialogueUIPtr(UUserWidget* NewDialogueWidgetPtr
 
 void UMounteaDialogueManager::StartExecuteDialogueRow()
 {
+	if (!GetOwner())
+	{
+		LOG_ERROR(TEXT("[StartExecuteDialogueRow] No Owner!"))
+		return;
+	}
+
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		DialogueContext->DialogueWidgetCommand = MounteaDialogueWidgetCommands::ShowDialogueRow;
+		NetPushDialogueContext();
+		
+		StartExecuteDialogueRow_Client();
+	}
+	
 	// Start Ticking Active Node and read Ticking from parent Graph
 	if (DialogueContext && DialogueContext->ActiveNode)
 	{
 		DialogueContext->ActiveNode->Execute_RegisterTick(DialogueContext->ActiveNode, DialogueContext->ActiveNode->Graph);
 	}
-	
-	const int32 Index = DialogueContext->GetActiveDialogueRowDataIndex();
-	const auto Row = DialogueContext->GetActiveDialogueRow();
-	const auto RowData = Row.DialogueRowData.Array()[Index];
-	
-	// TODO: timer should be moved to Client, as Client should request end of dialogue parts
-	if (RowData.RowDurationMode != ERowDurationMode::ERDM_Manual)
-	{
-		FTimerDelegate Delegate;
-		Delegate.BindUObject(this, &UMounteaDialogueManager::FinishedExecuteDialogueRow);
-		
-		GetWorld()->GetTimerManager().SetTimer
-		(
-			TimerHandle_RowTimer,
-			Delegate,
-			UMounteaDialogueSystemBFC::GetRowDuration(RowData),
-			false
-		);
-	}
-
-	DialogueContext->DialogueWidgetCommand = MounteaDialogueWidgetCommands::ShowDialogueRow;
-	DialogueContextReplicationKey++;
-	DialogueContext->IncreaseRepKey();
 	
 	if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
 	{
@@ -593,13 +644,13 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 		}
 		else
 		{
-			UpdateDialogueContext_Client(DialogueContext);
+			UpdateDialogueContext_Client(FMounteaDialogueContextReplicatedStruct(DialogueContext));
 			UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::ShowDialogueRow);
 		}
 	}
 	else
 	{
-		UpdateDialogueContext_Client(DialogueContext);
+		UpdateDialogueContext_Client(FMounteaDialogueContextReplicatedStruct(DialogueContext));
 		UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::ShowDialogueRow);
 	}
 
@@ -614,20 +665,33 @@ void UMounteaDialogueManager::FinishedExecuteDialogueRow()
 		return;
 	}
 
+	if (!GetOwner())
+	{
+		LOG_ERROR(TEXT("[FinishedExecuteDialogueRow] No owner!"))
+		return;;
+	}
+
+	if (!GetOwner()->HasAuthority())
+	{
+		FinishedExecuteDialogueRow_Server();
+
+		GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
+		return;
+	}
+
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 
-	const int32 IncreasedIndex = DialogueContext->GetActiveDialogueRowDataIndex() + 1;
+	const int32 increasedIndex = DialogueContext->GetActiveDialogueRowDataIndex() + 1;
 
 	const bool bIsActiveRowValid = UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueContext->GetActiveDialogueRow());
-	const bool bDialogueRowDataValid = DialogueContext->GetActiveDialogueRow().DialogueRowData.Array().IsValidIndex(IncreasedIndex);
+	const bool bDialogueRowDataValid = DialogueContext->GetActiveDialogueRow().DialogueRowData.Array().IsValidIndex(increasedIndex);
 
 	if (bIsActiveRowValid && bDialogueRowDataValid)
 	{
-		DialogueContext->UpdateActiveDialogueRowDataIndex(IncreasedIndex);
+		DialogueContext->UpdateActiveDialogueRowDataIndex(increasedIndex);
 		OnDialogueContextUpdated.Broadcast(DialogueContext);
 
-		DialogueContextReplicationKey++;
-		DialogueContext->IncreaseRepKey();
+		NetPushDialogueContext();
 		
 		StartExecuteDialogueRow();
 	}
@@ -659,8 +723,7 @@ void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewCon
 	{
 		DialogueContext = NewContext;
 
-		DialogueContextReplicationKey++;
-		DialogueContext->IncreaseRepKey();
+		NetPushDialogueContext();
 		
 		OnDialogueContextUpdatedEvent(DialogueContext);
 	}
@@ -782,14 +845,14 @@ bool UMounteaDialogueManager::InvokeDialogueUI_Implementation(FString& Message)
 		return false;
 	}
 	
-	APlayerController* PlayerController = UMounteaDialogueSystemBFC::FindPlayerController(GetOwner());
-	if (PlayerController == nullptr)
+	APlayerController* playerController = UMounteaDialogueSystemBFC::FindPlayerController(GetOwner());
+	if (playerController == nullptr)
 	{
 		Message = TEXT("Invalid Player Controller!");
 		return false;
 	}
 	
-	DialogueWidgetPtr = CreateWidget<UUserWidget>(PlayerController,  GetDialogueWidgetClass());
+	DialogueWidgetPtr = CreateWidget<UUserWidget>(playerController,  GetDialogueWidgetClass());
 	
 	if (DialogueWidgetPtr == nullptr)
 	{
@@ -809,13 +872,13 @@ bool UMounteaDialogueManager::InvokeDialogueUI_Implementation(FString& Message)
 		return false;
 	}
 	
-	bWasCursorVisible = PlayerController->bShowMouseCursor;
+	bWasCursorVisible = playerController->bShowMouseCursor;
 
 	// This event should be responsible for calling logic in Player Controller
 	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidgetPtr);
 	
 	// This Component should not be responsible for setting up Player Controller!
-	PlayerController->SetShowMouseCursor(true);
+	playerController->SetShowMouseCursor(true);
 	DialogueWidgetPtr->bStopAction = true;
 	
 	return Execute_UpdateDialogueUI(this, Message, MounteaDialogueWidgetCommands::CreateDialogueWidget);
@@ -844,8 +907,8 @@ bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, 
 
 bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
 {
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	if (PlayerController == nullptr)
+	APlayerController* playerController = UMounteaDialogueSystemBFC::FindPlayerController(GetOwner());
+	if (playerController == nullptr)
 	{
 		LOG_ERROR(TEXT("[CloseDialogueUI] No Player Controller Found!"))
 		return false;
@@ -857,7 +920,7 @@ bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
 		return false;
 	}
 
-	PlayerController->SetShowMouseCursor(bWasCursorVisible);
+	playerController->SetShowMouseCursor(bWasCursorVisible);
 
 	if (DialogueWidgetPtr->Implements<UMounteaDialogueWBPInterface>())
 	{
@@ -891,7 +954,6 @@ void UMounteaDialogueManager::CloseDialogueUI_Client_Implementation()
 
 void UMounteaDialogueManager::UpdateDialogueUI_Client_Implementation(const FString& Command)
 {
-	LOG_INFO(TEXT("[UPDATE UI] Command: %s"),*Command)
 	FString errorMessage;
 	if (!Execute_UpdateDialogueUI(this, errorMessage, Command))
 	{
@@ -921,19 +983,85 @@ void UMounteaDialogueManager::PostUIInitialized_Implementation()
 	Execute_PrepareNode(this);
 }
 
-void UMounteaDialogueManager::UpdateDialogueContext_Client_Implementation(UMounteaDialogueContext* NewDialogueContext)
+void UMounteaDialogueManager::UpdateDialogueContext_Client_Implementation(const FMounteaDialogueContextReplicatedStruct& NewDialogueContext)
 {
-	LOG_INFO(TEXT("[UpdateDialogueContext] Dialogue Context updated\nNew dialogue context:\n%s"), *(NewDialogueContext ?  NewDialogueContext->ToString() : TEXT("EMPTY")))
-	DialogueContext = NewDialogueContext;
+	if (NewDialogueContext.IsValid())
+	{
+		if (!DialogueContext)
+		{
+			LOG_WARNING(TEXT("[UpdateDialogueContext] No Context available, creating new local one."))
+			DialogueContext = NewObject<UMounteaDialogueContext>();
+		}
+	
+		if (DialogueContext)
+		{
+			DialogueContext->ActiveDialogueParticipant = NewDialogueContext.ActiveDialogueParticipant;
+			DialogueContext->PlayerDialogueParticipant = NewDialogueContext.PlayerDialogueParticipant;
+			DialogueContext->DialogueParticipant = NewDialogueContext.DialogueParticipant;
+			DialogueContext->DialogueParticipants = NewDialogueContext.DialogueParticipants;
+			DialogueContext->ActiveNode = NewDialogueContext.ActiveNode;
+			DialogueContext->AllowedChildNodes = NewDialogueContext.AllowedChildNodes;
+			DialogueContext->ActiveDialogueRowDataIndex = NewDialogueContext.ActiveDialogueRowDataIndex;
 
+			// Find data locally
+			DialogueContext->ActiveDialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
+		}
+	}
+	else
+	{
+		if (DialogueContext)
+		{
+			DialogueContext->MarkAsGarbage();
+			DialogueContext = nullptr;
+		}
+	}
+}
+
+
+void UMounteaDialogueManager::CallDialogueNodeSelected_Server_Implementation(const FGuid& NodeGuid)
+{
+	Execute_CallDialogueNodeSelected(this, NodeGuid);
+}
+
+void UMounteaDialogueManager::RequestVoiceStart_Client_Implementation(USoundBase* SoundBase)
+{
+	OnDialogueVoiceStartRequest.Broadcast(SoundBase);
+}
+
+void UMounteaDialogueManager::RequestVoiceStop_Client_Implementation(USoundBase* SoundBase)
+{
 	if (DialogueContext)
 	{
-		// Find data locally
-		DialogueContext->ActiveDialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
-
-		FString errorMessage;
-		//Execute_UpdateDialogueUI(this, errorMessage, DialogueContext->DialogueWidgetCommand);
+		DialogueContext->ActiveDialogueParticipant->SkipParticipantVoice(SoundBase);
 	}
+	
+	OnDialogueVoiceSkipRequestEvent(SoundBase);
+}
+
+void UMounteaDialogueManager::StartExecuteDialogueRow_Client_Implementation()
+{
+	const int32 Index = DialogueContext->GetActiveDialogueRowDataIndex();
+	const auto Row = DialogueContext->GetActiveDialogueRow();
+	const auto RowData = Row.DialogueRowData.Array()[Index];
+	
+	if (RowData.RowDurationMode != ERowDurationMode::ERDM_Manual)
+	{
+		FTimerDelegate Delegate;
+		Delegate.BindUObject(this, &UMounteaDialogueManager::FinishedExecuteDialogueRow);
+		
+		GetWorld()->GetTimerManager().SetTimer
+		(
+			TimerHandle_RowTimer,
+			Delegate,
+			UMounteaDialogueSystemBFC::GetRowDuration(RowData),
+			false
+		);
+	}
+}
+
+void UMounteaDialogueManager::FinishedExecuteDialogueRow_Server_Implementation()
+{
+	FinishedExecuteDialogueRow();
 }
 
 void UMounteaDialogueManager::OnRep_ManagerState()
@@ -954,26 +1082,37 @@ void UMounteaDialogueManager::OnRep_ManagerState()
 	}
 }
 
+/*
 void UMounteaDialogueManager::OnRep_DialogueContext()
 {
+	if (!DialogueContext)
+	{
+		LOG_WARNING(TEXT("[OnRep_DialogueContext] No Context available, creating new local one. This shout not happen!"))
+		DialogueContext = NewObject<UMounteaDialogueContext>();
+	}
+	
 	if (DialogueContext)
 	{
+		DialogueContext->ActiveDialogueParticipant = ReplicatedDialogueContext.ActiveDialogueParticipant;
+		DialogueContext->PlayerDialogueParticipant = ReplicatedDialogueContext.PlayerDialogueParticipant;
+		DialogueContext->DialogueParticipant = ReplicatedDialogueContext.DialogueParticipant;
+		DialogueContext->ActiveNode = ReplicatedDialogueContext.ActiveNode;
+		DialogueContext->AllowedChildNodes = ReplicatedDialogueContext.AllowedChildNodes;
+		DialogueContext->ActiveDialogueRowDataIndex = ReplicatedDialogueContext.ActiveDialogueRowDataIndex;
+		DialogueContext->DialogueWidgetCommand = ReplicatedDialogueContext.DialogueWidgetCommand;
+
 		// Find data locally
 		DialogueContext->ActiveDialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
-
-		LOG_WARNING(TEXT("%s"), *DialogueContext->ToString())
-
-		FString errorMessage;
-		Execute_UpdateDialogueUI(this, errorMessage, DialogueContext->DialogueWidgetCommand);
 	}
 }
+*/
 
 void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, ManagerState, COND_InitialOrOwner);
-	//DOREPLIFETIME(UMounteaDialogueManager, DialogueContext);
+	//DOREPLIFETIME(UMounteaDialogueManager, ReplicatedDialogueContext);
 }
 
 bool UMounteaDialogueManager::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
