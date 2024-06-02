@@ -21,7 +21,6 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecorator_SwapParticipants : pub
 
 public:
 
-	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager) override;
 	virtual void CleanupDecorator_Implementation() override;
 	virtual void ExecuteDecorator_Implementation() override;
 

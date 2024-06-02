@@ -28,8 +28,7 @@ class MOUNTEADIALOGUESYSTEM_API  UMounteaDialogueDecorator_OnlyFirstTime : publi
 	GENERATED_BODY()
 
 public:
-
-	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager) override;
+	
 	virtual void CleanupDecorator_Implementation() override;
 	virtual bool ValidateDecorator_Implementation(TArray<FText>& ValidationMessages) override;
 	virtual bool EvaluateDecorator_Implementation() override;

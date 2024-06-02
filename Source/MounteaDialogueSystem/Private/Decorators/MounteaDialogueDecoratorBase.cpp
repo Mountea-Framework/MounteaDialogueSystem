@@ -112,6 +112,8 @@ void UMounteaDialogueDecoratorBase::UnregisterTick_Implementation( const TScript
 void UMounteaDialogueDecoratorBase::TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime)
 {
 	DecoratorTickEvent.Broadcast(SelfRef, ParentTick, DeltaTime);
+
+	LOG_INFO(TEXT("[%s] %s"), *GetDecoratorName().ToString(), *(OwningManager != nullptr ? OwningManager.GetObject()->GetName() : TEXT("NO MANAGER")))
 }
 
 #undef LOCTEXT_NAMESPACE

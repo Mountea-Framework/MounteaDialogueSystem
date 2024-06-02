@@ -7,11 +7,6 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_SwapParticipants"
 
-void UMounteaDialogueDecorator_SwapParticipants::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
-{
-	Super::InitializeDecorator_Implementation(World, OwningParticipant, nullptr);
-}
-
 void UMounteaDialogueDecorator_SwapParticipants::CleanupDecorator_Implementation()
 {
 	Super::CleanupDecorator_Implementation();

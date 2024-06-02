@@ -236,6 +236,7 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 		}
 
 		Itr->Execute_InitializeParticipant(Itr.GetObject());
+		
 	}
 
 	if (UnavailableParticipants.Num() == AllDialogueParticipants.Num())

@@ -8,11 +8,6 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_SaveNodeAsStart"
 
-void UMounteaDialogueDecorator_SaveNodeAsStart::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
-{
-	Super::InitializeDecorator_Implementation(World, OwningParticipant, nullptr);
-}
-
 void UMounteaDialogueDecorator_SaveNodeAsStart::CleanupDecorator_Implementation()
 {
 	Super::CleanupDecorator_Implementation();

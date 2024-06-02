@@ -8,11 +8,6 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_SelectRandomDialogueRow"
 
-void UMounteaDialogueDecorator_SelectRandomDialogueRow::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
-{
-	Super::InitializeDecorator_Implementation(World, OwningParticipant, nullptr);
-}
-
 void UMounteaDialogueDecorator_SelectRandomDialogueRow::CleanupDecorator_Implementation()
 {
 	Super::CleanupDecorator_Implementation();

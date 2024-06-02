@@ -9,7 +9,7 @@
 
 void UMounteaDialogueDecorator_OverrideParticipants::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
 {
-	Super::InitializeDecorator_Implementation(World, OwningParticipant, nullptr);
+	Super::InitializeDecorator_Implementation(World, OwningParticipant, NewOwningManager);
 
 	if (World)
 	{
