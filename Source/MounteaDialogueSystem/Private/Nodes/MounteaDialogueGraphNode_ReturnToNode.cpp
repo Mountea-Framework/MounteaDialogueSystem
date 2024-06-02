@@ -9,7 +9,7 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_ReturnToNode"
 
-UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode()
+UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode() : bAutoCompleteSelectedNode(false), SelectedNode(nullptr)
 {
 #if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeTitle", "Return To Node");
@@ -42,6 +42,12 @@ void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode_Implementation(const TS
 			LOG_WARNING(TEXT("[ProcessNode - Return to Node] Updating Context"))
 			Context->SetDialogueContext(Context->DialogueParticipant, SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
 			Manager->GetDialogueNodeSelectedEventHandle().Broadcast(Context);
+
+			if (bAutoCompleteSelectedNode)
+			{
+				Manager->GetDialogueNodeFinishedEventHandle().Broadcast(Context);
+				Manager->GetDialogueVoiceSkipRequestEventHandle().Broadcast(nullptr);
+			}
 		}
 	}
 	

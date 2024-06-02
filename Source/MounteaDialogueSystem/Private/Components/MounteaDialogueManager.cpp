@@ -634,7 +634,6 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 
 	if (GetOwner() && GetOwner()->HasAuthority())
 	{
-		DialogueContext->DialogueWidgetCommand = MounteaDialogueWidgetCommands::ShowDialogueRow;
 		NetPushDialogueContext();
 		
 		StartExecuteDialogueRow_Client();
@@ -1030,7 +1029,6 @@ void UMounteaDialogueManager::UpdateDialogueContext_Client_Implementation(const 
 	}
 }
 
-
 void UMounteaDialogueManager::CallDialogueNodeSelected_Server_Implementation(const FGuid& NodeGuid)
 {
 	Execute_CallDialogueNodeSelected(this, NodeGuid);
@@ -1130,7 +1128,8 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 bool UMounteaDialogueManager::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
 	bool bUpdated = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
-	
+
+	/*
 	if (Channel->KeyNeedsToReplicate(0, DialogueContextReplicationKey))
 	{
 		if (DialogueContext && Channel->KeyNeedsToReplicate(DialogueContext->GetUniqueID(), DialogueContext->GetRepKey()))
@@ -1138,6 +1137,7 @@ bool UMounteaDialogueManager::ReplicateSubobjects(UActorChannel* Channel, FOutBu
 			bUpdated |= Channel->ReplicateSubobject(DialogueContext, *Bunch, *RepFlags);
 		}
 	}
+	*/
 
 	return bUpdated;
 }

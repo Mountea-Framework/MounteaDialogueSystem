@@ -33,6 +33,9 @@ public:
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames"))
 	FString SelectedNodeIndex;
 
+	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(EditCondition ="SelectedNode!=nullptr"))
+	uint8 bAutoCompleteSelectedNode : 1;
+
 	/**
 	 * Dialogue Node to which this Node leads to.
 	 */
