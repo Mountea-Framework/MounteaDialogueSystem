@@ -326,9 +326,9 @@ public:
 	virtual FDialogueManagerStateChanged& GetDialogueManagerStateChangedEventHandle() override
 	{ return OnDialogueManagerStateChanged; };
 	virtual FDialogueVoiceEvent& GetDialogueVoiceSkipRequestEventHandle() override
-	{ return OnDialogueVoiceStartRequest; };
-	virtual FDialogueVoiceEvent& GetDialogueVoiceStartRequestEventHandle() override
 	{ return OnDialogueVoiceSkipRequest; };
+	virtual FDialogueVoiceEvent& GetDialogueVoiceStartRequestEventHandle() override
+	{ return OnDialogueVoiceStartRequest; };
 	virtual FTimerHandle& GetDialogueRowTimerHandle() override
 	{ return TimerHandle_RowTimer; }; 
 

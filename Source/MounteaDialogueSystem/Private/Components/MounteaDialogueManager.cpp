@@ -106,8 +106,10 @@ void UMounteaDialogueManager::CallDialogueNodeSelected_Implementation(const FGui
 		OnDialogueFailed.Broadcast(TEXT("[CallDialogueNodeSelected] Cannot find Selected Option!"));
 		return;
 	}
-		
+
+	// Straight up set dialogue row from Node and index to 0
 	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, selectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(selectedNode));
+	DialogueContext->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode));
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 
 	NetPushDialogueContext();
@@ -293,6 +295,9 @@ void UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal(UMounteaDialogu
 		return;
 	}
 
+	int32 activeIndex = Context->GetActiveDialogueRowDataIndex();
+	LOG_INFO(TEXT("%d"), activeIndex)
+
 	// Let's hope we are not approaching invalid indexes
 	USoundBase* soundToStart =  Context->GetActiveDialogueRow().DialogueRowData.Array()[Context->GetActiveDialogueRowDataIndex()].RowSound;
 	
@@ -332,7 +337,7 @@ void UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal(USoundBa
 		return;
 	}
 	
-	DialogueContext->ActiveDialogueParticipant->PlayParticipantVoice(VoiceToStart);
+	DialogueContext->ActiveDialogueParticipant->Execute_PlayParticipantVoice(DialogueContext->ActiveDialogueParticipant.GetObject(), VoiceToStart);
 	OnDialogueVoiceStartRequestEvent(VoiceToStart);
 }
 
@@ -360,13 +365,17 @@ void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBas
 	{
 		if (GetOwner()->HasAuthority())
 		{
-			DialogueContext->ActiveDialogueParticipant->SkipParticipantVoice(VoiceToSkip);
+			DialogueContext->ActiveDialogueParticipant->Execute_SkipParticipantVoice(DialogueContext->ActiveDialogueParticipant.GetObject(), VoiceToSkip);
 			OnDialogueVoiceSkipRequestEvent(VoiceToSkip);
 		}
 		else
 		{
 			RequestVoiceStop_Client(VoiceToSkip);
 		}
+	}
+	else
+	{
+		RequestVoiceStop_Client(VoiceToSkip);
 	}
 	
 	FinishedExecuteDialogueRow();
@@ -1043,7 +1052,7 @@ void UMounteaDialogueManager::RequestVoiceStop_Client_Implementation(USoundBase*
 {
 	if (DialogueContext)
 	{
-		DialogueContext->ActiveDialogueParticipant->SkipParticipantVoice(SoundBase);
+		DialogueContext->ActiveDialogueParticipant->Execute_SkipParticipantVoice(DialogueContext->ActiveDialogueParticipant.GetObject(), SoundBase);
 	}
 	
 	OnDialogueVoiceSkipRequestEvent(SoundBase);

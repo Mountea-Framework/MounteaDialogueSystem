@@ -7,6 +7,7 @@
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
@@ -46,7 +47,6 @@ void UMounteaDialogueParticipant::TickComponent(float DeltaTime, ELevelTick Tick
 	}
 }
 
-
 void UMounteaDialogueParticipant::InitializeParticipant_Implementation()
 {
 	if (DialogueGraph == nullptr) return;
@@ -72,10 +72,6 @@ void UMounteaDialogueParticipant::InitializeParticipant_Implementation()
 UAudioComponent* UMounteaDialogueParticipant::FindAudioComponent() const
 {
 	if (AudioComponent != nullptr) return nullptr;
-
-	if (AudioComponentIdentification.IsNone()) return nullptr;
-
-	if (AudioComponentIdentification.IsValid() == false) return nullptr;
 	
 	if (const auto Return = FindAudioComponentByName(AudioComponentIdentification))
 	{
@@ -87,9 +83,12 @@ UAudioComponent* UMounteaDialogueParticipant::FindAudioComponent() const
 		return Return;
 	}
 
-	LOG_WARNING(TEXT("[FindAudioComponent] No Audio Component found with by %s"), *AudioComponentIdentification.ToString())
-	
-	return nullptr;
+	LOG_WARNING(TEXT("[FindAudioComponent] No Audio Component found with by Identifiication (%s)\nFirst Audio Component will be used instead. To override this behaviour implement 'FindAudioComponent' event."), *AudioComponentIdentification.ToString())
+
+	if (!GetOwner()) return nullptr;
+
+	UAudioComponent* firstFoundAudioComp = GetOwner()->FindComponentByClass<UAudioComponent>();
+	return firstFoundAudioComp;
 }
 
 UAudioComponent* UMounteaDialogueParticipant::FindAudioComponentByName(const FName& Arg) const
@@ -106,7 +105,7 @@ UAudioComponent* UMounteaDialogueParticipant::FindAudioComponentByTag(const FNam
 	return UMounteaDialogueSystemBFC::FindAudioComponentByTag(GetOwner(), Arg);
 }
 
-void UMounteaDialogueParticipant::PlayParticipantVoice(USoundBase* ParticipantVoice)
+void UMounteaDialogueParticipant::PlayParticipantVoice_Implementation(USoundBase* ParticipantVoice)
 {
 	// Audio is cosmetic -> Do not play on Dedicated server!
 	if(!UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
@@ -120,9 +119,13 @@ void UMounteaDialogueParticipant::PlayParticipantVoice(USoundBase* ParticipantVo
 		AudioComponent->SetSound(ParticipantVoice);
 		AudioComponent->Play();
 	}
+	else
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetOwner(), ParticipantVoice, GetOwner()->GetActorLocation(), GetOwner()->GetActorRotation());
+	}
 }
 
-void UMounteaDialogueParticipant::SkipParticipantVoice(USoundBase* ParticipantVoice)
+void UMounteaDialogueParticipant::SkipParticipantVoice_Implementation(USoundBase* ParticipantVoice)
 {
 	if(!UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
 	{
@@ -242,6 +245,10 @@ void UMounteaDialogueParticipant::SetAudioComponent(UAudioComponent* NewAudioCom
 	}
 	else
 	{
+		AudioComponent = NewAudioComponent;
+
+		OnAudioComponentChanged.Broadcast(AudioComponent);
+		
 		SetAudioComponent_Server(NewAudioComponent);
 	}
 }

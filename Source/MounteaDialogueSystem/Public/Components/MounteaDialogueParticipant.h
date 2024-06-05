@@ -63,19 +63,10 @@ public:
  	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	UAudioComponent* FindAudioComponentByTag(const FName& Arg) const;
-
-	/**
-	 * Plays the given participant voice sound.
-	 * @param ParticipantVoice The sound to play.
-	 * ❗ The sound should be a valid USoundBase object, otherwise nothing will be played.
-	 */ 
-	virtual void PlayParticipantVoice(USoundBase* ParticipantVoice) override;
-	/**
-	 * Skips the given participant voice sound.
-	 * @param ParticipantVoice The sound to skip.
-	 * ❗ The sound should be a valid USoundBase object, otherwise nothing will be skipped.
-	 */ 
-	virtual  void SkipParticipantVoice(USoundBase* ParticipantVoice) override;
+	
+	virtual void PlayParticipantVoice_Implementation(USoundBase* ParticipantVoice) override;
+	
+	virtual  void SkipParticipantVoice_Implementation(USoundBase* ParticipantVoice) override;
 
 protected:
 

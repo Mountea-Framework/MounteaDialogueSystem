@@ -106,6 +106,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	void SaveStartingNode(UMounteaDialogueGraphNode* NewStartingNode);
+	
 	/**
 	 * Saves the traversed path for this Dialogue Participant Component.
 	 * This function is called once Dialogue ends and is updated from Dialogue Context.
@@ -125,15 +126,35 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	EDialogueParticipantState GetState() const;
 
+	/**
+	 * Getter for Participant Gameplay Tag.
+	 * @return Participant Gameplay Tag if any is associated.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	FGameplayTag GetTag() const;
-
+	
 	/**
 	 * Helps initialize Participant.
 	 * ❔ Is being called in BeginPlay.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue")
 	void InitializeParticipant();
+
+	/**
+	 * Plays the given participant voice sound.
+	 * @param ParticipantVoice The sound to play.
+	 * ❗ The sound should be a valid USoundBase object, otherwise nothing will be played.
+	 */ 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	void PlayParticipantVoice(USoundBase* ParticipantVoice);
+
+	/**
+	 * Skips the given participant voice sound.
+	 * @param ParticipantVoice The sound to skip.
+	 * ❗ The sound should be a valid USoundBase object, otherwise nothing will be skipped.
+	 */ 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	void SkipParticipantVoice(USoundBase* ParticipantVoice);
 	
 #pragma endregion
 
@@ -146,20 +167,11 @@ public:
 		return CanStartDialogue();
 	};
 
-	virtual void SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode)
-	{
-		//Implement logic in child Blueprints
-	}
+	virtual void SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode) = 0;
 
-	virtual AActor* GetOwningActor_Implementation() const
-	{
-		return nullptr;
-	};
+	virtual AActor* GetOwningActor_Implementation() const = 0;
 
-	virtual void SaveTraversedPath_Implementation(TArray<FDialogueTraversePath>& InPath)
-	{
-		// Implement logic in children
-	};
+	virtual void SaveTraversedPath_Implementation(TArray<FDialogueTraversePath>& InPath) = 0;
 
 	EDialogueParticipantState GetState_Implementation() const
 	{ return GetParticipantState(); };
@@ -194,13 +206,13 @@ public:
 	 *
 	 * @param ParticipantVoice The sound to play as the voice of this dialogue participant
 	 */
-	virtual void PlayParticipantVoice(USoundBase* ParticipantVoice) = 0;
+	virtual void PlayParticipantVoice_Implementation(USoundBase* ParticipantVoice) = 0;
 	/**
 	 * Tries to skip the specified sound this participant is playing as voice.
 	 *
 	 * @param ParticipantVoice The sound to skip this participant is playing as voice.
 	 */
-	virtual void SkipParticipantVoice(USoundBase* ParticipantVoice) = 0;
+	virtual void SkipParticipantVoice_Implementation(USoundBase* ParticipantVoice) = 0;
 
 	/**
 	 * Returns the dialogue graph assigned to this Participant.
