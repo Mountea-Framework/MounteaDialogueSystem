@@ -41,7 +41,13 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Impleme
 	if (!Context) Context = OwningManager->GetDialogueContext();
 	if (!Context)
 	{
-		LOG_ERROR(TEXT("[ExecuteDecorator] %s Has no Context!\nExecution is skipped."), *(GetDecoratorName().ToString()))
+		LOG_ERROR(TEXT("[ExecuteDecorator] %s Has no Context!\nExecution is skipped."), *(GetDecoratorName().ToString()));
+		return;
+	}
+	
+	if (Context->GetActiveDialogueRow().DialogueRowData.Num() == 0)
+	{
+		LOG_WARNING(TEXT("[ExecuteDecorator] %s DialogueRowData is empty!\nExecution is skipped."), *(GetDecoratorName().ToString()));
 		return;
 	}
 	
@@ -65,5 +71,6 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Impleme
 
 	Context->UpdateActiveDialogueRowDataIndex(Range);
 }
+
 
 #undef LOCTEXT_NAMESPACE
