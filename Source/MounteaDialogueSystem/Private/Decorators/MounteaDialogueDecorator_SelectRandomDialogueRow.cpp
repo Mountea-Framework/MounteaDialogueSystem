@@ -4,6 +4,7 @@
 #include "Decorators/MounteaDialogueDecorator_SelectRandomDialogueRow.h"
 
 #include "Data/MounteaDialogueContext.h"
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_SelectRandomDialogueRow"
@@ -38,7 +39,12 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Impleme
 
 	if (!OwningManager) return;
 	if (!Context) Context = OwningManager->GetDialogueContext();
-
+	if (!Context)
+	{
+		LOG_ERROR(TEXT("[ExecuteDecorator] %s Has no Context!\nExecution is skipped."), *(GetDecoratorName().ToString()))
+		return;
+	}
+	
 	FIntPoint ClampedRange;
 	if (RandomRange.X > RandomRange.Y)
 	{
@@ -50,7 +56,7 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Impleme
 		ClampedRange = RandomRange;
 	}
 
-	const int32 MaxValue = Context->GetActiveDialogueRow().DialogueRowData.Num();
+	const int32 MaxValue = Context->GetActiveDialogueRow().DialogueRowData.Num() - 1;
 	const int32 Range = FMath::RandRange
 	(
 		FMath::Max(0, ClampedRange.X),
