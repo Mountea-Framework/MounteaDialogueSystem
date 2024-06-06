@@ -24,4 +24,3 @@ UKismetSystemLibrary::PrintString(GWorld, FString::Printf(Format, ##__VA_ARGS__)
 UE_LOG(LogMounteaDialogueSystem, Error, Format, ##__VA_ARGS__); \
 UKismetSystemLibrary::PrintString(GWorld, FString::Printf(Format, ##__VA_ARGS__), true, true, FLinearColor(1.0f, 0.0f, 0.0f), 15.0f); \
 }
-

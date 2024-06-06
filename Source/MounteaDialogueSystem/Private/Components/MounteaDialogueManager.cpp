@@ -177,6 +177,8 @@ void UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal(UMounteaDialo
 	OnDialogueNodeSelectedEvent(Context);
 
 	NetPushDialogueContext();
+
+	LOG_INFO(TEXT("[OnDialogueNodeSelectedEvent] Node Selected: %s"), *Context->GetActiveNode()->GetNodeTitle().ToString())
 	
 	if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
 	{
@@ -243,14 +245,14 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 	
 	if (bAutoActive)
 	{
-		const auto NewActiveNode = allowedChildrenNodes[0];
+		const auto newActiveNode = allowedChildrenNodes[0];
 
-		if (!NewActiveNode)
+		if (!newActiveNode)
 		{
 			OnDialogueClosed.Broadcast(DialogueContext);	
 		}
 		
-		DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, NewActiveNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(NewActiveNode));
+		DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, newActiveNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(newActiveNode));
 		
 		OnDialogueNodeSelected.Broadcast(DialogueContext);
 
@@ -296,7 +298,6 @@ void UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal(UMounteaDialogu
 	}
 
 	int32 activeIndex = Context->GetActiveDialogueRowDataIndex();
-	LOG_INFO(TEXT("%d"), activeIndex)
 
 	// Let's hope we are not approaching invalid indexes
 	USoundBase* soundToStart =  Context->GetActiveDialogueRow().DialogueRowData.Array()[Context->GetActiveDialogueRowDataIndex()].RowSound;

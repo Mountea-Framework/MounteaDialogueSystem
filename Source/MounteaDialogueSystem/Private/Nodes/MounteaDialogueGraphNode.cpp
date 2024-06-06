@@ -3,6 +3,7 @@
 #include "Nodes/MounteaDialogueGraphNode.h"
 
 #include "Graph/MounteaDialogueGraph.h"
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueNode"

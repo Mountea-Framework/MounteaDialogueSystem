@@ -40,6 +40,7 @@ void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode_Implementation(const TS
 		if (const auto Context = Manager->GetDialogueContext())
 		{
 			LOG_WARNING(TEXT("[ProcessNode - Return to Node] Updating Context"))
+			
 			Context->SetDialogueContext(Context->DialogueParticipant, SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
 			Manager->GetDialogueNodeSelectedEventHandle().Broadcast(Context);
 

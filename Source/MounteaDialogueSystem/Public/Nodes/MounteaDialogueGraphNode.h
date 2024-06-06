@@ -348,11 +348,7 @@ public:
 	// Defines whether this Node can be manually created
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowManualCreate;
-
-	// Display title of the Node
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
-	FText NodeTitle;
-
+	
 	// Display name of the Node menu category
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText ContextMenuName;
@@ -375,6 +371,10 @@ public:
 
 #endif
 
+	// Display title of the Node
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	FText NodeTitle;
+
 #if WITH_EDITOR
 
 	/**
@@ -385,16 +385,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetNodeTooltipText() const;
 	virtual FText GetNodeTooltipText_Implementation() const;
-
-	/**
-	 * Returns the Title text for this graph node.
-	 *
-	 * @return The Title text for this node.
-	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
-	FText GetNodeTitle() const;
-	virtual FText GetNodeTitle_Implementation() const;
-
+	
 	/**
 	 * Returns the Description text for this graph node.
 	 *
@@ -450,4 +441,21 @@ public:
 
 #endif
 
+	/**
+	 * Returns the Title text for this graph node.
+	 *
+	 * @return The Title text for this node.
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	FText GetNodeTitle() const;
+	virtual FText GetNodeTitle_Implementation() const;
+
+private:
+
+	virtual  bool IsSupportedForNetworking() const override
+	{ return true; }
+	virtual bool IsNameStableForNetworking() const override
+	{ return true; };
+	virtual bool IsFullNameStableForNetworking() const override
+	{ return true; };
 };
