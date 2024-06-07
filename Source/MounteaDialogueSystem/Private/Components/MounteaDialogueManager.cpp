@@ -1021,9 +1021,11 @@ void UMounteaDialogueManager::UpdateDialogueContext_Client_Implementation(const 
 			DialogueContext->PlayerDialogueParticipant = NewDialogueContext.PlayerDialogueParticipant;
 			DialogueContext->DialogueParticipant = NewDialogueContext.DialogueParticipant;
 			DialogueContext->DialogueParticipants = NewDialogueContext.DialogueParticipants;
-			DialogueContext->ActiveNode = NewDialogueContext.ActiveNode;
 			DialogueContext->AllowedChildNodes = NewDialogueContext.AllowedChildNodes;
 			DialogueContext->ActiveDialogueRowDataIndex = NewDialogueContext.ActiveDialogueRowDataIndex;
+
+			// Find Active Node
+			DialogueContext->ActiveNode = UMounteaDialogueSystemBFC::FindNodeByGUID(DialogueContext->DialogueParticipant->GetDialogueGraph(), NewDialogueContext.ActiveNodeGuid);
 
 			// Find data locally
 			DialogueContext->ActiveDialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);

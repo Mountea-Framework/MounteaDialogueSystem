@@ -622,15 +622,40 @@ TArray<UMounteaDialogueGraphNode*> UMounteaDialogueSystemBFC::GetAllowedChildNod
 
 FDialogueRow UMounteaDialogueSystemBFC::GetDialogueRow(const UMounteaDialogueGraphNode* Node)
 {
+	if (!Node)
+	{
+		LOG_ERROR(TEXT("[GetDialogueRow] Invalid Node input!"))
+		return FDialogueRow();
+	}
 	const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNodeBase = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node);
 		
-	if (!DialogueNodeBase) return FDialogueRow();
-	if (DialogueNodeBase->GetDataTable() == nullptr) return FDialogueRow();
-	if (DialogueNodeBase->GetDataTable()->RowStruct->IsChildOf(FDialogueRow::StaticStruct()) == false) return FDialogueRow();
+	if (!DialogueNodeBase)
+	{
+		LOG_ERROR(TEXT("[GetDialogueRow] Invalid Dialogue Node input!"))
+		return FDialogueRow();
+	}
+	if (DialogueNodeBase->GetDataTable() == nullptr)
+	{
+		LOG_ERROR(TEXT("[GetDialogueRow] Node %s has empty Data Table!"), *DialogueNodeBase->GetNodeTitle().ToString())
+		return FDialogueRow();
+	}
+	if (DialogueNodeBase->GetDataTable()->RowStruct->IsChildOf(FDialogueRow::StaticStruct()) == false)
+	{
+		LOG_ERROR(TEXT("[GetDialogueRow] Node %s has invalid Data Table data!"), *DialogueNodeBase->GetNodeTitle().ToString())
+		return FDialogueRow();
+	}
 
 	const FDialogueRow* Row = DialogueNodeBase->GetDataTable()->FindRow<FDialogueRow>(DialogueNodeBase->GetRowName(), FString("") );
-	if (!Row) return FDialogueRow();
-	if (IsDialogueRowValid(*Row) == false) return FDialogueRow();
+	if (!Row)
+	{
+		LOG_WARNING(TEXT("[GetDialogueRow] Node %s has no Row Data by ID: %s!"), *DialogueNodeBase->GetNodeTitle().ToString(), *DialogueNodeBase->GetRowName().ToString())
+		return FDialogueRow();
+	}
+	if (IsDialogueRowValid(*Row) == false)
+	{
+		LOG_ERROR(TEXT("[GetDialogueRow] Node %s has invalid Dialogue Row %s"), *DialogueNodeBase->GetNodeTitle().ToString(), *DialogueNodeBase->GetRowName().ToString())
+		return FDialogueRow();
+	}
 
 	return *Row;
 }

@@ -29,7 +29,7 @@ FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct
 	: ActiveDialogueParticipant(nullptr)
 	, PlayerDialogueParticipant(nullptr)
 	, DialogueParticipant(nullptr)
-	, ActiveNode(nullptr)
+	, ActiveNodeGuid(FGuid())
 	, AllowedChildNodes(TArray<TObjectPtr<UMounteaDialogueGraphNode>>())
 	, ActiveDialogueRowDataIndex(0)
 {}
@@ -39,7 +39,7 @@ FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct
 	, PlayerDialogueParticipant(Source ? Source->PlayerDialogueParticipant : nullptr)
 	, DialogueParticipant(Source ? Source->DialogueParticipant : nullptr)
 	, DialogueParticipants(Source ? Source->DialogueParticipants : TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>())
-	, ActiveNode(Source ? Source->ActiveNode : nullptr)
+	, ActiveNodeGuid(Source ? ( Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid() ) : FGuid())
 	, AllowedChildNodes(Source ? Source->AllowedChildNodes : TArray<TObjectPtr<UMounteaDialogueGraphNode>>())
 	, ActiveDialogueRowDataIndex(Source ? Source->ActiveDialogueRowDataIndex : 0)
 {
@@ -55,12 +55,12 @@ void FMounteaDialogueContextReplicatedStruct::SetData(UMounteaDialogueContext* S
 	DialogueParticipant = Source->DialogueParticipant;
 	DialogueParticipants = Source->DialogueParticipants;
 	ActiveDialogueRowDataIndex = Source->ActiveDialogueRowDataIndex;
-	ActiveNode = Source->ActiveNode;
+	ActiveNodeGuid = Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid();
 	AllowedChildNodes = Source->AllowedChildNodes;
 	ActiveDialogueRowDataIndex = Source->ActiveDialogueRowDataIndex;
 }
 
 bool FMounteaDialogueContextReplicatedStruct::IsValid() const
 {
-	return PlayerDialogueParticipant != nullptr && DialogueParticipant != nullptr && ActiveNode != nullptr && DialogueParticipants.Num() != 0;
+	return PlayerDialogueParticipant != nullptr && DialogueParticipant != nullptr && ActiveNodeGuid.IsValid() && DialogueParticipants.Num() != 0;
 }

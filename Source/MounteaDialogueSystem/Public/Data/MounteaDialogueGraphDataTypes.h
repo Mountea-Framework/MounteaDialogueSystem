@@ -446,7 +446,7 @@ struct FMounteaDialogueContextReplicatedStruct
 	UPROPERTY()
 	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipants;
 	UPROPERTY()
-	TObjectPtr<UMounteaDialogueGraphNode> ActiveNode = nullptr;
+	FGuid ActiveNodeGuid;
 	UPROPERTY()
 	TArray<TObjectPtr<UMounteaDialogueGraphNode>> AllowedChildNodes;
 	UPROPERTY()
