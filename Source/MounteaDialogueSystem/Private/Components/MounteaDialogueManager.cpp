@@ -187,11 +187,6 @@ void UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal(UMounteaDialo
 			FString resultMessage;
 			Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::RemoveDialogueOptions);
 		}
-		else
-		{
-			UpdateDialogueContext_Client(FMounteaDialogueContextReplicatedStruct(DialogueContext));
-			UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::RemoveDialogueOptions);
-		}
 	}
 	else
 	{
@@ -309,10 +304,6 @@ void UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal(UMounteaDialogu
 		{
 			OnDialogueVoiceStartRequest.Broadcast(soundToStart);
 		}
-		else
-		{
-			RequestVoiceStart_Client(soundToStart);
-		}
 	}
 	else
 	{
@@ -369,10 +360,6 @@ void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBas
 		{
 			DialogueContext->ActiveDialogueParticipant->Execute_SkipParticipantVoice(DialogueContext->ActiveDialogueParticipant.GetObject(), VoiceToSkip);
 			OnDialogueVoiceSkipRequestEvent(VoiceToSkip);
-		}
-		else
-		{
-			RequestVoiceStop_Client(VoiceToSkip);
 		}
 	}
 	else
@@ -520,16 +507,6 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 		if (GetOwner()->HasAuthority())
 		{
 			Execute_CloseDialogueUI(this);
-		}
-		else
-		{
-			if (DialogueWidgetPtr)
-			{
-				DialogueWidgetPtr->RemoveFromParent();
-				DialogueWidgetPtr = nullptr;
-			}
-			UpdateDialogueContext_Client(FMounteaDialogueContextReplicatedStruct(nullptr));
-			CloseDialogueUI_Client();
 		}
 	}
 	else
@@ -682,11 +659,6 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 		{
 			FString resultMessage;
 			Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::ShowDialogueRow);
-		}
-		else
-		{
-			UpdateDialogueContext_Client(FMounteaDialogueContextReplicatedStruct(DialogueContext));
-			UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::ShowDialogueRow);
 		}
 	}
 	else
