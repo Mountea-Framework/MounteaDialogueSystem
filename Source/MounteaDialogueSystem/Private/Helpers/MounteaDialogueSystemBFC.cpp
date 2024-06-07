@@ -13,6 +13,7 @@
 #include "Components/AudioComponent.h"
 #include "Data/MounteaDialogueContext.h"
 #include "GameFramework/PlayerState.h"
+#include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 #include "Sound/SoundBase.h"
 
 bool UMounteaDialogueSystemBFC::IsEditor()
@@ -579,6 +580,31 @@ UMounteaDialogueGraphNode* UMounteaDialogueSystemBFC::FindNodeByGUID(const UMoun
 	return nullptr;
 }
 
+TArray<UMounteaDialogueGraphNode*> UMounteaDialogueSystemBFC::FindNodesByGUID(const UMounteaDialogueGraph* FromGraph, const TArray<FGuid> Guids)
+{
+	TArray<UMounteaDialogueGraphNode*> resultArray;
+	for (const auto& Itr : Guids)
+	{
+		if (auto foundNode = FindNodeByGUID(FromGraph, Itr))
+		{
+			resultArray.Add(foundNode);
+		}
+	}
+
+	return resultArray;
+}
+
+TArray<FGuid> UMounteaDialogueSystemBFC::NodesToGuids(TArray<UMounteaDialogueGraphNode*> Nodes)
+{
+	TArray<FGuid> resultArray;
+	for (const auto& Itr : Nodes)
+	{
+		if (Itr) resultArray.Add(Itr->GetNodeGUID());
+	}
+
+	return resultArray;
+}
+
 UMounteaDialogueGraphNode* UMounteaDialogueSystemBFC::GetChildrenNodeFromIndex(const int32 Index, const UMounteaDialogueGraphNode* ParentNode)
 {
 	if (ParentNode->GetChildrenNodes().IsValidIndex(Index))
@@ -791,4 +817,25 @@ APlayerController* UMounteaDialogueSystemBFC::FindPlayerController(AActor* ForAc
 	}
 	
 	return nullptr;
+}
+
+bool UMounteaDialogueSystemBFC::DoesNodeInvertSkipSettings(UMounteaDialogueGraphNode* Node)
+{
+	return Node ? Node->bInvertSkipRowSetting : false;
+}
+
+bool UMounteaDialogueSystemBFC::DoesPreviousNodeSkipActiveNode(const UMounteaDialogueGraph* ParentGraph, const FGuid PreviousNode)
+{
+	if (!ParentGraph) return false;
+
+	UMounteaDialogueGraphNode* tempNode = FindNodeByGUID(ParentGraph, PreviousNode);
+
+	if (tempNode == nullptr) return false;
+
+	if (const UMounteaDialogueGraphNode_ReturnToNode* returnNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(tempNode))
+	{
+		return returnNode->bAutoCompleteSelectedNode;
+	}
+	
+	return false;
 }

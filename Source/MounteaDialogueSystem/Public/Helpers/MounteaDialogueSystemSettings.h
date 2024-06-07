@@ -49,6 +49,13 @@ protected:
 	EInputMode InputMode;
 
 	/**
+	 * Defines whether whole Dialogue Row is skipped when audio skip is requested.
+	 * This setting defines behaviour for all Nodes. Each Node allows different behaviour, so in special cases Node inversion can be used.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "Audio")
+	uint8 bSkipRowWithAudioSkip : 1;
+
+	/**
 	 * Defines coefficient of speed per 100 characters for `Automatic` `RowDurationMode`.
 	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "UserInterface")
@@ -133,6 +140,16 @@ public:
 		return  DefaultDialogueWidgetClass;
 	}
 
+	/**
+	 * 
+	 * @return True if skipping finishes the whole row, False if only skips audio.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	bool CanSkipWholeRow() const
+	{
+		return bSkipRowWithAudioSkip;
+	}
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	EInputMode GetDialogueInputMode() const
 	{ return InputMode; };

@@ -202,6 +202,7 @@ void UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal(UMounteaDialo
 	Execute_PrepareNode(this);
 }
 
+// TODO: Implement NODE STATE for easier State Machine transitions (to avoid starting 1 node multiple times etc.)
 void UMounteaDialogueManager::OnDialogueNodeStartedEvent_Internal(UMounteaDialogueContext* Context)
 {
 	if (!DialogueContext)
@@ -209,10 +210,10 @@ void UMounteaDialogueManager::OnDialogueNodeStartedEvent_Internal(UMounteaDialog
 		OnDialogueFailed.Broadcast(TEXT("Invalid Dialogue Context!"));
 		return;
 	}
-
-	StartExecuteDialogueRow();
 	
 	OnDialogueNodeStartedEvent(Context);
+	
+	StartExecuteDialogueRow();
 }
 
 void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialogueContext* Context)
@@ -378,7 +379,27 @@ void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBas
 	{
 		RequestVoiceStop_Client(VoiceToSkip);
 	}
-	
+
+	/*
+	if (auto dialogueSettings = UMounteaDialogueSystemBFC::GetDialogueSystemSettings())
+	{
+		bool bCanSkipRow = dialogueSettings->CanSkipWholeRow();
+		bool bNodeInversion = UMounteaDialogueSystemBFC::DoesNodeInvertSkipSettings(DialogueContext->ActiveNode);
+		bool finalValue = bCanSkipRow != bNodeInversion;
+
+		if (!finalValue)
+		{
+			return;
+		}
+	}
+	*/
+
+	// This is brute force that I want to change in next big update, sorry for this.
+	if (UMounteaDialogueSystemBFC::DoesPreviousNodeSkipActiveNode(DialogueContext->DialogueParticipant->GetDialogueGraph(), DialogueContext->PreviousActiveNode))
+	{
+		return;
+	}
+
 	FinishedExecuteDialogueRow();
 }
 
@@ -672,6 +693,14 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 	{
 		UpdateDialogueContext_Client(FMounteaDialogueContextReplicatedStruct(DialogueContext));
 		UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::ShowDialogueRow);
+	}
+
+	if (DialogueContext->DialogueParticipant)
+	{
+		if (UMounteaDialogueSystemBFC::DoesPreviousNodeSkipActiveNode(DialogueContext->DialogueParticipant->GetDialogueGraph(), DialogueContext->PreviousActiveNode))
+		{
+			return;
+		}
 	}
 
 	OnDialogueRowStarted.Broadcast(DialogueContext);
@@ -1021,11 +1050,16 @@ void UMounteaDialogueManager::UpdateDialogueContext_Client_Implementation(const 
 			DialogueContext->PlayerDialogueParticipant = NewDialogueContext.PlayerDialogueParticipant;
 			DialogueContext->DialogueParticipant = NewDialogueContext.DialogueParticipant;
 			DialogueContext->DialogueParticipants = NewDialogueContext.DialogueParticipants;
-			DialogueContext->AllowedChildNodes = NewDialogueContext.AllowedChildNodes;
 			DialogueContext->ActiveDialogueRowDataIndex = NewDialogueContext.ActiveDialogueRowDataIndex;
 
 			// Find Active Node
 			DialogueContext->ActiveNode = UMounteaDialogueSystemBFC::FindNodeByGUID(DialogueContext->DialogueParticipant->GetDialogueGraph(), NewDialogueContext.ActiveNodeGuid);
+
+			// Find child Nodes
+			DialogueContext->AllowedChildNodes = UMounteaDialogueSystemBFC::FindNodesByGUID(DialogueContext->DialogueParticipant->GetDialogueGraph(), NewDialogueContext.AllowedChildNodes);
+
+			// Find Previous Active Node
+			DialogueContext->PreviousActiveNode = NewDialogueContext.PreviousActiveNodeGuid;
 
 			// Find data locally
 			DialogueContext->ActiveDialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
@@ -1066,6 +1100,16 @@ void UMounteaDialogueManager::StartExecuteDialogueRow_Client_Implementation()
 	const int32 Index = DialogueContext->GetActiveDialogueRowDataIndex();
 	const auto Row = DialogueContext->GetActiveDialogueRow();
 	const auto RowData = Row.DialogueRowData.Array()[Index];
+	
+	if (DialogueContext->DialogueParticipant)
+	{
+		if (UMounteaDialogueSystemBFC::DoesPreviousNodeSkipActiveNode(DialogueContext->DialogueParticipant->GetDialogueGraph(), DialogueContext->PreviousActiveNode))
+		{
+			FinishedExecuteDialogueRow();
+
+			return;
+		}
+	}
 	
 	if (RowData.RowDurationMode != ERowDurationMode::ERDM_Manual)
 	{

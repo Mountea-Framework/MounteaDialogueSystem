@@ -3,6 +3,7 @@
 #include "Graph/MounteaDialogueGraph.h"
 
 #include "Edges/MounteaDialogueGraphEdge.h"
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 

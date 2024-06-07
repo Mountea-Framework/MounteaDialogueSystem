@@ -118,8 +118,6 @@ void UMounteaDialogueParticipant::PlayParticipantVoice_Implementation(USoundBase
 	{
 		AudioComponent->SetSound(ParticipantVoice);
 		AudioComponent->Play();
-
-		LOG_ERROR(TEXT("Playing Audio %s"), *FDateTime::Now().ToString())
 	}
 	else
 	{
@@ -139,8 +137,6 @@ void UMounteaDialogueParticipant::SkipParticipantVoice_Implementation(USoundBase
 	{
 		AudioComponent->StopDelayed(UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->GetSkipFadeDuration());
 		AudioComponent->SetSound(nullptr);
-
-		LOG_ERROR(TEXT("Stopped Audio %s"), *FDateTime::Now().ToString())
 	}
 }
 

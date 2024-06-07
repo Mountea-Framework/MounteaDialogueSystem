@@ -113,6 +113,13 @@ public:
 	uint8 bInheritGraphDecorators : 1;
 
 	/**
+	 * Provides a node-based inversion of global skip settings.
+	 * If global settings are changed, inversion behaviour stays the same, so keep this in mined when changing this setting for nodes!
+	 */
+	UPROPERTY(SaveGame, EditDefaultsOnly, BlueprintReadOnly, Category="Base")
+	uint8 bInvertSkipRowSetting : 1;
+
+	/**
 	 * A list of Decorators that can help out with enhancing the Dialogue flow.
 	 * Those Decorators are instanced and exist only as "triggers".
 	 * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.

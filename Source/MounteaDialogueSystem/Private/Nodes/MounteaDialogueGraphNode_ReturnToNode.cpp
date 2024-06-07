@@ -42,11 +42,14 @@ void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode_Implementation(const TS
 			LOG_WARNING(TEXT("[ProcessNode - Return to Node] Updating Context"))
 			
 			Context->SetDialogueContext(Context->DialogueParticipant, SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
-			Manager->GetDialogueNodeSelectedEventHandle().Broadcast(Context);
+
+			Context->ActiveDialogueRowDataIndex = 	UMounteaDialogueSystemBFC::GetDialogueRow(SelectedNode).DialogueRowData.Num() - 1; // Force-set the last row
+			
+			Manager->GetDialogueNodeSelectedEventHandle().Broadcast(Context);	
 
 			if (bAutoCompleteSelectedNode)
 			{
-				Manager->GetDialogueNodeFinishedEventHandle().Broadcast(Context);
+				//Manager->GetDialogueNodeFinishedEventHandle().Broadcast(Context);
 				Manager->GetDialogueVoiceSkipRequestEventHandle().Broadcast(nullptr);
 			}
 		}

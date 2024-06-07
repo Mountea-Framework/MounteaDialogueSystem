@@ -448,7 +448,9 @@ struct FMounteaDialogueContextReplicatedStruct
 	UPROPERTY()
 	FGuid ActiveNodeGuid;
 	UPROPERTY()
-	TArray<TObjectPtr<UMounteaDialogueGraphNode>> AllowedChildNodes;
+	FGuid PreviousActiveNodeGuid;
+	UPROPERTY()
+	TArray<FGuid> AllowedChildNodes;
 	UPROPERTY()
 	int32 ActiveDialogueRowDataIndex = 0;
 

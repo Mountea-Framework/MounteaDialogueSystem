@@ -4,6 +4,7 @@
 #include "Data/MounteaDialogueGraphDataTypes.h"
 
 #include "Data/MounteaDialogueContext.h"
+#include "Helpers/MounteaDialogueSystemBFC.h"
 
 /* Serialization is not needed, data can be found locally for Clients -> saving bandwith as well
 void FDialogueRow::SerializeDialogueRowData()
@@ -30,7 +31,8 @@ FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct
 	, PlayerDialogueParticipant(nullptr)
 	, DialogueParticipant(nullptr)
 	, ActiveNodeGuid(FGuid())
-	, AllowedChildNodes(TArray<TObjectPtr<UMounteaDialogueGraphNode>>())
+	, PreviousActiveNodeGuid(FGuid())
+	, AllowedChildNodes(TArray<FGuid>())
 	, ActiveDialogueRowDataIndex(0)
 {}
 
@@ -40,7 +42,8 @@ FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct
 	, DialogueParticipant(Source ? Source->DialogueParticipant : nullptr)
 	, DialogueParticipants(Source ? Source->DialogueParticipants : TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>())
 	, ActiveNodeGuid(Source ? ( Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid() ) : FGuid())
-	, AllowedChildNodes(Source ? Source->AllowedChildNodes : TArray<TObjectPtr<UMounteaDialogueGraphNode>>())
+	, PreviousActiveNodeGuid( Source ? Source->PreviousActiveNode : FGuid() )
+	, AllowedChildNodes(Source ? UMounteaDialogueSystemBFC::NodesToGuids(Source->AllowedChildNodes) : TArray<FGuid>())
 	, ActiveDialogueRowDataIndex(Source ? Source->ActiveDialogueRowDataIndex : 0)
 {
 }
@@ -56,7 +59,8 @@ void FMounteaDialogueContextReplicatedStruct::SetData(UMounteaDialogueContext* S
 	DialogueParticipants = Source->DialogueParticipants;
 	ActiveDialogueRowDataIndex = Source->ActiveDialogueRowDataIndex;
 	ActiveNodeGuid = Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid();
-	AllowedChildNodes = Source->AllowedChildNodes;
+	PreviousActiveNodeGuid = Source ? Source->PreviousActiveNode : FGuid();
+	AllowedChildNodes = UMounteaDialogueSystemBFC::NodesToGuids(Source->AllowedChildNodes);
 	ActiveDialogueRowDataIndex = Source->ActiveDialogueRowDataIndex;
 }
 

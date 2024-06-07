@@ -149,8 +149,8 @@ public:
 	void PlayParticipantVoice(USoundBase* ParticipantVoice);
 
 	/**
-	 * Skips the given participant voice sound.
-	 * @param ParticipantVoice The sound to skip.
+	 * Skips the given participant voice sound and whole row. Will automatically start new Row if any is available.
+	 * @param ParticipantVoice The sound to skip. Can be left empty.
 	 * ❗ The sound should be a valid USoundBase object, otherwise nothing will be skipped.
 	 */ 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
@@ -213,7 +213,7 @@ public:
 	 * @param ParticipantVoice The sound to skip this participant is playing as voice.
 	 */
 	virtual void SkipParticipantVoice_Implementation(USoundBase* ParticipantVoice) = 0;
-
+	
 	/**
 	 * Returns the dialogue graph assigned to this Participant.
 	 * ❔ Could be updated using 'SetDialogueGraph', providing ability to swith Dialogue graphs on fly

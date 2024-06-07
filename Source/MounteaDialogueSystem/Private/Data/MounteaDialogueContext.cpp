@@ -52,6 +52,12 @@ bool UMounteaDialogueContext::IsValid() const
 void UMounteaDialogueContext::SetDialogueContext(const TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant, UMounteaDialogueGraphNode* NewActiveNode, const TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes)
 {
 	DialogueParticipant = NewParticipant;
+	
+	if (ActiveNode && ActiveNode->GetNodeGUID() != PreviousActiveNode)
+	{
+		PreviousActiveNode = ActiveNode->GetNodeGUID();
+	}
+	
 	ActiveNode = NewActiveNode;
 	AllowedChildNodes = NewAllowedChildNodes;
 
@@ -70,6 +76,11 @@ void UMounteaDialogueContext::UpdateDialogueParticipant(const TScriptInterface<I
 
 void UMounteaDialogueContext::UpdateActiveDialogueNode(UMounteaDialogueGraphNode* NewActiveNode)
 {
+	if (ActiveNode && ActiveNode->GetNodeGUID() != PreviousActiveNode)
+	{
+		PreviousActiveNode = ActiveNode->GetNodeGUID();
+	}
+	
 	ActiveNode = NewActiveNode;
 }
 

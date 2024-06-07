@@ -60,7 +60,13 @@ public:
 	 * ❗ Might be null
 	 */
 	UPROPERTY(/*Replicated, */VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	UMounteaDialogueGraphNode* ActiveNode = nullptr;
+	TObjectPtr<UMounteaDialogueGraphNode> ActiveNode = nullptr;
+
+	/**
+	 * Keeps info about the Previous Active Node.
+	 */
+	UPROPERTY(/*Replicated, */VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	FGuid PreviousActiveNode = FGuid::NewGuid();
 	
 	/**
 	 * List of Nodes that can be accessed from Active Node.
@@ -70,7 +76,7 @@ public:
 	 * ❗ Might be empty
 	 */
 	UPROPERTY(/*Replicated, */VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	TArray<UMounteaDialogueGraphNode*> AllowedChildNodes;
+	TArray<TObjectPtr<UMounteaDialogueGraphNode>> AllowedChildNodes;
 	
 	/**
 	 * Active Dialogue Row from Active Node. 
@@ -165,7 +171,6 @@ public:
 	virtual bool RemoveDialogueParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 	virtual bool RemoveDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant);
 	virtual void ClearDialogueParticipants();
-	
 	
 	int GetRepKey() const
 	{ return RepKey; }
