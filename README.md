@@ -73,6 +73,12 @@ A new feature dropped in, and that is Node Style now supporting indications of h
     <img width="65%" src="https://user-images.githubusercontent.com/37410226/233844886-4414e2f6-788d-48da-a643-8b275c083f09.png">
 </p>
 
+#### Editor Runtime Debug
+A piece of helpful information is displayed in the Editor and Debug Builds alike.
+<p align="center" width="100%">
+    <img width="65%" src="https://github.com/Mountea-Framework/MounteaDialogueSystem/assets/37410226/00d8004c-bbef-4c76-b1df-2b024a4e857b">
+</p>
+
 ## Installation
 
 Download the plugin (either from Releases or from Marketplace). For a more detailed guide take a look at the Wiki page.
