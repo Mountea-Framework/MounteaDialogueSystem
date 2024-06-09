@@ -157,7 +157,7 @@ public:
 	static bool RemoveParticipants(AActor* WorldContextObject, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 
 	/**
-	 * Returns first 'Mountea Dialogue Manager' Component from Player Controller.
+	 * Returns first 'Mountea Dialogue Manager' Component from Player State.
 	 * ❗ Might return Null❗
 	 * 
 	 * @param WorldContextObject	World Context Object 

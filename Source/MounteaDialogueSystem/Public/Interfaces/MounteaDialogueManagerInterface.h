@@ -125,6 +125,7 @@ public:
 	 * @return The widget class used to display Dialogue UI.
 	 */
 	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const = 0;
+	
 	/**
 	 * Sets the widget class for the Dialogue UI.
 	 * ❗ This is a pure virtual function that must be implemented in derived classes.
@@ -132,13 +133,7 @@ public:
 	 * @param NewWidgetClass	The new widget class to set.
 	 */
 	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) = 0;
-	/**
-	 * Returns Dialogue UI pointer.
-	 * 
-	 * ❗ Could be null
-	 * @return UserWidget pointer to created UI
-	 */
-	virtual UUserWidget* GetDialogueUIPtr() const = 0;
+	
 	/**
 	 * Sets Dialogue UI pointer.
 	 * 
@@ -178,11 +173,8 @@ public:
 	 * @return The widget used to display the current dialogue.
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
-	UUserWidget* GetDialogueWidget();
-	UUserWidget* GetDialogueWidget_Implementation()
-	{
-		return GetDialogueWidget();
-	};
+	UUserWidget* GetDialogueWidget() const;
+	virtual UUserWidget* GetDialogueWidget_Implementation() const = 0;
 
 	/**
 	 * Returns the owning actor for this Dialogue Manager Component.

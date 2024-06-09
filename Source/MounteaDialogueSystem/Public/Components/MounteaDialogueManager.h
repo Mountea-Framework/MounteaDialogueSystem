@@ -243,13 +243,6 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
 	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const override;
-	/**
-	 * Returns Dialogue Widget Pointer if any exists already.
-	 * ❗ Could return null
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
-	virtual UUserWidget* GetDialogueUIPtr() const override
-	{ return DialogueWidgetPtr; };
 
 	/**
 	 * Returns Dialogue Context if any exists.
@@ -291,6 +284,7 @@ public:
 	
 	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) override;
 	virtual void SetDialogueUIPtr(UUserWidget* NewDialogueWidgetPtr) override;
+	virtual UUserWidget* GetDialogueWidget_Implementation() const override;
 
 	UFUNCTION() virtual void StartExecuteDialogueRow() override;
 	UFUNCTION() virtual void FinishedExecuteDialogueRow() override;

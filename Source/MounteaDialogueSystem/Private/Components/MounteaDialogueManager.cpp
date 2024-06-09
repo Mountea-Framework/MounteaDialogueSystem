@@ -643,6 +643,11 @@ void UMounteaDialogueManager::SetDialogueUIPtr(UUserWidget* NewDialogueWidgetPtr
 	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidgetPtr);
 }
 
+UUserWidget* UMounteaDialogueManager::GetDialogueWidget_Implementation() const
+{
+	return DialogueWidgetPtr;
+}
+
 void UMounteaDialogueManager::StartExecuteDialogueRow()
 {
 	if (!GetOwner())
