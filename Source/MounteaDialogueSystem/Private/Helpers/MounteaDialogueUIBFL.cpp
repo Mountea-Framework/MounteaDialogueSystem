@@ -26,3 +26,20 @@ FDialogueRow UMounteaDialogueUIBFL::GetDialogueNodeRow(UMounteaDialogueGraphNode
 
 	return FDialogueRow();
 }
+
+TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> UMounteaDialogueUIBFL::FilterDialogueFriendlyNodes(const TArray<UMounteaDialogueGraphNode*>& RawNodes)
+{
+	TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> returnArray;
+
+	for (const auto& Itr : RawNodes)
+	{
+		if (!Itr) continue;
+
+		if (TObjectPtr<UMounteaDialogueGraphNode_DialogueNodeBase> dialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Itr))
+		{
+			returnArray.Add(dialogueNode);
+		}
+	}
+
+	return returnArray;
+}

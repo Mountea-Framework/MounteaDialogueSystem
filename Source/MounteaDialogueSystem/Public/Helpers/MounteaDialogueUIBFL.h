@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "MounteaDialogueUIBFL.generated.h"
 
+class UMounteaDialogueGraphNode;
 class UMounteaDialogueGraphNode_DialogueNodeBase;
 struct FDialogueOptionData;
 struct FDialogueRow;
@@ -28,4 +29,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	static FDialogueRow GetDialogueNodeRow(UMounteaDialogueGraphNode_DialogueNodeBase* FromNode);
+
+	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
+	static TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> FilterDialogueFriendlyNodes(const TArray<UMounteaDialogueGraphNode*>& RawNodes);
 };

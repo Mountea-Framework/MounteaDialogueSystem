@@ -25,3 +25,8 @@ void UMounteaDialogueOption::ProcessOptionSelected_Implementation()
 {
 	OnDialogueOptionSelected.Broadcast(DialogueOptionData.OptionGuid, this);
 }
+
+void UMounteaDialogueOption::InitializeDialogueOption_Implementation()
+{
+	// ...
+}

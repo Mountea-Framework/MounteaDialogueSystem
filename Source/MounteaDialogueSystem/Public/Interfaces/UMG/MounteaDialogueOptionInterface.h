@@ -126,6 +126,13 @@ public:
 	virtual void ResetDialogueOptionData_Implementation() = 0;
 
 	/**
+	 * Responsible for setting visual data from Dialogue Option data.
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	void InitializeDialogueOption();
+	virtual void InitializeDialogueOption_Implementation() = 0;
+
+	/**
 	 * Processes the event of a dialogue option being selected.
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
