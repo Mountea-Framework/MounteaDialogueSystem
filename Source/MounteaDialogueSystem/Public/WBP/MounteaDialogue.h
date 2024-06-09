@@ -42,6 +42,6 @@ protected:
 	/**
 	 * The class type of the dialogue row widget. Must Implement 'MounteaDialogueRowInterface'.
 	 */
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Mountea|Dialogue", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueRowInterface", NoResetToDefault))
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Mountea|Dialogue", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueSkipInterface", NoResetToDefault))
 	TSoftClassPtr<UUserWidget> 													DialogueSkipClass;
 };
