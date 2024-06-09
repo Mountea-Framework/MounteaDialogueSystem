@@ -44,7 +44,12 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Impleme
 		LOG_ERROR(TEXT("[ExecuteDecorator] %s Has no Context!\nExecution is skipped."), *(GetDecoratorName().ToString()));
 		return;
 	}
-	
+
+	if (!Context->GetActiveDialogueRow().IsValid())
+	{
+		LOG_WARNING(TEXT("[ExecuteDecorator] %s ActiveDialogueRow is invalid!!\nExecution is skipped."), *(GetDecoratorName().ToString()));
+		return;
+	}
 	if (Context->GetActiveDialogueRow().DialogueRowData.Num() == 0)
 	{
 		LOG_WARNING(TEXT("[ExecuteDecorator] %s DialogueRowData is empty!\nExecution is skipped."), *(GetDecoratorName().ToString()));

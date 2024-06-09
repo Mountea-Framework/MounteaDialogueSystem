@@ -57,6 +57,7 @@ protected:
 
 private:
 	
+	UPROPERTY()
 	TObjectPtr<UMounteaDialogueContext> Context = nullptr;
 
 	TScriptInterface<IMounteaDialogueParticipantInterface> Override_PlayerParticipantInterface = nullptr;

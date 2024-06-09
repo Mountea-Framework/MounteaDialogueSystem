@@ -42,6 +42,7 @@ protected:
 
 private:
 	
+	UPROPERTY()
 	TObjectPtr<UMounteaDialogueContext> Context = nullptr;
 	
 private:
