@@ -26,6 +26,13 @@ void FDialogueRow::DeserializeDialogueRowData()
 }
 */
 
+bool FDialogueRow::IsValid() const
+{
+	return
+	RowGUID.IsValid() &&
+	DialogueRowData.Num() > 0;
+}
+
 FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct()
 	: ActiveDialogueParticipant(nullptr)
 	, PlayerDialogueParticipant(nullptr)

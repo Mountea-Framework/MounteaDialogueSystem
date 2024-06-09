@@ -116,4 +116,5 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
 	void ProcessOptionSelected(const FGuid& SelectedOption, UUserWidget* CallingWidget);
 	virtual void ProcessOptionSelected_Implementation(const FGuid& SelectedOption, UUserWidget* CallingWidget) = 0;
+
 };

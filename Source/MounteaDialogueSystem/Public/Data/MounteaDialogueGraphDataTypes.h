@@ -390,6 +390,8 @@ public:
 	{
 		return FCrc::MemCrc32(&Row.RowGUID, sizeof(FGuid));
 	}
+
+	bool IsValid() const;
 };
 #undef LOCTEXT_NAMESPACE
 

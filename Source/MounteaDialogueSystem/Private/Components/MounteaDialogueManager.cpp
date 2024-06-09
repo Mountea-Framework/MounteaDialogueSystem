@@ -90,10 +90,21 @@ void UMounteaDialogueManager::CallDialogueNodeSelected_Implementation(const FGui
 	UMounteaDialogueGraphNode* selectedNode = nullptr;
 	if (DialogueContext)
 	{
-		selectedNode = *DialogueContext->GetChildrenNodes().FindByPredicate([NodeGUID](const UMounteaDialogueGraphNode* Node)
+		const TArray<UMounteaDialogueGraphNode*>& childrenNodes = DialogueContext->GetChildrenNodes();
+		auto foundNode = childrenNodes.FindByPredicate([NodeGUID](const UMounteaDialogueGraphNode* Node)
 		{
 			return Node && Node->GetNodeGUID() == NodeGUID;
 		});
+
+		if (foundNode)
+		{
+			selectedNode = *foundNode;
+		}
+		else
+		{
+			// Handle the case where the node is not found
+			UE_LOG(LogTemp, Warning, TEXT("Node with GUID %s not found"), *NodeGUID.ToString());
+		}
 	}
 	else
 	{
