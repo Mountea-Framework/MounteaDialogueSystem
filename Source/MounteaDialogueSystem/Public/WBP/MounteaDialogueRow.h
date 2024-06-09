@@ -23,6 +23,7 @@ protected:
 	virtual		FWidgetDialogueRow	GetDialogueWidgetRowData_Implementation			() const															override;
 	virtual		void								SetNewWidgetDialogueRowData_Implementation	(const FWidgetDialogueRow& NewData)		override;
 	virtual		void								ResetWidgetDialogueRow_Implementation				()																		override;
+	virtual		void								InitializeWidgetDialogueRow_Implementation			()																		override;
 
 protected:
 

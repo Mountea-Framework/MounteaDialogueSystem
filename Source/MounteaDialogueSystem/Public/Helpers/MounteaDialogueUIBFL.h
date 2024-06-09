@@ -8,8 +8,11 @@
 
 class UMounteaDialogueGraphNode;
 class UMounteaDialogueGraphNode_DialogueNodeBase;
+
+struct FDialogueRowData;
 struct FDialogueOptionData;
 struct FDialogueRow;
+struct FWidgetDialogueRow;
 
 /**
  * 
@@ -23,6 +26,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Mountea|Dialogue", meta = (BlueprintThreadSafe))
 	static FDialogueOptionData NewDialogueOptionData(const FGuid& Node, const FDialogueRow& DialogueRow);
+
+	UFUNCTION(BlueprintPure, Category = "Mountea|Dialogue", meta = (BlueprintThreadSafe))
+	static FWidgetDialogueRow NewDialogueWidgetRowData(const FDialogueRow& SourceRow, const FDialogueRowData& SourceRowData);
 
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	static FGuid GetDialogueNodeGuid(UMounteaDialogueGraphNode_DialogueNodeBase* FromNode);

@@ -20,3 +20,8 @@ void UMounteaDialogueRow::ResetWidgetDialogueRow_Implementation()
 {
 	DialogueRowData.ResetRow();
 }
+
+void UMounteaDialogueRow::InitializeWidgetDialogueRow_Implementation()
+{
+	// ...
+}

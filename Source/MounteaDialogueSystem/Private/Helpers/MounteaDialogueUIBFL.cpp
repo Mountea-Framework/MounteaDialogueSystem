@@ -5,12 +5,18 @@
 
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/UMG/MounteaDialogueOptionInterface.h"
+#include "Interfaces/UMG/MounteaDialogueRowInterface.h"
 #include "Internationalization/Regex.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 
 FDialogueOptionData UMounteaDialogueUIBFL::NewDialogueOptionData(const FGuid& Node, const FDialogueRow& DialogueRow)
 {
 	return FDialogueOptionData(Node, DialogueRow);
+}
+
+FWidgetDialogueRow UMounteaDialogueUIBFL::NewDialogueWidgetRowData(const FDialogueRow& SourceRow, const FDialogueRowData& SourceRowData)
+{
+	return FWidgetDialogueRow(SourceRow, SourceRowData);
 }
 
 FGuid UMounteaDialogueUIBFL::GetDialogueNodeGuid(UMounteaDialogueGraphNode_DialogueNodeBase* FromNode)

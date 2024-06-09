@@ -14,7 +14,7 @@ struct FDialogueRow;
 /**
  * A helper struct to move Dialogue Row data around.
  */
-USTRUCT(BlueprintType)
+USTRUCT(BlueprintType, meta = (HasNativeMake = "/Script/MounteaDialogueSystem.UMounteaDialogueUIBFL.NewDialogueWidgetRowData"))
 struct FWidgetDialogueRow
 {
 	GENERATED_BODY()
@@ -135,6 +135,13 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
 	void ResetWidgetDialogueRow();
 	virtual void ResetWidgetDialogueRow_Implementation() = 0;
+
+	/**
+	 * 
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	void InitializeWidgetDialogueRow();
+	virtual void InitializeWidgetDialogueRow_Implementation() = 0;
 };
 
 #undef LOCTEXT_NAMESPACE

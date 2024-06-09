@@ -24,18 +24,18 @@ protected:
 	/**
 	 * The class type of the dialogue options container widget. Must Implement 'MounteaDialogueOptionsContainerInterface'.
 	 */
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Mountea|Dialogue", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueOptionsContainerInterface"))
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Mountea|Dialogue", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueOptionsContainerInterface", NoResetToDefault))
 	TSoftClassPtr<UUserWidget> 													DialogueOptionsContainerClass;
 
 	/**
 	 * The class type of the dialogue option widget. Must Implement 'MounteaDialogueOptionInterface'.
 	 */
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Mountea|Dialogue", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueOptionInterface"))
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Mountea|Dialogue", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueOptionInterface", NoResetToDefault))
 	TSoftClassPtr<UUserWidget> 													DialogueOptionClass;
 	
 	/**
 	 * The class type of the dialogue row widget. Must Implement 'MounteaDialogueRowInterface'.
 	 */
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Mountea|Dialogue", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueRowInterface"))
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Mountea|Dialogue", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueRowInterface", NoResetToDefault))
 	TSoftClassPtr<UUserWidget> 													DialogueRowClass;
 };
