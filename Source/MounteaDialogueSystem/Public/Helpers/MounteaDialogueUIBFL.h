@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿// All rights reserved Dominik Morse (Pavlicek) 2024.
 
 #pragma once
 
@@ -32,4 +32,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
 	static TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> FilterDialogueFriendlyNodes(const TArray<UMounteaDialogueGraphNode*>& RawNodes);
+
+	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
+	static FText ReplaceRegexInText(const FString& Regex, const FText& Replacement, const FText& SourceText);
+
 };

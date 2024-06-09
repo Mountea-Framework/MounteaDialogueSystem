@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿// All rights reserved Dominik Morse (Pavlicek) 2024.
 
 #pragma once
 
@@ -12,17 +12,15 @@
  *
  * 
  */
-UCLASS(DisplayName="Mountea Dialogue", ClassGroup=Monutea)
+UCLASS(DisplayName="Mountea Dialogue", ClassGroup=Mountea)
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogue : public UUserWidget, public IMounteaDialogueWBPInterface
 {
 	GENERATED_BODY()
-
-protected:
 	
 	// IMounteaDialogueWBPInterface implementation
-
+	
 protected:
-
+	
 	/**
 	 * The class type of the dialogue options container widget. Must Implement 'MounteaDialogueOptionsContainerInterface'.
 	 */

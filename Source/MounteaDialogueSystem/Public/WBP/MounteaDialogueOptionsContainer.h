@@ -12,9 +12,9 @@ class UMounteaDialogueGraphNode_DialogueNodeBase;
 /**
  * UMounteaDialogueOptionsContainer
  *
- * 
+ * A UserWidget class that implements the 'MounteaDialogueOptionsContainerInterface', providing functionalities for dialogue option containers in the Mountea Dialogue System.
  */
-UCLASS(DisplayName="Mountea Dialogue Options Container", ClassGroup=Monutea)
+UCLASS(DisplayName="Mountea Dialogue Options Container", ClassGroup=Mountea)
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueOptionsContainer : public UUserWidget, public IMounteaDialogueOptionsContainerInterface
 {
 	GENERATED_BODY()

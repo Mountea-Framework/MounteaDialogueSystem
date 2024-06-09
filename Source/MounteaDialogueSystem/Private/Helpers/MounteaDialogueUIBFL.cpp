@@ -1,10 +1,11 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿// All rights reserved Dominik Morse (Pavlicek) 2024.
 
 
 #include "Helpers/MounteaDialogueUIBFL.h"
 
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/UMG/MounteaDialogueOptionInterface.h"
+#include "Internationalization/Regex.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 
 FDialogueOptionData UMounteaDialogueUIBFL::NewDialogueOptionData(const FGuid& Node, const FDialogueRow& DialogueRow)
@@ -42,4 +43,27 @@ TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> UMounteaDialogueUIBFL::Filte
 	}
 
 	return returnArray;
+}
+
+FText UMounteaDialogueUIBFL::ReplaceRegexInText(const FString& Regex, const FText& Replacement, const FText& SourceText)
+{
+	FString					sourceString = SourceText.ToString();
+	FRegexPattern	regexPattern(Regex);
+	FRegexMatcher	regexMatcher(regexPattern, sourceString);
+
+	FString					formattedString;
+
+	int32					previousPosition = 0;
+	FString					replacementText = Replacement.ToString();
+
+	while (regexMatcher.FindNext())
+	{
+		formattedString += sourceString.Mid(previousPosition, regexMatcher.GetMatchBeginning() - previousPosition);
+		formattedString += replacementText;
+		previousPosition = regexMatcher.GetMatchEnding();
+	}
+	
+	formattedString += sourceString.Mid(previousPosition);
+	
+	return FText::FromString(formattedString);
 }

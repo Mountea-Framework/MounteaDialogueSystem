@@ -10,10 +10,9 @@
 /**
  * UMounteaDialogueOption
  * 
- * A UserWidget class that implements the IMounteaDialogueOptionInterface, providing functionalities 
- * for dialogue options in the Mountea Dialogue System.
+ * A UserWidget class that implements the 'MounteaDialogueOptionInterface', providing functionalities for dialogue options in the Mountea Dialogue System.
  */
-UCLASS(DisplayName="Mountea Dialogue Option", ClassGroup=Monutea)
+UCLASS(DisplayName="Mountea Dialogue Option", ClassGroup=Mountea)
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueOption : public UUserWidget, public IMounteaDialogueOptionInterface
 {
 	GENERATED_BODY()
