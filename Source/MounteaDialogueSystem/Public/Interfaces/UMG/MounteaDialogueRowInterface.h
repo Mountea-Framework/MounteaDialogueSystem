@@ -14,7 +14,7 @@ struct FDialogueRow;
 /**
  * A helper struct to move Dialogue Row data around.
  */
-USTRUCT(BlueprintType, meta = (HasNativeMake = "/Script/MounteaDialogueSystem.UMounteaDialogueUIBFL.NewDialogueWidgetRowData"))
+USTRUCT(BlueprintType, meta = (HasNativeMake = "/Script/MounteaDialogueSystem.MounteaDialogueUIBFL.NewDialogueWidgetRowData"))
 struct FWidgetDialogueRow
 {
 	GENERATED_BODY()
