@@ -74,13 +74,13 @@ public:
 	/**
 	 * Starts the Dialogue if possible.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="show, widget"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="start"))
 	void StartDialogue();
 	virtual void StartDialogue_Implementation() = 0;
 	/**
 	 * Closes the Dialogue if is active.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="show, widget"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="exit, close"))
 	void CloseDialogue();
 	virtual void CloseDialogue_Implementation() = 0;
 
@@ -140,7 +140,7 @@ public:
 	 * ❔ Using null value resets saved value
 	 * @param DialogueUIPtr	UserWidget pointer to be saved as Dialogue UI
 	 */
-	virtual void SetDialogueUIPtr(UUserWidget* DialogueUIPtr) = 0;
+	virtual void SetDialogueWidget(UUserWidget* DialogueUIPtr) = 0;
 
 	/**
 	 * Starts Dialogue Row execution.
@@ -196,6 +196,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	void PrepareNode();
 	virtual void PrepareNode_Implementation() {};
+
+	/**
+	 * Calls to the Node to Process it.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	void ProcessNode();
+	virtual void ProcessNode_Implementation() = 0;
 	
 	/**
 	 * Retrieves current Dialogue Context.
@@ -204,6 +211,7 @@ public:
 	 * @return DialogueContext	Dialogue Context is transient data holder for current dialogue instance.
 	 */
 	virtual UMounteaDialogueContext* GetDialogueContext() const = 0;
+
 	/**
 	 * Sets new Dialogue Context.
 	 * 
@@ -223,6 +231,7 @@ public:
 	EDialogueManagerState GetState() const;
 	EDialogueManagerState GetState_Implementation() const
 	{ return GetDialogueManagerState(); };
+
 	/**
 	 * Retrieves current Dialogue Manager State.
 	 * State defines whether Manager can start/close dialogue or not.
@@ -230,12 +239,16 @@ public:
 	 * @return ManagerState	Manager state value
 	 */
 	virtual EDialogueManagerState GetDialogueManagerState() const = 0;
+
 	/**
 	 * Sets new Dialogue Manager State.
 	 * 
 	 * @param NewState	Manager State to be set as Manager State
 	 */
-	virtual void SetDialogueManagerState(const EDialogueManagerState NewState) = 0;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="state, status"))
+	void SetDialogueManagerState(const EDialogueManagerState NewState);
+	virtual void SetDialogueManagerState_Implementation(const EDialogueManagerState NewState) = 0;
+
 	/**
 	 * Retrieves current Default Dialogue Manager State.
 	 * Default Dialogue Manager State sets Dialogue Manager state upon BeginPlay and is used as fallback once Dialogue ends.
@@ -243,6 +256,7 @@ public:
 	 * @return ManagerState	Default Manager state value
 	 */
 	virtual EDialogueManagerState GetDefaultDialogueManagerState() const = 0;
+
 	/**
 	 * Sets new Default Dialogue Manager State.
 	 * 
@@ -250,9 +264,22 @@ public:
 	 */
 	virtual void SetDefaultDialogueManagerState(const EDialogueManagerState NewState) = 0;
 
+	/**
+	 * Initializes the dialogue with the provided player state and participants. Provides the Manager and World to Nodes and Dialogue Graph.
+	 *
+	 * @param OwningPlayerState		The player state that owns this dialogue instance.
+	 * @param Participants					A structure containing all the participants involved in the dialogue.
+	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
 	void InitializeDialogue(APlayerState* OwningPlayerState, const FDialogueParticipants& Participants);
 	virtual void InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const FDialogueParticipants& Participants) = 0;
+
+	/**
+	 * Skips the current dialogue row.
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
+	void SkipDialogueRow();
+	virtual void SkipDialogueRow_Implementation() = 0;
 	
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() = 0;

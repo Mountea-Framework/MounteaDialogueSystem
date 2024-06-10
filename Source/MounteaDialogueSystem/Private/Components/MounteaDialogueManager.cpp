@@ -29,6 +29,10 @@ UMounteaDialogueManager::UMounteaDialogueManager()
 	SetActiveFlag(true);
 
 	PrimaryComponentTick.bStartWithTickEnabled = false;
+
+	ComponentTags.Add(FName("Mountea"));
+	ComponentTags.Add(FName("Dialogue"));
+	ComponentTags.Add(FName("Manager"));
 }
 
 
@@ -36,27 +40,30 @@ void UMounteaDialogueManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OnDialogueInitialized.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueInitializedEvent_Internal);
+	// Setup bindings
+	{
+		OnDialogueInitialized.							AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueInitializedEvent_Internal);
 	
-	OnDialogueContextUpdated.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent_Internal);
-	OnDialogueUserInterfaceChanged.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueUserInterfaceChangedEvent_Internal);
+		OnDialogueContextUpdated.				AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent_Internal);
+		OnDialogueUserInterfaceChanged.	AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueUserInterfaceChangedEvent_Internal);
 	
-	OnDialogueStarted.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueStartedEvent_Internal);
-	OnDialogueClosed.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueClosedEvent_Internal);
+		OnDialogueStarted.								AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueStartedEvent_Internal);
+		OnDialogueClosed.								AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueClosedEvent_Internal);
 
-	OnDialogueNodeSelected.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal);
-	OnDialogueNodeStarted.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeStartedEvent_Internal);
-	OnDialogueNodeFinished.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal);
+		OnDialogueNodeSelected.					AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal);
+		OnDialogueNodeStarted.						AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeStartedEvent_Internal);
+		OnDialogueNodeFinished.					AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal);
 
-	OnDialogueRowStarted.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal);
-	OnDialogueRowFinished.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueRowFinishedEvent_Internal);
+		OnDialogueRowStarted.						AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal);
+		OnDialogueRowFinished.					AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueRowFinishedEvent_Internal);
 
-	OnDialogueVoiceStartRequest.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal);
-	OnDialogueVoiceSkipRequest.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal);
+		OnDialogueVoiceStartRequest.			AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal);
+		OnDialogueVoiceSkipRequest.			AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal);
 
-	OnNextDialogueRowDataRequested.AddUniqueDynamic(this, &UMounteaDialogueManager::NextDialogueRowDataRequested);
+		OnNextDialogueRowDataRequested.	AddUniqueDynamic(this, &UMounteaDialogueManager::NextDialogueRowDataRequested);
+	}
 	
-	SetDialogueManagerState(GetDefaultDialogueManagerState());
+	Execute_SetDialogueManagerState(this, GetDefaultDialogueManagerState());
 }
 
 void UMounteaDialogueManager::NetPushDialogueContext()
@@ -372,6 +379,10 @@ void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBas
 			DialogueContext->ActiveDialogueParticipant->Execute_SkipParticipantVoice(DialogueContext->ActiveDialogueParticipant.GetObject(), VoiceToSkip);
 			OnDialogueVoiceSkipRequestEvent(VoiceToSkip);
 		}
+		else
+		{
+			RequestVoiceStop_Client(VoiceToSkip);
+		}
 	}
 	else
 	{
@@ -479,7 +490,7 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 		return;
 	}
 	
-	SetDialogueManagerState(EDialogueManagerState::EDMS_Active);
+	Execute_SetDialogueManagerState(this, EDialogueManagerState::EDMS_Active);
 
 	for (const auto& Itr : DialogueContext->DialogueParticipants)
 	{
@@ -531,7 +542,7 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 		CloseDialogueUI_Client();
 	}
 	
-	SetDialogueManagerState(EDialogueManagerState::EDMS_Enabled);
+	Execute_SetDialogueManagerState(this, EDialogueManagerState::EDMS_Enabled);
 
 	if(!DialogueContext) return;
 
@@ -565,7 +576,7 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 	NetPushDialogueContext();
 }
 
-void UMounteaDialogueManager::ProcessNode()
+void UMounteaDialogueManager::ProcessNode_Implementation()
 {
 	// Then Process Node
 	if (DialogueContext && DialogueContext->ActiveNode)
@@ -589,7 +600,7 @@ void UMounteaDialogueManager::PrepareNode_Implementation()
 	// First PreProcess Node
 	DialogueContext->ActiveNode->PreProcessNode(this);
 	
-	ProcessNode();
+	Execute_ProcessNode(this);
 }
 
 AActor* UMounteaDialogueManager::GetOwningActor_Implementation() const
@@ -636,7 +647,7 @@ void UMounteaDialogueManager::SetDialogueWidgetClass(const TSubclassOf<UUserWidg
 	}
 }
 
-void UMounteaDialogueManager::SetDialogueUIPtr(UUserWidget* NewDialogueWidgetPtr)
+void UMounteaDialogueManager::SetDialogueWidget(UUserWidget* NewDialogueWidgetPtr)
 {
 	DialogueWidgetPtr = NewDialogueWidgetPtr;
 
@@ -720,26 +731,36 @@ void UMounteaDialogueManager::FinishedExecuteDialogueRow()
 
 	const int32 increasedIndex = DialogueContext->GetActiveDialogueRowDataIndex() + 1;
 
-	const bool bIsActiveRowValid = UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueContext->GetActiveDialogueRow());
+	const FDialogueRow dialogueRow = DialogueContext->GetActiveDialogueRow();
+	const bool bIsActiveRowValid = UMounteaDialogueSystemBFC::IsDialogueRowValid(dialogueRow);
 	const bool bDialogueRowDataValid = DialogueContext->GetActiveDialogueRow().DialogueRowData.Array().IsValidIndex(increasedIndex);
 
+	LOG_INFO(TEXT("[FinishedExecuteDialogueRow] Dialogue Row Finished"))
+
+	OnDialogueRowFinished.Broadcast(DialogueContext);
+	
 	if (bIsActiveRowValid && bDialogueRowDataValid)
 	{
-		DialogueContext->UpdateActiveDialogueRowDataIndex(increasedIndex);
-		OnDialogueContextUpdated.Broadcast(DialogueContext);
+		const FDialogueRowData dialogueRowData = DialogueContext->GetActiveDialogueRow().DialogueRowData.Array()[increasedIndex];
 
-		NetPushDialogueContext();
+		if (dialogueRowData.bIsStoppingRow)
+		{
+			OnDialogueNodeFinished.Broadcast(DialogueContext);
+		}
+		else
+		{
+			DialogueContext->UpdateActiveDialogueRowDataIndex(increasedIndex);
+			OnDialogueContextUpdated.Broadcast(DialogueContext);
+
+			NetPushDialogueContext();
 		
-		StartExecuteDialogueRow();
+			StartExecuteDialogueRow();
+		}
 	}
 	else
 	{
 		OnDialogueNodeFinished.Broadcast(DialogueContext);
 	}
-
-	LOG_INFO(TEXT("[FinishedExecuteDialogueRow] Dialogue Row Finished"))
-
-	OnDialogueRowFinished.Broadcast(DialogueContext);
 }
 
 void UMounteaDialogueManager::NextDialogueRowDataRequested(UMounteaDialogueContext* Context)
@@ -770,7 +791,12 @@ void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewCon
 	}
 }
 
-void UMounteaDialogueManager::SetDialogueManagerState(const EDialogueManagerState NewState)
+void UMounteaDialogueManager::SkipDialogueRow_Implementation()
+{
+	OnDialogueVoiceSkipRequest.Broadcast(nullptr);
+}
+
+void UMounteaDialogueManager::SetDialogueManagerState_Implementation(const EDialogueManagerState NewState)
 {
 	if (NewState == ManagerState) return;
 	
@@ -837,7 +863,7 @@ void UMounteaDialogueManager::SetDefaultDialogueManagerState(const EDialogueMana
 
 void UMounteaDialogueManager::SetDialogueManagerState_Server_Implementation(const EDialogueManagerState NewState)
 {
-	SetDialogueManagerState(NewState);
+	Execute_SetDialogueManagerState(this, NewState);
 }
 
 void UMounteaDialogueManager::SetDialogueDefaultManagerState_Server_Implementation(const EDialogueManagerState NewState)

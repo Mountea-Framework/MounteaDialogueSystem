@@ -196,6 +196,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
 	float RowDurationOverride;
 	/**
+	 * If set to true this Row will stop the whole Node execution and next row won't start.
+	 * Default is false.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
+	uint8 bIsStoppingRow : 1;
+	/**
 	 * Row GUID.
 	 * 
 	 * Unique Key when searching and binding this Row.
@@ -206,14 +212,26 @@ public:
 public:
 
 	FDialogueRowData()
-		: RowText(LOCTEXT("FDialogueRowData_RowText", "Dialogue Example")), RowSound(nullptr), RowDurationMode(ERowDurationMode::ERDM_Duration), RowDuration(0), RowDurationOverride(0), RowGUID(FGuid::NewGuid())
+		: RowText(LOCTEXT("FDialogueRowData_RowText", "Dialogue Example"))
+		, RowSound(nullptr)
+		, RowDurationMode(ERowDurationMode::ERDM_Duration)
+		, RowDuration(0)
+		, RowDurationOverride(0)
+		, bIsStoppingRow(false)
+		, RowGUID(FGuid::NewGuid())
 	{};
 
 	FDialogueRowData
 	(
-		const FText& InText, USoundBase* InSound, const ERowDurationMode InRowDurationMode, const float InDuration, const float InDurationOverride
+		const FText& InText, USoundBase* InSound, const ERowDurationMode InRowDurationMode, const float InDuration, const float InDurationOverride, const bool bStopRow = false
 	)
-	: RowText(InText), RowSound(InSound), RowDurationMode(InRowDurationMode), RowDuration(InDuration), RowDurationOverride(InDurationOverride), RowGUID(FGuid::NewGuid())
+		: RowText(InText)
+		, RowSound(InSound)
+		, RowDurationMode(InRowDurationMode)
+		, RowDuration(InDuration)
+		, RowDurationOverride(InDurationOverride)
+		, bIsStoppingRow(bStopRow)
+		, RowGUID(FGuid::NewGuid())
 	{};
 
 public:
@@ -225,6 +243,7 @@ public:
 		RowDurationMode = Other.RowDurationMode;
 		RowDuration = Other.RowDuration;
 		RowDurationOverride = Other.RowDurationOverride;
+		bIsStoppingRow = Other.bIsStoppingRow;
 		RowGUID = FGuid::NewGuid();
 		
 		return *this;

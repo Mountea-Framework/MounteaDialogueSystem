@@ -13,15 +13,18 @@
 #include "Nodes/MounteaDialogueGraphNode.h"
 
 UMounteaDialogueParticipant::UMounteaDialogueParticipant()
+	: DefaultParticipantState(EDialogueParticipantState::EDPS_Enabled)
 {
-	DefaultParticipantState = EDialogueParticipantState::EDPS_Enabled;
-
 	SetIsReplicatedByDefault(true);
 	SetActiveFlag(true);
 
 	bAutoActivate = true;
 
 	PrimaryComponentTick.bStartWithTickEnabled = false;
+
+	ComponentTags.Add(FName("Mountea"));
+	ComponentTags.Add(FName("Dialogue"));
+	ComponentTags.Add(FName("Participant"));
 }
 
 void UMounteaDialogueParticipant::BeginPlay()

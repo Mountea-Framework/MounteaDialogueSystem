@@ -11,10 +11,9 @@
 /**
  *  Mountea Dialogue Manager Component
  * 
- * Should be attached to Player Controller or any other Controller which should be able to trigger dialogues.
+ * Should be attached to Player State in order to be replication ready.
  * ❔ Allows any Actor to be Dialogue Manager
  * ❔ Implements 'IMounteaDialogueManagerInterface'.
- * ❗ If attached to non-Controller class, then it will show Dialogue UI to first found Player Controller
  */
 UCLASS(ClassGroup=(Mountea), Blueprintable,  AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"), meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Manager"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueManager : public UActorComponent, public IMounteaDialogueManagerInterface
@@ -232,8 +231,7 @@ protected:
 #pragma region InterfaceImplementations
 
 public:
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	
 	virtual AActor* GetOwningActor_Implementation() const override;
 
 	/**
@@ -276,14 +274,14 @@ public:
 
 	virtual void StartDialogue_Implementation() override;
 	virtual void CloseDialogue_Implementation() override;
-	virtual void ProcessNode();
+	virtual void ProcessNode_Implementation() override;
 	
 	virtual bool InvokeDialogueUI_Implementation(FString& Message) override;
 	virtual bool UpdateDialogueUI_Implementation(FString& Message, const FString& Command) override;
 	virtual bool CloseDialogueUI_Implementation() override;
 	
 	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) override;
-	virtual void SetDialogueUIPtr(UUserWidget* NewDialogueWidgetPtr) override;
+	virtual void SetDialogueWidget(UUserWidget* NewDialogueWidgetPtr) override;
 	virtual UUserWidget* GetDialogueWidget_Implementation() const override;
 
 	UFUNCTION() virtual void StartExecuteDialogueRow() override;
@@ -291,8 +289,9 @@ public:
 	UFUNCTION() void NextDialogueRowDataRequested(UMounteaDialogueContext* Context);
 	
 	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) override;
+	virtual void SkipDialogueRow_Implementation() override;
 	
-	virtual void SetDialogueManagerState(const EDialogueManagerState NewState) override;
+	virtual void SetDialogueManagerState_Implementation(const EDialogueManagerState NewState) override;
 	virtual void SetDefaultDialogueManagerState(const EDialogueManagerState NewState) override;
 	
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() override
