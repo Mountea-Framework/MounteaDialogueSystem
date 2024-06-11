@@ -31,8 +31,8 @@ void UMounteaDialogueRow::StartTypeWriterEffect_Implementation(const FText& Sour
 	const float updateInterval = Duration / sourceTextLength;
 
 	FTimerDelegate TimerDelegate_TypeWriterUpdateInterval;
-	TimerDelegate_TypeWriterUpdateInterval.BindUFunction(this, "UpdateTypeWriterEffect_Callback", SourceText, sourceTextLength, 0, Duration);
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_TypeWriterUpdateInterval, TimerDelegate_TypeWriterUpdateInterval, updateInterval, true);
+	TimerDelegate_TypeWriterUpdateInterval.BindUFunction(this, "UpdateTypeWriterEffect_Callback", SourceText, 0, Duration);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle_TypeWriterUpdateInterval, TimerDelegate_TypeWriterUpdateInterval, updateInterval, false);
 
 	FTimerDelegate TimerDelegate_TypeWriterDuration;
 	TimerDelegate_TypeWriterDuration.BindUFunction(this, "CompleteTypeWriterEffect_Callback", SourceText);

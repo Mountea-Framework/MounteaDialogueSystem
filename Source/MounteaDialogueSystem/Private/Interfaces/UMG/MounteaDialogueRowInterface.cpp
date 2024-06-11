@@ -4,6 +4,7 @@
 #include "Interfaces/UMG/MounteaDialogueRowInterface.h"
 
 #include "Data/MounteaDialogueGraphDataTypes.h"
+#include "Helpers/MounteaDialogueSystemBFC.h"
 
 
 // Add default functionality here for any IMounteaDialogueRowInterface functions that are not pure virtual.
@@ -23,7 +24,7 @@ FWidgetDialogueRow::FWidgetDialogueRow(const FDialogueRow& SourceRow, const FDia
 	: DialogueRowParticipantName(SourceRow.DialogueParticipant)
 	, DialogueRowTitle(SourceRow.RowTitle)
 	, DialogueRowBody(SourceRowData.RowText)
-	, RowDuration(SourceRowData.RowDuration)
+	, RowDuration(UMounteaDialogueSystemBFC::GetRowDuration(SourceRowData))
 	, UIRowID(SourceRow.UIRowID)
 	, RowOptionalIcon(SourceRow.RowOptionalIcon)
 	, RowGuid(SourceRowData.RowGUID)
