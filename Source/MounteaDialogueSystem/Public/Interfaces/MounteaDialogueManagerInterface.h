@@ -118,6 +118,14 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="close, exit, stop, widget"))
 	bool CloseDialogueUI();
 	virtual bool CloseDialogueUI_Implementation() = 0;
+
+	/**
+	 * 
+	 * @param Command	
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(Keywords="UI, widget, process"))
+	void ExecuteWidgetCommand(const FString& Command);
+	virtual void ExecuteWidgetCommand_Implementation(const FString& Command) = 0;
 	
 	/**
 	 * Gets the widget class used to display Dialogue UI.

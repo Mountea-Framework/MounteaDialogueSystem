@@ -1003,6 +1003,26 @@ bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
 	return true;
 }
 
+void UMounteaDialogueManager::ExecuteWidgetCommand_Implementation(const FString& Command)
+{
+	if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
+	{
+		if (GetOwner()->HasAuthority())
+		{
+			FString resultMessage;
+			Execute_UpdateDialogueUI(this, resultMessage, Command);
+		}
+		else
+		{
+			UpdateDialogueUI_Client(Command);
+		}
+	}
+	else
+	{
+		UpdateDialogueUI_Client(Command);
+	}
+}
+
 void UMounteaDialogueManager::InvokeDialogueUI_Client_Implementation()
 {
 	FString ErrorMessage;

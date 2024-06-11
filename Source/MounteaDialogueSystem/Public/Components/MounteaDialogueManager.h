@@ -279,6 +279,7 @@ public:
 	virtual bool InvokeDialogueUI_Implementation(FString& Message) override;
 	virtual bool UpdateDialogueUI_Implementation(FString& Message, const FString& Command) override;
 	virtual bool CloseDialogueUI_Implementation() override;
+	virtual void ExecuteWidgetCommand_Implementation(const FString& Command) override;
 	
 	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) override;
 	virtual void SetDialogueWidget(UUserWidget* NewDialogueWidgetPtr) override;
