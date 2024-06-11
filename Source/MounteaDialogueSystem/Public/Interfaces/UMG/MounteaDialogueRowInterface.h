@@ -9,6 +9,8 @@
 struct FDialogueRowData;
 struct FDialogueRow;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTypeWriterEffectChanged, bool, bEnabled);
+
 #define LOCTEXT_NAMESPACE "DialogueRow"
 
 /**
@@ -112,6 +114,7 @@ class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueRowInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
+
 	
 	/**
 	 * 
@@ -142,6 +145,30 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
 	void InitializeWidgetDialogueRow();
 	virtual void InitializeWidgetDialogueRow_Implementation() = 0;
+
+	/**
+	 * Stop the effect from play and finishes the text.
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	void StopTypeWriterEffect ();
+	virtual void StopTypeWriterEffect_Implementation () = 0;
+
+	/**
+	 * Starts the typewriter effect on the given text for the specified duration.
+	 * @param SourceText		The full text to display.
+	 * @param Duration				The total duration for the typewriter effect.
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	void StartTypeWriterEffect (const FText& SourceText, float Duration);
+	virtual void StartTypeWriterEffect_Implementation (const FText& SourceText, float Duration) = 0;
+
+	/**
+	 * Enables Type-Writer effect.
+	 * Based on implementation the effect can start or stop.
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	void EnableTypeWriterEffect(bool bEnable);
+	virtual void EnableTypeWriterEffect_Implementation(bool bEnable) = 0;
 };
 
 #undef LOCTEXT_NAMESPACE

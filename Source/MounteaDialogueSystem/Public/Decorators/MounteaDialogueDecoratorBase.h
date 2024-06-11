@@ -206,7 +206,7 @@ protected:
 	UWorld*																				OwningWorld				= nullptr;
 	UPROPERTY()
 	TScriptInterface<IMounteaDialogueParticipantInterface>	OwnerParticipant		= nullptr;
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue|Decorator")
 	TScriptInterface<IMounteaDialogueManagerInterface>		OwningManager			= nullptr;
 };
 
