@@ -287,6 +287,7 @@ public:
 
 	UFUNCTION() virtual void StartExecuteDialogueRow() override;
 	UFUNCTION() virtual void FinishedExecuteDialogueRow() override;
+	virtual void TriggerNextDialogueRow_Implementation() override;
 	UFUNCTION() void NextDialogueRowDataRequested(UMounteaDialogueContext* Context);
 	
 	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) override;
@@ -436,6 +437,8 @@ protected:
 	void RequestVoiceStart_Client(USoundBase* SoundBase);
 	UFUNCTION(Client, Unreliable)
 	void RequestVoiceStop_Client(USoundBase* SoundBase);
+	UFUNCTION(Server, Reliable)
+	void TriggerNextDialogueRow_Server();
 
 	UFUNCTION(Server, Reliable)
 	void PostUIInitialized();

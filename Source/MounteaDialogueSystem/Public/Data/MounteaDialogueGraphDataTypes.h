@@ -29,9 +29,11 @@ class UDataAsset;
 UENUM(BlueprintType)
 enum class EDialogueManagerState : uint8
 {
-	EDMS_Disabled			UMETA(DisplayName="Disabled",			Tooltip="Disabled. Dialogue cannot start."),
-	EDMS_Enabled			UMETA(DisplayName="Enabled",			Tooltip="Enabled. Dialogue can start."),
-	EDMS_Active				UMETA(DisplayName="Active",				Tooltip="Active. Is in Diaologue."),
+	EDMS_Disabled				UMETA(DisplayName="Disabled",			Tooltip="Disabled. Dialogue cannot start."),
+	EDMS_Enabled				UMETA(DisplayName="Enabled",			Tooltip="Enabled. Dialogue can start."),
+	EDMS_Active					UMETA(DisplayName="Active",				Tooltip="Active. Is in Diaologue."),
+
+	Default								UMETA(hidden)
 };
 
 /**
@@ -42,9 +44,11 @@ enum class EDialogueManagerState : uint8
 UENUM(BlueprintType)
 enum class EDialogueParticipantState : uint8
 {
-	EDPS_Disabled		UMETA(DisplayName="Disabled",			Tooltip="Disabled. Dialogue cannot start."),
-	EDPS_Enabled		UMETA(DisplayName="Enabled",			Tooltip="Enabled. Dialogue can start."),
-	EDPS_Active			UMETA(DisplayName="Active",				Tooltip="Active. Is in Diaologue."),
+	EDPS_Disabled				UMETA(DisplayName="Disabled",			Tooltip="Disabled. Dialogue cannot start."),
+	EDPS_Enabled					UMETA(DisplayName="Enabled",			Tooltip="Enabled. Dialogue can start."),
+	EDPS_Active					UMETA(DisplayName="Active",				Tooltip="Active. Is in Diaologue."),
+
+	Default								UMETA(hidden)
 };
 
 /**
@@ -59,7 +63,23 @@ enum class ERowDurationMode : uint8
 	ERDM_Duration				UMETA(DisplayName="Duration",			Tooltip="Uses either duration of 'Row Sound' or value from 'Duration'."),
 	EDRM_Override				UMETA(DisplayName="Override",			Tooltip="Uses 'Duration Override' value."),
 	EDRM_Add						UMETA(DisplayName="Add Time",			Tooltip="Adds 'Duration Override' value to 'Duration'."),
-	ERDM_AutoCalculate		UMETA(DisplayName="Calculate",			Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds.")
+	ERDM_AutoCalculate		UMETA(DisplayName="Calculate",			Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds."),
+
+	Default								UMETA(hidden)
+};
+
+/**
+ * Row execution mode. Defines
+ */
+UENUM(BlueprintType)
+enum class ERowExecutionMode : uint8
+{
+	EREM_Automatic				UMETA(DisplayName="Automatic",			Tooltip="Next row will be executed if any is present."),
+	EREM_AwaitInput			UMETA(DisplayName="Await Input",		Tooltip="Next row will be executed once request is triggered."),
+	EREM_Stopping				UMETA(DisplayName="Stopping",			Tooltip="Row will stop execution of whole Node and will finish both."),
+
+	Default								UMETA(hidden)
+	
 };
 
 /**
@@ -70,8 +90,8 @@ enum class ERowDurationMode : uint8
 UENUM(BlueprintType)
 enum class EInputMode : uint8
 {
-	EIM_UIOnly			UMETA(DisplayName="UI Only"),
-	EIM_UIAndGame	UMETA(DisplayName="UI & Game")
+	EIM_UIOnly					UMETA(DisplayName="UI Only"),
+	EIM_UIAndGame			UMETA(DisplayName="UI & Game")
 };
 
 /**
@@ -200,7 +220,7 @@ public:
 	 * Default is false.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
-	uint8 bIsStoppingRow : 1;
+	ERowExecutionMode RowExecutionBehaviour;
 	/**
 	 * Row GUID.
 	 * 
@@ -217,20 +237,20 @@ public:
 		, RowDurationMode(ERowDurationMode::ERDM_Duration)
 		, RowDuration(0)
 		, RowDurationOverride(0)
-		, bIsStoppingRow(false)
+		, RowExecutionBehaviour(ERowExecutionMode::EREM_Automatic)
 		, RowGUID(FGuid::NewGuid())
 	{};
 
 	FDialogueRowData
 	(
-		const FText& InText, USoundBase* InSound, const ERowDurationMode InRowDurationMode, const float InDuration, const float InDurationOverride, const bool bStopRow = false
+		const FText& InText, USoundBase* InSound, const ERowDurationMode InRowDurationMode, const float InDuration, const float InDurationOverride, const ERowExecutionMode InRowBehaviour = ERowExecutionMode::EREM_Automatic
 	)
 		: RowText(InText)
 		, RowSound(InSound)
 		, RowDurationMode(InRowDurationMode)
 		, RowDuration(InDuration)
 		, RowDurationOverride(InDurationOverride)
-		, bIsStoppingRow(bStopRow)
+		, RowExecutionBehaviour(InRowBehaviour)
 		, RowGUID(FGuid::NewGuid())
 	{};
 
@@ -243,7 +263,7 @@ public:
 		RowDurationMode = Other.RowDurationMode;
 		RowDuration = Other.RowDuration;
 		RowDurationOverride = Other.RowDurationOverride;
-		bIsStoppingRow = Other.bIsStoppingRow;
+		RowExecutionBehaviour = Other.RowExecutionBehaviour;
 		RowGUID = FGuid::NewGuid();
 		
 		return *this;

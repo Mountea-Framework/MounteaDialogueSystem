@@ -164,6 +164,14 @@ public:
 	virtual void FinishedExecuteDialogueRow() = 0;
 
 	/**
+	 * Requests next dialogue row.
+	 * Contains validation that current row must be 'ExecutionMode::AwaitInput'.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	void TriggerNextDialogueRow();
+	virtual void TriggerNextDialogueRow_Implementation() = 0;
+
+	/**
 	 * Retrieves the current dialogue context associated with this dialogue instance.
 	 *
 	 * @return The dialogue context object for this instance.

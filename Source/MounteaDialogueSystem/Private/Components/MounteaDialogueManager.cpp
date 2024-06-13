@@ -733,33 +733,97 @@ void UMounteaDialogueManager::FinishedExecuteDialogueRow()
 
 	const FDialogueRow dialogueRow = DialogueContext->GetActiveDialogueRow();
 	const bool bIsActiveRowValid = UMounteaDialogueSystemBFC::IsDialogueRowValid(dialogueRow);
+	
 	const bool bDialogueRowDataValid = DialogueContext->GetActiveDialogueRow().DialogueRowData.Array().IsValidIndex(increasedIndex);
 
 	LOG_INFO(TEXT("[FinishedExecuteDialogueRow] Dialogue Row Finished"))
 
 	OnDialogueRowFinished.Broadcast(DialogueContext);
+
+	const FDialogueRowData currentDialogueRowData = DialogueContext->GetActiveDialogueRow().DialogueRowData.Array()[DialogueContext->GetActiveDialogueRowDataIndex()];
+	if (currentDialogueRowData.RowExecutionBehaviour == ERowExecutionMode::EREM_AwaitInput)
+	{
+		LOG_INFO(TEXT("[FinishedExecuteDialogueRow] This row has finished and next will execute only using 'TriggerNextDialogueRow'."))
+		return;
+	}
 	
 	if (bIsActiveRowValid && bDialogueRowDataValid)
 	{
 		const FDialogueRowData dialogueRowData = DialogueContext->GetActiveDialogueRow().DialogueRowData.Array()[increasedIndex];
 
-		if (dialogueRowData.bIsStoppingRow)
+		switch (dialogueRowData.RowExecutionBehaviour)
 		{
-			OnDialogueNodeFinished.Broadcast(DialogueContext);
-		}
-		else
-		{
-			DialogueContext->UpdateActiveDialogueRowDataIndex(increasedIndex);
-			OnDialogueContextUpdated.Broadcast(DialogueContext);
+			case ERowExecutionMode::EREM_Automatic:
+				{
+					DialogueContext->UpdateActiveDialogueRowDataIndex(increasedIndex);
+					OnDialogueContextUpdated.Broadcast(DialogueContext);
 
-			NetPushDialogueContext();
+					NetPushDialogueContext();
 		
-			StartExecuteDialogueRow();
+					StartExecuteDialogueRow();
+				}
+				break;
+			case ERowExecutionMode::EREM_AwaitInput:
+				break;
+			case ERowExecutionMode::EREM_Stopping:
+				OnDialogueNodeFinished.Broadcast(DialogueContext);
+				break;
+			case ERowExecutionMode::Default:
+				break;
 		}
 	}
 	else
 	{
 		OnDialogueNodeFinished.Broadcast(DialogueContext);
+	}
+}
+
+void UMounteaDialogueManager::TriggerNextDialogueRow_Implementation()
+{
+	if (!GetWorld())
+	{
+		OnDialogueFailed.Broadcast(TEXT("Cannot find World!"));
+		return;
+	}
+
+	if (!GetOwner())
+	{
+		LOG_ERROR(TEXT("[TriggerNextDialogueRow] No owner!"))
+		return;;
+	}
+
+	if (!GetOwner()->HasAuthority())
+	{
+		TriggerNextDialogueRow_Server();
+		
+		return;
+	}
+
+	const int32 increasedIndex = DialogueContext->GetActiveDialogueRowDataIndex() + 1;
+
+	const FDialogueRow dialogueRow = DialogueContext->GetActiveDialogueRow();
+	const bool bIsActiveRowValid = UMounteaDialogueSystemBFC::IsDialogueRowValid(dialogueRow);
+	const bool bDialogueRowDataValid = DialogueContext->GetActiveDialogueRow().DialogueRowData.Array().IsValidIndex(increasedIndex);
+
+	if (bIsActiveRowValid && bDialogueRowDataValid)
+	{
+		const FDialogueRowData dialogueRowData = DialogueContext->GetActiveDialogueRow().DialogueRowData.Array()[increasedIndex];
+
+		switch (dialogueRowData.RowExecutionBehaviour)
+		{
+			case ERowExecutionMode::EREM_AwaitInput:
+				DialogueContext->UpdateActiveDialogueRowDataIndex(increasedIndex);
+				OnDialogueContextUpdated.Broadcast(DialogueContext);
+
+				NetPushDialogueContext();
+				
+				StartExecuteDialogueRow();
+				break;
+			case ERowExecutionMode::EREM_Stopping:
+			case ERowExecutionMode::EREM_Automatic:
+			case ERowExecutionMode::Default:
+				break;
+		}
 	}
 }
 
@@ -820,17 +884,17 @@ void UMounteaDialogueManager::SetDialogueManagerState_Implementation(const EDial
 			{
 				switch (ManagerState)
 				{
-				case EDialogueManagerState::EDMS_Disabled:
-					Execute_CloseDialogueUI(this);
-					break;
-				case EDialogueManagerState::EDMS_Enabled:
-					Execute_CloseDialogueUI(this);
-					break;
-				case EDialogueManagerState::EDMS_Active:
-					FString resultMessage;
-					Execute_InvokeDialogueUI(this, resultMessage);
-					PostUIInitialized();
-					break;
+					case EDialogueManagerState::EDMS_Disabled:
+						Execute_CloseDialogueUI(this);
+						break;
+					case EDialogueManagerState::EDMS_Enabled:
+						Execute_CloseDialogueUI(this);
+						break;
+					case EDialogueManagerState::EDMS_Active:
+						FString resultMessage;
+						Execute_InvokeDialogueUI(this, resultMessage);
+						PostUIInitialized();
+						break;
 				}
 			}
 		}
@@ -1163,6 +1227,11 @@ void UMounteaDialogueManager::StartExecuteDialogueRow_Client_Implementation()
 void UMounteaDialogueManager::FinishedExecuteDialogueRow_Server_Implementation()
 {
 	FinishedExecuteDialogueRow();
+}
+
+void UMounteaDialogueManager::TriggerNextDialogueRow_Server_Implementation()
+{
+	Execute_TriggerNextDialogueRow(this);
 }
 
 void UMounteaDialogueManager::OnRep_ManagerState()
