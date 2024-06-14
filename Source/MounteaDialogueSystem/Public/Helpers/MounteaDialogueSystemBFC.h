@@ -315,4 +315,7 @@ public:
 	static bool DoesNodeInvertSkipSettings(UMounteaDialogueGraphNode* Node);
 
 	static bool DoesPreviousNodeSkipActiveNode(const UMounteaDialogueGraph* ParentGraph, const FGuid PreviousNode);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="get, find, retrieve"))
+	static ERowExecutionMode GetActiveRowExecutionMode(UMounteaDialogueContext* DialogueContext, const int32 RowIndex);
 };

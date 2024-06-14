@@ -839,3 +839,38 @@ bool UMounteaDialogueSystemBFC::DoesPreviousNodeSkipActiveNode(const UMounteaDia
 	
 	return false;
 }
+
+ERowExecutionMode UMounteaDialogueSystemBFC::GetActiveRowExecutionMode(UMounteaDialogueContext* DialogueContext, const int32 RowIndex)
+{
+	constexpr ERowExecutionMode result = ERowExecutionMode::EREM_Automatic;
+
+	if (!DialogueContext)
+	{
+		return result;
+	}
+
+	if (RowIndex < 0)
+	{
+		return result;
+	}
+
+	auto activeRow = DialogueContext->GetActiveDialogueRow();
+	if (!activeRow.IsValid())
+	{
+		return result;
+	}
+
+	const TArray<FDialogueRowData> rowDataArray = activeRow.DialogueRowData.Array();
+	if (!rowDataArray.IsValidIndex(RowIndex))
+	{
+		return result;
+	}
+
+	auto activeRowData = rowDataArray[RowIndex];
+	if (!IsDialogueRowDataValid(activeRowData))
+	{
+		return result;
+	}
+
+	return activeRowData.RowExecutionBehaviour;
+}

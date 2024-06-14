@@ -408,8 +408,8 @@ void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBas
 	{
 		return;
 	}
-
-	FinishedExecuteDialogueRow();
+	
+	OnNextDialogueRowDataRequested.Broadcast(DialogueContext);
 }
 
 #pragma endregion
@@ -722,44 +722,34 @@ void UMounteaDialogueManager::FinishedExecuteDialogueRow()
 	if (!GetOwner()->HasAuthority())
 	{
 		FinishedExecuteDialogueRow_Server();
-
+		
 		GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 		return;
 	}
 
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 
-	const int32 increasedIndex = DialogueContext->GetActiveDialogueRowDataIndex() + 1;
-
-	const FDialogueRow dialogueRow = DialogueContext->GetActiveDialogueRow();
-	const bool bIsActiveRowValid = UMounteaDialogueSystemBFC::IsDialogueRowValid(dialogueRow);
-	
-	const bool bDialogueRowDataValid = DialogueContext->GetActiveDialogueRow().DialogueRowData.Array().IsValidIndex(increasedIndex);
+	const MounteaDialogueManagerHelpers::FDialogueRowDataInfo processInfo = MounteaDialogueManagerHelpers::GetDialogueRowDataInfo(DialogueContext);
 
 	LOG_INFO(TEXT("[FinishedExecuteDialogueRow] Dialogue Row Finished"))
 
 	OnDialogueRowFinished.Broadcast(DialogueContext);
-
-	const FDialogueRowData currentDialogueRowData = DialogueContext->GetActiveDialogueRow().DialogueRowData.Array()[DialogueContext->GetActiveDialogueRowDataIndex()];
-	if (currentDialogueRowData.RowExecutionBehaviour == ERowExecutionMode::EREM_AwaitInput)
+	
+	if (processInfo.ActiveRowExecutionMode == ERowExecutionMode::EREM_AwaitInput)
 	{
 		LOG_INFO(TEXT("[FinishedExecuteDialogueRow] This row has finished and next will execute only using 'TriggerNextDialogueRow'."))
 		return;
 	}
 	
-	if (bIsActiveRowValid && bDialogueRowDataValid)
+	if (processInfo.bIsActiveRowValid && processInfo.bDialogueRowDataValid)
 	{
-		const FDialogueRowData dialogueRowData = DialogueContext->GetActiveDialogueRow().DialogueRowData.Array()[increasedIndex];
-
-		switch (dialogueRowData.RowExecutionBehaviour)
+		switch (processInfo.NextRowExecutionMode)
 		{
 			case ERowExecutionMode::EREM_Automatic:
 				{
-					DialogueContext->UpdateActiveDialogueRowDataIndex(increasedIndex);
+					DialogueContext->UpdateActiveDialogueRowDataIndex(processInfo.IncreasedIndex);
 					OnDialogueContextUpdated.Broadcast(DialogueContext);
-
-					NetPushDialogueContext();
-		
+					NetPushDialogueContext();		
 					StartExecuteDialogueRow();
 				}
 				break;
@@ -795,41 +785,47 @@ void UMounteaDialogueManager::TriggerNextDialogueRow_Implementation()
 	if (!GetOwner()->HasAuthority())
 	{
 		TriggerNextDialogueRow_Server();
-		
+
+		GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 		return;
 	}
 
-	const int32 increasedIndex = DialogueContext->GetActiveDialogueRowDataIndex() + 1;
+	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 
-	const FDialogueRow dialogueRow = DialogueContext->GetActiveDialogueRow();
-	const bool bIsActiveRowValid = UMounteaDialogueSystemBFC::IsDialogueRowValid(dialogueRow);
-	const bool bDialogueRowDataValid = DialogueContext->GetActiveDialogueRow().DialogueRowData.Array().IsValidIndex(increasedIndex);
+	const MounteaDialogueManagerHelpers::FDialogueRowDataInfo processInfo = MounteaDialogueManagerHelpers::GetDialogueRowDataInfo(DialogueContext);
 
-	if (bIsActiveRowValid && bDialogueRowDataValid)
+	OnDialogueRowFinished.Broadcast(DialogueContext);
+	
+	if (processInfo.bDialogueRowDataValid && processInfo.bIsActiveRowValid)
 	{
-		const FDialogueRowData dialogueRowData = DialogueContext->GetActiveDialogueRow().DialogueRowData.Array()[increasedIndex];
-
-		switch (dialogueRowData.RowExecutionBehaviour)
+		switch (processInfo.ActiveRowExecutionMode)
 		{
+			case ERowExecutionMode::EREM_Automatic:
 			case ERowExecutionMode::EREM_AwaitInput:
-				DialogueContext->UpdateActiveDialogueRowDataIndex(increasedIndex);
+				DialogueContext->UpdateActiveDialogueRowDataIndex(processInfo.IncreasedIndex);
 				OnDialogueContextUpdated.Broadcast(DialogueContext);
-
 				NetPushDialogueContext();
-				
 				StartExecuteDialogueRow();
 				break;
 			case ERowExecutionMode::EREM_Stopping:
-			case ERowExecutionMode::EREM_Automatic:
+				OnDialogueNodeFinished.Broadcast(DialogueContext);
+				break;
 			case ERowExecutionMode::Default:
+				OnDialogueNodeFinished.Broadcast(DialogueContext);
 				break;
 		}
+	}
+	else
+	{
+		OnDialogueNodeFinished.Broadcast(DialogueContext);
 	}
 }
 
 void UMounteaDialogueManager::NextDialogueRowDataRequested(UMounteaDialogueContext* Context)
 {
-	FinishedExecuteDialogueRow();
+	//FinishedExecuteDialogueRow();
+	
+	Execute_TriggerNextDialogueRow(this);
 }
 
 void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewContext)
@@ -1299,4 +1295,24 @@ bool UMounteaDialogueManager::ReplicateSubobjects(UActorChannel* Channel, FOutBu
 	*/
 
 	return bUpdated;
+}
+
+MounteaDialogueManagerHelpers::FDialogueRowDataInfo MounteaDialogueManagerHelpers::GetDialogueRowDataInfo(const UMounteaDialogueContext* DialogueContext)
+{
+	FDialogueRowDataInfo Info;
+	
+	const int32 currentIndex = DialogueContext->GetActiveDialogueRowDataIndex();
+	Info.IncreasedIndex = currentIndex + 1;
+
+	const FDialogueRow dialogueRow = DialogueContext->GetActiveDialogueRow();
+	Info.bIsActiveRowValid = UMounteaDialogueSystemBFC::IsDialogueRowValid(dialogueRow);
+
+	const TArray<FDialogueRowData> rowDataArray = DialogueContext->GetActiveDialogueRow().DialogueRowData.Array();
+	
+	Info.bDialogueRowDataValid = rowDataArray.IsValidIndex(Info.IncreasedIndex);
+
+	Info.NextRowExecutionMode = Info.bDialogueRowDataValid ? rowDataArray[Info.IncreasedIndex].RowExecutionBehaviour : ERowExecutionMode::EREM_Automatic;
+	Info.ActiveRowExecutionMode = rowDataArray.IsValidIndex(currentIndex) ? rowDataArray[currentIndex].RowExecutionBehaviour : ERowExecutionMode::EREM_Automatic;
+
+	return Info;
 }

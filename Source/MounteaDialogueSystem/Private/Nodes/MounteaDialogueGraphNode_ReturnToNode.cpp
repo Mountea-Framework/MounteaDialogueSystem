@@ -50,7 +50,7 @@ void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode_Implementation(const TS
 			if (bAutoCompleteSelectedNode)
 			{
 				//Manager->GetDialogueNodeFinishedEventHandle().Broadcast(Context);
-				Manager->GetDialogueVoiceSkipRequestEventHandle().Broadcast(nullptr);
+				//Manager->GetDialogueVoiceSkipRequestEventHandle().Broadcast(nullptr);
 			}
 		}
 	}

@@ -454,4 +454,19 @@ protected:
 	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	
 #pragma endregion
+
 };
+
+namespace MounteaDialogueManagerHelpers
+{
+    struct FDialogueRowDataInfo
+    {
+        int32							IncreasedIndex;
+        bool								bIsActiveRowValid;
+        bool								bDialogueRowDataValid;
+    	ERowExecutionMode	NextRowExecutionMode;
+    	ERowExecutionMode	ActiveRowExecutionMode;
+    };
+
+    inline FDialogueRowDataInfo GetDialogueRowDataInfo(const UMounteaDialogueContext* DialogueContext);
+}
