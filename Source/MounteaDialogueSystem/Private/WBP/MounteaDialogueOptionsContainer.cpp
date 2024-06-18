@@ -8,6 +8,7 @@
 #include "Helpers/MounteaDialogueUIBFL.h"
 #include "Interfaces/MounteaDialogueWBPInterface.h"
 #include "Interfaces/UMG/MounteaDialogueOptionInterface.h"
+#include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 
 void UMounteaDialogueOptionsContainer::SetParentDialogueWidget_Implementation(UUserWidget* NewParentDialogueWidget)
 {
@@ -43,7 +44,10 @@ void UMounteaDialogueOptionsContainer::AddNewDialogueOption_Implementation(UMoun
 		return;
 	}
 	
-	TObjectPtr<UUserWidget> dialogueOptionWidget = CreateWidget<UUserWidget>(GetOwningPlayer(),  DialogueOptionClass.LoadSynchronous());
+	TObjectPtr<UUserWidget> dialogueOptionWidget =
+		DialogueOptions.Contains(NewDialogueOption->GetNodeGUID())
+		? DialogueOptions.FindRef(NewDialogueOption->GetNodeGUID())
+		: CreateWidget<UUserWidget>(GetOwningPlayer(),  DialogueOptionClass.LoadSynchronous());
 	
 	if (dialogueOptionWidget)
 	{		

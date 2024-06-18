@@ -285,8 +285,8 @@ public:
 	virtual void SetDialogueWidget(UUserWidget* NewDialogueWidgetPtr) override;
 	virtual UUserWidget* GetDialogueWidget_Implementation() const override;
 
-	UFUNCTION() virtual void StartExecuteDialogueRow() override;
-	UFUNCTION() virtual void FinishedExecuteDialogueRow() override;
+	virtual void StartExecuteDialogueRow_Implementation() override;
+	virtual void FinishedExecuteDialogueRow_Implementation() override;
 	virtual void TriggerNextDialogueRow_Implementation() override;
 	UFUNCTION() void NextDialogueRowDataRequested(UMounteaDialogueContext* Context);
 	

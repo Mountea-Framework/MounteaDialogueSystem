@@ -155,13 +155,18 @@ public:
 	 * ❔ Dialogue Data contain Dialogue Data Rows, which are individual dialogue lines, which can be skipped.
 	 * ❔ Once all Dialogue Data Rows are finished, Dialogue Data is finished as well.
 	 */
-	virtual void StartExecuteDialogueRow() = 0;
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	void StartExecuteDialogueRow();
+	virtual void StartExecuteDialogueRow_Implementation() = 0;
+	
 	/**
 	 * Function responsible for cleanup once Dialogue Row is finished.
 	 * ❔ Dialogue Data contain Dialogue Data Rows, which are individual dialogue lines, which can be skipped.
 	 * ❔ Once all Dialogue Data Rows are finished, Dialogue Data is finished as well.
 	 */
-	virtual void FinishedExecuteDialogueRow() = 0;
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	void FinishedExecuteDialogueRow();
+	virtual void FinishedExecuteDialogueRow_Implementation() = 0;
 
 	/**
 	 * Requests next dialogue row.

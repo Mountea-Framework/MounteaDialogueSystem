@@ -226,7 +226,7 @@ void UMounteaDialogueManager::OnDialogueNodeStartedEvent_Internal(UMounteaDialog
 	
 	OnDialogueNodeStartedEvent(Context);
 	
-	StartExecuteDialogueRow();
+	Execute_StartExecuteDialogueRow(this);
 }
 
 void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialogueContext* Context)
@@ -659,7 +659,7 @@ UUserWidget* UMounteaDialogueManager::GetDialogueWidget_Implementation() const
 	return DialogueWidgetPtr;
 }
 
-void UMounteaDialogueManager::StartExecuteDialogueRow()
+void UMounteaDialogueManager::StartExecuteDialogueRow_Implementation()
 {
 	if (!GetOwner())
 	{
@@ -705,7 +705,7 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 	OnDialogueRowStarted.Broadcast(DialogueContext);
 }
 
-void UMounteaDialogueManager::FinishedExecuteDialogueRow()
+void UMounteaDialogueManager::FinishedExecuteDialogueRow_Implementation()
 {
 	if (!GetWorld())
 	{
@@ -750,7 +750,7 @@ void UMounteaDialogueManager::FinishedExecuteDialogueRow()
 					DialogueContext->UpdateActiveDialogueRowDataIndex(processInfo.IncreasedIndex);
 					OnDialogueContextUpdated.Broadcast(DialogueContext);
 					NetPushDialogueContext();		
-					StartExecuteDialogueRow();
+					Execute_StartExecuteDialogueRow(this);
 				}
 				break;
 			case ERowExecutionMode::EREM_AwaitInput:
@@ -805,7 +805,7 @@ void UMounteaDialogueManager::TriggerNextDialogueRow_Implementation()
 				DialogueContext->UpdateActiveDialogueRowDataIndex(processInfo.IncreasedIndex);
 				OnDialogueContextUpdated.Broadcast(DialogueContext);
 				NetPushDialogueContext();
-				StartExecuteDialogueRow();
+				Execute_StartExecuteDialogueRow(this);
 				break;
 			case ERowExecutionMode::EREM_Stopping:
 				OnDialogueNodeFinished.Broadcast(DialogueContext);
@@ -1199,7 +1199,7 @@ void UMounteaDialogueManager::StartExecuteDialogueRow_Client_Implementation()
 	{
 		if (UMounteaDialogueSystemBFC::DoesPreviousNodeSkipActiveNode(DialogueContext->DialogueParticipant->GetDialogueGraph(), DialogueContext->PreviousActiveNode))
 		{
-			FinishedExecuteDialogueRow();
+			Execute_FinishedExecuteDialogueRow(this);
 
 			return;
 		}
@@ -1208,7 +1208,7 @@ void UMounteaDialogueManager::StartExecuteDialogueRow_Client_Implementation()
 	if (RowData.RowDurationMode != ERowDurationMode::ERDM_Manual)
 	{
 		FTimerDelegate Delegate;
-		Delegate.BindUObject(this, &UMounteaDialogueManager::FinishedExecuteDialogueRow);
+		Delegate.BindUObject(this, &UMounteaDialogueManager::FinishedExecuteDialogueRow_Implementation);
 		
 		GetWorld()->GetTimerManager().SetTimer
 		(
@@ -1222,7 +1222,7 @@ void UMounteaDialogueManager::StartExecuteDialogueRow_Client_Implementation()
 
 void UMounteaDialogueManager::FinishedExecuteDialogueRow_Server_Implementation()
 {
-	FinishedExecuteDialogueRow();
+	Execute_FinishedExecuteDialogueRow(this);
 }
 
 void UMounteaDialogueManager::TriggerNextDialogueRow_Server_Implementation()
