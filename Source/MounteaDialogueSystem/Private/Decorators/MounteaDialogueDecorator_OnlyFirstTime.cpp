@@ -51,8 +51,12 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::EvaluateDecorator_Implementation()
 
 	// We can live for a moment without Context, because this Decorator might be called before Context is initialized
 	bSatisfied = GetOwnerParticipant() != nullptr  || Context != nullptr;
+	if (!bSatisfied)
+	{
+		return bSatisfied;
+	}
 	
-	return bSatisfied;
+	return IsFirstTime();
 }
 
 void UMounteaDialogueDecorator_OnlyFirstTime::ExecuteDecorator_Implementation()
