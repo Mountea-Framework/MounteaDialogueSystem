@@ -48,6 +48,20 @@ bool UMounteaDialogueSystemBFC::HasNodeBeenTraversed(const UMounteaDialogueGraph
 	return bTraversed;
 }
 
+bool UMounteaDialogueSystemBFC::HasNodeBeenTraversedV2(const UMounteaDialogueGraphNode* Node,  const UMounteaDialogueContext* Context)
+{
+	bool bTraversed = false;
+
+	if (!Node || !Context)
+	{
+		return bTraversed;
+	}
+
+	bTraversed = Context->TraversedPath.Contains(Node->GetNodeGUID());
+
+	return  bTraversed;
+}
+
 UAudioComponent* UMounteaDialogueSystemBFC::FindAudioComponentByName(const AActor* ActorContext, const FName& Arg)
 {
 	if (ActorContext == nullptr) return nullptr;

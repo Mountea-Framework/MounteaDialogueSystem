@@ -79,7 +79,7 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::IsFirstTime() const
 		ParticipantInterface = Context->GetDialogueParticipant();
 	}
 
-	return !UMounteaDialogueSystemBFC::HasNodeBeenTraversed(GetOwningNode(), ParticipantInterface);
+	return !UMounteaDialogueSystemBFC::HasNodeBeenTraversed(GetOwningNode(), ParticipantInterface) || UMounteaDialogueSystemBFC::HasNodeBeenTraversedV2(GetOwningNode(), Context);
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -44,6 +44,11 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="node, traverse, open, active"))
 	static bool HasNodeBeenTraversed(const UMounteaDialogueGraphNode* Node, const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant);
+	/**
+	 * Returns whether selected Node has been already Traversed or not.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="node, traverse, open, active"))
+	static bool HasNodeBeenTraversedV2(const UMounteaDialogueGraphNode* Node, const UMounteaDialogueContext* Context);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="audio, tag, search"))
 	static UAudioComponent* FindAudioComponentByName(const AActor* ActorContext, const FName& Arg);

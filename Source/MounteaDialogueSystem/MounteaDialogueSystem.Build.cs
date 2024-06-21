@@ -52,7 +52,7 @@ public class MounteaDialogueSystem : ModuleRules
 				"DeveloperSettings",
 				"UMG",
 				"Projects",
-				"NetCore"
+				"NetCore",
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);
