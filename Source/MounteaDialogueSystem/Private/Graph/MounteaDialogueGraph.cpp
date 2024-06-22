@@ -2,8 +2,10 @@
 
 #include "Graph/MounteaDialogueGraph.h"
 
-#include "Edges/MounteaDialogueGraphEdge.h"
 #include "Misc/DataValidation.h"
+
+#include "Edges/MounteaDialogueGraphEdge.h"
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
@@ -187,6 +189,27 @@ void UMounteaDialogueGraph::PostInitProperties()
 	CreateGraph();
 	
 #endif
+}
+
+void UMounteaDialogueGraph::RegisterTick_Implementation( const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+{
+	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
+	{
+		ParentTickable->GetMounteaDialogueTickHandle().AddUniqueDynamic(this, &UMounteaDialogueGraph::TickMounteaEvent);
+	}
+}
+
+void UMounteaDialogueGraph::UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+{
+	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
+	{
+		ParentTickable->GetMounteaDialogueTickHandle().RemoveDynamic(this, &UMounteaDialogueGraph::TickMounteaEvent);
+	}
+}
+
+void UMounteaDialogueGraph::TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime)
+{
+	GraphTickEvent.Broadcast(this, ParentTick, DeltaTime);
 }
 
 #if WITH_EDITOR

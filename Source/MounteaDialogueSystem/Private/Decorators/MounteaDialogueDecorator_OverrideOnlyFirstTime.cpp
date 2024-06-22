@@ -36,6 +36,8 @@ void UMounteaDialogueDecorator_OverrideOnlyFirstTime::ExecuteDecorator_Implement
 {
 	Super::ExecuteDecorator_Implementation();
 
+	if (!OwningManager) return;
+
 	if (const auto TempContext = GetContext())
 	{
 		// We assume Context and Manager are already valid, but safety is safety

@@ -29,7 +29,7 @@ UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 	bUseGameplayTags = false;
 }
 
-void UMounteaDialogueGraphNode_AnswerNode::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode_AnswerNode::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	if (!bUseGameplayTags)
 	{
@@ -42,13 +42,13 @@ void UMounteaDialogueGraphNode_AnswerNode::PreProcessNode(const TScriptInterface
 			}
 		}
 	}
-	
-	Super::PreProcessNode(Manager);
+
+	Super::PreProcessNode_Implementation(Manager);
 }
 
-void UMounteaDialogueGraphNode_AnswerNode::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode_AnswerNode::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	Super::ProcessNode(Manager);
+	Super::ProcessNode_Implementation(Manager);
 }
 
 #if WITH_EDITOR

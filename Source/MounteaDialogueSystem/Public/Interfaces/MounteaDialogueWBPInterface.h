@@ -7,6 +7,7 @@
 #include "MounteaDialogueWBPInterface.generated.h"
 
 class IMounteaDialogueManagerInterface;
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI, BlueprintType, Blueprintable)
 class UMounteaDialogueWBPInterface : public UInterface

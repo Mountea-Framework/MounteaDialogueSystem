@@ -27,9 +27,9 @@ public:
 
 public:
 	
-	virtual void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
+	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 
-	virtual void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
+	virtual void PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 
 	/**
 	 * Returns the Dialogue Data Table for this graph node.
@@ -72,12 +72,12 @@ protected:
 	 * The data table containing the dialogue rows.
 	 * ❗ Strongly suggested to use 'DialogueRow' based Data Tables
 	 */
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, RequiredAssetDataTags = "RowStructure=/Script/MounteaDialogueSystem.DialogueRow"))
 	UDataTable*	DataTable;
 
 	/** Name of row in the table that we want */
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
-	FName RowName;
+	FName				RowName;
 
 	/**
 	 * Flag defining how the Participant is searched for.
@@ -98,7 +98,7 @@ protected:
 	 * ❔ Each unique dialogue Participant should be using different Tag, if generic, then use something like `Dialogue.NPC`
 	 */
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault))
-	uint8 bUseGameplayTags : 1;
+	uint8					bUseGameplayTags : 1;
 
 #if WITH_EDITOR
 	

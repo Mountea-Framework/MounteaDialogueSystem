@@ -3,35 +3,28 @@
 
 #include "Decorators/MounteaIDialogueDecorator_SwapParticipants.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Data/MounteaDialogueContext.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_SwapParticipants"
-
-void UMounteaDialogueDecorator_SwapParticipants::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant)
-{
-	Super::InitializeDecorator_Implementation(World, OwningParticipant);
-
-	if (World)
-	{
-		Manager = UMounteaDialogueSystemBFC::GetDialogueManager(GetOwningWorld());
-	}
-}
 
 void UMounteaDialogueDecorator_SwapParticipants::CleanupDecorator_Implementation()
 {
 	Super::CleanupDecorator_Implementation();
 
 	Context = nullptr;
-	Manager = nullptr;
+	OwningManager = nullptr;
 }
 
 void UMounteaDialogueDecorator_SwapParticipants::ExecuteDecorator_Implementation()
 {
 	Super::ExecuteDecorator_Implementation();
 
+	if (!OwningManager) return;
+
 	if (!Context)
 	{
 		// Let's return BP Updatable Context rather than Raw
-		Context = Manager->GetDialogueContext();
+		Context = OwningManager->GetDialogueContext();
 	}
 
 	if (!Context) return;

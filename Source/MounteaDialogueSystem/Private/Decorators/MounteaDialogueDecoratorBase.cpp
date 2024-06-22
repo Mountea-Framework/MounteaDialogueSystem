@@ -1,13 +1,38 @@
 // All rights reserved Dominik Pavlicek 2023
 
-
 #include "Decorators/MounteaDialogueDecoratorBase.h"
+
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 
 #if WITH_EDITOR
 #include "Editor.h"
 #endif
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecoratorBase"
+
+void UMounteaDialogueDecoratorBase::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
+{
+	OwningWorld = World;
+	if (World)
+	{
+		DecoratorState = EDecoratorState::Initialized;
+	}
+
+	if (OwningParticipant)
+	{
+		OwnerParticipant = OwningParticipant;
+	}
+
+	if (NewOwningManager != nullptr)
+	{
+		OwningManager = NewOwningManager;
+	}
+};
+
+void UMounteaDialogueDecoratorBase::SetOwningManager_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
+{
+	OwningManager = NewOwningManager;
+}
 
 bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
 {
@@ -57,6 +82,11 @@ bool UMounteaDialogueDecoratorBase::EvaluateDecorator_Implementation()
 
 void UMounteaDialogueDecoratorBase::ExecuteDecorator_Implementation()
 {
+	if (!OwningManager)
+	{
+		LOG_ERROR(TEXT("[ExecuteDecorator] Decorator %s has no Manager!"), *GetDecoratorName().ToString())
+	}
+	
 	return;
 }
 
@@ -82,5 +112,86 @@ FText UMounteaDialogueDecoratorBase::GetDecoratorName() const
 #endif
 	return FText::FromString(GetName());
 }
+
+void UMounteaDialogueDecoratorBase::RegisterTick_Implementation( const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+{
+	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
+	{
+		ParentTickable->GetMounteaDialogueTickHandle().AddUniqueDynamic(this, &UMounteaDialogueDecoratorBase::TickMounteaEvent);
+	}
+}
+
+void UMounteaDialogueDecoratorBase::UnregisterTick_Implementation( const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+{
+	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
+	{
+		ParentTickable->GetMounteaDialogueTickHandle().RemoveDynamic(this, &UMounteaDialogueDecoratorBase::TickMounteaEvent);
+	}
+}
+
+void UMounteaDialogueDecoratorBase::TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime)
+{
+	DecoratorTickEvent.Broadcast(SelfRef, ParentTick, DeltaTime);
+
+	LOG_INFO(TEXT("[%s] %s"), *GetDecoratorName().ToString(), *(OwningManager != nullptr ? OwningManager.GetObject()->GetName() : TEXT("NO MANAGER")))
+}
+
+void FMounteaDialogueDecorator::InitializeDecorator(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager) const
+{
+	if (DecoratorType)
+	{
+		DecoratorType->InitializeDecorator(World, OwningParticipant, OwningManager);
+		return;
+	}
+
+	LOG_ERROR(TEXT("[InitializeDecorator] DecoratorType is null (invalid)!"))
+	return;
+}
+
+bool FMounteaDialogueDecorator::ValidateDecorator(TArray<FText>& ValidationMessages) const
+{
+	if (DecoratorType)
+	{
+		return DecoratorType->ValidateDecorator(ValidationMessages);
+	}
+		
+	LOG_ERROR(TEXT("[EvaluateDecorator] DecoratorType is null (invalid)!"))
+	return false;
+}
+
+void FMounteaDialogueDecorator::CleanupDecorator() const
+{
+	if (DecoratorType)
+	{
+		DecoratorType->CleanupDecorator();
+		return;
+	}
+
+	LOG_ERROR(TEXT("[CleanupDecorator] DecoratorType is null (invalid)!"))
+	return;
+}
+
+bool FMounteaDialogueDecorator::EvaluateDecorator() const
+{
+	if (DecoratorType)
+	{
+		return DecoratorType->EvaluateDecorator();
+	}
+		
+	LOG_ERROR(TEXT("[EvaluateDecorator] DecoratorType is null (invalid)!"))
+	return false;
+}
+
+void FMounteaDialogueDecorator::ExecuteDecorator() const
+{
+	if (DecoratorType)
+	{
+		DecoratorType->ExecuteDecorator();
+		return;
+	}
+		
+	LOG_ERROR(TEXT("[ExecuteDecorator] DecoratorType is null (invalid)!"))
+	return;
+};
 
 #undef LOCTEXT_NAMESPACE
