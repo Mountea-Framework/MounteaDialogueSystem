@@ -6,6 +6,7 @@
 #include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "MounteaDialogueDecorator_SelectRandomDialogueRow.generated.h"
 
+class UMounteaDialogueContext;
 class IMounteaDialogueManagerInterface;
 /**
  *	Mountea Dialogue Decorators
@@ -18,8 +19,7 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecorator_SelectRandomDialogueRo
 	GENERATED_BODY()
 
 public:
-
-	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant) override;
+	
 	virtual void CleanupDecorator_Implementation() override;
 	virtual bool ValidateDecorator_Implementation(TArray<FText>& ValidationMessages) override;
 	virtual void ExecuteDecorator_Implementation() override;
@@ -30,17 +30,17 @@ public:
 protected:
 
 	UPROPERTY(SaveGame, Category="Random", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, InlineEditConditionToggle))
-	bool bUseRange;
+	bool															bUseRange;
 
 	/**
 	 * Allows select random number from given Range.
 	 * If range exceeds or is invalid, first valid random index is used.
 	 */
 	UPROPERTY(SaveGame, Category="Random", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, EditCondition="bUseRange"))
-	FIntPoint RandomRange;
+	FIntPoint													RandomRange;
 
 private:
 	
-	class UMounteaDialogueContext* Context = nullptr;
-	TScriptInterface<IMounteaDialogueManagerInterface> Manager = nullptr;
+	UPROPERTY()
+	TObjectPtr<UMounteaDialogueContext> Context = nullptr;
 };

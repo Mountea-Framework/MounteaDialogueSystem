@@ -24,7 +24,7 @@ class MOUNTEADIALOGUESYSTEM_API  UMounteaDialogueDecorator_OverrideParticipants 
 
 public:
 	
-	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant) override;
+	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager) override;
 	virtual void CleanupDecorator_Implementation() override;
 	virtual bool ValidateDecorator_Implementation(TArray<FText>& ValidationMessages) override;
 	virtual void ExecuteDecorator_Implementation() override;
@@ -57,8 +57,8 @@ protected:
 
 private:
 	
-	UMounteaDialogueContext* Context = nullptr;
-	TScriptInterface<IMounteaDialogueManagerInterface> Manager = nullptr;
+	UPROPERTY()
+	TObjectPtr<UMounteaDialogueContext> Context = nullptr;
 
 	TScriptInterface<IMounteaDialogueParticipantInterface> Override_PlayerParticipantInterface = nullptr;
 	TScriptInterface<IMounteaDialogueParticipantInterface> Override_ParticipantInterface = nullptr;
