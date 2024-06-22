@@ -6,6 +6,8 @@
 #include "Engine/DeveloperSettings.h"
 #include "MounteaDialogueGraphEditorSettings.generated.h"
 
+class UMounteaDialogueGraphNode;
+
 #pragma region Enums
 
 UENUM(BlueprintType)

@@ -256,8 +256,14 @@ void FAssetEditor_MounteaDialogueGraph::RegisterToolbarTab(const TSharedRef<FTab
 
 void FAssetEditor_MounteaDialogueGraph::AddReferencedObjects(FReferenceCollector& Collector)
 {
-	Collector.AddReferencedObject(EditingGraph);
-	Collector.AddReferencedObject(EditingGraph->EdGraph);
+	TObjectPtr<UMounteaDialogueGraph> graphObject = EditingGraph;
+	Collector.AddReferencedObject(graphObject);
+
+	if (graphObject)
+	{
+		TObjectPtr<UEdGraph> graphEditorObject = graphObject->EdGraph;
+		Collector.AddReferencedObject(graphEditorObject);
+	}
 }
 
 FString FAssetEditor_MounteaDialogueGraph::GetReferencerName() const

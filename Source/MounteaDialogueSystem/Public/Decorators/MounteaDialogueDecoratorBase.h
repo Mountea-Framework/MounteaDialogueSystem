@@ -10,8 +10,6 @@
 
 class IMounteaDialogueManagerInterface;
 class IMounteaDialogueParticipantInterface;
-class UMounteaDialogueGraph;
-class UMounteaDialogueGraphNode;
 
 UENUM(BlueprintType)
 enum class EDecoratorState : uint8

@@ -3,6 +3,8 @@
 #include "Decorators/MounteaDialogueDecoratorBase.h"
 
 #include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Nodes/MounteaDialogueGraphNode.h"
+#include "Graph/MounteaDialogueGraph.h"
 
 #if WITH_EDITOR
 #include "Editor.h"
@@ -109,8 +111,9 @@ FText UMounteaDialogueDecoratorBase::GetDecoratorName() const
 {
 #if WITH_EDITORONLY_DATA
 	return GetClass()->GetDisplayNameText();
-#endif
+#else
 	return FText::FromString(GetName());
+#endif
 }
 
 void UMounteaDialogueDecoratorBase::RegisterTick_Implementation( const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)

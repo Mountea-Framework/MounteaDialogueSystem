@@ -473,6 +473,52 @@ public:
 	}
 };
 
+/**
+ * 
+ */
+USTRUCT(BlueprintType)
+struct FDialogueTraversePath
+{
+	GENERATED_BODY()
+
+	FDialogueTraversePath() : NodeGuid(FGuid::NewGuid()), TraverseCount(0) {}
+	FDialogueTraversePath(const FGuid& Guid, const int32 AddCount) : NodeGuid(Guid), TraverseCount(0)
+	{
+		TraverseCount += FMath::Max(0, AddCount);
+	};
+	FDialogueTraversePath(const FGuid& Guid, const int32& Count) : NodeGuid(Guid), TraverseCount(Count) {};
+
+public:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	FGuid NodeGuid;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	int32 TraverseCount;
+
+public:
+
+	bool operator==(const FDialogueTraversePath& Other) const
+	{
+		return Other.NodeGuid == NodeGuid;
+	}
+
+	bool operator==(const FGuid& Other) const
+	{
+		return Other == NodeGuid;
+	}
+
+	bool operator!=(const FDialogueTraversePath& Other) const
+	{
+		return !(*this == Other);
+	}
+
+	friend uint32 GetTypeHash(const FDialogueTraversePath& Path)
+	{
+		return GetTypeHash(Path.NodeGuid);
+	}
+};
+
 USTRUCT()
 struct FMounteaDialogueContextReplicatedStruct
 {

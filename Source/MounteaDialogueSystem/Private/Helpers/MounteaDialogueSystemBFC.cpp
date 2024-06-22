@@ -18,11 +18,7 @@
 
 bool UMounteaDialogueSystemBFC::IsEditor()
 {
-#if WITH_EDITOR
-	return true;
-#endif
-
-	return false;
+	return GIsEditor && !IsRunningCommandlet();
 }
 
 void UMounteaDialogueSystemBFC::CleanupGraph(const UObject* WorldContextObject, const UMounteaDialogueGraph* GraphToClean)
