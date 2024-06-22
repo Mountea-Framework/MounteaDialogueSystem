@@ -31,10 +31,8 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 	);
 	
 	PropertyRow->ShowPropertyButtons(true);
-
-	FExecuteAction OnInsertClicked; // Insert is not allowed
+	
 	FExecuteAction OnDeleteClicked = FExecuteAction::CreateSP( this, &FMounteaDialogueDecorator_CustomDetailsHelper::RequestDeleteItem );
-	FExecuteAction OnDuplicateClicked; // Duplicates are not allowed
 	
 	FDetailWidgetRow& DetailWidgetRow = PropertyRow->CustomWidget(true);
 	DetailWidgetRow.NameContent()
@@ -62,19 +60,8 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 	.VAlign(VAlign_Center)
 	.Padding(4.f)
 	[
-		PropertyCustomizationHelpers::MakeInsertDeleteDuplicateButton( OnInsertClicked, OnDeleteClicked, OnDuplicateClicked)
+		PropertyCustomizationHelpers::MakeDeleteButton(OnDeleteClicked)
 	];
-
-	// GEditor doesn't support inserting Handle values for EditInline
-	/*
-	HorizontalBox->AddSlot()
-	.AutoWidth()
-	.VAlign(VAlign_Center)
-	.Padding(4.f)
-	[
-		PropertyCustomizationHelpers::MakeUseSelectedButton( OnUseSelectedClicked)
-	];
-	*/
 	
 	// Browse Asset
 	HorizontalBox->AddSlot()

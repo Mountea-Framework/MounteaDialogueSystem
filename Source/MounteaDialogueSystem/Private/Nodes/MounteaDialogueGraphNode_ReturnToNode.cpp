@@ -3,13 +3,14 @@
 
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 
+#include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Misc/DataValidation.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_ReturnToNode"
 
-UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode()
+UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode() : bAutoCompleteSelectedNode(false), SelectedNode(nullptr)
 {
 #if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeTitle", "Return To Node");
@@ -33,18 +34,29 @@ UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode()
 	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_CompleteNode::StaticClass());
 }
 
-void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	if (SelectedNode && Manager)
 	{
 		if (const auto Context = Manager->GetDialogueContext())
 		{
+			LOG_WARNING(TEXT("[ProcessNode - Return to Node] Updating Context"))
+			
 			Context->SetDialogueContext(Context->DialogueParticipant, SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
-			Manager->GetDialogueNodeSelectedEventHandle().Broadcast(Context);
+
+			Context->ActiveDialogueRowDataIndex = 	UMounteaDialogueSystemBFC::GetDialogueRow(SelectedNode).DialogueRowData.Num() - 1; // Force-set the last row
+			
+			Manager->GetDialogueNodeSelectedEventHandle().Broadcast(Context);	
+
+			if (bAutoCompleteSelectedNode)
+			{
+				//Manager->GetDialogueNodeFinishedEventHandle().Broadcast(Context);
+				//Manager->GetDialogueVoiceSkipRequestEventHandle().Broadcast(nullptr);
+			}
 		}
 	}
 	
-	Super::ProcessNode(Manager);
+	Super::ProcessNode_Implementation(Manager);
 }
 
 #if WITH_EDITOR

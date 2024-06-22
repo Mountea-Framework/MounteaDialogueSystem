@@ -3,6 +3,46 @@
 
 #include "Data/MounteaDialogueContext.h"
 
+#include "Interfaces/MounteaDialogueParticipantInterface.h"
+#include "Net/UnrealNetwork.h"
+
+
+FString UMounteaDialogueContext::ToString() const
+{
+	FString returnValue;
+
+	FString activeDialoguePart = FString("Active Dialogue Participant: ");
+	activeDialoguePart.Append(ActiveDialogueParticipant.GetObject() ? ActiveDialogueParticipant->Execute_GetTag(ActiveDialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
+
+	FString playerDialoguePart = FString("Player Dialogue Participant: ");
+	playerDialoguePart.Append(PlayerDialogueParticipant.GetObject() ? PlayerDialogueParticipant->Execute_GetTag(PlayerDialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
+
+	FString otherDialoguePart = FString("Other Dialogue Participant: ");
+	otherDialoguePart.Append(DialogueParticipant.GetObject() ? DialogueParticipant->Execute_GetTag(DialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
+
+	FString allDialogueParts = FString("Dialogue Participants: ");
+	allDialogueParts.Append(FString::Printf(TEXT("%d"), DialogueParticipants.Num()));
+
+	FString activeNode = FString("Active Node ID: ");
+	activeNode.Append(ActiveNode ? ActiveNode->GetNodeGUID().ToString() : TEXT("invalid"));
+
+	FString activeRow = FString("Active Row: ");
+	activeRow.Append(ActiveDialogueRow.RowTitle.ToString());
+
+	FString activeRowData = FString("Active Row Data: ");
+	activeRowData.Append(FString::Printf(TEXT("%d"), ActiveDialogueRow.DialogueRowData.Num()));
+
+	returnValue
+		.Append(activeDialoguePart).Append(TEXT("\n"))
+		.Append(playerDialoguePart).Append(TEXT("\n"))
+		.Append(otherDialoguePart).Append(TEXT("\n"))
+		.Append(allDialogueParts).Append(TEXT("\n"))
+		.Append(activeNode).Append(TEXT("\n"))
+		.Append(activeRow).Append(TEXT("\n"))
+		.Append(activeRowData);
+
+	return returnValue;
+}
 
 bool UMounteaDialogueContext::IsValid() const
 {
@@ -12,6 +52,12 @@ bool UMounteaDialogueContext::IsValid() const
 void UMounteaDialogueContext::SetDialogueContext(const TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant, UMounteaDialogueGraphNode* NewActiveNode, const TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes)
 {
 	DialogueParticipant = NewParticipant;
+	
+	if (ActiveNode && ActiveNode->GetNodeGUID() != PreviousActiveNode)
+	{
+		PreviousActiveNode = ActiveNode->GetNodeGUID();
+	}
+	
 	ActiveNode = NewActiveNode;
 	AllowedChildNodes = NewAllowedChildNodes;
 
@@ -30,6 +76,11 @@ void UMounteaDialogueContext::UpdateDialogueParticipant(const TScriptInterface<I
 
 void UMounteaDialogueContext::UpdateActiveDialogueNode(UMounteaDialogueGraphNode* NewActiveNode)
 {
+	if (ActiveNode && ActiveNode->GetNodeGUID() != PreviousActiveNode)
+	{
+		PreviousActiveNode = ActiveNode->GetNodeGUID();
+	}
+	
 	ActiveNode = NewActiveNode;
 }
 
@@ -73,11 +124,19 @@ void UMounteaDialogueContext::AddTraversedNode(const UMounteaDialogueGraphNode* 
 	// If we have already passed over this Node, then just increase the counter
 	if (TraversedPath.Contains(TraversedNode->GetNodeGUID()))
 	{
-		TraversedPath[TraversedNode->GetNodeGUID()]++;
+		if (FDialogueTraversePath* ExistingRow = TraversedPath.FindByKey(TraversedNode->GetNodeGUID()))
+		{
+			ExistingRow->TraverseCount++;
+		}
 	}
 	else
 	{
-		TraversedPath.Add(TraversedNode->GetNodeGUID(), 1);
+		FDialogueTraversePath NewRow;
+		{
+			NewRow.NodeGuid = TraversedNode->GetNodeGUID();
+			NewRow.TraverseCount = 1;
+		}
+		TraversedPath.Add(NewRow);
 	}
 }
 
@@ -224,3 +283,19 @@ bool UMounteaDialogueContext::RemoveDialogueParticipantsBP(const TArray<TScriptI
 
 	return false;
 }
+
+/*
+void UMounteaDialogueContext::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	UObject::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueParticipant);
+	DOREPLIFETIME(UMounteaDialogueContext, PlayerDialogueParticipant);
+	DOREPLIFETIME(UMounteaDialogueContext, DialogueParticipant);
+	DOREPLIFETIME(UMounteaDialogueContext, DialogueParticipants);
+	DOREPLIFETIME(UMounteaDialogueContext, ActiveNode);
+	DOREPLIFETIME(UMounteaDialogueContext, AllowedChildNodes);
+	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueRowDataIndex);
+	DOREPLIFETIME(UMounteaDialogueContext, TraversedPath);
+}
+*/

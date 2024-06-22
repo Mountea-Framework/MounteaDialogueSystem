@@ -3,26 +3,18 @@
 
 #include "Decorators/MounteaDialogueDecorator_SelectRandomDialogueRow.h"
 
+#include "Data/MounteaDialogueContext.h"
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_SelectRandomDialogueRow"
-
-void UMounteaDialogueDecorator_SelectRandomDialogueRow::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant)
-{
-	Super::InitializeDecorator_Implementation(World, OwningParticipant);
-
-	if (World)
-	{
-		Manager = UMounteaDialogueSystemBFC::GetDialogueManager(GetOwningWorld());
-	}
-}
 
 void UMounteaDialogueDecorator_SelectRandomDialogueRow::CleanupDecorator_Implementation()
 {
 	Super::CleanupDecorator_Implementation();
 
 	Context = nullptr;
-	Manager = nullptr;
+	OwningManager = nullptr;
 }
 
 bool UMounteaDialogueDecorator_SelectRandomDialogueRow::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
@@ -45,9 +37,25 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Impleme
 {
 	Super::ExecuteDecorator_Implementation();
 
-	// Let's return BP Updatable Context rather than Raw
-	Context = Manager->GetDialogueContext();
+	if (!OwningManager) return;
+	if (!Context) Context = OwningManager->GetDialogueContext();
+	if (!Context)
+	{
+		LOG_ERROR(TEXT("[ExecuteDecorator] %s Has no Context!\nExecution is skipped."), *(GetDecoratorName().ToString()));
+		return;
+	}
 
+	if (!Context->GetActiveDialogueRow().IsValid())
+	{
+		LOG_WARNING(TEXT("[ExecuteDecorator] %s ActiveDialogueRow is invalid!!\nExecution is skipped."), *(GetDecoratorName().ToString()));
+		return;
+	}
+	if (Context->GetActiveDialogueRow().DialogueRowData.Num() == 0)
+	{
+		LOG_WARNING(TEXT("[ExecuteDecorator] %s DialogueRowData is empty!\nExecution is skipped."), *(GetDecoratorName().ToString()));
+		return;
+	}
+	
 	FIntPoint ClampedRange;
 	if (RandomRange.X > RandomRange.Y)
 	{
@@ -59,7 +67,7 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Impleme
 		ClampedRange = RandomRange;
 	}
 
-	const int32 MaxValue = Context->GetActiveDialogueRow().DialogueRowData.Num();
+	const int32 MaxValue = Context->GetActiveDialogueRow().DialogueRowData.Num() - 1;
 	const int32 Range = FMath::RandRange
 	(
 		FMath::Max(0, ClampedRange.X),
@@ -68,5 +76,6 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Impleme
 
 	Context->UpdateActiveDialogueRowDataIndex(Range);
 }
+
 
 #undef LOCTEXT_NAMESPACE
