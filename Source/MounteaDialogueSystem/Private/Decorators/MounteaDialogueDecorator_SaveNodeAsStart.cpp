@@ -3,26 +3,17 @@
 
 #include "Decorators/MounteaDialogueDecorator_SaveNodeAsStart.h"
 
+#include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_SaveNodeAsStart"
-
-void UMounteaDialogueDecorator_SaveNodeAsStart::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant)
-{
-	Super::InitializeDecorator_Implementation(World, OwningParticipant);
-
-	if (World)
-	{
-		Manager = UMounteaDialogueSystemBFC::GetDialogueManager(GetOwningWorld());
-	}
-}
 
 void UMounteaDialogueDecorator_SaveNodeAsStart::CleanupDecorator_Implementation()
 {
 	Super::CleanupDecorator_Implementation();
 
 	Context = nullptr;
-	Manager = nullptr;
+	OwningManager = nullptr;
 }
 
 bool UMounteaDialogueDecorator_SaveNodeAsStart::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
@@ -45,8 +36,10 @@ void UMounteaDialogueDecorator_SaveNodeAsStart::ExecuteDecorator_Implementation(
 {
 	Super::ExecuteDecorator_Implementation();
 
+	if (!OwningManager) return;
+
 	// Let's return BP Updatable Context rather than Raw
-	Context = Manager->GetDialogueContext();
+	Context = OwningManager->GetDialogueContext();
 
 	if (Context)
 	{
