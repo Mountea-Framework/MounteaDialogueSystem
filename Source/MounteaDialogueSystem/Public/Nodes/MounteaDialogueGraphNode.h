@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Decorators/MounteaDialogueDecoratorBase.h"
+#include "Interfaces/MounteaDialogueTickableObject.h"
 #include "MounteaDialogueGraphNode.generated.h"
 
 class IMounteaDialogueManagerInterface;
@@ -17,8 +18,8 @@ class UMounteaDialogueGraphEdge;
  * Does come with ability to define Colours, Name, Description and Title.
  * Contains information about Parent and Children Nodes.
  */
-UCLASS(Abstract, BlueprintType, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"))
-class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject
+UCLASS(Abstract, BlueprintType, Blueprintable, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"))
+class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()
 
@@ -112,6 +113,13 @@ public:
 	uint8 bInheritGraphDecorators : 1;
 
 	/**
+	 * Provides a node-based inversion of global skip settings.
+	 * If global settings are changed, inversion behaviour stays the same, so keep this in mined when changing this setting for nodes!
+	 */
+	UPROPERTY(SaveGame, EditDefaultsOnly, BlueprintReadOnly, Category="Base")
+	uint8 bInvertSkipRowSetting : 1;
+
+	/**
 	 * A list of Decorators that can help out with enhancing the Dialogue flow.
 	 * Those Decorators are instanced and exist only as "triggers".
 	 * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
@@ -134,6 +142,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue")
 	void InitializeNode(UWorld* InWorld);
 	virtual void InitializeNode_Implementation(UWorld* InWorld);
+	
 	/**
 	 * Checks if the node should automatically start when the dialogue is played.
 	 * @return true if the node should automatically start, false otherwise.
@@ -141,15 +150,30 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	virtual bool DoesAutoStart() const
 	{ return bAutoStarts; };
+
+	/**
+	 * 
+	 * @param Manager 
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
+	virtual void PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
+
+	/**
+	 * 
+	 * @param Manager 
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
+	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	
-	virtual void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
-	virtual void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	/**
 	 * Gets the decorators for this Dialogue Graph Node.
 	 *❔ Returns only Valid decorators!
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	TArray<FMounteaDialogueDecorator> GetNodeDecorators() const;
+	
 	/**
 	 * Returns true if the node can be started.
 	 *❗ The implementation of this function is up to the subclass.
@@ -157,9 +181,18 @@ public:
 	 *❔ This can be further enhanced by Decorators.
 	 * @return True if the node can be started, false otherwise.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
-	virtual bool CanStartNode() const;
-	virtual bool EvaluateDecorators() const;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	bool CanStartNode() const;
+	virtual bool CanStartNode_Implementation() const;
+
+	/**
+	 * 
+	 * @return 
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	bool EvaluateDecorators() const;
+	virtual bool EvaluateDecorators_Implementation() const;
+	
 	/**
 	 * Returns whether this node inherits decorators from the dialogue graph.
 	 * If this is set to true, this node will receive all decorators assigned to the graph.
@@ -170,6 +203,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	bool DoesInheritDecorators() const
 	{ return bInheritGraphDecorators; };
+	
 	/**
 	 * Returns how many Children Nodes this Node allows to have.
 	 *❔ -1 means no limits.
@@ -189,6 +223,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	FORCEINLINE int32 GetNodeIndex() const
 	{ return NodeIndex; };
+	
 	/**
 	 * Sets the index of this dialogue node in the dialogue graph.
 	 *
@@ -224,6 +259,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetChildrenNodes() const
 	{ return ChildrenNodes; };
+	
 	/**
 	 * Gets how many parent Nodes point to this one
 	 *❗ Might be empty
@@ -277,7 +313,19 @@ public:
 
 #pragma endregion 
 
+#pragma region TickableInterface
+	
+public:
+	virtual void RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
+	virtual void UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
+	virtual void TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime) override;
+	virtual FMounteaDialogueTick& GetMounteaDialogueTickHandle() override {return NodeTickEvent; };
 
+	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
+	FMounteaDialogueTick NodeTickEvent;
+	
+#pragma endregion
+	
 #if WITH_EDITORONLY_DATA
 
 	// Defines whether this Node type allows inputs
@@ -307,11 +355,7 @@ public:
 	// Defines whether this Node can be manually created
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowManualCreate;
-
-	// Display title of the Node
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
-	FText NodeTitle;
-
+	
 	// Display name of the Node menu category
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText ContextMenuName;
@@ -334,6 +378,10 @@ public:
 
 #endif
 
+	// Display title of the Node
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	FText NodeTitle;
+
 #if WITH_EDITOR
 
 	/**
@@ -344,16 +392,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
 	FText GetNodeTooltipText() const;
 	virtual FText GetNodeTooltipText_Implementation() const;
-
-	/**
-	 * Returns the Title text for this graph node.
-	 *
-	 * @return The Title text for this node.
-	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
-	FText GetNodeTitle() const;
-	virtual FText GetNodeTitle_Implementation() const;
-
+	
 	/**
 	 * Returns the Description text for this graph node.
 	 *
@@ -409,4 +448,21 @@ public:
 
 #endif
 
+	/**
+	 * Returns the Title text for this graph node.
+	 *
+	 * @return The Title text for this node.
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	FText GetNodeTitle() const;
+	virtual FText GetNodeTitle_Implementation() const;
+
+private:
+
+	virtual  bool IsSupportedForNetworking() const override
+	{ return true; }
+	virtual bool IsNameStableForNetworking() const override
+	{ return true; };
+	virtual bool IsFullNameStableForNetworking() const override
+	{ return true; };
 };

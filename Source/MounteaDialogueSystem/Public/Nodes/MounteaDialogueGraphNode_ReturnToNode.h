@@ -22,7 +22,7 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_ReturnToNode : public 
 
 public:
 
-	virtual void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
+	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 
 public:
 
@@ -32,6 +32,9 @@ public:
 	 */
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames"))
 	FString SelectedNodeIndex;
+
+	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(EditCondition ="SelectedNode!=nullptr"))
+	uint8 bAutoCompleteSelectedNode : 1;
 
 	/**
 	 * Dialogue Node to which this Node leads to.

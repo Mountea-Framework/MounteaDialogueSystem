@@ -22,8 +22,8 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_LeadNode : public UMou
 
 public:
 
-	virtual void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
-	virtual void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
+	virtual void PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
+	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 
 #if WITH_EDITOR
 	virtual FText GetDescription_Implementation() const override;

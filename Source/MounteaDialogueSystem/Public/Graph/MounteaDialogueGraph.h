@@ -6,6 +6,7 @@
 #include "Templates/SubclassOf.h"
 #include "GameplayTagContainer.h"
 #include "Decorators/MounteaDialogueDecoratorBase.h"
+#include "Interfaces/MounteaDialogueTickableObject.h"
 #include "MounteaDialogueGraph.generated.h"
 
 class UMounteaDialogueGraphNode;
@@ -21,7 +22,7 @@ struct FMounteaDialogueDecorator;
  * Comes with Node editor, which provides easy to follow visual way to create Dialogue Trees.
  */
 UCLASS(BlueprintType, ClassGroup=("Mountea|Dialogue"), DisplayName="Mountea Dialogue Tree", HideCategories=("Hidden", "Private", "Base"), AutoExpandCategories=("Mountea", "Dialogue"))
-class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraph : public UObject
+class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraph : public UObject, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()
 
@@ -144,6 +145,18 @@ public:
 
 #pragma endregion 
 
+#pragma region TickableInterface
+
+	virtual void RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
+	virtual void UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
+	virtual void TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime) override;
+	virtual FMounteaDialogueTick& GetMounteaDialogueTickHandle() override {return GraphTickEvent; };
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	FMounteaDialogueTick GraphTickEvent;
+	
+#pragma endregion
+	
 #if WITH_EDITORONLY_DATA
 
 public:
