@@ -2,6 +2,7 @@
 
 
 #include "WBP/MounteaDialogueRow.h"
+#include "TimerManager.h"
 
 UMounteaDialogueRow::UMounteaDialogueRow(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

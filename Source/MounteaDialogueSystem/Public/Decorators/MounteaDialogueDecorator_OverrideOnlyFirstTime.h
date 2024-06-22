@@ -6,6 +6,8 @@
 #include "Decorators/MounteaDialogueDecorator_OnlyFirstTime.h"
 #include "MounteaDialogueDecorator_OverrideOnlyFirstTime.generated.h"
 
+class UDataTable;
+
 /**
  *	Mountea Dialogue Decorators
  *
@@ -32,7 +34,7 @@ public:
 protected:
 
 	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, RequiredAssetDataTags = "RowStructure=/Script/MounteaDialogueSystem.DialogueRow"))
-	UDataTable* DataTable;
+	TObjectPtr<UDataTable> DataTable;
 
 	/** Name of row in the table that we want */
 	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
@@ -41,13 +43,5 @@ protected:
 private:
 
 	UFUNCTION()
-	TArray<FName> GetRowNames() const
-	{
-		if (DataTable)
-		{
-			return DataTable->GetRowNames();
-		}
-
-		return TArray<FName>();
-	}
+	TArray<FName> GetRowNames() const;
 };

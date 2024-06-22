@@ -2,7 +2,7 @@
 
 
 #include "Decorators/MounteaDialogueDecorator_OverrideOnlyFirstTime.h"
-
+#include "Engine/DataTable.h"
 #include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 
@@ -49,6 +49,16 @@ void UMounteaDialogueDecorator_OverrideOnlyFirstTime::ExecuteDecorator_Implement
 	
 		TempContext->UpdateActiveDialogueRow( UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName) );
 	}
+}
+
+TArray<FName> UMounteaDialogueDecorator_OverrideOnlyFirstTime::GetRowNames() const
+{
+	if (DataTable)
+	{
+		return DataTable->GetRowNames();
+	}
+
+	return TArray<FName>();
 }
 
 #undef LOCTEXT_NAMESPACE

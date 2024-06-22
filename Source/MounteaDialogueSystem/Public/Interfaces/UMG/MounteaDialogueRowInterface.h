@@ -8,6 +8,7 @@
 
 struct FDialogueRowData;
 struct FDialogueRow;
+class UTexture;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTypeWriterEffectChanged, bool, bEnabled);
 
@@ -27,43 +28,43 @@ public:
 	 * The name of the dialogue participant.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	FText DialogueRowParticipantName		= LOCTEXT("DialogueRow_Particpant", "Participant Name");
+	FText DialogueRowParticipantName			= LOCTEXT("DialogueRow_Particpant", "Participant Name");
 
 	/**
 	 * The title of the dialogue row.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	FText DialogueRowTitle							= LOCTEXT("DialogueRow_Title", "This is dialogue row title text.");
+	FText DialogueRowTitle								= LOCTEXT("DialogueRow_Title", "This is dialogue row title text.");
 
 	/**
 	 * The text of the dialogue row body.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	FText DialogueRowBody						= LOCTEXT("DialogueRow_Body", "This is dialogue option title text.");
-
+	FText DialogueRowBody							= LOCTEXT("DialogueRow_Body", "This is dialogue option title text.");
+	
 	/**
 	 * The duration of the dialogue row.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	float RowDuration									= 0.f;
+	float RowDuration										= 0.f;
 
 	/**
 	 * The UI row ID.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	int32 UIRowID											= 0;
+	int32 UIRowID												= 0;
 
 	/**
 	 * An optional icon for the dialogue row.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	UTexture* RowOptionalIcon					= nullptr;
+	TObjectPtr<UTexture> RowOptionalIcon	= nullptr;
 
 	/**
 	 * The unique identifier for the dialogue row.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	FGuid RowGuid										= FGuid();
+	FGuid RowGuid											= FGuid();
 
 public:
 
