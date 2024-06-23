@@ -453,7 +453,7 @@ public:
 	 *
 	 * @return The Title text for this node.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue")
 	FText GetNodeTitle() const;
 	virtual FText GetNodeTitle_Implementation() const;
 
