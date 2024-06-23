@@ -14,6 +14,9 @@
 
 #include "MounteaDialogueGraphDataTypes.generated.h"
 
+class UMounteaDialogueContext;
+class IMounteaDialogueParticipantInterface;
+class UMounteaDialogueGraphNode;
 class USoundBase;
 class UTexture;
 class UDataAsset;
@@ -26,9 +29,11 @@ class UDataAsset;
 UENUM(BlueprintType)
 enum class EDialogueManagerState : uint8
 {
-	EDMS_Disabled			UMETA(DisplayName="Disabled",			Tooltip="Disabled. Dialogue cannot start."),
-	EDMS_Enabled			UMETA(DisplayName="Enabled",			Tooltip="Enabled. Dialogue can start."),
-	EDMS_Active				UMETA(DisplayName="Active",				Tooltip="Active. Is in Diaologue."),
+	EDMS_Disabled				UMETA(DisplayName="Disabled",			Tooltip="Disabled. Dialogue cannot start."),
+	EDMS_Enabled				UMETA(DisplayName="Enabled",			Tooltip="Enabled. Dialogue can start."),
+	EDMS_Active					UMETA(DisplayName="Active",				Tooltip="Active. Is in Diaologue."),
+
+	Default								UMETA(hidden)
 };
 
 /**
@@ -39,9 +44,11 @@ enum class EDialogueManagerState : uint8
 UENUM(BlueprintType)
 enum class EDialogueParticipantState : uint8
 {
-	EDPS_Disabled		UMETA(DisplayName="Disabled",			Tooltip="Disabled. Dialogue cannot start."),
-	EDPS_Enabled		UMETA(DisplayName="Enabled",			Tooltip="Enabled. Dialogue can start."),
-	EDPS_Active			UMETA(DisplayName="Active",				Tooltip="Active. Is in Diaologue."),
+	EDPS_Disabled				UMETA(DisplayName="Disabled",			Tooltip="Disabled. Dialogue cannot start."),
+	EDPS_Enabled					UMETA(DisplayName="Enabled",			Tooltip="Enabled. Dialogue can start."),
+	EDPS_Active					UMETA(DisplayName="Active",				Tooltip="Active. Is in Diaologue."),
+
+	Default								UMETA(hidden)
 };
 
 /**
@@ -52,11 +59,27 @@ enum class EDialogueParticipantState : uint8
 UENUM(BlueprintType)
 enum class ERowDurationMode : uint8
 {
-	ERDM_Manual					UMETA(DisplayName="Manual",				Tooltip="Row won't start automatically and will wait for `NextDialogueRow` request."),
+	ERDM_Manual					UMETA(DisplayName="Manual",				Tooltip="Row won't start automatically and will wait for `NextDialogueRow` request.",			hidden),
 	ERDM_Duration				UMETA(DisplayName="Duration",			Tooltip="Uses either duration of 'Row Sound' or value from 'Duration'."),
 	EDRM_Override				UMETA(DisplayName="Override",			Tooltip="Uses 'Duration Override' value."),
 	EDRM_Add						UMETA(DisplayName="Add Time",			Tooltip="Adds 'Duration Override' value to 'Duration'."),
-	ERDM_AutoCalculate		UMETA(DisplayName="Calculate",			Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds.")
+	ERDM_AutoCalculate		UMETA(DisplayName="Calculate",			Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds."),
+
+	Default								UMETA(hidden)
+};
+
+/**
+ * Row execution mode. Defines
+ */
+UENUM(BlueprintType)
+enum class ERowExecutionMode : uint8
+{
+	EREM_Automatic				UMETA(DisplayName="Automatic",			Tooltip="Next row will be executed if any is present."),
+	EREM_AwaitInput			UMETA(DisplayName="Await Input",		Tooltip="Next row will be executed once request is triggered."),
+	EREM_Stopping				UMETA(DisplayName="Stopping",			Tooltip="Row will stop execution of whole Node and will finish both."),
+
+	Default								UMETA(hidden)
+	
 };
 
 /**
@@ -67,8 +90,8 @@ enum class ERowDurationMode : uint8
 UENUM(BlueprintType)
 enum class EInputMode : uint8
 {
-	EIM_UIOnly			UMETA(DisplayName="UI Only"),
-	EIM_UIAndGame	UMETA(DisplayName="UI & Game")
+	EIM_UIOnly					UMETA(DisplayName="UI Only"),
+	EIM_UIAndGame			UMETA(DisplayName="UI & Game")
 };
 
 /**
@@ -193,6 +216,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
 	float RowDurationOverride;
 	/**
+	 * If set to true this Row will stop the whole Node execution and next row won't start.
+	 * Default is false.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
+	ERowExecutionMode RowExecutionBehaviour;
+	/**
 	 * Row GUID.
 	 * 
 	 * Unique Key when searching and binding this Row.
@@ -203,14 +232,26 @@ public:
 public:
 
 	FDialogueRowData()
-		: RowText(LOCTEXT("FDialogueRowData_RowText", "Dialogue Example")), RowSound(nullptr), RowDurationMode(ERowDurationMode::ERDM_Duration), RowDuration(0), RowDurationOverride(0), RowGUID(FGuid::NewGuid())
+		: RowText(LOCTEXT("FDialogueRowData_RowText", "Dialogue Example"))
+		, RowSound(nullptr)
+		, RowDurationMode(ERowDurationMode::ERDM_Duration)
+		, RowDuration(0)
+		, RowDurationOverride(0)
+		, RowExecutionBehaviour(ERowExecutionMode::EREM_Automatic)
+		, RowGUID(FGuid::NewGuid())
 	{};
 
 	FDialogueRowData
 	(
-		const FText& InText, USoundBase* InSound, const ERowDurationMode InRowDurationMode, const float InDuration, const float InDurationOverride
+		const FText& InText, USoundBase* InSound, const ERowDurationMode InRowDurationMode, const float InDuration, const float InDurationOverride, const ERowExecutionMode InRowBehaviour = ERowExecutionMode::EREM_Automatic
 	)
-	: RowText(InText), RowSound(InSound), RowDurationMode(InRowDurationMode), RowDuration(InDuration), RowDurationOverride(InDurationOverride), RowGUID(FGuid::NewGuid())
+		: RowText(InText)
+		, RowSound(InSound)
+		, RowDurationMode(InRowDurationMode)
+		, RowDuration(InDuration)
+		, RowDurationOverride(InDurationOverride)
+		, RowExecutionBehaviour(InRowBehaviour)
+		, RowGUID(FGuid::NewGuid())
 	{};
 
 public:
@@ -222,6 +263,7 @@ public:
 		RowDurationMode = Other.RowDurationMode;
 		RowDuration = Other.RowDuration;
 		RowDurationOverride = Other.RowDurationOverride;
+		RowExecutionBehaviour = Other.RowExecutionBehaviour;
 		RowGUID = FGuid::NewGuid();
 		
 		return *this;
@@ -303,7 +345,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
 	FText RowTitle;
 	/**
-	 * List of Dialogue Row Data.
+	 * List of Dialogue Row Data. Not replicated, must be found locally for each Client from replicated Active Node!
 	 * 
 	 * ❔ Each Dialogue Row can contain multiple of those, where each Data Row represents:
 	 * * What Sound should be played
@@ -315,7 +357,7 @@ public:
 	 * 
 	 * Each Data Row has its Duration, which could be based on the Sound, directly set, calculated on generic formula or added atop of the sound duration.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(TitleProperty="RowText"))
+	UPROPERTY(NotReplicated, EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(TitleProperty="RowText"))
 	TSet<FDialogueRowData> DialogueRowData;
 	/**
 	 * Additional Row Data
@@ -387,6 +429,8 @@ public:
 	{
 		return FCrc::MemCrc32(&Row.RowGUID, sizeof(FGuid));
 	}
+
+	bool IsValid() const;
 };
 #undef LOCTEXT_NAMESPACE
 
@@ -427,4 +471,79 @@ public:
 	{
 		return FCrc::MemCrc32(&RowID.RowWidgetClass, sizeof(FUIRowID)) + RowID.UIRowID;
 	}
+};
+
+/**
+ * 
+ */
+USTRUCT(BlueprintType)
+struct FDialogueTraversePath
+{
+	GENERATED_BODY()
+
+	FDialogueTraversePath() : NodeGuid(FGuid::NewGuid()), TraverseCount(0) {}
+	FDialogueTraversePath(const FGuid& Guid, const int32 AddCount) : NodeGuid(Guid), TraverseCount(0)
+	{
+		TraverseCount += FMath::Max(0, AddCount);
+	};
+	FDialogueTraversePath(const FGuid& Guid, const int32& Count) : NodeGuid(Guid), TraverseCount(Count) {};
+
+public:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	FGuid NodeGuid;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	int32 TraverseCount;
+
+public:
+
+	bool operator==(const FDialogueTraversePath& Other) const
+	{
+		return Other.NodeGuid == NodeGuid;
+	}
+
+	bool operator==(const FGuid& Other) const
+	{
+		return Other == NodeGuid;
+	}
+
+	bool operator!=(const FDialogueTraversePath& Other) const
+	{
+		return !(*this == Other);
+	}
+
+	friend uint32 GetTypeHash(const FDialogueTraversePath& Path)
+	{
+		return GetTypeHash(Path.NodeGuid);
+	}
+};
+
+USTRUCT()
+struct FMounteaDialogueContextReplicatedStruct
+{
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	TScriptInterface<IMounteaDialogueParticipantInterface> ActiveDialogueParticipant;
+	UPROPERTY()
+	TScriptInterface<IMounteaDialogueParticipantInterface> PlayerDialogueParticipant;
+	UPROPERTY()
+	TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant;
+	UPROPERTY()
+	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipants;
+	UPROPERTY()
+	FGuid ActiveNodeGuid;
+	UPROPERTY()
+	FGuid PreviousActiveNodeGuid;
+	UPROPERTY()
+	TArray<FGuid> AllowedChildNodes;
+	UPROPERTY()
+	int32 ActiveDialogueRowDataIndex = 0;
+
+	FMounteaDialogueContextReplicatedStruct();
+	explicit FMounteaDialogueContextReplicatedStruct(UMounteaDialogueContext* Source);
+
+	void SetData(class UMounteaDialogueContext* Source);
+	bool IsValid() const;
 };

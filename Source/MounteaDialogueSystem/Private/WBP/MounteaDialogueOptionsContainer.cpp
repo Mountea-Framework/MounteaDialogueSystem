@@ -1,0 +1,128 @@
+﻿// All rights reserved Dominik Morse (Pavlicek) 2024.
+
+
+#include "WBP/MounteaDialogueOptionsContainer.h"
+
+#include "Data/MounteaDialogueGraphDataTypes.h"
+#include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Helpers/MounteaDialogueUIBFL.h"
+#include "Interfaces/MounteaDialogueWBPInterface.h"
+#include "Interfaces/UMG/MounteaDialogueOptionInterface.h"
+#include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
+
+void UMounteaDialogueOptionsContainer::SetParentDialogueWidget_Implementation(UUserWidget* NewParentDialogueWidget)
+{
+	if (NewParentDialogueWidget != ParentDialogueWidget)
+	{
+		ParentDialogueWidget = NewParentDialogueWidget;
+	}
+}
+
+UUserWidget* UMounteaDialogueOptionsContainer::GetParentDialogueWidget_Implementation() const
+{
+	return ParentDialogueWidget;
+}
+
+TSoftClassPtr<UUserWidget> UMounteaDialogueOptionsContainer::GetDialogueOptionClass_Implementation() const
+{
+	return DialogueOptionClass;
+}
+
+void UMounteaDialogueOptionsContainer::SetDialogueOptionClass_Implementation(const TSoftClassPtr<UUserWidget>& NewDialogueOptionClass)
+{
+	if (NewDialogueOptionClass.Get() != DialogueOptionClass.Get())
+	{
+		DialogueOptionClass = NewDialogueOptionClass;
+	}
+}
+
+void UMounteaDialogueOptionsContainer::AddNewDialogueOption_Implementation(UMounteaDialogueGraphNode_DialogueNodeBase* NewDialogueOption)
+{
+	if (!NewDialogueOption)
+	{
+		LOG_ERROR(TEXT("[AddNewDialogueOption] Invalid Dialogue Option (Node)!"))
+		return;
+	}
+	
+	TObjectPtr<UUserWidget> dialogueOptionWidget =
+	DialogueOptions.Contains(NewDialogueOption->GetNodeGUID())
+	? DialogueOptions.FindRef(NewDialogueOption->GetNodeGUID())
+	: TObjectPtr<UUserWidget>(CreateWidget<UUserWidget>(GetOwningPlayer(), DialogueOptionClass.LoadSynchronous()));
+
+	
+	if (dialogueOptionWidget)
+	{		
+		TScriptInterface<IMounteaDialogueOptionInterface> dialogueOption = dialogueOptionWidget;
+		if (dialogueOption.GetObject() && dialogueOption.GetInterface())
+		{
+			dialogueOption->GetDialogueOptionSelectedHandle().AddUniqueDynamic(this, &UMounteaDialogueOptionsContainer::ProcessOptionSelected);
+			dialogueOption->Execute_SetNewDialogueOptionData(dialogueOptionWidget, FDialogueOptionData( UMounteaDialogueUIBFL::GetDialogueNodeGuid(NewDialogueOption),  UMounteaDialogueUIBFL::GetDialogueNodeRow(NewDialogueOption)));
+		}
+	}
+	else
+	{
+		LOG_ERROR(TEXT("[AddNewDialogueOption] Failed to create new dialogue option!"))
+		return;
+	}
+	
+	DialogueOptions.Add(UMounteaDialogueUIBFL::GetDialogueNodeGuid(NewDialogueOption), dialogueOptionWidget);
+}
+
+void UMounteaDialogueOptionsContainer::AddNewDialogueOptions_Implementation(const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& NewDialogueOptions)
+{
+	for (const auto& Itr : NewDialogueOptions)
+	{
+		Execute_AddNewDialogueOption(this, Itr);
+	}
+}
+
+void UMounteaDialogueOptionsContainer::RemoveDialogueOption_Implementation(UMounteaDialogueGraphNode_DialogueNodeBase* DirtyDialogueOption)
+{
+	if (DirtyDialogueOption)
+	{
+		if (TObjectPtr<UUserWidget> dirtyOptionWidget = DialogueOptions.FindRef(UMounteaDialogueUIBFL::GetDialogueNodeGuid(DirtyDialogueOption)))
+		{
+			TScriptInterface<IMounteaDialogueOptionInterface> dialogueOption = dirtyOptionWidget;
+			if (dialogueOption.GetObject() && dialogueOption.GetInterface())
+			{
+				dialogueOption->GetDialogueOptionSelectedHandle().RemoveDynamic(this, &UMounteaDialogueOptionsContainer::ProcessOptionSelected);
+				dialogueOption->Execute_ResetDialogueOptionData(dirtyOptionWidget);
+			}
+		}
+		
+	}
+	DialogueOptions.Remove(UMounteaDialogueUIBFL::GetDialogueNodeGuid(DirtyDialogueOption));
+}
+
+void UMounteaDialogueOptionsContainer::RemoveDialogueOptions_Implementation(const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& DirtyDialogueOptions)
+{
+	for (const auto& Itr : DirtyDialogueOptions)
+	{
+		Execute_RemoveDialogueOption(this, Itr);
+	}
+}
+
+void UMounteaDialogueOptionsContainer::ClearDialogueOptions_Implementation()
+{
+	for (const auto& Itr : DialogueOptions)
+	{
+		TScriptInterface<IMounteaDialogueOptionInterface> dialogueOption = Itr.Value;
+
+		if (dialogueOption.GetObject() && dialogueOption.GetInterface())
+		{
+			dialogueOption->GetDialogueOptionSelectedHandle().RemoveDynamic(this, &UMounteaDialogueOptionsContainer::ProcessOptionSelected);
+			dialogueOption->Execute_ResetDialogueOptionData( Itr.Value);
+		}
+	}
+
+	DialogueOptions.Empty();
+}
+
+void UMounteaDialogueOptionsContainer::ProcessOptionSelected_Implementation(const FGuid& SelectedOption,UUserWidget* CallingWidget)
+{
+	if (ParentDialogueWidget)
+	{
+		TScriptInterface<IMounteaDialogueWBPInterface> dialogueInterface = ParentDialogueWidget;
+		dialogueInterface->Execute_OnOptionSelected(ParentDialogueWidget, SelectedOption);
+	}
+}

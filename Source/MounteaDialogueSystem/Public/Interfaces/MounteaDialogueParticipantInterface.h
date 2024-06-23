@@ -60,6 +60,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	void SaveStartingNode(UMounteaDialogueGraphNode* NewStartingNode);
+	
 	/**
 	 * Saves the traversed path for this Dialogue Participant Component.
 	 * This function is called once Dialogue ends and is updated from Dialogue Context.
@@ -67,7 +68,7 @@ public:
 	 * @param InPath The traversed path of the dialogue graph to be saved.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
-	void SaveTraversedPath(TMap<FGuid,int32>& InPath);
+	void SaveTraversedPath(TArray<FDialogueTraversePath>& InPath);
 
 	/**
 	 * Interface call.
@@ -79,11 +80,39 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	EDialogueParticipantState GetState() const;
 
+	/**
+	 * Getter for Participant Gameplay Tag.
+	 * @return Participant Gameplay Tag if any is associated.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
 	FGameplayTag GetTag() const;
+	
+	/**
+	 * Helps initialize Participant.
+	 * ❔ Is being called in BeginPlay.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue")
+	void InitializeParticipant();
+
+	/**
+	 * Plays the given participant voice sound.
+	 * @param ParticipantVoice The sound to play.
+	 * ❗ The sound should be a valid USoundBase object, otherwise nothing will be played.
+	 */ 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	void PlayParticipantVoice(USoundBase* ParticipantVoice);
+
+	/**
+	 * Skips the given participant voice sound and whole row. Will automatically start new Row if any is available.
+	 * @param ParticipantVoice The sound to skip. Can be left empty.
+	 * ❗ The sound should be a valid USoundBase object, otherwise nothing will be skipped.
+	 */ 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	void SkipParticipantVoice(USoundBase* ParticipantVoice);
+	
 #pragma endregion
 
-protected:
+public:
 
 #pragma region EventFunctions_Implementations
 
@@ -92,20 +121,11 @@ protected:
 		return CanStartDialogue();
 	};
 
-	virtual void SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode)
-	{
-		//Implement logic in child Blueprints
-	}
+	virtual void SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode) = 0;
 
-	virtual AActor* GetOwningActor_Implementation() const
-	{
-		return nullptr;
-	};
+	virtual AActor* GetOwningActor_Implementation() const = 0;
 
-	virtual void SaveTraversedPath_Implementation(TMap<FGuid,int32>& InPath)
-	{
-		// Implement logic in children
-	};
+	virtual void SaveTraversedPath_Implementation(TArray<FDialogueTraversePath>& InPath) = 0;
 
 	EDialogueParticipantState GetState_Implementation() const
 	{ return GetParticipantState(); };
@@ -140,14 +160,14 @@ public:
 	 *
 	 * @param ParticipantVoice The sound to play as the voice of this dialogue participant
 	 */
-	virtual void PlayParticipantVoice(USoundBase* ParticipantVoice) = 0;
+	virtual void PlayParticipantVoice_Implementation(USoundBase* ParticipantVoice) = 0;
 	/**
 	 * Tries to skip the specified sound this participant is playing as voice.
 	 *
 	 * @param ParticipantVoice The sound to skip this participant is playing as voice.
 	 */
-	virtual void SkipParticipantVoice(USoundBase* ParticipantVoice) = 0;
-
+	virtual void SkipParticipantVoice_Implementation(USoundBase* ParticipantVoice) = 0;
+	
 	/**
 	 * Returns the dialogue graph assigned to this Participant.
 	 * ❔ Could be updated using 'SetDialogueGraph', providing ability to swith Dialogue graphs on fly
@@ -202,7 +222,7 @@ public:
 	 * 
 	 * @return The map of nodes traversed during the dialogue.
 	 */
-	virtual TMap<FGuid,int32> GetTraversedPath() const = 0;
+	virtual TArray<FDialogueTraversePath> GetTraversedPath() const = 0;
 
 	virtual FGameplayTag GetParticipantTag() const = 0;
 

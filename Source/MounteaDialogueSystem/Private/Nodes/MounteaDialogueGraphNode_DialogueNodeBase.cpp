@@ -3,8 +3,11 @@
 
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 
+#include "TimerManager.h"
+#include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Misc/DataValidation.h"
+
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_DialogueNodeBase"
 
@@ -23,7 +26,7 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 	bUseGameplayTags = true;
 }
 
-void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	if (Manager)
 	{
@@ -41,10 +44,10 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode(const TScriptInterf
 		}
 	}
 	
-	Super::ProcessNode(Manager);
+	Super::ProcessNode_Implementation(Manager);
 }
 
-void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	if (bUseGameplayTags)
 	{
@@ -59,8 +62,6 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode(const TScriptInt
 			}
 		}
 	}
-	
-	Super::PreProcessNode(Manager);
 }
 
 UDataTable* UMounteaDialogueGraphNode_DialogueNodeBase::GetDataTable() const

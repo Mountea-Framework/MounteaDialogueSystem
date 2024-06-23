@@ -6,8 +6,11 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
+#include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
 #include "MounteaDialogueSystemEditorBFC.generated.h"
+
+class UEdNode_MounteaDialogueGraphNode;
 
 /**
  * Editor Only helper functions.
