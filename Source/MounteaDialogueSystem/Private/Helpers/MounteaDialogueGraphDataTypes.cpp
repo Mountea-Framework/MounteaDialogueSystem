@@ -37,8 +37,8 @@ FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct
 	: ActiveDialogueParticipant(nullptr)
 	, PlayerDialogueParticipant(nullptr)
 	, DialogueParticipant(nullptr)
-	, ActiveNodeGuid(FGuid())
-	, PreviousActiveNodeGuid(FGuid())
+	, ActiveNodeGuid(FGuid::NewGuid())
+	, PreviousActiveNodeGuid(FGuid::NewGuid())
 	, AllowedChildNodes(TArray<FGuid>())
 	, ActiveDialogueRowDataIndex(0)
 {}
@@ -48,8 +48,8 @@ FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct
 	, PlayerDialogueParticipant(Source ? Source->PlayerDialogueParticipant : nullptr)
 	, DialogueParticipant(Source ? Source->DialogueParticipant : nullptr)
 	, DialogueParticipants(Source ? Source->DialogueParticipants : TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>())
-	, ActiveNodeGuid(Source ? ( Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid() ) : FGuid())
-	, PreviousActiveNodeGuid( Source ? Source->PreviousActiveNode : FGuid() )
+	, ActiveNodeGuid(Source ? ( Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid::NewGuid() ) : FGuid::NewGuid())
+	, PreviousActiveNodeGuid( Source ? Source->PreviousActiveNode : FGuid::NewGuid() )
 	, AllowedChildNodes(Source ? UMounteaDialogueSystemBFC::NodesToGuids(Source->AllowedChildNodes) : TArray<FGuid>())
 	, ActiveDialogueRowDataIndex(Source ? Source->ActiveDialogueRowDataIndex : 0)
 {
@@ -65,8 +65,8 @@ void FMounteaDialogueContextReplicatedStruct::SetData(UMounteaDialogueContext* S
 	DialogueParticipant = Source->DialogueParticipant;
 	DialogueParticipants = Source->DialogueParticipants;
 	ActiveDialogueRowDataIndex = Source->ActiveDialogueRowDataIndex;
-	ActiveNodeGuid = Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid();
-	PreviousActiveNodeGuid = Source ? Source->PreviousActiveNode : FGuid();
+	ActiveNodeGuid = Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid::NewGuid();
+	PreviousActiveNodeGuid = Source ? Source->PreviousActiveNode : FGuid::NewGuid();
 	AllowedChildNodes = UMounteaDialogueSystemBFC::NodesToGuids(Source->AllowedChildNodes);
 	ActiveDialogueRowDataIndex = Source->ActiveDialogueRowDataIndex;
 }
