@@ -26,7 +26,7 @@ public:
 	 * The unique identifier for this dialogue option parent Node.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	FGuid OptionGuid;
+	FGuid OptionGuid = FGuid::NewGuid();
 
 	/**
 	 * The title of the dialogue option, displayed to the user.

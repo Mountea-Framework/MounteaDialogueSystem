@@ -53,7 +53,7 @@ protected:
 	*❔ Can be used for debugging and tracing purposes.
 	*/
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea")
-	FGuid GraphGUID;
+	FGuid GraphGUID = FGuid::NewGuid();
 
 public:
 	
