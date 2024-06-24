@@ -19,10 +19,10 @@ class UMounteaDialogueGraphNode;
 
 struct FDialogueRow;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueGraphChanged, UMounteaDialogueGraph*, NewGraph);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantStateChanged, const EDialogueParticipantState&, NewState);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantAudioComponentChanged, const UAudioComponent*, NewAudioComp);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FParticipantStartingNodeSaved, const UMounteaDialogueGraphNode*, NewSavedNode);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueGraphChanged,										UMounteaDialogueGraph*, NewGraph);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantStateChanged,						const EDialogueParticipantState&, NewState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantAudioComponentChanged,	const UAudioComponent*, NewAudioComp);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FParticipantStartingNodeSaved,							const UMounteaDialogueGraphNode*, NewSavedNode);
 
 /**
  * 
@@ -42,7 +42,7 @@ struct FDialogueTraversePath
 public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
-	FGuid NodeGuid;
+	FGuid NodeGuid = FGuid::NewGuid();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
 	int32 TraverseCount;
