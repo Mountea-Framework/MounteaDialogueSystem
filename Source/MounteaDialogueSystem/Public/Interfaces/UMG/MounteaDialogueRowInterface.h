@@ -64,7 +64,7 @@ public:
 	 * The unique identifier for the dialogue row.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	FGuid RowGuid											= FGuid();
+	FGuid RowGuid											= FGuid::NewGuid();
 
 public:
 

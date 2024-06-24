@@ -143,7 +143,7 @@ struct FSubtitlesSettings
 	 * Invalid settings are ignored!
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Subtitles")
-	FGuid SettingsGUID;
+	FGuid SettingsGUID = FGuid::NewGuid();
 
 public:
 
@@ -188,7 +188,7 @@ public:
 	 * ❔ Could be used with 'DP_PlayDialogueSound' or as Sound Value for any better way of handling synced animations and sounds (to get more info how to do that, join the Support Discord)
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
-	USoundBase* RowSound = nullptr;
+	TObjectPtr<USoundBase> RowSound = nullptr;
 	/**
 	 * Row Duration Mode
 	 * 
@@ -227,7 +227,7 @@ public:
 	 * Unique Key when searching and binding this Row.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay)
-	FGuid RowGUID;
+	FGuid RowGUID = FGuid::NewGuid();
 
 public:
 
@@ -327,7 +327,7 @@ public:
 	 * ❔ Could be used to mark special dialogue options, like "Open Store" or "Leave conversation" with special icon.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
-	UTexture* RowOptionalIcon = nullptr;
+	TObjectPtr<UTexture> RowOptionalIcon = nullptr;
 	/**
 	 * Name of the Dialogue Participant.
 	 * 
@@ -367,14 +367,14 @@ public:
 	 * Any Data Asset can be used here and no logic is tied to this attribute.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(AllowAbstract=false))
-	UDialogueAdditionalData* DialogueRowAdditionalData = nullptr;
+	TObjectPtr<UDialogueAdditionalData> DialogueRowAdditionalData = nullptr;
 	/**
 	 * Row GUID.
 	 * 
 	 * Unique Key when searching and binding this Row.
 	 */
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate))
-	FGuid RowGUID;
+	FGuid RowGUID = FGuid::NewGuid();
 	/**
 	 * ❗ WIP
 	 * Title Settings Override.
@@ -491,7 +491,7 @@ struct FDialogueTraversePath
 public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
-	FGuid NodeGuid;
+	FGuid NodeGuid = FGuid::NewGuid();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
 	int32 TraverseCount;
@@ -535,7 +535,7 @@ struct FMounteaDialogueContextReplicatedStruct
 	UPROPERTY()
 	FGuid ActiveNodeGuid;
 	UPROPERTY()
-	FGuid PreviousActiveNodeGuid;
+	FGuid PreviousActiveNodeGuid = FGuid::NewGuid();
 	UPROPERTY()
 	TArray<FGuid> AllowedChildNodes;
 	UPROPERTY()
