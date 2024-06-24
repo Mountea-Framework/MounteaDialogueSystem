@@ -227,7 +227,7 @@ public:
 	 * Unique Key when searching and binding this Row.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay)
-	FGuid RowGUID;
+	FGuid RowGUID = FGuid::NewGuid();
 
 public:
 

@@ -86,7 +86,7 @@ protected:
 	 * Set Graph is allowed only outside active Dialogue.
 	 */
 	UPROPERTY(ReplicatedUsing=OnRep_DialogueGraph, SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(DisplayThumbnail=false, NoResetToDefault))
-	UMounteaDialogueGraph* DialogueGraph = nullptr;
+	TObjectPtr<UMounteaDialogueGraph> DialogueGraph = nullptr;
 
 	/**
 	 * Mountea Dialogue Participant Default State.
@@ -123,7 +123,7 @@ protected:
 	 * ❗ Is populated by FindAudioComponent is called.
 	 */
 	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false, NoResetToDefault))
-	UAudioComponent* AudioComponent = nullptr;
+	TObjectPtr<UAudioComponent> AudioComponent = nullptr;
 	
 	/**
 	 * Optional Starting Node.
@@ -132,7 +132,7 @@ protected:
 	 * Otherwise it will start from Start Node of the Graph.
 	 */
 	UPROPERTY(Replicated, SaveGame, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false, NoResetToDefault))
-	UMounteaDialogueGraphNode* StartingNode = nullptr;
+	TObjectPtr<UMounteaDialogueGraphNode> StartingNode = nullptr;
 
 	/**
 	 * Contains mapped list of Traversed Nodes by GUIDs.
