@@ -173,6 +173,11 @@ void UMounteaDialogueGraphNode::SetNodeIndex(const int32 NewIndex)
 	NodeIndex = NewIndex;
 }
 
+FText UMounteaDialogueGraphNode::GetNodeTitle_Implementation() const
+{
+	return NodeTitle;
+}
+
 #if WITH_EDITOR
 
 FText UMounteaDialogueGraphNode::GetDescription_Implementation() const
@@ -198,11 +203,6 @@ FText UMounteaDialogueGraphNode::GetNodeTooltipText_Implementation() const
 FLinearColor UMounteaDialogueGraphNode::GetBackgroundColor() const
 {
 	return BackgroundColor;
-}
-
-FText UMounteaDialogueGraphNode::GetNodeTitle_Implementation() const
-{
-	return NodeTitle;
 }
 
 void UMounteaDialogueGraphNode::SetNodeTitle(const FText& NewTitle)
