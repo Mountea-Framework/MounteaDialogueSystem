@@ -182,6 +182,7 @@ void UMounteaDialogueManager::OnDialogueClosedEvent_Internal(UMounteaDialogueCon
 		case EDialogueManagerState::EDMS_Enabled:
 			return;
 		case EDialogueManagerState::EDMS_Active:
+		case EDialogueManagerState::Default:
 			break;
 	}
 	
