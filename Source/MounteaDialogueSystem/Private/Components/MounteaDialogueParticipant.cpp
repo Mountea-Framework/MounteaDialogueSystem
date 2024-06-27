@@ -171,7 +171,7 @@ void UMounteaDialogueParticipant::SetDialogueGraph(UMounteaDialogueGraph* NewDia
 {
 	if (ParticipantState == EDialogueParticipantState::EDPS_Active) return;
 
-	if (NewDialogueGraph == DialogueGraph) return;;
+	if (NewDialogueGraph == DialogueGraph) return;
 
 	if (!GetOwner())
 	{
@@ -195,6 +195,12 @@ void UMounteaDialogueParticipant::SetDialogueGraph(UMounteaDialogueGraph* NewDia
 
 void UMounteaDialogueParticipant::SetParticipantState(const EDialogueParticipantState NewState)
 {
+	if (NewState == ParticipantState)
+	{
+		LOG_INFO(TEXT("[SetParticipantState] Unable to update Participant State with same Value!"))
+		return;
+	}
+	
 	if (!GetOwner())
 	{
 		LOG_ERROR(TEXT("[SetParticipantState] Component has no Owner!"))
