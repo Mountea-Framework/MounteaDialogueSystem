@@ -17,6 +17,7 @@
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "GraphScheme/AssetGraphScheme_MounteaDialogueGraph.h"
+#include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Layout/AssetEditorTabs.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemEditorBFC.h"
@@ -460,7 +461,7 @@ void FAssetEditor_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 {
 	if (EditingGraph == nullptr)
 	{
-		LOG_WARNING(TEXT("[RebuildMounteaDialogueGraph] EditingGraph is nullptr"));
+		EditorLOG_WARNING(TEXT("[RebuildMounteaDialogueGraph] EditingGraph is nullptr"));
 		return;
 	}
 
@@ -819,7 +820,7 @@ void FAssetEditor_MounteaDialogueGraph::AutoArrange()
 	}
 	else
 	{
-		LOG_ERROR(TEXT("[AutoArrange] LayoutStrategy is null."));
+		EditorLOG_INFO(TEXT("[AutoArrange] LayoutStrategy is null."));
 	}
 }
 

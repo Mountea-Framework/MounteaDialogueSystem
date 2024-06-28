@@ -59,7 +59,7 @@ public:
 	
 	// Pointer to the starting node of the dialogue graph.
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
-	class UMounteaDialogueGraphNode* StartNode = nullptr;
+	TObjectPtr<UMounteaDialogueGraphNode> StartNode = nullptr;
 	/**
 	 * The class of the dialogue node represented by this instance.
 	 */
@@ -74,12 +74,12 @@ public:
 	 * An array of root nodes in the dialogue graph. These are the nodes that do not have any incoming connections.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
-	TArray<UMounteaDialogueGraphNode*> RootNodes;
+	TArray<TObjectPtr<UMounteaDialogueGraphNode>> RootNodes;
 	/**
 	 * Array containing all the nodes in the graph, including both root nodes and child nodes.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
-	TArray<UMounteaDialogueGraphNode*> AllNodes;
+	TArray<TObjectPtr<UMounteaDialogueGraphNode>> AllNodes;
 	// Flag indicating whether an edge is enabled
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	bool bEdgeEnabled;
