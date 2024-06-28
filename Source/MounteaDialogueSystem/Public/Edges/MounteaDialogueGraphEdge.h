@@ -24,13 +24,13 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphEdge : public UObject
 public:
 	
 	UPROPERTY(VisibleAnywhere, Category = "Mountea|Dialogue")
-	UMounteaDialogueGraph* Graph = nullptr;
+	TObjectPtr<UMounteaDialogueGraph> Graph = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
-	UMounteaDialogueGraphNode* StartNode = nullptr;
+	TObjectPtr<UMounteaDialogueGraphNode> StartNode = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
-	UMounteaDialogueGraphNode* EndNode = nullptr;
+	TObjectPtr<UMounteaDialogueGraphNode> EndNode = nullptr;
 
 #pragma endregion
 

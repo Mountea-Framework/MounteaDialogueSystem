@@ -203,7 +203,7 @@ protected:
 	EDecoratorState																	DecoratorState			= EDecoratorState::Uninitialized;
 
 	UPROPERTY()
-	UWorld*																				OwningWorld				= nullptr;
+	TObjectPtr<UWorld>															OwningWorld				= nullptr;
 	UPROPERTY()
 	TScriptInterface<IMounteaDialogueParticipantInterface>	OwnerParticipant		= nullptr;
 	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue|Decorator")
