@@ -246,7 +246,7 @@ void MDSPopup::Open(const FString& Changelog)
 				.HAlign(HAlign_Center)
 				.OnClicked_Lambda([]()
 				{
-					const FString URL = "https://discord.gg/2vXWEEN";
+					const FString URL = "https://discord.gg/c2WQ658V44";
 					FPlatformProcess::LaunchURL(*URL, nullptr, nullptr);
 
 					return FReply::Handled();

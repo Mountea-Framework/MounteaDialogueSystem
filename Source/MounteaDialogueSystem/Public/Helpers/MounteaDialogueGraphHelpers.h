@@ -1,3 +1,5 @@
+// Copyright Dominik Morse (Pavlicek) 2022. All Rights Reserved.
+
 #pragma once
 
 #include "CoreMinimal.h"

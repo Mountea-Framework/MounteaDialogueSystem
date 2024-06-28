@@ -83,7 +83,7 @@ protected:
 	TSharedPtr<SBorder> NodeBody;
 	TSharedPtr<SHorizontalBox> OutputPinBox;
 
-	class UMounteaDialogueGraphEditorSettings* GraphEditorSettings = nullptr;
+	TObjectPtr<class UMounteaDialogueGraphEditorSettings> GraphEditorSettings = nullptr;
 
 	FLinearColor NodeInnerColor;
 	FLinearColor PinsDockColor;
