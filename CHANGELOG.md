@@ -8,9 +8,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 > - Dialogue Nodes can be created in blueprints
 >   - That means you can create your own Nodes!
-> - Dialogue Graph, Node and Decorator will have **Tick** function!
+> - Dialogue Graph, Node and Decorator will have ***Tick*** function!
 >   - Carefully narrated to the Active Node and Decorators only for performance saving
-> - **Replication** of base Dialogue stats
+> - ***Replication*** of base Dialogue stats
 >   - States, Progress etc.
 > - Dialogue UI will be slightly changed to allow custom Widgets
 >   - All UI is Interface based now, so calling Interface functions instead of class-based functions to allow swapping WBPs
@@ -31,7 +31,7 @@ All notable changes to this project will be documented in this file.
 > - That annoying fix where the graph crashes if using Gameplay Tags
 
 ### Changed
-> - **Traverse Path** is now Structure instead of TMap
+> - ***Traverse Path*** is now Structure instead of TMap
 >   - This is ***breaking*** change.
 > - Dialogue Node and pre-defined Decorators require `FDialogueRow` DataTable
 > - Dialogue Decorators don't have drop arrow in the list anymore - replaced with `Delete` button
