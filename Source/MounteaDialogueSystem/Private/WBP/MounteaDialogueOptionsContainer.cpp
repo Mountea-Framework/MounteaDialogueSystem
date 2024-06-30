@@ -45,9 +45,9 @@ void UMounteaDialogueOptionsContainer::AddNewDialogueOption_Implementation(UMoun
 	}
 	
 	TObjectPtr<UUserWidget> dialogueOptionWidget =
-		DialogueOptions.Contains(NewDialogueOption->GetNodeGUID())
-		? DialogueOptions.FindRef(NewDialogueOption->GetNodeGUID())
-		: CreateWidget<UUserWidget>(GetOwningPlayer(),  DialogueOptionClass.LoadSynchronous());
+	DialogueOptions.Contains(NewDialogueOption->GetNodeGUID())
+	? DialogueOptions.FindRef(NewDialogueOption->GetNodeGUID())
+	: TObjectPtr<UUserWidget>(CreateWidget<UUserWidget>(GetOwningPlayer(), DialogueOptionClass.LoadSynchronous()));
 	
 	if (dialogueOptionWidget)
 	{		
