@@ -1,4 +1,4 @@
-Current Version: 1.0.6.52
+Current Version: 2.0.0.52
 
 # Changelog
 
