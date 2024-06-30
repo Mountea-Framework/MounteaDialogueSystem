@@ -1,11 +1,10 @@
-Current Version: 1.0.6.51
+Current Version: 2.0.0.51
 
 # Changelog
 
 All notable changes to this project will be documented in this file.
 
 **Version 2.0.0.51**
-
 ### Added
 > - Dialogue Nodes can be created in blueprints
 >   - That means you can create your own Nodes!
