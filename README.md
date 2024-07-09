@@ -7,6 +7,14 @@ Mountea Dialogue System is an Open-source Mountea Framework Unreal Engine tool f
 [![Discord](https://badgen.net/discord/online-members/2vXWEEN?label=Discord&logo=discord&logoColor=ffffff&color=7389D8)](https://discord.com/invite/2vXWEEN)
 [![Discord](https://badgen.net/discord/members/2vXWEEN?label=Discord&logo=discord&logoColor=ffffff&color=7389D8)](https://discord.com/invite/2vXWEEN)
 
+## Playable Demo
+Feel free to download the playable demo and take a look at what this plugin (in combination with its Dialogue sibling) can do in a matter of a few clicks!
+<p align="center" width="100%">
+    <a href="https://drive.google.com/file/d/1XS6meFqXbDM_YfbjQijcco6q1O1wl9-J/view?usp=drive_link">
+        <img width="20%" src="https://github.com/Mountea-Framework/MounteaInteractionSystem/assets/37410226/da51eced-84e4-4c96-a9ff-cd5a03055d64">
+    </a>
+</p>
+
 ## Discord Channel
 <a href="https://discord.gg/2vXWEEN"><img src="https://static.wikia.nocookie.net/siivagunner/images/9/9f/Discord_icon.svg/revision/latest?cb=20210814160101" alt="Discord LINK" width="100" height="100"></a>
 
@@ -33,10 +41,11 @@ Engine Version | Plugin Version | Support
 -------------- | -------------- | ----
 UE 4.26 | [1.0.0.426](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.426) | 🟪
 UE 4.27 | [1.0.0.427](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.427) | 🟪
-UE 5.00 | [1.0.0.50](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.50) | 🟥
-UE 5.1 | [1.0.0.51](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.51) | 🟩
-UE 5.2 | [1.0.0.52](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.52) | 🟩
-UE 5.3 | [1.0.0.53](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.5.53) | 🟩
+UE 5.00 | [1.0.0.50](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.50) | 🟪
+UE 5.1 | [2.0.0.51](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.0.51) | 🟥
+UE 5.2 | [2.0.0.52](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.0.52) | 🟩
+UE 5.3 | [2.0.0.53](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.0.53) | 🟩
+UE 5.4 | [2.0.0.54](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.0.54) | 🟩
 
 ## Features
 ### Graph Editor
