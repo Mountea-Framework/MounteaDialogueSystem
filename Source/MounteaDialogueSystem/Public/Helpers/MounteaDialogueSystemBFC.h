@@ -301,13 +301,13 @@ public:
 
 		if (GetDialogueManager(WorldContextObject) == nullptr)
 		{
-			LOG_ERROR(TEXT("[InitializeDialogue] WorldContextObject is Invalid. Cannot Initialize dialogue."));
+			LOG_ERROR(TEXT("[InitializeDialogue] Dialogue Manager not found. Cannot Initialize dialogue."));
 			return false;
 		}
 
 		if (DialogueParticipant->CanStartDialogue() == false)
 		{
-			LOG_ERROR(TEXT("[InitializeDialogue] WorldContextObject is Invalid. Cannot Initialize dialogue."));
+			LOG_ERROR(TEXT("[InitializeDialogue] Dialogue participant cannot Initialize dialogue."));
 			return false;
 		}
 

@@ -126,6 +126,9 @@ public:
 	UFUNCTION()
 	void OnDialogueVoiceSkipRequestEvent_Internal(USoundBase* VoiceToSkip);
 
+	UFUNCTION()
+    void RefreshDialogueWidgetHelper(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& WidgetCommand);
+
 #pragma endregion
 
 protected:
@@ -226,6 +229,9 @@ protected:
 	UPROPERTY(BlueprintCallable, BlueprintAssignable, Category="Mountea|Dialogue")
 	FDialogueVoiceEvent OnDialogueVoiceSkipRequest;
 
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	FDialogueWidgetCommand OnDialogueWidgetCommandRequested;
+
 #pragma endregion
 
 #pragma region InterfaceImplementations
@@ -295,6 +301,13 @@ public:
 	
 	virtual void SetDialogueManagerState(const EDialogueManagerState NewState) override;
 	virtual void SetDefaultDialogueManagerState(const EDialogueManagerState NewState) override;
+
+	virtual bool AddDialogueUIObject_Implementation(UObject* NewDialogueObject) override;    
+	virtual bool AddDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects) override;    
+	virtual bool RemoveDialogueUIObject_Implementation(UObject* DialogueObjectToRemove) override;    
+	virtual bool RemoveDialogueUIObjects_Implementation(const TArray<UObject*>& DialogueObjectsToRemove) override;    
+	virtual void SetDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects) override;    
+	virtual void ResetDialogueUIObjects_Implementation() override;
 	
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() override
 	{ return OnDialogueInitialized; };
@@ -324,6 +337,8 @@ public:
 	{ return OnDialogueVoiceStartRequest; };
 	virtual FDialogueVoiceEvent& GetDialogueVoiceStartRequestEventHandle() override
 	{ return OnDialogueVoiceSkipRequest; };
+	virtual FDialogueWidgetCommand& GetDialogueWidgetCommandHandle() override
+	{ return OnDialogueWidgetCommandRequested; };
 	virtual FTimerHandle& GetDialogueRowTimerHandle() override
 	{ return TimerHandle_RowTimer; }; 
 
@@ -355,6 +370,13 @@ protected:
 	*/
 	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea|Dialogue")
 	EDialogueManagerState ManagerState;
+
+	/**
+	 * An array of dialogue objects. Serves purpose of listeners who receive information about UI events.
+	 * Each must implement `IMounteaDialogueWBPInterface` interface.
+	 */
+	UPROPERTY(VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
+	TArray<TObjectPtr<UObject>> DialogueObjects;
 	
 	/**
 	 * Dialogue Widget which has been created.

@@ -13,7 +13,7 @@ FConnectionDrawingPolicy_MounteaDialogueGraph::FConnectionDrawingPolicy_MounteaD
 	: FKismetConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, ZoomFactor, InClippingRect, InDrawElements, InGraphObj)
 	  , GraphObj(InGraphObj)
 {
-	if (const UMounteaDialogueGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
+	if (const UMounteaDialogueGraphEditorSettings* GraphEditorSettings = GetDefault<UMounteaDialogueGraphEditorSettings>())
 	{
 		switch (GraphEditorSettings->GetArrowType())
 		{
@@ -113,7 +113,7 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FV
 	FConnectionParams NewParams = Params;
 	//NewParams.bDrawBubbles = true;
 	
-	if (const UMounteaDialogueGraphEditorSettings* MounteaDialogueGraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
+	if (const UMounteaDialogueGraphEditorSettings* MounteaDialogueGraphEditorSettings = GetDefault<UMounteaDialogueGraphEditorSettings>())
 	{
 		NewParams.WireThickness = MounteaDialogueGraphEditorSettings->GetWireWidth();
 	}
