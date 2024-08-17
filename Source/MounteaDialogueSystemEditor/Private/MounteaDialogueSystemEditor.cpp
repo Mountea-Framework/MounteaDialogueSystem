@@ -29,7 +29,7 @@
 #include "HelpButton/MDSHelpStyle.h"
 #include "Interfaces/IMainFrameModule.h"
 
-const FString ChangelogURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/5.1/CHANGELOG.md");
+const FString ChangelogURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/5.2/CHANGELOG.md");
 
 #define LOCTEXT_NAMESPACE "FMounteaDialogueSystemEditor"
 

@@ -10,15 +10,15 @@
 
 namespace MounteaDialogueWidgetCommands
 {
-	const FString CreateDialogueWidget		(TEXT("CreateDialogueWidget"));
-	const FString CloseDialogueWidget		(TEXT("CloseDialogueWidget"));
+	const FString CreateDialogueWidget			(TEXT("CreateDialogueWidget"));
+	const FString CloseDialogueWidget			(TEXT("CloseDialogueWidget"));
 	const FString ShowDialogueRow				(TEXT("ShowDialogueRow"));
-	const FString UpdateDialogueRow			(TEXT("UpdateDialogueRow"));
-	const FString HideDialogueRow				(TEXT("HideDialogueRow"));
-	const FString AddDialogueOptions			(TEXT("AddDialogueOptions"));
-	const FString RemoveDialogueOptions	(TEXT("RemoveDialogueOptions"));
-	const FString ShowSkipUI						(TEXT("ShowSkipUI"));
-	const FString HideSkipUI						(TEXT("HideSkipUI"));
+	const FString UpdateDialogueRow				(TEXT("UpdateDialogueRow"));
+	const FString HideDialogueRow					(TEXT("HideDialogueRow"));
+	const FString AddDialogueOptions				(TEXT("AddDialogueOptions"));
+	const FString RemoveDialogueOptions		(TEXT("RemoveDialogueOptions"));
+	const FString ShowSkipUI							(TEXT("ShowSkipUI"));
+	const FString HideSkipUI								(TEXT("HideSkipUI"));
 }
 
 /**
@@ -26,7 +26,7 @@ namespace MounteaDialogueWidgetCommands
  * 
  * Holds a list of settings that are used to further improve and tweak Dialogues.
  */
-UCLASS(config = MounteaSettings, DefaultConfig)
+UCLASS(config = MounteaSettings, defaultconfig)
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSystemSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
@@ -47,6 +47,19 @@ protected:
 	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "UserInterface")
 	EInputMode InputMode;
+
+	/**
+	 * Defines whether whole Dialogue Row is skipped when audio skip is requested.
+	 * This setting defines behaviour for all Nodes. Each Node allows different behaviour, so in special cases Node inversion can be used.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "Audio")
+	uint8 bSkipRowWithAudioSkip : 1;
+
+	/**
+	 * Defines coefficient of speed per 100 characters for `Automatic` `RowDurationMode`.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "UserInterface")
+	float DurationCoefficient = 8.f;
 	
 	/**
 	 * Defines how often Dialogue Widgets update per second.
@@ -127,9 +140,23 @@ public:
 		return  DefaultDialogueWidgetClass;
 	}
 
+	/**
+	 * 
+	 * @return True if skipping finishes the whole row, False if only skips audio.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	bool CanSkipWholeRow() const
+	{
+		return bSkipRowWithAudioSkip;
+	}
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	EInputMode GetDialogueInputMode() const
 	{ return InputMode; };
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	float GetDurationCoefficient() const
+	{ return DurationCoefficient; };
 	
 	/**
 	 * Returns whether Subtitles are allowed or not.

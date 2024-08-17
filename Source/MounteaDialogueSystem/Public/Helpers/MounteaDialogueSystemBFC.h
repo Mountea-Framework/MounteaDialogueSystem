@@ -13,6 +13,8 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Blueprint/UserWidget.h"
 
+#include "GameFramework/Pawn.h"
+
 #include "MounteaDialogueSystemBFC.generated.h"
 
 struct FMounteaDialogueDecorator;
