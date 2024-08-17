@@ -42,6 +42,8 @@ void UMounteaDialogueManager::BeginPlay()
 	OnDialogueVoiceSkipRequest.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal);
 
 	OnNextDialogueRowDataRequested.AddUniqueDynamic(this, &UMounteaDialogueManager::NextDialogueRowDataRequested);
+
+	OnDialogueWidgetCommandRequested.AddUniqueDynamic(this, &UMounteaDialogueManager::RefreshDialogueWidgetHelper);
 	
 	SetDialogueManagerState(GetDefaultDialogueManagerState());
 }
@@ -134,6 +136,7 @@ void UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal(UMounteaDialo
 	if (DialogueWidgetPtr)
 	{
 		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::RemoveDialogueOptions);
+		OnDialogueWidgetCommandRequested.Broadcast(this, MounteaDialogueWidgetCommands::RemoveDialogueOptions);
 	}
 	else
 	{
@@ -201,6 +204,7 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 	else
 	{
 		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::AddDialogueOptions);
+		OnDialogueWidgetCommandRequested.Broadcast(this, MounteaDialogueWidgetCommands::AddDialogueOptions);
 		return;
 	}
 }
@@ -308,6 +312,7 @@ void UMounteaDialogueManager::CloseDialogue()
 	if (DialogueWidgetPtr)
 	{
 		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CloseDialogueWidget);
+		OnDialogueWidgetCommandRequested.Broadcast(this, MounteaDialogueWidgetCommands::CloseDialogueWidget);
 	}
 
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -433,6 +438,7 @@ bool UMounteaDialogueManager::InvokeDialogueUI(FString& Message)
 	DialogueWidgetPtr->bStopAction = true;
 
 	IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::CreateDialogueWidget);
+	OnDialogueWidgetCommandRequested.Broadcast(this, MounteaDialogueWidgetCommands::CreateDialogueWidget);
 	
 	return true;
 }
@@ -507,6 +513,7 @@ void UMounteaDialogueManager::StartExecuteDialogueRow()
 		if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->SubtitlesAllowed())
 		{
 			IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, MounteaDialogueWidgetCommands::ShowDialogueRow);
+			OnDialogueWidgetCommandRequested.Broadcast(this, MounteaDialogueWidgetCommands::ShowDialogueRow);
 		}
 	}
 }
@@ -563,4 +570,117 @@ void UMounteaDialogueManager::SetDialogueManagerState(const EDialogueManagerStat
 void UMounteaDialogueManager::SetDefaultDialogueManagerState(const EDialogueManagerState NewState)
 {
 	DefaultManagerState = NewState;
+}
+
+void UMounteaDialogueManager::RefreshDialogueWidgetHelper(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& WidgetCommand)
+{
+	for (const auto& dialogueObject : DialogueObjects)
+	{
+		if (dialogueObject)
+		{
+			if ( const TScriptInterface<IMounteaDialogueWBPInterface> dialogueInterface = dialogueObject.Get() )	
+			{
+				IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, DialogueManager, WidgetCommand);
+			}
+		}
+	}
+}
+
+bool UMounteaDialogueManager::AddDialogueUIObject_Implementation(UObject* NewDialogueObject)
+{
+	if (NewDialogueObject == nullptr)
+	{
+		LOG_WARNING(TEXT("[AddDialogueUIObject] Input parameter is null!"));
+		return false;
+	}
+
+	const TScriptInterface<IMounteaDialogueWBPInterface> dialogueObject = NewDialogueObject;
+	if (dialogueObject.GetInterface() == nullptr || dialogueObject.GetObject() == nullptr)
+	{
+		LOG_WARNING(TEXT("[AddDialogueUIObject] Input parameter does not implement 'IMounteaDialogueWBPInterface'!"));
+		return false;
+	}
+
+	if (DialogueObjects.Contains(NewDialogueObject))
+	{
+		LOG_WARNING(TEXT("[AddDialogueUIObject] Input parameter already stored!"));
+		return false;
+	}
+
+	DialogueObjects.Add(NewDialogueObject);
+    
+	return true;
+}
+
+bool UMounteaDialogueManager::AddDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects)
+{
+	if (NewDialogueObjects.Num() == 0)
+	{
+		LOG_WARNING(TEXT("[AddDialogueUIObjects] Input array is empty!"));
+		return false;
+	}
+
+	bool bAllAdded = true;
+	for (UObject* Object : NewDialogueObjects)
+	{
+		if (!AddDialogueUIObject_Implementation(Object))
+		{
+			bAllAdded = false;
+		}
+	}
+
+	return bAllAdded;
+}
+
+bool UMounteaDialogueManager::RemoveDialogueUIObject_Implementation(UObject* DialogueObjectToRemove)
+{
+	if (DialogueObjectToRemove == nullptr)
+	{
+		LOG_WARNING(TEXT("[RemoveDialogueUIObject] Input parameter is null!"));
+		return false;
+	}
+
+	if (!DialogueObjects.Contains(DialogueObjectToRemove))
+	{
+		LOG_WARNING(TEXT("[RemoveDialogueUIObject] Input parameter not found in stored objects!"));
+		return false;
+	}
+
+	DialogueObjects.Remove(DialogueObjectToRemove);
+	return true;
+}
+
+bool UMounteaDialogueManager::RemoveDialogueUIObjects_Implementation(const TArray<UObject*>& DialogueObjectsToRemove)
+{
+	if (DialogueObjectsToRemove.Num() == 0)
+	{
+		LOG_WARNING(TEXT("[RemoveDialogueUIObjects] Input array is empty!"));
+		return false;
+	}
+
+	bool bAllRemoved = true;
+	for (UObject* Object : DialogueObjectsToRemove)
+	{
+		if (!RemoveDialogueUIObject_Implementation(Object))
+		{
+			bAllRemoved = false;
+		}
+	}
+
+	return bAllRemoved;
+}
+
+void UMounteaDialogueManager::SetDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects)
+{
+	DialogueObjects.Empty();
+
+	for (UObject* Object : NewDialogueObjects)
+	{
+		AddDialogueUIObject_Implementation(Object);
+	}
+}
+
+void UMounteaDialogueManager::ResetDialogueUIObjects_Implementation()
+{
+	DialogueObjects.Empty();
 }
