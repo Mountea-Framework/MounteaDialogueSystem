@@ -16,20 +16,20 @@ class UMounteaDialogueManagerInterface : public UInterface
 
 class UMounteaDialogueContext;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueInitialized, UMounteaDialogueContext *, Context);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueEvent, UMounteaDialogueContext *, Context);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueInitialized, UMounteaDialogueContext*, Context);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueEvent, UMounteaDialogueContext*, Context);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueContextUpdated, UMounteaDialogueContext *, Context);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDialogueUserInterfaceChanged, TSubclassOf<UUserWidget>, DialogueWidgetClass, UUserWidget *, DialogueWidget);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueContextUpdated, UMounteaDialogueContext*, Context);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDialogueUserInterfaceChanged, TSubclassOf<UUserWidget>, DialogueWidgetClass, UUserWidget*, DialogueWidget);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueNodeEvent, UMounteaDialogueContext *, Context);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueRowEvent, UMounteaDialogueContext *, Context);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueFailed, const FString &, ErrorMessage);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueFailed, const FString&, ErrorMessage);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueManagerStateChanged, const EDialogueManagerState &, NewState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueManagerStateChanged, const EDialogueManagerState&, NewState);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueVoiceEvent, class USoundBase *, NewDialogueVoice);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueVoiceEvent, class USoundBase*, NewDialogueVoice);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDialogueWidgetCommand, const TScriptInterface<IMounteaDialogueManagerInterface>&, DialogueManager, const FString&, WidgetCommand);
 
@@ -50,7 +50,7 @@ public:
 	 * @param NodeGUID The GUID of the selected node.
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta = (Keywords = "select, chosen, option"))
-	void CallDialogueNodeSelected(const FGuid &NodeGUID);
+	void CallDialogueNodeSelected(const FGuid& NodeGUID);
 
 	/**
 	 * Starts the Dialogue if possible.
@@ -69,7 +69,7 @@ public:
 	 * @param Message InMessage to be populated with error message explaining why returns false
 	 * @return true if UI can be added to screen, false if cannot
 	 */
-	virtual bool InvokeDialogueUI(FString &Message) = 0;
+	virtual bool InvokeDialogueUI(FString& Message) = 0;
 	/**
 	 * Gets the widget class used to display Dialogue UI.
 	 *
@@ -89,7 +89,7 @@ public:
 	 * ❗ Could be null
 	 * @return UserWidget pointer to created UI
 	 */
-	virtual UUserWidget *GetDialogueUIPtr() const = 0;
+	virtual UUserWidget* GetDialogueUIPtr() const = 0;
 	/**
 	 * Sets Dialogue UI pointer.
 	 *
@@ -117,8 +117,8 @@ public:
 	 * @return The dialogue context object for this instance.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
-	UMounteaDialogueContext *GetDialogueContextEvent() const;
-	UMounteaDialogueContext *GetDialogueContextEvent_Implementation() const
+	UMounteaDialogueContext* GetDialogueContextEvent() const;
+	UMounteaDialogueContext* GetDialogueContextEvent_Implementation() const
 	{
 		return GetDialogueContext();
 	}
@@ -129,8 +129,8 @@ public:
 	 * @return The widget used to display the current dialogue.
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta = (Keywords = "UI, Widget"))
-	UUserWidget *GetDialogueWidget();
-	UUserWidget *GetDialogueWidget_Implementation()
+	UUserWidget* GetDialogueWidget();
+	UUserWidget* GetDialogueWidget_Implementation()
 	{
 		return GetDialogueWidget();
 	};
@@ -141,8 +141,8 @@ public:
 	 * @return The owning actor for this Dialogue Manager Component.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
-	AActor *GetOwningActor() const;
-	virtual AActor *GetOwningActor_Implementation() const
+	AActor* GetOwningActor() const;
+	virtual AActor* GetOwningActor_Implementation() const
 	{
 		return nullptr;
 	};
@@ -162,7 +162,7 @@ public:
 	 * ❗ Could be null
 	 * @return DialogueContext	Dialogue Context is transient data holder for current dialogue instance.
 	 */
-	virtual UMounteaDialogueContext *GetDialogueContext() const = 0;
+	virtual UMounteaDialogueContext* GetDialogueContext() const = 0;
 	/**
 	 * Sets new Dialogue Context.
 	 *
@@ -217,8 +217,8 @@ public:
 	 * @return True if the object was successfully added, false otherwise.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
-	bool AddDialogueUIObject(UObject *NewDialogueObject);
-	virtual bool AddDialogueUIObject_Implementation(UObject *NewDialogueObject) = 0;
+	bool AddDialogueUIObject(UObject* NewDialogueObject);
+	virtual bool AddDialogueUIObject_Implementation(UObject* NewDialogueObject) = 0;
 
 	/**
 	 * Adds an array of dialogue UI objects to the manager.
@@ -226,8 +226,8 @@ public:
 	 * @return Number of objects successfully added.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
-	bool AddDialogueUIObjects(const TArray<UObject *> &NewDialogueObjects);
-	virtual bool AddDialogueUIObjects_Implementation(const TArray<UObject *> &NewDialogueObjects) = 0;
+	bool AddDialogueUIObjects(const TArray<UObject* >& NewDialogueObjects);
+	virtual bool AddDialogueUIObjects_Implementation(const TArray<UObject* >& NewDialogueObjects) = 0;
 
 	/**
 	 * Removes a single dialogue UI object from the manager.
@@ -235,8 +235,8 @@ public:
 	 * @return True if the object was successfully removed, false otherwise.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
-	bool RemoveDialogueUIObject(UObject *DialogueObjectToRemove);
-	virtual bool RemoveDialogueUIObject_Implementation(UObject *DialogueObjectToRemove) = 0;
+	bool RemoveDialogueUIObject(UObject* DialogueObjectToRemove);
+	virtual bool RemoveDialogueUIObject_Implementation(UObject* DialogueObjectToRemove) = 0;
 
 	/**
 	 * Removes multiple dialogue UI objects from the manager.
@@ -244,16 +244,16 @@ public:
 	 * @return Number of objects successfully removed.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
-	bool RemoveDialogueUIObjects(const TArray<UObject *> &DialogueObjectsToRemove);
-	virtual bool RemoveDialogueUIObjects_Implementation(const TArray<UObject *> &DialogueObjectsToRemove) = 0;
+	bool RemoveDialogueUIObjects(const TArray<UObject* >& DialogueObjectsToRemove);
+	virtual bool RemoveDialogueUIObjects_Implementation(const TArray<UObject* >& DialogueObjectsToRemove) = 0;
 
 	/**
 	 * Sets the entire array of dialogue UI objects, replacing any existing objects.
 	 * @param NewDialogueObjects The new array of dialogue UI objects.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
-	void SetDialogueUIObjects(const TArray<UObject *> &NewDialogueObjects);
-	virtual void SetDialogueUIObjects_Implementation(const TArray<UObject *> &NewDialogueObjects) = 0;
+	void SetDialogueUIObjects(const TArray<UObject* >& NewDialogueObjects);
+	virtual void SetDialogueUIObjects_Implementation(const TArray<UObject* >& NewDialogueObjects) = 0;
 
 	/**
 	 * Resets the dialogue manager, removing all dialogue UI objects.
@@ -262,28 +262,28 @@ public:
 	void ResetDialogueUIObjects();
 	virtual void ResetDialogueUIObjects_Implementation() = 0;
 
-	virtual FDialogueInitialized &GetDialogueInitializedEventHandle() = 0;
-	virtual FDialogueEvent &GetDialogueStartedEventHandle() = 0;
-	virtual FDialogueEvent &GetDialogueClosedEventHandle() = 0;
+	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() = 0;
+	virtual FDialogueEvent& GetDialogueStartedEventHandle() = 0;
+	virtual FDialogueEvent& GetDialogueClosedEventHandle() = 0;
 
-	virtual FDialogueContextUpdated &GetDialogueContextUpdatedEventHande() = 0;
-	virtual FDialogueUserInterfaceChanged &GetDialogueUserInterfaceChangedEventHandle() = 0;
+	virtual FDialogueContextUpdated& GetDialogueContextUpdatedEventHande() = 0;
+	virtual FDialogueUserInterfaceChanged& GetDialogueUserInterfaceChangedEventHandle() = 0;
 
-	virtual FDialogueNodeEvent &GetDialogueNodeSelectedEventHandle() = 0;
+	virtual FDialogueNodeEvent& GetDialogueNodeSelectedEventHandle() = 0;
 
-	virtual FDialogueNodeEvent &GetDialogueNodeStartedEventHandle() = 0;
-	virtual FDialogueNodeEvent &GetDialogueNodeFinishedEventHandle() = 0;
-	virtual FDialogueRowEvent &GetDialogueRowStartedEventHandle() = 0;
-	virtual FDialogueRowEvent &GetDialogueRowFinishedEventHandle() = 0;
+	virtual FDialogueNodeEvent& GetDialogueNodeStartedEventHandle() = 0;
+	virtual FDialogueNodeEvent& GetDialogueNodeFinishedEventHandle() = 0;
+	virtual FDialogueRowEvent& GetDialogueRowStartedEventHandle() = 0;
+	virtual FDialogueRowEvent& GetDialogueRowFinishedEventHandle() = 0;
 
-	virtual FDialogueFailed &GetDialogueFailedEventHandle() = 0;
+	virtual FDialogueFailed& GetDialogueFailedEventHandle() = 0;
 
-	virtual FDialogueManagerStateChanged &GetDialogueManagerStateChangedEventHandle() = 0;
+	virtual FDialogueManagerStateChanged& GetDialogueManagerStateChangedEventHandle() = 0;
 
-	virtual FDialogueVoiceEvent &GetDialogueVoiceStartRequestEventHandle() = 0;
-	virtual FDialogueVoiceEvent &GetDialogueVoiceSkipRequestEventHandle() = 0;
+	virtual FDialogueVoiceEvent& GetDialogueVoiceStartRequestEventHandle() = 0;
+	virtual FDialogueVoiceEvent& GetDialogueVoiceSkipRequestEventHandle() = 0;
 
 	virtual FDialogueWidgetCommand& GetDialogueWidgetCommandHandle() = 0;
 
-	virtual FTimerHandle &GetDialogueRowTimerHandle() = 0;
+	virtual FTimerHandle& GetDialogueRowTimerHandle() = 0;
 };
