@@ -40,7 +40,7 @@ public:
 	 * Even called when Dialogue is Initialized.
 	 * ❗ In order to use native logic, call Parent node
 	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Initialized, Start"))
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue|Manager", meta=(Keywords="Initialized, Start"))
 	void OnDialogueInitializedEvent(UMounteaDialogueContext* Context);
 	UFUNCTION()
 	virtual void OnDialogueInitializedEvent_Internal(UMounteaDialogueContext* Context);
@@ -49,7 +49,7 @@ public:
 	 * Event called when Dialogue Context is updated.
 	 * ❗ Could be Null
 	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Update, Context"))
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue|Manager", meta=(Keywords="Update, Context"))
 	void OnDialogueContextUpdatedEvent(UMounteaDialogueContext* Context);
 	UFUNCTION()
 	virtual void OnDialogueContextUpdatedEvent_Internal(UMounteaDialogueContext* NewContext);
@@ -58,7 +58,7 @@ public:
 	 * Event called when Dialogue Widget Class or Widget have changed.
 	 * ❗ Dialogue Widget Could be Null
 	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Update, Context"))
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue|Manager", meta=(Keywords="Update, Context"))
 	void OnDialogueUserInterfaceChangedEvent(TSubclassOf<UUserWidget> DialogueUIClass, UUserWidget* DialogueUIWidget);
 	UFUNCTION()
 	void OnDialogueUserInterfaceChangedEvent_Internal(TSubclassOf<UUserWidget> DialogueUIClass, UUserWidget* DialogueUIWidget);
@@ -66,7 +66,7 @@ public:
 	/**
 	 * Event called when Dialogue has Started.
 	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Update, Context"))
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue|Manager", meta=(Keywords="Update, Context"))
 	void OnDialogueStartedEvent(UMounteaDialogueContext* Context);
 	UFUNCTION()
 	void OnDialogueStartedEvent_Internal(UMounteaDialogueContext* Context);
@@ -75,7 +75,7 @@ public:
 	 * Event called when Dialogue has Closed.
 	 * Could be either by manual request or automatic, as there are no nodes to follow.
 	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Close, Context"))
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue|Manager", meta=(Keywords="Close, Context"))
 	void OnDialogueClosedEvent(UMounteaDialogueContext* Context);
 	UFUNCTION()
 	void OnDialogueClosedEvent_Internal(UMounteaDialogueContext* Context);
@@ -83,21 +83,21 @@ public:
 	/**
 	 * Event called when new Node is selected.
 	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Start, Begin"))
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue|Manager", meta=(Keywords="Start, Begin"))
 	void OnDialogueNodeSelectedEvent(UMounteaDialogueContext* Context);
 	UFUNCTION()
 	void OnDialogueNodeSelectedEvent_Internal(UMounteaDialogueContext* Context);
 	/**
 	 * Event called when Dialogue Node has Started.
 	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Start, Begin"))
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue|Manager", meta=(Keywords="Start, Begin"))
 	void OnDialogueNodeStartedEvent(UMounteaDialogueContext* Context);
 	UFUNCTION()
 	void OnDialogueNodeStartedEvent_Internal(UMounteaDialogueContext* Context);
 	/**
 	 * Event called when Dialogue Node has Finished.
 	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Finish, End, Complete"))
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue|Manager", meta=(Keywords="Finish, End, Complete"))
 	void OnDialogueNodeFinishedEvent(UMounteaDialogueContext* Context);
 	UFUNCTION()
 	void OnDialogueNodeFinishedEvent_Internal(UMounteaDialogueContext* Context);
@@ -111,7 +111,7 @@ public:
 	 * 
 	 * @param VoiceToStart The voice line to start playing.
 	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Finish, End, Complete"))
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue|Manager", meta=(Keywords="Finish, End, Complete"))
 	void OnDialogueVoiceStartRequestEvent(USoundBase* VoiceToStart);
 	UFUNCTION()
 	void OnDialogueVoiceStartRequestEvent_Internal(USoundBase* VoiceToStart);
@@ -121,7 +121,7 @@ public:
 	 * 
 	 * @param VoiceToSkip - The voice line to be skipped.
 	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Finish, End, Complete"))
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue|Manager", meta=(Keywords="Finish, End, Complete"))
 	void OnDialogueVoiceSkipRequestEvent(USoundBase* VoiceToSkip);
 	UFUNCTION()
 	void OnDialogueVoiceSkipRequestEvent_Internal(USoundBase* VoiceToSkip);
@@ -139,18 +139,18 @@ protected:
 	/**
 	 * Even called when Dialogue is Initialized.
 	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueInitialized OnDialogueInitialized;
 	/**
 	 * Event called when Dialogue has started.
 	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueEvent OnDialogueStarted;
 	/**
 	 * Event called when Dialogue has been closed.
 	 * Could be either manual or automatic.
 	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueEvent OnDialogueClosed;
 	
 	
@@ -158,78 +158,78 @@ protected:
 	 * Event called when Dialogue Context is updated.
 	 * ❗ Could be Null
 	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueContextUpdated OnDialogueContextUpdated;
 	/**
 	 * Event called when Dialogue Widget Class or Widget have changed.
 	 *❗ Dialogue Widget Could be Null
 	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueUserInterfaceChanged OnDialogueUserInterfaceChanged;
 	
 
 	/**
 	 * Event called when new Dialogue Node has been selected.
 	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueNodeEvent OnDialogueNodeSelected;
 
 	/**
 	 * Event called when Dialogue Node has started.
 	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueNodeEvent OnDialogueNodeStarted;
 	/**
 	 * Event called when Dialogue Node has finished.
 	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueNodeEvent OnDialogueNodeFinished;
 	
 	/**
 	 * Event called when Dialogue Row has started.
 	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueRowEvent OnDialogueRowStarted;
 	/**
 	 * Event called when Dialogue Row has finished.
 	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueRowEvent OnDialogueRowFinished;
 	/**
 	 * Event called once Dialogue Row Data update has been requested.
 	 * Is never called from Code and is bound to `FinishedExecuteDialogueRow` function.
 	 * Should be used carefully. Suggested usage is with Dialogue Row Data which are using `RowDurationMode::Manual`.
 	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueRowEvent OnNextDialogueRowDataRequested;
 
 	/**
 	 * Event called if Dialogue fails to execute.
 	 * Provides Error Message with explanation.
 	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueFailed OnDialogueFailed;
 
 	/**
 	 * Event called when Dialogue State changes.
 	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueManagerStateChanged OnDialogueManagerStateChanged;
 
 	/**
 	 * Event called when Dialogue Voice is requested to Start.
 	 * Provides info what Dialogue Voice is requested to Start.
 	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueVoiceEvent OnDialogueVoiceStartRequest;
 	/**
 	 * Event called when Dialogue Voice is requested to Skip.
 	 * Provides info what Dialogue Voice is requested to Skip.
 	 */
-	UPROPERTY(BlueprintCallable, BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintCallable, BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueVoiceEvent OnDialogueVoiceSkipRequest;
 
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueWidgetCommand OnDialogueWidgetCommandRequested;
 
 #pragma endregion
@@ -238,7 +238,7 @@ protected:
 
 public:
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager")
 	virtual AActor* GetOwningActor_Implementation() const override;
 
 	/**
@@ -246,13 +246,13 @@ public:
 	 * ❗ If none specified per Manager will return Class from Project Settings
 	 * ❗ Could return null
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(Keywords="UI, Widget"))
 	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const override;
 	/**
 	 * Returns Dialogue Widget Pointer if any exists already.
 	 * ❗ Could return null
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(Keywords="UI, Widget"))
 	virtual UUserWidget* GetDialogueUIPtr() const override
 	{ return DialogueWidgetPtr; };
 
@@ -260,7 +260,7 @@ public:
 	 * Returns Dialogue Context if any exists.
 	 * ❗ Could return null
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="Context, Get"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(Keywords="Context, Get"))
 	virtual UMounteaDialogueContext* GetDialogueContext() const override
 	{ return DialogueContext; };
 
@@ -268,7 +268,7 @@ public:
 	 * Returns the current state of the Dialogue Manager.
 	 * @return The current state of the Dialogue Manager.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="Context, Get"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(Keywords="Context, Get"))
 	virtual EDialogueManagerState GetDialogueManagerState() const override
 	{ return  ManagerState; };
 
@@ -276,7 +276,7 @@ public:
 	 * Returns the default state of the Dialogue Manager.
 	 * @return The default state of the Dialogue Manager.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="Context, Get"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(Keywords="Context, Get"))
 	virtual EDialogueManagerState GetDefaultDialogueManagerState() const override
 	{ return DefaultManagerState; };
 	
@@ -352,7 +352,7 @@ protected:
 	 * ❔ Could be left empty if Project Settings are setup properly
 	 * ❗ Must implement MounteaDialogueWBPInterface
 	 */
-	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
+	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue|Manager", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
 	TSubclassOf<UUserWidget> DialogueWidgetClass = nullptr;
 
 	/**
@@ -360,7 +360,7 @@ protected:
 	 * ❔ Is used in BeginPlay to set ManagerState.
 	 * ❔ Is used as fallback value once Dialogue Ends.
 	 */
-	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue")
+	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue|Manager")
 	EDialogueManagerState DefaultManagerState;
 	
 	/**
@@ -368,7 +368,7 @@ protected:
 	* ❗ In order to start Dialogue, this value must not be Disabled.
 	* ❔ Can be updated using SetDialogueManagerState function.
 	*/
-	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea|Dialogue")
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea|Dialogue|Manager")
 	EDialogueManagerState ManagerState;
 
 	/**

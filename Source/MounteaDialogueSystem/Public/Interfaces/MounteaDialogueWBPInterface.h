@@ -33,7 +33,7 @@ public:
 	 * @param DialogueManager	Dialogue Manager Interface reference. Request 'GetDialogueContext' to retrieve data to display.
 	 * @param Command			String command. All commands are defined in ProjectSettings/MounteaFramework/MounteaDialogueSystem.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Mountea|Dialogue|Widget")
 	void RefreshDialogueWidget(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command);
 
 	/**
@@ -41,6 +41,6 @@ public:
 	 * 
 	 * @param SelectionGUID The GUID of the selected option.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Mountea|Dialogue|Widget")
 	void OnOptionSelected(const FGuid& SelectionGUID);
 };

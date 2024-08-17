@@ -49,7 +49,7 @@ public:
 	 *
 	 * @param NodeGUID The GUID of the selected node.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta = (Keywords = "select, chosen, option"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta = (Keywords = "select, chosen, option"))
 	void CallDialogueNodeSelected(const FGuid& NodeGUID);
 
 	/**
@@ -116,7 +116,7 @@ public:
 	 *
 	 * @return The dialogue context object for this instance.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	UMounteaDialogueContext* GetDialogueContextEvent() const;
 	UMounteaDialogueContext* GetDialogueContextEvent_Implementation() const
 	{
@@ -128,7 +128,7 @@ public:
 	 *
 	 * @return The widget used to display the current dialogue.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta = (Keywords = "UI, Widget"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta = (Keywords = "UI, Widget"))
 	UUserWidget* GetDialogueWidget();
 	UUserWidget* GetDialogueWidget_Implementation()
 	{
@@ -140,7 +140,7 @@ public:
 	 *
 	 * @return The owning actor for this Dialogue Manager Component.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	AActor* GetOwningActor() const;
 	virtual AActor* GetOwningActor_Implementation() const
 	{
@@ -152,7 +152,7 @@ public:
 	 * Asks Active Node to 'PreProcessNode' and then to 'ProcessNode'.
 	 * In this preparation stage, Nodes are asked to process all Decorators.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	void PrepareNode();
 	virtual void PrepareNode_Implementation() {};
 
@@ -178,7 +178,7 @@ public:
 	 *
 	 * @return ManagerState	Manager state value
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	EDialogueManagerState GetState() const;
 	EDialogueManagerState GetState_Implementation() const
 	{
@@ -216,7 +216,7 @@ public:
 	 * @param NewDialogueObject The object to add.
 	 * @return True if the object was successfully added, false otherwise.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	bool AddDialogueUIObject(UObject* NewDialogueObject);
 	virtual bool AddDialogueUIObject_Implementation(UObject* NewDialogueObject) = 0;
 
@@ -225,7 +225,7 @@ public:
 	 * @param NewDialogueObjects Array of objects to add.
 	 * @return Number of objects successfully added.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	bool AddDialogueUIObjects(const TArray<UObject* >& NewDialogueObjects);
 	virtual bool AddDialogueUIObjects_Implementation(const TArray<UObject* >& NewDialogueObjects) = 0;
 
@@ -234,7 +234,7 @@ public:
 	 * @param DialogueObjectToRemove The object to remove.
 	 * @return True if the object was successfully removed, false otherwise.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	bool RemoveDialogueUIObject(UObject* DialogueObjectToRemove);
 	virtual bool RemoveDialogueUIObject_Implementation(UObject* DialogueObjectToRemove) = 0;
 
@@ -243,7 +243,7 @@ public:
 	 * @param DialogueObjectsToRemove Array of objects to remove.
 	 * @return Number of objects successfully removed.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	bool RemoveDialogueUIObjects(const TArray<UObject* >& DialogueObjectsToRemove);
 	virtual bool RemoveDialogueUIObjects_Implementation(const TArray<UObject* >& DialogueObjectsToRemove) = 0;
 
@@ -251,14 +251,14 @@ public:
 	 * Sets the entire array of dialogue UI objects, replacing any existing objects.
 	 * @param NewDialogueObjects The new array of dialogue UI objects.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	void SetDialogueUIObjects(const TArray<UObject* >& NewDialogueObjects);
 	virtual void SetDialogueUIObjects_Implementation(const TArray<UObject* >& NewDialogueObjects) = 0;
 
 	/**
 	 * Resets the dialogue manager, removing all dialogue UI objects.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	void ResetDialogueUIObjects();
 	virtual void ResetDialogueUIObjects_Implementation() = 0;
 
