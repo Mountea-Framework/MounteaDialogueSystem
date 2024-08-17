@@ -44,23 +44,25 @@ void UMounteaDialogueManager::BeginPlay()
 	{
 		OnDialogueInitialized.							AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueInitializedEvent_Internal);
 	
-		OnDialogueContextUpdated.				AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent_Internal);
-		OnDialogueUserInterfaceChanged.	AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueUserInterfaceChangedEvent_Internal);
+		OnDialogueContextUpdated.					AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent_Internal);
+		OnDialogueUserInterfaceChanged.			AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueUserInterfaceChangedEvent_Internal);
 	
-		OnDialogueStarted.								AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueStartedEvent_Internal);
-		OnDialogueClosed.								AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueClosedEvent_Internal);
+		OnDialogueStarted.									AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueStartedEvent_Internal);
+		OnDialogueClosed.									AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueClosedEvent_Internal);
 
-		OnDialogueNodeSelected.					AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal);
+		OnDialogueNodeSelected.						AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal);
 		OnDialogueNodeStarted.						AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeStartedEvent_Internal);
-		OnDialogueNodeFinished.					AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal);
+		OnDialogueNodeFinished.						AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal);
 
-		OnDialogueRowStarted.						AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal);
-		OnDialogueRowFinished.					AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueRowFinishedEvent_Internal);
+		OnDialogueRowStarted.							AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal);
+		OnDialogueRowFinished.						AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueRowFinishedEvent_Internal);
 
-		OnDialogueVoiceStartRequest.			AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal);
-		OnDialogueVoiceSkipRequest.			AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal);
+		OnDialogueVoiceStartRequest.				AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal);
+		OnDialogueVoiceSkipRequest.				AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal);
 
-		OnNextDialogueRowDataRequested.	AddUniqueDynamic(this, &UMounteaDialogueManager::NextDialogueRowDataRequested);
+		OnNextDialogueRowDataRequested.		AddUniqueDynamic(this, &UMounteaDialogueManager::NextDialogueRowDataRequested);
+
+		OnDialogueWidgetCommandRequested.AddUniqueDynamic(this, &UMounteaDialogueManager::RefreshDialogueWidgetHelper);
 	}
 	
 	Execute_SetDialogueManagerState(this, GetDefaultDialogueManagerState());
@@ -1019,6 +1021,8 @@ bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, 
 	
 	LOG_INFO(TEXT("[Dialogue Command Requested] %s"), *Command)
 	
+	OnDialogueWidgetCommandRequested.Broadcast(this, Command);
+	
 	if (DialogueWidgetPtr)
 	{
 		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidgetPtr, this, Command);
@@ -1315,4 +1319,117 @@ MounteaDialogueManagerHelpers::FDialogueRowDataInfo MounteaDialogueManagerHelper
 	Info.ActiveRowExecutionMode = rowDataArray.IsValidIndex(currentIndex) ? rowDataArray[currentIndex].RowExecutionBehaviour : ERowExecutionMode::EREM_Automatic;
 
 	return Info;
+}
+
+void UMounteaDialogueManager::RefreshDialogueWidgetHelper(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& WidgetCommand)
+{
+	for (const auto& dialogueObject : DialogueObjects)
+	{
+		if (dialogueObject)
+		{
+			if ( const TScriptInterface<IMounteaDialogueWBPInterface> dialogueInterface = dialogueObject.Get() )	
+			{
+				IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, DialogueManager, WidgetCommand);
+			}
+		}
+	}
+}
+
+bool UMounteaDialogueManager::AddDialogueUIObject_Implementation(UObject* NewDialogueObject)
+{
+	if (NewDialogueObject == nullptr)
+	{
+		LOG_WARNING(TEXT("[AddDialogueUIObject] Input parameter is null!"));
+		return false;
+	}
+
+	const TScriptInterface<IMounteaDialogueWBPInterface> dialogueObject = NewDialogueObject;
+	if (dialogueObject.GetInterface() == nullptr || dialogueObject.GetObject() == nullptr)
+	{
+		LOG_WARNING(TEXT("[AddDialogueUIObject] Input parameter does not implement 'IMounteaDialogueWBPInterface'!"));
+		return false;
+	}
+
+	if (DialogueObjects.Contains(NewDialogueObject))
+	{
+		LOG_WARNING(TEXT("[AddDialogueUIObject] Input parameter already stored!"));
+		return false;
+	}
+
+	DialogueObjects.Add(NewDialogueObject);
+    
+	return true;
+}
+
+bool UMounteaDialogueManager::AddDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects)
+{
+	if (NewDialogueObjects.Num() == 0)
+	{
+		LOG_WARNING(TEXT("[AddDialogueUIObjects] Input array is empty!"));
+		return false;
+	}
+
+	bool bAllAdded = true;
+	for (UObject* Object : NewDialogueObjects)
+	{
+		if (!AddDialogueUIObject_Implementation(Object))
+		{
+			bAllAdded = false;
+		}
+	}
+
+	return bAllAdded;
+}
+
+bool UMounteaDialogueManager::RemoveDialogueUIObject_Implementation(UObject* DialogueObjectToRemove)
+{
+	if (DialogueObjectToRemove == nullptr)
+	{
+		LOG_WARNING(TEXT("[RemoveDialogueUIObject] Input parameter is null!"));
+		return false;
+	}
+
+	if (!DialogueObjects.Contains(DialogueObjectToRemove))
+	{
+		LOG_WARNING(TEXT("[RemoveDialogueUIObject] Input parameter not found in stored objects!"));
+		return false;
+	}
+
+	DialogueObjects.Remove(DialogueObjectToRemove);
+	return true;
+}
+
+bool UMounteaDialogueManager::RemoveDialogueUIObjects_Implementation(const TArray<UObject*>& DialogueObjectsToRemove)
+{
+	if (DialogueObjectsToRemove.Num() == 0)
+	{
+		LOG_WARNING(TEXT("[RemoveDialogueUIObjects] Input array is empty!"));
+		return false;
+	}
+
+	bool bAllRemoved = true;
+	for (UObject* Object : DialogueObjectsToRemove)
+	{
+		if (!RemoveDialogueUIObject_Implementation(Object))
+		{
+			bAllRemoved = false;
+		}
+	}
+
+	return bAllRemoved;
+}
+
+void UMounteaDialogueManager::SetDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects)
+{
+	DialogueObjects.Empty();
+
+	for (UObject* Object : NewDialogueObjects)
+	{
+		AddDialogueUIObject_Implementation(Object);
+	}
+}
+
+void UMounteaDialogueManager::ResetDialogueUIObjects_Implementation()
+{
+	DialogueObjects.Empty();
 }
