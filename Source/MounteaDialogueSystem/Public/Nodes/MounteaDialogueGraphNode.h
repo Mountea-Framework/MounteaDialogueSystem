@@ -240,6 +240,9 @@ public:
 	FORCEINLINE FGuid GetNodeGUID() const
 	{ return NodeGUID; };
 
+	// Sets new guid of the Node. Not exposed to Bluprints!
+	void SetNodeGUID(const FGuid& NewGuid);
+
 	/**
 	 * Gets the owning Graph of the node.
 	 *❗ Might be null

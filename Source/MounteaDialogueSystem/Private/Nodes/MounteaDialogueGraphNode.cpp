@@ -35,6 +35,11 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode(): Graph(nullptr), OwningWo
 	bAutoStarts = false;
 }
 
+void UMounteaDialogueGraphNode::SetNodeGUID(const FGuid& NewGuid)
+{
+	NodeGUID = NewGuid;
+}
+
 UMounteaDialogueGraph* UMounteaDialogueGraphNode::GetGraph() const
 {
 	return Graph;

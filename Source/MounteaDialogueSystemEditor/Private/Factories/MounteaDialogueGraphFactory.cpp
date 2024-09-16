@@ -23,6 +23,11 @@
 #include "zip.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Framework/Notifications/NotificationManager.h"
+#include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
+#include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
+#include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
+#include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
+#include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphFactory"
@@ -143,6 +148,8 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 			IFileManager::Get().Delete(*File.Value);
 		}
 	}
+
+	NewGraph->CreateGraph();
 
 	return nullptr;
 }
@@ -469,104 +476,237 @@ bool UMounteaDialogueGraphFactory::PopulateCategories(UMounteaDialogueGraph* Gra
 
 bool UMounteaDialogueGraphFactory::PopulateParticipants(UMounteaDialogueGraph* Graph, const FString& Json)
 {
-    if (!Graph)
-    {
-        UE_LOG(LogTemp, Error, TEXT("Invalid Graph object provided to PopulateParticipants"));
-        return false;
-    }
+	if (!Graph)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Invalid Graph object provided to PopulateParticipants"));
+		return false;
+	}
 
-    // Parse JSON
-    TArray<TSharedPtr<FJsonValue>> JsonArray;
-    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Json);
-    if (!FJsonSerializer::Deserialize(Reader, JsonArray))
-    {
-        UE_LOG(LogTemp, Error, TEXT("Failed to parse participants.json"));
-        return false;
-    }
+	// Parse JSON
+	TArray<TSharedPtr<FJsonValue>> JsonArray;
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Json);
+	if (!FJsonSerializer::Deserialize(Reader, JsonArray))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to parse participants.json"));
+		return false;
+	}
 
-    // Create a new DataTable asset
-    FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
-    
-    // Determine the package path for the new asset
-    FString PackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
-    FString AssetName = FString::Printf(TEXT("%s_Participants"), *Graph->GetName());
-    
-    UDataTable* ParticipantsDataTable = Cast<UDataTable>(AssetToolsModule.Get().CreateAsset(AssetName, PackagePath, UDataTable::StaticClass(), nullptr));
-    
-    if (!ParticipantsDataTable)
-    {
-        UE_LOG(LogTemp, Error, TEXT("Failed to create DataTable asset"));
-        return false;
-    }
-    
-    ParticipantsDataTable->RowStruct = FDialogueParticipant::StaticStruct();
+	// Create a new DataTable asset
+	FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
 
-    // Get the GameplayTagsManager
-    UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
+	// Determine the package path for the new asset
+	FString PackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
+	FString AssetName = FString::Printf(TEXT("%s_Participants"), *Graph->GetName());
 
-    // Get all existing tags
+	UDataTable* ParticipantsDataTable = Cast<UDataTable>(
+		AssetToolsModule.Get().CreateAsset(AssetName, PackagePath, UDataTable::StaticClass(), nullptr));
+
+	if (!ParticipantsDataTable)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to create DataTable asset"));
+		return false;
+	}
+
+	ParticipantsDataTable->RowStruct = FDialogueParticipant::StaticStruct();
+
+	// Get the GameplayTagsManager
+	UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
+
+	// Get all existing tags
 	FGameplayTagContainer AllTags;
 	TagsManager.RequestAllGameplayTags(AllTags, true);
 
-    for (const auto& ParticipantValue : JsonArray)
-    {
-        TSharedPtr<FJsonObject> Participant = ParticipantValue->AsObject();
-        if (!Participant.IsValid())
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Invalid participant object in JSON"));
-            continue;
-        }
+	for (const auto& ParticipantValue : JsonArray)
+	{
+		TSharedPtr<FJsonObject> Participant = ParticipantValue->AsObject();
+		if (!Participant.IsValid())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Invalid participant object in JSON"));
+			continue;
+		}
 
-        FString Name = Participant->GetStringField("name");
-        FString Category = Participant->GetStringField("category");
+		FString Name = Participant->GetStringField("name");
+		FString Category = Participant->GetStringField("category");
 
-        FDialogueParticipant* NewRow = new FDialogueParticipant();
-        NewRow->ParticipantName = FName(*Name);
+		FDialogueParticipant* NewRow = new FDialogueParticipant();
+		NewRow->ParticipantName = FName(*Name);
 
-        // Find the correct GameplayTag
-        FGameplayTag FoundTag;
-        for (const FGameplayTag& Tag : AllTags)
-        {
-            if (Tag.ToString().EndsWith(Category))
-            {
-                FoundTag = Tag;
-                break;
-            }
-        }
+		// Find the correct GameplayTag
+		FGameplayTag FoundTag;
+		for (const FGameplayTag& Tag : AllTags)
+		{
+			if (Tag.ToString().EndsWith(Category))
+			{
+				FoundTag = Tag;
+				break;
+			}
+		}
 
-        if (FoundTag.IsValid())
-        {
-            NewRow->ParticipantCategoryTag = FoundTag;
-            UE_LOG(LogTemp, Log, TEXT("Found tag for participant %s: %s"), *Name, *FoundTag.ToString());
-        }
-        else
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Could not find GameplayTag for category: %s"), *Category);
-        }
+		if (FoundTag.IsValid())
+		{
+			NewRow->ParticipantCategoryTag = FoundTag;
+			UE_LOG(LogTemp, Log, TEXT("Found tag for participant %s: %s"), *Name, *FoundTag.ToString());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Could not find GameplayTag for category: %s"), *Category);
+		}
 
-        // Add the new row to the DataTable
-        ParticipantsDataTable->AddRow(FName(*Name), *NewRow);
-    }
+		// Add the new row to the DataTable
+		ParticipantsDataTable->AddRow(FName(*Name), *NewRow);
+	}
 
-    // Save the DataTable asset
-    FAssetRegistryModule::AssetCreated(ParticipantsDataTable);
-    ParticipantsDataTable->MarkPackageDirty();
+	// Save the DataTable asset
+	FAssetRegistryModule::AssetCreated(ParticipantsDataTable);
+	ParticipantsDataTable->MarkPackageDirty();
 
-    // Assign the DataTable to your Graph
-    //Graph->SetParticipantsDataTable(ParticipantsDataTable);
+	// Notify the user
+	FNotificationInfo Info(FText::Format(
+		LOCTEXT("ParticipantsDataTableCreated", "Created Participants DataTable: {0}"), FText::FromString(AssetName)));
+	Info.ExpireDuration = 5.0f;
+	FSlateNotificationManager::Get().AddNotification(Info);
 
-    // Notify the user
-    FNotificationInfo Info(FText::Format(LOCTEXT("ParticipantsDataTableCreated", "Created Participants DataTable: {0}"), FText::FromString(AssetName)));
-    Info.ExpireDuration = 5.0f;
-    FSlateNotificationManager::Get().AddNotification(Info);
-
-    return true;
+	return true;
 }
 
 bool UMounteaDialogueGraphFactory::PopulateNodes(UMounteaDialogueGraph* Graph, const FString& Json)
 {
-	// TODO: Implement JSON parsing and population of nodes
+	if (!Graph)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Invalid Graph object provided to PopulateNodes"));
+		return false;
+	}
+
+	// Parse JSON
+	TArray<TSharedPtr<FJsonValue>> JsonArray;
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Json);
+	if (!FJsonSerializer::Deserialize(Reader, JsonArray))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to parse nodes.json"));
+		return false;
+	}
+
+	// Arrays to store nodes by type
+	TArray<TSharedPtr<FJsonValue>> LeadNodes, AnswerNodes, CloseDialogueNodes, JumpToNodes, StartNodes;
+
+	// Categorize nodes by type
+	for (const auto& NodeValue : JsonArray)
+	{
+		TSharedPtr<FJsonObject> NodeObject = NodeValue->AsObject();
+		if (!NodeObject.IsValid())
+		{
+			continue;
+		}
+
+		FString NodeType = NodeObject->GetStringField("type");
+		if (NodeType == "leadNode")
+		{
+			LeadNodes.Add(NodeValue);
+		}
+		else if (NodeType == "answerNode")
+		{
+			AnswerNodes.Add(NodeValue);
+		}
+		else if (NodeType == "closeDialogueNode")
+		{
+			CloseDialogueNodes.Add(NodeValue);
+		}
+		else if (NodeType == "jumpToNode")
+		{
+			JumpToNodes.Add(NodeValue);
+		}
+		else if (NodeType == "startNode")
+		{
+			StartNodes.Add(NodeValue);
+		}
+	}
+
+	// Create nodes for each type
+	for (const auto& StartNode : StartNodes)
+	{
+		if (Graph && Graph->GetStartNode())
+		{
+			PopulateNodeData(Graph->GetStartNode(), StartNode->AsObject());
+		}
+		else
+		{
+			if (UMounteaDialogueGraphNode_StartNode* NewStartNode = Graph->ConstructDialogueNode<UMounteaDialogueGraphNode_StartNode>())
+			{
+				Graph->StartNode = NewStartNode;
+				PopulateNodeData(NewStartNode, StartNode->AsObject());
+				Graph->AllNodes.Add(NewStartNode);
+			}
+		}
+	}
+	
+	for (const auto& LeadNode : LeadNodes)
+	{
+		if (UMounteaDialogueGraphNode_LeadNode* NewLeadNode = Graph->ConstructDialogueNode<UMounteaDialogueGraphNode_LeadNode>())
+		{
+			PopulateNodeData(NewLeadNode, LeadNode->AsObject());
+			Graph->AllNodes.Add(NewLeadNode);
+		}
+	}
+
+	for (const auto& AnswerNode : AnswerNodes)
+	{
+		if (UMounteaDialogueGraphNode_AnswerNode* NewAnswerNode = Graph->ConstructDialogueNode<UMounteaDialogueGraphNode_AnswerNode>())
+		{
+			PopulateNodeData(NewAnswerNode, AnswerNode->AsObject());
+			Graph->AllNodes.Add(NewAnswerNode);
+		}
+	}
+
+	for (const auto& CloseNode : CloseDialogueNodes)
+	{
+		if (UMounteaDialogueGraphNode_CompleteNode* NewCloseNode = Graph->ConstructDialogueNode<UMounteaDialogueGraphNode_CompleteNode>())
+		{
+			PopulateNodeData(NewCloseNode, CloseNode->AsObject());
+			Graph->AllNodes.Add(NewCloseNode);
+		}
+	}
+
+	for (const auto& JumpNode : JumpToNodes)
+	{
+		if (UMounteaDialogueGraphNode_ReturnToNode* NewJumpNode = Graph->ConstructDialogueNode<UMounteaDialogueGraphNode_ReturnToNode>())
+		{
+			PopulateNodeData(NewJumpNode, JumpNode->AsObject());
+			Graph->AllNodes.Add(NewJumpNode);
+		}
+	}
+
+	// Notify the user
+	FNotificationInfo Info(FText::Format(
+		LOCTEXT("DialogueNodesCreated", "Populated nodes: {0} Lead, {1} Answer, {2} Close, {3} Jump"),
+		LeadNodes.Num(), AnswerNodes.Num(), CloseDialogueNodes.Num(), JumpToNodes.Num()));
+	Info.ExpireDuration = 5.0f;
+	FSlateNotificationManager::Get().AddNotification(Info);
+
 	return true;
+}
+
+void UMounteaDialogueGraphFactory::PopulateNodeData(UMounteaDialogueGraphNode* Node,
+													const TSharedPtr<FJsonObject>& JsonObject)
+{
+	if (!Node || !JsonObject.IsValid())
+	{
+		return;
+	}
+
+	// Set common properties
+	Node->SetNodeGUID(FGuid(JsonObject->GetStringField("id")));
+	Node->NodeTitle = FText::FromString(JsonObject->GetObjectField("data")->GetStringField("title"));
+
+	// Set additional info
+	TSharedPtr<FJsonObject> AdditionalInfoObject = JsonObject->GetObjectField("data")->GetObjectField("additionalInfo");
+	if (AdditionalInfoObject->HasField("targetNodeId") && Node->Graph)
+	{
+		if (UMounteaDialogueGraphNode_ReturnToNode* returnToNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(Node))
+		{
+			returnToNode->SelectedNode = returnToNode->Graph->FindNodeByGuid(
+				FGuid(AdditionalInfoObject->GetStringField("targetNodeId")));
+		}
+	}
 }
 
 bool UMounteaDialogueGraphFactory::PopulateEdges(UMounteaDialogueGraph* Graph, const FString& Json)

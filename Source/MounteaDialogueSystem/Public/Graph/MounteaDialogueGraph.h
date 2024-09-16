@@ -115,6 +115,9 @@ public:
 
 	// Allows setting graph guid directly.
 	void SetGraphGUID(const FGuid& NewGuid);
+
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	UMounteaDialogueGraphNode* FindNodeByGuid(const FGuid& NodeGuid);
 	
 	/**
 	 * Returns an array containing all nodes in the dialogue graph.
@@ -125,6 +128,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	TArray<UMounteaDialogueGraphNode*> GetRootNodes() const;
+	
 	/**
 	 * Returns the root nodes of the dialogue graph.
 	 *
@@ -132,6 +136,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	UMounteaDialogueGraphNode* GetStartNode() const;
+	
 	/**
 	 * Returns the array of decorators that are associated with this graph.
 	 *
@@ -139,6 +144,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	TArray<FMounteaDialogueDecorator> GetGraphDecorators() const;
+	
 	/**
 	 * Returns the array of decorators that are associated with this graph and its nodes.
 	 *
@@ -146,6 +152,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	TArray<FMounteaDialogueDecorator> GetAllDecorators() const;
+	
 	/**
 	 * Determines whether the dialogue graph can be started.
 	 * 

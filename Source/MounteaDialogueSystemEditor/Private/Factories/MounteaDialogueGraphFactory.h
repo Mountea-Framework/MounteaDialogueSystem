@@ -7,6 +7,7 @@
 #include "MounteaDialogueGraphFactory.generated.h"
 
 class UMounteaDialogueGraph;
+class UMounteaDialogueGraphNode;
 
 UCLASS()
 class MOUNTEADIALOGUESYSTEMEDITOR_API UMounteaDialogueGraphFactory : public UFactory
@@ -36,6 +37,7 @@ private:
 	bool PopulateCategories(UMounteaDialogueGraph* Graph, const FString& Json);
 	bool PopulateParticipants(UMounteaDialogueGraph* Graph, const FString& Json);
 	bool PopulateNodes(UMounteaDialogueGraph* Graph, const FString& Json);
+	void PopulateNodeData(UMounteaDialogueGraphNode* Node, const TSharedPtr<FJsonObject>& JsonObject);
 	bool PopulateEdges(UMounteaDialogueGraph* Graph, const FString& Json);
 	bool PopulateDialogueRows(UMounteaDialogueGraph* Graph, const FString& Json);
 };

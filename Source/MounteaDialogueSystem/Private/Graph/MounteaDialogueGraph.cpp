@@ -34,6 +34,19 @@ void UMounteaDialogueGraph::SetGraphGUID(const FGuid& NewGuid)
 	GraphGUID = NewGuid;
 }
 
+UMounteaDialogueGraphNode* UMounteaDialogueGraph::FindNodeByGuid(const FGuid& NodeGuid)
+{
+	for (UMounteaDialogueGraphNode* Node : AllNodes)
+	{
+		if (Node && Node->GetNodeGUID() == NodeGuid)
+		{
+			return Node;
+		}
+	}
+
+	return nullptr;
+}
+
 TArray<UMounteaDialogueGraphNode*> UMounteaDialogueGraph::GetAllNodes() const
 {
 	return AllNodes;
