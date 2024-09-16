@@ -24,6 +24,10 @@ public:
 	virtual ~UEdGraph_MounteaDialogueGraph() override;
 
 	virtual void RebuildMounteaDialogueGraph();
+	UEdNode_MounteaDialogueGraphNode* CreateEdNode(UMounteaDialogueGraphNode* DialogueNode);
+	UEdNode_MounteaDialogueGraphEdge* CreateEdgeNode(UEdNode_MounteaDialogueGraphNode* StartNode,
+													UEdNode_MounteaDialogueGraphNode* EndNode);
+	void UpdateNodesPositions();
 
 	UMounteaDialogueGraph* GetMounteaDialogueGraph() const;
 

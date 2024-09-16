@@ -54,7 +54,7 @@ protected:
 	*❗ Unique identifier for this Dialogue Graph instance.
 	*❔ Can be used for debugging and tracing purposes.
 	*/
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Mountea|Dialogue", AdvancedDisplay=true)
 	FGuid GraphGUID;
 
 public:
@@ -84,7 +84,7 @@ public:
 	/**
 	 * Array containing all the nodes in the graph, including both root nodes and child nodes.
 	 */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TArray<TObjectPtr<UMounteaDialogueGraphNode>> AllNodes;
 	
 	// Flag indicating whether an edge is enabled

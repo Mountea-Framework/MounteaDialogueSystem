@@ -22,8 +22,8 @@ UEdGraph_MounteaDialogueGraph::~UEdGraph_MounteaDialogueGraph()
 
 void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 {
+	/*
 	UMounteaDialogueGraph* Graph = GetMounteaDialogueGraph();
-	EditorLOG_WARNING(TEXT("Graph has %d Nodes"), Graph->AllNodes.Num())
 
 	Clear();
 
@@ -99,6 +99,58 @@ void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 			Edge->StartNode->Edges.Add(Edge->EndNode, Edge);
 		}
 	}
+	*/
+
+
+	UMounteaDialogueGraph* Graph = GetMounteaDialogueGraph();
+	if (!Graph)
+	{
+		EditorLOG_ERROR(TEXT("Invalid MounteaDialogueGraph"));
+		return;
+	}
+
+	// Clear only the EdGraph nodes and edges
+	NodeMap.Reset();
+	EdgeMap.Reset();
+	Nodes.Empty();
+
+	// Recreate EdGraph nodes based on the existing nodes in the Graph asset
+	for (UMounteaDialogueGraphNode* DialogueNode : Graph->GetAllNodes())
+	{
+		UEdNode_MounteaDialogueGraphNode* EdNode = CreateEdNode(DialogueNode);
+		if (EdNode)
+		{
+			NodeMap.Add(DialogueNode, EdNode);
+			Nodes.Add(EdNode);
+		}
+	}
+
+	// Recreate edges and set up node relationships
+	for (UMounteaDialogueGraphNode* DialogueNode : Graph->GetAllNodes())
+	{
+		UEdNode_MounteaDialogueGraphNode* StartEdNode = NodeMap.FindRef(DialogueNode);
+		if (!StartEdNode) continue;
+
+		for (UMounteaDialogueGraphNode* ChildNode : DialogueNode->GetChildrenNodes())
+		{
+			UEdNode_MounteaDialogueGraphNode* EndEdNode = NodeMap.FindRef(ChildNode);
+			if (!EndEdNode) continue;
+
+			UEdNode_MounteaDialogueGraphEdge* EdgeNode = CreateEdgeNode(StartEdNode, EndEdNode);
+			if (EdgeNode)
+			{
+				UMounteaDialogueGraphEdge* Edge = EdgeNode->MounteaDialogueGraphEdge;
+				EdgeMap.Add(Edge, EdgeNode);
+				Nodes.Add(EdgeNode);
+			}
+		}
+	}
+
+	// Update node positions and graph layout
+	UpdateNodesPositions();
+
+	// Notify that the graph has changed
+	NotifyGraphChanged();
 
 	for (int i = 0; i < Graph->AllNodes.Num(); ++i)
 	{
@@ -107,7 +159,7 @@ void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 		{
 			Graph->RootNodes.Add(Node);
 
-			SortNodes(Node);
+			//SortNodes(Node);
 		}
 
 		Node->Graph = Graph;
@@ -120,6 +172,39 @@ void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 		UEdNode_MounteaDialogueGraphNode* EdNode_RNode = NodeMap[&R];
 		return EdNode_LNode->NodePosX < EdNode_RNode->NodePosX;
 	});
+}
+
+UEdNode_MounteaDialogueGraphNode* UEdGraph_MounteaDialogueGraph::CreateEdNode(UMounteaDialogueGraphNode* DialogueNode)
+{
+	UEdNode_MounteaDialogueGraphNode* EdNode = NewObject<UEdNode_MounteaDialogueGraphNode>(this);
+	EdNode->DialogueGraphNode = DialogueNode;
+	EdNode->NodeGuid = DialogueNode->GetNodeGUID();
+	EdNode->DialogueGraphNode->SetFlags(RF_Transactional);
+	EdNode->SetFlags(RF_Transactional);
+	EdNode->AllocateDefaultPins();
+
+	// I may need to set up additional properties here, such as node position
+
+	return EdNode;
+}
+
+UEdNode_MounteaDialogueGraphEdge* UEdGraph_MounteaDialogueGraph::CreateEdgeNode(
+	UEdNode_MounteaDialogueGraphNode* StartNode, UEdNode_MounteaDialogueGraphNode* EndNode)
+{
+	UEdNode_MounteaDialogueGraphEdge* EdgeNode = NewObject<UEdNode_MounteaDialogueGraphEdge>(this);
+	EdgeNode->AllocateDefaultPins();
+	EdgeNode->CreateConnections(StartNode, EndNode);
+	EdgeNode->MounteaDialogueGraphEdge = NewObject<UMounteaDialogueGraphEdge>(GetMounteaDialogueGraph());
+	EdgeNode->MounteaDialogueGraphEdge->StartNode = StartNode->DialogueGraphNode;
+	EdgeNode->MounteaDialogueGraphEdge->EndNode = EndNode->DialogueGraphNode;
+	EdgeNode->MounteaDialogueGraphEdge->Graph = GetMounteaDialogueGraph();
+
+	return EdgeNode;
+}
+
+void UEdGraph_MounteaDialogueGraph::UpdateNodesPositions()
+{
+	SortNodes(GetMounteaDialogueGraph()->StartNode);
 }
 
 UMounteaDialogueGraph* UEdGraph_MounteaDialogueGraph::GetMounteaDialogueGraph() const
@@ -144,7 +229,7 @@ bool UEdGraph_MounteaDialogueGraph::Modify(bool bAlwaysMarkDirty)
 void UEdGraph_MounteaDialogueGraph::PostEditUndo()
 {
 	NotifyGraphChanged();
-	
+
 	Super::PostEditUndo();
 }
 
@@ -181,7 +266,7 @@ void UEdGraph_MounteaDialogueGraph::Clear()
 void UEdGraph_MounteaDialogueGraph::SortNodes(UMounteaDialogueGraphNode* RootNode)
 {
 	int Level = 0;
-	TArray<UMounteaDialogueGraphNode*> CurrLevelNodes = { RootNode };
+	TArray<UMounteaDialogueGraphNode*> CurrLevelNodes = {RootNode};
 	TArray<UMounteaDialogueGraphNode*> NextLevelNodes;
 
 	while (CurrLevelNodes.Num() != 0)

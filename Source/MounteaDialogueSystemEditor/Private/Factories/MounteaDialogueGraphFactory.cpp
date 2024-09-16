@@ -311,37 +311,31 @@ bool UMounteaDialogueGraphFactory::ValidateExtractedContent(const TMap<FString, 
 bool UMounteaDialogueGraphFactory::PopulateGraphFromExtractedFiles(UMounteaDialogueGraph* Graph,
 																	const TMap<FString, FString>& ExtractedFiles)
 {
-	// Load dialogue data
 	if (!PopulateDialogueData(Graph, ExtractedFiles["dialogueData.json"]))
 	{
 		return false;
 	}
 
-	// Load categories
 	if (!PopulateCategories(Graph, ExtractedFiles["categories.json"]))
 	{
 		return false;
 	}
 
-	// Load participants
 	if (!PopulateParticipants(Graph, ExtractedFiles["participants.json"]))
 	{
 		return false;
 	}
 
-	// Load nodes
 	if (!PopulateNodes(Graph, ExtractedFiles["nodes.json"]))
 	{
 		return false;
 	}
 
-	// Load edges
 	if (!PopulateEdges(Graph, ExtractedFiles["edges.json"]))
 	{
 		return false;
 	}
 
-	// Load dialogue rows
 	if (!PopulateDialogueRows(Graph, ExtractedFiles["dialogueRows.json"]))
 	{
 		return false;
@@ -393,7 +387,7 @@ bool UMounteaDialogueGraphFactory::PopulateDialogueData(UMounteaDialogueGraph* G
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Json);
 	if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
 	{
-		// TODO: Graph->SetGraphGUID()
+		Graph->SetGraphGUID(FGuid(JsonObject->GetStringField("dialogueGuid")));
 		return true;
 	}
 
@@ -662,8 +656,7 @@ bool UMounteaDialogueGraphFactory::PopulateNodes(UMounteaDialogueGraph* Graph, c
 			}
 		}
 	};
-
-	// Create other node types
+	
 	CreateNodes(LeadNodes, UMounteaDialogueGraphNode_LeadNode::StaticClass());
 	CreateNodes(AnswerNodes, UMounteaDialogueGraphNode_AnswerNode::StaticClass());
 	CreateNodes(CloseDialogueNodes, UMounteaDialogueGraphNode_CompleteNode::StaticClass());
@@ -686,12 +679,10 @@ void UMounteaDialogueGraphFactory::PopulateNodeData(UMounteaDialogueGraphNode* N
 	{
 		return;
 	}
-
-	// Set common properties
+	
 	Node->SetNodeGUID(FGuid(JsonObject->GetStringField("id")));
 	Node->NodeTitle = FText::FromString(JsonObject->GetObjectField("data")->GetStringField("title"));
-
-	// Set additional info
+	
 	TSharedPtr<FJsonObject> AdditionalInfoObject = JsonObject->GetObjectField("data")->GetObjectField("additionalInfo");
 	if (AdditionalInfoObject->HasField("targetNodeId") && Node->Graph)
 	{
@@ -740,20 +731,17 @@ bool UMounteaDialogueGraphFactory::PopulateEdges(UMounteaDialogueGraph* Graph, c
             UE_LOG(LogTemp, Warning, TEXT("Could not find source or target node for edge: %s -> %s"), *SourceID, *TargetID);
             continue;
         }
-
-        // Create the edge
+    	
         UMounteaDialogueGraphEdge* NewEdge = NewObject<UMounteaDialogueGraphEdge>(Graph);
         if (NewEdge)
         {
         	NewEdge->Graph = Graph;
             NewEdge->StartNode = SourceNode;
             NewEdge->EndNode = TargetNode;
-
-            // Update source node
+        	
             SourceNode->ChildrenNodes.AddUnique(TargetNode);
             SourceNode->Edges.Add(TargetNode, NewEdge);
-
-            // Update target node
+        	
             TargetNode->ParentNodes.AddUnique(SourceNode);
 
             EdgesCreated++;

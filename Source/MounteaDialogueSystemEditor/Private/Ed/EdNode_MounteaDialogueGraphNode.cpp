@@ -48,7 +48,7 @@ void UEdNode_MounteaDialogueGraphNode::AllocateDefaultPins()
 	if (DialogueGraphNode == nullptr)
 	{
 		EditorLOG_ERROR(TEXT("[AllocateDefaultPins] Cannot find Owning Graph Node!"))
-		return;
+		//return;
 	}
 		
 	if (DialogueGraphNode->bAllowInputNodes)
