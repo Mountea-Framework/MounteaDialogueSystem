@@ -4,6 +4,7 @@
 
 #include "Sound/SoundWave.h"
 #include "Graph/MounteaDialogueGraph.h"
+#include "Ed/EdGraph_MounteaDialogueGraph.h"
 
 #include "Data/MounteaDialogueGraphDataTypes.h"
 
@@ -22,6 +23,8 @@
 
 #include "zip.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Ed/EdNode_MounteaDialogueGraphNode.h"
+#include "Edges/MounteaDialogueGraphEdge.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
@@ -129,6 +132,13 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 			// 7. Import audio files if present
 			ImportAudioFiles(ExtractedFiles, InParent, Flags);
 
+			NewGraph->CreateGraph();
+			if (NewGraph->EdGraph)
+			{
+				if (UEdGraph_MounteaDialogueGraph* edGraph = Cast<UEdGraph_MounteaDialogueGraph>(NewGraph->EdGraph))
+					edGraph->RebuildMounteaDialogueGraph();
+			}
+			
 			return NewGraph;
 		}
 		UE_LOG(LogTemp, Error, TEXT("Failed to populate graph from extracted files: %s"), *Filename);
@@ -148,8 +158,6 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 			IFileManager::Get().Delete(*File.Value);
 		}
 	}
-
-	NewGraph->CreateGraph();
 
 	return nullptr;
 }
@@ -571,13 +579,12 @@ bool UMounteaDialogueGraphFactory::PopulateParticipants(UMounteaDialogueGraph* G
 
 bool UMounteaDialogueGraphFactory::PopulateNodes(UMounteaDialogueGraph* Graph, const FString& Json)
 {
-	if (!Graph)
+	if (!Graph || !Graph->GetOutermost()->IsValidLowLevel())
 	{
-		UE_LOG(LogTemp, Error, TEXT("Invalid Graph object provided to PopulateNodes"));
+		UE_LOG(LogTemp, Error, TEXT("Invalid Graph object or package provided to PopulateNodes"));
 		return false;
 	}
 
-	// Parse JSON
 	TArray<TSharedPtr<FJsonValue>> JsonArray;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Json);
 	if (!FJsonSerializer::Deserialize(Reader, JsonArray))
@@ -586,10 +593,10 @@ bool UMounteaDialogueGraphFactory::PopulateNodes(UMounteaDialogueGraph* Graph, c
 		return false;
 	}
 
-	// Arrays to store nodes by type
 	TArray<TSharedPtr<FJsonValue>> LeadNodes, AnswerNodes, CloseDialogueNodes, JumpToNodes, StartNodes;
-
-	// Categorize nodes by type
+	TArray<UMounteaDialogueGraphNode*> SpawnedNodes;
+	
+	// Categorize nodes
 	for (const auto& NodeValue : JsonArray)
 	{
 		TSharedPtr<FJsonObject> NodeObject = NodeValue->AsObject();
@@ -620,64 +627,51 @@ bool UMounteaDialogueGraphFactory::PopulateNodes(UMounteaDialogueGraph* Graph, c
 			StartNodes.Add(NodeValue);
 		}
 	}
-
-	// Create nodes for each type
-	for (const auto& StartNode : StartNodes)
+	
+	if (StartNodes.Num() > 0)
 	{
 		if (Graph && Graph->GetStartNode())
 		{
-			PopulateNodeData(Graph->GetStartNode(), StartNode->AsObject());
+			PopulateNodeData(Graph->GetStartNode(), StartNodes[0]->AsObject());
+			SpawnedNodes.Add(Graph->GetStartNode());
 		}
 		else
 		{
-			if (UMounteaDialogueGraphNode_StartNode* NewStartNode = Graph->ConstructDialogueNode<UMounteaDialogueGraphNode_StartNode>())
+			UMounteaDialogueGraphNode_StartNode* NewStartNode = Graph->ConstructDialogueNode<
+				UMounteaDialogueGraphNode_StartNode>();
+			if (NewStartNode)
 			{
 				Graph->StartNode = NewStartNode;
-				PopulateNodeData(NewStartNode, StartNode->AsObject());
-				Graph->AllNodes.Add(NewStartNode);
+				PopulateNodeData(NewStartNode, StartNodes[0]->AsObject());
+				SpawnedNodes.Add(NewStartNode);
 			}
 		}
 	}
-	
-	for (const auto& LeadNode : LeadNodes)
-	{
-		if (UMounteaDialogueGraphNode_LeadNode* NewLeadNode = Graph->ConstructDialogueNode<UMounteaDialogueGraphNode_LeadNode>())
-		{
-			PopulateNodeData(NewLeadNode, LeadNode->AsObject());
-			Graph->AllNodes.Add(NewLeadNode);
-		}
-	}
 
-	for (const auto& AnswerNode : AnswerNodes)
+	auto CreateNodes = [&](const TArray<TSharedPtr<FJsonValue>>& Nodes,
+							TSubclassOf<UMounteaDialogueGraphNode> NodeClass)
 	{
-		if (UMounteaDialogueGraphNode_AnswerNode* NewAnswerNode = Graph->ConstructDialogueNode<UMounteaDialogueGraphNode_AnswerNode>())
+		for (const auto& Node : Nodes)
 		{
-			PopulateNodeData(NewAnswerNode, AnswerNode->AsObject());
-			Graph->AllNodes.Add(NewAnswerNode);
+			UMounteaDialogueGraphNode* NewNode = Graph->ConstructDialogueNode(NodeClass);
+			if (NewNode)
+			{
+				PopulateNodeData(NewNode, Node->AsObject());
+				Graph->AllNodes.Add(NewNode);
+				SpawnedNodes.Add(NewNode);
+			}
 		}
-	}
+	};
 
-	for (const auto& CloseNode : CloseDialogueNodes)
-	{
-		if (UMounteaDialogueGraphNode_CompleteNode* NewCloseNode = Graph->ConstructDialogueNode<UMounteaDialogueGraphNode_CompleteNode>())
-		{
-			PopulateNodeData(NewCloseNode, CloseNode->AsObject());
-			Graph->AllNodes.Add(NewCloseNode);
-		}
-	}
-
-	for (const auto& JumpNode : JumpToNodes)
-	{
-		if (UMounteaDialogueGraphNode_ReturnToNode* NewJumpNode = Graph->ConstructDialogueNode<UMounteaDialogueGraphNode_ReturnToNode>())
-		{
-			PopulateNodeData(NewJumpNode, JumpNode->AsObject());
-			Graph->AllNodes.Add(NewJumpNode);
-		}
-	}
+	// Create other node types
+	CreateNodes(LeadNodes, UMounteaDialogueGraphNode_LeadNode::StaticClass());
+	CreateNodes(AnswerNodes, UMounteaDialogueGraphNode_AnswerNode::StaticClass());
+	CreateNodes(CloseDialogueNodes, UMounteaDialogueGraphNode_CompleteNode::StaticClass());
+	CreateNodes(JumpToNodes, UMounteaDialogueGraphNode_ReturnToNode::StaticClass());
 
 	// Notify the user
 	FNotificationInfo Info(FText::Format(
-		LOCTEXT("DialogueNodesCreated", "Populated nodes: {0} Lead, {1} Answer, {2} Close, {3} Jump"),
+		LOCTEXT("DialogueNodesCreated", "Populated nodes\n{0} Lead\n{1} Answer\n{2} Close\n{3} Jump"),
 		LeadNodes.Num(), AnswerNodes.Num(), CloseDialogueNodes.Num(), JumpToNodes.Num()));
 	Info.ExpireDuration = 5.0f;
 	FSlateNotificationManager::Get().AddNotification(Info);
@@ -711,8 +705,73 @@ void UMounteaDialogueGraphFactory::PopulateNodeData(UMounteaDialogueGraphNode* N
 
 bool UMounteaDialogueGraphFactory::PopulateEdges(UMounteaDialogueGraph* Graph, const FString& Json)
 {
-	// TODO: Implement JSON parsing and population of edges
-	return true;
+    if (!Graph)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Invalid Graph object provided to PopulateEdges"));
+        return false;
+    }
+
+    TArray<TSharedPtr<FJsonValue>> JsonArray;
+    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Json);
+    if (!FJsonSerializer::Deserialize(Reader, JsonArray))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to parse edges.json"));
+        return false;
+    }
+
+    int32 EdgesCreated = 0;
+
+    for (const auto& EdgeValue : JsonArray)
+    {
+        TSharedPtr<FJsonObject> EdgeObject = EdgeValue->AsObject();
+        if (!EdgeObject.IsValid())
+        {
+            continue;
+        }
+
+        FString SourceID = EdgeObject->GetStringField("source");
+        FString TargetID = EdgeObject->GetStringField("target");
+
+        UMounteaDialogueGraphNode* SourceNode = Graph->FindNodeByGuid(FGuid(SourceID));
+        UMounteaDialogueGraphNode* TargetNode = Graph->FindNodeByGuid(FGuid(TargetID));
+
+        if (!SourceNode || !TargetNode)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Could not find source or target node for edge: %s -> %s"), *SourceID, *TargetID);
+            continue;
+        }
+
+        // Create the edge
+        UMounteaDialogueGraphEdge* NewEdge = NewObject<UMounteaDialogueGraphEdge>(Graph);
+        if (NewEdge)
+        {
+        	NewEdge->Graph = Graph;
+            NewEdge->StartNode = SourceNode;
+            NewEdge->EndNode = TargetNode;
+
+            // Update source node
+            SourceNode->ChildrenNodes.AddUnique(TargetNode);
+            SourceNode->Edges.Add(TargetNode, NewEdge);
+
+            // Update target node
+            TargetNode->ParentNodes.AddUnique(SourceNode);
+
+            EdgesCreated++;
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to create edge object for: %s -> %s"), *SourceID, *TargetID);
+        }
+    }
+
+    // Notify the user
+    FNotificationInfo Info(FText::Format(
+        LOCTEXT("DialogueEdgesCreated", "Created {0} edges"),
+        EdgesCreated));
+    Info.ExpireDuration = 5.0f;
+    FSlateNotificationManager::Get().AddNotification(Info);
+
+    return true;
 }
 
 bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph* Graph, const FString& Json)

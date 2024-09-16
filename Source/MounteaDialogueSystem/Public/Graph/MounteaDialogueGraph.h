@@ -84,7 +84,7 @@ public:
 	/**
 	 * Array containing all the nodes in the graph, including both root nodes and child nodes.
 	 */
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Mountea|Dialogue")
 	TArray<TObjectPtr<UMounteaDialogueGraphNode>> AllNodes;
 	
 	// Flag indicating whether an edge is enabled
@@ -211,6 +211,9 @@ public:
 		DialogueNode->OnCreatedInEditor();
 		return DialogueNode;
 	}
+
+	UMounteaDialogueGraphNode* ConstructDialogueNode(TSubclassOf<UMounteaDialogueGraphNode> NodeClass);
+	
 
 #endif
 };

@@ -22,9 +22,8 @@ UEdGraph_MounteaDialogueGraph::~UEdGraph_MounteaDialogueGraph()
 
 void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 {
-	EditorLOG_INFO(TEXT("UMounteaDialogueGraphEdGraph::RebuildMounteaDialogueGraph has been called"));
-
 	UMounteaDialogueGraph* Graph = GetMounteaDialogueGraph();
+	EditorLOG_WARNING(TEXT("Graph has %d Nodes"), Graph->AllNodes.Num())
 
 	Clear();
 
