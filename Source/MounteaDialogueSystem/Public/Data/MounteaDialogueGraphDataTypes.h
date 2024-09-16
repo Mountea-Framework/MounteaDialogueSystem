@@ -153,6 +153,25 @@ public:
 	};
 };
 
+#define LOCTEXT_NAMESPACE "DialogueParticipant"
+
+USTRUCT(BlueprintType)
+struct FDialogueParticipant : public FTableRowBase
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Participant")
+	FName ParticipantName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
+	FGameplayTag ParticipantCategoryTag;
+};
+
+#undef LOCTEXT_NAMESPACE
+
+
 #define LOCTEXT_NAMESPACE "FDialogueRow"
 
 /**

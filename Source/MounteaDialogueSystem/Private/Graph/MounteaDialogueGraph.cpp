@@ -29,6 +29,11 @@ FGuid UMounteaDialogueGraph::GetGraphGUID() const
 	return GraphGUID;
 }
 
+void UMounteaDialogueGraph::SetGraphGUID(const FGuid& NewGuid)
+{
+	GraphGUID = NewGuid;
+}
+
 TArray<UMounteaDialogueGraphNode*> UMounteaDialogueGraph::GetAllNodes() const
 {
 	return AllNodes;

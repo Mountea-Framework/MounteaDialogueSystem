@@ -42,11 +42,13 @@ protected:
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue", NoClear, meta=(NoResetToDefault))
 	TArray<FMounteaDialogueDecorator> GraphDecorators;
+	
 	/**
 	 * A set of gameplay tags associated with this dialogue graph.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue")
 	FGameplayTagContainer GraphTags;
+	
 	/**
 	* GUID for this Mountea Dialogue Graph.
 	*❗ Unique identifier for this Dialogue Graph instance.
@@ -60,29 +62,43 @@ public:
 	// Pointer to the starting node of the dialogue graph.
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TObjectPtr<UMounteaDialogueGraphNode> StartNode = nullptr;
+	
 	/**
 	 * The class of the dialogue node represented by this instance.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TSubclassOf<UMounteaDialogueGraphNode> NodeType;
+	
 	/**
 	 * The class of the dialogue edge represented by this instance.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TSubclassOf<UMounteaDialogueGraphEdge> EdgeType;
+	
 	/**
 	 * An array of root nodes in the dialogue graph. These are the nodes that do not have any incoming connections.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TArray<TObjectPtr<UMounteaDialogueGraphNode>> RootNodes;
+	
 	/**
 	 * Array containing all the nodes in the graph, including both root nodes and child nodes.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TArray<TObjectPtr<UMounteaDialogueGraphNode>> AllNodes;
+	
 	// Flag indicating whether an edge is enabled
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	bool bEdgeEnabled;
+
+#if WITH_EDITORONLY_DATA
+	/**
+	 * Source file from import.
+	 */
+	UPROPERTY(VisibleAnywhere)
+	FString SourceFile;
+#endif
+
 
 #pragma endregion
 
@@ -96,6 +112,10 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
 	FGuid GetGraphGUID() const;
+
+	// Allows setting graph guid directly.
+	void SetGraphGUID(const FGuid& NewGuid);
+	
 	/**
 	 * Returns an array containing all nodes in the dialogue graph.
 	 * @return An array of all nodes in the dialogue graph.
