@@ -372,27 +372,41 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 		NewNode->DialogueGraphNode->SetFlags(RF_Transactional);
 		NewNode->SetFlags(RF_Transactional);
 
-		int32 lastNodeY = 0;
-
-		for (const auto& Node : EditingGraph->AllNodes)
+		// For Imported graph only!
+		if (!EditingGraph->SourceFile.IsEmpty())
 		{
-			if (Node && Node->IsA(UMounteaDialogueGraphNode_StartNode::StaticClass())) continue;
+			int32 lastNodeY = 0;
+
+			TArray<UEdNode_MounteaDialogueGraphNode*> dummyNodes;
+		
+			for (const auto& Node : EditingGraph->AllNodes)
+			{
+				if (Node && Node->IsA(UMounteaDialogueGraphNode_StartNode::StaticClass())) continue;
 			
-			const auto DummyNewNode = MounteaDialogueGraph->CreateIntermediateNode<UEdNode_MounteaDialogueGraphNode>();
+				const auto DummyNewNode = MounteaDialogueGraph->CreateIntermediateNode<UEdNode_MounteaDialogueGraphNode>();
 	
-			DummyNewNode->SetMounteaDialogueGraphNode(Node);
-			DummyNewNode->CreateNewGuid();
-			DummyNewNode->PostPlacedNewNode();
-			DummyNewNode->AllocateDefaultPins();
-			DummyNewNode->AutowireNewNode(nullptr);
+				DummyNewNode->SetMounteaDialogueGraphNode(Node);
+				DummyNewNode->CreateNewGuid();
+				DummyNewNode->PostPlacedNewNode();
+				DummyNewNode->AllocateDefaultPins();
+			
+				DummyNewNode->AutowireNewNode(nullptr);
 
-			DummyNewNode->NodePosX = 0;
-			DummyNewNode->NodePosY = lastNodeY + 150;
+				DummyNewNode->NodePosX = 0;
+				DummyNewNode->NodePosY = lastNodeY + 150;
 
-			lastNodeY = DummyNewNode->NodePosY;
+				lastNodeY = DummyNewNode->NodePosY;
 
-			DummyNewNode->DialogueGraphNode->SetFlags(RF_Transactional);
-			DummyNewNode->SetFlags(RF_Transactional);
+				DummyNewNode->DialogueGraphNode->SetFlags(RF_Transactional);
+				DummyNewNode->SetFlags(RF_Transactional);
+
+				dummyNodes.Add(DummyNewNode);
+			}
+
+			for (const auto& Node : dummyNodes)
+			{
+				//TODO: find child Nodes and create connections?
+			}
 		}
 		
 		MounteaDialogueGraph->RebuildMounteaDialogueGraph();

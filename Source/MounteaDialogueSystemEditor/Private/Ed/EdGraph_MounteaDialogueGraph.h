@@ -51,11 +51,13 @@ public:
 	TMap<UMounteaDialogueGraphEdge*, UEdNode_MounteaDialogueGraphEdge*> EdgeMap;
 
 protected:
-	
+
 	void Clear();
 	void SortNodes(UMounteaDialogueGraphNode* RootNode);
 
 private:
+
+	TArray<UMounteaDialogueGraphNode*> CachedGraphData;
 
 	/** Pointer back to the Dialogue editor that owns us */
 	TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr;

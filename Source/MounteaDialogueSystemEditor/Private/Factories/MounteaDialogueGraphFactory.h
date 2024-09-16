@@ -29,11 +29,11 @@ private:
 	bool ExtractFilesFromZip(const TArray<uint8>& ZipData, TMap<FString, FString>& OutExtractedFiles);
 	FString BytesToString(const uint8* Bytes, int32 Count);
 	bool ValidateExtractedContent(const TMap<FString, FString>& ExtractedFiles);
-	bool PopulateGraphFromExtractedFiles(UMounteaDialogueGraph* Graph, const TMap<FString, FString>& ExtractedFiles);
+	bool PopulateGraphFromExtractedFiles(UMounteaDialogueGraph* Graph, const TMap<FString, FString>& ExtractedFiles, const FString& SourceFilePath);
 	void ImportAudioFiles(const TMap<FString, FString>& ExtractedFiles, UObject* InParent, EObjectFlags Flags);
 
 	// Helper functions for populating graph data
-	bool PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& Json);
+	bool PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& Json, const FString& SourceFilePath);
 	bool PopulateCategories(UMounteaDialogueGraph* Graph, const FString& Json);
 	bool PopulateParticipants(UMounteaDialogueGraph* Graph, const FString& Json);
 	bool PopulateNodes(UMounteaDialogueGraph* Graph, const FString& Json);

@@ -386,6 +386,7 @@ UMounteaDialogueGraphNode* UMounteaDialogueGraph::ConstructDialogueNode(
 	if (DialogueNode)
 	{
 		DialogueNode->OnCreatedInEditor();
+		DialogueNode->Graph = this;
 	}
 	return DialogueNode;
 }

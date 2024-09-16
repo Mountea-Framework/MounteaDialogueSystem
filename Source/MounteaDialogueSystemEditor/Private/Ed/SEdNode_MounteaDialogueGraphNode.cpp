@@ -140,6 +140,17 @@ BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 {
+	if (GraphNode)
+	{
+		if (auto dialogueGraphNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
+		{
+			if (dialogueGraphNode->SEdNode == nullptr)
+			{
+				dialogueGraphNode->SEdNode = this;
+			}
+		}
+	}
+	
 	const FMargin NodePadding = FMargin(2.0f);
 	const FMargin UnifiedRowsPadding = FMargin(0.f, 1.15f, 0.f, 0.f);
 
