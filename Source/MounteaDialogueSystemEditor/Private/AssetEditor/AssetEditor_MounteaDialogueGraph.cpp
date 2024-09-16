@@ -39,9 +39,10 @@ const FName FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyI
 const FName FAssetEditorTabs_MounteaDialogueGraph::ViewportID(TEXT("Viewport"));
 const FName FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID(TEXT("Search"));
 
-#pragma endregion 
+#pragma endregion
 
-void FAssetEditor_MounteaDialogueGraph::OnPackageSaved(const FString& String, UPackage* Package, FObjectPostSaveContext ObjectPostSaveContext)
+void FAssetEditor_MounteaDialogueGraph::OnPackageSaved(const FString& String, UPackage* Package,
+														FObjectPostSaveContext ObjectPostSaveContext)
 {
 	RebuildMounteaDialogueGraph();
 }
@@ -50,7 +51,8 @@ FAssetEditor_MounteaDialogueGraph::FAssetEditor_MounteaDialogueGraph()
 {
 	EditingGraph = nullptr;
 	MounteaDialogueGraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>();
-	OnPackageSavedDelegateHandle = UPackage::PackageSavedWithContextEvent.AddRaw(this, &FAssetEditor_MounteaDialogueGraph::OnPackageSaved);
+	OnPackageSavedDelegateHandle = UPackage::PackageSavedWithContextEvent.AddRaw(
+		this, &FAssetEditor_MounteaDialogueGraph::OnPackageSaved);
 }
 
 FAssetEditor_MounteaDialogueGraph::~FAssetEditor_MounteaDialogueGraph()
@@ -65,11 +67,12 @@ FAssetEditor_MounteaDialogueGraph::~FAssetEditor_MounteaDialogueGraph()
 	ToolbarBuilder.Reset();
 }
 
-void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UMounteaDialogueGraph* Graph)
+void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(
+	const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UMounteaDialogueGraph* Graph)
 {
 	EditingGraph = Graph;
 	CreateEdGraph();
-	
+
 	//FGenericCommands::Register();
 	//FGraphEditorCommands::Register();
 	FMounteaDialogueGraphEditorCommands::Register();
@@ -88,43 +91,52 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(cons
 	ToolbarBuilder->AddMounteaDialogueGraphToolbar(ToolbarExtender);
 
 	// Layout
-	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("Standalone_MounteaDialogueGraphEditor_LayoutV0.3")
+	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout(
+			"Standalone_MounteaDialogueGraphEditor_LayoutV0.3")
 		->AddArea
 		(
 			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
-			->Split
-			(
-				FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
-				->Split
-				(
-					FTabManager::NewStack()
-					->SetSizeCoefficient(3.f)
-					->AddTab(FAssetEditorTabs_MounteaDialogueGraph::ViewportID, ETabState::OpenedTab)->SetHideTabWell(true)
-				)
-				->Split
-				(
-					FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)
-					->Split
-					(
-					FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)
-						->Split
-						(
-							FTabManager::NewStack()
-							->SetSizeCoefficient(0.9f)
-							->AddTab(FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID, ETabState::OpenedTab)->SetHideTabWell(true)
-						)
+										->Split
+										(
+											FTabManager::NewSplitter()
+											->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
+											->Split
+											(
+												FTabManager::NewStack()
+												->SetSizeCoefficient(3.f)
+												->AddTab(FAssetEditorTabs_MounteaDialogueGraph::ViewportID,
+														ETabState::OpenedTab)->SetHideTabWell(true)
+											)
+											->Split
+											(
+												FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)
+																		->Split
+																		(
+																			FTabManager::NewSplitter()->SetOrientation(
+																				Orient_Vertical)
+																			->Split
+																			(
+																				FTabManager::NewStack()
+																				->SetSizeCoefficient(0.9f)
+																				->AddTab(
+																					FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID,
+																					ETabState::OpenedTab)->
+																				SetHideTabWell(true)
+																			)
 
-						->Split
-						(
-							FTabManager::NewStack()
-							->SetSizeCoefficient(0.3f)
-							->AddTab(FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID, ETabState::OpenedTab)
-						)
-					)
-				)
-			)
+																			->Split
+																			(
+																				FTabManager::NewStack()
+																				->SetSizeCoefficient(0.3f)
+																				->AddTab(
+																					FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID,
+																					ETabState::OpenedTab)
+																			)
+																		)
+											)
+										)
 		);
-	
+
 	const bool bCreateDefaultStandaloneMenu = true;
 	const bool bCreateDefaultToolbar = true;
 	FAssetEditorToolkit::InitAssetEditor
@@ -137,7 +149,7 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(cons
 		bCreateDefaultToolbar,
 		EditingGraph,
 		false
-		);
+	);
 
 	RegenerateMenusAndToolbars();
 }
@@ -149,25 +161,29 @@ UMounteaDialogueGraphEditorSettings* FAssetEditor_MounteaDialogueGraph::GetSetti
 
 void FAssetEditor_MounteaDialogueGraph::RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
 {
-	WorkspaceMenuCategory = InTabManager->AddLocalWorkspaceMenuCategory(LOCTEXT("WorkspaceMenu_MounteaDialogueTreeEditor", "Mountea Dialogue Tree Editor"));
+	WorkspaceMenuCategory = InTabManager->AddLocalWorkspaceMenuCategory(
+		LOCTEXT("WorkspaceMenu_MounteaDialogueTreeEditor", "Mountea Dialogue Tree Editor"));
 	auto WorkspaceMenuCategoryRef = WorkspaceMenuCategory.ToSharedRef();
 
 	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
 
-	InTabManager->RegisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::ViewportID, FOnSpawnTab::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::SpawnTab_Viewport))
-		.SetDisplayName(LOCTEXT("GraphCanvasTab", "Viewport"))
-		.SetGroup(WorkspaceMenuCategoryRef)
-		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.EventGraph_16x"));
+	InTabManager->RegisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::ViewportID,
+									FOnSpawnTab::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::SpawnTab_Viewport))
+				.SetDisplayName(LOCTEXT("GraphCanvasTab", "Viewport"))
+				.SetGroup(WorkspaceMenuCategoryRef)
+				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.EventGraph_16x"));
 
-	InTabManager->RegisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID, FOnSpawnTab::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::SpawnTab_Details))
-		.SetDisplayName(LOCTEXT("DetailsTab", "Property"))
-		.SetGroup(WorkspaceMenuCategoryRef)
-		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
+	InTabManager->RegisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID,
+									FOnSpawnTab::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::SpawnTab_Details))
+				.SetDisplayName(LOCTEXT("DetailsTab", "Property"))
+				.SetGroup(WorkspaceMenuCategoryRef)
+				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
 
-	InTabManager->RegisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID, FOnSpawnTab::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::SpawnTab_Search))
-		.SetDisplayName(LOCTEXT("SearchTab", "Search"))
-		.SetGroup(WorkspaceMenuCategoryRef)
-		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.FindResults"));
+	InTabManager->RegisterTabSpawner(FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID,
+									FOnSpawnTab::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::SpawnTab_Search))
+				.SetDisplayName(LOCTEXT("SearchTab", "Search"))
+				.SetGroup(WorkspaceMenuCategoryRef)
+				.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.FindResults"));
 }
 
 void FAssetEditor_MounteaDialogueGraph::UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
@@ -188,7 +204,7 @@ bool FAssetEditor_MounteaDialogueGraph::CloseWindow()
 		if (EditingGraph->EdGraph)
 		{
 			UEdGraph_MounteaDialogueGraph* EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
-			if (EdGraph->GetDialogueEditorPtr().HasSameObject(this))	EdGraph->ResetDialogueEditorPtr();
+			if (EdGraph->GetDialogueEditorPtr().HasSameObject(this)) EdGraph->ResetDialogueEditorPtr();
 		}
 	}
 
@@ -212,7 +228,8 @@ FText FAssetEditor_MounteaDialogueGraph::GetToolkitName() const
 	FFormatNamedArguments Args;
 	Args.Add(TEXT("MounteaDialogueGraphName"), FText::FromString(EditingGraph->GetName()));
 	Args.Add(TEXT("DirtyState"), bDirtyState ? FText::FromString(TEXT("*")) : FText::GetEmpty());
-	return FText::Format(LOCTEXT("MounteaDialogueGraphEditorToolkitName", "{MounteaDialogueGraphName}{DirtyState}"), Args);
+	return FText::Format(
+		LOCTEXT("MounteaDialogueGraphEditorToolkitName", "{MounteaDialogueGraphName}{DirtyState}"), Args);
 }
 
 FText FAssetEditor_MounteaDialogueGraph::GetToolkitToolTipText() const
@@ -293,8 +310,9 @@ void FAssetEditor_MounteaDialogueGraph::CreateInternalWidgets()
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyWidget = PropertyModule.CreateDetailView(Args);
 	PropertyWidget->SetObject(EditingGraph);
-	
-	PropertyWidget->OnFinishedChangingProperties().AddSP(this, &FAssetEditor_MounteaDialogueGraph::OnFinishedChangingProperties);
+
+	PropertyWidget->OnFinishedChangingProperties().AddSP(
+		this, &FAssetEditor_MounteaDialogueGraph::OnFinishedChangingProperties);
 
 	FindResultsView = SNew(SMounteaDialogueSearch, SharedThis(this));
 }
@@ -304,13 +322,16 @@ TSharedRef<SGraphEditor> FAssetEditor_MounteaDialogueGraph::CreateViewportWidget
 	FGraphAppearanceInfo AppearanceInfo;
 	AppearanceInfo.CornerText = LOCTEXT("AppearanceCornerText_MounteaDialogueGraph", "Mountea Dialogue Tree");
 	AppearanceInfo.CornerImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.CornerImage"));
-	AppearanceInfo.InstructionText = LOCTEXT("InstructionText_MounteaDialogueGraph", "Place Dialogue Nodes by right clicking and selecting them from Menu.");
+	AppearanceInfo.InstructionText = LOCTEXT("InstructionText_MounteaDialogueGraph",
+											"Place Dialogue Nodes by right clicking and selecting them from Menu.");
 
 	CreateCommandList();
 
 	SGraphEditor::FGraphEditorEvents InEvents;
-	InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::OnSelectedNodesChanged);
-	InEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::OnNodeDoubleClicked);
+	InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP(
+		this, &FAssetEditor_MounteaDialogueGraph::OnSelectedNodesChanged);
+	InEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(
+		this, &FAssetEditor_MounteaDialogueGraph::OnNodeDoubleClicked);
 
 	return SNew(SGraphEditor)
 		.AdditionalCommands(GraphEditorCommands)
@@ -337,7 +358,7 @@ void FAssetEditor_MounteaDialogueGraph::BindCommands()
 		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::ValidateGraph),
 		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::CanValidateGraph)
 	);
-	
+
 	ToolkitCommands->MapAction
 	(
 		FMounteaDialogueGraphEditorCommands::Get().FindInDialogue,
@@ -349,17 +370,20 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 {
 	if (EditingGraph->EdGraph == nullptr)
 	{
-		EditingGraph->EdGraph = CastChecked<UEdGraph_MounteaDialogueGraph>(FBlueprintEditorUtils::CreateNewGraph(EditingGraph, NAME_None, UEdGraph_MounteaDialogueGraph::StaticClass(), UAssetGraphScheme_MounteaDialogueGraph::StaticClass()));
+		EditingGraph->EdGraph = CastChecked<UEdGraph_MounteaDialogueGraph>(
+			FBlueprintEditorUtils::CreateNewGraph(EditingGraph, NAME_None, UEdGraph_MounteaDialogueGraph::StaticClass(),
+												UAssetGraphScheme_MounteaDialogueGraph::StaticClass()));
 		EditingGraph->EdGraph->bAllowDeletion = false;
 
 		// Give the schema a chance to fill out any required nodes (like the results node)
 		const UEdGraphSchema* Schema = EditingGraph->EdGraph->GetSchema();
 		Schema->CreateDefaultNodesForGraph(*EditingGraph->EdGraph);
 
-		UEdGraph_MounteaDialogueGraph* MounteaDialogueGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
+		UEdGraph_MounteaDialogueGraph* MounteaDialogueGraph = Cast<
+			UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
 
 		const auto NewNode = MounteaDialogueGraph->CreateIntermediateNode<UEdNode_MounteaDialogueGraphNode>();
-	
+
 		NewNode->SetMounteaDialogueGraphNode(EditingGraph->StartNode);
 		NewNode->CreateNewGuid();
 		NewNode->PostPlacedNewNode();
@@ -378,18 +402,19 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 			int32 lastNodeY = 0;
 
 			TArray<UEdNode_MounteaDialogueGraphNode*> dummyNodes;
-		
+
 			for (const auto& Node : EditingGraph->AllNodes)
 			{
 				if (Node && Node->IsA(UMounteaDialogueGraphNode_StartNode::StaticClass())) continue;
-			
-				const auto DummyNewNode = MounteaDialogueGraph->CreateIntermediateNode<UEdNode_MounteaDialogueGraphNode>();
-	
+
+				const auto DummyNewNode = MounteaDialogueGraph->CreateIntermediateNode<
+					UEdNode_MounteaDialogueGraphNode>();
+
 				DummyNewNode->SetMounteaDialogueGraphNode(Node);
 				DummyNewNode->CreateNewGuid();
 				DummyNewNode->PostPlacedNewNode();
 				DummyNewNode->AllocateDefaultPins();
-			
+
 				DummyNewNode->AutowireNewNode(nullptr);
 
 				DummyNewNode->NodePosX = 0;
@@ -403,12 +428,75 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 				dummyNodes.Add(DummyNewNode);
 			}
 
-			for (const auto& Node : dummyNodes)
+			// Create connections
+			for (int32 i = dummyNodes.Num() - 1; i >= 0; --i)
 			{
-				//TODO: find child Nodes and create connections?
+				UEdNode_MounteaDialogueGraphNode* CurrentNode = dummyNodes[i];
+				UMounteaDialogueGraphNode* DialogueNode = CurrentNode->DialogueGraphNode;
+
+				// Find the input pin of the current node
+				UEdGraphPin* CurrentNodeInputPin = nullptr;
+				for (UEdGraphPin* Pin : CurrentNode->Pins)
+				{
+					if (Pin->Direction == EGPD_Input)
+					{
+						CurrentNodeInputPin = Pin;
+						break;
+					}
+				}
+
+				if (!CurrentNodeInputPin)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Current node has no input pin: %s"), *CurrentNode->GetName());
+					continue;
+				}
+
+				for (UMounteaDialogueGraphNode* ParentDialogueNode : DialogueNode->GetParentNodes())
+				{
+					UEdNode_MounteaDialogueGraphNode* ParentEdNode = nullptr;
+
+					// Find the corresponding EdNode for the parent
+					for (UEdNode_MounteaDialogueGraphNode* PotentialParent : dummyNodes)
+					{
+						if (PotentialParent->DialogueGraphNode == ParentDialogueNode)
+						{
+							ParentEdNode = PotentialParent;
+							break;
+						}
+					}
+
+					if (ParentEdNode)
+					{
+						// Find the output pin of the parent node
+						UEdGraphPin* ParentOutputPin = nullptr;
+						for (UEdGraphPin* Pin : ParentEdNode->Pins)
+						{
+							if (Pin->Direction == EGPD_Output)
+							{
+								ParentOutputPin = Pin;
+								break;
+							}
+						}
+
+						if (ParentOutputPin)
+						{
+							// Create the connection
+							ParentOutputPin->MakeLinkTo(CurrentNodeInputPin);
+						}
+						else
+						{
+							UE_LOG(LogTemp, Warning, TEXT("Parent node has no output pin: %s"),
+									*ParentEdNode->GetName());
+						}
+					}
+					else
+					{
+						UE_LOG(LogTemp, Warning, TEXT("Could not find EdNode for parent dialogue node"));
+					}
+				}
 			}
 		}
-		
+
 		MounteaDialogueGraph->RebuildMounteaDialogueGraph();
 	}
 
@@ -429,46 +517,56 @@ void FAssetEditor_MounteaDialogueGraph::CreateCommandList()
 	GraphEditorCommands = MakeShareable(new FUICommandList);
 
 	GraphEditorCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().AutoArrange,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::AutoArrange),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::CanAutoArrange));
+									FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::AutoArrange),
+									FCanExecuteAction::CreateRaw(
+										this, &FAssetEditor_MounteaDialogueGraph::CanAutoArrange));
 
 	GraphEditorCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().ValidateGraph,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::ValidateGraph),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::CanValidateGraph));
+									FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::ValidateGraph),
+									FCanExecuteAction::CreateRaw(
+										this, &FAssetEditor_MounteaDialogueGraph::CanValidateGraph));
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().SelectAll,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::SelectAllNodes),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::CanSelectAllNodes)
+									FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::SelectAllNodes),
+									FCanExecuteAction::CreateRaw(
+										this, &FAssetEditor_MounteaDialogueGraph::CanSelectAllNodes)
 	);
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().Delete,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::DeleteSelectedNodes),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::CanDeleteNodes)
+									FExecuteAction::CreateRaw(
+										this, &FAssetEditor_MounteaDialogueGraph::DeleteSelectedNodes),
+									FCanExecuteAction::CreateRaw(
+										this, &FAssetEditor_MounteaDialogueGraph::CanDeleteNodes)
 	);
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().Copy,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::CopySelectedNodes),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::CanCopyNodes)
+									FExecuteAction::CreateRaw(
+										this, &FAssetEditor_MounteaDialogueGraph::CopySelectedNodes),
+									FCanExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::CanCopyNodes)
 	);
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().Cut,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::CutSelectedNodes),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::CanCutNodes)
+									FExecuteAction::CreateRaw(
+										this, &FAssetEditor_MounteaDialogueGraph::CutSelectedNodes),
+									FCanExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::CanCutNodes)
 	);
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().Paste,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::PasteNodes),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::CanPasteNodes)
+									FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::PasteNodes),
+									FCanExecuteAction::CreateRaw(
+										this, &FAssetEditor_MounteaDialogueGraph::CanPasteNodes)
 	);
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().Duplicate,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::DuplicateNodes),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::CanDuplicateNodes)
+									FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::DuplicateNodes),
+									FCanExecuteAction::CreateRaw(
+										this, &FAssetEditor_MounteaDialogueGraph::CanDuplicateNodes)
 	);
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().Rename,
-		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::OnRenameNode),
-		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::CanRenameNodes)
+									FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::OnRenameNode),
+									FCanExecuteAction::CreateSP(
+										this, &FAssetEditor_MounteaDialogueGraph::CanRenameNodes)
 	);
 
 	ToolkitCommands->MapAction
@@ -805,7 +903,7 @@ bool FAssetEditor_MounteaDialogueGraph::CanPasteNodes()
 			return false;
 		}
 	}
-	
+
 	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
 	if (!CurrentGraphEditor.IsValid())
 	{
@@ -834,21 +932,24 @@ void FAssetEditor_MounteaDialogueGraph::AutoArrange()
 	UEdGraph_MounteaDialogueGraph* EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
 	check(EdGraph != nullptr);
 
-	const FScopedTransaction Transaction(LOCTEXT("MounteaDialogueGraphEditorAutoArrange", "Mountea Dialogue Graph Editor: Auto Arrange all Nodes"));
+	const FScopedTransaction Transaction(LOCTEXT("MounteaDialogueGraphEditorAutoArrange",
+												"Mountea Dialogue Graph Editor: Auto Arrange all Nodes"));
 
 	EdGraph->Modify(true);
 
 	UMounteaDialogueGraphLayoutStrategy* LayoutStrategy = nullptr;
 	switch (MounteaDialogueGraphEditorSettings->GetAutoLayoutStrategy())
 	{
-		case EAutoLayoutStrategyType::EALS_Tree:
-			LayoutStrategy = NewObject<UMounteaDialogueGraphLayoutStrategy>(EdGraph, UTreeSolveLayoutStrategy::StaticClass());
-			break;
-		case EAutoLayoutStrategyType::EALS_ForceDirected:
-			LayoutStrategy = NewObject<UMounteaDialogueGraphLayoutStrategy>(EdGraph, UForceDirectedSolveLayoutStrategy::StaticClass());
-			break;
-		default:
-			break;
+	case EAutoLayoutStrategyType::EALS_Tree:
+		LayoutStrategy = NewObject<UMounteaDialogueGraphLayoutStrategy>(
+			EdGraph, UTreeSolveLayoutStrategy::StaticClass());
+		break;
+	case EAutoLayoutStrategyType::EALS_ForceDirected:
+		LayoutStrategy = NewObject<UMounteaDialogueGraphLayoutStrategy>(
+			EdGraph, UForceDirectedSolveLayoutStrategy::StaticClass());
+		break;
+	default:
+		break;
 	}
 
 	if (LayoutStrategy != nullptr)
@@ -873,17 +974,18 @@ void FAssetEditor_MounteaDialogueGraph::ValidateGraph()
 	{
 		ValidationWindow->RequestDestroyWindow();
 	}
-	
+
 	UEdGraph_MounteaDialogueGraph* EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
 	check(EdGraph != nullptr);
 
-	const FScopedTransaction Transaction(LOCTEXT("MounteaDialogueGraphEditorValidateGraph", "Mountea Dialogue Graph Editor: Validate Graph."));
+	const FScopedTransaction Transaction(LOCTEXT("MounteaDialogueGraphEditorValidateGraph",
+												"Mountea Dialogue Graph Editor: Validate Graph."));
 
 	UMounteaDialogueGraph* MounteaGraph = EdGraph->GetMounteaDialogueGraph();
 	check(MounteaGraph != nullptr);
-	
+
 	RebuildMounteaDialogueGraph();
-	
+
 	TArray<FText> ValidationMessages;
 	if (MounteaGraph->ValidateGraph(ValidationMessages, true) == false)
 	{
@@ -933,13 +1035,13 @@ void FAssetEditor_MounteaDialogueGraph::OnSelectedNodesChanged(const TSet<UObjec
 	{
 		Selection.Add(SelectionEntry);
 	}
-	
+
 	if (Selection.Num() == 1)
 	{
 		// When just one node is selected, add it to PropertyWidget
 		PropertyWidget->SetObjects(Selection);
 		PropertyWidget->ShowAllAdvancedProperties();
-		
+
 		UMounteaDialogueSystemEditorBFC::TriggerPreviewRefresh(Selection);
 	}
 	else
@@ -1005,8 +1107,7 @@ TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Search(const FS
 		];
 
 	DockTab->SetTabIcon(FAppStyle::GetBrush("Kismet.Tabs.FindResults"));
-	return  DockTab;
+	return DockTab;
 }
 
 #undef LOCTEXT_NAMESPACE
-
