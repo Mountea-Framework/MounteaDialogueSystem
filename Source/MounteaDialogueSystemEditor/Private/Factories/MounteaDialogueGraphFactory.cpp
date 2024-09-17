@@ -30,11 +30,13 @@
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Internationalization/StringTable.h"
 #include "Internationalization/StringTableCore.h"
+
 #include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
 #include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
+
 #include "UObject/SavePackage.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
@@ -474,7 +476,7 @@ bool UMounteaDialogueGraphFactory::PopulateParticipants(UMounteaDialogueGraph *G
 	FAssetToolsModule &AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
 
 	const FString PackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
-	const FString AssetName = FString::Printf(TEXT("%s_Participants"), *Graph->GetName());
+	const FString AssetName = FString::Printf(TEXT("DT_%s_Participants"), *Graph->GetName());
 
 	UDataTable *ParticipantsDataTable = Cast<UDataTable>(AssetToolsModule.Get().CreateAsset(AssetName, PackagePath, UDataTable::StaticClass(), nullptr));
 
@@ -750,7 +752,7 @@ bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph *G
 
 	FString PackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
 
-	const FString ParticipantsAssetName = FString::Printf(TEXT("%s_Participants"), *Graph->GetName());
+	const FString ParticipantsAssetName = FString::Printf(TEXT("DT_%s_Participants"), *Graph->GetName());
 	FString DialogueRowsStringTableName = FString::Printf(TEXT("ST_%s_DialogueRows"), *Graph->GetName());
 	FString DialogueRowsDataTableName = FString::Printf(TEXT("DT_%s_DialogueRows"), *Graph->GetName());
 	FString DialogueNodesStringTableName = FString::Printf(TEXT("ST_%s_Nodes"), *Graph->GetName());
@@ -851,19 +853,9 @@ bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph *G
 		{
 			continue;
 		}
-		
+
 		FDialogueRow NewRow;
 		NewRow.RowGUID = FGuid(GroupedRow.Key);
-
-		EditorLOG_ERROR(TEXT("Adding new DialogueRow: %s | "), *GroupedRow.Key)
-
-		// Set RowTitle from NodesStringTable
-		auto TableEntry = NodesStringTable->GetStringTable()->FindEntry(NodeId);
-		if (TableEntry.IsValid())
-		{
-			// TODO: DO NOT COPY VALUE, USE LOCALIZED VALUE
-			NewRow.RowTitle = FText::FromString(TableEntry->GetSourceString());
-		}
 		
 		// Set DialogueParticipant using the NodeParticipantMap
 		const FString* ParticipantName = NodeParticipantMap.Find(NodeId);
@@ -885,20 +877,25 @@ bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph *G
 			EditorLOG_WARNING(TEXT("[PopulateDialogueRows] Participant not found for NodeId: %s"), *NodeId);
 		}
 
+		// Set RowTitle from NodesStringTable
+		NewRow.RowTitle = FText::FromStringTable(NodesStringTable->GetStringTableId(), NodeId);
+
 		// Add FDialogueRowData for each row in the group
 		for (const auto &RowObject : Rows)
 		{
 			FString Id = RowObject->GetStringField("id");
-			FString Text = RowObject->GetStringField("text");
-
+        
 			FDialogueRowData RowData;
-			RowData.RowText = FText::FromString(Text);
+			RowData.RowText = FText::FromStringTable(DialogueRowsStringTable->GetStringTableId(), Id);
 			RowData.RowGUID = FGuid(Id);
 			NewRow.DialogueRowData.Add(RowData);
 		}
-		
-		FString rowName = NewRow.RowTitle.ToString();
-		RemoveWhitespace(rowName);
+
+		TArray<FDialogueRow*> dialogueRows;
+		FString outString;
+		DialogueRowsDataTable->GetAllRows(outString, dialogueRows);
+		FString rowName = NewRow.DialogueParticipant.ToString();
+		rowName.Append(TEXT("_")).Append(FString::FromInt(dialogueRows.Num()));
 		DialogueRowsDataTable->AddRow(FName(*rowName), NewRow);
 	}
 
@@ -910,7 +907,7 @@ bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph *G
 	return true;
 }
 
-UStringTable *UMounteaDialogueGraphFactory::CreateStringTable(IAssetTools &AssetTools, const FString &PackagePath, const FString &AssetName, TFunction<void(UStringTable *)> PopulateFunction)
+UStringTable* UMounteaDialogueGraphFactory::CreateStringTable(IAssetTools &AssetTools, const FString &PackagePath, const FString &AssetName, TFunction<void(UStringTable *)> PopulateFunction)
 {
 	UStringTable *StringTable = Cast<UStringTable>(AssetTools.CreateAsset(AssetName, PackagePath, UStringTable::StaticClass(), nullptr));
 	if (StringTable)
@@ -921,7 +918,7 @@ UStringTable *UMounteaDialogueGraphFactory::CreateStringTable(IAssetTools &Asset
 }
 
 template <typename RowType>
-UDataTable *UMounteaDialogueGraphFactory::CreateDataTable(IAssetTools &AssetTools, const FString &PackagePath, const FString &AssetName)
+UDataTable* UMounteaDialogueGraphFactory::CreateDataTable(IAssetTools &AssetTools, const FString &PackagePath, const FString &AssetName)
 {
 	UDataTable *DataTable = Cast<UDataTable>(AssetTools.CreateAsset(AssetName, PackagePath, UDataTable::StaticClass(), nullptr));
 	if (DataTable)
