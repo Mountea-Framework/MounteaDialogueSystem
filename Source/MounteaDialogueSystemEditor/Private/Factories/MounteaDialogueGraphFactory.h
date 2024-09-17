@@ -49,4 +49,17 @@ private:
 	template <class RowType>
 	UDataTable* CreateDataTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName);
 	void SaveAsset(UObject* Asset);
+
+	FString RemoveWhitespace(const FString& Input)
+	{
+		FString Result;
+		for (TCHAR Char : Input)
+		{
+			if (!FChar::IsWhitespace(Char))
+			{
+				Result.AppendChar(Char);
+			}
+		}
+		return Result;
+	}
 };
