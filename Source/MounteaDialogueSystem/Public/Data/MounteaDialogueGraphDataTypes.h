@@ -408,15 +408,15 @@ public:
 public:
 	FDialogueRow()
 		: RowOptionalIcon(nullptr), DialogueParticipant(LOCTEXT("FDialogueRow_Participant", "Dialogue Participant")),
-		RowTitle(LOCTEXT("FDialogueRow_Title", "Selectable Option"))
+		RowTitle(LOCTEXT("FDialogueRow_Title", "Selectable Option")), CompatibleTags()
 	{
 		RowGUID = FGuid::NewGuid();
 	};
 
 	FDialogueRow(const int32 NewUIRowID, UTexture* InRowIcon, const FText& InText, const FText& InParticipant,
-				const TSet<FDialogueRowData>& InData, UDialogueAdditionalData* NewData)
+				const TSet<FDialogueRowData>& InData, UDialogueAdditionalData* NewData, const FGameplayTagContainer& InCompatibleTags)
 		: UIRowID(NewUIRowID), RowOptionalIcon(InRowIcon), DialogueParticipant(InParticipant), RowTitle(InText),
-		DialogueRowData(InData), DialogueRowAdditionalData(NewData)
+		DialogueRowData(InData), DialogueRowAdditionalData(NewData), CompatibleTags(InCompatibleTags)
 	{
 		RowGUID = FGuid::NewGuid();
 	}
@@ -432,6 +432,7 @@ public:
 		UIRowID = Other.UIRowID;
 		DialogueRowAdditionalData = Other.DialogueRowAdditionalData;
 		RowGUID = FGuid::NewGuid();
+		CompatibleTags = Other.CompatibleTags;
 
 		return *this;
 	}
