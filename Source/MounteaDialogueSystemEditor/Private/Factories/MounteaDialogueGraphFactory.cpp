@@ -7,6 +7,7 @@
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
 
 #include "Data/MounteaDialogueGraphDataTypes.h"
+#include "Data/MounteaDialogueGraphExtraDataTypes.h"
 
 #include "AssetToolsModule.h"
 #include "AutomatedAssetImportData.h"
@@ -311,7 +312,7 @@ bool UMounteaDialogueGraphFactory::ValidateExtractedContent(const TMap<FString, 
 bool UMounteaDialogueGraphFactory::PopulateGraphFromExtractedFiles(UMounteaDialogueGraph* Graph,
 																	const TMap<FString, FString>& ExtractedFiles, const FString& SourceFilePath)
 {
-	if (!PopulateDialogueData(Graph, ExtractedFiles["dialogueData.json"], SourceFilePath))
+	if (!PopulateDialogueData(Graph, SourceFilePath, ExtractedFiles))
 	{
 		return false;
 	}
@@ -381,12 +382,21 @@ void UMounteaDialogueGraphFactory::ImportAudioFiles(const TMap<FString, FString>
 	}
 }
 
-bool UMounteaDialogueGraphFactory::PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& Json, const FString& SourceFilePath)
+bool UMounteaDialogueGraphFactory::PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& SourceFilePath, const TMap<FString, FString>& ExtractedFiles)
 {
+	const FString DialogueDataJson = ExtractedFiles["dialogueData.json"];
+
 	Graph->SourceFile = SourceFilePath;
+	for (const auto& Itr : ExtractedFiles)
+	{
+		FDialogueImportData NewSourceData;
+		NewSourceData.JsonFile = Itr.Key;
+		NewSourceData.JsonData = Itr.Value;
+		Graph->SourceData.Add(NewSourceData);
+	}
 	
 	TSharedPtr<FJsonObject> JsonObject;
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Json);
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(DialogueDataJson);
 	if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
 	{
 		Graph->SetGraphGUID(FGuid(JsonObject->GetStringField("dialogueGuid")));

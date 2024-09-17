@@ -385,7 +385,7 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 		const auto NewNode = MounteaDialogueGraph->CreateIntermediateNode<UEdNode_MounteaDialogueGraphNode>();
 
 		NewNode->SetMounteaDialogueGraphNode(EditingGraph->StartNode);
-		NewNode->CreateNewGuid();
+		NewNode->NodeGuid = EditingGraph->StartNode->GetNodeGUID();
 		NewNode->PostPlacedNewNode();
 		NewNode->AllocateDefaultPins();
 		NewNode->AutowireNewNode(nullptr);
@@ -402,6 +402,7 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 			int32 lastNodeY = 0;
 
 			TArray<UEdNode_MounteaDialogueGraphNode*> dummyNodes;
+			dummyNodes.Add(NewNode);
 
 			for (const auto& Node : EditingGraph->AllNodes)
 			{
@@ -411,7 +412,7 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 					UEdNode_MounteaDialogueGraphNode>();
 
 				DummyNewNode->SetMounteaDialogueGraphNode(Node);
-				DummyNewNode->CreateNewGuid();
+				DummyNewNode->NodeGuid = Node->GetNodeGUID();
 				DummyNewNode->PostPlacedNewNode();
 				DummyNewNode->AllocateDefaultPins();
 

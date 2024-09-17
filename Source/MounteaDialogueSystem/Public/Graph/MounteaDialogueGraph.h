@@ -5,8 +5,14 @@
 #include "CoreMinimal.h"
 #include "Templates/SubclassOf.h"
 #include "GameplayTagContainer.h"
+
 #include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "Interfaces/MounteaDialogueTickableObject.h"
+
+#if WITH_EDITORONLY_DATA
+#include "Data/MounteaDialogueGraphExtraDataTypes.h"
+#endif
+
 #include "MounteaDialogueGraph.generated.h"
 
 class UMounteaDialogueGraphNode;
@@ -21,19 +27,18 @@ struct FMounteaDialogueDecorator;
  * Can be manually created from Content Browser, using Mountea Dialogue category.
  * Comes with Node editor, which provides easy to follow visual way to create Dialogue Trees.
  */
-UCLASS(BlueprintType, ClassGroup=("Mountea|Dialogue"), DisplayName="Mountea Dialogue Tree", HideCategories=("Hidden", "Private", "Base"), AutoExpandCategories=("Mountea", "Dialogue"))
+UCLASS(BlueprintType, ClassGroup=("Mountea|Dialogue"), DisplayName="Mountea Dialogue Tree",
+	HideCategories=("Hidden", "Private", "Base"), AutoExpandCategories=("Mountea", "Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraph : public UObject, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()
 
 public:
-
 	UMounteaDialogueGraph();
 
 #pragma region Variables
-	
-protected:
 
+protected:
 	/**
 	 * The list of decorators for the dialogue graph.
 	 * Decorators are used to add extra functionality or behavior to the nodes in the graph.
@@ -42,63 +47,53 @@ protected:
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue", NoClear, meta=(NoResetToDefault))
 	TArray<FMounteaDialogueDecorator> GraphDecorators;
-	
+
 	/**
 	 * A set of gameplay tags associated with this dialogue graph.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue")
 	FGameplayTagContainer GraphTags;
-	
+
 	/**
 	* GUID for this Mountea Dialogue Graph.
 	*❗ Unique identifier for this Dialogue Graph instance.
 	*❔ Can be used for debugging and tracing purposes.
 	*/
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Mountea|Dialogue", AdvancedDisplay=true)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Mountea|Dialogue", meta=(NoResetToDefault))
 	FGuid GraphGUID;
 
 public:
-	
 	// Pointer to the starting node of the dialogue graph.
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TObjectPtr<UMounteaDialogueGraphNode> StartNode = nullptr;
-	
+
 	/**
 	 * The class of the dialogue node represented by this instance.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TSubclassOf<UMounteaDialogueGraphNode> NodeType;
-	
+
 	/**
 	 * The class of the dialogue edge represented by this instance.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TSubclassOf<UMounteaDialogueGraphEdge> EdgeType;
-	
+
 	/**
 	 * An array of root nodes in the dialogue graph. These are the nodes that do not have any incoming connections.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TArray<TObjectPtr<UMounteaDialogueGraphNode>> RootNodes;
-	
+
 	/**
 	 * Array containing all the nodes in the graph, including both root nodes and child nodes.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TArray<TObjectPtr<UMounteaDialogueGraphNode>> AllNodes;
-	
+
 	// Flag indicating whether an edge is enabled
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	bool bEdgeEnabled;
-
-#if WITH_EDITORONLY_DATA
-	/**
-	 * Source file from import.
-	 */
-	UPROPERTY(VisibleAnywhere)
-	FString SourceFile;
-#endif
-
 
 #pragma endregion
 
@@ -118,17 +113,17 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	UMounteaDialogueGraphNode* FindNodeByGuid(const FGuid& NodeGuid);
-	
+
 	/**
 	 * Returns an array containing all nodes in the dialogue graph.
 	 * @return An array of all nodes in the dialogue graph.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	TArray<UMounteaDialogueGraphNode*> GetAllNodes() const;
-	
+
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	TArray<UMounteaDialogueGraphNode*> GetRootNodes() const;
-	
+
 	/**
 	 * Returns the root nodes of the dialogue graph.
 	 *
@@ -136,7 +131,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
 	UMounteaDialogueGraphNode* GetStartNode() const;
-	
+
 	/**
 	 * Returns the array of decorators that are associated with this graph.
 	 *
@@ -144,7 +139,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	TArray<FMounteaDialogueDecorator> GetGraphDecorators() const;
-	
+
 	/**
 	 * Returns the array of decorators that are associated with this graph and its nodes.
 	 *
@@ -152,43 +147,58 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
 	TArray<FMounteaDialogueDecorator> GetAllDecorators() const;
-	
+
 	/**
 	 * Determines whether the dialogue graph can be started.
 	 * 
 	 * @return true if the graph can be started, false otherwise.
 	 */
 	bool CanStartDialogueGraph() const;
-	
+
 public:
-	
 	void CreateGraph();
 	void ClearGraph();
 
 	FORCEINLINE bool IsEdgeEnabled() const
-	{ return bEdgeEnabled; };
+	{
+		return bEdgeEnabled;
+	};
 
 	virtual void PostInitProperties() override;
 
-#pragma endregion 
+#pragma endregion
 
 #pragma region TickableInterface
 
-	virtual void RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
-	virtual void UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
+	virtual void
+	RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
+	virtual void
+	UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
 	virtual void TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime) override;
-	virtual FMounteaDialogueTick& GetMounteaDialogueTickHandle() override {return GraphTickEvent; };
+	virtual FMounteaDialogueTick& GetMounteaDialogueTickHandle() override { return GraphTickEvent; };
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, BlueprintReadOnly, Category="Mountea|Dialogue")
 	FMounteaDialogueTick GraphTickEvent;
-	
+
 #pragma endregion
-	
+
 #if WITH_EDITORONLY_DATA
 
 public:
 	UPROPERTY()
 	class UEdGraph* EdGraph;
+
+	/**
+	 * Source file from import.
+	 */
+	UPROPERTY(VisibleAnywhere, Category = "Mountea|Import")
+	FString SourceFile;
+
+	/**
+	 * Source data from import.
+	 */
+	UPROPERTY(VisibleAnywhere, Category = "Mountea|Import", meta=(TitleProperty="Json file: {JsonFile}", NoResetToDefault, ShowOnlyInnerProperties))
+	TArray<FDialogueImportData> SourceData;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
 	bool bCanRenameNode;
@@ -201,9 +211,8 @@ public:
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
 
 public:
-
 	// Construct and initialize a node within this Dialogue.
-	template<class T>
+	template <class T>
 	T* ConstructDialogueNode(TSubclassOf<UMounteaDialogueGraphNode> DialogueNodeClass = T::StaticClass())
 	{
 		// Set flag to be transactional so it registers with undo system
@@ -213,7 +222,7 @@ public:
 	}
 
 	UMounteaDialogueGraphNode* ConstructDialogueNode(TSubclassOf<UMounteaDialogueGraphNode> NodeClass);
-	
+
 
 #endif
 };

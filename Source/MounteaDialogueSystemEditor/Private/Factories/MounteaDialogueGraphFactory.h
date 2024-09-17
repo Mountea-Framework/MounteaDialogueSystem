@@ -33,7 +33,7 @@ private:
 	void ImportAudioFiles(const TMap<FString, FString>& ExtractedFiles, UObject* InParent, EObjectFlags Flags);
 
 	// Helper functions for populating graph data
-	bool PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& Json, const FString& SourceFilePath);
+	bool PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& SourceFilePath, const TMap<FString, FString>& ExtractedFiles);
 	bool PopulateCategories(UMounteaDialogueGraph* Graph, const FString& Json);
 	bool PopulateParticipants(UMounteaDialogueGraph* Graph, const FString& Json);
 	bool PopulateNodes(UMounteaDialogueGraph* Graph, const FString& Json);

@@ -35,27 +35,31 @@ public:
 	 * Array of parent nodes for the current active node in the dialogue traversal.
 	 *❗ Parent nodes are nodes that have a directed edge pointing to the current active node.
 	 */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", meta=(DisplayThumbnail=false))
 	TArray<UMounteaDialogueGraphNode*> ParentNodes;
+	
 	/**
 	 * The array of child nodes of the current dialogue node.
 	 *❗ The order of the children nodes matter and determines the order in which the options are presented to the player.
 	 *❔ Can be used to traverse the graph and to create UI to display the dialogue options.
 	 */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", meta=(DisplayThumbnail=false))
 	TArray<UMounteaDialogueGraphNode*> ChildrenNodes;
+	
 	/**
 	 * Map of edges connecting this Node in the Mountea Dialogue Graph.
 	 *❗ The key of the map is the source node, and the value is the edge connecting it to its target node.
 	 *❔ Can be used to traverse the graph, get information about node connections...
 	 */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", meta=(DisplayThumbnail=false))
 	TMap<UMounteaDialogueGraphNode*, UMounteaDialogueGraphEdge*> Edges;
+	
 	/**
 	 * Pointer to the parent dialogue graph of this node.
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", meta=(DisplayThumbnail=false))
 	UMounteaDialogueGraph* Graph;
+	
 	/**
 	 * Temporary NodeIndex.
 	 * This variable will be deleted.
@@ -70,7 +74,7 @@ protected:
 	 *❗ This is used to differentiate between nodes, and must be unique within the graph.
 	 *❔ Can be used for debugging and tracing purposes.
 	 */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Mountea|Dialogue", meta=(NoResetToDefault))
 	FGuid NodeGUID;
 
 private:
@@ -79,7 +83,7 @@ private:
 	 *❗ This is the world in which this Dialogue Graph Node is currently running.
 	 *❔ Can be used for accessing world-related functionality.
 	 */
-	UPROPERTY(VisibleAnywhere, Category = "Private")
+	UPROPERTY(VisibleAnywhere, Category = "Mountea|Dialogue")
 	UWorld* OwningWorld;
 
 #pragma endregion
