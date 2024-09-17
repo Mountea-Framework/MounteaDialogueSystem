@@ -32,7 +32,38 @@ bool FDialogueRow::IsValid() const
 	RowGUID.IsValid() &&
 	DialogueRowData.Num() > 0;
 }
+/*
+void FDialogueRow::OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName)
+{
+	FTableRowBase::OnDataTableChanged(InDataTable, InRowName);
 
+	if (!InDataTable)
+	{
+		return;
+	}
+
+	const FName* FoundRowName = nullptr;
+	
+	for (const auto& Pair : InDataTable->GetRowMap())
+	{
+		const FDialogueRow* RowPtr = reinterpret_cast<const FDialogueRow*>(Pair.Value);
+		if (RowPtr == this)
+		{
+			FoundRowName = &Pair.Key;
+			break;
+		}
+	}
+
+	if (FoundRowName)
+	{
+		if (*FoundRowName != InRowName)
+		{
+			RowGUID = FGuid::NewGuid();
+			UE_LOG(LogTemp, Warning, TEXT("Updated GUID"))
+		}
+	}
+}
+*/
 FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct()
 	: ActiveDialogueParticipant(nullptr)
 	, PlayerDialogueParticipant(nullptr)

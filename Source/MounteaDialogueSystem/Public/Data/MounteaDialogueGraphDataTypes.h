@@ -339,6 +339,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
 		meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true, DisplayName="Row Type ID"))
 	int32 UIRowID = 0;
+	
 	/**
 	 * Optional Row Icon.
 	 * 
@@ -347,6 +348,7 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
 	TObjectPtr<UTexture> RowOptionalIcon = nullptr;
+	
 	/**
 	 * Name of the Dialogue Participant.
 	 * 
@@ -356,6 +358,7 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
 	FText DialogueParticipant;
+	
 	/**
 	 * Title of the Dialogue Row.
 	 * 
@@ -363,6 +366,7 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
 	FText RowTitle;
+	
 	/**
 	 * List of Dialogue Row Data. Not replicated, must be found locally for each Client from replicated Active Node!
 	 * 
@@ -378,6 +382,7 @@ public:
 	 */
 	UPROPERTY(NotReplicated, EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(TitleProperty="RowText"))
 	TSet<FDialogueRowData> DialogueRowData;
+	
 	/**
 	 * Additional Row Data
 	 * 
@@ -387,14 +392,16 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(AllowAbstract=false))
 	TObjectPtr<UDialogueAdditionalData> DialogueRowAdditionalData = nullptr;
+	
 	/**
 	 * Row GUID.
 	 * 
 	 * Unique Key when searching and binding this Row.
 	 */
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay,
+	UPROPERTY(/*Transient, */VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay,
 		meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate))
 	FGuid RowGUID;
+	
 	/**
 	 * ❗ WIP
 	 * Title Settings Override.
@@ -407,16 +414,16 @@ public:
 
 public:
 	FDialogueRow()
-		: RowOptionalIcon(nullptr), DialogueParticipant(LOCTEXT("FDialogueRow_Participant", "Dialogue Participant")),
-		RowTitle(LOCTEXT("FDialogueRow_Title", "Selectable Option")), CompatibleTags()
+		: CompatibleTags(), RowOptionalIcon(nullptr),
+		DialogueParticipant(LOCTEXT("FDialogueRow_Participant", "Dialogue Participant")), RowTitle(LOCTEXT("FDialogueRow_Title", "Selectable Option"))
 	{
 		RowGUID = FGuid::NewGuid();
 	};
 
 	FDialogueRow(const int32 NewUIRowID, UTexture* InRowIcon, const FText& InText, const FText& InParticipant,
 				const TSet<FDialogueRowData>& InData, UDialogueAdditionalData* NewData, const FGameplayTagContainer& InCompatibleTags)
-		: UIRowID(NewUIRowID), RowOptionalIcon(InRowIcon), DialogueParticipant(InParticipant), RowTitle(InText),
-		DialogueRowData(InData), DialogueRowAdditionalData(NewData), CompatibleTags(InCompatibleTags)
+		: CompatibleTags(InCompatibleTags), UIRowID(NewUIRowID), RowOptionalIcon(InRowIcon), DialogueParticipant(InParticipant),
+		RowTitle(InText), DialogueRowData(InData), DialogueRowAdditionalData(NewData)
 	{
 		RowGUID = FGuid::NewGuid();
 	}
@@ -453,6 +460,36 @@ public:
 	}
 
 	bool IsValid() const;
+	
+	virtual void OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName) override
+	{
+		FTableRowBase::OnDataTableChanged(InDataTable, InRowName);
+
+		if (!InDataTable)
+		{
+			return;
+		}
+
+		const FName* FoundRowName = nullptr;
+	
+		for (const auto& Pair : InDataTable->GetRowMap())
+		{
+			const FDialogueRow* RowPtr = reinterpret_cast<const FDialogueRow*>(Pair.Value);
+			if (RowPtr == this)
+			{
+				FoundRowName = &Pair.Key;
+				break;
+			}
+		}
+
+		if (FoundRowName)
+		{
+			if (*FoundRowName != InRowName)
+			{
+				//RowGUID = FGuid::NewGuid();
+			}
+		}
+	}
 };
 #undef LOCTEXT_NAMESPACE
 

@@ -50,6 +50,26 @@ public:
 	virtual FName GetRowName() const
 	{ return RowName; }
 
+	/**
+	 * Sets the Dialogue Data Table for this graph node.
+	 * @param NewDataTable The new DataTable to set.
+	 */
+	UFUNCTION(/*BlueprintCallable,*/ Category="Mountea|Dialogue")
+	virtual void SetDataTable(UDataTable* NewDataTable)
+	{
+		DataTable = NewDataTable;
+	}
+
+	/**
+	 * Sets the Dialogue Data Row name.
+	 * @param NewRowName The new row name to set.
+	 */
+	UFUNCTION(/*BlueprintCallable,*/ Category="Mountea|Dialogue")
+	virtual void SetRowName(const FName NewRowName)
+	{
+		RowName = NewRowName;
+	}
+
 	virtual bool ValidateNodeRuntime_Implementation() const override;
 
 public:

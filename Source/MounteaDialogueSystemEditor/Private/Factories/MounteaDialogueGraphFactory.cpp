@@ -904,7 +904,12 @@ bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph* G
 		}
 
 		FDialogueRow NewRow;
-		NewRow.RowGUID = FGuid(GroupedRow.Key);
+		const FGuid newRowGuid = FGuid(GroupedRow.Key);
+		NewRow.RowGUID = newRowGuid;
+
+		
+
+		EditorLOG_WARNING(TEXT("[PopulateDialogueRows] Row guid is: %s | Should be: %s"), *NewRow.RowGUID.ToString(), *newRowGuid.ToString());
 
 		// Set DialogueParticipant using the NodeParticipantMap
 		const FString* ParticipantName = NodeParticipantMap.Find(NodeId);
@@ -953,15 +958,25 @@ bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph* G
 		FString rowName = NewRow.DialogueParticipant.ToString();
 		rowName.Append(TEXT("_")).Append(FString::FromInt(dialogueRows.Num()));
 		DialogueRowsDataTable->AddRow(FName(*rowName), NewRow);
-	}
-	
-	for (auto It = DialogueRowsDataTable->GetRowMap().CreateConstIterator(); It; ++It)
-	{
-		const FDialogueRow* Row = reinterpret_cast<const FDialogueRow*>(It.Value());
-		EditorLOG_WARNING(TEXT("Row %s - Participant: %s, Tags: %s"), 
-						  *It.Key().ToString(), 
-						  *Row->DialogueParticipant.ToString(), 
-						  *Row->CompatibleTags.ToString());
+
+		// Update nodes
+		if (Graph && Graph->GetAllNodes().Num() > 0)
+		{
+			for (const auto& Node : Graph->GetAllNodes())
+			{
+				if (Node && Node->GetNodeGUID() == newRowGuid)
+				{
+					if (UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node))
+					{
+						// Set DataTable
+						DialogueNode->SetDataTable(DialogueRowsDataTable);
+            
+						// Set RowName
+						DialogueNode->SetRowName(FName(*rowName));
+					}
+				}
+			}
+		}
 	}
 
 	// Save all created assets

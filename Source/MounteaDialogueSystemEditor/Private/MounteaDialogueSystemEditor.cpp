@@ -74,7 +74,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 	
 	// Register new Category
 	{
-		FAssetToolsModule::GetModule().Get().RegisterAdvancedAssetCategory(FName("Mountea Dialogue"), FText::FromString("Mountea Dialogue"));
+		FAssetToolsModule::GetModule().Get().RegisterAdvancedAssetCategory(FName("Mountea Dialogue"), FText::FromString(TEXT("\U0001F538 Mountea Dialogue")));
 	}
 
 	// Asset Actions
