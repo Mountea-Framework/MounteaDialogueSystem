@@ -212,7 +212,6 @@ bool UMounteaDialogueGraphFactory::IsZipFile(const TArray<uint8>& FileData)
 bool UMounteaDialogueGraphFactory::ExtractFilesFromZip(const TArray<uint8>& ZipData,
 														TMap<FString, FString>& OutExtractedFiles)
 {
-	// Create a temporary file to store the zip data
 	FString TempFilePath = FPaths::CreateTempFilename(FPlatformProcess::UserTempDir(), TEXT("MounteaDialogue"),
 													TEXT(".zip"));
 	if (!FFileHelper::SaveArrayToFile(ZipData, *TempFilePath))
@@ -237,24 +236,19 @@ bool UMounteaDialogueGraphFactory::ExtractFilesFromZip(const TArray<uint8>& ZipD
 		{
 			const char* name = zip_entry_name(zip);
 			int size = zip_entry_size(zip);
-
-			// Allocate buffer for file content
+			
 			TArray<uint8> buffer;
 			buffer.SetNum(size);
-
-			// Read file content
+			
 			if (zip_entry_noallocread(zip, buffer.GetData(), size) != -1)
 			{
-				// Convert to FString and add to output map
 				FString FileName = UTF8_TO_TCHAR(name);
 				if (FileName.StartsWith(TEXT("audio/")) && FileName.EndsWith(TEXT(".wav")))
 				{
-					// For audio files, store the file path
 					OutExtractedFiles.Add(FileName, TempFilePath);
 				}
 				else
 				{
-					// For other files, store the content as string
 					FString FileContent = BytesToString(buffer.GetData(), size);
 					OutExtractedFiles.Add(FileName, FileContent);
 				}
@@ -355,11 +349,9 @@ void UMounteaDialogueGraphFactory::ImportAudioFiles(const TMap<FString, FString>
 			FString SourceFilePath = File.Value;
 			FString DestinationPath = FPaths::Combine(FPaths::GetPath(InParent->GetPathName()),
 													FPaths::GetBaseFilename(File.Key) + TEXT(".wav"));
-
-			// Copy the audio file to the project's content directory
+			
 			if (IFileManager::Get().Copy(*DestinationPath, *SourceFilePath) == COPY_OK)
 			{
-				// Import the audio file
 				UAutomatedAssetImportData* ImportData = NewObject<UAutomatedAssetImportData>();
 				ImportData->Filenames.Add(DestinationPath);
 				ImportData->DestinationPath = FPaths::GetPath(InParent->GetPathName());
@@ -367,8 +359,7 @@ void UMounteaDialogueGraphFactory::ImportAudioFiles(const TMap<FString, FString>
 
 				FAssetToolsModule& AssetToolsModule = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools");
 				TArray<UObject*> ImportedAssets = AssetToolsModule.Get().ImportAssetsAutomated(ImportData);
-
-				// Link the imported audio to your dialogue system as needed
+				
 				if (ImportedAssets.Num() > 0)
 				{
 					USoundWave* SoundWave = Cast<USoundWave>(ImportedAssets[0]);

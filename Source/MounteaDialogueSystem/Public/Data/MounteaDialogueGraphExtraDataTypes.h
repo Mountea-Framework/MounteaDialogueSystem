@@ -13,13 +13,25 @@ struct FDialogueImportData
 {
 	GENERATED_BODY()
 
-public:
+	FDialogueImportData()
+	{
+	};
 
+	FDialogueImportData(const FString& Key, const FString& Value) : JsonFile(Key), JsonData(Value)
+	{
+	};
+
+public:
 	UPROPERTY(VisibleAnywhere, meta=(NoResetToDefault), Category="Import")
 	FString JsonFile;
 
 	UPROPERTY(VisibleAnywhere, meta=(NoResetToDefault, MultiLine), Category="Import")
 	FString JsonData;
+
+	bool operator ==(const FDialogueImportData& Other) const
+	{
+		return JsonFile == Other.JsonFile;
+	}
 };
 
 #endif
