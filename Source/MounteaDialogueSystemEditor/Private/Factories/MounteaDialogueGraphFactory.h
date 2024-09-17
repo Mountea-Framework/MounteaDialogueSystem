@@ -3,11 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "IAssetTools.h"
 #include "Factories/Factory.h"
 #include "MounteaDialogueGraphFactory.generated.h"
 
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
+class UStringTable;
+class UDataTable;
 
 UCLASS()
 class MOUNTEADIALOGUESYSTEMEDITOR_API UMounteaDialogueGraphFactory : public UFactory
@@ -39,5 +42,11 @@ private:
 	bool PopulateNodes(UMounteaDialogueGraph* Graph, const FString& Json);
 	void PopulateNodeData(UMounteaDialogueGraphNode* Node, const TSharedPtr<FJsonObject>& JsonObject);
 	bool PopulateEdges(UMounteaDialogueGraph* Graph, const FString& Json);
-	bool PopulateDialogueRows(UMounteaDialogueGraph* Graph, const FString& Json);
+	bool PopulateDialogueRows(UMounteaDialogueGraph* Graph,  const TMap<FString, FString>& ExtractedFiles);
+	
+	UStringTable* CreateStringTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName,
+									TFunction<void(UStringTable*)> PopulateFunction);
+	template <class RowType>
+	UDataTable* CreateDataTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName);
+	void SaveAsset(UObject* Asset);
 };

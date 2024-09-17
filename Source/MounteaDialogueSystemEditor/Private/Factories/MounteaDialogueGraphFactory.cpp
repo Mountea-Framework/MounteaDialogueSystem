@@ -24,14 +24,18 @@
 
 #include "zip.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "Ed/EdNode_MounteaDialogueGraphNode.h"
+//#include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
 #include "Framework/Notifications/NotificationManager.h"
+#include "Helpers/MounteaDialogueGraphEditorHelpers.h"
+#include "Internationalization/StringTable.h"
+#include "Internationalization/StringTableCore.h"
 #include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
 #include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
+#include "UObject/SavePackage.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphFactory"
@@ -61,7 +65,7 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 	TArray<uint8> FileData;
 	if (!FFileHelper::LoadFileToArray(FileData, *Filename))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to load file: %s"), *Filename);
+		EditorLOG_ERROR(TEXT("[FactoryCreateFile] Failed to load file: %s"), *Filename);
 		bOutOperationCanceled = true;
 		return nullptr;
 	}
@@ -69,7 +73,7 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 	// 2. Make sure it's a zip file
 	if (!IsZipFile(FileData))
 	{
-		UE_LOG(LogTemp, Error, TEXT("File is not a valid zip: %s"), *Filename);
+		EditorLOG_ERROR(TEXT("[FactoryCreateFile] File is not a valid mnteadlg/zip: %s"), *Filename);
 		bOutOperationCanceled = true;
 		return nullptr;
 	}
@@ -78,7 +82,7 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 	TMap<FString, FString> ExtractedFiles;
 	if (!ExtractFilesFromZip(FileData, ExtractedFiles))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to extract files from zip: %s"), *Filename);
+		EditorLOG_ERROR(TEXT("[FactoryCreateFile] Failed to extract files from archive: %s"), *Filename);
 		bOutOperationCanceled = true;
 		return nullptr;
 	}
@@ -86,7 +90,7 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 	// 4. Validate content
 	if (!ValidateExtractedContent(ExtractedFiles))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Invalid content in file: %s"), *Filename);
+		EditorLOG_ERROR(TEXT("[FactoryCreateFile] Invalid content in file: %s"), *Filename);
 		bOutOperationCanceled = true;
 		return nullptr;
 	}
@@ -102,32 +106,28 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 			if (JsonObject->HasField("dialogueName"))
 			{
 				DialogueName = JsonObject->GetStringField("dialogueName");
-				UE_LOG(LogTemp, Log, TEXT("Found dialogueName in JSON: %s"), *DialogueName);
 			}
 			else
 			{
-				UE_LOG(LogTemp, Warning, TEXT("dialogueName field not found in dialogueData.json"));
+				EditorLOG_WARNING(TEXT("dialogueName field not found in dialogueData.json"));
 			}
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("Failed to parse dialogueData.json"));
+			EditorLOG_ERROR(TEXT("Failed to parse dialogueData.json"));
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("dialogueData.json not found in extracted files"));
+		EditorLOG_WARNING(TEXT("dialogueData.json not found in extracted files"));
 	}
 
-	// Use DialogueName if it's not empty, otherwise use InName
 	FName AssetName = !DialogueName.IsEmpty() ? FName(*DialogueName) : InName;
-	UE_LOG(LogTemp, Log, TEXT("Using asset name: %s"), *AssetName.ToString());
 
 	// 6. Create UMounteaDialogueGraph if all is good
 	UMounteaDialogueGraph* NewGraph = NewObject<UMounteaDialogueGraph>(InParent, InClass, AssetName, Flags);
 	if (NewGraph)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Created new graph with name: %s"), *NewGraph->GetName());
 		if (PopulateGraphFromExtractedFiles(NewGraph, ExtractedFiles, Filename))
 		{
 			// 7. Import audio files if present
@@ -142,11 +142,11 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 
 			return NewGraph;
 		}
-		UE_LOG(LogTemp, Error, TEXT("Failed to populate graph from extracted files: %s"), *Filename);
+		EditorLOG_ERROR(TEXT("[FactoryCreateFile] Failed to populate graph from extracted files: %s"), *Filename);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to create new graph object"));
+		EditorLOG_ERROR(TEXT("[FactoryCreateFile] Failed to create new graph object"));
 	}
 
 	bOutOperationCanceled = true;
@@ -187,7 +187,7 @@ bool UMounteaDialogueGraphFactory::IsZipFile(const TArray<uint8>& FileData)
 
 	if (FileData.Num() < 4)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("File is too small to be a valid ZIP file"));
+		EditorLOG_WARNING(TEXT("File is too small to be a valid ZIP file"));
 		return false;
 	}
 
@@ -203,9 +203,7 @@ bool UMounteaDialogueGraphFactory::IsZipFile(const TArray<uint8>& FileData)
 		return true;
 	}
 
-	// Additional checks could be performed here, such as looking for the end of central directory record
-
-	UE_LOG(LogTemp, Warning, TEXT("File does not have a valid ZIP signature"));
+	EditorLOG_WARNING(TEXT("[IsZipFile] File does not have a valid ZIP signature"));
 	return false;
 }
 
@@ -216,7 +214,7 @@ bool UMounteaDialogueGraphFactory::ExtractFilesFromZip(const TArray<uint8>& ZipD
 													TEXT(".zip"));
 	if (!FFileHelper::SaveArrayToFile(ZipData, *TempFilePath))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to save zip data to temporary file"));
+		EditorLOG_ERROR(TEXT("[ExtractFilesFromZip] Failed to save zip data to temporary file"));
 		return false;
 	}
 
@@ -224,7 +222,7 @@ bool UMounteaDialogueGraphFactory::ExtractFilesFromZip(const TArray<uint8>& ZipD
 	struct zip_t* zip = zip_open(TCHAR_TO_UTF8(*TempFilePath), 0, 'r');
 	if (!zip)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to open zip file"));
+		EditorLOG_ERROR(TEXT("[ExtractFilesFromZip] Failed to open zip file"));
 		IFileManager::Get().Delete(*TempFilePath);
 		return false;
 	}
@@ -236,10 +234,10 @@ bool UMounteaDialogueGraphFactory::ExtractFilesFromZip(const TArray<uint8>& ZipD
 		{
 			const char* name = zip_entry_name(zip);
 			int size = zip_entry_size(zip);
-			
+
 			TArray<uint8> buffer;
 			buffer.SetNum(size);
-			
+
 			if (zip_entry_noallocread(zip, buffer.GetData(), size) != -1)
 			{
 				FString FileName = UTF8_TO_TCHAR(name);
@@ -255,7 +253,7 @@ bool UMounteaDialogueGraphFactory::ExtractFilesFromZip(const TArray<uint8>& ZipD
 			}
 			else
 			{
-				UE_LOG(LogTemp, Error, TEXT("Failed to read file content: %hs"), UTF8_TO_TCHAR(name));
+				EditorLOG_ERROR(TEXT("Failed to read file content: %hs"), UTF8_TO_TCHAR(name));
 			}
 		}
 		zip_entry_close(zip);
@@ -293,7 +291,7 @@ bool UMounteaDialogueGraphFactory::ValidateExtractedContent(const TMap<FString, 
 	{
 		if (!ExtractedFiles.Contains(File))
 		{
-			UE_LOG(LogTemp, Error, TEXT("Missing required file: %s"), *File);
+			EditorLOG_ERROR(TEXT("[ValidateExtractedContent] Missing required file: %s"), *File);
 			return false;
 		}
 	}
@@ -304,7 +302,8 @@ bool UMounteaDialogueGraphFactory::ValidateExtractedContent(const TMap<FString, 
 }
 
 bool UMounteaDialogueGraphFactory::PopulateGraphFromExtractedFiles(UMounteaDialogueGraph* Graph,
-																	const TMap<FString, FString>& ExtractedFiles, const FString& SourceFilePath)
+																	const TMap<FString, FString>& ExtractedFiles,
+																	const FString& SourceFilePath)
 {
 	if (!PopulateDialogueData(Graph, SourceFilePath, ExtractedFiles))
 	{
@@ -331,7 +330,7 @@ bool UMounteaDialogueGraphFactory::PopulateGraphFromExtractedFiles(UMounteaDialo
 		return false;
 	}
 
-	if (!PopulateDialogueRows(Graph, ExtractedFiles["dialogueRows.json"]))
+	if (!PopulateDialogueRows(Graph, ExtractedFiles))
 	{
 		return false;
 	}
@@ -349,7 +348,7 @@ void UMounteaDialogueGraphFactory::ImportAudioFiles(const TMap<FString, FString>
 			FString SourceFilePath = File.Value;
 			FString DestinationPath = FPaths::Combine(FPaths::GetPath(InParent->GetPathName()),
 													FPaths::GetBaseFilename(File.Key) + TEXT(".wav"));
-			
+
 			if (IFileManager::Get().Copy(*DestinationPath, *SourceFilePath) == COPY_OK)
 			{
 				UAutomatedAssetImportData* ImportData = NewObject<UAutomatedAssetImportData>();
@@ -359,7 +358,7 @@ void UMounteaDialogueGraphFactory::ImportAudioFiles(const TMap<FString, FString>
 
 				FAssetToolsModule& AssetToolsModule = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools");
 				TArray<UObject*> ImportedAssets = AssetToolsModule.Get().ImportAssetsAutomated(ImportData);
-				
+
 				if (ImportedAssets.Num() > 0)
 				{
 					USoundWave* SoundWave = Cast<USoundWave>(ImportedAssets[0]);
@@ -373,7 +372,8 @@ void UMounteaDialogueGraphFactory::ImportAudioFiles(const TMap<FString, FString>
 	}
 }
 
-bool UMounteaDialogueGraphFactory::PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& SourceFilePath, const TMap<FString, FString>& ExtractedFiles)
+bool UMounteaDialogueGraphFactory::PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& SourceFilePath,
+														const TMap<FString, FString>& ExtractedFiles)
 {
 	const FString DialogueDataJson = ExtractedFiles["dialogueData.json"];
 
@@ -385,7 +385,7 @@ bool UMounteaDialogueGraphFactory::PopulateDialogueData(UMounteaDialogueGraph* G
 		NewSourceData.JsonData = Itr.Value;
 		Graph->SourceData.Add(NewSourceData);
 	}
-	
+
 	TSharedPtr<FJsonObject> JsonObject;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(DialogueDataJson);
 	if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
@@ -394,27 +394,25 @@ bool UMounteaDialogueGraphFactory::PopulateDialogueData(UMounteaDialogueGraph* G
 		return true;
 	}
 
-	UE_LOG(LogTemp, Error, TEXT("Failed to parse dialogueData.json during population"));
+	EditorLOG_ERROR(TEXT("[PopulateDialogueData] Failed to parse dialogueData.json during population"));
 	return false;
 }
 
 bool UMounteaDialogueGraphFactory::PopulateCategories(UMounteaDialogueGraph* Graph, const FString& Json)
 {
-	TArray<TSharedPtr<FJsonValue>> JsonArray;
+	TArray<TSharedPtr<FJsonValue>> dialogueRowsJsonArray;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Json);
-	if (!FJsonSerializer::Deserialize(Reader, JsonArray))
+	if (!FJsonSerializer::Deserialize(Reader, dialogueRowsJsonArray))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to parse categories.json"));
+		EditorLOG_ERROR(TEXT("[PopulateCategories] Failed to parse categories.json"));
 		return false;
 	}
 
-	// Get the GameplayTagsManager
 	UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
 
-	// Get the mutable config for GameplayTags
 	UGameplayTagsSettings* MutableTagsSettings = GetMutableDefault<UGameplayTagsSettings>();
 
-	for (const auto& CategoryValue : JsonArray)
+	for (const auto& CategoryValue : dialogueRowsJsonArray)
 	{
 		TSharedPtr<FJsonObject> Category = CategoryValue->AsObject();
 		if (!Category.IsValid())
@@ -435,7 +433,6 @@ bool UMounteaDialogueGraphFactory::PopulateCategories(UMounteaDialogueGraph* Gra
 			FullTag = FString::Printf(TEXT("MounteaDialogue.Categories.%s.%s"), *Parent, *Name);
 		}
 
-		// Check if the tag already exists
 		FGameplayTag ExistingTag = TagsManager.RequestGameplayTag(FName(*FullTag), false);
 		if (!ExistingTag.IsValid())
 		{
@@ -460,15 +457,10 @@ bool UMounteaDialogueGraphFactory::PopulateCategories(UMounteaDialogueGraph* Gra
 				MutableTagsSettings->GameplayTagList.Add(NewTagRow);
 			}
 		}
-
-		// For demonstration purposes, let's log each tag we're creating
-		UE_LOG(LogTemp, Log, TEXT("Creating tag: %s"), *FullTag);
 	}
 
-	// Save the updated config
 	MutableTagsSettings->SaveConfig();
 
-	// Notify the GameplayTagsManager that we've added new tags
 	TagsManager.EditorRefreshGameplayTagTree();
 
 	// Notify the user
@@ -483,50 +475,45 @@ bool UMounteaDialogueGraphFactory::PopulateParticipants(UMounteaDialogueGraph* G
 {
 	if (!Graph)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Invalid Graph object provided to PopulateParticipants"));
+		EditorLOG_ERROR(TEXT("[PopulateParticipants] Invalid Graph object provided to PopulateParticipants"));
 		return false;
 	}
 
-	// Parse JSON
-	TArray<TSharedPtr<FJsonValue>> JsonArray;
+	TArray<TSharedPtr<FJsonValue>> dialogueRowsJsonArray;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Json);
-	if (!FJsonSerializer::Deserialize(Reader, JsonArray))
+	if (!FJsonSerializer::Deserialize(Reader, dialogueRowsJsonArray))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to parse participants.json"));
+		EditorLOG_ERROR(TEXT("[PopulateParticipants] Failed to parse participants.json"));
 		return false;
 	}
 
-	// Create a new DataTable asset
 	FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
 
-	// Determine the package path for the new asset
-	FString PackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
-	FString AssetName = FString::Printf(TEXT("%s_Participants"), *Graph->GetName());
+	const FString PackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
+	const FString AssetName = FString::Printf(TEXT("%s_Participants"), *Graph->GetName());
 
 	UDataTable* ParticipantsDataTable = Cast<UDataTable>(
 		AssetToolsModule.Get().CreateAsset(AssetName, PackagePath, UDataTable::StaticClass(), nullptr));
 
 	if (!ParticipantsDataTable)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to create DataTable asset"));
+		EditorLOG_ERROR(TEXT("[PopulateParticipants] Failed to create DataTable asset"));
 		return false;
 	}
 
 	ParticipantsDataTable->RowStruct = FDialogueParticipant::StaticStruct();
 
-	// Get the GameplayTagsManager
-	UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
+	const UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
 
-	// Get all existing tags
 	FGameplayTagContainer AllTags;
 	TagsManager.RequestAllGameplayTags(AllTags, true);
 
-	for (const auto& ParticipantValue : JsonArray)
+	for (const auto& ParticipantValue : dialogueRowsJsonArray)
 	{
 		TSharedPtr<FJsonObject> Participant = ParticipantValue->AsObject();
 		if (!Participant.IsValid())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Invalid participant object in JSON"));
+			EditorLOG_WARNING(TEXT("[PopulateParticipants] Invalid participant object in JSON"));
 			continue;
 		}
 
@@ -536,7 +523,6 @@ bool UMounteaDialogueGraphFactory::PopulateParticipants(UMounteaDialogueGraph* G
 		FDialogueParticipant* NewRow = new FDialogueParticipant();
 		NewRow->ParticipantName = FName(*Name);
 
-		// Find the correct GameplayTag
 		FGameplayTag FoundTag;
 		for (const FGameplayTag& Tag : AllTags)
 		{
@@ -550,20 +536,12 @@ bool UMounteaDialogueGraphFactory::PopulateParticipants(UMounteaDialogueGraph* G
 		if (FoundTag.IsValid())
 		{
 			NewRow->ParticipantCategoryTag = FoundTag;
-			UE_LOG(LogTemp, Log, TEXT("Found tag for participant %s: %s"), *Name, *FoundTag.ToString());
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Could not find GameplayTag for category: %s"), *Category);
 		}
 
-		// Add the new row to the DataTable
 		ParticipantsDataTable->AddRow(FName(*Name), *NewRow);
 	}
 
-	// Save the DataTable asset
-	FAssetRegistryModule::AssetCreated(ParticipantsDataTable);
-	ParticipantsDataTable->MarkPackageDirty();
+	SaveAsset(ParticipantsDataTable);
 
 	// Notify the user
 	FNotificationInfo Info(FText::Format(
@@ -578,15 +556,15 @@ bool UMounteaDialogueGraphFactory::PopulateNodes(UMounteaDialogueGraph* Graph, c
 {
 	if (!Graph || !Graph->GetOutermost()->IsValidLowLevel())
 	{
-		UE_LOG(LogTemp, Error, TEXT("Invalid Graph object or package provided to PopulateNodes"));
+		EditorLOG_ERROR(TEXT("[PopulateNodes] Invalid Graph object or package provided to PopulateNodes"));
 		return false;
 	}
 
-	TArray<TSharedPtr<FJsonValue>> JsonArray;
+	TArray<TSharedPtr<FJsonValue>> dialogueRowsJsonArray;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Json);
-	if (!FJsonSerializer::Deserialize(Reader, JsonArray))
+	if (!FJsonSerializer::Deserialize(Reader, dialogueRowsJsonArray))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to parse nodes.json"));
+		EditorLOG_ERROR(TEXT("[PopulateNodes] Failed to parse nodes.json"));
 		return false;
 	}
 
@@ -594,7 +572,7 @@ bool UMounteaDialogueGraphFactory::PopulateNodes(UMounteaDialogueGraph* Graph, c
 	TArray<UMounteaDialogueGraphNode*> SpawnedNodes;
 
 	// Categorize nodes
-	for (const auto& NodeValue : JsonArray)
+	for (const auto& NodeValue : dialogueRowsJsonArray)
 	{
 		TSharedPtr<FJsonObject> NodeObject = NodeValue->AsObject();
 		if (!NodeObject.IsValid())
@@ -701,21 +679,21 @@ bool UMounteaDialogueGraphFactory::PopulateEdges(UMounteaDialogueGraph* Graph, c
 {
 	if (!Graph)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Invalid Graph object provided to PopulateEdges"));
+		EditorLOG_ERROR(TEXT("[PopulateEdges] Invalid Graph object provided to PopulateEdges"));
 		return false;
 	}
 
-	TArray<TSharedPtr<FJsonValue>> JsonArray;
+	TArray<TSharedPtr<FJsonValue>> dialogueRowsJsonArray;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Json);
-	if (!FJsonSerializer::Deserialize(Reader, JsonArray))
+	if (!FJsonSerializer::Deserialize(Reader, dialogueRowsJsonArray))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to parse edges.json"));
+		EditorLOG_ERROR(TEXT("[PopulateEdges] Failed to parse edges.json"));
 		return false;
 	}
 
 	int32 EdgesCreated = 0;
 
-	for (const auto& EdgeValue : JsonArray)
+	for (const auto& EdgeValue : dialogueRowsJsonArray)
 	{
 		TSharedPtr<FJsonObject> EdgeObject = EdgeValue->AsObject();
 		if (!EdgeObject.IsValid())
@@ -731,8 +709,9 @@ bool UMounteaDialogueGraphFactory::PopulateEdges(UMounteaDialogueGraph* Graph, c
 
 		if (!SourceNode || !TargetNode)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Could not find source or target node for edge: %s -> %s"), *SourceID,
-					*TargetID);
+			EditorLOG_WARNING(TEXT("[PopulateEdges] Could not find source or target node for edge: %s -> %s"),
+							*SourceID,
+							*TargetID);
 			continue;
 		}
 
@@ -752,7 +731,7 @@ bool UMounteaDialogueGraphFactory::PopulateEdges(UMounteaDialogueGraph* Graph, c
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("Failed to create edge object for: %s -> %s"), *SourceID, *TargetID);
+			EditorLOG_ERROR(TEXT("[PopulateEdges] Failed to create edge object for: %s -> %s"), *SourceID, *TargetID);
 		}
 	}
 
@@ -766,10 +745,229 @@ bool UMounteaDialogueGraphFactory::PopulateEdges(UMounteaDialogueGraph* Graph, c
 	return true;
 }
 
-bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph* Graph, const FString& Json)
+bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph* Graph,
+														const TMap<FString, FString>& ExtractedFiles)
 {
-	// TODO: Implement JSON parsing and population of dialogue rows
+	if (!Graph)
+	{
+		EditorLOG_ERROR(TEXT("[PopulateDialogueRows] Invalid Graph object provided to PopulateDialogueRows"));
+		return false;
+	}
+
+	if (!Graph)
+	{
+		EditorLOG_ERROR(TEXT("[PopulateDialogueRows] Invalid Graph object provided to PopulateDialogueRows"));
+		return false;
+	}
+
+	const FString dialogueRowsJson = ExtractedFiles["dialogueRows.json"];
+	const FString dialogueNodesJson = ExtractedFiles["nodes.json"];
+
+	// Parse JSON
+	TArray<TSharedPtr<FJsonValue>> dialogueRowsJsonArray;
+	TSharedRef<TJsonReader<>> dialogueRowsJsonReader = TJsonReaderFactory<>::Create(dialogueRowsJson);
+	if (!FJsonSerializer::Deserialize(dialogueRowsJsonReader, dialogueRowsJsonArray))
+	{
+		EditorLOG_ERROR(TEXT("[PopulateDialogueRows] Failed to parse dialogueRows.json"));
+		return false;
+	}
+
+	// Parse JSON
+	TArray<TSharedPtr<FJsonValue>> dialogueNodesJsonArray;
+	TSharedRef<TJsonReader<>> dialogueNodesJsonReader = TJsonReaderFactory<>::Create(dialogueNodesJson);
+	if (!FJsonSerializer::Deserialize(dialogueNodesJsonReader, dialogueNodesJsonArray))
+	{
+		EditorLOG_ERROR(TEXT("[PopulateDialogueRows] Failed to parse nodes.json"));
+		return false;
+	}
+
+	FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+	IAssetTools& AssetTools = AssetToolsModule.Get();
+
+	FString PackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
+
+	const FString ParticipantsAssetName = FString::Printf(TEXT("%s_Participants"), *Graph->GetName());
+	FString DialogueRowsStringTableName = FString::Printf(TEXT("ST_%s_DialogueRows"), *Graph->GetName());
+	FString DialogueRowsDataTableName = FString::Printf(TEXT("DT_%s_DialogueRows"), *Graph->GetName());
+	FString DialogueNodesStringTableName = FString::Printf(TEXT("ST_%s_Nodes"), *Graph->GetName());
+
+	// 1. Create StringTable for dialogueRows
+	UStringTable* DialogueRowsStringTable = CreateStringTable(AssetTools, PackagePath, DialogueRowsStringTableName,
+															[&](UStringTable* Table)
+															{
+																for (const auto& Row : dialogueRowsJsonArray)
+																{
+																	const TSharedPtr<FJsonObject>& RowObject = Row->
+																		AsObject();
+																	FString Id = RowObject->GetStringField("id");
+																	FString Text = RowObject->GetStringField("text");
+																	Table->GetMutableStringTable()->SetSourceString(
+																		Id, Text);
+																}
+															});
+
+	// 2. Create StringTable for nodes
+	UStringTable* NodesStringTable = CreateStringTable(AssetTools, PackagePath, DialogueNodesStringTableName,
+														[&dialogueNodesJsonArray](UStringTable* Table)
+														{
+															for (const auto& Node : dialogueNodesJsonArray)
+															{
+																const TSharedPtr<FJsonObject>& NodeObject = Node->
+																	AsObject();
+																if (NodeObject.IsValid())
+																{
+																	FString Id = NodeObject->GetStringField("id");
+																	const TSharedPtr<FJsonObject>& DataObject =
+																		NodeObject->GetObjectField("data");
+																	if (DataObject.IsValid())
+																	{
+																		const TSharedPtr<FJsonObject>&
+																			AdditionalInfoObject = DataObject->
+																			GetObjectField("additionalInfo");
+																		if (AdditionalInfoObject.IsValid())
+																		{
+																			FString DisplayName = AdditionalInfoObject->
+																				GetStringField("displayName");
+																			Table->GetMutableStringTable()->
+																				SetSourceString(
+																					Id, DisplayName);
+																		}
+																		else
+																		{
+																			UE_LOG(LogTemp, Warning,
+																				TEXT(
+																					"AdditionalInfo object not found for node: %s"
+																				), *Id);
+																		}
+																	}
+																	else
+																	{
+																		UE_LOG(LogTemp, Warning,
+																				TEXT(
+																					"Data object not found for node: %s"
+																				), *Id);
+																	}
+																}
+															}
+														});
+
+	// 3. Create DataTable with FDialogueRow structure
+	UDataTable* DialogueRowsDataTable = CreateDataTable<FDialogueRow>(AssetTools, PackagePath,
+																	DialogueRowsDataTableName);
+
+	FString FullAssetPath = FString::Printf(TEXT("%s/%s"), *PackagePath, *ParticipantsAssetName);
+	FSoftObjectPath AssetReference(FullAssetPath);
+	UDataTable* ParticipantsDataTable = Cast<UDataTable>(AssetReference.TryLoad());
+
+	if (!ParticipantsDataTable)
+	{
+		EditorLOG_ERROR(TEXT("Failed to load Participants DataTable: %s"), *FullAssetPath);
+		return false;
+	}
+	if (!ParticipantsDataTable)
+	{
+		EditorLOG_WARNING(TEXT("[PopulateDialogueRows] Failed to load Participants DataTable"));
+		return false;
+	}
+
+	// Populate the DialogueRowsDataTable
+	for (const auto& Row : dialogueRowsJsonArray)
+	{
+		const TSharedPtr<FJsonObject>& RowObject = Row->AsObject();
+		if (!RowObject.IsValid())
+		{
+			continue;
+		}
+
+		FString Id = RowObject->GetStringField("id");
+		FString NodeId = RowObject->GetStringField("nodeId");
+		FString Text = RowObject->GetStringField("text");
+
+		DialogueRowsDataTable->AddRow(FName(*Id), FDialogueRow());
+
+		FString contextString;
+		FDialogueRow* NewRow = DialogueRowsDataTable->FindRow<FDialogueRow>(FName(*Id), contextString);
+		if (!NewRow)
+		{
+			EditorLOG_WARNING(
+				TEXT(
+					"[PopulateDialogueRows] Populate the DialogueRowsDataTable faild, unable to retrieve row by name %s"
+				), *Id)
+		}
+
+		// TODO: VALIDATE!!!
+		auto TableEntry = NodesStringTable->GetStringTable()->FindEntry(NodeId);
+		NewRow->RowTitle = FText::FromString(TableEntry->GetSourceString());
+
+		// Set DialogueParticipant from ParticipantsDataTable
+		// I need to implement a way to get the correct participant based on the node
+		// This is a placeholder implementation
+		FString ParticipantName = "Player"; // Replace with actual logic to get participant name
+		FDialogueParticipant* Participant = ParticipantsDataTable->FindRow<FDialogueParticipant>(
+			FName(*ParticipantName), TEXT(""));
+		if (Participant)
+		{
+			NewRow->DialogueParticipant = FText::FromString(Participant->ParticipantName.ToString());
+			NewRow->CompatibleTags.AddTag(Participant->ParticipantCategoryTag);
+		}
+
+		FDialogueRowData RowData;
+		RowData.RowText = FText::FromString(Text);
+		NewRow->DialogueRowData.Add(RowData);
+	}
+
+	// Save all created assets
+	SaveAsset(DialogueRowsStringTable);
+	SaveAsset(NodesStringTable);
+	SaveAsset(DialogueRowsDataTable);
+
 	return true;
+}
+
+// Helper function to create a StringTable
+UStringTable* UMounteaDialogueGraphFactory::CreateStringTable(IAssetTools& AssetTools, const FString& PackagePath,
+															const FString& AssetName,
+															TFunction<void(UStringTable*)> PopulateFunction)
+{
+	UStringTable* StringTable = Cast<UStringTable>(
+		AssetTools.CreateAsset(AssetName, PackagePath, UStringTable::StaticClass(), nullptr));
+	if (StringTable)
+	{
+		PopulateFunction(StringTable);
+	}
+	return StringTable;
+}
+
+// Helper function to create a DataTable
+template <typename RowType>
+UDataTable* UMounteaDialogueGraphFactory::CreateDataTable(IAssetTools& AssetTools, const FString& PackagePath,
+														const FString& AssetName)
+{
+	UDataTable* DataTable = Cast<UDataTable>(
+		AssetTools.CreateAsset(AssetName, PackagePath, UDataTable::StaticClass(), nullptr));
+	if (DataTable)
+	{
+		DataTable->RowStruct = RowType::StaticStruct();
+	}
+	return DataTable;
+}
+
+// Helper function to save an asset
+void UMounteaDialogueGraphFactory::SaveAsset(UObject* Asset)
+{
+	if (Asset)
+	{
+		Asset->MarkPackageDirty();
+		FAssetRegistryModule::AssetCreated(Asset);
+		const FString PackageName = Asset->GetOutermost()->GetName();
+		const FString PackageFileName = FPackageName::LongPackageNameToFilename(
+			PackageName, FPackageName::GetAssetPackageExtension());
+		FSavePackageArgs saveArgs;
+		{
+			saveArgs.TopLevelFlags = RF_Public | RF_Standalone;
+		}
+		UPackage::SavePackage(Asset->GetOutermost(), Asset, *PackageFileName, saveArgs);
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

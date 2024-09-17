@@ -405,8 +405,7 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 
 			TArray<UEdNode_MounteaDialogueGraphNode*> dummyNodes;
 			dummyNodes.Add(NewNode);
-
-			// Find nodes.json in SourceData
+			
 			FString NodesJsonContent;
 			for (const FDialogueImportData& ImportData : EditingGraph->SourceData)
 			{
@@ -418,7 +417,7 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 			}
 
 			TArray<TSharedPtr<FJsonValue>> JsonArray;
-			TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(NodesJsonContent);
+			const TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(NodesJsonContent);
 
 			if (FJsonSerializer::Deserialize(JsonReader, JsonArray))
 			{
@@ -434,13 +433,12 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 					DummyNewNode->PostPlacedNewNode();
 					DummyNewNode->AllocateDefaultPins();
 					DummyNewNode->AutowireNewNode(nullptr);
-
-					// Find the corresponding node in the JSON data
+					
 					TSharedPtr<FJsonObject> FoundNode;
 					for (const auto& JsonValue : JsonArray)
 					{
-						TSharedPtr<FJsonObject> NodeObject = JsonValue->AsObject();
-						FGuid NodeObjectGuid = FGuid(NodeObject->GetStringField("id"));
+						const TSharedPtr<FJsonObject> NodeObject = JsonValue->AsObject();
+						const FGuid NodeObjectGuid = FGuid(NodeObject->GetStringField("id"));
 						if (NodeObjectGuid == Node->GetNodeGUID())
 						{
 							FoundNode = NodeObject;
@@ -450,17 +448,15 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 
 					if (FoundNode.IsValid())
 					{
-						// Get position from JSON
 						TSharedPtr<FJsonObject> PositionObject = FoundNode->GetObjectField("position");
-						double X = PositionObject->GetNumberField("x");
-						double Y = PositionObject->GetNumberField("y");
+						const float X = PositionObject->GetNumberField("x");
+						const float Y = PositionObject->GetNumberField("y");
 
 						DummyNewNode->NodePosX = X;
 						DummyNewNode->NodePosY = Y;
 					}
 					else
 					{
-						// Fallback to old positioning logic
 						DummyNewNode->NodePosX = 0;
 						DummyNewNode->NodePosY = lastNodeY + 150;
 						lastNodeY = DummyNewNode->NodePosY;
@@ -505,8 +501,7 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 			{
 				UEdNode_MounteaDialogueGraphNode* CurrentNode = dummyNodes[i];
 				UMounteaDialogueGraphNode* DialogueNode = CurrentNode->DialogueGraphNode;
-
-				// Find the input pin of the current node
+				
 				UEdGraphPin* CurrentNodeInputPin = nullptr;
 				for (UEdGraphPin* Pin : CurrentNode->Pins)
 				{
@@ -526,8 +521,7 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 				for (UMounteaDialogueGraphNode* ParentDialogueNode : DialogueNode->GetParentNodes())
 				{
 					UEdNode_MounteaDialogueGraphNode* ParentEdNode = nullptr;
-
-					// Find the corresponding EdNode for the parent
+					
 					for (UEdNode_MounteaDialogueGraphNode* PotentialParent : dummyNodes)
 					{
 						if (PotentialParent->DialogueGraphNode == ParentDialogueNode)
@@ -539,7 +533,6 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 
 					if (ParentEdNode)
 					{
-						// Find the output pin of the parent node
 						UEdGraphPin* ParentOutputPin = nullptr;
 						for (UEdGraphPin* Pin : ParentEdNode->Pins)
 						{
@@ -552,7 +545,6 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 
 						if (ParentOutputPin)
 						{
-							// Create the connection
 							ParentOutputPin->MakeLinkTo(CurrentNodeInputPin);
 						}
 						else
