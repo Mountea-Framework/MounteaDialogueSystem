@@ -54,6 +54,7 @@ public class MounteaDialogueSystemEditor : ModuleRules
 				"SlateCore",
 				"GraphEditor",
 				"PropertyEditor",
+				"AudioEditor",
 				"EditorStyle",
 				"Kismet",
 				"KismetWidgets",

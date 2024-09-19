@@ -44,22 +44,8 @@ private:
 	bool PopulateEdges(UMounteaDialogueGraph* Graph, const FString& Json);
 	bool PopulateDialogueRows(UMounteaDialogueGraph* Graph,  const TMap<FString, FString>& ExtractedFiles);
 	
-	UStringTable* CreateStringTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName,
-									TFunction<void(UStringTable*)> PopulateFunction);
+	UStringTable* CreateStringTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName, TFunction<void(UStringTable*)> PopulateFunction);
 	template <class RowType>
 	UDataTable* CreateDataTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName);
 	void SaveAsset(UObject* Asset);
-
-	FString RemoveWhitespace(const FString& Input)
-	{
-		FString Result;
-		for (TCHAR Char : Input)
-		{
-			if (!FChar::IsWhitespace(Char))
-			{
-				Result.AppendChar(Char);
-			}
-		}
-		return Result;
-	}
 };
