@@ -210,78 +210,78 @@ bool UMounteaDialogueGraphFactory::IsZipFile(const TArray<uint8>& FileData)
 
 bool UMounteaDialogueGraphFactory::ExtractFilesFromZip(const TArray<uint8>& ZipData, TMap<FString, FString>& OutExtractedFiles)
 {
-    FString TempFilePath = FPaths::CreateTempFilename(FPlatformProcess::UserTempDir(), TEXT("MounteaDialogue"), TEXT(".zip"));
-    if (!FFileHelper::SaveArrayToFile(ZipData, *TempFilePath))
-    {
-        EditorLOG_ERROR(TEXT("[ExtractFilesFromZip] Failed to save zip data to temporary file"));
-        return false;
-    }
+	FString TempFilePath = FPaths::CreateTempFilename(FPlatformProcess::UserTempDir(), TEXT("MounteaDialogue"), TEXT(".zip"));
+	if (!FFileHelper::SaveArrayToFile(ZipData, *TempFilePath))
+	{
+		EditorLOG_ERROR(TEXT("[ExtractFilesFromZip] Failed to save zip data to temporary file"));
+		return false;
+	}
 
-    struct zip_t* zip = zip_open(TCHAR_TO_UTF8(*TempFilePath), 0, 'r');
-    if (!zip)
-    {
-        EditorLOG_ERROR(TEXT("[ExtractFilesFromZip] Failed to open zip file"));
-        IFileManager::Get().Delete(*TempFilePath);
-        return false;
-    }
+	struct zip_t* zip = zip_open(TCHAR_TO_UTF8(*TempFilePath), 0, 'r');
+	if (!zip)
+	{
+		EditorLOG_ERROR(TEXT("[ExtractFilesFromZip] Failed to open zip file"));
+		IFileManager::Get().Delete(*TempFilePath);
+		return false;
+	}
 
-    int n = zip_entries_total(zip);
-    for (int i = 0; i < n; ++i)
-    {
-        zip_entry_openbyindex(zip, i);
-        {
-            const char* name = zip_entry_name(zip);
-            int size = zip_entry_size(zip);
+	int n = zip_entries_total(zip);
+	for (int i = 0; i < n; ++i)
+	{
+		zip_entry_openbyindex(zip, i);
+		{
+			const char* name = zip_entry_name(zip);
+			int size = zip_entry_size(zip);
 
-            FString FileName = UTF8_TO_TCHAR(name);
-            if (FileName.StartsWith(TEXT("audio/")) && FileName.EndsWith(TEXT(".wav")))
-            {
-                // For audio files, extract to a temporary file
-                FString TempAudioPath = FPaths::CreateTempFilename(FPlatformProcess::UserTempDir(), TEXT("TempAudio"), TEXT(".wav"));
-                
-                TArray<uint8> Buffer;
-                Buffer.SetNum(size);
-                
-                if (zip_entry_noallocread(zip, Buffer.GetData(), size) != -1)
-                {
-                    if (FFileHelper::SaveArrayToFile(Buffer, *TempAudioPath))
-                    {
-                        OutExtractedFiles.Add(FileName, TempAudioPath);
-                    }
-                    else
-                    {
-                        EditorLOG_ERROR(TEXT("Failed to save temporary audio file: %s"), *TempAudioPath);
-                    }
-                }
-                else
-                {
-                    EditorLOG_ERROR(TEXT("Failed to read audio file content: %hs"), name);
-                }
-            }
-            else
-            {
-                // For non-audio files, keep the existing string-based approach
-                TArray<uint8> Buffer;
-                Buffer.SetNum(size);
+			FString FileName = UTF8_TO_TCHAR(name);
+			if (FileName.StartsWith(TEXT("audio/")) && FileName.EndsWith(TEXT(".wav")))
+			{
+				// For audio files, extract to a temporary file
+				FString TempAudioPath = FPaths::CreateTempFilename(FPlatformProcess::UserTempDir(), TEXT("TempAudio"), TEXT(".wav"));
+				
+				TArray<uint8> Buffer;
+				Buffer.SetNum(size);
+				
+				if (zip_entry_noallocread(zip, Buffer.GetData(), size) != -1)
+				{
+					if (FFileHelper::SaveArrayToFile(Buffer, *TempAudioPath))
+					{
+						OutExtractedFiles.Add(FileName, TempAudioPath);
+					}
+					else
+					{
+						EditorLOG_ERROR(TEXT("Failed to save temporary audio file: %s"), *TempAudioPath);
+					}
+				}
+				else
+				{
+					EditorLOG_ERROR(TEXT("Failed to read audio file content: %hs"), name);
+				}
+			}
+			else
+			{
+				// For non-audio files, keep the existing string-based approach
+				TArray<uint8> Buffer;
+				Buffer.SetNum(size);
 
-                if (zip_entry_noallocread(zip, Buffer.GetData(), size) != -1)
-                {
-                    FString FileContent = BytesToString(Buffer.GetData(), size);
-                    OutExtractedFiles.Add(FileName, FileContent);
-                }
-                else
-                {
-                    EditorLOG_ERROR(TEXT("Failed to read file content: %hs"), name);
-                }
-            }
-        }
-        zip_entry_close(zip);
-    }
+				if (zip_entry_noallocread(zip, Buffer.GetData(), size) != -1)
+				{
+					FString FileContent = BytesToString(Buffer.GetData(), size);
+					OutExtractedFiles.Add(FileName, FileContent);
+				}
+				else
+				{
+					EditorLOG_ERROR(TEXT("Failed to read file content: %hs"), name);
+				}
+			}
+		}
+		zip_entry_close(zip);
+	}
 
-    zip_close(zip);
-    IFileManager::Get().Delete(*TempFilePath);
+	zip_close(zip);
+	IFileManager::Get().Delete(*TempFilePath);
 
-    return true;
+	return true;
 }
 
 FString UMounteaDialogueGraphFactory::BytesToString(const uint8* Bytes, int32 Count)
@@ -356,41 +356,88 @@ void UMounteaDialogueGraphFactory::ImportAudioFiles(const TMap<FString, FString>
 	FModuleManager::LoadModuleChecked<IAudioEditorModule>("AudioEditor");
 	IAudioEditorModule& AudioEditorModule = FModuleManager::GetModuleChecked<IAudioEditorModule>("AudioEditor");
 
+	// Get the Dialogue Rows DataTable
+	FString PackagePath = FPackageName::GetLongPackagePath(InParent->GetPathName());
+    
+	// Extract just the asset name from InParent
+	FString AssetName = FPaths::GetBaseFilename(InParent->GetName());
+    
+	FString DialogueRowsDataTableName = FString::Printf(TEXT("DT_%s_DialogueRows"), *AssetName);
+	FString FullAssetPath = FString::Printf(TEXT("%s/%s"), *PackagePath, *DialogueRowsDataTableName);
+	FSoftObjectPath AssetReference(FullAssetPath);
+	UDataTable* DialogueRowsDataTable = Cast<UDataTable>(AssetReference.TryLoad());
+
+	if (!DialogueRowsDataTable)
+	{
+		EditorLOG_ERROR(TEXT("[ImportAudioFiles] Failed to load Dialogue Rows DataTable: %s"), *FullAssetPath);
+	}
+
+	TMap<FGuid, USoundWave*> ImportedAudioMap;
+
 	for (const auto& File : ExtractedFiles)
 	{
 		if (File.Key.StartsWith("audio/") && File.Key.EndsWith(".wav"))
 		{
 			FString TempAudioPath = File.Value;
-			FString DestinationPath = FPaths::Combine(FPaths::GetPath(InParent->GetPathName()), FPaths::GetBaseFilename(File.Key) + TEXT(".wav"));
-
-			// TODO: It should import to same folder as it is saved in
-			// example: audio/08ec1842-75cc-45b8-835f-8e46d028db47/
 			
-			// Create a package for the sound wave
-			FString PackageName = FPackageName::GetLongPackagePath(InParent->GetOutermost()->GetName()) + TEXT("/") + FPaths::GetBaseFilename(File.Key);
-			UPackage* SoundWavePackage = CreatePackage(*PackageName);
+			FString RelativePath = File.Key;
+			RelativePath.RemoveFromStart(TEXT("audio/"));
+			FString SubfolderPath = FPaths::GetPath(RelativePath);
+			
+			FGuid RowDataGuid = FGuid(FPaths::GetBaseFilename(SubfolderPath));
+
+			FString DestinationPath = FPaths::Combine(FPaths::GetPath(InParent->GetPathName()), TEXT("Audio"), SubfolderPath);
+            
+			FPlatformFileManager::Get().GetPlatformFile().CreateDirectoryTree(*DestinationPath);
+            
+			FString FullDestinationPath = FPaths::Combine(DestinationPath, FPaths::GetCleanFilename(File.Key));
+            
+			FString RelativePackagePath = FString::Printf(TEXT("/Audio/%s"), *SubfolderPath);
+			FString FullPackagePath = PackagePath / RelativePackagePath / FPaths::GetBaseFilename(File.Key);
+			UPackage* SoundWavePackage = CreatePackage(*FullPackagePath);
             
 			SoundWavePackage->FullyLoad();
-
+            
 			USoundWave* ImportedSoundWave = AudioEditorModule.ImportSoundWave(SoundWavePackage, FPaths::GetBaseFilename(File.Key), TempAudioPath);
 
 			if (ImportedSoundWave)
 			{
-				SoundWavePackage->MarkPackageDirty();
 				FAssetRegistryModule::AssetCreated(ImportedSoundWave);
+				SaveAsset(ImportedSoundWave);
+				ImportedAudioMap.Add(RowDataGuid, ImportedSoundWave);
 			}
 			else
 			{
-				UE_LOG(LogTemp, Error, TEXT("Failed to import audio file: %s"), *TempAudioPath);
+				EditorLOG_WARNING(TEXT("[ImportAudioFiles] Failed to import audio file: %s"), *TempAudioPath);
 			}
 
 			// Clean up the temporary file
 			IFileManager::Get().Delete(*TempAudioPath);
-
-			// TODO: Use the path of the audio folder (the parent folder name is guid of the owning DialogueRowData from DialogueRow)
-			// and map the audio to that DialogueRowData 
 		}
 	}
+
+	if (!DialogueRowsDataTable)
+		return;
+
+	TMap<FName, uint8 *> rowMap = DialogueRowsDataTable->GetRowMap();
+	for (auto It = rowMap.CreateIterator(); It; ++It)
+	{
+		FName RowName = It.Key();
+		FDialogueRow* DialogueRow = reinterpret_cast<FDialogueRow*>(It.Value());
+
+		if(!DialogueRow) continue;
+		
+		for (FDialogueRowData& RowData : DialogueRow->DialogueRowData)
+		{
+			if (USoundWave** FoundSound = ImportedAudioMap.Find(RowData.RowGUID))
+			{
+				RowData.RowSound = *FoundSound;
+			}
+		}
+	}
+
+	// Save the updated DataTable
+	SaveAsset(DialogueRowsDataTable);
 }
 
 bool UMounteaDialogueGraphFactory::PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& SourceFilePath, const TMap<FString, FString>& ExtractedFiles)
