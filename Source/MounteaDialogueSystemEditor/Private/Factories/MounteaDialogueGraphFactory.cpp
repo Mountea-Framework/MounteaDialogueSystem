@@ -51,16 +51,12 @@ UMounteaDialogueGraphFactory::UMounteaDialogueGraphFactory()
 	Formats.Add("mnteadlg;Mountea Dialogue File");
 }
 
-UObject* UMounteaDialogueGraphFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name,
-														EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
+UObject* UMounteaDialogueGraphFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
 {
 	return NewObject<UObject>(InParent, Class, Name, Flags | RF_Transactional);
 }
 
-UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObject* InParent, FName InName,
-														 EObjectFlags Flags, const FString& Filename,
-														 const TCHAR* Parms, FFeedbackContext* Warn,
-														 bool& bOutOperationCanceled)
+UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, FFeedbackContext* Warn, bool& bOutOperationCanceled)
 {
 	if (!FactoryCanImport(Filename))
 		return nullptr;
@@ -170,8 +166,7 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 	return nullptr;
 }
 
-UObject* UMounteaDialogueGraphFactory::ImportObject(UClass* InClass, UObject* InOuter, FName InName, EObjectFlags Flags,
-													const FString& Filename, const TCHAR* Parms, bool& OutCanceled)
+UObject* UMounteaDialogueGraphFactory::ImportObject(UClass* InClass, UObject* InOuter, FName InName, EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, bool& OutCanceled)
 {
 	if (!FactoryCanImport(Filename))
 		return nullptr;
@@ -212,11 +207,10 @@ bool UMounteaDialogueGraphFactory::IsZipFile(const TArray<uint8>& FileData)
 	return false;
 }
 
-bool UMounteaDialogueGraphFactory::ExtractFilesFromZip(const TArray<uint8>& ZipData,
-													   TMap<FString, FString>& OutExtractedFiles)
+bool UMounteaDialogueGraphFactory::ExtractFilesFromZip(const TArray<uint8>& ZipData, TMap<FString, FString>& OutExtractedFiles)
 {
 	FString TempFilePath = FPaths::CreateTempFilename(FPlatformProcess::UserTempDir(), TEXT("MounteaDialogue"),
-													  TEXT(".zip"));
+															TEXT(".zip"));
 	if (!FFileHelper::SaveArrayToFile(ZipData, *TempFilePath))
 	{
 		EditorLOG_ERROR(TEXT("[ExtractFilesFromZip] Failed to save zip data to temporary file"));
@@ -301,9 +295,7 @@ bool UMounteaDialogueGraphFactory::ValidateExtractedContent(const TMap<FString, 
 	return true;
 }
 
-bool UMounteaDialogueGraphFactory::PopulateGraphFromExtractedFiles(UMounteaDialogueGraph* Graph,
-																   const TMap<FString, FString>& ExtractedFiles,
-																   const FString& SourceFilePath)
+bool UMounteaDialogueGraphFactory::PopulateGraphFromExtractedFiles(UMounteaDialogueGraph* Graph, const TMap<FString, FString>& ExtractedFiles, const FString& SourceFilePath)
 {
 	if (!PopulateDialogueData(Graph, SourceFilePath, ExtractedFiles))
 	{
@@ -338,8 +330,7 @@ bool UMounteaDialogueGraphFactory::PopulateGraphFromExtractedFiles(UMounteaDialo
 	return true;
 }
 
-void UMounteaDialogueGraphFactory::ImportAudioFiles(const TMap<FString, FString>& ExtractedFiles, UObject* InParent,
-													EObjectFlags Flags)
+void UMounteaDialogueGraphFactory::ImportAudioFiles(const TMap<FString, FString>& ExtractedFiles, UObject* InParent, EObjectFlags Flags)
 {
 	for (const auto& File : ExtractedFiles)
 	{
@@ -347,7 +338,7 @@ void UMounteaDialogueGraphFactory::ImportAudioFiles(const TMap<FString, FString>
 		{
 			FString SourceFilePath = File.Value;
 			FString DestinationPath = FPaths::Combine(FPaths::GetPath(InParent->GetPathName()),
-													  FPaths::GetBaseFilename(File.Key) + TEXT(".wav"));
+															FPaths::GetBaseFilename(File.Key) + TEXT(".wav"));
 
 			if (IFileManager::Get().Copy(*DestinationPath, *SourceFilePath) == COPY_OK)
 			{
@@ -372,8 +363,7 @@ void UMounteaDialogueGraphFactory::ImportAudioFiles(const TMap<FString, FString>
 	}
 }
 
-bool UMounteaDialogueGraphFactory::PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& SourceFilePath,
-														const TMap<FString, FString>& ExtractedFiles)
+bool UMounteaDialogueGraphFactory::PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& SourceFilePath, const TMap<FString, FString>& ExtractedFiles)
 {
 	const FString DialogueDataJson = ExtractedFiles["dialogueData.json"];
 
@@ -580,7 +570,7 @@ bool UMounteaDialogueGraphFactory::PopulateNodes(UMounteaDialogueGraph* Graph, c
 			continue;
 		}
 
-		FString NodeType = NodeObject->GetStringField("type");
+		const FString NodeType = NodeObject->GetStringField("type");
 		if (NodeType == "leadNode")
 		{
 			LeadNodes.Add(NodeValue);
@@ -612,9 +602,7 @@ bool UMounteaDialogueGraphFactory::PopulateNodes(UMounteaDialogueGraph* Graph, c
 		}
 		else
 		{
-			UMounteaDialogueGraphNode_StartNode* NewStartNode = Graph->ConstructDialogueNode<
-				UMounteaDialogueGraphNode_StartNode>();
-			if (NewStartNode)
+			if (UMounteaDialogueGraphNode_StartNode* NewStartNode = Graph->ConstructDialogueNode<UMounteaDialogueGraphNode_StartNode>())
 			{
 				Graph->StartNode = NewStartNode;
 				PopulateNodeData(NewStartNode, StartNodes[0]->AsObject());
@@ -623,18 +611,16 @@ bool UMounteaDialogueGraphFactory::PopulateNodes(UMounteaDialogueGraph* Graph, c
 		}
 	}
 
-	auto CreateNodes = [&](const TArray<TSharedPtr<FJsonValue>>& Nodes,
-						   TSubclassOf<UMounteaDialogueGraphNode> NodeClass)
+	auto CreateNodes = [&](const TArray<TSharedPtr<FJsonValue>>& Nodes, const TSubclassOf<UMounteaDialogueGraphNode> NodeClass)
 	{
 		for (const auto& Node : Nodes)
 		{
 			UMounteaDialogueGraphNode* NewNode = Graph->ConstructDialogueNode(NodeClass);
-			if (NewNode)
-			{
-				PopulateNodeData(NewNode, Node->AsObject());
-				Graph->AllNodes.Add(NewNode);
-				SpawnedNodes.Add(NewNode);
-			}
+			if (!NewNode) continue;
+			
+			PopulateNodeData(NewNode, Node->AsObject());
+			Graph->AllNodes.Add(NewNode);
+			SpawnedNodes.Add(NewNode);
 		}
 	};
 
@@ -654,8 +640,7 @@ bool UMounteaDialogueGraphFactory::PopulateNodes(UMounteaDialogueGraph* Graph, c
 	return true;
 }
 
-void UMounteaDialogueGraphFactory::PopulateNodeData(UMounteaDialogueGraphNode* Node,
-													const TSharedPtr<FJsonObject>& JsonObject)
+void UMounteaDialogueGraphFactory::PopulateNodeData(UMounteaDialogueGraphNode* Node, const TSharedPtr<FJsonObject>& JsonObject)
 {
 	if (!Node || !JsonObject.IsValid())
 	{
@@ -670,8 +655,7 @@ void UMounteaDialogueGraphFactory::PopulateNodeData(UMounteaDialogueGraphNode* N
 	{
 		if (UMounteaDialogueGraphNode_ReturnToNode* returnToNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(Node))
 		{
-			returnToNode->SelectedNode = returnToNode->Graph->FindNodeByGuid(
-				FGuid(AdditionalInfoObject->GetStringField("targetNodeId")));
+			returnToNode->SelectedNode = returnToNode->Graph->FindNodeByGuid(FGuid(AdditionalInfoObject->GetStringField("targetNodeId")));
 		}
 	}
 }
@@ -710,8 +694,7 @@ bool UMounteaDialogueGraphFactory::PopulateEdges(UMounteaDialogueGraph* Graph, c
 
 		if (!SourceNode || !TargetNode)
 		{
-			EditorLOG_WARNING(TEXT("[PopulateEdges] Could not find source or target node for edge: %s -> %s"),
-							  *SourceID, *TargetID);
+			EditorLOG_WARNING(TEXT("[PopulateEdges] Could not find source or target node for edge: %s -> %s"), *SourceID, *TargetID);
 			continue;
 		}
 
@@ -743,8 +726,7 @@ bool UMounteaDialogueGraphFactory::PopulateEdges(UMounteaDialogueGraph* Graph, c
 	return true;
 }
 
-bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph* Graph,
-														const TMap<FString, FString>& ExtractedFiles)
+bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph* Graph, const TMap<FString, FString>& ExtractedFiles)
 {
 	if (!Graph)
 	{
@@ -781,52 +763,40 @@ bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph* G
 	FString DialogueRowsDataTableName = FString::Printf(TEXT("DT_%s_DialogueRows"), *Graph->GetName());
 	FString DialogueNodesStringTableName = FString::Printf(TEXT("ST_%s_Nodes"), *Graph->GetName());
 
-	// Create StringTables and DataTable (unchanged)
-	UStringTable* DialogueRowsStringTable = CreateStringTable(AssetTools, PackagePath, DialogueRowsStringTableName,
-															  [&](UStringTable* Table)
-															  {
-																  for (const auto& Row : dialogueRowsJsonArray)
-																  {
-																	  const TSharedPtr<FJsonObject>& RowObject = Row->
-																		  AsObject();
-																	  FString Id = RowObject->GetStringField("id");
-																	  FString Text = RowObject->GetStringField("text");
-																	  Table->GetMutableStringTable()->SetSourceString(
-																		  Id, Text);
-																  }
-															  });
+	// Create StringTables and DataTable
+	UStringTable* DialogueRowsStringTable = CreateStringTable(AssetTools, PackagePath, DialogueRowsStringTableName, [&](UStringTable* Table)
+	{
+		if (!Table) return;
+		
+		for (const auto& Row : dialogueRowsJsonArray)
+		{
+			const TSharedPtr<FJsonObject>& RowObject = Row->AsObject();
+			FString Id = RowObject->GetStringField("id");
+			FString Text = RowObject->GetStringField("text");
+			Table->GetMutableStringTable()->SetSourceString(Id, Text);
+		}
+	});
 
-	UStringTable* NodesStringTable = CreateStringTable(AssetTools, PackagePath, DialogueNodesStringTableName,
-													   [&dialogueNodesJsonArray](UStringTable* Table)
-													   {
-														   for (const auto& Node : dialogueNodesJsonArray)
-														   {
-															   const TSharedPtr<FJsonObject>& NodeObject = Node->
-																   AsObject();
-															   if (NodeObject.IsValid())
-															   {
-																   FString Id = NodeObject->GetStringField("id");
-																   const TSharedPtr<FJsonObject>& DataObject =
-																	   NodeObject->GetObjectField("data");
-																   if (DataObject.IsValid())
-																   {
-																	   const TSharedPtr<FJsonObject>&
-																		   AdditionalInfoObject = DataObject->
-																		   GetObjectField("additionalInfo");
-																	   if (AdditionalInfoObject.IsValid())
-																	   {
-																		   FString DisplayName = AdditionalInfoObject->
-																			   GetStringField("displayName");
-																		   Table->GetMutableStringTable()->
-																				  SetSourceString(Id, DisplayName);
-																	   }
-																   }
-															   }
-														   }
-													   });
+	UStringTable* NodesStringTable = CreateStringTable(AssetTools, PackagePath, DialogueNodesStringTableName,[&dialogueNodesJsonArray](UStringTable* Table)
+	{
+		for (const auto& Node : dialogueNodesJsonArray)
+		{
+			const TSharedPtr<FJsonObject>& NodeObject = Node->AsObject();
+			if (!NodeObject.IsValid()) continue;
+			
+			FString Id = NodeObject->GetStringField("id");
+			const TSharedPtr<FJsonObject>& DataObject = NodeObject->GetObjectField("data");
+			if (!DataObject.IsValid()) continue;
+			
+			const TSharedPtr<FJsonObject>& AdditionalInfoObject = DataObject->GetObjectField("additionalInfo");
+			if (!AdditionalInfoObject.IsValid()) continue;
+			
+			FString DisplayName = AdditionalInfoObject->GetStringField("displayName");
+			Table->GetMutableStringTable()->SetSourceString(Id, DisplayName);
+		}
+	});
 
-	UDataTable* DialogueRowsDataTable = CreateDataTable<FDialogueRow>(AssetTools, PackagePath,
-																	  DialogueRowsDataTableName);
+	UDataTable* DialogueRowsDataTable = CreateDataTable<FDialogueRow>(AssetTools, PackagePath, DialogueRowsDataTableName);
 
 	// Load ParticipantsDataTable
 	FString FullAssetPath = FString::Printf(TEXT("%s/%s"), *PackagePath, *ParticipantsAssetName);
@@ -844,39 +814,31 @@ bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph* G
 	for (const auto& Node : dialogueNodesJsonArray)
 	{
 		const TSharedPtr<FJsonObject>& NodeObject = Node->AsObject();
-		if (NodeObject.IsValid())
+		if (!NodeObject.IsValid()) continue;
+		
+		FString NodeId = NodeObject->GetStringField("id");
+		const TSharedPtr<FJsonObject>& DataObject = NodeObject->GetObjectField("data");
+		if (!DataObject.IsValid()) continue;
+		
+		const TSharedPtr<FJsonObject>& AdditionalInfoObject = DataObject->GetObjectField("additionalInfo");
+		if (!AdditionalInfoObject.IsValid()) continue;
+		
+		const TSharedPtr<FJsonObject>* ParticipantObject = nullptr;
+		if (AdditionalInfoObject->TryGetObjectField("participant", ParticipantObject) && ParticipantObject != nullptr)
 		{
-			FString NodeId = NodeObject->GetStringField("id");
-			const TSharedPtr<FJsonObject>& DataObject = NodeObject->GetObjectField("data");
-			if (DataObject.IsValid())
+			FString ParticipantName;
+			if ((*ParticipantObject)->TryGetStringField("name", ParticipantName))
 			{
-				const TSharedPtr<FJsonObject>& AdditionalInfoObject = DataObject->GetObjectField("additionalInfo");
-				if (AdditionalInfoObject.IsValid())
-				{
-					// Check if participant field exists and is an object
-					const TSharedPtr<FJsonObject>* ParticipantObject = nullptr;
-					if (AdditionalInfoObject->TryGetObjectField("participant", ParticipantObject) && ParticipantObject
-						!= nullptr)
-					{
-						FString ParticipantName;
-						if ((*ParticipantObject)->TryGetStringField("name", ParticipantName))
-						{
-							NodeParticipantMap.Add(NodeId, ParticipantName);
-						}
-						else
-						{
-							EditorLOG_WARNING(TEXT("[PopulateDialogueRows] Participant name not found for NodeId: %s"),
-											  *NodeId);
-						}
-					}
-					else
-					{
-						EditorLOG_WARNING(
-							TEXT("[PopulateDialogueRows] Participant object not found or invalid for NodeId: %s"),
-							*NodeId);
-					}
-				}
+				NodeParticipantMap.Add(NodeId, ParticipantName);
 			}
+			else
+			{
+				EditorLOG_WARNING(TEXT("[PopulateDialogueRows] Participant name not found for NodeId: %s"), *NodeId);
+			}
+		}
+		else
+		{
+			EditorLOG_WARNING(TEXT("[PopulateDialogueRows] Participant object not found or invalid for NodeId: %s"), *NodeId);
 		}
 	}
 
@@ -900,6 +862,8 @@ bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph* G
 
 		if (Rows.Num() == 0)
 		{
+			EditorLOG_WARNING(TEXT("[PopulateDialogueRows] No dialogue Rows associated with NodeId: %s"), *NodeId);
+			
 			continue;
 		}
 
@@ -907,38 +871,25 @@ bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph* G
 		const FGuid newRowGuid = FGuid(GroupedRow.Key);
 		NewRow.RowGUID = newRowGuid;
 
-		
-
-		EditorLOG_WARNING(TEXT("[PopulateDialogueRows] Row guid is: %s | Should be: %s"), *NewRow.RowGUID.ToString(), *newRowGuid.ToString());
-
 		// Set DialogueParticipant using the NodeParticipantMap
 		const FString* ParticipantName = NodeParticipantMap.Find(NodeId);
-		if (ParticipantName && !ParticipantName->IsEmpty())
+		if (!ParticipantName || ParticipantName->IsEmpty())
 		{
-			FDialogueParticipant* Participant = ParticipantsDataTable->FindRow<FDialogueParticipant>(FName(**ParticipantName), TEXT(""));
-			if (Participant)
-			{
-				NewRow.DialogueParticipant = FText::FromString(Participant->ParticipantName.ToString());
-                
-				// Directly assign the tag to CompatibleTags
-				NewRow.CompatibleTags.AddTag(Participant->ParticipantCategoryTag);
-                
-				EditorLOG_WARNING(TEXT("[PopulateDialogueRows] Assigning tag: %s to participant: %s"),
-								  *Participant->ParticipantCategoryTag.ToString(),
-								  *NewRow.DialogueParticipant.ToString());
-			}
-			else
-			{
-				EditorLOG_WARNING(TEXT("[PopulateDialogueRows] Participant not found in DataTable: %s"),
-								  **ParticipantName);
-			}
+			EditorLOG_WARNING(TEXT("[PopulateDialogueRows] Participant name not valid not found for NodeId %s"), *NodeId);
+		
+			continue;
 		}
-		else
+		
+		FDialogueParticipant* Participant = ParticipantsDataTable->FindRow<FDialogueParticipant>(FName(**ParticipantName), TEXT(""));
+		if (!Participant)
 		{
 			EditorLOG_WARNING(TEXT("[PopulateDialogueRows] Participant not found for NodeId: %s"), *NodeId);
+			
+			continue;
 		}
-
-		// Set RowTitle from NodesStringTable
+		
+		NewRow.DialogueParticipant = FText::FromString(Participant->ParticipantName.ToString());
+		NewRow.CompatibleTags.AddTag(Participant->ParticipantCategoryTag);
 		NewRow.RowTitle = FText::FromStringTable(NodesStringTable->GetStringTableId(), NodeId);
 
 		// Add FDialogueRowData for each row in the group
@@ -964,16 +915,12 @@ bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph* G
 		{
 			for (const auto& Node : Graph->GetAllNodes())
 			{
-				if (Node && Node->GetNodeGUID() == newRowGuid)
+				if (!Node || Node->GetNodeGUID() != newRowGuid) continue;
+				
+				if (UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node))
 				{
-					if (UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node))
-					{
-						// Set DataTable
-						DialogueNode->SetDataTable(DialogueRowsDataTable);
-            
-						// Set RowName
-						DialogueNode->SetRowName(FName(*rowName));
-					}
+					DialogueNode->SetDataTable(DialogueRowsDataTable);
+					DialogueNode->SetRowName(FName(*rowName));
 				}
 			}
 		}
@@ -987,12 +934,9 @@ bool UMounteaDialogueGraphFactory::PopulateDialogueRows(UMounteaDialogueGraph* G
 	return true;
 }
 
-UStringTable* UMounteaDialogueGraphFactory::CreateStringTable(IAssetTools& AssetTools, const FString& PackagePath,
-															  const FString& AssetName,
-															  TFunction<void(UStringTable*)> PopulateFunction)
+UStringTable* UMounteaDialogueGraphFactory::CreateStringTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName, TFunction<void(UStringTable*)> PopulateFunction)
 {
-	UStringTable* StringTable = Cast<UStringTable>(
-		AssetTools.CreateAsset(AssetName, PackagePath, UStringTable::StaticClass(), nullptr));
+	UStringTable* StringTable = Cast<UStringTable>(AssetTools.CreateAsset(AssetName, PackagePath, UStringTable::StaticClass(), nullptr));
 	if (StringTable)
 	{
 		PopulateFunction(StringTable);
@@ -1001,8 +945,7 @@ UStringTable* UMounteaDialogueGraphFactory::CreateStringTable(IAssetTools& Asset
 }
 
 template <typename RowType>
-UDataTable* UMounteaDialogueGraphFactory::CreateDataTable(IAssetTools& AssetTools, const FString& PackagePath,
-														  const FString& AssetName)
+UDataTable* UMounteaDialogueGraphFactory::CreateDataTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName)
 {
 	UDataTable* DataTable = Cast<UDataTable>(
 		AssetTools.CreateAsset(AssetName, PackagePath, UDataTable::StaticClass(), nullptr));
@@ -1015,19 +958,17 @@ UDataTable* UMounteaDialogueGraphFactory::CreateDataTable(IAssetTools& AssetTool
 
 void UMounteaDialogueGraphFactory::SaveAsset(UObject* Asset)
 {
-	if (Asset)
+	if (!Asset) return;
+	
+	Asset->MarkPackageDirty();
+	FAssetRegistryModule::AssetCreated(Asset);
+	const FString PackageName = Asset->GetOutermost()->GetName();
+	const FString PackageFileName = FPackageName::LongPackageNameToFilename(PackageName, FPackageName::GetAssetPackageExtension());
+	FSavePackageArgs saveArgs;
 	{
-		Asset->MarkPackageDirty();
-		FAssetRegistryModule::AssetCreated(Asset);
-		const FString PackageName = Asset->GetOutermost()->GetName();
-		const FString PackageFileName = FPackageName::LongPackageNameToFilename(
-			PackageName, FPackageName::GetAssetPackageExtension());
-		FSavePackageArgs saveArgs;
-		{
-			saveArgs.TopLevelFlags = RF_Public | RF_Standalone;
-		}
-		UPackage::SavePackage(Asset->GetOutermost(), Asset, *PackageFileName, saveArgs);
+		saveArgs.TopLevelFlags = RF_Public | RF_Standalone;
 	}
+	UPackage::SavePackage(Asset->GetOutermost(), Asset, *PackageFileName, saveArgs);
 }
 
 #undef LOCTEXT_NAMESPACE
