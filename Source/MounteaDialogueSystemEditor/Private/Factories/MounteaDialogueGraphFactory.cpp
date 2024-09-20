@@ -63,8 +63,8 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 		return nullptr;
 
 	// 1. Load the file
-	TArray<uint8> FileData;
-	if (!FFileHelper::LoadFileToArray(FileData, *Filename))
+	TArray<uint8> fileData;
+	if (!FFileHelper::LoadFileToArray(fileData, *Filename))
 	{
 		EditorLOG_ERROR(TEXT("[FactoryCreateFile] Failed to load file: %s"), *Filename);
 		bOutOperationCanceled = true;
@@ -72,7 +72,7 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 	}
 
 	// 2. Make sure it's a zip file
-	if (!IsZipFile(FileData))
+	if (!IsZipFile(fileData))
 	{
 		EditorLOG_ERROR(TEXT("[FactoryCreateFile] File is not a valid mnteadlg/zip: %s"), *Filename);
 		bOutOperationCanceled = true;
@@ -80,8 +80,8 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 	}
 
 	// 3. Extract and read content
-	TMap<FString, FString> ExtractedFiles;
-	if (!ExtractFilesFromZip(FileData, ExtractedFiles))
+	TMap<FString, FString> extractedFiles;
+	if (!ExtractFilesFromZip(fileData, extractedFiles))
 	{
 		EditorLOG_ERROR(TEXT("[FactoryCreateFile] Failed to extract files from archive: %s"), *Filename);
 		bOutOperationCanceled = true;
@@ -89,7 +89,7 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 	}
 
 	// 4. Validate content
-	if (!ValidateExtractedContent(ExtractedFiles))
+	if (!ValidateExtractedContent(extractedFiles))
 	{
 		EditorLOG_ERROR(TEXT("[FactoryCreateFile] Invalid content in file: %s"), *Filename);
 		bOutOperationCanceled = true;
@@ -97,17 +97,17 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 	}
 
 	// 5. Read dialogue name from dialogueData.json
-	FString DialogueName;
-	if (ExtractedFiles.Contains("dialogueData.json"))
+	FString dialogueName;
+	if (extractedFiles.Contains("dialogueData.json"))
 	{
 		TSharedPtr<FJsonObject> JsonObject;
-		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ExtractedFiles["dialogueData.json"]);
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(extractedFiles["dialogueData.json"]);
 		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
 		{
 			if (JsonObject->HasField("dialogueName"))
 			{
 				//DialogueName = FString("D_").Append(JsonObject->GetStringField("dialogueName")); // TODO :This breaks naming down the line, need to fix is later on
-				DialogueName = JsonObject->GetStringField("dialogueName");
+				dialogueName = JsonObject->GetStringField("dialogueName");
 			}
 			else
 			{
@@ -124,27 +124,27 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 		EditorLOG_WARNING(TEXT("dialogueData.json not found in extracted files"));
 	}
 
-	const FName AssetName = !DialogueName.IsEmpty() ? FName(*DialogueName) : InName;
+	const FName assetName = !dialogueName.IsEmpty() ? FName(*dialogueName) : InName;
 
 	// 6. Create UMounteaDialogueGraph if all is good
-	UMounteaDialogueGraph* NewGraph = NewObject<UMounteaDialogueGraph>(InParent, InClass, AssetName, Flags);
-	if (NewGraph)
+	UMounteaDialogueGraph* newDialogueGraph = NewObject<UMounteaDialogueGraph>(InParent, InClass, assetName, Flags);
+	if (newDialogueGraph)
 	{
-		if (PopulateGraphFromExtractedFiles(NewGraph, ExtractedFiles, Filename))
+		if (PopulateGraphFromExtractedFiles(newDialogueGraph, extractedFiles, Filename))
 		{
 			// 7. Import audio files if present
-			ImportAudioFiles(ExtractedFiles, InParent, Flags);
+			ImportAudioFiles(extractedFiles, InParent, Flags);
 
-			NewGraph->CreateGraph();
-			if (NewGraph->EdGraph)
+			newDialogueGraph->CreateGraph();
+			if (newDialogueGraph->EdGraph)
 			{
-				if (UEdGraph_MounteaDialogueGraph* edGraph = Cast<UEdGraph_MounteaDialogueGraph>(NewGraph->EdGraph))
+				if (UEdGraph_MounteaDialogueGraph* edGraph = Cast<UEdGraph_MounteaDialogueGraph>(newDialogueGraph->EdGraph))
 					edGraph->RebuildMounteaDialogueGraph();
 			}
 
-			SaveAsset(NewGraph);
+			SaveAsset(newDialogueGraph);
 
-			return NewGraph;
+			return newDialogueGraph;
 		}
 		EditorLOG_ERROR(TEXT("[FactoryCreateFile] Failed to populate graph from extracted files: %s"), *Filename);
 	}
@@ -156,7 +156,7 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 	bOutOperationCanceled = true;
 
 	// Cleanup
-	for (const auto& File : ExtractedFiles)
+	for (const auto& File : extractedFiles)
 	{
 		if (File.Key.StartsWith("audio/"))
 		{
@@ -176,17 +176,17 @@ UObject* UMounteaDialogueGraphFactory::ImportObject(UClass* InClass, UObject* In
 
 bool UMounteaDialogueGraphFactory::FactoryCanImport(const FString& Filename)
 {
-	const FString Extension = FPaths::GetExtension(Filename);
-	return (Extension == TEXT("mnteadlg") || Extension == TEXT("zip"));
+	const FString extension = FPaths::GetExtension(Filename);
+	return (extension == TEXT("mnteadlg") || extension == TEXT("zip"));
 }
 
 bool UMounteaDialogueGraphFactory::IsZipFile(const TArray<uint8>& FileData)
 {
 	// ZIP files can start with several different signatures
-	const uint32 ZIP_SIGNATURE_1 = 0x04034b50; // Regular ZIP file
-	const uint32 ZIP_SIGNATURE_2 = 0x08074b50; // Spanned ZIP file
-	const uint32 ZIP_SIGNATURE_3 = 0x02014b50; // Central directory header
-	const uint32 ZIP_SIGNATURE_4 = 0x06054b50; // End of central directory record
+	constexpr uint32 ZIP_SIGNATURE_1 = 0x04034b50; // Regular ZIP file
+	constexpr uint32 ZIP_SIGNATURE_2 = 0x08074b50; // Spanned ZIP file
+	constexpr uint32 ZIP_SIGNATURE_3 = 0x02014b50; // Central directory header
+	constexpr uint32 ZIP_SIGNATURE_4 = 0x06054b50; // End of central directory record
 
 	if (FileData.Num() < 4)
 	{
@@ -195,11 +195,10 @@ bool UMounteaDialogueGraphFactory::IsZipFile(const TArray<uint8>& FileData)
 	}
 
 	// Read the first 4 bytes as a uint32
-	uint32 Signature = (FileData[3] << 24) | (FileData[2] << 16) | (FileData[1] << 8) | FileData[0];
+	uint32 fileSignature = (FileData[3] << 24) | (FileData[2] << 16) | (FileData[1] << 8) | FileData[0];
 
 	// Check against known ZIP signatures
-	if (Signature == ZIP_SIGNATURE_1 || Signature == ZIP_SIGNATURE_2 || Signature == ZIP_SIGNATURE_3 || Signature ==
-		ZIP_SIGNATURE_4)
+	if (fileSignature == ZIP_SIGNATURE_1 || fileSignature == ZIP_SIGNATURE_2 || fileSignature == ZIP_SIGNATURE_3 || fileSignature == ZIP_SIGNATURE_4)
 	{
 		return true;
 	}
@@ -210,18 +209,18 @@ bool UMounteaDialogueGraphFactory::IsZipFile(const TArray<uint8>& FileData)
 
 bool UMounteaDialogueGraphFactory::ExtractFilesFromZip(const TArray<uint8>& ZipData, TMap<FString, FString>& OutExtractedFiles)
 {
-	FString TempFilePath = FPaths::CreateTempFilename(FPlatformProcess::UserTempDir(), TEXT("MounteaDialogue"), TEXT(".zip"));
-	if (!FFileHelper::SaveArrayToFile(ZipData, *TempFilePath))
+	FString tempFilePath = FPaths::CreateTempFilename(FPlatformProcess::UserTempDir(), TEXT("MounteaDialogue"), TEXT(".zip"));
+	if (!FFileHelper::SaveArrayToFile(ZipData, *tempFilePath))
 	{
 		EditorLOG_ERROR(TEXT("[ExtractFilesFromZip] Failed to save zip data to temporary file"));
 		return false;
 	}
 
-	struct zip_t* zip = zip_open(TCHAR_TO_UTF8(*TempFilePath), 0, 'r');
+	struct zip_t* zip = zip_open(TCHAR_TO_UTF8(*tempFilePath), 0, 'r');
 	if (!zip)
 	{
 		EditorLOG_ERROR(TEXT("[ExtractFilesFromZip] Failed to open zip file"));
-		IFileManager::Get().Delete(*TempFilePath);
+		IFileManager::Get().Delete(*tempFilePath);
 		return false;
 	}
 
@@ -279,7 +278,7 @@ bool UMounteaDialogueGraphFactory::ExtractFilesFromZip(const TArray<uint8>& ZipD
 	}
 
 	zip_close(zip);
-	IFileManager::Get().Delete(*TempFilePath);
+	IFileManager::Get().Delete(*tempFilePath);
 
 	return true;
 }
@@ -732,7 +731,12 @@ void UMounteaDialogueGraphFactory::PopulateNodeData(UMounteaDialogueGraphNode* N
 	{
 		if (UMounteaDialogueGraphNode_ReturnToNode* returnToNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(Node))
 		{
+			UMounteaDialogueGraphNode* targetNode = returnToNode->Graph->FindNodeByGuid(FGuid(AdditionalInfoObject->GetStringField("targetNodeId")));
+			const int32 targetNodeIndex = returnToNode->Graph->AllNodes.Find(targetNode);
+			returnToNode->SelectedNodeIndex = FString::FromInt(targetNodeIndex);
 			returnToNode->SelectedNode = returnToNode->Graph->FindNodeByGuid(FGuid(AdditionalInfoObject->GetStringField("targetNodeId")));
+
+			returnToNode->ReturnNodeUpdated.ExecuteIfBound();
 		}
 	}
 }
