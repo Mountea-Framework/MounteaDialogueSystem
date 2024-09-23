@@ -200,6 +200,10 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Mountea|Import", meta=(TitleProperty="Json file: {JsonFile}", NoResetToDefault, ShowOnlyInnerProperties))
 	TArray<FDialogueImportData> SourceData;
 
+	/** The file this Dialogue was imported from, may be empty */
+	UPROPERTY(VisibleAnywhere, Instanced, Category="Mountea|Import")
+	TObjectPtr<class UAssetImportData> AssetImportData;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
 	bool bCanRenameNode;
 

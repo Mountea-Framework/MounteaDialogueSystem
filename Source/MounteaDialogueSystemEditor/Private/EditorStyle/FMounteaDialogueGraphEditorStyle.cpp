@@ -44,6 +44,10 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.AutoArrange.small", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.AutoArrange", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.AutoArrange.large", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon64x64));
+
+	StyleSet->Set("MDSStyleSet.ExportGraph.small", new IMAGE_BRUSH(TEXT("ExportGraphIcon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.ExportGraph", new IMAGE_BRUSH(TEXT("ExportGraphIcon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.ExportGraph.large", new IMAGE_BRUSH(TEXT("ExportGraphIcon"), Icon64x64));
 	
 	StyleSet->Set("MDSStyleSet.GraphSettings.small", new IMAGE_BRUSH(TEXT("GraphSettings"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.GraphSettings", new IMAGE_BRUSH(TEXT("GraphSettings"), Icon40x40));

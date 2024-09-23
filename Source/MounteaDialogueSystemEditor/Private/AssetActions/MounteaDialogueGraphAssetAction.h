@@ -15,6 +15,11 @@ public:
 	virtual UClass* GetSupportedClass() const override;
 	virtual void OpenAssetEditor(const TArray<UObject*>& InObjects, TSharedPtr<class IToolkitHost> EditWithinLevelEditor = TSharedPtr<IToolkitHost>()) override;
 	virtual uint32 GetCategories() override;
+	virtual void GetActions(const TArray<UObject*>& InObjects, struct FToolMenuSection& Section) override;
+
+protected:
+
+	void ExecuteExportDialogue(TArray< TWeakObjectPtr<UObject> > Objects);
 
 	/*
 	virtual FText GetAssetDescription(const FAssetData& AssetData) const override;

@@ -73,7 +73,8 @@ public class MounteaDialogueSystemEditor : ModuleRules
 				
 				"MainFrame",
 				
-				"GameplayTags"
+				"GameplayTags",
+				"DesktopPlatform",
 				// ... add private dependencies that you statically link with here ...
 			}
 		);
