@@ -26,6 +26,7 @@
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
+#include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
 #include "Framework/Notifications/NotificationManager.h"
 
@@ -1136,82 +1137,18 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateNodesJson(const TArray<
 
 	for (const FDialogueNodeData& Data : NodeData)
 	{
+		if (!Data.Node)
+		{
+			EditorLOG_WARNING(TEXT("[CreateNodesJson] Skipping null node"));
+			continue;
+		}
+
 		TSharedPtr<FJsonObject> NodeObject = MakeShareable(new FJsonObject);
 		NodeObject->SetStringField("id", Data.Node->GetNodeGUID().ToString());
 		NodeObject->SetStringField("type", Data.Type);
-		
-		TSharedPtr<FJsonObject> PositionObject = MakeShareable(new FJsonObject);
-		//PositionObject->SetNumberField("x", Data.Node->NodePosX); // This can be maybe found from Graph->EdGraph and search for EdNodes where EdNode is editor for current Node?
-		//PositionObject->SetNumberField("y", Data.Node->NodePosY);
-		NodeObject->SetObjectField("position", PositionObject);
-		
-		TSharedPtr<FJsonObject> DataObject = MakeShareable(new FJsonObject);
-		DataObject->SetStringField("title", Data.Node->NodeTitle.ToString());
-		
-		TSharedPtr<FJsonObject> AdditionalInfoObject = MakeShareable(new FJsonObject);
 
-		TArray<TSharedPtr<FJsonValue>> DialogueRowsArray;
-		if (const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Data.Node))
-		{
-			if (!DialogueNode->GetDataTable())
-			{
-				EditorLOG_ERROR(TEXT("[CreateNodesJson] Node %s has no Dialogue Table!"), *DialogueNode->GetNodeTitle().ToString());
-				continue;
-			}
-
-			if (!DialogueNode->GetRowName().IsValid())
-			{
-				EditorLOG_ERROR(TEXT("[CreateNodesJson] Node %s has no Dialogue Row Name!"), *DialogueNode->GetNodeTitle().ToString());
-				continue;
-			}
-
-			TArray<FDialogueRow*> DialogueRows;
-			DialogueNode->GetDataTable()->GetAllRows<FDialogueRow>(TEXT(""), DialogueRows);
-
-			if (DialogueRows.Num() <= 0)
-			{
-				EditorLOG_ERROR(TEXT("[CreateNodesJson] Node %s has empty Dialogue Table!"), *DialogueNode->GetNodeTitle().ToString());
-				continue;
-			}
-
-			FDialogueRow* DialogueRowRef = DialogueNode->GetDataTable()->FindRow<FDialogueRow>(DialogueNode->GetRowName(), TEXT(""));
-
-			if (!DialogueRowRef)
-			{
-				EditorLOG_ERROR(TEXT("[CreateNodesJson] Node %s has empty Dialogue Row!"), *DialogueNode->GetNodeTitle().ToString());
-				continue;
-			}
-			
-			TSharedPtr<FJsonObject> ParticipantObject = MakeShareable(new FJsonObject);
-			ParticipantObject->SetStringField("name", DialogueRowRef->DialogueParticipant.ToString());
-			ParticipantObject->SetStringField("category", DialogueRowRef->CompatibleTags.First().ToString());
-			AdditionalInfoObject->SetObjectField("participant", ParticipantObject);
-			
-			for (const auto& RowData : DialogueRowRef->DialogueRowData)
-			{
-				// This is WRONG, I'm using FDialogueRowData as struct that holds all the info!
-				TSharedPtr<FJsonObject> RowObject = MakeShareable(new FJsonObject);
-				RowObject->SetStringField("id", RowData.RowGUID.ToString());
-				RowObject->SetStringField("text", RowData.RowText.ToString());
-				RowObject->SetStringField("audio", RowData.RowSound ? RowData.RowSound->GetPathName() : "null");
-				DialogueRowsArray.Add(MakeShareable(new FJsonValueObject(RowObject)));
-			}
-		}
-		AdditionalInfoObject->SetArrayField("dialogueRows", DialogueRowsArray);
-
-		if (const UMounteaDialogueGraphNode_ReturnToNode* JumpNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(Data.Node))
-		{
-			AdditionalInfoObject->SetStringField("targetNodeId", JumpNode->SelectedNode ? JumpNode->SelectedNode->GetNodeGUID().ToString() : "");
-		}
-		else
-		{
-			AdditionalInfoObject->SetStringField("targetNodeId", "");
-		}
-
-		AdditionalInfoObject->SetStringField("displayName", Data.Node->GetNodeTitle().ToString());
-
-		DataObject->SetObjectField("additionalInfo", AdditionalInfoObject);
-		NodeObject->SetObjectField("data", DataObject);
+		AddNodePosition(NodeObject, Data.Node);
+		AddNodeData(NodeObject, Data.Node);
 
 		NodesArray.Add(MakeShareable(new FJsonValueObject(NodeObject)));
 	}
@@ -1221,6 +1158,113 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateNodesJson(const TArray<
 	FJsonSerializer::Serialize(NodesArray, Writer);
 
 	return OutputString;
+}
+
+void UMounteaDialogueSystemImportExportHelpers::AddNodePosition(const TSharedPtr<FJsonObject>& NodeObject, const UMounteaDialogueGraphNode* Node)
+{
+	const TSharedPtr<FJsonObject> PositionObject = MakeShareable(new FJsonObject);
+
+	if (!Node->Graph || !Node->Graph->EdGraph)
+	{
+		EditorLOG_WARNING(TEXT("[AddNodePosition] Invalid Graph or EdGraph for node %s"), *Node->GetName());
+		NodeObject->SetObjectField("position", PositionObject);
+		return;
+	}
+
+	const UEdGraph_MounteaDialogueGraph* MounteaGraphEditor = Cast<UEdGraph_MounteaDialogueGraph>(Node->Graph->EdGraph);
+	if (!MounteaGraphEditor)
+	{
+		EditorLOG_WARNING(TEXT("[AddNodePosition] Invalid MounteaGraphEditor for node %s"), *Node->GetName());
+		NodeObject->SetObjectField("position", PositionObject);
+		return;
+	}
+
+	const UEdNode_MounteaDialogueGraphNode* const * NodeEditorPtr = MounteaGraphEditor->NodeMap.Find(Node);
+	if (!NodeEditorPtr || !*NodeEditorPtr)
+	{
+		EditorLOG_WARNING(TEXT("[AddNodePosition] Node editor not found for node %s"), *Node->GetName());
+		NodeObject->SetObjectField("position", PositionObject);
+		return;
+	}
+
+	const UEdNode_MounteaDialogueGraphNode* NodeEditor = *NodeEditorPtr;
+	PositionObject->SetNumberField("x", NodeEditor->NodePosX);
+	PositionObject->SetNumberField("y", NodeEditor->NodePosY);
+	
+	NodeObject->SetObjectField("position", PositionObject);
+}
+
+void UMounteaDialogueSystemImportExportHelpers::AddNodeData(const TSharedPtr<FJsonObject>& NodeObject, const UMounteaDialogueGraphNode* Node)
+{
+	const TSharedPtr<FJsonObject> DataObject = MakeShareable(new FJsonObject);
+	DataObject->SetStringField("title", Node->NodeTitle.ToString());
+
+	TSharedPtr<FJsonObject> AdditionalInfoObject = MakeShareable(new FJsonObject);
+
+	if (const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node))
+	{
+		AddDialogueNodeData(AdditionalInfoObject, DialogueNode);
+	}
+
+	if (const UMounteaDialogueGraphNode_ReturnToNode* JumpNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(Node))
+	{
+		AddJumpNodeData(AdditionalInfoObject, JumpNode);
+	}
+
+	DataObject->SetObjectField("additionalInfo", AdditionalInfoObject);
+	NodeObject->SetObjectField("data", DataObject);
+}
+
+void UMounteaDialogueSystemImportExportHelpers::AddDialogueNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode)
+{
+	if (!DialogueNode->GetDataTable())
+	{
+		EditorLOG_ERROR(TEXT("[AddDialogueNodeData] Node %s has no Dialogue Table!"), *DialogueNode->GetNodeTitle().ToString());
+		return;
+	}
+
+	if (!DialogueNode->GetRowName().IsValid())
+	{
+		EditorLOG_ERROR(TEXT("[AddDialogueNodeData] Node %s has no Dialogue Row Name!"), *DialogueNode->GetNodeTitle().ToString());
+		return;
+	}
+
+	FDialogueRow* DialogueRowRef = DialogueNode->GetDataTable()->FindRow<FDialogueRow>(DialogueNode->GetRowName(), TEXT(""));
+	if (!DialogueRowRef)
+	{
+		EditorLOG_ERROR(TEXT("[AddDialogueNodeData] Node %s has empty Dialogue Row!"), *DialogueNode->GetNodeTitle().ToString());
+		return;
+	}
+
+	AdditionalInfoObject->SetStringField("displayName", DialogueRowRef->RowTitle.ToString());
+
+	TSharedPtr<FJsonObject> ParticipantObject = MakeShareable(new FJsonObject);
+	ParticipantObject->SetStringField("name", DialogueRowRef->DialogueParticipant.ToString());
+	ParticipantObject->SetStringField("category", DialogueRowRef->CompatibleTags.First().ToString());
+	AdditionalInfoObject->SetObjectField("participant", ParticipantObject);
+
+	TArray<TSharedPtr<FJsonValue>> DialogueRowsArray;
+	for (const auto& RowData : DialogueRowRef->DialogueRowData)
+	{
+		const TSharedPtr<FJsonObject> RowObject = MakeShareable(new FJsonObject);
+		RowObject->SetStringField("id", RowData.RowGUID.ToString());
+		RowObject->SetStringField("text", RowData.RowText.ToString());
+		RowObject->SetStringField("audio", RowData.RowSound ? RowData.RowSound->GetPathName() : "null");
+		DialogueRowsArray.Add(MakeShareable(new FJsonValueObject(RowObject)));
+	}
+	AdditionalInfoObject->SetArrayField("dialogueRows", DialogueRowsArray);
+}
+
+void UMounteaDialogueSystemImportExportHelpers::AddJumpNodeData(TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_ReturnToNode* Node)
+{
+	if (Node && Node->SelectedNode)
+	{
+		AdditionalInfoObject->SetStringField("targetNodeId", Node->SelectedNode->GetNodeGUID().ToString());
+	}
+	else
+	{
+		AdditionalInfoObject->SetStringField("targetNodeId", "");
+	}
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::ExportAudioFiles(const TArray<FString>& AudioFiles, const FString& ExportPath)

@@ -7,6 +7,8 @@
 #include "MounteaDialogueSystemImportExportHelpers.generated.h"
 
 
+class UMounteaDialogueGraphNode_ReturnToNode;
+class UMounteaDialogueGraphNode_DialogueNodeBase;
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
 class IAssetTools;
@@ -77,4 +79,8 @@ private:
 
 	// Helper functions to generate JSON files
 	static FString CreateNodesJson(const TArray<FDialogueNodeData>& NodeData);
+	static void AddNodePosition(const TSharedPtr<FJsonObject>& NodeObject, const UMounteaDialogueGraphNode* Node);
+	static void AddNodeData(const TSharedPtr<FJsonObject>& NodeObject, const UMounteaDialogueGraphNode* Node);
+	static void AddDialogueNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode);
+	static void AddJumpNodeData(TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_ReturnToNode* Node);
 };
