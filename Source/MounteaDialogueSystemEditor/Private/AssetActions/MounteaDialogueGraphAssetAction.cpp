@@ -6,7 +6,10 @@
 #include "AssetEditor/AssetEditor_MounteaDialogueGraph.h"
 #include "DesktopPlatformModule.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
+#include "Framework/Notifications/NotificationManager.h"
 #include "Graph/MounteaDialogueGraph.h"
+#include "Helpers/MounteaDialogueSystemImportExportHelpers.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueNodeAssetAction"
 
@@ -104,7 +107,24 @@ void FMounteaDialogueGraphAssetAction::ExecuteExportDialogue(TArray<TWeakObjectP
 			OutFilenames
 			);
 
-		// TODO: Use `UMounteaDialogueSystemImportExportHelpers` to actually gather data and export
+		if (OutFilenames.Num() > 0)
+		{
+			const FString& ChosenFilePath = OutFilenames[0];
+			if (UMounteaDialogueSystemImportExportHelpers::ExportDialogueGraph(DialogueGraph, ChosenFilePath))
+			{
+				// Success notification
+				FNotificationInfo Info(FText::Format(LOCTEXT("ExportSuccessful", "Successfully exported {0}"), FText::FromString(DialogueGraph->GetName())));
+				Info.ExpireDuration = 5.0f;
+				FSlateNotificationManager::Get().AddNotification(Info);
+			}
+			else
+			{
+				// Error notification
+				FNotificationInfo Info(FText::Format(LOCTEXT("ExportFailed", "Failed to export {0}"), FText::FromString(DialogueGraph->GetName())));
+				Info.ExpireDuration = 5.0f;
+				FSlateNotificationManager::Get().AddNotification(Info);
+			}
+		}
 	}
 };
 

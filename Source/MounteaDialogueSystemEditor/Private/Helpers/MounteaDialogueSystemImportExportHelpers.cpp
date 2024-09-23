@@ -108,7 +108,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 	if (OutGraph)
 	{
 		OutGraph->Rename(*assetName.ToString());
-		
+
 		if (PopulateGraphFromExtractedFiles(OutGraph, extractedFiles, FilePath))
 		{
 			// 7. Import audio files if present
@@ -117,7 +117,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 			OutGraph->CreateGraph();
 			if (OutGraph->EdGraph)
 			{
-				if (UEdGraph_MounteaDialogueGraph* edGraph = Cast<UEdGraph_MounteaDialogueGraph>(OutGraph->EdGraph))
+				if (UEdGraph_MounteaDialogueGraph *edGraph = Cast<UEdGraph_MounteaDialogueGraph>(OutGraph->EdGraph))
 					edGraph->RebuildMounteaDialogueGraph();
 			}
 
@@ -133,7 +133,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 	}
 
 	// Cleanup
-	for (const auto& File : extractedFiles)
+	for (const auto &File : extractedFiles)
 	{
 		if (File.Key.StartsWith("audio/"))
 		{
@@ -142,6 +142,38 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 	}
 
 	return nullptr;
+}
+bool UMounteaDialogueSystemImportExportHelpers::ExportDialogueGraph(UMounteaDialogueGraph *Graph, const FString &FilePath)
+{
+	if (!Graph)
+	{
+		EditorLOG_ERROR(TEXT("Invalid Graph object provided for export"));
+		return false;
+	}
+
+	TMap<FString, FString> JsonFiles;
+	TArray<FString> AudioFiles;
+
+	if (!GatherAssetsFromGraph(Graph, JsonFiles, AudioFiles))
+	{
+		EditorLOG_ERROR(TEXT("Failed to gather assets from Graph"));
+		return false;
+	}
+
+	const FString ExportDirectory = FPaths::GetPath(FilePath);
+	if (!ExportAudioFiles(AudioFiles, ExportDirectory))
+	{
+		EditorLOG_ERROR(TEXT("Failed to export audio files"));
+		return false;
+	}
+
+	if (!PackToMNTEADLG(JsonFiles, AudioFiles, FilePath))
+	{
+		EditorLOG_ERROR(TEXT("Failed to pack files into MNTEADLG"));
+		return false;
+	}
+
+	return true;
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::IsZipFile(const TArray<uint8>& FileData)
@@ -321,10 +353,10 @@ void UMounteaDialogueSystemImportExportHelpers::ImportAudioFiles(const TMap<FStr
 
 	// Get the Dialogue Rows DataTable
 	FString PackagePath = FPackageName::GetLongPackagePath(InParent->GetPathName());
-    
+	
 	// Extract just the asset name from InParent
 	FString AssetName = FPaths::GetBaseFilename(Graph->GetName());
-    
+	
 	FString DialogueRowsDataTableName = FString::Printf(TEXT("DT_%s_DialogueRows"), *AssetName);
 	FString FullAssetPath = FString::Printf(TEXT("%s/%s"), *PackagePath, *DialogueRowsDataTableName);
 	FSoftObjectPath AssetReference(FullAssetPath);
@@ -350,17 +382,17 @@ void UMounteaDialogueSystemImportExportHelpers::ImportAudioFiles(const TMap<FStr
 			FGuid RowDataGuid = FGuid(FPaths::GetBaseFilename(SubfolderPath));
 
 			FString DestinationPath = FPaths::Combine(FPaths::GetPath(InParent->GetPathName()), TEXT("Audio"), SubfolderPath);
-            
+			
 			FPlatformFileManager::Get().GetPlatformFile().CreateDirectoryTree(*DestinationPath);
-            
+			
 			FString FullDestinationPath = FPaths::Combine(DestinationPath, FPaths::GetCleanFilename(File.Key));
-            
+			
 			FString RelativePackagePath = FString::Printf(TEXT("/Audio/%s"), *SubfolderPath);
 			FString FullPackagePath = PackagePath / RelativePackagePath / FPaths::GetBaseFilename(File.Key);
 			UPackage* SoundWavePackage = CreatePackage(*FullPackagePath);
-            
+			
 			SoundWavePackage->FullyLoad();
-            
+			
 			USoundWave* ImportedSoundWave = AudioEditorModule.ImportSoundWave(SoundWavePackage, FPaths::GetBaseFilename(File.Key), TempAudioPath);
 
 			if (ImportedSoundWave)
@@ -1006,8 +1038,9 @@ UDataTable* UMounteaDialogueSystemImportExportHelpers::CreateDataTable(IAssetToo
 
 void UMounteaDialogueSystemImportExportHelpers::SaveAsset(UObject* Asset)
 {
-	if (!Asset) return;
-	
+	if (!Asset)
+		return;
+
 	Asset->MarkPackageDirty();
 	FAssetRegistryModule::AssetCreated(Asset);
 	const FString PackageName = Asset->GetOutermost()->GetName();
@@ -1017,6 +1050,209 @@ void UMounteaDialogueSystemImportExportHelpers::SaveAsset(UObject* Asset)
 		saveArgs.TopLevelFlags = RF_Public | RF_Standalone;
 	}
 	UPackage::SavePackage(Asset->GetOutermost(), Asset, *PackageFileName, saveArgs);
+}
+
+bool UMounteaDialogueSystemImportExportHelpers::GatherAssetsFromGraph(UMounteaDialogueGraph* Graph, TMap<FString, FString>& OutJsonFiles, TArray<FString>& OutAudioFiles)
+{
+	if (!Graph)
+	{
+		EditorLOG_ERROR(TEXT("[GatherAssetsFromGraph] Invalid Dialogue Graph!"));
+		return false;
+	}
+
+	TArray<FDialogueNodeData> AllNodeData;
+	GatherNodesFromGraph(Graph, AllNodeData);
+
+	// Process nodes and create JSON
+	OutJsonFiles.Add(TEXT("nodes.json"), CreateNodesJson(AllNodeData));
+	/*
+	OutJsonFiles.Add(TEXT("dialogueData.json"), CreateDialogueDataJson(Graph));
+	OutJsonFiles.Add(TEXT("categories.json"), CreateCategoriesJson(Graph));
+	OutJsonFiles.Add(TEXT("participants.json"), CreateParticipantsJson(Graph));	
+	OutJsonFiles.Add(TEXT("edges.json"), CreateEdgesJson(Graph));
+	OutJsonFiles.Add(TEXT("dialogueRows.json"), CreateDialogueRowsJson(AllNodeData));
+	*/
+
+	// Gather audio files
+	GatherAudioFiles(Graph, OutAudioFiles);
+
+	return true;
+}
+
+void UMounteaDialogueSystemImportExportHelpers::GatherNodesFromGraph(const UMounteaDialogueGraph* Graph, TArray<FDialogueNodeData>& OutNodeData)
+{
+	for (UMounteaDialogueGraphNode* Node : Graph->GetAllNodes())
+	{
+		if (!Node) continue;
+
+		if (Cast<UMounteaDialogueGraphNode_StartNode>(Node))
+			OutNodeData.Add(FDialogueNodeData(TEXT("startNode"), Node));
+		else if (Cast<UMounteaDialogueGraphNode_LeadNode>(Node))
+			OutNodeData.Add(FDialogueNodeData(TEXT("leadNode"), Node));
+		else if (Cast<UMounteaDialogueGraphNode_AnswerNode>(Node))
+			OutNodeData.Add(FDialogueNodeData(TEXT("answerNode"), Node));
+		else if (Cast<UMounteaDialogueGraphNode_CompleteNode>(Node))
+			OutNodeData.Add(FDialogueNodeData(TEXT("closeDialogueNode"), Node));
+		else if (Cast<UMounteaDialogueGraphNode_ReturnToNode>(Node))
+			OutNodeData.Add(FDialogueNodeData(TEXT("jumpToNode"), Node));
+		else
+			EditorLOG_WARNING(TEXT("[GatherNodesFromGraph] Unknown node type: %s"), *Node->GetClass()->GetName());
+	}
+}
+
+bool UMounteaDialogueSystemImportExportHelpers::GatherAudioFiles(UMounteaDialogueGraph* Graph, TArray<FString>& OutAudioFiles)
+{
+	if (!Graph)
+		return false;
+
+	/*
+	// Assuming DialogueRowsDataTable is a property of UMounteaDialogueGraph
+	UDataTable* DialogueRowsDataTable = Graph->GetDialogueRowsDataTable();
+	if (!DialogueRowsDataTable) return false;
+
+	for (auto It = DialogueRowsDataTable->GetRowMap().CreateConstIterator(); It; ++It)
+	{
+		FDialogueRow* Row = reinterpret_cast<FDialogueRow*>(It.Value());
+		if (Row)
+		{
+			for (const FDialogueRowData& RowData : Row->DialogueRowData)
+			{
+				if (RowData.RowSound)
+				{
+					FString FilePath = RowData.RowSound->GetOutermost()->GetName();
+					OutAudioFiles.AddUnique(FilePath);
+				}
+			}
+		}
+	}
+	*/
+
+	return true;
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::CreateNodesJson(const TArray<FDialogueNodeData>& NodeData)
+{
+	TArray<TSharedPtr<FJsonValue>> NodesArray;
+
+	for (const FDialogueNodeData& Data : NodeData)
+	{
+		TSharedPtr<FJsonObject> NodeObject = MakeShareable(new FJsonObject);
+		NodeObject->SetStringField("id", Data.Node->GetNodeGUID().ToString());
+		NodeObject->SetStringField("type", Data.Type);
+		
+		TSharedPtr<FJsonObject> PositionObject = MakeShareable(new FJsonObject);
+		//PositionObject->SetNumberField("x", Data.Node->NodePosX); // This can be maybe found from Graph->EdGraph and search for EdNodes where EdNode is editor for current Node?
+		//PositionObject->SetNumberField("y", Data.Node->NodePosY);
+		NodeObject->SetObjectField("position", PositionObject);
+		
+		TSharedPtr<FJsonObject> DataObject = MakeShareable(new FJsonObject);
+		DataObject->SetStringField("title", Data.Node->NodeTitle.ToString());
+		
+		TSharedPtr<FJsonObject> AdditionalInfoObject = MakeShareable(new FJsonObject);
+
+		TArray<TSharedPtr<FJsonValue>> DialogueRowsArray;
+		if (const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Data.Node))
+		{
+			if (!DialogueNode->GetDataTable())
+			{
+				EditorLOG_ERROR(TEXT("[CreateNodesJson] Node %s has no Dialogue Table!"), *DialogueNode->GetNodeTitle().ToString());
+				continue;
+			}
+
+			if (!DialogueNode->GetRowName().IsValid())
+			{
+				EditorLOG_ERROR(TEXT("[CreateNodesJson] Node %s has no Dialogue Row Name!"), *DialogueNode->GetNodeTitle().ToString());
+				continue;
+			}
+
+			TArray<FDialogueRow*> DialogueRows;
+			DialogueNode->GetDataTable()->GetAllRows<FDialogueRow>(TEXT(""), DialogueRows);
+
+			if (DialogueRows.Num() <= 0)
+			{
+				EditorLOG_ERROR(TEXT("[CreateNodesJson] Node %s has empty Dialogue Table!"), *DialogueNode->GetNodeTitle().ToString());
+				continue;
+			}
+
+			FDialogueRow* DialogueRowRef = DialogueNode->GetDataTable()->FindRow<FDialogueRow>(DialogueNode->GetRowName(), TEXT(""));
+
+			if (!DialogueRowRef)
+			{
+				EditorLOG_ERROR(TEXT("[CreateNodesJson] Node %s has empty Dialogue Row!"), *DialogueNode->GetNodeTitle().ToString());
+				continue;
+			}
+			
+			TSharedPtr<FJsonObject> ParticipantObject = MakeShareable(new FJsonObject);
+			ParticipantObject->SetStringField("name", DialogueRowRef->DialogueParticipant.ToString());
+			ParticipantObject->SetStringField("category", DialogueRowRef->CompatibleTags.First().ToString());
+			AdditionalInfoObject->SetObjectField("participant", ParticipantObject);
+			
+			for (const auto& RowData : DialogueRowRef->DialogueRowData)
+			{
+				// This is WRONG, I'm using FDialogueRowData as struct that holds all the info!
+				TSharedPtr<FJsonObject> RowObject = MakeShareable(new FJsonObject);
+				RowObject->SetStringField("id", RowData.RowGUID.ToString());
+				RowObject->SetStringField("text", RowData.RowText.ToString());
+				RowObject->SetStringField("audio", RowData.RowSound ? RowData.RowSound->GetPathName() : "null");
+				DialogueRowsArray.Add(MakeShareable(new FJsonValueObject(RowObject)));
+			}
+		}
+		AdditionalInfoObject->SetArrayField("dialogueRows", DialogueRowsArray);
+
+		if (const UMounteaDialogueGraphNode_ReturnToNode* JumpNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(Data.Node))
+		{
+			AdditionalInfoObject->SetStringField("targetNodeId", JumpNode->SelectedNode ? JumpNode->SelectedNode->GetNodeGUID().ToString() : "");
+		}
+		else
+		{
+			AdditionalInfoObject->SetStringField("targetNodeId", "");
+		}
+
+		AdditionalInfoObject->SetStringField("displayName", Data.Node->GetNodeTitle().ToString());
+
+		DataObject->SetObjectField("additionalInfo", AdditionalInfoObject);
+		NodeObject->SetObjectField("data", DataObject);
+
+		NodesArray.Add(MakeShareable(new FJsonValueObject(NodeObject)));
+	}
+
+	FString OutputString;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+	FJsonSerializer::Serialize(NodesArray, Writer);
+
+	return OutputString;
+}
+
+bool UMounteaDialogueSystemImportExportHelpers::ExportAudioFiles(const TArray<FString>& AudioFiles, const FString& ExportPath)
+{
+	IPlatformFile &PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+
+	for (const FString &AudioFile : AudioFiles)
+	{
+		FString Destination = FPaths::Combine(ExportPath, FPaths::GetCleanFilename(AudioFile));
+		if (!PlatformFile.CopyFile(*Destination, *AudioFile))
+		{
+			EditorLOG_ERROR(TEXT("Failed to copy audio file: %s"), *AudioFile);
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool UMounteaDialogueSystemImportExportHelpers::PackToMNTEADLG(const TMap<FString, FString>& JsonFiles, const TArray<FString>& AudioFiles, const FString& OutputPath)
+{
+	for (const auto &JsonFile : JsonFiles)
+	{
+		FString FilePath = FPaths::Combine(FPaths::GetPath(OutputPath), JsonFile.Key);
+		if (!FFileHelper::SaveStringToFile(JsonFile.Value, *FilePath))
+		{
+			EditorLOG_ERROR(TEXT("Failed to write JSON file: %s"), *FilePath);
+			return false;
+		}
+	}
+
+	return true;
 }
 
 #undef LOCTEXT_NAMESPACE

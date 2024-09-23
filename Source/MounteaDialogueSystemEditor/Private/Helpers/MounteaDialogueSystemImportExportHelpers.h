@@ -11,6 +11,15 @@ class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
 class IAssetTools;
 
+// Define a struct to hold node data
+struct FDialogueNodeData
+{
+	FString Type;
+	UMounteaDialogueGraphNode* Node;
+    
+	FDialogueNodeData(const FString &InType, UMounteaDialogueGraphNode *InNode) : Type(InType), Node(InNode) {}
+};
+
 /**
  *
  */
@@ -29,6 +38,9 @@ class MOUNTEADIALOGUESYSTEMEDITOR_API UMounteaDialogueSystemImportExportHelpers 
 public:
 	// Main import function
 	static bool ImportDialogueGraph(const FString& FilePath, UObject* InParent, FName Name, EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph);
+
+	// Main export function
+	static bool ExportDialogueGraph(UMounteaDialogueGraph* Graph, const FString& FilePath);
 
 	// Helper functions for import process
 	static bool IsZipFile(const TArray<uint8>& FileData);
@@ -54,6 +66,15 @@ private:
 	static UDataTable* CreateDataTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName);
 	static void SaveAsset(UObject* Asset);
 
-	// 2. Import logic
-	// Move all that is inside the Factory Class
+	// Helper functions for export process
+	static bool GatherAssetsFromGraph(UMounteaDialogueGraph* Graph, TMap<FString, FString>& OutJsonFiles, TArray<FString>& OutAudioFiles);
+	static bool ExportAudioFiles(const TArray<FString>& AudioFiles, const FString& ExportPath);
+	static bool PackToMNTEADLG(const TMap<FString, FString>& JsonFiles, const TArray<FString>& AudioFiles, const FString& OutputPath);
+
+	// Helper functions for gathering specific parts of the graph
+	static void GatherNodesFromGraph(const UMounteaDialogueGraph* Graph, TArray<FDialogueNodeData>& OutNodeData);
+	static bool GatherAudioFiles(UMounteaDialogueGraph* Graph, TArray<FString>& OutAudioFiles);
+
+	// Helper functions to generate JSON files
+	static FString CreateNodesJson(const TArray<FDialogueNodeData>& NodeData);
 };
