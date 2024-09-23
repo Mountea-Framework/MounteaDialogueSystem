@@ -44,7 +44,7 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueSystemImportExportHelpers"
 
-bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FString &FilePath, UObject *InParent, FName Name, EObjectFlags Flags, UMounteaDialogueGraph *&OutGraph)
+bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FString& FilePath, UObject* InParent, const FName Name, const EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph)
 {
 	// 1. Load the file
 	TArray<uint8> fileData;
@@ -144,7 +144,8 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 
 	return nullptr;
 }
-bool UMounteaDialogueSystemImportExportHelpers::ExportDialogueGraph(UMounteaDialogueGraph *Graph, const FString &FilePath)
+
+bool UMounteaDialogueSystemImportExportHelpers::ExportDialogueGraph(const UMounteaDialogueGraph* Graph, const FString& FilePath)
 {
 	if (!Graph)
 	{
@@ -280,7 +281,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ExtractFilesFromZip(const TArray
 	return true;
 }
 
-FString UMounteaDialogueSystemImportExportHelpers::BytesToString(const uint8* Bytes, int32 Count)
+FString UMounteaDialogueSystemImportExportHelpers::BytesToString(const uint8* Bytes, const int32 Count)
 {
 	TArray<TCHAR> CharArray;
 	CharArray.SetNum(Count + 1);
@@ -537,7 +538,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateCategories(UMounteaDialo
 	return true;
 }
 
-bool UMounteaDialogueSystemImportExportHelpers::PopulateParticipants(UMounteaDialogueGraph* Graph, const FString& Json)
+bool UMounteaDialogueSystemImportExportHelpers::PopulateParticipants(const UMounteaDialogueGraph* Graph, const FString& Json)
 {
 	if (!Graph)
 	{
@@ -1053,7 +1054,7 @@ void UMounteaDialogueSystemImportExportHelpers::SaveAsset(UObject* Asset)
 	UPackage::SavePackage(Asset->GetOutermost(), Asset, *PackageFileName, saveArgs);
 }
 
-bool UMounteaDialogueSystemImportExportHelpers::GatherAssetsFromGraph(UMounteaDialogueGraph* Graph, TMap<FString, FString>& OutJsonFiles, TArray<FString>& OutAudioFiles)
+bool UMounteaDialogueSystemImportExportHelpers::GatherAssetsFromGraph(const UMounteaDialogueGraph* Graph, TMap<FString, FString>& OutJsonFiles, TArray<FString>& OutAudioFiles)
 {
 	if (!Graph)
 	{
@@ -1066,11 +1067,12 @@ bool UMounteaDialogueSystemImportExportHelpers::GatherAssetsFromGraph(UMounteaDi
 
 	// Process nodes and create JSON
 	OutJsonFiles.Add(TEXT("nodes.json"), CreateNodesJson(AllNodeData));
+	OutJsonFiles.Add(TEXT("edges.json"), CreateEdgesJson(Graph));
+	
 	/*
 	OutJsonFiles.Add(TEXT("dialogueData.json"), CreateDialogueDataJson(Graph));
 	OutJsonFiles.Add(TEXT("categories.json"), CreateCategoriesJson(Graph));
-	OutJsonFiles.Add(TEXT("participants.json"), CreateParticipantsJson(Graph));	
-	OutJsonFiles.Add(TEXT("edges.json"), CreateEdgesJson(Graph));
+	OutJsonFiles.Add(TEXT("participants.json"), CreateParticipantsJson(Graph));		
 	OutJsonFiles.Add(TEXT("dialogueRows.json"), CreateDialogueRowsJson(AllNodeData));
 	*/
 
@@ -1101,7 +1103,7 @@ void UMounteaDialogueSystemImportExportHelpers::GatherNodesFromGraph(const UMoun
 	}
 }
 
-bool UMounteaDialogueSystemImportExportHelpers::GatherAudioFiles(UMounteaDialogueGraph* Graph, TArray<FString>& OutAudioFiles)
+bool UMounteaDialogueSystemImportExportHelpers::GatherAudioFiles(const UMounteaDialogueGraph* Graph, TArray<FString>& OutAudioFiles)
 {
 	if (!Graph)
 		return false;
@@ -1255,7 +1257,7 @@ void UMounteaDialogueSystemImportExportHelpers::AddDialogueNodeData(const TShare
 	AdditionalInfoObject->SetArrayField("dialogueRows", DialogueRowsArray);
 }
 
-void UMounteaDialogueSystemImportExportHelpers::AddJumpNodeData(TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_ReturnToNode* Node)
+void UMounteaDialogueSystemImportExportHelpers::AddJumpNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_ReturnToNode* Node)
 {
 	if (Node && Node->SelectedNode)
 	{
@@ -1265,6 +1267,43 @@ void UMounteaDialogueSystemImportExportHelpers::AddJumpNodeData(TSharedPtr<FJson
 	{
 		AdditionalInfoObject->SetStringField("targetNodeId", "");
 	}
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::CreateEdgesJson(const UMounteaDialogueGraph* Graph)
+{
+	if (!Graph)
+	{
+		EditorLOG_ERROR(TEXT("[CreateEdgesJson] Invalid Graph provided"));
+		return FString();
+	}
+
+	TArray<TSharedPtr<FJsonValue>> EdgesArray;
+
+	for (const UMounteaDialogueGraphNode* Node : Graph->GetAllNodes())
+	{
+		if (!Node) continue;
+
+		for (const UMounteaDialogueGraphNode* ChildNode : Node->GetChildrenNodes())
+		{
+			if (!ChildNode) continue;
+
+			const TSharedPtr<FJsonObject> EdgeObject = MakeShareable(new FJsonObject);
+
+			FString EdgeId = FString::Printf(TEXT("reactflow__edge-%s-%s"), *Node->GetNodeGUID().ToString(), *ChildNode->GetNodeGUID().ToString());
+			EdgeObject->SetStringField("id", EdgeId);
+			EdgeObject->SetStringField("source", Node->GetNodeGUID().ToString());
+			EdgeObject->SetStringField("target", ChildNode->GetNodeGUID().ToString());
+			EdgeObject->SetStringField("type", "customEdge");
+
+			EdgesArray.Add(MakeShareable(new FJsonValueObject(EdgeObject)));
+		}
+	}
+
+	FString OutputString;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+	FJsonSerializer::Serialize(EdgesArray, Writer);
+
+	return OutputString;
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::ExportAudioFiles(const TArray<FString>& AudioFiles, const FString& ExportPath)
