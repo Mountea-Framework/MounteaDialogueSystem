@@ -80,4 +80,5 @@ private:
 	static FString CreateCategoriesJson(const UMounteaDialogueGraph* Graph);
 	static FString CreateDialogueDataJson(const UMounteaDialogueGraph* Graph);
 	static FString CreateParticipantsJson(const UMounteaDialogueGraph* Graph);
+	static FString CreateDialogueRowsJson(const TArray<FDialogueNodeData>& AllNodeData);
 };

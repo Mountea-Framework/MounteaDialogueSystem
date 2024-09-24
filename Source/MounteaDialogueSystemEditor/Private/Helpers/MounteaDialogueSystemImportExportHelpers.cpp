@@ -1072,10 +1072,7 @@ bool UMounteaDialogueSystemImportExportHelpers::GatherAssetsFromGraph(const UMou
 	OutJsonFiles.Add(TEXT("categories.json"), CreateCategoriesJson(Graph));
 	OutJsonFiles.Add(TEXT("dialogueData.json"), CreateDialogueDataJson(Graph));
 	OutJsonFiles.Add(TEXT("participants.json"), CreateParticipantsJson(Graph));
-	
-	/*
 	OutJsonFiles.Add(TEXT("dialogueRows.json"), CreateDialogueRowsJson(AllNodeData));
-	*/
 
 	// Gather audio files
 	GatherAudioFiles(Graph, OutAudioFiles);
@@ -1514,6 +1511,64 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateParticipantsJson(const 
 	FString OutputString;
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
 	FJsonSerializer::Serialize(ParticipantsArray, Writer);
+
+	return OutputString;
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::CreateDialogueRowsJson(const TArray<FDialogueNodeData>& AllNodeData)
+{
+	TArray<TSharedPtr<FJsonValue>> DialogueRowsArray;
+
+	for (const FDialogueNodeData& NodeData : AllNodeData)
+	{
+		if (!NodeData.Node)
+		{
+			continue;
+		}
+
+		const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(NodeData.Node);
+		if (!DialogueNode)
+		{
+			continue;
+		}
+
+		if (!DialogueNode->GetDataTable())
+		{
+			continue;
+		}
+
+		const FDialogueRow* DialogueRow = DialogueNode->GetDataTable()->FindRow<FDialogueRow>(DialogueNode->GetRowName(), TEXT(""));
+		if (!DialogueRow)
+		{
+			continue;
+		}
+
+		for (const FDialogueRowData& RowData : DialogueRow->DialogueRowData)
+		{
+			TSharedPtr<FJsonObject> RowObject = MakeShareable(new FJsonObject);
+
+			RowObject->SetStringField("id", RowData.RowGUID.ToString());
+			RowObject->SetStringField("text", RowData.RowText.ToString());
+			
+			if (RowData.RowSound)
+			{
+				FString AudioPath = FString::Printf(TEXT("audio/%s/%s.wav"), *NodeData.Node->GetNodeGUID().ToString(), *RowData.RowGUID.ToString());
+				RowObject->SetStringField("audioPath", AudioPath);
+			}
+			else
+			{
+				RowObject->SetStringField("audioPath", "null");
+			}
+
+			RowObject->SetStringField("nodeId", NodeData.Node->GetNodeGUID().ToString());
+
+			DialogueRowsArray.Add(MakeShareable(new FJsonValueObject(RowObject)));
+		}
+	}
+
+	FString OutputString;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+	FJsonSerializer::Serialize(DialogueRowsArray, Writer);
 
 	return OutputString;
 }
