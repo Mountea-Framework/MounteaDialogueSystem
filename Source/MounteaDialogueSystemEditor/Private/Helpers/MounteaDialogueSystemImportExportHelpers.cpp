@@ -180,45 +180,24 @@ bool UMounteaDialogueSystemImportExportHelpers::ExportDialogueGraph(const UMount
 	{
 		EditorLOG_ERROR(TEXT("[ExportDialogueGraph] Failed to export audio files"));
 	}
-
-	TSet<FString> AudioDirectories;
-	// Clean up temporary exported audio files
-	for (const FString& ExportedAudioFile : ExportedAudioFiles)
-	{
-		IFileManager::Get().Delete(*ExportedAudioFile);
-	}
-
+	
 	FString AudioDirectory = ExportDirectory;
 	AudioDirectory.Append(TEXT("/Audio"));
 	
-	DeleteDirectoryRecursively(AudioDirectory);
-	//IFileManager::Get().DeleteDirectory(*AudioDirectory, false, true);
+	TSet<FString> AudioDirectories;
+	for (const FString& ExportedAudioFile : ExportedAudioFiles)
+	{
+		AudioDirectories.Add(FPaths::GetPath(ExportedAudioFile));
+		IFileManager::Get().Delete(*ExportedAudioFile);
+	}
+
+	for (const FString& Directory : AudioDirectories)
+	{
+		IFileManager::Get().DeleteDirectory(*Directory, false, true);
+	}
+	IFileManager::Get().DeleteDirectory(*AudioDirectory, false, true);
 
 	return bSuccess;
-}
-
-void UMounteaDialogueSystemImportExportHelpers::DeleteDirectoryRecursively(const FString& Directory)
-{
-	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-	
-	auto DeleteFileOrDir = [&](const TCHAR* Path, bool bIsDirectory) {
-		if (bIsDirectory)
-		{
-			DeleteDirectoryRecursively(Path);
-		}
-		else
-		{
-			PlatformFile.DeleteFile(Path);
-		}
-		return true; // Continue iteration
-	};
-	
-	PlatformFile.IterateDirectory(*Directory, [&](const TCHAR* FilenameOrDirectory, bool bIsDirectory) {
-		return DeleteFileOrDir(FilenameOrDirectory, bIsDirectory);
-	});
-
-
-	PlatformFile.DeleteDirectory(*Directory);
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::IsZipFile(const TArray<uint8>& FileData)

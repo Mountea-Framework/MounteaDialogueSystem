@@ -73,9 +73,6 @@ private:
 	// Helper function to get relative audio paths
 	static FString GetRelativeAudioPath(const USoundBase* Sound, const FString& GraphFolder);
 	static void CreateWAVFile(const TArray<uint8>& InPCMData, uint32 InSampleRate, uint16 InNumChannels, TArray<uint8>& OutWAVData);
-
-	// Helper functions for file management
-	static void DeleteDirectoryRecursively(const FString& Directory);
 	
 	// Helper functions to generate JSON files
 	static FString CreateNodesJson(const TArray<FDialogueNodeData>& NodeData);
