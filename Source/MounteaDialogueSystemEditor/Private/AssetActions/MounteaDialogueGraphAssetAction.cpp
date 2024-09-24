@@ -79,6 +79,18 @@ void FMounteaDialogueGraphAssetAction::GetActions(const TArray<UObject *> &InObj
 			FCanExecuteAction()
 			)
 		);
+
+	// TODO: Enable only of SourceData contains valid path
+	Section.AddMenuEntry(
+		"MounteaDialogueGraph_ReimportGraph",
+		LOCTEXT("MounteaDialogueGraph_ReimportGraphName", "Reimport Dialogue Graph"),
+		LOCTEXT("MounteaDialogueGraph_ReimportGraphTooltip", "Tries to reimport Dialogue Graph from saved source."),
+		FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.ReimportGraph"),
+		FUIAction(
+			FExecuteAction::CreateSP( this, &FMounteaDialogueGraphAssetAction::ExecuteReimportDialogue, DialogueGraphs ),
+			FCanExecuteAction()
+			)
+		);
 }
 
 void FMounteaDialogueGraphAssetAction::ExecuteExportDialogue(TArray<TWeakObjectPtr<UObject>> Objects)
@@ -126,6 +138,10 @@ void FMounteaDialogueGraphAssetAction::ExecuteExportDialogue(TArray<TWeakObjectP
 			}
 		}
 	}
+}
+
+void FMounteaDialogueGraphAssetAction::ExecuteReimportDialogue(TArray<TWeakObjectPtr<UObject>> Objects)
+{
 };
 
 #undef LOCTEXT_NAMESPACE

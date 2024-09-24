@@ -20,7 +20,7 @@ public:
 protected:
 
 	void ExecuteExportDialogue(TArray< TWeakObjectPtr<UObject> > Objects);
-
+	void ExecuteReimportDialogue(TArray< TWeakObjectPtr<UObject> > Objects);
 	/*
 	virtual FText GetAssetDescription(const FAssetData& AssetData) const override;
 	*/
