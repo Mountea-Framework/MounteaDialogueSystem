@@ -19,6 +19,7 @@
 #include "Dom/JsonObject.h"
 #include "Misc/FileHelper.h"
 #include "Misc/PackageName.h"
+#include "Misc/DateTime.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 
@@ -1069,10 +1070,9 @@ bool UMounteaDialogueSystemImportExportHelpers::GatherAssetsFromGraph(const UMou
 	OutJsonFiles.Add(TEXT("nodes.json"), CreateNodesJson(AllNodeData));
 	OutJsonFiles.Add(TEXT("edges.json"), CreateEdgesJson(Graph));
 	OutJsonFiles.Add(TEXT("categories.json"), CreateCategoriesJson(Graph));
-	
-	/*
 	OutJsonFiles.Add(TEXT("dialogueData.json"), CreateDialogueDataJson(Graph));
 	
+	/*		
 	OutJsonFiles.Add(TEXT("participants.json"), CreateParticipantsJson(Graph));
 	OutJsonFiles.Add(TEXT("dialogueRows.json"), CreateDialogueRowsJson(AllNodeData));
 	*/
@@ -1425,6 +1425,30 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateCategoriesJson(const UM
 	FString OutputString;
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
 	FJsonSerializer::Serialize(CategoriesArray, Writer);
+
+	return OutputString;
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::CreateDialogueDataJson(const UMounteaDialogueGraph* Graph)
+{
+	if (!Graph)
+	{
+		EditorLOG_ERROR(TEXT("[CreateDialogueDataJson] Invalid Graph provided"));
+		return FString();
+	}
+
+	TSharedPtr<FJsonObject> DialogueDataObject = MakeShareable(new FJsonObject);
+
+	DialogueDataObject->SetStringField("dialogueGuid", Graph->GetGraphGUID().ToString());
+	DialogueDataObject->SetStringField("dialogueName", Graph->GetName());
+
+	const FDateTime CurrentTime = FDateTime::UtcNow();
+	const FString FormattedDate = CurrentTime.ToIso8601();
+	DialogueDataObject->SetStringField("modifiedOnDate", FormattedDate);
+
+	FString OutputString;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+	FJsonSerializer::Serialize(DialogueDataObject.ToSharedRef(), Writer);
 
 	return OutputString;
 }

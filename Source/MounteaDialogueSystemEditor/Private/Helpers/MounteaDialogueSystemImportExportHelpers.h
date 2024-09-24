@@ -78,4 +78,5 @@ private:
 	static void AddJumpNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_ReturnToNode* Node);
 	static FString CreateEdgesJson(const UMounteaDialogueGraph* Graph);
 	static FString CreateCategoriesJson(const UMounteaDialogueGraph* Graph);
+	static FString CreateDialogueDataJson(const UMounteaDialogueGraph* Graph);
 };
