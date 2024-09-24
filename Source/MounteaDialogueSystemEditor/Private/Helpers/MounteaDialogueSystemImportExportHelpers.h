@@ -63,8 +63,8 @@ private:
 	
 	// Helper functions for export process
 	static bool GatherAssetsFromGraph(const UMounteaDialogueGraph* Graph, TMap<FString, FString>& OutJsonFiles, TArray<FString>& OutAudioFiles);
-	static bool ExportAudioFiles(const TArray<FString>& AudioFiles, const FString& ExportPath);
-	static bool PackToMNTEADLG(const TMap<FString, FString>& JsonFiles, const TArray<FString>& AudioFiles, const FString& OutputPath);
+	static bool ExportAudioFiles(const TArray<FString>& AudioFiles, const FString& ExportPath, TArray<FString>& OutExportedFiles);
+	static bool PackToMNTEADLG(const TMap<FString, FString>& JsonFiles, const TArray<FString>& ExportedAudioFiles, const FString& OutputPath);
 	
 	// Helper functions for gathering specific parts of the graph
 	static void GatherNodesFromGraph(const UMounteaDialogueGraph* Graph, TArray<FDialogueNodeData>& OutNodeData);
@@ -73,6 +73,9 @@ private:
 	// Helper function to get relative audio paths
 	static FString GetRelativeAudioPath(const USoundBase* Sound, const FString& GraphFolder);
 	static void CreateWAVFile(const TArray<uint8>& InPCMData, uint32 InSampleRate, uint16 InNumChannels, TArray<uint8>& OutWAVData);
+
+	// Helper functions for file management
+	static void DeleteDirectoryRecursively(const FString& Directory);
 	
 	// Helper functions to generate JSON files
 	static FString CreateNodesJson(const TArray<FDialogueNodeData>& NodeData);

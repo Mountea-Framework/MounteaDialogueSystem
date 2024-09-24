@@ -164,19 +164,61 @@ bool UMounteaDialogueSystemImportExportHelpers::ExportDialogueGraph(const UMount
 	}
 
 	const FString ExportDirectory = FPaths::GetPath(FilePath);
-	if (!ExportAudioFiles(AudioFiles, ExportDirectory))
+	TArray<FString> ExportedAudioFiles;
+	bool bSuccess = false;
+
+	if (ExportAudioFiles(AudioFiles, ExportDirectory, ExportedAudioFiles))
 	{
-		EditorLOG_ERROR(TEXT("Failed to export audio files"));
-		return false;
+		bSuccess = PackToMNTEADLG(JsonFiles, ExportedAudioFiles, FilePath);
+		
+		if (!bSuccess)
+		{
+			EditorLOG_ERROR(TEXT("[ExportDialogueGraph] Failed to pack files into MNTEADLG"));
+		}
+	}
+	else
+	{
+		EditorLOG_ERROR(TEXT("[ExportDialogueGraph] Failed to export audio files"));
 	}
 
-	if (!PackToMNTEADLG(JsonFiles, AudioFiles, FilePath))
+	TSet<FString> AudioDirectories;
+	// Clean up temporary exported audio files
+	for (const FString& ExportedAudioFile : ExportedAudioFiles)
 	{
-		EditorLOG_ERROR(TEXT("Failed to pack files into MNTEADLG"));
-		return false;
+		IFileManager::Get().Delete(*ExportedAudioFile);
 	}
 
-	return true;
+	FString AudioDirectory = ExportDirectory;
+	AudioDirectory.Append(TEXT("/Audio"));
+	
+	DeleteDirectoryRecursively(AudioDirectory);
+	//IFileManager::Get().DeleteDirectory(*AudioDirectory, false, true);
+
+	return bSuccess;
+}
+
+void UMounteaDialogueSystemImportExportHelpers::DeleteDirectoryRecursively(const FString& Directory)
+{
+	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+	
+	auto DeleteFileOrDir = [&](const TCHAR* Path, bool bIsDirectory) {
+		if (bIsDirectory)
+		{
+			DeleteDirectoryRecursively(Path);
+		}
+		else
+		{
+			PlatformFile.DeleteFile(Path);
+		}
+		return true; // Continue iteration
+	};
+	
+	PlatformFile.IterateDirectory(*Directory, [&](const TCHAR* FilenameOrDirectory, bool bIsDirectory) {
+		return DeleteFileOrDir(FilenameOrDirectory, bIsDirectory);
+	});
+
+
+	PlatformFile.DeleteDirectory(*Directory);
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::IsZipFile(const TArray<uint8>& FileData)
@@ -1316,7 +1358,7 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateEdgesJson(const UMounte
 	return OutputString;
 }
 
-bool UMounteaDialogueSystemImportExportHelpers::ExportAudioFiles(const TArray<FString>& AudioFiles, const FString& ExportPath)
+bool UMounteaDialogueSystemImportExportHelpers::ExportAudioFiles(const TArray<FString>& AudioFiles, const FString& ExportPath, TArray<FString>& OutExportedFiles)
 {
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 	
@@ -1329,8 +1371,20 @@ bool UMounteaDialogueSystemImportExportHelpers::ExportAudioFiles(const TArray<FS
 			continue;
 		}
 
-		FString FileName = FPaths::GetCleanFilename(AudioFile);
-		FString DestinationPath = FPaths::Combine(ExportPath, TEXT("audio"), FileName);
+		// Extract the relative path
+		FString RelativePath = AudioFile;
+		int32 AudioIndex = RelativePath.Find(TEXT("/Audio/"));
+		if (AudioIndex != INDEX_NONE)
+		{
+			RelativePath = RelativePath.RightChop(AudioIndex + 7); // +7 to skip "/Audio/"
+		}
+		else
+		{
+			EditorLOG_WARNING(TEXT("[ExportAudioFiles] Couldn't find '/Audio/' in path: %s"), *AudioFile);
+			// Use the full path as a fallback
+		}
+
+		FString DestinationPath = FPaths::Combine(ExportPath, RelativePath);
 
 		// Ensure the destination directory exists
 		FString DestinationDir = FPaths::GetPath(DestinationPath);
@@ -1358,6 +1412,8 @@ bool UMounteaDialogueSystemImportExportHelpers::ExportAudioFiles(const TArray<FS
 				EditorLOG_ERROR(TEXT("[ExportAudioFiles] Failed to save audio file: %s"), *DestinationPath);
 				return false;
 			}
+
+			OutExportedFiles.Add(DestinationPath);
 		}
 		else
 		{
@@ -1402,9 +1458,9 @@ void UMounteaDialogueSystemImportExportHelpers::CreateWAVFile(const TArray<uint8
 	FMemory::Memcpy(OutWAVData.GetData() + sizeof(WAVHeader), InPCMData.GetData(), InPCMData.Num());
 }
 
-bool UMounteaDialogueSystemImportExportHelpers::PackToMNTEADLG(const TMap<FString, FString>& JsonFiles, const TArray<FString>& AudioFiles, const FString& OutputPath)
+bool UMounteaDialogueSystemImportExportHelpers::PackToMNTEADLG(const TMap<FString, FString>& JsonFiles, const TArray<FString>& ExportedAudioFiles, const FString& OutputPath)
 {
-	FString ZipFilePath = FPaths::ChangeExtension(OutputPath, TEXT("[PackToMNTEADLG] mnteadlg"));
+	FString ZipFilePath = FPaths::ChangeExtension(OutputPath, TEXT("mnteadlg"));
 	
 	struct zip_t* zip = zip_open(TCHAR_TO_UTF8(*ZipFilePath), ZIP_DEFAULT_COMPRESSION_LEVEL, 'w');
 	if (!zip)
@@ -1442,10 +1498,10 @@ bool UMounteaDialogueSystemImportExportHelpers::PackToMNTEADLG(const TMap<FStrin
 	}
 	zip_entry_close(zip);
 	
-	for (const FString& AudioFile : AudioFiles)
+	for (const FString& AudioFile : ExportedAudioFiles)
 	{
 		FString AudioFileName = FPaths::GetCleanFilename(AudioFile);
-		FString ZipAudioPath = FString::Printf(TEXT("[PackToMNTEADLG] audio/%s"), *AudioFileName);
+		FString ZipAudioPath = FString::Printf(TEXT("audio/%s"), *AudioFileName);
 
 		if (zip_entry_open(zip, TCHAR_TO_UTF8(*ZipAudioPath)) < 0)
 		{
