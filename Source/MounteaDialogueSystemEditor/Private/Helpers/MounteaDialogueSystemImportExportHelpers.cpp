@@ -1350,6 +1350,8 @@ bool UMounteaDialogueSystemImportExportHelpers::ExportAudioFiles(const TArray<FS
 			TArray<uint8> WAVData;
 			CreateWAVFile(RawPCMData, SampleRate, NumChannels, WAVData);
 
+			DestinationPath.Append(".wav");
+
 			// Save the WAV data to the destination file
 			if (!FFileHelper::SaveArrayToFile(WAVData, *DestinationPath))
 			{
