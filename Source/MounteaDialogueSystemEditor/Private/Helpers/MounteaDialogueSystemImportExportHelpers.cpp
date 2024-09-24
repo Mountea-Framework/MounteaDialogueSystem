@@ -1072,7 +1072,7 @@ bool UMounteaDialogueSystemImportExportHelpers::GatherAssetsFromGraph(const UMou
 	OutJsonFiles.Add(TEXT("categories.json"), CreateCategoriesJson(Graph));
 	OutJsonFiles.Add(TEXT("dialogueData.json"), CreateDialogueDataJson(Graph));
 	OutJsonFiles.Add(TEXT("participants.json"), CreateParticipantsJson(Graph));
-	OutJsonFiles.Add(TEXT("dialogueRows.json"), CreateDialogueRowsJson(AllNodeData));
+	OutJsonFiles.Add(TEXT("dialogueRows.json"), CreateDialogueRowsJson(AllNodeData, Graph));
 
 	// Gather audio files
 	GatherAudioFiles(Graph, OutAudioFiles);
@@ -1104,29 +1104,39 @@ void UMounteaDialogueSystemImportExportHelpers::GatherNodesFromGraph(const UMoun
 bool UMounteaDialogueSystemImportExportHelpers::GatherAudioFiles(const UMounteaDialogueGraph* Graph, TArray<FString>& OutAudioFiles)
 {
 	if (!Graph)
-		return false;
-
-	/*
-	// Assuming DialogueRowsDataTable is a property of UMounteaDialogueGraph
-	UDataTable* DialogueRowsDataTable = Graph->GetDialogueRowsDataTable();
-	if (!DialogueRowsDataTable) return false;
-
-	for (auto It = DialogueRowsDataTable->GetRowMap().CreateConstIterator(); It; ++It)
 	{
-		FDialogueRow* Row = reinterpret_cast<FDialogueRow*>(It.Value());
-		if (Row)
+		EditorLOG_ERROR(TEXT("[GatherAudioFiles] Invalid Graph provided"));
+		return false;
+	}
+
+	for (const UMounteaDialogueGraphNode* Node : Graph->GetAllNodes())
+	{
+		const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node);
+		if (!DialogueNode)
 		{
-			for (const FDialogueRowData& RowData : Row->DialogueRowData)
+			continue;
+		}
+
+		if (!DialogueNode->GetDataTable())
+		{
+			continue;
+		}
+
+		const FDialogueRow* DialogueRow = DialogueNode->GetDataTable()->FindRow<FDialogueRow>(DialogueNode->GetRowName(), TEXT(""));
+		if (!DialogueRow)
+		{
+			continue;
+		}
+
+		for (const FDialogueRowData& RowData : DialogueRow->DialogueRowData)
+		{
+			if (RowData.RowSound)
 			{
-				if (RowData.RowSound)
-				{
-					FString FilePath = RowData.RowSound->GetOutermost()->GetName();
-					OutAudioFiles.AddUnique(FilePath);
-				}
+				FString AudioPath = RowData.RowSound->GetOuter()->GetName();
+				OutAudioFiles.AddUnique(AudioPath);
 			}
 		}
 	}
-	*/
 
 	return true;
 }
@@ -1243,13 +1253,15 @@ void UMounteaDialogueSystemImportExportHelpers::AddDialogueNodeData(const TShare
 	ParticipantObject->SetStringField("category", DialogueRowRef->CompatibleTags.First().ToString());
 	AdditionalInfoObject->SetObjectField("participant", ParticipantObject);
 
+	const FString GraphFolder = FPaths::GetPath(DialogueNode->Graph->GetPathName());
+
 	TArray<TSharedPtr<FJsonValue>> DialogueRowsArray;
 	for (const auto& RowData : DialogueRowRef->DialogueRowData)
 	{
 		const TSharedPtr<FJsonObject> RowObject = MakeShareable(new FJsonObject);
 		RowObject->SetStringField("id", RowData.RowGUID.ToString());
 		RowObject->SetStringField("text", RowData.RowText.ToString());
-		RowObject->SetStringField("audio", RowData.RowSound ? RowData.RowSound->GetPathName() : "null");
+		RowObject->SetStringField("audio", GetRelativeAudioPath(RowData.RowSound, GraphFolder));
 		DialogueRowsArray.Add(MakeShareable(new FJsonValueObject(RowObject)));
 	}
 	AdditionalInfoObject->SetArrayField("dialogueRows", DialogueRowsArray);
@@ -1306,14 +1318,48 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateEdgesJson(const UMounte
 
 bool UMounteaDialogueSystemImportExportHelpers::ExportAudioFiles(const TArray<FString>& AudioFiles, const FString& ExportPath)
 {
-	IPlatformFile &PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-
-	for (const FString &AudioFile : AudioFiles)
+	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+	
+	for (const FString& AudioFile : AudioFiles)
 	{
-		FString Destination = FPaths::Combine(ExportPath, FPaths::GetCleanFilename(AudioFile));
-		if (!PlatformFile.CopyFile(*Destination, *AudioFile))
+		const USoundWave* SoundWave = LoadObject<USoundWave>(nullptr, *AudioFile);
+		if (!SoundWave)
 		{
-			EditorLOG_ERROR(TEXT("Failed to copy audio file: %s"), *AudioFile);
+			EditorLOG_ERROR(TEXT("[ExportAudioFiles] Failed to load audio file: %s"), *AudioFile);
+			continue;
+		}
+
+		FString FileName = FPaths::GetCleanFilename(AudioFile);
+		FString DestinationPath = FPaths::Combine(ExportPath, TEXT("audio"), FileName);
+
+		// Ensure the destination directory exists
+		FString DestinationDir = FPaths::GetPath(DestinationPath);
+		if (!PlatformFile.CreateDirectoryTree(*DestinationDir))
+		{
+			EditorLOG_ERROR(TEXT("[ExportAudioFiles] Failed to create directory: %s"), *DestinationDir);
+			return false;
+		}
+
+		// Get the raw PCM data
+		TArray<uint8> RawPCMData;
+		uint32 SampleRate;
+		uint16 NumChannels;
+
+		if (SoundWave->GetImportedSoundWaveData(RawPCMData, SampleRate, NumChannels))
+		{
+			TArray<uint8> WAVData;
+			CreateWAVFile(RawPCMData, SampleRate, NumChannels, WAVData);
+
+			// Save the WAV data to the destination file
+			if (!FFileHelper::SaveArrayToFile(WAVData, *DestinationPath))
+			{
+				EditorLOG_ERROR(TEXT("[ExportAudioFiles] Failed to save audio file: %s"), *DestinationPath);
+				return false;
+			}
+		}
+		else
+		{
+			EditorLOG_ERROR(TEXT("[ExportAudioFiles] Failed to get imported sound wave data for: %s"), *AudioFile);
 			return false;
 		}
 	}
@@ -1321,18 +1367,113 @@ bool UMounteaDialogueSystemImportExportHelpers::ExportAudioFiles(const TArray<FS
 	return true;
 }
 
+void UMounteaDialogueSystemImportExportHelpers::CreateWAVFile(const TArray<uint8>& InPCMData, uint32 InSampleRate, uint16 InNumChannels, TArray<uint8>& OutWAVData)
+{
+	// WAV file header
+	struct WAVHeader
+	{
+		uint8 ChunkID[4] = {'R', 'I', 'F', 'F'};
+		uint32 ChunkSize;
+		uint8 Format[4] = {'W', 'A', 'V', 'E'};
+		uint8 Subchunk1ID[4] = {'f', 'm', 't', ' '};
+		uint32 Subchunk1Size = 16;
+		uint16 AudioFormat = 1;
+		uint16 NumChannels;
+		uint32 SampleRate;
+		uint32 ByteRate;
+		uint16 BlockAlign;
+		uint16 BitsPerSample = 16;
+		uint8 Subchunk2ID[4] = {'d', 'a', 't', 'a'};
+		uint32 Subchunk2Size;
+	};
+
+	WAVHeader Header;
+	Header.NumChannels = InNumChannels;
+	Header.SampleRate = InSampleRate;
+	Header.ByteRate = InSampleRate * InNumChannels * 2;
+	Header.BlockAlign = InNumChannels * 2;
+	Header.Subchunk2Size = InPCMData.Num();
+	Header.ChunkSize = 36 + Header.Subchunk2Size;
+
+	OutWAVData.SetNum(sizeof(WAVHeader) + InPCMData.Num());
+	FMemory::Memcpy(OutWAVData.GetData(), &Header, sizeof(WAVHeader));
+	FMemory::Memcpy(OutWAVData.GetData() + sizeof(WAVHeader), InPCMData.GetData(), InPCMData.Num());
+}
+
 bool UMounteaDialogueSystemImportExportHelpers::PackToMNTEADLG(const TMap<FString, FString>& JsonFiles, const TArray<FString>& AudioFiles, const FString& OutputPath)
 {
-	for (const auto &JsonFile : JsonFiles)
+	FString ZipFilePath = FPaths::ChangeExtension(OutputPath, TEXT("[PackToMNTEADLG] mnteadlg"));
+	
+	struct zip_t* zip = zip_open(TCHAR_TO_UTF8(*ZipFilePath), ZIP_DEFAULT_COMPRESSION_LEVEL, 'w');
+	if (!zip)
 	{
-		FString FilePath = FPaths::Combine(FPaths::GetPath(OutputPath), JsonFile.Key);
-		if (!FFileHelper::SaveStringToFile(JsonFile.Value, *FilePath))
+		EditorLOG_ERROR(TEXT("[PackToMNTEADLG] Failed to create zip file: %s"), *ZipFilePath);
+		return false;
+	}
+	
+	for (const auto& JsonFile : JsonFiles)
+	{
+		if (zip_entry_open(zip, TCHAR_TO_UTF8(*JsonFile.Key)) < 0)
 		{
-			EditorLOG_ERROR(TEXT("Failed to write JSON file: %s"), *FilePath);
+			EditorLOG_ERROR(TEXT("[PackToMNTEADLG] Failed to open zip entry for JSON file: %s"), *JsonFile.Key);
+			zip_close(zip);
 			return false;
 		}
+
+		if (zip_entry_write(zip, TCHAR_TO_UTF8(*JsonFile.Value), JsonFile.Value.Len()) < 0)
+		{
+			EditorLOG_ERROR(TEXT("[PackToMNTEADLG] Failed to write JSON file to zip: %s"), *JsonFile.Key);
+			zip_entry_close(zip);
+			zip_close(zip);
+			return false;
+		}
+
+		zip_entry_close(zip);
 	}
 
+	// Always add an empty 'audio' directory
+	if (zip_entry_open(zip, "audio/") < 0)
+	{
+		EditorLOG_ERROR(TEXT("[PackToMNTEADLG] Failed to add 'audio' directory to zip"));
+		zip_close(zip);
+		return false;
+	}
+	zip_entry_close(zip);
+	
+	for (const FString& AudioFile : AudioFiles)
+	{
+		FString AudioFileName = FPaths::GetCleanFilename(AudioFile);
+		FString ZipAudioPath = FString::Printf(TEXT("[PackToMNTEADLG] audio/%s"), *AudioFileName);
+
+		if (zip_entry_open(zip, TCHAR_TO_UTF8(*ZipAudioPath)) < 0)
+		{
+			EditorLOG_ERROR(TEXT("[PackToMNTEADLG] Failed to open zip entry for audio file: %s"), *AudioFileName);
+			zip_close(zip);
+			return false;
+		}
+
+		TArray<uint8> AudioFileData;
+		if (!FFileHelper::LoadFileToArray(AudioFileData, *AudioFile))
+		{
+			EditorLOG_ERROR(TEXT("[PackToMNTEADLG] Failed to read audio file: %s"), *AudioFile);
+			zip_entry_close(zip);
+			zip_close(zip);
+			return false;
+		}
+
+		if (zip_entry_write(zip, AudioFileData.GetData(), AudioFileData.Num()) < 0)
+		{
+			EditorLOG_ERROR(TEXT("[PackToMNTEADLG] Failed to write audio file to zip: %s"), *AudioFileName);
+			zip_entry_close(zip);
+			zip_close(zip);
+			return false;
+		}
+
+		zip_entry_close(zip);
+	}
+
+	zip_close(zip);
+	
 	return true;
 }
 
@@ -1515,9 +1656,18 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateParticipantsJson(const 
 	return OutputString;
 }
 
-FString UMounteaDialogueSystemImportExportHelpers::CreateDialogueRowsJson(const TArray<FDialogueNodeData>& AllNodeData)
+FString UMounteaDialogueSystemImportExportHelpers::CreateDialogueRowsJson(const TArray<FDialogueNodeData>& AllNodeData, const UMounteaDialogueGraph* Graph)
 {
 	TArray<TSharedPtr<FJsonValue>> DialogueRowsArray;
+
+	if (!Graph)
+	{
+		EditorLOG_ERROR(TEXT("[CreateDialogueRowsJson] Invalid Graph provided"));
+		return FString();
+	}
+
+	const FString GraphPath = Graph->GetPathName();
+	const FString GraphFolder = FPaths::GetPath(GraphPath);
 
 	for (const FDialogueNodeData& NodeData : AllNodeData)
 	{
@@ -1549,17 +1699,7 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateDialogueRowsJson(const 
 
 			RowObject->SetStringField("id", RowData.RowGUID.ToString());
 			RowObject->SetStringField("text", RowData.RowText.ToString());
-			
-			if (RowData.RowSound)
-			{
-				FString AudioPath = FString::Printf(TEXT("audio/%s/%s.wav"), *NodeData.Node->GetNodeGUID().ToString(), *RowData.RowGUID.ToString());
-				RowObject->SetStringField("audioPath", AudioPath);
-			}
-			else
-			{
-				RowObject->SetStringField("audioPath", "null");
-			}
-
+			RowObject->SetStringField("audioPath", GetRelativeAudioPath(RowData.RowSound, GraphFolder));
 			RowObject->SetStringField("nodeId", NodeData.Node->GetNodeGUID().ToString());
 
 			DialogueRowsArray.Add(MakeShareable(new FJsonValueObject(RowObject)));
@@ -1571,6 +1711,32 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateDialogueRowsJson(const 
 	FJsonSerializer::Serialize(DialogueRowsArray, Writer);
 
 	return OutputString;
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::GetRelativeAudioPath(const USoundBase* Sound, const FString& GraphFolder)
+{
+	if (!Sound)
+	{
+		return TEXT("null");
+	}
+
+	const FString FullAudioPath = Sound->GetOuter()->GetName();
+	FString RelativeAudioPath = FullAudioPath;
+
+	// Remove the common part of the path
+	if (FullAudioPath.StartsWith(GraphFolder))
+	{
+		RelativeAudioPath = FullAudioPath.RightChop(GraphFolder.Len() + 1);
+		RelativeAudioPath.Append(TEXT(".wav"));
+	}
+
+	// Ensure the path starts with "audio/"
+	if (!RelativeAudioPath.StartsWith(TEXT("audio/")))
+	{
+		RelativeAudioPath = FString::Printf(TEXT("audio/%s"), *RelativeAudioPath);
+	}
+
+	return RelativeAudioPath;
 }
 
 #undef LOCTEXT_NAMESPACE

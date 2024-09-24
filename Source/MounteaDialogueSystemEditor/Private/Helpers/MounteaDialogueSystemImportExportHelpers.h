@@ -18,7 +18,7 @@ struct FDialogueNodeData
 {
 	FString Type;
 	UMounteaDialogueGraphNode* Node;
-    
+	
 	FDialogueNodeData(const FString &InType, UMounteaDialogueGraphNode *InNode) : Type(InType), Node(InNode) {}
 };
 
@@ -69,6 +69,10 @@ private:
 	// Helper functions for gathering specific parts of the graph
 	static void GatherNodesFromGraph(const UMounteaDialogueGraph* Graph, TArray<FDialogueNodeData>& OutNodeData);
 	static bool GatherAudioFiles(const UMounteaDialogueGraph* Graph, TArray<FString>& OutAudioFiles);
+
+	// Helper function to get relative audio paths
+	static FString GetRelativeAudioPath(const USoundBase* Sound, const FString& GraphFolder);
+	static void CreateWAVFile(const TArray<uint8>& InPCMData, uint32 InSampleRate, uint16 InNumChannels, TArray<uint8>& OutWAVData);
 	
 	// Helper functions to generate JSON files
 	static FString CreateNodesJson(const TArray<FDialogueNodeData>& NodeData);
@@ -80,5 +84,5 @@ private:
 	static FString CreateCategoriesJson(const UMounteaDialogueGraph* Graph);
 	static FString CreateDialogueDataJson(const UMounteaDialogueGraph* Graph);
 	static FString CreateParticipantsJson(const UMounteaDialogueGraph* Graph);
-	static FString CreateDialogueRowsJson(const TArray<FDialogueNodeData>& AllNodeData);
+	static FString CreateDialogueRowsJson(const TArray<FDialogueNodeData>& AllNodeData, const UMounteaDialogueGraph* Graph);
 };
