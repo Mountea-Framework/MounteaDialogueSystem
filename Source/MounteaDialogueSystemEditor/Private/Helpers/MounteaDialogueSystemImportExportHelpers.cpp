@@ -1068,11 +1068,12 @@ bool UMounteaDialogueSystemImportExportHelpers::GatherAssetsFromGraph(const UMou
 	// Process nodes and create JSON
 	OutJsonFiles.Add(TEXT("nodes.json"), CreateNodesJson(AllNodeData));
 	OutJsonFiles.Add(TEXT("edges.json"), CreateEdgesJson(Graph));
+	OutJsonFiles.Add(TEXT("categories.json"), CreateCategoriesJson(Graph));
 	
 	/*
 	OutJsonFiles.Add(TEXT("dialogueData.json"), CreateDialogueDataJson(Graph));
-	OutJsonFiles.Add(TEXT("categories.json"), CreateCategoriesJson(Graph));
-	OutJsonFiles.Add(TEXT("participants.json"), CreateParticipantsJson(Graph));		
+	
+	OutJsonFiles.Add(TEXT("participants.json"), CreateParticipantsJson(Graph));
 	OutJsonFiles.Add(TEXT("dialogueRows.json"), CreateDialogueRowsJson(AllNodeData));
 	*/
 
@@ -1336,6 +1337,96 @@ bool UMounteaDialogueSystemImportExportHelpers::PackToMNTEADLG(const TMap<FStrin
 	}
 
 	return true;
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::CreateCategoriesJson(const UMounteaDialogueGraph* Graph)
+{
+	if (!Graph)
+	{
+		EditorLOG_ERROR(TEXT("[CreateCategoriesJson] Invalid Graph provided"));
+		return FString();
+	}
+
+	TSet<FGameplayTag> AllCategories;
+	
+	for (const UMounteaDialogueGraphNode* Node : Graph->GetAllNodes())
+	{
+		const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node);
+		if (!DialogueNode)
+		{
+			continue;
+		}
+
+		if (!DialogueNode->GetDataTable())
+		{
+			continue;
+		}
+		
+		const FDialogueRow* DialogueRow = DialogueNode->GetDataTable()->FindRow<FDialogueRow>(DialogueNode->GetRowName(), TEXT(""));
+		if (!DialogueRow)
+		{
+			continue;
+		}
+		
+		auto CompatibleTags = DialogueRow->CompatibleTags;
+		for (const auto& Itr : CompatibleTags)
+		{
+			AllCategories.Add(Itr);
+		}
+	}
+
+	TArray<TSharedPtr<FJsonValue>> CategoriesArray;
+
+	for (const FGameplayTag& Tag : AllCategories)
+	{
+		TSharedPtr<FJsonObject> CategoryObject = MakeShareable(new FJsonObject);
+
+		FString TagString = Tag.ToString();
+		const FString Prefix = TEXT("MounteaDialogue.Categories.");
+		
+		if (TagString.StartsWith(Prefix))
+		{
+			FString CategoryPath = TagString.RightChop(Prefix.Len());
+			TArray<FString> CategoryParts;
+			CategoryPath.ParseIntoArray(CategoryParts, TEXT("."));
+
+			if (CategoryParts.Num() > 0)
+			{
+				FString Name = CategoryParts.Last();
+				
+				FString Parent;
+				for (int32 i = 0; i < CategoryParts.Num() - 1; ++i)
+				{
+					if (!Parent.IsEmpty())
+					{
+						Parent += TEXT(".");
+					}
+					Parent += CategoryParts[i];
+				}
+
+				CategoryObject->SetStringField("name", Name);
+				CategoryObject->SetStringField("parent", Parent);
+
+				CategoriesArray.Add(MakeShareable(new FJsonValueObject(CategoryObject)));
+			}
+		}
+	}
+	
+	CategoriesArray.Sort([](const TSharedPtr<FJsonValue>& A, const TSharedPtr<FJsonValue>& B) {
+		const TSharedPtr<FJsonObject>& ObjectA = A->AsObject();
+		const TSharedPtr<FJsonObject>& ObjectB = B->AsObject();
+		
+		const FString NameA = ObjectA->GetStringField("name");
+		const FString NameB = ObjectB->GetStringField("name");
+		
+		return NameA < NameB;
+	});
+
+	FString OutputString;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+	FJsonSerializer::Serialize(CategoriesArray, Writer);
+
+	return OutputString;
 }
 
 #undef LOCTEXT_NAMESPACE
