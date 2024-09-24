@@ -79,4 +79,5 @@ private:
 	static FString CreateEdgesJson(const UMounteaDialogueGraph* Graph);
 	static FString CreateCategoriesJson(const UMounteaDialogueGraph* Graph);
 	static FString CreateDialogueDataJson(const UMounteaDialogueGraph* Graph);
+	static FString CreateParticipantsJson(const UMounteaDialogueGraph* Graph);
 };

@@ -1071,9 +1071,9 @@ bool UMounteaDialogueSystemImportExportHelpers::GatherAssetsFromGraph(const UMou
 	OutJsonFiles.Add(TEXT("edges.json"), CreateEdgesJson(Graph));
 	OutJsonFiles.Add(TEXT("categories.json"), CreateCategoriesJson(Graph));
 	OutJsonFiles.Add(TEXT("dialogueData.json"), CreateDialogueDataJson(Graph));
-	
-	/*		
 	OutJsonFiles.Add(TEXT("participants.json"), CreateParticipantsJson(Graph));
+	
+	/*
 	OutJsonFiles.Add(TEXT("dialogueRows.json"), CreateDialogueRowsJson(AllNodeData));
 	*/
 
@@ -1449,6 +1449,71 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateDialogueDataJson(const 
 	FString OutputString;
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
 	FJsonSerializer::Serialize(DialogueDataObject.ToSharedRef(), Writer);
+
+	return OutputString;
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::CreateParticipantsJson(const UMounteaDialogueGraph* Graph)
+{
+	if (!Graph)
+	{
+		EditorLOG_ERROR(TEXT("[CreateParticipantsJson] Invalid Graph provided"));
+		return FString();
+	}
+
+	TSet<TPair<FString, FString>> UniqueParticipants;
+
+	for (const UMounteaDialogueGraphNode* Node : Graph->GetAllNodes())
+	{
+		const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node);
+		if (!DialogueNode)
+		{
+			continue;
+		}
+
+		if (!DialogueNode->GetDataTable())
+		{
+			continue;
+		}
+
+		const FDialogueRow* DialogueRow = DialogueNode->GetDataTable()->FindRow<FDialogueRow>(DialogueNode->GetRowName(), TEXT(""));
+		if (!DialogueRow)
+		{
+			continue;
+		}
+
+		FString Category;
+		if (DialogueRow->CompatibleTags.Num() > 0)
+		{
+			Category = DialogueRow->CompatibleTags.First().GetTagName().ToString();
+			const FString Prefix = TEXT("MounteaDialogue.Categories.");
+			if (Category.StartsWith(Prefix))
+			{
+				Category = Category.RightChop(Prefix.Len());
+			}
+		}
+
+		const FString Name = DialogueRow->DialogueParticipant.ToString();
+
+		if (!Category.IsEmpty() && !Name.IsEmpty())
+		{
+			UniqueParticipants.Add(TPair<FString, FString>(Name, Category));
+		}
+	}
+
+	TArray<TSharedPtr<FJsonValue>> ParticipantsArray;
+
+	for (const auto& Participant : UniqueParticipants)
+	{
+		TSharedPtr<FJsonObject> ParticipantObject = MakeShareable(new FJsonObject);
+		ParticipantObject->SetStringField("name", Participant.Key);
+		ParticipantObject->SetStringField("category", Participant.Value);
+		ParticipantsArray.Add(MakeShareable(new FJsonValueObject(ParticipantObject)));
+	}
+
+	FString OutputString;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+	FJsonSerializer::Serialize(ParticipantsArray, Writer);
 
 	return OutputString;
 }
