@@ -24,6 +24,7 @@
 #include "Styling/SlateStyleRegistry.h"
 
 #include "ToolMenus.h"
+#include "AssetActions/MounteaDialogueDataTableAssetAction.h"
 #include "DetailsPanel/MounteaDialogueDecorator_Details.h"
 #include "HelpButton/MDSCommands.h"
 #include "HelpButton/MDSHelpStyle.h"
@@ -79,14 +80,15 @@ void FMounteaDialogueSystemEditor::StartupModule()
 
 	// Asset Actions
 	{
-		MounteaDialogueGraphAssetActions = MakeShared<FMounteaDialogueGraphAssetAction>();
-		FAssetToolsModule::GetModule().Get().RegisterAssetTypeActions(MounteaDialogueGraphAssetActions.ToSharedRef());
+		AssetActions.Add(MakeShared<FMounteaDialogueGraphAssetAction>());
+		AssetActions.Add(MakeShared<FMounteaDialogueAdditionalDataAssetAction>());
+		AssetActions.Add(MakeShared<FMounteaDialogueDecoratorAssetAction>());
+		AssetActions.Add(MakeShared<FMounteaDialogueDataTableAssetAction>());
 
-		MounteaDialogueAdditionalDataAssetActions = MakeShared<FMounteaDialogueAdditionalDataAssetAction>();
-		FAssetToolsModule::GetModule().Get().RegisterAssetTypeActions(MounteaDialogueAdditionalDataAssetActions.ToSharedRef());
-		
-		MounteaDialogueDecoratorAssetAction = MakeShared<FMounteaDialogueDecoratorAssetAction>();
-		FAssetToolsModule::GetModule().Get().RegisterAssetTypeActions(MounteaDialogueDecoratorAssetAction.ToSharedRef());
+		for (const auto& Itr : AssetActions)
+		{
+			FAssetToolsModule::GetModule().Get().RegisterAssetTypeActions(Itr.ToSharedRef());
+		}
 	}
 
 	// Thumbnails and Icons
@@ -235,8 +237,9 @@ void FMounteaDialogueSystemEditor::ShutdownModule()
 	{
 		if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
 		{
+			for (const auto& Itr : AssetActions)
 			{
-				FAssetToolsModule::GetModule().Get().UnregisterAssetTypeActions(MounteaDialogueGraphAssetActions.ToSharedRef());
+				FAssetToolsModule::GetModule().Get().UnregisterAssetTypeActions(Itr.ToSharedRef());
 			}
 		}
 	}
