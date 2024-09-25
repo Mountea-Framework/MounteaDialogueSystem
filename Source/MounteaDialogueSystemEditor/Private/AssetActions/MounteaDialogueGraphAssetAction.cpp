@@ -8,6 +8,7 @@
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Graph/MounteaDialogueGraph.h"
+#include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Helpers/MounteaDialogueSystemImportExportHelpers.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
@@ -73,7 +74,7 @@ void FMounteaDialogueGraphAssetAction::GetActions(const TArray<UObject *> &InObj
 		"MounteaDialogueGraph_ExportGraph",
 		LOCTEXT("MounteaDialogueGraph_ExportGraphName", "Export Dialogue Graph"),
 		LOCTEXT("MounteaDialogueGraph_ExportGraphTooltip", "Export the Dialogue Graph as a file containing MNTEADLG data."),
-		FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.ExportGraph"),
+		FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.ExportGraph.Large"),
 		FUIAction(
 			FExecuteAction::CreateSP( this, &FMounteaDialogueGraphAssetAction::ExecuteExportDialogue, DialogueGraphs ),
 			FCanExecuteAction()
@@ -85,7 +86,7 @@ void FMounteaDialogueGraphAssetAction::GetActions(const TArray<UObject *> &InObj
 		"MounteaDialogueGraph_ReimportGraph",
 		LOCTEXT("MounteaDialogueGraph_ReimportGraphName", "Reimport Dialogue Graph"),
 		LOCTEXT("MounteaDialogueGraph_ReimportGraphTooltip", "Tries to reimport Dialogue Graph from saved source."),
-		FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.ReimportGraph"),
+		FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.ReimportGraph.Large"),
 		FUIAction(
 			FExecuteAction::CreateSP( this, &FMounteaDialogueGraphAssetAction::ExecuteReimportDialogue, DialogueGraphs ),
 			FCanExecuteAction()
@@ -142,6 +143,7 @@ void FMounteaDialogueGraphAssetAction::ExecuteExportDialogue(TArray<TWeakObjectP
 
 void FMounteaDialogueGraphAssetAction::ExecuteReimportDialogue(TArray<TWeakObjectPtr<UObject>> Objects)
 {
+	EditorLOG_WARNING(TEXT("[ExecuteReimportDialogue] This logic is not yet implemented!"))
 };
 
 #undef LOCTEXT_NAMESPACE
