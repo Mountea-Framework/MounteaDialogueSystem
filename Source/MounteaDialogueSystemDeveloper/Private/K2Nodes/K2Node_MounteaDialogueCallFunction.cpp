@@ -99,18 +99,19 @@ FText UK2Node_MounteaDialogueCallFunction::GetTooltipText() const
 
 FLinearColor UK2Node_MounteaDialogueCallFunction::GetNodeTitleColor() const
 {
+	
 	switch (GetFunctionRole())
 	{
-		case EFunctionRole::Validate: return FLinearColor(.0f, 0.75f, .925f);
-		case EFunctionRole::Set: return FLinearColor(1.0f, .7f, .1f);
-		case EFunctionRole::Get: return FLinearColor(.27f, 0.0f, .4f);
+		case EFunctionRole::Validate: return FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("99621e")));
+		case EFunctionRole::Set: return FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("420039")));
+		case EFunctionRole::Get: return FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("05204a")));
 		default: return Super::GetNodeTitleColor();
 	}
 }
 
 FName UK2Node_MounteaDialogueCallFunction::GetCornerIcon() const
 {
-	return Super::GetCornerIcon();
+	return TEXT("MDSStyleSet.MounteaLogo");
 	// TODO: Add custom icons for different function types
 }
 

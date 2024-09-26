@@ -19,6 +19,9 @@ void FMounteaDialogueGraphEditorStyle::Initialize()
 	{
 		Create();
 		FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
+
+		StyleSet->SetParentStyleName(FAppStyle::GetAppStyleSetName());
+		FAppStyle::SetAppStyleSet(*StyleSet);
 	}
 }
 
@@ -40,6 +43,10 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	
 	StyleSet = MakeShareable(new FSlateStyleSet(GetAppStyleSetName()));
 	StyleSet->SetContentRoot(IPluginManager::Get().FindPlugin("MounteaDialogueSystem")->GetBaseDir() / TEXT("Resources"));
+	
+	StyleSet->Set("MDSStyleSet.MounteaLogo.small", new IMAGE_BRUSH(TEXT("Mountea_Logo"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.MounteaLogo", new IMAGE_BRUSH(TEXT("Mountea_Logo"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.MounteaLogo.large", new IMAGE_BRUSH(TEXT("Mountea_Logo"), Icon64x64));
 
 	StyleSet->Set("MDSStyleSet.K2Node_GetterIcon.small", new IMAGE_BRUSH(TEXT("K2Node_GetterIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.K2Node_GetterIcon", new IMAGE_BRUSH(TEXT("K2Node_GetterIcon"), Icon40x40));
