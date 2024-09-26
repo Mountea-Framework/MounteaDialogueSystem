@@ -44,18 +44,19 @@ public:
 	/**
 	 * Returns whether selected Node for selected Participant has been already Traversed or not.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="node, traverse, open, active"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="node, traverse, open, active"), meta=(CustomTag="MounteaK2Validate"))
 	static bool HasNodeBeenTraversed(const UMounteaDialogueGraphNode* Node, const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant);
+	
 	/**
 	 * Returns whether selected Node has been already Traversed or not.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="node, traverse, open, active"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="node, traverse, open, active"), meta=(CustomTag="MounteaK2Validate"))
 	static bool HasNodeBeenTraversedV2(const UMounteaDialogueGraphNode* Node, const UMounteaDialogueContext* Context);
 	
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="audio, tag, search"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="audio, tag, search"), meta=(CustomTag="MounteaK2Getter"))
 	static UAudioComponent* FindAudioComponentByName(const AActor* ActorContext, const FName& Arg);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="audio, tag, search"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="audio, tag, search"), meta=(CustomTag="MounteaK2Getter"))
 	static UAudioComponent* FindAudioComponentByTag(const AActor* ActorContext, const FName& Arg);
 
 	/**
@@ -157,10 +158,10 @@ public:
 	 */
 	static bool InitializeDialogueWithContext(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant, UMounteaDialogueContext* Context);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Dialogue Manager", Keywords="manager, dialogue, master, initialize"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Dialogue Manager", Keywords="manager, dialogue, master, initialize"), meta=(CustomTag="MounteaK2Setter"))
 	static bool AddParticipants(AActor* WorldContextObject, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Dialogue Manager", Keywords="manager, dialogue, master, initialize"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Dialogue Manager", Keywords="manager, dialogue, master, initialize"), meta=(CustomTag="MounteaK2Setter"))
 	static bool RemoveParticipants(AActor* WorldContextObject, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 
 	/**

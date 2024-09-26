@@ -41,6 +41,18 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet = MakeShareable(new FSlateStyleSet(GetAppStyleSetName()));
 	StyleSet->SetContentRoot(IPluginManager::Get().FindPlugin("MounteaDialogueSystem")->GetBaseDir() / TEXT("Resources"));
 
+	StyleSet->Set("MDSStyleSet.K2Node_GetterIcon.small", new IMAGE_BRUSH(TEXT("K2Node_GetterIcon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.K2Node_GetterIcon", new IMAGE_BRUSH(TEXT("K2Node_GetterIcon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.K2Node_GetterIcon.large", new IMAGE_BRUSH(TEXT("K2Node_GetterIcon"), Icon64x64));
+
+	StyleSet->Set("MDSStyleSet.K2Node_SetterIcon.small", new IMAGE_BRUSH(TEXT("K2Node_SetterIcon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.K2Node_SetterIcon", new IMAGE_BRUSH(TEXT("K2Node_SetterIcon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.K2Node_SetterIcon.large", new IMAGE_BRUSH(TEXT("K2Node_SetterIcon"), Icon64x64));
+	
+	StyleSet->Set("MDSStyleSet.K2Node_ValidateIcon.small", new IMAGE_BRUSH(TEXT("K2Node_ValidateIcon"), Icon16x16));
+    StyleSet->Set("MDSStyleSet.K2Node_ValidateIcon", new IMAGE_BRUSH(TEXT("K2Node_ValidateIcon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.K2Node_ValidateIcon.large", new IMAGE_BRUSH(TEXT("K2Node_ValidateIcon"), Icon64x64));
+
 	StyleSet->Set("MDSStyleSet.AutoArrange.small", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.AutoArrange", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.AutoArrange.large", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon64x64));

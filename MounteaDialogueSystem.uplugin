@@ -35,6 +35,16 @@
 				"Mac",
 				"Win64"
 			]
+		},
+		{
+			"Name": "MounteaDialogueSystemDeveloper",
+			"Type": "DeveloperTool",
+			"LoadingPhase": "Default",
+			"PlatformAllowList": [
+				"Linux",
+				"Mac",
+				"Win64"
+			]
 		}
 	]
 }
