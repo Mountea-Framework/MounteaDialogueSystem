@@ -105,7 +105,7 @@ public:
 	/**
 	 * Tries to validate given Dialogue Context.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Is Dialogue Context Valid", Keywords="dialogue, null, validate, valid, check"), meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Is Dialogue Context Valid", Keywords="dialogue, null, validate, valid, check"), meta=(CustomTag="MounteaK2Validate"))
 	static bool IsContextValid(const UMounteaDialogueContext* Context);
 
 	/**
