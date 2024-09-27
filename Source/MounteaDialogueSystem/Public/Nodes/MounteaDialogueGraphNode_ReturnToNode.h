@@ -40,7 +40,7 @@ public:
 	 * Dialogue Node to which this Node leads to.
 	 */
 	UPROPERTY(SaveGame, Category="Private", VisibleAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, DisplayThumbnail="false"))
-	UMounteaDialogueGraphNode* SelectedNode;
+	TObjectPtr<UMounteaDialogueGraphNode> SelectedNode;
 
 	/**
 	 * Filters OUT all nodes by that class.

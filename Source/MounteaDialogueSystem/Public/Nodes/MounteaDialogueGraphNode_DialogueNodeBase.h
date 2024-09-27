@@ -37,7 +37,7 @@ public:
 	 *
 	 * @return The Dialogue Data Table for this graph node.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	virtual UDataTable* GetDataTable() const;
 
 	/**
@@ -46,7 +46,7 @@ public:
 	 *
 	 * @return The Dialogue Data Row name.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	virtual FName GetRowName() const
 	{ return RowName; }
 
@@ -54,7 +54,7 @@ public:
 	 * Sets the Dialogue Data Table for this graph node.
 	 * @param NewDataTable The new DataTable to set.
 	 */
-	UFUNCTION(/*BlueprintCallable,*/ Category="Mountea|Dialogue")
+	UFUNCTION(/*BlueprintCallable,*/ Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Setter"))
 	virtual void SetDataTable(UDataTable* NewDataTable)
 	{
 		DataTable = NewDataTable;
@@ -64,7 +64,7 @@ public:
 	 * Sets the Dialogue Data Row name.
 	 * @param NewRowName The new row name to set.
 	 */
-	UFUNCTION(/*BlueprintCallable,*/ Category="Mountea|Dialogue")
+	UFUNCTION(/*BlueprintCallable,*/ Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Setter"))
 	virtual void SetRowName(const FName NewRowName)
 	{
 		RowName = NewRowName;
@@ -93,11 +93,11 @@ protected:
 	 * ❗ Strongly suggested to use 'DialogueRow' based Data Tables
 	 */
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, RequiredAssetDataTags = "RowStructure=/Script/MounteaDialogueSystem.DialogueRow"))
-	UDataTable*	DataTable;
+	TObjectPtr<UDataTable>	DataTable;
 
 	/** Name of row in the table that we want */
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
-	FName				RowName;
+	FName					RowName;
 
 	/**
 	 * Flag defining how the Participant is searched for.
@@ -118,7 +118,7 @@ protected:
 	 * ❔ Each unique dialogue Participant should be using different Tag, if generic, then use something like `Dialogue.NPC`
 	 */
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault))
-	uint8					bUseGameplayTags : 1;
+	uint8				bUseGameplayTags : 1;
 
 #if WITH_EDITOR
 	

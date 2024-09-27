@@ -105,23 +105,23 @@ public:
 	 *
 	 * @return The GUID of the graph.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	FGuid GetGraphGUID() const;
 
 	// Allows setting graph guid directly.
 	void SetGraphGUID(const FGuid& NewGuid);
 
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	UMounteaDialogueGraphNode* FindNodeByGuid(const FGuid& NodeGuid);
 
 	/**
 	 * Returns an array containing all nodes in the dialogue graph.
 	 * @return An array of all nodes in the dialogue graph.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	TArray<UMounteaDialogueGraphNode*> GetAllNodes() const;
 
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	TArray<UMounteaDialogueGraphNode*> GetRootNodes() const;
 
 	/**
@@ -129,7 +129,7 @@ public:
 	 *
 	 * @return An array of all root nodes.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	UMounteaDialogueGraphNode* GetStartNode() const;
 
 	/**
@@ -137,7 +137,7 @@ public:
 	 *
 	 * @return The array of decorators.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	TArray<FMounteaDialogueDecorator> GetGraphDecorators() const;
 
 	/**
@@ -145,7 +145,7 @@ public:
 	 *
 	 * @return The array of decorators.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	TArray<FMounteaDialogueDecorator> GetAllDecorators() const;
 
 	/**

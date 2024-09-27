@@ -60,6 +60,10 @@ void FMounteaDialogueGraphEditorStyle::Create()
     StyleSet->Set("MDSStyleSet.K2Node_ValidateIcon", new IMAGE_BRUSH(TEXT("K2Node_ValidateIcon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.K2Node_ValidateIcon.large", new IMAGE_BRUSH(TEXT("K2Node_ValidateIcon"), Icon64x64));
 
+	StyleSet->Set("MDSStyleSet.K2Node_MessageIcon.small", new IMAGE_BRUSH(TEXT("K2Node_MessageIcon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.K2Node_MessageIcon", new IMAGE_BRUSH(TEXT("K2Node_MessageIcon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.K2Node_MessageIcon.large", new IMAGE_BRUSH(TEXT("K2Node_MessageIcon"), Icon64x64));
+
 	StyleSet->Set("MDSStyleSet.AutoArrange.small", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.AutoArrange", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.AutoArrange.large", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon64x64));

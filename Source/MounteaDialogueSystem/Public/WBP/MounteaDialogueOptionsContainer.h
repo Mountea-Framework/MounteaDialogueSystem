@@ -22,16 +22,16 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueOptionsContainer : public UUserW
 protected:
 	
 	// IMounteaDialogueOptionsContainerInterface implementation
-	virtual		void											SetParentDialogueWidget_Implementation	(UUserWidget* NewParentDialogueWidget)																				override;
-	virtual		UUserWidget*							GetParentDialogueWidget_Implementation	() const																																		override;
-	virtual		TSoftClassPtr<UUserWidget> GetDialogueOptionClass_Implementation	() const 																																		override;
-	virtual		void											SetDialogueOptionClass_Implementation	(const TSoftClassPtr<UUserWidget>& NewDialogueOptionClass)											override;
-	virtual		void											AddNewDialogueOption_Implementation	(UMounteaDialogueGraphNode_DialogueNodeBase* Node) 														override;
-	virtual		void 										AddNewDialogueOptions_Implementation	(const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& NewDialogueOptions)	override;
-	virtual		void 										RemoveDialogueOption_Implementation		(UMounteaDialogueGraphNode_DialogueNodeBase* DirtyDialogueOption)								override;
-	virtual		void  										RemoveDialogueOptions_Implementation	(const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& DirtyDialogueOptions)	override;
-	virtual		void  										ClearDialogueOptions_Implementation		() 																																				override;
-	virtual		void											ProcessOptionSelected_Implementation		(const FGuid& SelectedOption, UUserWidget* CallingWidget)													override;
+	virtual		void						SetParentDialogueWidget_Implementation	(UUserWidget* NewParentDialogueWidget)												override;
+	virtual		UUserWidget*				GetParentDialogueWidget_Implementation	() const																			override;
+	virtual		TSoftClassPtr<UUserWidget>	GetDialogueOptionClass_Implementation	() const 																			override;
+	virtual		void						SetDialogueOptionClass_Implementation	(const TSoftClassPtr<UUserWidget>& NewDialogueOptionClass)							override;
+	virtual		void						AddNewDialogueOption_Implementation		(UMounteaDialogueGraphNode_DialogueNodeBase* Node) 									override;
+	virtual		void 						AddNewDialogueOptions_Implementation	(const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& NewDialogueOptions)		override;
+	virtual		void 						RemoveDialogueOption_Implementation		(UMounteaDialogueGraphNode_DialogueNodeBase* DirtyDialogueOption)					override;
+	virtual		void  						RemoveDialogueOptions_Implementation	(const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& DirtyDialogueOptions)	override;
+	virtual		void  						ClearDialogueOptions_Implementation		() 																					override;
+	virtual		void						ProcessOptionSelected_Implementation	(const FGuid& SelectedOption, UUserWidget* CallingWidget)							override;
 	
 protected:
 	

@@ -4,13 +4,6 @@
 #include "BlueprintActionDatabaseRegistrar.h"
 #include "MounteaDialogueSystemEditor/Private/EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "BlueprintNodeSpawner.h"
-#include "Interfaces/IPluginManager.h"
-
-namespace MounteaDialogueHelpers
-{
-	TSharedPtr<IPlugin> GetThisPlugin();
-	const TSet<UClass*> GetFunctionLibraryClasses();
-}
 
 void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabaseRegistrar& registrar) const
 {
@@ -26,25 +19,29 @@ void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabas
 
 	if (registrar.IsOpenForRegistration(nodeClass))
 	{
-		const TSet<UClass*>& functionLibraries = MounteaDialogueHelpers::GetFunctionLibraryClasses();
+		const TSet<UClass*>& relevantClasses = MounteaDialogueHelpers::GetRelevantClasses();
 
-		for (UClass* functionClass : functionLibraries)
+		for (UClass* relevantClass : relevantClasses)
 		{
-			TArray<FName> functionNames;
-			functionClass->GenerateFunctionList(functionNames);
-
-			for (const FName& functionName : functionNames)
+			TArray<UFunction*> classFunctions;
+			for (TFieldIterator<UFunction> FuncIt(relevantClass, EFieldIteratorFlags::IncludeSuper); FuncIt; ++FuncIt)
 			{
-				if (UFunction* localFunction = functionClass->FindFunctionByName(functionName, EIncludeSuperFlag::ExcludeSuper))
+				UFunction* Function = *FuncIt;
+				if (Function->HasAnyFunctionFlags(FUNC_BlueprintCallable) && !Function->HasAnyFunctionFlags(FUNC_Private))
 				{
-					localFunction->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
-					localFunction->RemoveMetaData(TEXT("BlueprintCallable"));
-
-					UBlueprintNodeSpawner* nodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
-					nodeSpawner->CustomizeNodeDelegate = UBlueprintNodeSpawner::FCustomizeNodeDelegate::CreateStatic(customizeNodeLambda, localFunction, functionClass);
-
-					registrar.AddBlueprintAction(nodeClass, nodeSpawner);
+					classFunctions.Add(Function);
 				}
+			}
+
+			for (UFunction* Function : classFunctions)
+			{
+				Function->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
+				Function->RemoveMetaData(TEXT("BlueprintCallable"));
+
+				UBlueprintNodeSpawner* nodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
+				nodeSpawner->CustomizeNodeDelegate = UBlueprintNodeSpawner::FCustomizeNodeDelegate::CreateStatic(customizeNodeLambda, Function, relevantClass);
+
+				registrar.AddBlueprintAction(nodeClass, nodeSpawner);
 			}
 		}
 	}
@@ -99,7 +96,6 @@ FText UK2Node_MounteaDialogueCallFunction::GetTooltipText() const
 
 FLinearColor UK2Node_MounteaDialogueCallFunction::GetNodeTitleColor() const
 {
-	
 	switch (GetFunctionRole())
 	{
 		case EFunctionRole::Validate: return FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("99621e")));
@@ -111,8 +107,12 @@ FLinearColor UK2Node_MounteaDialogueCallFunction::GetNodeTitleColor() const
 
 FName UK2Node_MounteaDialogueCallFunction::GetCornerIcon() const
 {
-	return TEXT("MDSStyleSet.MounteaLogo");
-	// TODO: Add custom icons for different function types
+	auto SuperName = Super::GetCornerIcon();
+
+	if (SuperName == NAME_None)
+		return TEXT("MDSStyleSet.MounteaLogo");
+
+	return SuperName;
 }
 
 FSlateIcon UK2Node_MounteaDialogueCallFunction::GetIconAndTint(FLinearColor& outColor) const
@@ -135,50 +135,4 @@ FSlateIcon UK2Node_MounteaDialogueCallFunction::GetIconAndTint(FLinearColor& out
 void UK2Node_MounteaDialogueCallFunction::Initialize(const UFunction* func, UClass* cls)
 {
 	FunctionReference.SetExternalMember(func->GetFName(), cls);
-}
-
-namespace MounteaDialogueHelpers
-{
-	TSharedPtr<IPlugin> GetThisPlugin()
-	{
-		return IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"));
-	}
-
-	const TSet<UClass*> GetFunctionLibraryClasses()
-	{
-		static TSet<UClass*> functionLibrariesWhitelist;
-		
-		if (!functionLibrariesWhitelist.IsEmpty())
-		{
-			return functionLibrariesWhitelist;
-		}
-
-		const TSharedPtr<IPlugin> thisPlugin = GetThisPlugin();
-		if (!thisPlugin.IsValid())
-		{
-			return functionLibrariesWhitelist;
-		}
-
-		TSet<FString> thisPluginModulesNames;
-		for (const FModuleDescriptor& module : thisPlugin->GetDescriptor().Modules)
-		{
-			thisPluginModulesNames.Add(module.Name.ToString());
-		}
-		
-		for (TObjectIterator<UClass> it; it; ++it)
-		{
-			UClass* classType = *it;
-
-			if (classType->IsChildOf(UBlueprintFunctionLibrary::StaticClass()))
-			{
-				const FString packageName = FPackageName::GetLongPackageAssetName(classType->GetPackage()->GetName());
-				if (thisPluginModulesNames.Contains(packageName))
-				{
-					functionLibrariesWhitelist.Add(classType);
-				}
-			}
-		}
-
-		return functionLibrariesWhitelist;
-	}
 }

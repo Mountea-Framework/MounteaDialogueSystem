@@ -4,23 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "K2Node_CallFunction.h"
+#include "Helpers/FMounteaDialogueK2NodesHelpers.h"
 #include "K2Node_MounteaDialogueCallFunction.generated.h"
 
-enum class EFunctionCallType
-{
-	Function,
-	Message,
-	Delegate,
-	Unknown
-};
-
-enum class EFunctionRole
-{
-	Set,
-	Get,
-	Validate,
-	Unknown
-};
 
 /**
  * This node allows for styling the functions from Mountea Dialogue System. It works by creating a node for each

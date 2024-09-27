@@ -143,7 +143,7 @@ public:
 	 *
 	 * @param InWorld The world to use for initialization.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue", meta=(CustomTag="MounteaK2Setter"))
 	void InitializeNode(UWorld* InWorld);
 	virtual void InitializeNode_Implementation(UWorld* InWorld);
 	
@@ -151,7 +151,7 @@ public:
 	 * Checks if the node should automatically start when the dialogue is played.
 	 * @return true if the node should automatically start, false otherwise.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Validate"))
 	virtual bool DoesAutoStart() const
 	{ return bAutoStarts; };
 
@@ -159,7 +159,7 @@ public:
 	 * 
 	 * @param Manager 
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue", meta=(CustomTag="MounteaK2Setter"))
 	void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	virtual void PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 
@@ -167,7 +167,7 @@ public:
 	 * 
 	 * @param Manager 
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue", meta=(CustomTag="MounteaK2Setter"))
 	void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	
@@ -175,7 +175,7 @@ public:
 	 * Gets the decorators for this Dialogue Graph Node.
 	 *❔ Returns only Valid decorators!
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	TArray<FMounteaDialogueDecorator> GetNodeDecorators() const;
 	
 	/**
@@ -185,7 +185,7 @@ public:
 	 *❔ This can be further enhanced by Decorators.
 	 * @return True if the node can be started, false otherwise.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Validate"))
 	bool CanStartNode() const;
 	virtual bool CanStartNode_Implementation() const;
 
@@ -193,7 +193,7 @@ public:
 	 * 
 	 * @return 
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue", meta=(CustomTag="MounteaK2Validate"))
 	bool EvaluateDecorators() const;
 	virtual bool EvaluateDecorators_Implementation() const;
 	
@@ -204,7 +204,7 @@ public:
 	 *
 	 * @return Whether this node inherits decorators from the graph.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Validate"))
 	bool DoesInheritDecorators() const
 	{ return bInheritGraphDecorators; };
 	
@@ -214,7 +214,7 @@ public:
 	 *
 	 * @return MaxChildrenNodes
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	int32 GetMaxChildNodes() const
 	{ return MaxChildrenNodes; };
 
@@ -224,7 +224,7 @@ public:
 	 *
 	 * @return The index of the node.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	FORCEINLINE int32 GetNodeIndex() const
 	{ return NodeIndex; };
 	
@@ -240,7 +240,7 @@ public:
 	 *
 	 * @return The GUID of the node.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	FORCEINLINE FGuid GetNodeGUID() const
 	{ return NodeGUID; };
 
@@ -253,7 +253,7 @@ public:
 	 *
 	 * @return The owning Graph of the node.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	UMounteaDialogueGraph* GetGraph() const;
 
 	
@@ -263,7 +263,7 @@ public:
 	 *
 	 * @return Amount of children Nodes
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetChildrenNodes() const
 	{ return ChildrenNodes; };
 	
@@ -273,7 +273,7 @@ public:
 	 *
 	 * @return Amount of how parent Nodes
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetParentNodes() const
 	{return ParentNodes; };
 
@@ -281,7 +281,7 @@ public:
 	 * Serves purpose of validating Node before Dialogue gets Started.
 	 * Any broken Node results in non-starting Dialogue to avoid crashes.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Validate"))
 	bool ValidateNodeRuntime() const;
 	virtual bool ValidateNodeRuntime_Implementation() const
 	{ return true; };
@@ -297,7 +297,7 @@ public:
 	 * Provides a way to update Node's owning World.
 	 * Useful for Loading sub-levels.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Setter"))
 	virtual void SetNewWorld(UWorld* NewWorld);
 	virtual UWorld* GetWorld() const override
 	{
@@ -396,7 +396,7 @@ public:
 	 *
 	 * @return The tooltip text for this node.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true), meta=(CustomTag="MounteaK2Getter"))
 	FText GetNodeTooltipText() const;
 	virtual FText GetNodeTooltipText_Implementation() const;
 	
@@ -405,7 +405,7 @@ public:
 	 *
 	 * @return The Description text for this node.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true), meta=(CustomTag="MounteaK2Getter"))
 	FText GetDescription() const;
 	virtual FText GetDescription_Implementation() const;
 
@@ -414,7 +414,7 @@ public:
 	 *
 	 * @return The Node Category text for this node.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true), meta=(CustomTag="MounteaK2Getter"))
 	FText GetNodeCategory() const;
 	virtual FText GetNodeCategory_Implementation() const;
 
@@ -423,7 +423,7 @@ public:
 	 *
 	 * @return The Documentation Link for this node.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true), meta=(CustomTag="MounteaK2Getter"))
 	FString GetNodeDocumentationLink() const;
 	virtual FString GetNodeDocumentationLink_Implementation() const;
 
@@ -449,7 +449,7 @@ public:
 	virtual void OnPasted();
 
 	// Generates default Tooltip body text used for all Nodes
-	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true))
+	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "Mountea|Dialogue", meta=(DevelopmentOnly=true), meta=(CustomTag="MounteaK2Getter"))
 	FText GetDefaultTooltipBody() const;
 	virtual void OnCreatedInEditor() {};
 
@@ -460,7 +460,7 @@ public:
 	 *
 	 * @return The Title text for this node.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	FText GetNodeTitle() const;
 	virtual FText GetNodeTitle_Implementation() const;
 

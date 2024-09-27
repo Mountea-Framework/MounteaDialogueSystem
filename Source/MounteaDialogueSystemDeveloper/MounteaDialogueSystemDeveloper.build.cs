@@ -25,6 +25,7 @@ public class MounteaDialogueSystemDeveloper : ModuleRules
 				"SlateCore", 
 				"Projects", 
 				"EditorStyle",
+				"BlueprintGraph",
 				
 				"MounteaDialogueSystem", 
 				"MounteaDialogueSystemEditor"
