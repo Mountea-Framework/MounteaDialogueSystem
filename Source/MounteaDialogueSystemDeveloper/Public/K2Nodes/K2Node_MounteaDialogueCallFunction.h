@@ -32,6 +32,7 @@ class MOUNTEADIALOGUESYSTEMDEVELOPER_API UK2Node_MounteaDialogueCallFunction : p
 public:
 
 	// UK2Node_CallFunction
+	virtual FText GetToolTipHeading() const override;
 	virtual FText GetTooltipText() const override;
 	virtual FLinearColor GetNodeTitleColor() const override;
 	virtual FName GetCornerIcon() const override;

@@ -6,8 +6,6 @@
 #include "UObject/Object.h"
 #include "MounteaDialogueGraphExtraDataTypes.generated.h"
 
-#if WITH_EDITORONLY_DATA
-
 USTRUCT(BlueprintType)
 struct FDialogueImportData
 {
@@ -33,5 +31,3 @@ public:
 		return JsonFile == Other.JsonFile;
 	}
 };
-
-#endif

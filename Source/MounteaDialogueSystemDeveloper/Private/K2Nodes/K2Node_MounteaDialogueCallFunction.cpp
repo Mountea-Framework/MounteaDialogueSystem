@@ -5,6 +5,8 @@
 #include "MounteaDialogueSystemEditor/Private/EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "BlueprintNodeSpawner.h"
 
+#define LOCTEXT_NAMESPACE "MounteaDialogueCallFunction"
+
 void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const
 {
 	Super::GetMenuActions(ActionRegistrar);
@@ -44,8 +46,11 @@ void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabas
 
 			for (UFunction* itrFunction : classFunctions)
 			{
-				itrFunction->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
-				itrFunction->RemoveMetaData(TEXT("BlueprintCallable"));
+				if (!itrFunction->HasAnyFunctionFlags(FUNC_BlueprintEvent))
+				{
+					itrFunction->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
+					itrFunction->RemoveMetaData(TEXT("BlueprintCallable"));
+				}
 
 				UBlueprintNodeSpawner* nodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
 				nodeSpawner->CustomizeNodeDelegate = UBlueprintNodeSpawner::FCustomizeNodeDelegate::CreateStatic(customizeNodeLambda, itrFunction, relevantClass);
@@ -54,6 +59,11 @@ void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabas
 			}
 		}
 	}
+}
+
+FText UK2Node_MounteaDialogueCallFunction::GetToolTipHeading() const
+{
+	return LOCTEXT("MounteaDialogueCallFunctionFunctions", "Mountea Dialogue Function");
 }
 
 
@@ -156,3 +166,5 @@ void UK2Node_MounteaDialogueCallFunction::Initialize(const UFunction* func, UCla
 {
 	FunctionReference.SetExternalMember(func->GetFName(), cls);
 }
+
+#undef LOCTEXT_NAMESPACE

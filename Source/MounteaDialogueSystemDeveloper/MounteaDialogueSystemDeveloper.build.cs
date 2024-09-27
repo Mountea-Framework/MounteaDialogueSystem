@@ -1,5 +1,5 @@
 using UnrealBuildTool;
- 
+
 public class MounteaDialogueSystemDeveloper : ModuleRules
 {
 	public MounteaDialogueSystemDeveloper(ReadOnlyTargetRules Target) : base(Target)
@@ -23,13 +23,20 @@ public class MounteaDialogueSystemDeveloper : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore", 
-				"Projects", 
-				"EditorStyle",
-				"BlueprintGraph",
-				
-				"MounteaDialogueSystem", 
-				"MounteaDialogueSystemEditor"
+				"MounteaDialogueSystem"
 			}
 		);
+
+		if (Target.bBuildEditor == true) 
+		{
+			PrivateDependencyModuleNames.AddRange(
+				new string[]
+				{
+					"EditorStyle",
+					"BlueprintGraph",
+					"MounteaDialogueSystemEditor"
+				}
+			);
+		}
 	}
 }

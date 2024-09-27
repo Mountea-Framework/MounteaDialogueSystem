@@ -28,13 +28,13 @@ public:
 	 * @param FadeProgressDuration 
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Setter"))
-	void RequestShow(const FVector2D& FadeProgressDuration);
-	virtual void RequestShow_Implementation(const FVector2D& FadeProgressDuration) = 0;
+	void RequestShowWidget(const FVector2D& FadeProgressDuration);
+	virtual void RequestShowWidget_Implementation(const FVector2D& FadeProgressDuration) = 0;
 
 	/**
 	 * 
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Setter"))
-	void RequestHide();
-	virtual void RequestHide_Implementation() = 0;
+	void RequestHideWidget();
+	virtual void RequestHideWidget_Implementation() = 0;
 };
