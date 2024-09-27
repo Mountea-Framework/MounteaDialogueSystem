@@ -19,10 +19,10 @@ class UMounteaDialogueGraphNode;
 
 struct FDialogueRow;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueGraphChanged,										UMounteaDialogueGraph*, NewGraph);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantStateChanged,						const EDialogueParticipantState&, NewState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueGraphChanged,						UMounteaDialogueGraph*, NewGraph);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantStateChanged,			const EDialogueParticipantState&, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantAudioComponentChanged,	const UAudioComponent*, NewAudioComp);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FParticipantStartingNodeSaved,							const UMounteaDialogueGraphNode*, NewSavedNode);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FParticipantStartingNodeSaved,				const UMounteaDialogueGraphNode*, NewSavedNode);
 
 /**
  * 
@@ -88,7 +88,7 @@ public:
 	 * It does come with Native C++ implementation, which can be overriden in child C++ classes.
 	 * ❗ If you are using Blueprint implementation, don't forget to call Parent Node, which contains all parent implementations.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Validate"))
 	bool CanStartDialogueEvent() const;
 
 	/**
@@ -96,7 +96,7 @@ public:
 	 *
 	 * @return The owning actor for this Dialogue Participant Component.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	AActor* GetOwningActor() const;
 
 	/**
@@ -104,7 +104,7 @@ public:
 	 *
 	 * @param NewStartingNode The node to set as the starting node
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Setter"))
 	void SaveStartingNode(UMounteaDialogueGraphNode* NewStartingNode);
 	
 	/**
@@ -113,7 +113,7 @@ public:
 	 *
 	 * @param InPath The traversed path of the dialogue graph to be saved.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Setter"))
 	void SaveTraversedPath(TArray<FDialogueTraversePath>& InPath);
 
 	/**
@@ -123,21 +123,21 @@ public:
 	 * 
 	 * @return ParticipantState	Participant state value
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	EDialogueParticipantState GetState() const;
 
 	/**
 	 * Getter for Participant Gameplay Tag.
 	 * @return Participant Gameplay Tag if any is associated.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	FGameplayTag GetTag() const;
 	
 	/**
 	 * Helps initialize Participant.
 	 * ❔ Is being called in BeginPlay.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Setter"))
 	void InitializeParticipant();
 
 	/**
@@ -145,7 +145,7 @@ public:
 	 * @param ParticipantVoice The sound to play.
 	 * ❗ The sound should be a valid USoundBase object, otherwise nothing will be played.
 	 */ 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Setter"))
 	void PlayParticipantVoice(USoundBase* ParticipantVoice);
 
 	/**
@@ -153,7 +153,7 @@ public:
 	 * @param ParticipantVoice The sound to skip. Can be left empty.
 	 * ❗ The sound should be a valid USoundBase object, otherwise nothing will be skipped.
 	 */ 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Setter"))
 	void SkipParticipantVoice(USoundBase* ParticipantVoice);
 	
 #pragma endregion

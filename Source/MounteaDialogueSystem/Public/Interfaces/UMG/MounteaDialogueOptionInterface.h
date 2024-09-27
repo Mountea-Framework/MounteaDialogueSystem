@@ -105,7 +105,7 @@ public:
 	 * 
 	 * @return The current dialogue option data.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface", meta=(CustomTag="MounteaK2Getter"))
 	FDialogueOptionData GetDialogueOptionData() const;
 	virtual FDialogueOptionData GetDialogueOptionData_Implementation() const = 0;
 
@@ -114,28 +114,28 @@ public:
 	 * 
 	 * @param NewData The new data to set for the dialogue option.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface", meta=(CustomTag="MounteaK2Setter"))
 	void SetNewDialogueOptionData(const FDialogueOptionData& NewData);
 	virtual void SetNewDialogueOptionData_Implementation(const FDialogueOptionData& NewData) = 0;
 
 	/**
 	 * Resets the dialogue option data to its default state.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface", meta=(CustomTag="MounteaK2Setter"))
 	void ResetDialogueOptionData();
 	virtual void ResetDialogueOptionData_Implementation() = 0;
 
 	/**
 	 * Responsible for setting visual data from Dialogue Option data.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface", meta=(CustomTag="MounteaK2Setter"))
 	void InitializeDialogueOption();
 	virtual void InitializeDialogueOption_Implementation() = 0;
 
 	/**
 	 * Processes the event of a dialogue option being selected.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface", meta=(CustomTag="MounteaK2Setter"))
 	void ProcessOptionSelected();
 	virtual void ProcessOptionSelected_Implementation() = 0;
 
