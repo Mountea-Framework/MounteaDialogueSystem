@@ -7,45 +7,55 @@
 
 void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabaseRegistrar& registrar) const
 {
-	Super::GetMenuActions(registrar);
+    Super::GetMenuActions(registrar);
 
-	UClass* nodeClass = GetClass();
+    UClass* nodeClass = GetClass();
 
-	auto customizeNodeLambda = [](UEdGraphNode* newNode, bool bIsTemplateNode, UFunction* func, UClass* cls)
-	{
-		UK2Node_MounteaDialogueCallFunction* inputNode = CastChecked<UK2Node_MounteaDialogueCallFunction>(newNode);
-		inputNode->Initialize(func, cls);
-	};
+    // Lambda for node customization
+    auto customizeNodeLambda = [](UEdGraphNode* newNode, bool bIsTemplateNode, UFunction* func, UClass* cls)
+    {
+        UK2Node_MounteaDialogueCallFunction* inputNode = CastChecked<UK2Node_MounteaDialogueCallFunction>(newNode);
+        inputNode->Initialize(func, cls);
+    };
 
-	if (registrar.IsOpenForRegistration(nodeClass))
-	{
-		const TSet<UClass*>& relevantClasses = MounteaDialogueHelpers::GetRelevantClasses();
+    if (registrar.IsOpenForRegistration(nodeClass))
+    {
+        const TSet<UClass*>& relevantClasses = MounteaDialogueHelpers::GetRelevantClasses();
 
-		for (UClass* relevantClass : relevantClasses)
-		{
-			TArray<UFunction*> classFunctions;
-			for (TFieldIterator<UFunction> FuncIt(relevantClass, EFieldIteratorFlags::IncludeSuper); FuncIt; ++FuncIt)
-			{
-				UFunction* Function = *FuncIt;
-				if (Function->HasAnyFunctionFlags(FUNC_BlueprintCallable) && !Function->HasAnyFunctionFlags(FUNC_Private))
-				{
-					classFunctions.Add(Function);
-				}
-			}
+        // Create a set to track added functions
+        TSet<UFunction*> registeredFunctions;
 
-			for (UFunction* Function : classFunctions)
-			{
-				Function->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
-				Function->RemoveMetaData(TEXT("BlueprintCallable"));
+        for (UClass* relevantClass : relevantClasses)
+        {
+            TArray<UFunction*> classFunctions;
+            for (TFieldIterator<UFunction> FuncIt(relevantClass, EFieldIteratorFlags::IncludeSuper); FuncIt; ++FuncIt)
+            {
+                UFunction* Function = *FuncIt;
+                if (Function->HasAnyFunctionFlags(FUNC_BlueprintCallable) && !Function->HasAnyFunctionFlags(FUNC_Private))
+                {
+                    // Check if the function is already registered
+                    if (!registeredFunctions.Contains(Function))
+                    {
+                        classFunctions.Add(Function);
+                        registeredFunctions.Add(Function); // Add to the set
+                    }
+                }
+            }
 
-				UBlueprintNodeSpawner* nodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
-				nodeSpawner->CustomizeNodeDelegate = UBlueprintNodeSpawner::FCustomizeNodeDelegate::CreateStatic(customizeNodeLambda, Function, relevantClass);
+            for (UFunction* Function : classFunctions)
+            {
+                Function->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
+                Function->RemoveMetaData(TEXT("BlueprintCallable"));
 
-				registrar.AddBlueprintAction(nodeClass, nodeSpawner);
-			}
-		}
-	}
+                UBlueprintNodeSpawner* nodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
+                nodeSpawner->CustomizeNodeDelegate = UBlueprintNodeSpawner::FCustomizeNodeDelegate::CreateStatic(customizeNodeLambda, Function, relevantClass);
+
+                registrar.AddBlueprintAction(nodeClass, nodeSpawner);
+            }
+        }
+    }
 }
+
 
 EFunctionCallType UK2Node_MounteaDialogueCallFunction::GetFunctionType() const
 {
