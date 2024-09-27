@@ -27,7 +27,7 @@ class MOUNTEADIALOGUESYSTEMDEVELOPER_API UK2Node_MounteaDialogueCallFunction : p
 	void Initialize(const UFunction* func, UClass* cls);
 	
 	// UK2Node
-	virtual void GetMenuActions(FBlueprintActionDatabaseRegistrar& registrar) const override;
+	virtual void GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const override;
 
 public:
 

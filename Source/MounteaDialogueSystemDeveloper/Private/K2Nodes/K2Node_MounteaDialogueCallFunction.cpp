@@ -5,55 +5,55 @@
 #include "MounteaDialogueSystemEditor/Private/EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "BlueprintNodeSpawner.h"
 
-void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabaseRegistrar& registrar) const
+void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const
 {
-    Super::GetMenuActions(registrar);
+	Super::GetMenuActions(ActionRegistrar);
 
-    UClass* nodeClass = GetClass();
+	UClass* nodeClass = GetClass();
 
-    // Lambda for node customization
-    auto customizeNodeLambda = [](UEdGraphNode* newNode, bool bIsTemplateNode, UFunction* func, UClass* cls)
-    {
-        UK2Node_MounteaDialogueCallFunction* inputNode = CastChecked<UK2Node_MounteaDialogueCallFunction>(newNode);
-        inputNode->Initialize(func, cls);
-    };
+	// Lambda for node customization
+	auto customizeNodeLambda = [](UEdGraphNode* newNode, bool bIsTemplateNode, UFunction* relevantFunction, UClass* relevantClass)
+	{
+		UK2Node_MounteaDialogueCallFunction* inputNode = CastChecked<UK2Node_MounteaDialogueCallFunction>(newNode);
+		inputNode->Initialize(relevantFunction, relevantClass);
+	};
 
-    if (registrar.IsOpenForRegistration(nodeClass))
-    {
-        const TSet<UClass*>& relevantClasses = MounteaDialogueHelpers::GetRelevantClasses();
+	if (ActionRegistrar.IsOpenForRegistration(nodeClass))
+	{
+		const TSet<UClass*>& relevantClasses = MounteaDialogueHelpers::GetRelevantClasses();
 
-        // Create a set to track added functions
-        TSet<UFunction*> registeredFunctions;
+		// Create a set to track added functions
+		TSet<UFunction*> registeredFunctions;
 
-        for (UClass* relevantClass : relevantClasses)
-        {
-            TArray<UFunction*> classFunctions;
-            for (TFieldIterator<UFunction> FuncIt(relevantClass, EFieldIteratorFlags::IncludeSuper); FuncIt; ++FuncIt)
-            {
-                UFunction* Function = *FuncIt;
-                if (Function->HasAnyFunctionFlags(FUNC_BlueprintCallable) && !Function->HasAnyFunctionFlags(FUNC_Private))
-                {
-                    // Check if the function is already registered
-                    if (!registeredFunctions.Contains(Function))
-                    {
-                        classFunctions.Add(Function);
-                        registeredFunctions.Add(Function); // Add to the set
-                    }
-                }
-            }
+		for (UClass* relevantClass : relevantClasses)
+		{
+			TArray<UFunction*> classFunctions;
+			for (TFieldIterator<UFunction> FuncIt(relevantClass, EFieldIteratorFlags::IncludeSuper); FuncIt; ++FuncIt)
+			{
+				UFunction* function = *FuncIt;
+				if (function->HasAnyFunctionFlags(FUNC_BlueprintCallable) && !function->HasAnyFunctionFlags(FUNC_Private))
+				{
+					// Check if the function is already registered
+					if (!registeredFunctions.Contains(function))
+					{
+						classFunctions.Add(function);
+						registeredFunctions.Add(function); // Add to the set
+					}
+				}
+			}
 
-            for (UFunction* Function : classFunctions)
-            {
-                Function->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
-                Function->RemoveMetaData(TEXT("BlueprintCallable"));
+			for (UFunction* itrFunction : classFunctions)
+			{
+				itrFunction->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
+				itrFunction->RemoveMetaData(TEXT("BlueprintCallable"));
 
-                UBlueprintNodeSpawner* nodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
-                nodeSpawner->CustomizeNodeDelegate = UBlueprintNodeSpawner::FCustomizeNodeDelegate::CreateStatic(customizeNodeLambda, Function, relevantClass);
+				UBlueprintNodeSpawner* nodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
+				nodeSpawner->CustomizeNodeDelegate = UBlueprintNodeSpawner::FCustomizeNodeDelegate::CreateStatic(customizeNodeLambda, itrFunction, relevantClass);
 
-                registrar.AddBlueprintAction(nodeClass, nodeSpawner);
-            }
-        }
-    }
+				ActionRegistrar.AddBlueprintAction(nodeClass, nodeSpawner);
+			}
+		}
+	}
 }
 
 
@@ -94,15 +94,25 @@ FText UK2Node_MounteaDialogueCallFunction::GetTooltipText() const
 	switch (GetFunctionRole())
 	{
 		case EFunctionRole::Set:
-			return FText::Format(INVTEXT("{0}\n\n📥 Setter: These functions attempt to modify the data in the target."), defaultText);
+			return FText::Format(
+				INVTEXT("{0}\n\n📥 Setter: A setter function is responsible for updating or modifying a particular value or data in an object.\nIt directly affects the state of the target by assigning a new value to one of its properties.\nSetters may include internal validation or checks to ensure that the value being assigned meets certain criteria before applying it."), 
+				defaultText);
+
 		case EFunctionRole::Validate:
-			return FText::Format(INVTEXT("{0}\n\n❔ Validator: These functions perform necessary checks to ensure data integrity."), defaultText);
+			return FText::Format(
+				INVTEXT("{0}\n\n❔ Validator: Validator functions are used to verify the correctness or validity of data.\nThese functions perform checks to ensure that the data adheres to certain rules or constraints, such as format, range, or consistency.\nA successful validation confirms that the data is reliable and suitable for use."), 
+				defaultText);
+
 		case EFunctionRole::Get:
-			return FText::Format(INVTEXT("{0}\n\n📤 Getter: These functions retrieve and return data."), defaultText);
+			return FText::Format(
+				INVTEXT("{0}\n\n📤 Getter: A getter function is designed to retrieve and return a specific value or property from an object without modifying it.\nGetters are essential for accessing data in a controlled manner, ensuring that external code can view data but not alter it directly."), 
+				defaultText);
+
 		default:
 			return defaultText;
 	}
 }
+
 
 FLinearColor UK2Node_MounteaDialogueCallFunction::GetNodeTitleColor() const
 {
@@ -117,12 +127,12 @@ FLinearColor UK2Node_MounteaDialogueCallFunction::GetNodeTitleColor() const
 
 FName UK2Node_MounteaDialogueCallFunction::GetCornerIcon() const
 {
-	auto SuperName = Super::GetCornerIcon();
+	auto superName = Super::GetCornerIcon();
 
-	if (SuperName == NAME_None)
+	if (superName == NAME_None)
 		return TEXT("MDSStyleSet.MounteaLogo");
 
-	return SuperName;
+	return superName;
 }
 
 FSlateIcon UK2Node_MounteaDialogueCallFunction::GetIconAndTint(FLinearColor& outColor) const
