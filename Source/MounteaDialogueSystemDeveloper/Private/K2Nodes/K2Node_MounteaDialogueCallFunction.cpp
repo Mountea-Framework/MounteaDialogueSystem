@@ -40,13 +40,13 @@ void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabas
 				if (!function->HasMetaData(TEXT("CustomTag")))
 					continue;
 				
-				if (function->HasAnyFunctionFlags(FUNC_BlueprintCallable) && !function->HasAnyFunctionFlags(FUNC_Private))
+				if (!function->HasAnyFunctionFlags(FUNC_Private))
 				{
 					// Check if the function is already registered
 					if (!registeredFunctions.Contains(function))
 					{
 						classFunctions.Add(function);
-						registeredFunctions.Add(function); // Add to the set
+						registeredFunctions.Add(function);
 					}
 				}
 			}

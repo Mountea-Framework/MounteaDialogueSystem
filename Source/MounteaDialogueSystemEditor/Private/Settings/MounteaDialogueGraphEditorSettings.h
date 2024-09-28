@@ -131,6 +131,8 @@ private:
 	 *
 	 * If turned off, then standard Nodes will be hidden and Blueprint Graphs will display only custom K2 Nodes.
 	 * Might cause issues if you create Blueprint Classes that directly implement Dialogue Interfaces.
+	 *
+	 * This will also cause Interface Functions to disappear from `My Blueprint` panel, unless class inherits from C++ class which already implemented Interface functions.
 	 */
 	UPROPERTY(config, EditDefaultsOnly,  Category = "BlueprintNodes")
 	bool bDisplayStandardNodes;
