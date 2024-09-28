@@ -552,11 +552,6 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateCategories(UMounteaDialo
 
 	TagsManager.EditorRefreshGameplayTagTree();
 
-	// Notify the user
-	FNotificationInfo Info(FText(LOCTEXT("DialogueCategoriesCreated", "Created Dialogue Categories")));
-	Info.ExpireDuration = 5.0f;
-	FSlateNotificationManager::Get().AddNotification(Info);
-
 	return true;
 }
 
@@ -631,12 +626,6 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateParticipants(const UMoun
 	}
 
 	SaveAsset(ParticipantsDataTable);
-
-	// Notify the user
-	FNotificationInfo Info(FText::Format(
-		LOCTEXT("ParticipantsDataTableCreated", "Created Participants DataTable: {0}"), FText::FromString(AssetName)));
-	Info.ExpireDuration = 5.0f;
-	FSlateNotificationManager::Get().AddNotification(Info);
 
 	return true;
 }
@@ -728,14 +717,6 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateNodes(UMounteaDialogueGr
 	CreateNodes(CloseDialogueNodes, UMounteaDialogueGraphNode_CompleteNode::StaticClass());
 	CreateNodes(JumpToNodes, UMounteaDialogueGraphNode_ReturnToNode::StaticClass());
 
-	// Notify the user
-	FNotificationInfo Info(
-		FText::Format(
-			LOCTEXT("DialogueNodesCreated", "Populated nodes\n{0} Lead\n{1} Answer\n{2} Close\n{3} Jump"),
-			LeadNodes.Num(), AnswerNodes.Num(), CloseDialogueNodes.Num(), JumpToNodes.Num()));
-	Info.ExpireDuration = 5.0f;
-	FSlateNotificationManager::Get().AddNotification(Info);
-
 	return true;
 }
 
@@ -821,11 +802,6 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateEdges(UMounteaDialogueGr
 			EditorLOG_ERROR(TEXT("[PopulateEdges] Failed to create edge object for: %s -> %s"), *SourceID, *TargetID);
 		}
 	}
-
-	// Notify the user
-	FNotificationInfo Info(FText::Format(LOCTEXT("DialogueEdgesCreated", "Created {0} edges"), EdgesCreated));
-	Info.ExpireDuration = 5.0f;
-	FSlateNotificationManager::Get().AddNotification(Info);
 
 	return true;
 }

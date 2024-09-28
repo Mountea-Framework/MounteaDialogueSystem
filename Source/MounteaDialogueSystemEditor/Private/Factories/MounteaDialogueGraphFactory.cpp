@@ -2,8 +2,10 @@
 
 #include "MounteaDialogueGraphFactory.h"
 
+#include "Framework/Notifications/NotificationManager.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueSystemImportExportHelpers.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphFactory"
 
@@ -24,12 +26,34 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateNew(UClass* Class, UObject* 
 UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, FFeedbackContext* Warn, bool& bOutOperationCanceled)
 {
 	if (!FactoryCanImport(Filename))
+	{
+		// Error notification
+		FNotificationInfo Info(FText::Format(LOCTEXT("PreImportFailed", "Unable to import Dialogue:\n{0}"), FText::FromString(InName.ToString())));
+		Info.ExpireDuration = 5.0f;
+		Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Error"));
+		FSlateNotificationManager::Get().AddNotification(Info);
+
 		return nullptr;
+	}
 
 	UMounteaDialogueGraph* NewGraph = NewObject<UMounteaDialogueGraph>(InParent, InClass, InName, Flags);
 	if (UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(Filename, InParent, InName, Flags, NewGraph))
 	{
+		// Success notification
+		FNotificationInfo Info(FText::Format(LOCTEXT("ImportSuccessful", "Successfully imported Dialogue:\n{0}"), FText::FromString(InName.ToString())));
+		Info.ExpireDuration = 5.0f;
+		Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Success"));
+		FSlateNotificationManager::Get().AddNotification(Info);
+		
 		return NewGraph;
+	}
+	else
+	{
+		// Error notification
+		FNotificationInfo Info(FText::Format(LOCTEXT("ImportFailed", "Failed to import Dialogue:\n{0}"), FText::FromString(InName.ToString())));
+		Info.ExpireDuration = 5.0f;
+		Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Error"));
+		FSlateNotificationManager::Get().AddNotification(Info);
 	}
 
 	bOutOperationCanceled = true;
