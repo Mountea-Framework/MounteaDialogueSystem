@@ -3,6 +3,7 @@
 #include "K2Nodes/K2Node_MounteaDialogueCallFunction.h"
 #include "BlueprintActionDatabaseRegistrar.h"
 #include "MounteaDialogueSystemEditor/Private/EditorStyle/FMounteaDialogueGraphEditorStyle.h"
+#include "MounteaDialogueSystemEditor/Private/Settings/MounteaDialogueGraphEditorSettings.h"
 #include "BlueprintNodeSpawner.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueCallFunction"
@@ -13,13 +14,15 @@ void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabas
 
 	UClass* nodeClass = GetClass();
 
+	auto Settings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>();
+
 	// Lambda for node customization
 	auto customizeNodeLambda = [](UEdGraphNode* newNode, bool bIsTemplateNode, UFunction* relevantFunction, UClass* relevantClass)
 	{
 		UK2Node_MounteaDialogueCallFunction* inputNode = CastChecked<UK2Node_MounteaDialogueCallFunction>(newNode);
 		inputNode->Initialize(relevantFunction, relevantClass);
 	};
-
+	
 	if (actionRegistrar.IsOpenForRegistration(nodeClass))
 	{
 		const TSet<UClass*>& relevantClasses = MounteaDialogueHelpers::GetRelevantClasses();
@@ -33,6 +36,10 @@ void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabas
 			for (TFieldIterator<UFunction> FuncIt(relevantClass, EFieldIteratorFlags::IncludeSuper); FuncIt; ++FuncIt)
 			{
 				UFunction* function = *FuncIt;
+				
+				if (!function->HasMetaData(TEXT("CustomTag")))
+					continue;
+				
 				if (function->HasAnyFunctionFlags(FUNC_BlueprintCallable) && !function->HasAnyFunctionFlags(FUNC_Private))
 				{
 					// Check if the function is already registered
@@ -46,21 +53,17 @@ void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabas
 
 			for (UFunction* itrFunction : classFunctions)
 			{
-				/*
-				if (itrFunction->HasAnyFunctionFlags(FUNC_BlueprintEvent))
+				if (Settings && !Settings->DisplayStandardNodes())
 				{
 					itrFunction->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
-					itrFunction->RemoveMetaData(TEXT("BlueprintCallable"));
 				}
-				if (!itrFunction->HasAnyFunctionFlags(FUNC_BlueprintEvent))
+				else
 				{
-					itrFunction->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
-					itrFunction->RemoveMetaData(TEXT("BlueprintCallable"));
+					if (!itrFunction->HasAnyFunctionFlags(FUNC_BlueprintEvent))
+					{
+						itrFunction->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
+					}
 				}
-				*/
-				
-				itrFunction->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
-				itrFunction->RemoveMetaData(TEXT("BlueprintCallable"));
 
 				UBlueprintNodeSpawner* nodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
 				nodeSpawner->CustomizeNodeDelegate = UBlueprintNodeSpawner::FCustomizeNodeDelegate::CreateStatic(customizeNodeLambda, itrFunction, relevantClass);
