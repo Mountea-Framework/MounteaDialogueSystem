@@ -45,6 +45,11 @@ UMounteaDialogueGraph* UMounteaDialogueGraphNode::GetGraph() const
 	return Graph;
 }
 
+FGuid UMounteaDialogueGraphNode::GetGraphGUID() const
+{
+	return Graph ? Graph->GetGraphGUID() : FGuid();
+}
+
 void UMounteaDialogueGraphNode::SetNewWorld(UWorld* NewWorld)
 {
 	if (!NewWorld) return;
@@ -98,14 +103,14 @@ void UMounteaDialogueGraphNode::ProcessNode_Implementation(const TScriptInterfac
 
 	if (!GetGraph())
 	{
-		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid owning Graph!!"));
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid owning Graph!"));
 		return;
 	}
 	
 	UMounteaDialogueContext* Context = Manager->GetDialogueContext();
 	if (!Context || !UMounteaDialogueSystemBFC::IsContextValid(Context))
 	{
-		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid Dialogue Context!!"));
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid Dialogue Context!"));
 		return;
 	}
 	

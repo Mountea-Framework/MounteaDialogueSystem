@@ -138,6 +138,7 @@ public:
 #pragma region Functions
 
 public:
+	
 	/**
 	 * Initializes the node with the given world.
 	 *
@@ -256,6 +257,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
 	UMounteaDialogueGraph* GetGraph() const;
 
+	/**
+	 * If node is owned by graph, then it will return guid of the owning graph.
+	 * @return Guid of the owning Graph
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
+	FGuid GetGraphGUID() const;
 	
 	/**
 	 * Gets children Nodes this one has,

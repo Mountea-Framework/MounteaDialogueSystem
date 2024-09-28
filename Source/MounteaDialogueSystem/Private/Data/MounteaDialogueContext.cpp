@@ -119,21 +119,26 @@ void UMounteaDialogueContext::UpdateActiveDialogueParticipant(const TScriptInter
 
 void UMounteaDialogueContext::AddTraversedNode(const UMounteaDialogueGraphNode* TraversedNode)
 {
-	if (!TraversedNode) return;
-	
-	// If we have already passed over this Node, then just increase the counter
-	if (TraversedPath.Contains(TraversedNode->GetNodeGUID()))
+	if (!TraversedNode || !TraversedNode->Graph)
 	{
-		if (FDialogueTraversePath* ExistingRow = TraversedPath.FindByKey(TraversedNode->GetNodeGUID()))
-		{
-			ExistingRow->TraverseCount++;
-		}
+		return;
+	}
+	
+	FDialogueTraversePath* ExistingRow = TraversedPath.FindByPredicate([&](FDialogueTraversePath& Path)
+	{
+		return Path.NodeGuid == TraversedNode->GetNodeGUID() && Path.GraphGuid == TraversedNode->GetGraphGUID();
+	});
+
+	if (ExistingRow)
+	{
+		ExistingRow->TraverseCount++;
 	}
 	else
 	{
 		FDialogueTraversePath NewRow;
 		{
 			NewRow.NodeGuid = TraversedNode->GetNodeGUID();
+			NewRow.GraphGuid = TraversedNode->GetGraphGUID();
 			NewRow.TraverseCount = 1;
 		}
 		TraversedPath.Add(NewRow);

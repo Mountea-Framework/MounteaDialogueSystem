@@ -38,28 +38,35 @@ void UMounteaDialogueSystemBFC::CleanupGraph(const UObject* WorldContextObject, 
 
 bool UMounteaDialogueSystemBFC::HasNodeBeenTraversed(const UMounteaDialogueGraphNode* Node, const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant)
 {
-	bool bTraversed = false;
+	if (!Node || !Participant || !Participant.GetObject() || !Node->Graph)
+	{
+		return false;
+	}
 
-	if (!Node) return bTraversed;
-	if (!Participant || !Participant.GetObject()) return bTraversed;
+	const TArray<FDialogueTraversePath>& TraversedPaths = Participant->Execute_GetTraversedPath(Participant.GetObject());
+	const FDialogueTraversePath* FoundPath = TraversedPaths.FindByPredicate([&](const FDialogueTraversePath& Path)
+	{
+		return Path.NodeGuid == Node->GetNodeGUID() && Path.GraphGuid == Node->Graph->GetGraphGUID();
+	});
 
-	bTraversed = Participant->GetTraversedPath().Contains(Node->GetNodeGUID());
-		
-	return bTraversed;
+	return FoundPath != nullptr;
 }
 
 bool UMounteaDialogueSystemBFC::HasNodeBeenTraversedV2(const UMounteaDialogueGraphNode* Node,  const UMounteaDialogueContext* Context)
 {
-	bool bTraversed = false;
-
-	if (!Node || !Context)
+	if (!Node || !Context || !Node->Graph)
 	{
-		return bTraversed;
+		return false;
 	}
 
-	bTraversed = Context->TraversedPath.Contains(Node->GetNodeGUID());
+	const TArray<FDialogueTraversePath>& TraversedPaths = Context->TraversedPath;
 
-	return  bTraversed;
+	const FDialogueTraversePath* FoundPath = TraversedPaths.FindByPredicate([&](const FDialogueTraversePath& Path)
+	{
+		return Path.NodeGuid == Node->GetNodeGUID() && Path.GraphGuid == Node->Graph->GetGraphGUID();
+	});
+
+	return FoundPath != nullptr;
 }
 
 UAudioComponent* UMounteaDialogueSystemBFC::FindAudioComponentByName(const AActor* ActorContext, const FName& Arg)
@@ -141,12 +148,13 @@ bool UMounteaDialogueSystemBFC::ExecuteDecorators(const UObject* WorldContextObj
 		return false;
 	}
 
-	if (DialogueContext->DialogueParticipant.GetInterface() == nullptr)
+	if (DialogueContext->DialogueParticipant.GetInterface() == nullptr || DialogueContext->DialogueParticipant.GetObject() == nullptr)
 	{
 		return false;
 	}
 
-	if (DialogueContext->DialogueParticipant->GetDialogueGraph() == nullptr)
+	UObject* participantObject = DialogueContext->DialogueParticipant.GetObject();
+	if (DialogueContext->DialogueParticipant->Execute_GetDialogueGraph(participantObject) == nullptr)
 	{
 		return false;
 	}
@@ -164,7 +172,7 @@ bool UMounteaDialogueSystemBFC::ExecuteDecorators(const UObject* WorldContextObj
 	AllDecorators.Append(DialogueContext->GetActiveNode()->GetNodeDecorators());
 	if (ActiveNode->DoesInheritDecorators())
 	{
-		AllDecorators.Append(DialogueContext->DialogueParticipant->GetDialogueGraph()->GetGraphDecorators());
+		AllDecorators.Append(DialogueContext->DialogueParticipant->Execute_GetDialogueGraph(participantObject)->GetGraphDecorators());
 	}
 		
 	for (auto Itr : AllDecorators)
@@ -282,12 +290,24 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 			return false;
 	}
 	
-	const UMounteaDialogueGraph* Graph = MainParticipant->GetDialogueGraph();
+	const UMounteaDialogueGraph* Graph = MainParticipant->Execute_GetDialogueGraph(MainParticipant.GetObject());
 
 	if (!Graph)
 	{
 		LOG_ERROR(TEXT("[StartDialogue] WorldContextObject is Invalid. Cannot Initialize dialogue."));
 		return false;
+	}
+
+	for (const auto& Itr : Graph->GetAllNodes())
+	{
+		if (Itr)
+			Itr->InitializeNode(TempWorld);
+	}
+
+	for (auto Itr : Graph->GetAllDecorators())
+	{
+		if (Itr.DecoratorType)
+			Itr.InitializeDecorator(TempWorld, MainParticipant, DialogueManager);
 	}
 
 	if (Graph->CanStartDialogueGraph() == false)
@@ -296,7 +316,7 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 		return false;
 	}
 
-	UMounteaDialogueGraphNode* NodeToStart = MainParticipant->GetSavedStartingNode();
+	UMounteaDialogueGraphNode* NodeToStart = MainParticipant->Execute_GetSavedStartingNode(MainParticipant.GetObject());
 	if (!NodeToStart || NodeToStart->CanStartNode() == false)
 	{
 		NodeToStart = Graph->GetStartNode();
@@ -334,19 +354,6 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 	
 	const TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
 	
-	for (const auto& Itr : Graph->GetAllNodes())
-	{
-		if (Itr)
-		{
-			Itr->InitializeNode(TempWorld);
-		}
-	}
-
-	for (auto Itr : Graph->GetAllDecorators())
-	{
-		Itr.InitializeDecorator(TempWorld, MainParticipant, DialogueManager);
-	}
-
 	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
 	Context->SetDialogueContext(MainParticipant, NodeToStart, StartNode_Children);
 	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(Initiator));
@@ -385,13 +392,13 @@ bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextOb
 		return false;
 	}
 
-	if (DialogueParticipant->CanStartDialogue() == false)
+	if (DialogueParticipant->Execute_CanStartDialogue(DialogueParticipant.GetObject()) == false)
 	{
 		LOG_ERROR(TEXT("[InitializeDialogue] WorldContextObject is Invalid. Cannot Initialize dialogue."));
 		return false;
 	}
 
-	const UMounteaDialogueGraph* Graph = DialogueParticipant->GetDialogueGraph();
+	const UMounteaDialogueGraph* Graph = DialogueParticipant->Execute_GetDialogueGraph(DialogueParticipant.GetObject());
 
 	if (Graph == nullptr)
 	{

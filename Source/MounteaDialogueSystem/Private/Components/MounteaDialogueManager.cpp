@@ -407,7 +407,7 @@ void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBas
 	*/
 
 	// This is brute force that I want to change in next big update, sorry for this.
-	if (UMounteaDialogueSystemBFC::DoesPreviousNodeSkipActiveNode(DialogueContext->DialogueParticipant->GetDialogueGraph(), DialogueContext->PreviousActiveNode))
+	if (UMounteaDialogueSystemBFC::DoesPreviousNodeSkipActiveNode(DialogueContext->DialogueParticipant->Execute_GetDialogueGraph(DialogueContext->DialogueParticipant.GetObject()), DialogueContext->PreviousActiveNode))
 	{
 		return;
 	}
@@ -506,7 +506,7 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 			tickableObject->Execute_RegisterTick(tickableObject.GetObject(), nullptr);
 		}
 
-		Itr->SetParticipantState(EDialogueParticipantState::EDPS_Active);
+		Itr->Execute_SetParticipantState(Itr.GetObject(), EDialogueParticipantState::EDPS_Active);
 	}
 }
 
@@ -560,13 +560,13 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 			tickableObject->Execute_UnregisterTick(tickableObject.GetObject(), nullptr);
 		}
 
-		Itr->SetParticipantState(Itr->GetDefaultParticipantState());
+		Itr->Execute_SetParticipantState(Itr.GetObject(), Itr->Execute_GetDefaultParticipantState(Itr.GetObject()));
 	}
 	
 	if (!DialogueContext->GetDialogueParticipant().GetObject()) return;
 
 	// Cleaning up
-	UMounteaDialogueSystemBFC::CleanupGraph(this, DialogueContext->GetDialogueParticipant()->GetDialogueGraph());
+	UMounteaDialogueSystemBFC::CleanupGraph(this, DialogueContext->GetDialogueParticipant()->Execute_GetDialogueGraph(DialogueContext->DialogueParticipant.GetObject()));
 	UMounteaDialogueSystemBFC::SaveTraversePathToParticipant(DialogueContext->TraversedPath, DialogueContext->GetDialogueParticipant());
 	
 	// Clear binding
@@ -699,7 +699,7 @@ void UMounteaDialogueManager::StartExecuteDialogueRow_Implementation()
 
 	if (DialogueContext->DialogueParticipant)
 	{
-		if (UMounteaDialogueSystemBFC::DoesPreviousNodeSkipActiveNode(DialogueContext->DialogueParticipant->GetDialogueGraph(), DialogueContext->PreviousActiveNode))
+		if (UMounteaDialogueSystemBFC::DoesPreviousNodeSkipActiveNode(DialogueContext->DialogueParticipant->Execute_GetDialogueGraph(DialogueContext->DialogueParticipant.GetObject()), DialogueContext->PreviousActiveNode))
 		{
 			return;
 		}
@@ -1150,11 +1150,13 @@ void UMounteaDialogueManager::UpdateDialogueContext_Client_Implementation(const 
 			DialogueContext->DialogueParticipants = NewDialogueContext.DialogueParticipants;
 			DialogueContext->ActiveDialogueRowDataIndex = NewDialogueContext.ActiveDialogueRowDataIndex;
 
+			UMounteaDialogueGraph* activeGraph = DialogueContext->DialogueParticipant->Execute_GetDialogueGraph(DialogueContext->DialogueParticipant.GetObject());
+
 			// Find Active Node
-			DialogueContext->ActiveNode = UMounteaDialogueSystemBFC::FindNodeByGUID(DialogueContext->DialogueParticipant->GetDialogueGraph(), NewDialogueContext.ActiveNodeGuid);
+			DialogueContext->ActiveNode = UMounteaDialogueSystemBFC::FindNodeByGUID(activeGraph, NewDialogueContext.ActiveNodeGuid);
 
 			// Find child Nodes
-			DialogueContext->AllowedChildNodes = UMounteaDialogueSystemBFC::FindNodesByGUID(DialogueContext->DialogueParticipant->GetDialogueGraph(), NewDialogueContext.AllowedChildNodes);
+			DialogueContext->AllowedChildNodes = UMounteaDialogueSystemBFC::FindNodesByGUID(activeGraph, NewDialogueContext.AllowedChildNodes);
 
 			// Find Previous Active Node
 			DialogueContext->PreviousActiveNode = NewDialogueContext.PreviousActiveNodeGuid;
@@ -1201,7 +1203,7 @@ void UMounteaDialogueManager::StartExecuteDialogueRow_Client_Implementation()
 	
 	if (DialogueContext->DialogueParticipant)
 	{
-		if (UMounteaDialogueSystemBFC::DoesPreviousNodeSkipActiveNode(DialogueContext->DialogueParticipant->GetDialogueGraph(), DialogueContext->PreviousActiveNode))
+		if (UMounteaDialogueSystemBFC::DoesPreviousNodeSkipActiveNode(DialogueContext->DialogueParticipant->Execute_GetDialogueGraph(DialogueContext->DialogueParticipant.GetObject()), DialogueContext->PreviousActiveNode))
 		{
 			Execute_FinishedExecuteDialogueRow(this);
 
