@@ -143,7 +143,7 @@ void UMounteaDialogueParticipant::SkipParticipantVoice_Implementation(USoundBase
 	}
 }
 
-bool UMounteaDialogueParticipant::CanStartDialogue() const
+bool UMounteaDialogueParticipant::CanStartDialogue_Implementation() const
 {
 	switch (GetParticipantState())
 	{
@@ -167,7 +167,7 @@ void UMounteaDialogueParticipant::SaveStartingNode_Implementation(UMounteaDialog
 	OnStartingNodeSaved.Broadcast(StartingNode);
 }
 
-void UMounteaDialogueParticipant::SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph)
+void UMounteaDialogueParticipant::SetDialogueGraph_Implementation(UMounteaDialogueGraph* NewDialogueGraph)
 {
 	if (ParticipantState == EDialogueParticipantState::EDPS_Active) return;
 
@@ -193,7 +193,7 @@ void UMounteaDialogueParticipant::SetDialogueGraph(UMounteaDialogueGraph* NewDia
 	}
 }
 
-void UMounteaDialogueParticipant::SetParticipantState(const EDialogueParticipantState NewState)
+void UMounteaDialogueParticipant::SetParticipantState_Implementation(const EDialogueParticipantState NewState)
 {
 	if (NewState == ParticipantState)
 	{
@@ -220,7 +220,7 @@ void UMounteaDialogueParticipant::SetParticipantState(const EDialogueParticipant
 	}
 }
 
-void UMounteaDialogueParticipant::SetDefaultParticipantState(const EDialogueParticipantState NewState)
+void UMounteaDialogueParticipant::SetDefaultParticipantState_Implementation(const EDialogueParticipantState NewState)
 {
 	if (!GetOwner())
 	{
@@ -237,7 +237,7 @@ void UMounteaDialogueParticipant::SetDefaultParticipantState(const EDialoguePart
 	}
 }
 
-void UMounteaDialogueParticipant::SetAudioComponent(UAudioComponent* NewAudioComponent)
+void UMounteaDialogueParticipant::SetAudioComponent_Implementation(UAudioComponent* NewAudioComponent)
 {
 	if (AudioComponent == NewAudioComponent) return;
 	
@@ -260,11 +260,6 @@ void UMounteaDialogueParticipant::SetAudioComponent(UAudioComponent* NewAudioCom
 		
 		SetAudioComponent_Server(NewAudioComponent);
 	}
-}
-
-AActor* UMounteaDialogueParticipant::GetOwningActor_Implementation() const
-{
-	return GetOwner();
 }
 
 //TODO: instead of the Actor handling this logic realtime, make FRunnable queue and let data be calculated async way
@@ -299,11 +294,6 @@ void UMounteaDialogueParticipant::SaveTraversedPath_Implementation(TArray<FDialo
 	}
 
 	// Traverse path has been updated! Great job.
-}
-
-FGameplayTag UMounteaDialogueParticipant::GetParticipantTag() const
-{
-	return ParticipantTag;
 }
 
 void UMounteaDialogueParticipant::RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)

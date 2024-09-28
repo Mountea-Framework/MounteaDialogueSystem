@@ -43,8 +43,7 @@ const FName FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID(TEXT("Search"
 
 #pragma endregion
 
-void FAssetEditor_MounteaDialogueGraph::OnPackageSaved(const FString& String, UPackage* Package,
-														FObjectPostSaveContext ObjectPostSaveContext)
+void FAssetEditor_MounteaDialogueGraph::OnPackageSaved(const FString& String, UPackage* Package, FObjectPostSaveContext ObjectPostSaveContext)
 {
 	RebuildMounteaDialogueGraph();
 }
@@ -61,11 +60,7 @@ FAssetEditor_MounteaDialogueGraph::~FAssetEditor_MounteaDialogueGraph()
 {
 	EditingGraph = nullptr;
 	UPackage::PackageSavedWithContextEvent.Remove(OnPackageSavedDelegateHandle);
-
-	//FGenericCommands::Unregister();
-	//FGraphEditorCommands::Unregister();
 	FMounteaDialogueGraphEditorCommands::Unregister();
-
 	ToolbarBuilder.Reset();
 }
 
@@ -74,9 +69,6 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(
 {
 	EditingGraph = Graph;
 	CreateEdGraph();
-
-	//FGenericCommands::Register();
-	//FGraphEditorCommands::Register();
 	FMounteaDialogueGraphEditorCommands::Register();
 
 	if (!ToolbarBuilder.IsValid())
@@ -98,45 +90,44 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(
 		->AddArea
 		(
 			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
-										->Split
-										(
-											FTabManager::NewSplitter()
-											->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
-											->Split
-											(
-												FTabManager::NewStack()
-												->SetSizeCoefficient(3.f)
-												->AddTab(FAssetEditorTabs_MounteaDialogueGraph::ViewportID,
-														ETabState::OpenedTab)->SetHideTabWell(true)
-											)
-											->Split
-											(
-												FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)
-																		->Split
-																		(
-																			FTabManager::NewSplitter()->SetOrientation(
-																				Orient_Vertical)
-																			->Split
-																			(
-																				FTabManager::NewStack()
-																				->SetSizeCoefficient(0.9f)
-																				->AddTab(
-																					FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID,
-																					ETabState::OpenedTab)->
-																				SetHideTabWell(true)
-																			)
-
-																			->Split
-																			(
-																				FTabManager::NewStack()
-																				->SetSizeCoefficient(0.3f)
-																				->AddTab(
-																					FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID,
-																					ETabState::OpenedTab)
-																			)
-																		)
-											)
-										)
+			->Split
+			(
+				FTabManager::NewSplitter()
+				->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
+				->Split
+				(
+					FTabManager::NewStack()
+					->SetSizeCoefficient(3.f)
+					->AddTab(FAssetEditorTabs_MounteaDialogueGraph::ViewportID,
+							ETabState::OpenedTab)->SetHideTabWell(true)
+				)
+				->Split
+				(
+					FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)
+					->Split
+					(
+						FTabManager::NewSplitter()->SetOrientation(
+							Orient_Vertical)
+						->Split
+						(
+							FTabManager::NewStack()
+							->SetSizeCoefficient(0.9f)
+							->AddTab(
+								FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID,
+								ETabState::OpenedTab)->
+							SetHideTabWell(true)
+						)
+						->Split
+						(
+							FTabManager::NewStack()
+							->SetSizeCoefficient(0.3f)
+							->AddTab(
+								FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID,
+								ETabState::OpenedTab)
+						)
+					)
+				)
+			)
 		);
 
 	const bool bCreateDefaultStandaloneMenu = true;

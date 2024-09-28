@@ -196,96 +196,47 @@ protected:
 	
 public:
 
-	/**
-	 * Returns whether Dialogue Can start or not.
-	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Validate"))
-	virtual bool CanStartDialogue() const override;
-	
-	/**
-	 * Returns the starting node of the Mountea Dialogue Graph saved during runtime.
-	 * ❗ In order to have a saved starting node, the function 'SaveStartingNode' must have been called at least once.
-	 * ❔ The saved starting node can be updated using 'SaveStartingNode' function.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Validate"))
-	virtual UMounteaDialogueGraphNode* GetSavedStartingNode() const override
+	virtual bool CanStartDialogue_Implementation() const override;
+
+	virtual UMounteaDialogueGraphNode* GetSavedStartingNode_Implementation() const override
 	{ return StartingNode; };
+	
 	virtual void SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode) override;
 
-	/**
-	 * Returns Dialogue Graph of this Participant.
-	 * ❗ Might return Null❗
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
-	virtual UMounteaDialogueGraph* GetDialogueGraph() const override
+	virtual UMounteaDialogueGraph* GetDialogueGraph_Implementation() const override
 	{ return DialogueGraph; };
-	
-	/**
-	 * Overrides Dialogue Graph for this Participant.
-	 * ❗ Accepts Null values❗
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
-	virtual void SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph) override;
-	
-	/**
-	 * Returns the current state of the Dialogue Participant.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
-	virtual EDialogueParticipantState GetParticipantState() const override
+
+	virtual void SetDialogueGraph_Implementation(UMounteaDialogueGraph* NewDialogueGraph) override;
+
+	virtual EDialogueParticipantState GetParticipantState_Implementation() const override
 	{ return  ParticipantState; };
+
+	virtual void SetParticipantState_Implementation(const EDialogueParticipantState NewState) override;
 	
-	/**
-	 * Sets the current state of the dialogue participant to the given state.
-	 * @param NewState The new state to set the dialogue participant to.
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
-	virtual void SetParticipantState(const EDialogueParticipantState NewState) override;
-	
-	/**
-	 * Returns the Default state of the Dialogue Participant.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
-	virtual EDialogueParticipantState GetDefaultParticipantState() const override
+	virtual EDialogueParticipantState GetDefaultParticipantState_Implementation() const override
 	{ return  DefaultParticipantState; };
 	
-	/**
-	 * Sets the Default state of the dialogue participant to the given state.
-	 * @param NewState The new state to set the dialogue participant to.
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
-	virtual void SetDefaultParticipantState(const EDialogueParticipantState NewState) override;
-
+	virtual void SetDefaultParticipantState_Implementation(const EDialogueParticipantState NewState) override;
 	
-	/**
-	 * Returns the audio component used to play the participant voices.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
-	virtual UAudioComponent* GetAudioComponent() const override
+	virtual UAudioComponent* GetAudioComponent_Implementation() const override
 	{ return AudioComponent; };
 	
-	/**
-	 * Sets the audio component used to play dialogue audio.
-	 *
-	 * @param NewAudioComponent The new audio component to use for dialogue audio.
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
-	virtual void SetAudioComponent(UAudioComponent* NewAudioComponent) override;
-
+	virtual void SetAudioComponent_Implementation(UAudioComponent* NewAudioComponent) override;
 	
-	virtual AActor* GetOwningActor_Implementation() const override;
-
+	virtual AActor* GetOwningActor_Implementation() const override
+	{ return GetOwner();	};
 	
-	/**
-	 * Returns the map of nodes traversed during the dialogue.
-	 * 
-	 * @return The map of nodes traversed during the dialogue.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
-	virtual TArray<FDialogueTraversePath> GetTraversedPath() const override
+	virtual TArray<FDialogueTraversePath> GetTraversedPath_Implementation() const override
 	{ return TraversedPath; };
+	
 	virtual void SaveTraversedPath_Implementation(TArray<FDialogueTraversePath>& InPath) override;
 
-	virtual FGameplayTag GetParticipantTag() const override;
+	virtual FGameplayTag GetParticipantTag_Implementation() const override
+	{ return ParticipantTag;	};
+	
+	virtual void ProcessDialogueCommand_Implementation(const FString& Command, UObject* Payload) override
+	{};
 	
 #pragma region EventHandleGetters
 	

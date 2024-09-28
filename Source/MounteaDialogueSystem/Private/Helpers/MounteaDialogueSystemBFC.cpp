@@ -210,7 +210,7 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 		return false;
 	}
 
-	if (MainParticipant->Execute_CanStartDialogueEvent(MainParticipant.GetObject()) == false)
+	if (MainParticipant->Execute_CanStartDialogue(MainParticipant.GetObject()) == false)
 	{
 		LOG_ERROR(TEXT("[StartDialogue]  Main Participant cannot starti Dialogue!. Cannot start dialogue."));
 		return false;
@@ -244,7 +244,7 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 			continue;
 		}
 
-		if (!Itr->Execute_CanStartDialogueEvent(Itr.GetObject()))
+		if (!Itr->Execute_CanStartDialogue(Itr.GetObject()))
 		{
 			UnavailableParticipants.Add(Itr);
 			LOG_INFO(TEXT("[StartDialogue] Dialogie Participant %d cannot Start Dialogue, so it will be ignored"), DialogueParticipants.Find(Itr))
@@ -298,6 +298,10 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 
 	UMounteaDialogueGraphNode* NodeToStart = MainParticipant->GetSavedStartingNode();
 	if (!NodeToStart || NodeToStart->CanStartNode() == false)
+	{
+		NodeToStart = Graph->GetStartNode();
+	}
+	else if (NodeToStart && NodeToStart->Graph != Graph)
 	{
 		NodeToStart = Graph->GetStartNode();
 	}
@@ -568,7 +572,7 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC
 
 	for (auto const& Participant : Context->GetDialogueParticipants())
 	{
-		const FGameplayTag Tag = Participant->Execute_GetTag(Participant.GetObject());
+		const FGameplayTag Tag = Participant->Execute_GetParticipantTag(Participant.GetObject());
 
 		const FDialogueRow Row = GetDialogueRow(DialogueNode);
 		if (Row.CompatibleTags.HasTagExact(Tag))

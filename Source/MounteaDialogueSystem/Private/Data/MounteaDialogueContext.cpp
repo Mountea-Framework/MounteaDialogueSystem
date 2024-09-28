@@ -12,13 +12,13 @@ FString UMounteaDialogueContext::ToString() const
 	FString returnValue;
 
 	FString activeDialoguePart = FString("Active Dialogue Participant: ");
-	activeDialoguePart.Append(ActiveDialogueParticipant.GetObject() ? ActiveDialogueParticipant->Execute_GetTag(ActiveDialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
+	activeDialoguePart.Append(ActiveDialogueParticipant.GetObject() ? ActiveDialogueParticipant->Execute_GetParticipantTag(ActiveDialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
 
 	FString playerDialoguePart = FString("Player Dialogue Participant: ");
-	playerDialoguePart.Append(PlayerDialogueParticipant.GetObject() ? PlayerDialogueParticipant->Execute_GetTag(PlayerDialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
+	playerDialoguePart.Append(PlayerDialogueParticipant.GetObject() ? PlayerDialogueParticipant->Execute_GetParticipantTag(PlayerDialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
 
 	FString otherDialoguePart = FString("Other Dialogue Participant: ");
-	otherDialoguePart.Append(DialogueParticipant.GetObject() ? DialogueParticipant->Execute_GetTag(DialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
+	otherDialoguePart.Append(DialogueParticipant.GetObject() ? DialogueParticipant->Execute_GetParticipantTag(DialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
 
 	FString allDialogueParts = FString("Dialogue Participants: ");
 	allDialogueParts.Append(FString::Printf(TEXT("%d"), DialogueParticipants.Num()));

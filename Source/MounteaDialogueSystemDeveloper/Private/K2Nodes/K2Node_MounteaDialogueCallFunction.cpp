@@ -7,9 +7,9 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueCallFunction"
 
-void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const
+void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabaseRegistrar& actionRegistrar) const
 {
-	Super::GetMenuActions(ActionRegistrar);
+	Super::GetMenuActions(actionRegistrar);
 
 	UClass* nodeClass = GetClass();
 
@@ -20,7 +20,7 @@ void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabas
 		inputNode->Initialize(relevantFunction, relevantClass);
 	};
 
-	if (ActionRegistrar.IsOpenForRegistration(nodeClass))
+	if (actionRegistrar.IsOpenForRegistration(nodeClass))
 	{
 		const TSet<UClass*>& relevantClasses = MounteaDialogueHelpers::GetRelevantClasses();
 
@@ -55,7 +55,7 @@ void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabas
 				UBlueprintNodeSpawner* nodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
 				nodeSpawner->CustomizeNodeDelegate = UBlueprintNodeSpawner::FCustomizeNodeDelegate::CreateStatic(customizeNodeLambda, itrFunction, relevantClass);
 
-				ActionRegistrar.AddBlueprintAction(nodeClass, nodeSpawner);
+				actionRegistrar.AddBlueprintAction(nodeClass, nodeSpawner);
 			}
 		}
 	}
@@ -162,9 +162,9 @@ FSlateIcon UK2Node_MounteaDialogueCallFunction::GetIconAndTint(FLinearColor& out
 	}
 }
 
-void UK2Node_MounteaDialogueCallFunction::Initialize(const UFunction* func, UClass* cls)
+void UK2Node_MounteaDialogueCallFunction::Initialize(const UFunction* relevantFunction, UClass* relevantClass)
 {
-	FunctionReference.SetExternalMember(func->GetFName(), cls);
+	FunctionReference.SetExternalMember(relevantFunction->GetFName(), relevantClass);
 }
 
 #undef LOCTEXT_NAMESPACE

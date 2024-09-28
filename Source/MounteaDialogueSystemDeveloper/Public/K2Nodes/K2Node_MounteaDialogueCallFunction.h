@@ -7,29 +7,23 @@
 #include "Helpers/FMounteaDialogueK2NodesHelpers.h"
 #include "K2Node_MounteaDialogueCallFunction.generated.h"
 
-
-/**
- * This node allows for styling the functions from Mountea Dialogue System. It works by creating a node for each
- * function in the library (these are set to BlueprintInternalUseOnly) and then customizing the node to display the
- * desired information and styling.
+/*
+ * 
  */
 UCLASS()
 class MOUNTEADIALOGUESYSTEMDEVELOPER_API UK2Node_MounteaDialogueCallFunction : public UK2Node_CallFunction
 {
 	GENERATED_BODY()
+	
+public:
+	
 	EFunctionCallType GetFunctionType() const;
 	EFunctionRole GetFunctionRole() const;
 
-	/**
-	 * Initializes the node with the given function. This is called by the BlueprintNodeSpawner, and is used
-	 * to initialize each node with the correct function pointer.
-	 */
-	void Initialize(const UFunction* func, UClass* cls);
+	void Initialize(const UFunction* relevantFunction, UClass* relevantClass);
 	
 	// UK2Node
-	virtual void GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const override;
-
-public:
+	virtual void GetMenuActions(FBlueprintActionDatabaseRegistrar& actionRegistrar) const override;
 
 	// UK2Node_CallFunction
 	virtual FText GetToolTipHeading() const override;

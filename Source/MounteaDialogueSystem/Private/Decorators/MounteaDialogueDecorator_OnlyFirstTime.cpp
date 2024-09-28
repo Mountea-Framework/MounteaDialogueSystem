@@ -43,6 +43,13 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::ValidateDecorator_Implementation(T
 bool UMounteaDialogueDecorator_OnlyFirstTime::EvaluateDecorator_Implementation()
 {
 	bool bSatisfied = Super::EvaluateDecorator_Implementation();
+
+	if (!OwningManager)
+	{
+		return false;
+	}
+
+	// TODO: THIS IS CRASHING IN PRE-INIT OF GRAPH AS GRAPH DOESNT HAVE ANY MANAGER YET
 	// Let's return BP Updatable Context rather than Raw
 	if (!Context)
 	{
