@@ -46,11 +46,21 @@ void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabas
 
 			for (UFunction* itrFunction : classFunctions)
 			{
+				/*
+				if (itrFunction->HasAnyFunctionFlags(FUNC_BlueprintEvent))
+				{
+					itrFunction->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
+					itrFunction->RemoveMetaData(TEXT("BlueprintCallable"));
+				}
 				if (!itrFunction->HasAnyFunctionFlags(FUNC_BlueprintEvent))
 				{
 					itrFunction->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
 					itrFunction->RemoveMetaData(TEXT("BlueprintCallable"));
 				}
+				*/
+				
+				itrFunction->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
+				itrFunction->RemoveMetaData(TEXT("BlueprintCallable"));
 
 				UBlueprintNodeSpawner* nodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
 				nodeSpawner->CustomizeNodeDelegate = UBlueprintNodeSpawner::FCustomizeNodeDelegate::CreateStatic(customizeNodeLambda, itrFunction, relevantClass);
