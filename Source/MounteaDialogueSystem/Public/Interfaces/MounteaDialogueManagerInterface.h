@@ -79,6 +79,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="start"), meta=(CustomTag="MounteaK2Setter"))
 	void StartDialogue();
 	virtual void StartDialogue_Implementation() = 0;
+	
 	/**
 	 * Closes the Dialogue if is active.
 	 */

@@ -37,7 +37,7 @@ public:
 #pragma region Functions
 public:
 	
-	UFUNCTION(BlueprintPure, Category = "Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintPure, Category = "Mountea|Dialogue|Edge", meta=(CustomTag="MounteaK2Getter"))
 	UMounteaDialogueGraph* GetGraph() const;
 
 #pragma endregion 

@@ -105,7 +105,7 @@ public:
 	 *
 	 * @return The GUID of the graph.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue|Graph", meta=(CustomTag="MounteaK2Getter"))
 	FGuid GetGraphGUID() const;
 
 	// Allows setting graph guid directly.
