@@ -38,7 +38,7 @@ public:
 	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Decorator:-Only-First-Time-Base"); }
 
 	// Returns whether Owning Node has never been called before.
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorators", meta=(CustomTag="MounteaK2Validate"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Validate"))
 	bool IsFirstTime() const;
 
 protected:

@@ -61,7 +61,7 @@ public:
 		return nullptr;
 	}
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Getter"))
 	FString GetDecoratorDocumentationLink() const;
 	virtual FString GetDecoratorDocumentationLink_Implementation() const
 	{
@@ -76,14 +76,14 @@ public:
 	 * In Blueprints should be used to cache values to avoid overhead in 'ExecuteDecorator'.
 	 * Dialogue Manager will not override if empty. If need to override with nullptr use `SetOwningManager` instead.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Setter"))
 	void InitializeDecorator(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager);
 	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager);
 
 	/**
 	 * @return Owning Dialogue Manager.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Getter"))
 	TScriptInterface<IMounteaDialogueManagerInterface> GetManager() const;
 	virtual TScriptInterface<IMounteaDialogueManagerInterface> GetManager_Implementation() const
 	{ return OwningManager; };
@@ -92,7 +92,7 @@ public:
 	 *	Updates Owning Manager. Can be used to clean the decorator.
 	 * @param NewOwningManager			Owning Manager that will handle this Decorator.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Setter"))
 	void SetOwningManager(const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager);
 	virtual void SetOwningManager_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager);
 
@@ -100,7 +100,7 @@ public:
 	 * Cleans up the Decorator.
 	 * In Blueprints should be used to reset cached values to avoid blocking garbage collector.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Setter"))
 	void CleanupDecorator();
 	virtual void CleanupDecorator_Implementation()
 	{
@@ -116,7 +116,7 @@ public:
 	 * False value stops Dialogue whatsoever.
 	 * Validation is called before Context is initialized!
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators", meta=(CustomTag="MounteaK2Validate"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Validate"))
 	bool ValidateDecorator(TArray<FText>& ValidationMessages);
 	virtual bool ValidateDecorator_Implementation(TArray<FText>& ValidationMessages);
 	
@@ -125,7 +125,7 @@ public:
 	 * Called for each Node it is attached to.
 	 * Could enhance Node's 'CanStartNode'. Example would be: BP_RequireItem decorator, which would return true if Player has specific Item in inventory. Otherwise it returns false and its Node is not available in Selection of Answers.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators", meta=(CustomTag="MounteaK2Validate"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Validate"))
 	bool EvaluateDecorator();
 	virtual bool EvaluateDecorator_Implementation();
 
@@ -133,7 +133,7 @@ public:
 	 * Executes the Decorator.
 	 * Useful for triggering special events per Node, for instance, switching dialogue cameras.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorators", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Setter"))
 	void ExecuteDecorator();
 	virtual void ExecuteDecorator_Implementation();
 
@@ -141,7 +141,7 @@ public:
 	 * Stores reference to World.
 	 * World is needed to perform World affecting tasks.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Decorators", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Setter"))
 	void StoreWorldReference(UWorld* World)
 	{
 		if (OwningWorld != World) OwningWorld = World;
@@ -152,7 +152,7 @@ public:
 	 *
 	 * ❗ Should not return Null, but possibly can.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Decorators", meta=(CompactNodeTitle="World"), meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Decorator", meta=(CompactNodeTitle="World"), meta=(CustomTag="MounteaK2Getter"))
 	UWorld* GetOwningWorld() const
 	{ return OwningWorld; };
 
@@ -161,24 +161,24 @@ public:
 	 *
 	 * ❗ Might return Null if this Decorator is owned by Graph!
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorators", meta=(CompactNodeTitle="OwningNode"), meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorator", meta=(CompactNodeTitle="OwningNode"), meta=(CustomTag="MounteaK2Getter"))
 	UMounteaDialogueGraphNode* GetOwningNode() const;
 	/**
 	 * Returns Owning Graph of this Decorator.
 	 *
 	 * ❗ Might return Null if this Decorator is owned by Node!
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorators", meta=(CompactNodeTitle="OwningGraph"), meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorator", meta=(CompactNodeTitle="OwningGraph"), meta=(CustomTag="MounteaK2Getter"))
 	UMounteaDialogueGraph* GetOwningGraph() const;
 	/**
 	 * Returns Owning Object of this Decorator.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorators", meta=(CompactNodeTitle="Owner"), meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorator", meta=(CompactNodeTitle="Owner"), meta=(CustomTag="MounteaK2Getter"))
 	UObject* GetOwner() const;
 	/**
 	 * Returns Owner Participant Interface.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorators", meta=(CompactNodeTitle="OwnerParticipant"), meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorator", meta=(CompactNodeTitle="OwnerParticipant"), meta=(CustomTag="MounteaK2Getter"))
 	TScriptInterface<IMounteaDialogueParticipantInterface> GetOwnerParticipant() const
 	{ return OwnerParticipant; };
 

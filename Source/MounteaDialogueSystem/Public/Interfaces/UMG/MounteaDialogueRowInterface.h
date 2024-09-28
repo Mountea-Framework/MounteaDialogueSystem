@@ -120,7 +120,7 @@ public:
 	 * 
 	 * @return 
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Getter"))
 	FWidgetDialogueRow GetDialogueWidgetRowData() const;
 	virtual FWidgetDialogueRow GetDialogueWidgetRowData_Implementation() const = 0;
 
@@ -128,28 +128,28 @@ public:
 	 * 
 	 * @param NewData 
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
 	void SetNewWidgetDialogueRowData(const FWidgetDialogueRow& NewData);
 	virtual void SetNewWidgetDialogueRowData_Implementation(const FWidgetDialogueRow& NewData) = 0;
 
 	/**
 	 * 
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
 	void ResetWidgetDialogueRow();
 	virtual void ResetWidgetDialogueRow_Implementation() = 0;
 
 	/**
 	 * 
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
 	void InitializeWidgetDialogueRow();
 	virtual void InitializeWidgetDialogueRow_Implementation() = 0;
 
 	/**
 	 * Stop the effect from play and finishes the text.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
 	void StopTypeWriterEffect ();
 	virtual void StopTypeWriterEffect_Implementation () = 0;
 
@@ -158,7 +158,7 @@ public:
 	 * @param SourceText		The full text to display.
 	 * @param Duration				The total duration for the typewriter effect.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
 	void StartTypeWriterEffect (const FText& SourceText, float Duration);
 	virtual void StartTypeWriterEffect_Implementation (const FText& SourceText, float Duration) = 0;
 
@@ -166,7 +166,7 @@ public:
 	 * Enables Type-Writer effect.
 	 * Based on implementation the effect can start or stop.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
 	void EnableTypeWriterEffect(bool bEnable);
 	virtual void EnableTypeWriterEffect_Implementation(bool bEnable) = 0;
 };
