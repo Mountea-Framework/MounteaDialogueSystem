@@ -899,3 +899,38 @@ ERowExecutionMode UMounteaDialogueSystemBFC::GetActiveRowExecutionMode(UMounteaD
 
 	return activeRowData.RowExecutionBehaviour;
 }
+
+UObject* UMounteaDialogueSystemBFC::GetObjectByClass(UObject* Object, const TSubclassOf<UObject> ClassFilter, bool& bResult)
+{
+	if (ClassFilter == nullptr)
+	{
+		bResult = false;
+		return nullptr;
+	}
+
+	if (Object == nullptr)
+	{
+		bResult = false;
+		return nullptr;
+	}
+
+	if (Object->IsA(ClassFilter))
+	{
+		bResult = true;
+		return Object;
+	}
+
+	bResult = false;
+	return nullptr;
+}
+
+UActorComponent* UMounteaDialogueSystemBFC::GetSingleComponentByInterface(const AActor* Target, TSubclassOf<UInterface> InterfaceFilter)
+{
+	if (Target == nullptr) return nullptr;
+
+	TArray<UActorComponent*> TempComps = Target->GetComponentsByInterface(InterfaceFilter);
+
+	if (TempComps.IsEmpty()) return nullptr;
+
+	return TempComps[0];
+}
