@@ -37,7 +37,7 @@ public:
 	 *
 	 * @return The Dialogue Data Table for this graph node.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Getter"))
 	virtual UDataTable* GetDataTable() const;
 
 	/**
@@ -46,7 +46,7 @@ public:
 	 *
 	 * @return The Dialogue Data Row name.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Getter"))
 	virtual FName GetRowName() const
 	{ return RowName; }
 
@@ -54,7 +54,7 @@ public:
 	 * Sets the Dialogue Data Table for this graph node.
 	 * @param NewDataTable The new DataTable to set.
 	 */
-	UFUNCTION(/*BlueprintCallable,*/ Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(/*BlueprintCallable,*/ Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Setter"))
 	virtual void SetDataTable(UDataTable* NewDataTable)
 	{
 		DataTable = NewDataTable;
@@ -64,7 +64,7 @@ public:
 	 * Sets the Dialogue Data Row name.
 	 * @param NewRowName The new row name to set.
 	 */
-	UFUNCTION(/*BlueprintCallable,*/ Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(/*BlueprintCallable,*/ Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Setter"))
 	virtual void SetRowName(const FName NewRowName)
 	{
 		RowName = NewRowName;

@@ -103,10 +103,10 @@ public:
 
 public:
 
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Debug", meta=(CompactNodeTitle="To String"), meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(CompactNodeTitle="To String"), meta=(CustomTag="MounteaK2Setter"))
 	virtual FString ToString() const;
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Debug", meta=(CustomTag="MounteaK2Validate"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Context", meta=(CustomTag="MounteaK2Validate"))
 	virtual bool IsValid() const;
 
 	TScriptInterface<IMounteaDialogueParticipantInterface> GetActiveDialogueParticipant() const

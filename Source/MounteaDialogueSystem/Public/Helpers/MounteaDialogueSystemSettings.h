@@ -129,7 +129,7 @@ public:
 	 * Returns Default Dialogue Widget if any is defined.
 	 * ❗ Might return Null❗
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
 	TSoftClassPtr<UUserWidget> GetDefaultDialogueWidget() const
 	{
 		if (DefaultDialogueWidgetClass.IsNull())
@@ -144,35 +144,35 @@ public:
 	 * 
 	 * @return True if skipping finishes the whole row, False if only skips audio.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Validate"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Validate"))
 	bool CanSkipWholeRow() const
 	{
 		return bSkipRowWithAudioSkip;
 	}
 	
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
 	EInputMode GetDialogueInputMode() const
 	{ return InputMode; };
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
 	float GetDurationCoefficient() const
 	{ return DurationCoefficient; };
 	
 	/**
 	 * Returns whether Subtitles are allowed or not.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Validate"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Validate"))
 	bool SubtitlesAllowed() const
 	{ return bAllowSubtitles; };
 
 	/**
 	 * Returns Widget Update Frequency in seconds.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Update Frequency", Keywords="update, refresh, tick, frequency"), meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CompactNodeTitle="Update Frequency", Keywords="update, refresh, tick, frequency"), meta=(CustomTag="MounteaK2Getter"))
 	float GetWidgetUpdateFrequency() const
 	{ return UpdateFrequency; };
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="SkipFadeDuration", Keywords="skip, fade, easy, smooth"), meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CompactNodeTitle="SkipFadeDuration", Keywords="skip, fade, easy, smooth"), meta=(CustomTag="MounteaK2Getter"))
 	float GetSkipFadeDuration() const
 	{ return SkipFadeDuration; };
 
@@ -184,7 +184,7 @@ public:
 	 * 
 	 * @param RowID	Optional Class and Row ID of UserWidget to filter out the override Settings
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
 	FSubtitlesSettings GetSubtitlesSettings(const FUIRowID& RowID) const
 	{ 
 		if (SubtitlesSettingsOverrides.Contains(RowID))
@@ -201,7 +201,7 @@ public:
 	/**
 	 * 
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Setter"))
 	void SetSubtitlesSettings(const FSubtitlesSettings& NewSettings, FUIRowID& RowID)
 	{
 		if (RowID.RowWidgetClass == nullptr)
