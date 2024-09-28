@@ -48,6 +48,26 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.MounteaLogo", new IMAGE_BRUSH(TEXT("Mountea_Logo"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.MounteaLogo.large", new IMAGE_BRUSH(TEXT("Mountea_Logo"), Icon64x64));
 
+	StyleSet->Set("MDSStyleSet.OpenGraphSourceIcon.small", new IMAGE_BRUSH(TEXT("OpenGraphSourceIcon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.OpenGraphSourceIcon", new IMAGE_BRUSH(TEXT("OpenGraphSourceIcon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.OpenGraphSourceIcon.large", new IMAGE_BRUSH(TEXT("OpenGraphSourceIcon"), Icon64x64));
+
+	StyleSet->Set("MDSStyleSet.Icon.Warning.small", new IMAGE_BRUSH(TEXT("InfoWarning_Icon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Icon.Warning", new IMAGE_BRUSH(TEXT("InfoWarning_Icon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.Icon.Warning.large", new IMAGE_BRUSH(TEXT("InfoWarning_Icon"), Icon64x64));
+
+	StyleSet->Set("MDSStyleSet.Icon.Success.small", new IMAGE_BRUSH(TEXT("InfoSuccess_Icon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Icon.Success", new IMAGE_BRUSH(TEXT("InfoSuccess_Icon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.Icon.Success.large", new IMAGE_BRUSH(TEXT("InfoSuccess_Icon"), Icon64x64));
+
+	StyleSet->Set("MDSStyleSet.Icon.Error.small", new IMAGE_BRUSH(TEXT("InfoError_Icon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Icon.Error", new IMAGE_BRUSH(TEXT("InfoError_Icon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.Icon.Error.large", new IMAGE_BRUSH(TEXT("InfoError_Icon"), Icon64x64));
+
+	StyleSet->Set("MDSStyleSet.Icon.Error.small", new IMAGE_BRUSH(TEXT("InfoError_Icon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Icon.Error", new IMAGE_BRUSH(TEXT("InfoError_Icon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.Icon.Error.large", new IMAGE_BRUSH(TEXT("InfoError_Icon"), Icon64x64));
+
 	StyleSet->Set("MDSStyleSet.K2Node_GetterIcon.small", new IMAGE_BRUSH(TEXT("K2Node_GetterIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.K2Node_GetterIcon", new IMAGE_BRUSH(TEXT("K2Node_GetterIcon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.K2Node_GetterIcon.large", new IMAGE_BRUSH(TEXT("K2Node_GetterIcon"), Icon64x64));

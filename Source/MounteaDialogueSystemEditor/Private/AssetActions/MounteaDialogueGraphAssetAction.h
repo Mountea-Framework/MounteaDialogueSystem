@@ -21,6 +21,10 @@ protected:
 
 	void ExecuteExportDialogue(TArray< TWeakObjectPtr<UObject> > Objects);
 	void ExecuteReimportDialogue(TArray< TWeakObjectPtr<UObject> > Objects);
+	void ExecuteOpenDialogueSource(TArray< TWeakObjectPtr<UObject> > Objects);
+
+	bool CanExecuteReimportDialogue(TArray< TWeakObjectPtr<UObject> > Objects);
+	bool CanExecuteOpenDialogueSource(TArray< TWeakObjectPtr<UObject> > Objects);
 	/*
 	virtual FText GetAssetDescription(const FAssetData& AssetData) const override;
 	*/

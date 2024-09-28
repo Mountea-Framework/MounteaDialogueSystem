@@ -134,7 +134,7 @@ private:
 	 *
 	 * This will also cause Interface Functions to disappear from `My Blueprint` panel, unless class inherits from C++ class which already implemented Interface functions.
 	 */
-	UPROPERTY(config, EditDefaultsOnly,  Category = "BlueprintNodes")
+	UPROPERTY(config, EditDefaultsOnly,  Category = "BlueprintNodes", meta=(ConfigRestartRequired=true))
 	bool bDisplayStandardNodes;
 	
 #pragma endregion
