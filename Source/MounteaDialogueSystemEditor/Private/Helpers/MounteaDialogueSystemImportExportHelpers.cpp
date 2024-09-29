@@ -976,10 +976,16 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 		for (const auto& RowObject : Rows)
 		{
 			FString Id = RowObject->GetStringField("id");
-
+			float duration = 0.f;
+			if (RowObject->HasField("duration"))
+			{
+				duration = RowObject->GetNumberField("duration");
+			} 
+			
 			FDialogueRowData RowData;
 			RowData.RowText = FText::FromStringTable(DialogueRowsStringTable->GetStringTableId(), Id);
 			RowData.RowGUID = FGuid(Id);
+			RowData.RowDuration = duration;
 			NewRow.DialogueRowData.Add(RowData);
 		}
 
