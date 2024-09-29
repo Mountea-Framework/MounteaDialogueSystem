@@ -8,7 +8,7 @@ void FMounteaDialogueGraphEditorCommands::RegisterCommands()
 	(
 		AutoArrange, 
 		"Auto Arrange", 
-		"Auto Arrange",
+		"📊 Tries its best to arrange Graph Nodes. Don't judge too harshly please.",
 		EUserInterfaceActionType::Button,
 		FInputChord()
 	);
@@ -18,7 +18,7 @@ void FMounteaDialogueGraphEditorCommands::RegisterCommands()
 	(
 		ValidateGraph, 
 		"Validate Graph", 
-		"Validate Graph",
+		"🚨️ Validates Graph if there are any invalid connections or broken data.",
 		EUserInterfaceActionType::Button,
 		FInputChord()
 	);
