@@ -34,7 +34,7 @@ void FAssetEditorToolbarMounteaDialogueGraph::FillMounteaDialogueGraphToolbar(FT
 		ToolbarBuilder.AddToolBarButton(FMounteaDialogueGraphEditorCommands::Get().ValidateGraph,
 			NAME_None,
 			LOCTEXT("ValidateGraph_Label", "Validate Graph"),
-			LOCTEXT("ValidateGraph_ToolTip", "⚠️ Validates Graph if there are any invalid connections or broken data."),
+			LOCTEXT("ValidateGraph_ToolTip", "🚨️ Validates Graph if there are any invalid connections or broken data."),
 			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.ValidateGraph"));
 
 		ToolbarBuilder.AddToolBarButton(FMounteaDialogueGraphEditorCommands::Get().ExportGraph,
