@@ -26,7 +26,7 @@ namespace MounteaDialogueWidgetCommands
  * 
  * Holds a list of settings that are used to further improve and tweak Dialogues.
  */
-UCLASS(config = MounteaSettings, defaultconfig)
+UCLASS(config = MounteaSettings, defaultconfig,ProjectUserConfig)
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSystemSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()

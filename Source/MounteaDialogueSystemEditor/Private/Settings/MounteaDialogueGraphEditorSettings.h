@@ -72,7 +72,7 @@ class UMounteaDialogueGraphNode;
 /**
  * Mountea Dialogue System global settings.
  */
-UCLASS(config = MounteaSettings)
+UCLASS(config = MounteaSettings, DefaultConfig, ProjectUserConfig)
 class MOUNTEADIALOGUESYSTEMEDITOR_API UMounteaDialogueGraphEditorSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
