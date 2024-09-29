@@ -24,6 +24,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueGraphChanged,						UMountea
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantStateChanged,			const EDialogueParticipantState&, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantAudioComponentChanged,	const UAudioComponent*, NewAudioComp);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FParticipantStartingNodeSaved,				const UMounteaDialogueGraphNode*, NewSavedNode);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FParticipantCommandRequested,				const FString&, Command, UObject*, OptionalPayload);
 
 /**
  * 
@@ -280,6 +281,7 @@ public:
 	virtual FDialogueParticipantStateChanged& GetDialogueParticipantStateChangedEventHandle() = 0;
 	virtual FDialogueParticipantAudioComponentChanged& GetDialogueParticipantAudioComponentChangedEventHandle() = 0;
 	virtual FParticipantStartingNodeSaved& GetParticipantStartingNodeSavedEventHandle() = 0;
+	virtual FParticipantCommandRequested& GetParticipantCommandRequestedEventHandle() = 0;
 
 #pragma endregion 
 };

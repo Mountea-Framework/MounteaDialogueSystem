@@ -176,7 +176,15 @@ protected:
 	 */
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Participant")
 	FParticipantStartingNodeSaved OnStartingNodeSaved;
-
+	/**
+	 * Generic event that will usually be called from Decorator.
+	 * Serves purpose of passing Command and Payload from Decorator to Participant (and its owning Actor).
+	 *
+	 * Useful to retrieve data like Animations etc. from Decorators.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Participant")
+	FParticipantCommandRequested ParticipantCommandRequested;
+	
 #pragma endregion 
 
 #pragma region EventFunctions
@@ -236,7 +244,7 @@ public:
 	{ return ParticipantTag;	};
 	
 	virtual void ProcessDialogueCommand_Implementation(const FString& Command, UObject* Payload) override
-	{};
+	{ ParticipantCommandRequested.Broadcast(Command, Payload); };
 	
 #pragma region EventHandleGetters
 	
@@ -248,6 +256,8 @@ public:
 	{ return OnAudioComponentChanged; };
 	virtual FParticipantStartingNodeSaved& GetParticipantStartingNodeSavedEventHandle() override
 	{ return OnStartingNodeSaved; };
+	virtual FParticipantCommandRequested& GetParticipantCommandRequestedEventHandle() override
+	{return ParticipantCommandRequested; };
 	
 #pragma endregion 
 
@@ -265,7 +275,6 @@ public:
 	FMounteaDialogueTick ParticipantTickEvent;
 	
 #pragma endregion
-
 
 #pragma region Functions
 
