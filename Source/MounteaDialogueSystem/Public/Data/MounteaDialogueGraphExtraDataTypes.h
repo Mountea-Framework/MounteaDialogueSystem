@@ -31,3 +31,21 @@ public:
 		return JsonFile == Other.JsonFile;
 	}
 };
+
+USTRUCT()
+struct FDialogueImportSourceData
+{
+	GENERATED_BODY()
+
+	// Path to saved Graph asset - reimport might try to import to different folder and we don't want to allow that!
+	UPROPERTY(VisibleAnywhere, meta=(NoResetToDefault), Category="Import")
+	FString DialogueAssetPath;
+
+	// Path to Graph Source .mntedlg file
+	UPROPERTY(VisibleAnywhere, meta=(NoResetToDefault), Category="Import")
+	FString DialogueSourcePath;
+
+	// Asset Path x Source Data
+	UPROPERTY(VisibleAnywhere, meta=(NoResetToDefault), Category="Import")
+	TMap<FString,FDialogueImportData> ImportData;
+};

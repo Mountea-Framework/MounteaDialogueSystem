@@ -36,6 +36,29 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 		return nullptr;
 	}
 
+	if (UMounteaDialogueSystemImportExportHelpers::IsReimport(Filename))
+	{
+		UMounteaDialogueGraph* ExistingGraph = nullptr;
+		if (UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(Filename,ExistingGraph ))
+		{
+			if (ExistingGraph)
+			{
+				return ExistingGraph;
+			}
+		}
+		else
+		{
+			// Error notification
+			FNotificationInfo Info(FText::Format(LOCTEXT("ReImportFailed", "Failed to reimport Dialogue:\n{0}"), FText::FromString(InName.ToString())));
+			Info.ExpireDuration = 5.0f;
+			Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Error"));
+			FSlateNotificationManager::Get().AddNotification(Info);
+			
+			bOutOperationCanceled = true;
+			return nullptr;
+		}
+	}
+	
 	UMounteaDialogueGraph* NewGraph = NewObject<UMounteaDialogueGraph>(InParent, InClass, InName, Flags);
 	if (UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(Filename, InParent, InName, Flags, NewGraph))
 	{

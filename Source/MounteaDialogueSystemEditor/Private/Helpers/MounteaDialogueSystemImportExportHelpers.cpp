@@ -45,6 +45,32 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueSystemImportExportHelpers"
 
+bool UMounteaDialogueSystemImportExportHelpers::IsReimport(const FString& Filename)
+{
+	/*
+	 * TODO:
+	 * extract zip and read `dialogueData.json`
+	 * if failed, return false
+	 * if success, return UMounteaDialogueImportConfig->IsReimport(extractedGuid)
+	 */
+	
+	return false;
+}
+
+bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FString& FilePath, UMounteaDialogueGraph*& OutGraph)
+{
+	/*
+	 * TODO:
+	 * 1. Find Dialogue Graph
+	 * 2. If not found, return false
+	 * 3. If found, then clean the graph from all Nodes, Decorators etc. so its empty
+	 * 4. return `ImportDialogueGraph` with found Graph
+	 * 4.1 In future I would like to deduplicate the logic, but keep it simple for now
+	 */
+
+	return false;
+}
+
 bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FString& FilePath, UObject* InParent, const FName Name, const EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph)
 {
 	// 1. Load the file
