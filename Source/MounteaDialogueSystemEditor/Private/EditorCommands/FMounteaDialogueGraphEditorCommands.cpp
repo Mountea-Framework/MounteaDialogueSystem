@@ -31,6 +31,15 @@ void FMounteaDialogueGraphEditorCommands::RegisterCommands()
 		EUserInterfaceActionType::Button,
 		FInputChord(EModifierKey::Control, EKeys::F)
 	);
+
+	UI_COMMAND
+	(
+		ExportGraph, 
+		"Export Graph", 
+		"📤Export the Dialogue Graph as a file containing MNTEADLG data",
+		EUserInterfaceActionType::Button,
+		FInputChord()
+	);
 }
 
 #undef LOCTEXT_NAMESPACE

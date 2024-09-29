@@ -2,6 +2,7 @@
 
 #include "AssetEditor_MounteaDialogueGraph.h"
 
+#include "DesktopPlatformModule.h"
 #include "GraphEditorActions.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "Kismet2/BlueprintEditorUtils.h"
@@ -16,11 +17,13 @@
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
+#include "Framework/Notifications/NotificationManager.h"
 #include "GraphScheme/AssetGraphScheme_MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Layout/AssetEditorTabs.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemEditorBFC.h"
+#include "Helpers/MounteaDialogueSystemImportExportHelpers.h"
 #include "Layout/ForceDirectedSolveLayoutStrategy.h"
 #include "Layout/MounteaDialogueGraphLayoutStrategy.h"
 #include "Layout/TreeSolveLayoutStrategy.h"
@@ -31,6 +34,7 @@
 #include "Serialization/JsonSerializer.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
 #include "UObject/ObjectSaveContext.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 #define LOCTEXT_NAMESPACE "AssetEditorMounteaDialogueGraph"
 
@@ -357,6 +361,12 @@ void FAssetEditor_MounteaDialogueGraph::BindCommands()
 		FMounteaDialogueGraphEditorCommands::Get().FindInDialogue,
 		FExecuteAction::CreateLambda([this] { SummonSearchUI(); })
 	);
+
+	ToolkitCommands->MapAction
+	(
+		FMounteaDialogueGraphEditorCommands::Get().ExportGraph,
+		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::ExportGraph)
+	);
 }
 
 void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
@@ -581,6 +591,10 @@ void FAssetEditor_MounteaDialogueGraph::CreateCommandList()
 									FCanExecuteAction::CreateRaw(
 										this, &FAssetEditor_MounteaDialogueGraph::CanValidateGraph));
 
+	GraphEditorCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().ExportGraph,
+								FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::ExportGraph),
+								FCanExecuteAction());
+
 	GraphEditorCommands->MapAction(FGenericCommands::Get().SelectAll,
 									FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::SelectAllNodes),
 									FCanExecuteAction::CreateRaw(
@@ -673,6 +687,77 @@ void FAssetEditor_MounteaDialogueGraph::SummonSearchUI(FString NewSearch, bool b
 		FMounteaDialogueSearchFilter Filter;
 		Filter.SearchString = NewSearch;
 		FindResultsToUse->FocusForUse(Filter, bSelectFirstResult);
+	}
+}
+
+void FAssetEditor_MounteaDialogueGraph::ExportGraph()
+{
+	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
+	if (!CurrentGraphEditor.IsValid())
+	{
+		// Error notification
+		FNotificationInfo Info(LOCTEXT("ExportFailed", "Failed to export Dialogue Graph. Invalid Editor reference!"));
+		Info.ExpireDuration = 5.0f;
+		Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Error"));
+		FSlateNotificationManager::Get().AddNotification(Info);
+
+		return;
+	}
+
+	if (!EditingGraph)
+	{
+		// Error notification
+		FNotificationInfo Info(LOCTEXT("ExportFailed", "Failed to export Dialogue Graph. Invalid Graph reference!"));
+		Info.ExpireDuration = 5.0f;
+		Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Error"));
+		FSlateNotificationManager::Get().AddNotification(Info);
+
+		return;
+	}
+	
+	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+
+	const void* ParentWindowWindowHandle = FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr);
+
+	const FText Title = FText::Format(LOCTEXT("MounteaDialogueGraph_ExportGraphDialogTitle", "Export '{0}' as MNTEADLG..."), FText::FromString(*EditingGraph->GetName()));
+	const FString CurrentFilename = EditingGraph->GetName();
+	const FString FileTypes = TEXT("Mountea Dialogue Graph (*.mnteadlg)|*.mnteadlg");
+
+	TArray<FString> OutFilenames;
+	DesktopPlatform->SaveFileDialog(
+		ParentWindowWindowHandle,
+		Title.ToString(),
+		(CurrentFilename.IsEmpty()) ? TEXT("") : FPaths::GetPath(CurrentFilename),
+		(CurrentFilename.IsEmpty()) ? TEXT("") : FPaths::GetBaseFilename(CurrentFilename) + TEXT(".mnteadlg"),
+		FileTypes,
+		EFileDialogFlags::None,
+		OutFilenames
+		);
+
+	if (OutFilenames.Num() > 0)
+	{
+		const FString& ChosenFilePath = OutFilenames[0];
+		if (UMounteaDialogueSystemImportExportHelpers::ExportDialogueGraph(EditingGraph, ChosenFilePath))
+		{
+			// Success notification
+			FNotificationInfo Info(FText::Format(LOCTEXT("ExportSuccessful", "Successfully exported {0}"), FText::FromString(EditingGraph->GetName())));
+			Info.ExpireDuration = 5.0f;
+			Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Success"));
+			Info.Hyperlink = FSimpleDelegate::CreateLambda([Path = ChosenFilePath]()
+			{
+				FPlatformProcess::ExploreFolder(*Path);
+			});
+			Info.HyperlinkText = LOCTEXT("ExportSuccessful_hyperlink", "click here to open export file folder");
+			FSlateNotificationManager::Get().AddNotification(Info);
+		}
+		else
+		{
+			// Error notification
+			FNotificationInfo Info(FText::Format(LOCTEXT("ExportFailed", "Failed to export {0}"), FText::FromString(EditingGraph->GetName())));
+			Info.ExpireDuration = 5.0f;
+			Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Error"));
+			FSlateNotificationManager::Get().AddNotification(Info);
+		}
 	}
 }
 

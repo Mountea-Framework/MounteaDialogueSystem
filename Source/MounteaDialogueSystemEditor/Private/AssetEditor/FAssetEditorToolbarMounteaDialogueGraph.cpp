@@ -36,6 +36,12 @@ void FAssetEditorToolbarMounteaDialogueGraph::FillMounteaDialogueGraphToolbar(FT
 			LOCTEXT("ValidateGraph_Label", "Validate Graph"),
 			LOCTEXT("ValidateGraph_ToolTip", "Validates Graph if there are any invalid connections or broken data."),
 			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.ValidateGraph"));
+
+		ToolbarBuilder.AddToolBarButton(FMounteaDialogueGraphEditorCommands::Get().ExportGraph,
+			NAME_None,
+			LOCTEXT("ExportDialogueGraph_Label", "Export Dialogue Graph"),
+			LOCTEXT("ExportDialogueGraph_Tooltip", "📤Export the Dialogue Graph as a file containing MNTEADLG data."),
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.ExportGraph"));
 	}
 	ToolbarBuilder.EndSection();
 }

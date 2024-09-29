@@ -16,6 +16,7 @@ public:
 	TSharedPtr<FUICommandInfo> ValidateGraph;
 
 	TSharedPtr<FUICommandInfo> FindInDialogue;
+	TSharedPtr<FUICommandInfo> ExportGraph;
 
 	virtual void RegisterCommands() override;
 };
