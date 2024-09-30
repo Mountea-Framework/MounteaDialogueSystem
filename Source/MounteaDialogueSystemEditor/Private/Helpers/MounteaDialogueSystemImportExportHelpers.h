@@ -65,6 +65,7 @@ private:
 	static FString BytesToString(const uint8* Bytes, int32 Count);
 	static void PopulateNodeData(UMounteaDialogueGraphNode* Node, const TSharedPtr<FJsonObject>& JsonObject);
 	static UStringTable* CreateStringTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName, TFunction<void(UStringTable*)> PopulateFunction);
+	
 	template <typename RowType>
 	static UDataTable* CreateDataTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName);
 	static void SaveAsset(UObject* Asset);

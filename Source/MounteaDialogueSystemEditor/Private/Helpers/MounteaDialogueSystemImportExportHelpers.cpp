@@ -185,10 +185,8 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 		// Basically copy-paste `ImportDialogueGraph` but without creating new assets (unless needed)
 		// * maybe modify the `ImportDialogueGraph`?
 
-		PopulateCategories(OutGraph, extractedFiles["categories.json"]);
-		PopulateParticipants(OutGraph, extractedFiles["participants.json"]);
-		
 		OutGraph->ClearGraph();
+		PopulateGraphFromExtractedFiles(OutGraph, extractedFiles, FilePath);
 
 		OutMessage = FString::Printf(TEXT("Graph `%s` has been refreshed."), *OutGraph->GetName());
 
@@ -832,27 +830,12 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateParticipants(const UMoun
 	}
 
 	FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+	IAssetTools& AssetTools = AssetToolsModule.Get();
 
 	const FString PackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
 	const FString AssetName = FString::Printf(TEXT("DT_%s_Participants"), *Graph->GetName());
-	
-	FSoftObjectPath AssetFullSoftPath =  PackagePath + TEXT("/") + AssetName + TEXT(".") + AssetName;
 
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-	FAssetData ExistingAssetData = AssetRegistryModule.Get().GetAssetByObjectPath(AssetFullSoftPath);
-
-	UDataTable* ParticipantsDataTable = nullptr;
-
-	if (ExistingAssetData.IsValid())
-	{
-		ParticipantsDataTable = Cast<UDataTable>(ExistingAssetData.GetAsset());
-	}
-	else
-	{
-		ParticipantsDataTable = Cast<UDataTable>(
-			AssetToolsModule.Get().CreateAsset(AssetName, PackagePath, UDataTable::StaticClass(), nullptr));
-	}
+	UDataTable* ParticipantsDataTable =ParticipantsDataTable = CreateDataTable<FDialogueRow>(AssetTools, PackagePath, AssetName);;
 
 	if (!ParticipantsDataTable)
 	{
@@ -1303,7 +1286,20 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 
 UStringTable* UMounteaDialogueSystemImportExportHelpers::CreateStringTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName, TFunction<void(UStringTable*)> PopulateFunction)
 {
-	UStringTable* StringTable = Cast<UStringTable>(AssetTools.CreateAsset(AssetName, PackagePath, UStringTable::StaticClass(), nullptr));
+	UStringTable* StringTable = nullptr;
+	
+	FSoftObjectPath StringTableAssetPath = PackagePath + TEXT("/") + AssetName + TEXT(".") + AssetName;
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	FAssetData StringTableAssetData = AssetRegistryModule.Get().GetAssetByObjectPath(StringTableAssetPath);
+	if (StringTableAssetData.IsValid())
+	{
+		StringTable = Cast<UStringTable>(StringTableAssetData.GetAsset());
+	}
+	else
+	{
+		StringTable = Cast<UStringTable>(AssetTools.CreateAsset(AssetName, PackagePath, UStringTable::StaticClass(), nullptr));
+	}
+	
 	if (StringTable)
 	{
 		PopulateFunction(StringTable);
@@ -1314,12 +1310,26 @@ UStringTable* UMounteaDialogueSystemImportExportHelpers::CreateStringTable(IAsse
 template <typename RowType>
 UDataTable* UMounteaDialogueSystemImportExportHelpers::CreateDataTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName)
 {
-	UDataTable* DataTable = Cast<UDataTable>(
+	UDataTable* DataTable = nullptr;
+
+	FSoftObjectPath DataTableAssetPath = PackagePath + TEXT("/") + AssetName + TEXT(".") + AssetName;
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	FAssetData DataTableAssetData = AssetRegistryModule.Get().GetAssetByObjectPath(DataTableAssetPath);
+	if (DataTableAssetData.IsValid())
+	{
+		DataTable = Cast<UDataTable>(DataTableAssetData.GetAsset());
+	}
+	else
+	{
+		DataTable = Cast<UDataTable>(
 		AssetTools.CreateAsset(AssetName, PackagePath, UDataTable::StaticClass(), nullptr));
+	}
+	
 	if (DataTable)
 	{
 		DataTable->RowStruct = RowType::StaticStruct();
 	}
+	
 	return DataTable;
 }
 
