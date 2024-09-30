@@ -1266,9 +1266,34 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 		TArray<FDialogueRow*> dialogueRows;
 		FString outString;
 		DialogueRowsDataTable->GetAllRows(outString, dialogueRows);
-		FString rowName = NewRow.DialogueParticipant.ToString();
-		rowName.Append(TEXT("_")).Append(FString::FromInt(dialogueRows.Num()));
-		DialogueRowsDataTable->AddRow(FName(*rowName), NewRow);
+
+		FDialogueRow* existingRowToUpdate = nullptr;
+		FName rowName;
+		
+		TArray<FName> rowNames = DialogueRowsDataTable->GetRowNames();
+		
+		for (int32 i = 0; i < dialogueRows.Num(); ++i)
+		{
+			auto* existingRow = dialogueRows[i];
+			if (existingRow && NewRow.IsNearlyEqual(*existingRow))
+			{
+				existingRowToUpdate = existingRow;
+				rowName = rowNames[i]; 
+				break;
+			}
+		}
+
+		if (existingRowToUpdate)
+		{
+			*existingRowToUpdate = NewRow;
+		}
+		else
+		{
+			FString newRowName = NewRow.DialogueParticipant.ToString();
+			newRowName.Append(TEXT("_")).Append(FString::FromInt(dialogueRows.Num()));
+			rowName = FName(*newRowName);
+			DialogueRowsDataTable->AddRow(rowName, NewRow);
+		}
 
 		// Update nodes
 		if (Graph && Graph->GetAllNodes().Num() > 0)
@@ -1276,11 +1301,11 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 			for (const auto& Node : Graph->GetAllNodes())
 			{
 				if (!Node || Node->GetNodeGUID() != newRowGuid) continue;
-				
+        
 				if (UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node))
 				{
 					DialogueNode->SetDataTable(DialogueRowsDataTable);
-					DialogueNode->SetRowName(FName(*rowName));
+					DialogueNode->SetRowName(rowName);
 				}
 			}
 		}

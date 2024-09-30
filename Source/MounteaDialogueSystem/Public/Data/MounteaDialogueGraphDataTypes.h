@@ -429,6 +429,7 @@ public:
 	}
 
 public:
+	
 	inline FDialogueRow& operator=(const FDialogueRow& Other)
 	{
 		RowOptionalIcon = Other.RowOptionalIcon;
@@ -459,9 +460,35 @@ public:
 		return FCrc::MemCrc32(&Row.RowGUID, sizeof(FGuid));
 	}
 
-	bool IsValid() const;
+	bool IsValid() const
+	{
+		return
+		RowGUID.IsValid() &&
+		DialogueRowData.Num() > 0;
+	}
 
-	bool IsNearlyEqual(const FDialogueRow& Other) const;
+	bool IsNearlyEqual(const FDialogueRow& Other) const
+	{
+		if (RowTitle.EqualTo(Other.RowTitle) &&
+		CompatibleTags.HasAllExact(Other.CompatibleTags) &&
+		DialogueParticipant.EqualTo(Other.DialogueParticipant))
+		{
+			return true;
+		}
+
+		if (RowTitle.EqualTo(Other.RowTitle) && DialogueRowData.Num() > 0 && Other.DialogueRowData.Num() > 0)
+		{
+			const FDialogueRowData ThisFirstRowData = DialogueRowData.Array()[0];
+			const FDialogueRowData OtherFirstRowData = Other.DialogueRowData.Array()[0];
+
+			if (ThisFirstRowData == OtherFirstRowData)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 	
 	virtual void OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName) override
 	{

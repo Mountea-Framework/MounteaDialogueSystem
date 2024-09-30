@@ -39,7 +39,7 @@ public class MounteaDialogueSystemEditor : ModuleRules
 				"CoreUObject", 
 				"Engine", 
 				"UnrealEd",
-				"AssetTools"
+				"AssetTools",
 			}
 		);
 		

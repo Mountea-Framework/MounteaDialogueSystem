@@ -26,37 +26,6 @@ void FDialogueRow::DeserializeDialogueRowData()
 }
 */
 
-bool FDialogueRow::IsValid() const
-{
-	return
-	RowGUID.IsValid() &&
-	DialogueRowData.Num() > 0;
-}
-
-bool FDialogueRow::IsNearlyEqual(const FDialogueRow& Other) const
-{
-	if (RowTitle.EqualTo(Other.RowTitle) &&
-		CompatibleTags.HasAllExact(Other.CompatibleTags) &&
-		DialogueParticipant.EqualTo(Other.DialogueParticipant))
-	{
-		return true;
-	}
-
-	if (RowTitle.EqualTo(Other.RowTitle) && DialogueRowData.Num() > 0 && Other.DialogueRowData.Num() > 0)
-	{
-		const FDialogueRowData ThisFirstRowData = DialogueRowData.Array()[0];
-		const FDialogueRowData OtherFirstRowData = Other.DialogueRowData.Array()[0];
-
-		if (ThisFirstRowData == OtherFirstRowData)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-
 /*
 void FDialogueRow::OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName)
 {
@@ -89,6 +58,7 @@ void FDialogueRow::OnDataTableChanged(const UDataTable* InDataTable, const FName
 	}
 }
 */
+
 FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct()
 	: ActiveDialogueParticipant(nullptr)
 	, PlayerDialogueParticipant(nullptr)

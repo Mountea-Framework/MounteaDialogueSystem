@@ -104,16 +104,28 @@ void UMounteaDialogueGraphFactory::SetReimportPaths(UObject* Obj, const TArray<F
 
 EReimportResult::Type UMounteaDialogueGraphFactory::Reimport(UObject* Obj)
 {
+	FString outMessage;
+	
 	if (!Obj)
 		return EReimportResult::Failed;
 
 	UObjectRedirector* objectRedirector = Cast<UObjectRedirector>(Obj);
-	if (!objectRedirector)
+	UMounteaDialogueGraph* targetGraph = Cast<UMounteaDialogueGraph>(Obj);
+	if (!objectRedirector && !targetGraph)
+	{
 		return EReimportResult::Failed;
+	}
 
-	FString outMessage;
+	if (!targetGraph)
+	{
+		targetGraph = Cast<UMounteaDialogueGraph>(objectRedirector->DestinationObject);
+	}
+
+	if (!targetGraph)
+	{
+		return EReimportResult::Failed;;
+	}
 	
-	UMounteaDialogueGraph* targetGraph = Cast<UMounteaDialogueGraph>(objectRedirector->DestinationObject);
 	const bool bReimportSuccess = UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(ReimportPaths[0], Obj, targetGraph, outMessage);
 
 	// This is extra notification added to the native Unreal one
