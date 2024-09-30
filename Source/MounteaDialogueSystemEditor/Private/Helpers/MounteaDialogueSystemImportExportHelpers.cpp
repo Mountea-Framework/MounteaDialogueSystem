@@ -147,8 +147,9 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 
 		if (FDialogueImportSourceData* dialogueImportData = importConfig->ImportHistory.Find(dialogueGuid))
 		{
+			const FString selectedDirectory = FPaths::GetPath(ObjectRedirector->GetPackage()->GetName());
 			FString dialogueTargetPath = dialogueImportData->DialogueAssetPath;
-			if (!FilePath.Equals(dialogueTargetPath))
+			if (!selectedDirectory.Equals(dialogueTargetPath))
 			{
 				// Cleanup
 				for (const auto &File : extractedFiles)
@@ -182,7 +183,8 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 	EObjectFlags flags = RF_Public | RF_Standalone | RF_Transactional;
 	UMounteaDialogueGraph* NewGraph = NewObject<UMounteaDialogueGraph>(ObjectRedirector, UMounteaDialogueGraph::StaticClass(), FName(ObjectRedirector->GetName()), flags);
 	OutGraph = NewGraph;
-	return ImportDialogueGraph(FilePath, ObjectRedirector, FName(ObjectRedirector->GetName()), flags, NewGraph);
+	FString outMessage;
+	return ImportDialogueGraph(FilePath, ObjectRedirector, FName(ObjectRedirector->GetName()), flags, NewGraph, outMessage);
 
 	/*
 	 * TODO:
@@ -199,7 +201,34 @@ bool UMounteaDialogueSystemImportExportHelpers::CanReimport(UObject* ObjectRedir
 	return true;
 }
 
-bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FString& FilePath, UObject* InParent, const FName Name, const EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph)
+void UMounteaDialogueSystemImportExportHelpers::UpdateGraphImportDataConfig(const UMounteaDialogueGraph* Graph, const FString& JsonName, const FString& Json, const FString& PackagePath, const FString& AssetName)
+{
+	const FString GameDirectory = FPaths::ProjectDir();
+	const FString UpdatedConfigFile = GameDirectory + "/Config/MounteaDialogueImportConfig.ini";
+
+	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
+
+	if (FPaths::FileExists(UpdatedConfigFile))
+	{
+		importConfig->LoadConfig(nullptr, *UpdatedConfigFile);
+	}
+	else
+	{
+		importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
+	}
+	
+	if (importConfig)
+	{
+		if (FDialogueImportSourceData* dialogueConfig = importConfig->ImportHistory.Find(Graph->GetGraphGUID()))
+		{
+			TMap<FString, FDialogueImportData>& currentData = dialogueConfig->ImportData;
+			currentData.Add(FString::Printf(TEXT("%s/%s"), *PackagePath, *AssetName), FDialogueImportData(JsonName, Json));
+			importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
+		}
+	}
+}
+
+bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FString& FilePath, UObject* InParent, const FName Name, const EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph, FString& OutMessage)
 {
 	// TODO: VALIDATE IF THIS GRAPH GUID EXISTS, IF YES CALL REIMPORT!
 	const FString Directory = FPaths::GetPath(InParent->GetPackage()->GetName());
@@ -215,6 +244,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 	
 	if (AssetDataList.Num() > 0)
 	{
+		OutMessage = TEXT("Only one Dialogue allowed in folder!");
 		return false;
 	}
 	
@@ -222,7 +252,8 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 	TArray<uint8> fileData;
 	if (!FFileHelper::LoadFileToArray(fileData, *FilePath))
 	{
-		EditorLOG_ERROR(TEXT("[FactoryCreateFile] Failed to load file: %s"), *FilePath);
+		OutMessage = FString::Printf(TEXT("Failed to extract files from archive: %s"), *FilePath);
+		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
 		return nullptr;
 	}
 
@@ -237,14 +268,16 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 	TMap<FString, FString> extractedFiles;
 	if (!ExtractFilesFromZip(fileData, extractedFiles))
 	{
-		EditorLOG_ERROR(TEXT("[FactoryCreateFile] Failed to extract files from archive: %s"), *FilePath);
+		OutMessage = FString::Printf(TEXT("Failed to extract files from archive: %s"), *FilePath);
+		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
 		return nullptr;
 	}
 
 	// 4. Validate content
 	if (!ValidateExtractedContent(extractedFiles))
 	{
-		EditorLOG_ERROR(TEXT("[FactoryCreateFile] Invalid content in file: %s"), *FilePath);
+		OutMessage = FString::Printf(TEXT("Invalid content in file: %s"), *FilePath);
+		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
 		return nullptr;
 	}
 
@@ -296,13 +329,16 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 
 			SaveAsset(OutGraph);
 
+			OutMessage = FString::Printf(TEXT("New Dialogue Graph created!"));
 			return true;
 		}
-		EditorLOG_ERROR(TEXT("[FactoryCreateFile] Failed to populate graph from extracted files: %s"), *FilePath);
+		OutMessage = FString::Printf(TEXT("Failed to populate graph from extracted files: %s"), *FilePath);
+		EditorLOG_ERROR(TEXT("[FactoryCreateFile] "), *OutMessage);
 	}
 	else
 	{
-		EditorLOG_ERROR(TEXT("[FactoryCreateFile] Failed to create new graph object"));
+		OutMessage = FString::Printf(TEXT("Failed to create new graph object"));
+		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
 	}
 
 	// Cleanup
@@ -755,33 +791,6 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateCategories(UMounteaDialo
 	TagsManager.EditorRefreshGameplayTagTree();
 
 	return true;
-}
-
-void UMounteaDialogueSystemImportExportHelpers::UpdateGraphImportDataConfig(const UMounteaDialogueGraph* Graph, const FString& JsonName, const FString& Json, const FString& PackagePath, const FString& AssetName)
-{
-	const FString GameDirectory = FPaths::ProjectDir();
-	const FString UpdatedConfigFile = GameDirectory + "/Config/MounteaDialogueImportConfig.ini";
-
-	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
-
-	if (FPaths::FileExists(UpdatedConfigFile))
-	{
-		importConfig->LoadConfig(nullptr, *UpdatedConfigFile);
-	}
-	else
-	{
-		importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
-	}
-	
-	if (importConfig)
-	{
-		if (FDialogueImportSourceData* dialogueConfig = importConfig->ImportHistory.Find(Graph->GetGraphGUID()))
-		{
-			TMap<FString, FDialogueImportData>& currentData = dialogueConfig->ImportData;
-			currentData.Add(FString::Printf(TEXT("%s/%s"), *PackagePath, *AssetName), FDialogueImportData(JsonName, Json));
-			importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
-		}
-	}
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::PopulateParticipants(const UMounteaDialogueGraph* Graph, const FString& Json)

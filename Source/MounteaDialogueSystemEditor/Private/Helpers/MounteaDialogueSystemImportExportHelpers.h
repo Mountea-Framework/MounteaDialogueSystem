@@ -40,7 +40,7 @@ public:
 	static void UpdateGraphImportDataConfig(const UMounteaDialogueGraph* Graph, const FString& JsonName, const FString& Json, const FString& PackagePath, const FString& AssetName);
 	
 	// Main import function
-	static bool ImportDialogueGraph(const FString& FilePath, UObject* InParent, FName Name, EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph);
+	static bool ImportDialogueGraph(const FString& FilePath, UObject* InParent, FName Name, EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph, FString& OutMessage);
 	
 	// Main export function
 	static bool ExportDialogueGraph(const UMounteaDialogueGraph* Graph, const FString& FilePath);

@@ -59,12 +59,13 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 			return nullptr;
 		}
 	}
-	
+
+	FString outMessage = TEXT("none");
 	UMounteaDialogueGraph* NewGraph = NewObject<UMounteaDialogueGraph>(InParent, InClass, InName, Flags);
-	if (UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(Filename, InParent, InName, Flags, NewGraph))
+	if (UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(Filename, InParent, InName, Flags, NewGraph, outMessage))
 	{
 		// Success notification
-		FNotificationInfo Info(FText::Format(LOCTEXT("ImportSuccessful", "Successfully imported Dialogue:\n{0}"), FText::FromString(InName.ToString())));
+		FNotificationInfo Info(FText::Format(LOCTEXT("ImportSuccessful", "Successfully imported Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(InName.ToString()), FText::FromString(outMessage)));
 		Info.ExpireDuration = 5.0f;
 		Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Success"));
 		FSlateNotificationManager::Get().AddNotification(Info);
@@ -74,7 +75,7 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 	else
 	{
 		// Error notification
-		FNotificationInfo Info(FText::Format(LOCTEXT("ImportFailed", "Failed to import Dialogue:\n{0}"), FText::FromString(InName.ToString())));
+		FNotificationInfo Info(FText::Format(LOCTEXT("ImportFailed", "Failed to import Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(InName.ToString()), FText::FromString(outMessage)));
 		Info.ExpireDuration = 5.0f;
 		Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Info.Error"));
 		FSlateNotificationManager::Get().AddNotification(Info);
