@@ -45,6 +45,7 @@ struct FDialogueImportSourceData
 	UPROPERTY(VisibleAnywhere, meta=(NoResetToDefault), Category="Import")
 	FString DialogueSourcePath;
 
+	// TODO: Maybe add FDate as well?
 	// Asset Path x Source Data
 	UPROPERTY(VisibleAnywhere, meta=(NoResetToDefault), Category="Import")
 	TMap<FString,FDialogueImportData> ImportData;

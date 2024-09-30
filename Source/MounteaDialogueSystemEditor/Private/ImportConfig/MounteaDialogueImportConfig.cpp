@@ -3,6 +3,8 @@
 
 #include "MounteaDialogueImportConfig.h"
 
+#include "Interfaces/IPluginManager.h"
+
 UMounteaDialogueImportConfig::UMounteaDialogueImportConfig(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	CategoryName = TEXT("Mountea Framework");

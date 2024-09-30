@@ -41,6 +41,7 @@
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 #include "ImportConfig/MounteaDialogueImportConfig.h"
+#include "Interfaces/IPluginManager.h"
 
 #include "UObject/SavePackage.h"
 #include "Widgets/Notifications/SNotificationList.h"
@@ -610,6 +611,34 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueData(UMounteaDia
 		Graph->SourceData.Add(NewSourceData);
 	}
 
+	const FString GameDirectory = FPaths::ProjectDir();
+	const FString UpdatedConfigFile = GameDirectory + "/Config/MounteaDialogueImportConfig.ini";
+
+	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
+
+	if (FPaths::FileExists(UpdatedConfigFile))
+	{
+		importConfig->LoadConfig(nullptr, *UpdatedConfigFile);
+	}
+	else
+	{
+		importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
+	}
+
+	const FString PackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
+	const FString AssetName = *Graph->GetName();
+	const FString GraphPath = FString::Printf(TEXT("%s/%s"), *PackagePath, *AssetName);
+	
+	if (importConfig)
+	{
+		FDialogueImportSourceData importSourceData;
+		importSourceData.DialogueAssetPath = GraphPath;
+		importSourceData.DialogueSourcePath = SourceFilePath;
+		importConfig->WriteToConfig(Graph->GetGraphGUID(), importSourceData);
+
+		importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
+	}
+
 	TSharedPtr<FJsonObject> JsonObject;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(DialogueDataJson);
 	if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
@@ -760,6 +789,32 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateParticipants(const UMoun
 		ParticipantsDataTable->AddRow(FName(*Name), *NewRow);
 	}
 
+	// Process Config Update
+	{
+		const FString GameDirectory = FPaths::ProjectDir();
+		const FString UpdatedConfigFile = GameDirectory + "/Config/MounteaDialogueImportConfig.ini";
+
+		UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
+
+		if (FPaths::FileExists(UpdatedConfigFile))
+		{
+			importConfig->LoadConfig(nullptr, *UpdatedConfigFile);
+		}
+		else
+		{
+			importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
+		}
+	
+		if (importConfig)
+		{
+			FDialogueImportSourceData importSourceData;
+			importSourceData.ImportData.Add(ParticipantsDataTable->GetOuter()->GetName(), FDialogueImportData(TEXT("participants.json"), Json));
+			importConfig->WriteToConfig(Graph->GetGraphGUID(), importSourceData);
+
+			importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
+		}
+	}
+	
 	SaveAsset(ParticipantsDataTable);
 
 	return true;
