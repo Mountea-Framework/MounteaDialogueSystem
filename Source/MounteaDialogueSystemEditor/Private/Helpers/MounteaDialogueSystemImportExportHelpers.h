@@ -32,9 +32,10 @@ class MOUNTEADIALOGUESYSTEMEDITOR_API UMounteaDialogueSystemImportExportHelpers 
 	
 public:
 
+	// Main reimport logic
 	static bool IsReimport(const FString& Filename);
-
 	static bool ReimportDialogueGraph(const FString& FilePath, UMounteaDialogueGraph*& OutGraph);
+	static bool CanReimport(UObject* ObjectRedirector, TArray<FString>& OutFilenames);
 	
 	// Main import function
 	static bool ImportDialogueGraph(const FString& FilePath, UObject* InParent, FName Name, EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph);

@@ -59,16 +59,94 @@ bool UMounteaDialogueSystemImportExportHelpers::IsReimport(const FString& Filena
 
 bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FString& FilePath, UMounteaDialogueGraph*& OutGraph)
 {
+	if (OutGraph)
+	{
+		if (FilePath.IsEmpty())
+		{
+			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Source File is empty."));
+			return false;
+		}
+
+		TArray<uint8> fileData;
+		if (!FFileHelper::LoadFileToArray(fileData, *FilePath))
+		{
+			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Failed to load file: %s"), *FilePath);
+			return false;
+		}
+
+		if (!IsZipFile(fileData))
+		{
+			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] File is not a valid mnteadlg/zip: %s"), *FilePath);
+			return false;
+		}
+
+		TMap<FString, FString> extractedFiles;
+		if (!ExtractFilesFromZip(fileData, extractedFiles))
+		{
+			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Failed to extract files from archive: %s"), *FilePath);
+			return false;
+		}
+		
+		if (!ValidateExtractedContent(extractedFiles))
+		{
+			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Invalid content in file: %s"), *FilePath);
+			return false;
+		}
+
+		FGuid dialogueGuid;
+		if (extractedFiles.Contains("dialogueData.json"))
+		{
+			TSharedPtr<FJsonObject> JsonObject;
+			TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(extractedFiles["dialogueData.json"]);
+			if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+			{
+				if (JsonObject->HasField("dialogueName"))
+				{
+					dialogueGuid = FGuid(JsonObject->GetStringField("dialogueGuid"));
+				}
+				else
+				{
+					EditorLOG_WARNING(TEXT("[ReimportDialogueGraph] `dialogueGuid` field not found in dialogueData.json"));
+					return false;
+				}
+			}
+			else
+			{
+				EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Failed to parse dialogueData.json"));
+				return false;
+			}
+		}
+		else
+		{
+			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Invalid Dialogue source, missing dialogueData.json"));
+			return false;
+		}
+
+		if (dialogueGuid != OutGraph->GetGraphGUID())
+		{
+			// TODO: Rather than return false process creating new dialogue? Maybe expose this option to settings?
+			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Attempting to reimport different Graph.\nUnreal Graph: %s\nSource Graph: %s"), *OutGraph->GetGraphGUID().ToString(), *dialogueGuid.ToString());
+			return false;
+		}
+
+		
+	}
+	
 	/*
 	 * TODO:
-	 * 1. Find Dialogue Graph
+	 * 1. Find Dialogue Graph from `UMounteaDialogueImportConfig`
 	 * 2. If not found, return false
 	 * 3. If found, then clean the graph from all Nodes, Decorators etc. so its empty
 	 * 4. return `ImportDialogueGraph` with found Graph
 	 * 4.1 In future I would like to deduplicate the logic, but keep it simple for now
 	 */
 
-	return false;
+	return true;
+}
+
+bool UMounteaDialogueSystemImportExportHelpers::CanReimport(UObject* ObjectRedirector, TArray<FString>& OutFilenames)
+{
+	return true;
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FString& FilePath, UObject* InParent, const FName Name, const EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph)

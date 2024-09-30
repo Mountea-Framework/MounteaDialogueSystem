@@ -90,6 +90,53 @@ UObject* UMounteaDialogueGraphFactory::ImportObject(UClass* InClass, UObject* In
 	return FactoryCreateFile(InClass, InOuter, InName, Flags, Filename, Parms, nullptr, OutCanceled);
 }
 
+bool UMounteaDialogueGraphFactory::CanReimport(UObject* Obj, TArray<FString>& OutFilenames)
+{
+	return UMounteaDialogueSystemImportExportHelpers::CanReimport(Obj,OutFilenames );
+}
+
+void UMounteaDialogueGraphFactory::SetReimportPaths(UObject* Obj, const TArray<FString>& NewReimportPaths)
+{
+	ReimportPaths = NewReimportPaths;
+}
+
+EReimportResult::Type UMounteaDialogueGraphFactory::Reimport(UObject* Obj)
+{
+	if (!Obj)
+		return EReimportResult::Failed;
+
+	UObjectRedirector* objectRedirector = Cast<UObjectRedirector>(Obj);
+	if (!objectRedirector)
+		return EReimportResult::Failed;
+	
+	UMounteaDialogueGraph* targetGraph = Cast<UMounteaDialogueGraph>(objectRedirector->DestinationObject);
+
+	/*
+	 * TODO:
+	 * 1a. If target is not valid, then try to find target in history and set it
+	 * 2. Extract mnteadlg file
+	 * 3. Validate if target has the same guid as extracted dialogue
+	 * 4. If guids do not match, then create new one in the same folder (or cancel and show some message)
+	 * 5. If guids match, then call to UMounteaDialogueSystemImportExportHelpers::Reimport with target graph
+	 */
+
+	return UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(ReimportPaths[0], targetGraph) ? EReimportResult::Succeeded : EReimportResult::Failed;
+}
+
+int32 UMounteaDialogueGraphFactory::GetPriority() const
+{
+	return 1000;
+}
+
+void UMounteaDialogueGraphFactory::PostImportCleanUp()
+{
+	FReimportHandler::PostImportCleanUp();
+
+	CleanUp();
+
+	ReimportPaths.Empty();
+}
+
 bool UMounteaDialogueGraphFactory::FactoryCanImport(const FString& Filename)
 {
 	const FString extension = FPaths::GetExtension(Filename);
