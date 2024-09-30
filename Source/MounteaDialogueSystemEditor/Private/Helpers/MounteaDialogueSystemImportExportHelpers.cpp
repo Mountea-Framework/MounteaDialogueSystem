@@ -184,8 +184,13 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 		// And then create all Nodes and Edges from JSON
 		// Basically copy-paste `ImportDialogueGraph` but without creating new assets (unless needed)
 		// * maybe modify the `ImportDialogueGraph`?
+
+		PopulateCategories(OutGraph, extractedFiles["categories.json"]);
+		PopulateParticipants(OutGraph, extractedFiles["participants.json"]);
 		
 		OutGraph->ClearGraph();
+
+		OutMessage = FString::Printf(TEXT("Graph `%s` has been refreshed."), *OutGraph->GetName());
 
 		return true;
 	}
@@ -830,9 +835,24 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateParticipants(const UMoun
 
 	const FString PackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
 	const FString AssetName = FString::Printf(TEXT("DT_%s_Participants"), *Graph->GetName());
+	
+	FSoftObjectPath AssetFullSoftPath =  PackagePath + TEXT("/") + AssetName + TEXT(".") + AssetName;
 
-	UDataTable* ParticipantsDataTable = Cast<UDataTable>(
-		AssetToolsModule.Get().CreateAsset(AssetName, PackagePath, UDataTable::StaticClass(), nullptr));
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+	FAssetData ExistingAssetData = AssetRegistryModule.Get().GetAssetByObjectPath(AssetFullSoftPath);
+
+	UDataTable* ParticipantsDataTable = nullptr;
+
+	if (ExistingAssetData.IsValid())
+	{
+		ParticipantsDataTable = Cast<UDataTable>(ExistingAssetData.GetAsset());
+	}
+	else
+	{
+		ParticipantsDataTable = Cast<UDataTable>(
+			AssetToolsModule.Get().CreateAsset(AssetName, PackagePath, UDataTable::StaticClass(), nullptr));
+	}
 
 	if (!ParticipantsDataTable)
 	{
