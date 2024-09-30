@@ -250,7 +250,6 @@ void UMounteaDialogueSystemImportExportHelpers::UpdateGraphImportDataConfig(cons
 
 bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FString& FilePath, UObject* InParent, const FName Name, const EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph, FString& OutMessage)
 {
-	// TODO: VALIDATE IF THIS GRAPH GUID EXISTS, IF YES CALL REIMPORT!
 	const FString Directory = FPaths::GetPath(InParent->GetPackage()->GetName());
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
@@ -264,6 +263,12 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 	
 	if (AssetDataList.Num() > 0)
 	{
+		// TODO:
+		// Before returning false there should be only 
+		// 2 files:
+		// - existing one
+		// - imported one
+		// If imported one has same GUID, then call reimport and return reimport result!
 		OutMessage = TEXT("Only one Dialogue allowed in folder!");
 		return false;
 	}
