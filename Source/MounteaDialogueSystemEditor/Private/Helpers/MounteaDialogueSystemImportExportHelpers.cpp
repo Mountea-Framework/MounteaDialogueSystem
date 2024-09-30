@@ -704,6 +704,9 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueData(UMounteaDia
 		EditorLOG_ERROR(TEXT("[PopulateDialogueData] Failed to parse dialogueData.json during population"));
 		return false;
 	}
+
+	Graph->SourceFile.Empty();
+	Graph->SourceData.Empty();
 	
 	Graph->SourceFile = SourceFilePath;
 	for (const auto& Itr : ExtractedFiles)

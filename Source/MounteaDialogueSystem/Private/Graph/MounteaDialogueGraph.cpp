@@ -36,7 +36,9 @@ void UMounteaDialogueGraph::SetGraphGUID(const FGuid& NewGuid)
 
 UMounteaDialogueGraphNode* UMounteaDialogueGraph::FindNodeByGuid(const FGuid& NodeGuid)
 {
-	for (UMounteaDialogueGraphNode* Node : AllNodes)
+	TArray<UMounteaDialogueGraphNode*> allDialogueNodes = AllNodes;
+	allDialogueNodes.AddUnique(StartNode);
+	for (UMounteaDialogueGraphNode* Node : allDialogueNodes)
 	{
 		if (Node && Node->GetNodeGUID() == NodeGuid)
 		{
