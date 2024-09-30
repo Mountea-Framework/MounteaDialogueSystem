@@ -2,6 +2,7 @@
 
 #include "MounteaDialogueGraphFactory.h"
 
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueSystemImportExportHelpers.h"
@@ -75,7 +76,7 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 		// Error notification
 		FNotificationInfo Info(FText::Format(LOCTEXT("ImportFailed", "Failed to import Dialogue:\n{0}"), FText::FromString(InName.ToString())));
 		Info.ExpireDuration = 5.0f;
-		Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Error"));
+		Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Info.Error"));
 		FSlateNotificationManager::Get().AddNotification(Info);
 	}
 
@@ -110,16 +111,6 @@ EReimportResult::Type UMounteaDialogueGraphFactory::Reimport(UObject* Obj)
 		return EReimportResult::Failed;
 	
 	UMounteaDialogueGraph* targetGraph = Cast<UMounteaDialogueGraph>(objectRedirector->DestinationObject);
-
-	/*
-	 * TODO:
-	 * 1a. If target is not valid, then try to find target in history and set it
-	 * 2. Extract mnteadlg file
-	 * 3. Validate if target has the same guid as extracted dialogue
-	 * 4. If guids do not match, then create new one in the same folder (or cancel and show some message)
-	 * 5. If guids match, then call to UMounteaDialogueSystemImportExportHelpers::Reimport with target graph
-	 */
-
 	return UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(ReimportPaths[0], Obj, targetGraph) ? EReimportResult::Succeeded : EReimportResult::Failed;
 }
 
@@ -140,7 +131,12 @@ void UMounteaDialogueGraphFactory::PostImportCleanUp()
 bool UMounteaDialogueGraphFactory::FactoryCanImport(const FString& Filename)
 {
 	const FString extension = FPaths::GetExtension(Filename);
-	return (extension == TEXT("mnteadlg") || extension == TEXT("zip"));
+	if (!(extension == TEXT("mnteadlg") || extension == TEXT("zip")))
+	{
+		return false;
+	}
+	
+	return true;
 }
 
 #undef LOCTEXT_NAMESPACE

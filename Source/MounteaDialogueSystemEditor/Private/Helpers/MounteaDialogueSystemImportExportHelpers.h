@@ -55,7 +55,7 @@ public:
 private:
 	// Helper functions for populating specific parts of the graph
 	static bool PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& SourceFilePath, const TMap<FString, FString>& ExtractedFiles);
-	static bool PopulateCategories(UMounteaDialogueGraph* Graph, const FString& Json);	
+	static bool PopulateCategories(UMounteaDialogueGraph* Graph, const FString& Json);
 	static bool PopulateParticipants(const UMounteaDialogueGraph* Graph, const FString& Json);
 	static bool PopulateNodes(UMounteaDialogueGraph* Graph, const FString& Json);
 	static bool PopulateEdges(UMounteaDialogueGraph* Graph, const FString& Json);

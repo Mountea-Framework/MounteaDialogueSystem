@@ -141,6 +141,31 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 		 * create new nodes?
 		 */
 
+		UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
+		if (!importConfig)
+			return false;
+
+		if (FDialogueImportSourceData* dialogueImportData = importConfig->ImportHistory.Find(dialogueGuid))
+		{
+			FString dialogueTargetPath = dialogueImportData->DialogueAssetPath;
+			if (!FilePath.Equals(dialogueTargetPath))
+			{
+				// Cleanup
+				for (const auto &File : extractedFiles)
+				{
+					if (File.Key.StartsWith("audio/"))
+					{
+						IFileManager::Get().Delete(*File.Value);
+					}
+				}
+				
+				// Calling to reimport with the CORRECT path
+				return ReimportDialogueGraph(dialogueTargetPath, ObjectRedirector, OutGraph);
+			}
+			
+			// TODO: Rather than deleting DTs and STs just use existing ones and update them?
+		}
+
 		OutGraph->ClearGraph();
 
 		return true;
@@ -150,20 +175,15 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 	if (!importConfig)
 		return false;
 
-	if (importConfig->IsReimport(dialogueGuid))
-	{
-		auto importHistory = importConfig->ImportHistory;
-	}
-	else
-	{
-		// Create new, because:
-		// - we dont have OutGraph
-		// - config doesnt know this guid yet		
-		EObjectFlags flags = RF_Public | RF_Standalone | RF_Transactional;		
-		UMounteaDialogueGraph* NewGraph = NewObject<UMounteaDialogueGraph>(ObjectRedirector, UMounteaDialogueGraph::StaticClass(), FName(ObjectRedirector->GetName()), flags);
-		OutGraph = NewGraph;
-		return ImportDialogueGraph(FilePath, ObjectRedirector, FName(ObjectRedirector->GetName()), flags, NewGraph);
-	}
+	
+	// Create new, because:
+	// - we dont have OutGraph
+	// - config doesnt know this guid yet
+	EObjectFlags flags = RF_Public | RF_Standalone | RF_Transactional;
+	UMounteaDialogueGraph* NewGraph = NewObject<UMounteaDialogueGraph>(ObjectRedirector, UMounteaDialogueGraph::StaticClass(), FName(ObjectRedirector->GetName()), flags);
+	OutGraph = NewGraph;
+	return ImportDialogueGraph(FilePath, ObjectRedirector, FName(ObjectRedirector->GetName()), flags, NewGraph);
+
 	/*
 	 * TODO:
 	 * 1. Find Dialogue Graph from `UMounteaDialogueImportConfig`
@@ -172,8 +192,6 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 	 * 4. return `ImportDialogueGraph` with found Graph
 	 * 4.1 In future I would like to deduplicate the logic, but keep it simple for now
 	 */
-
-	return true;
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::CanReimport(UObject* ObjectRedirector, TArray<FString>& OutFilenames)
@@ -183,6 +201,23 @@ bool UMounteaDialogueSystemImportExportHelpers::CanReimport(UObject* ObjectRedir
 
 bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FString& FilePath, UObject* InParent, const FName Name, const EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph)
 {
+	// TODO: VALIDATE IF THIS GRAPH GUID EXISTS, IF YES CALL REIMPORT!
+	const FString Directory = FPaths::GetPath(InParent->GetPackage()->GetName());
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+	FARFilter Filter;
+	Filter.bRecursivePaths = false;
+	Filter.PackagePaths.Add(FName(*Directory));
+	Filter.ClassPaths.Add(UMounteaDialogueGraph::StaticClass()->GetClassPathName());
+
+	TArray<FAssetData> AssetDataList;
+	AssetRegistryModule.Get().GetAssets(Filter, AssetDataList);
+	
+	if (AssetDataList.Num() > 0)
+	{
+		return false;
+	}
+	
 	// 1. Load the file
 	TArray<uint8> fileData;
 	if (!FFileHelper::LoadFileToArray(fileData, *FilePath))
@@ -743,9 +778,7 @@ void UMounteaDialogueSystemImportExportHelpers::UpdateGraphImportDataConfig(cons
 		if (FDialogueImportSourceData* dialogueConfig = importConfig->ImportHistory.Find(Graph->GetGraphGUID()))
 		{
 			TMap<FString, FDialogueImportData>& currentData = dialogueConfig->ImportData;
-
 			currentData.Add(FString::Printf(TEXT("%s/%s"), *PackagePath, *AssetName), FDialogueImportData(JsonName, Json));
-
 			importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
 		}
 	}
