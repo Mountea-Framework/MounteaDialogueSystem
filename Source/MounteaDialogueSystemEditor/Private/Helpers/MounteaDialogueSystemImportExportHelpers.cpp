@@ -250,29 +250,6 @@ void UMounteaDialogueSystemImportExportHelpers::UpdateGraphImportDataConfig(cons
 
 bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FString& FilePath, UObject* InParent, const FName Name, const EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph, FString& OutMessage)
 {
-	const FString Directory = FPaths::GetPath(InParent->GetPackage()->GetName());
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-	FARFilter Filter;
-	Filter.bRecursivePaths = false;
-	Filter.PackagePaths.Add(FName(*Directory));
-	Filter.ClassPaths.Add(UMounteaDialogueGraph::StaticClass()->GetClassPathName());
-
-	TArray<FAssetData> AssetDataList;
-	AssetRegistryModule.Get().GetAssets(Filter, AssetDataList);
-	
-	if (AssetDataList.Num() > 0)
-	{
-		// TODO:
-		// Before returning false there should be only 
-		// 2 files:
-		// - existing one
-		// - imported one
-		// If imported one has same GUID, then call reimport and return reimport result!
-		OutMessage = TEXT("Only one Dialogue allowed in folder!");
-		return false;
-	}
-	
 	// 1. Load the file
 	TArray<uint8> fileData;
 	if (!FFileHelper::LoadFileToArray(fileData, *FilePath))
@@ -298,15 +275,8 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 		return nullptr;
 	}
 
-	// 4. Validate content
-	if (!ValidateExtractedContent(extractedFiles))
-	{
-		OutMessage = FString::Printf(TEXT("Invalid content in file: %s"), *FilePath);
-		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
-		return nullptr;
-	}
-
-	// 5. Read dialogue name from dialogueData.json
+	// 3. Read the GUID from dialogueData.json
+	FGuid importedGuid;
 	FString dialogueName;
 	if (extractedFiles.Contains("dialogueData.json"))
 	{
@@ -314,25 +284,89 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(extractedFiles["dialogueData.json"]);
 		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
 		{
+			if (JsonObject->HasField("dialogueGuid"))
+			{
+				FString guidString = JsonObject->GetStringField("dialogueGuid");
+				FGuid::Parse(guidString, importedGuid);
+			}
+			
 			if (JsonObject->HasField("dialogueName"))
 			{
 				dialogueName = JsonObject->GetStringField("dialogueName");
 			}
 			else
 			{
-				EditorLOG_WARNING(TEXT("dialogueName field not found in dialogueData.json"));
+				OutMessage = TEXT("dialogueName field not found in dialogueData.json");
+				EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
+				return false;
 			}
 		}
 		else
 		{
-			EditorLOG_ERROR(TEXT("Failed to parse dialogueData.json"));
+			OutMessage = TEXT("Failed to parse dialogueData.json");
+			EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
+			return false;
 		}
 	}
 	else
 	{
-		EditorLOG_WARNING(TEXT("dialogueData.json not found in extracted files"));
+		OutMessage = TEXT("dialogueData.json not found in extracted files");
+		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
+		return nullptr;
 	}
 
+	if (!importedGuid.IsValid())
+	{
+		OutMessage = TEXT("Failed to read GUID from imported file");
+		EditorLOG_ERROR(TEXT("[ImportDialogueGraph] %s"), *OutMessage);
+		return false;
+	}
+	
+	// 4. Check for existing Dialogue Graphs in the folder
+	const FString Directory = FPaths::GetPath(InParent->GetPackage()->GetName());
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+	FARFilter Filter;
+	Filter.bRecursivePaths = false;
+	Filter.PackagePaths.Add(FName(*Directory));
+	Filter.ClassPaths.Add(UMounteaDialogueGraph::StaticClass()->GetClassPathName());
+
+	TArray<FAssetData> AssetDataList;
+	AssetRegistryModule.Get().GetAssets(Filter, AssetDataList);
+
+	// 5. Compare GUIDs and handle reimport or new import
+	UMounteaDialogueGraph* ExistingGraph = nullptr;
+	for (const FAssetData& AssetData : AssetDataList)
+	{
+		UMounteaDialogueGraph* DialogueGraph = Cast<UMounteaDialogueGraph>(AssetData.GetAsset());
+		if (DialogueGraph && DialogueGraph->GetGraphGUID() == importedGuid)
+		{
+			ExistingGraph = DialogueGraph;
+			break;
+		}
+	}
+	
+	if (ExistingGraph)
+	{
+		// Reimport
+		OutGraph = ExistingGraph;
+		return ReimportDialogueGraph(FilePath, InParent, OutGraph, OutMessage);
+	}
+
+	if (AssetDataList.Num() > 0)
+	{
+		OutMessage = TEXT("A different Dialogue Graph already exists in this folder. Import canceled.");
+		EditorLOG_ERROR(TEXT("[ImportDialogueGraph] %s"), *OutMessage);
+		return false;
+	}
+
+	// 4. Validate content
+	if (!ValidateExtractedContent(extractedFiles))
+	{
+		OutMessage = FString::Printf(TEXT("Invalid content in file: %s"), *FilePath);
+		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
+		return nullptr;
+	}
 	const FName assetName = !dialogueName.IsEmpty() ? FName(*dialogueName) : Name;
 
 	// 6. Process UMounteaDialogueGraph if all is good
