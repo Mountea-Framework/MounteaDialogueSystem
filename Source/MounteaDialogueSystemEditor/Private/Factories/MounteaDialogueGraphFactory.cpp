@@ -114,7 +114,27 @@ EReimportResult::Type UMounteaDialogueGraphFactory::Reimport(UObject* Obj)
 	FString outMessage;
 	
 	UMounteaDialogueGraph* targetGraph = Cast<UMounteaDialogueGraph>(objectRedirector->DestinationObject);
-	return UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(ReimportPaths[0], Obj, targetGraph, outMessage) ? EReimportResult::Succeeded : EReimportResult::Failed;
+	const bool bReimportSuccess = UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(ReimportPaths[0], Obj, targetGraph, outMessage);
+
+	// This is extra notification added to the native Unreal one
+	if (bReimportSuccess)
+	{
+		// Success notification
+		FNotificationInfo Info(FText::Format(LOCTEXT("ImportSuccessful", "Successfully reimported Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(targetGraph->GetName()), FText::FromString(outMessage)));
+		Info.ExpireDuration = 5.0f;
+		Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Success"));
+		FSlateNotificationManager::Get().AddNotification(Info);
+	}
+	else
+	{
+		// Error notification
+	    FNotificationInfo Info(FText::Format(LOCTEXT("ImportSuccessful", "Successfully imported Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(targetGraph->GetName()), FText::FromString(outMessage)));
+	    Info.ExpireDuration = 5.0f;
+	    Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Info.Error"));
+	    FSlateNotificationManager::Get().AddNotification(Info);
+	}
+	
+	return bReimportSuccess ? EReimportResult::Succeeded : EReimportResult::Failed;
 }
 
 int32 UMounteaDialogueGraphFactory::GetPriority() const
