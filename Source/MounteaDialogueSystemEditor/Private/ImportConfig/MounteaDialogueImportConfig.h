@@ -26,8 +26,8 @@ public:
 	bool IsReimport(const FGuid& GraphGuid) const;
 	FString WriteToConfig(const FGuid& DialogueGuid, const FDialogueImportSourceData& NewSourceData);
 	
-protected:
+public:
 
-	UPROPERTY(VisibleDefaultsOnly, Category=Import)
+	UPROPERTY(config, VisibleDefaultsOnly, Category=Import)
 	TMap<FGuid,FDialogueImportSourceData> ImportHistory;
 };

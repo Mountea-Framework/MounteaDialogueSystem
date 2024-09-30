@@ -34,7 +34,7 @@ public:
 
 	// Main reimport logic
 	static bool IsReimport(const FString& Filename);
-	static bool ReimportDialogueGraph(const FString& FilePath, UMounteaDialogueGraph*& OutGraph);
+	static bool ReimportDialogueGraph(const FString& FilePath, UObject* ObjectRedirector, UMounteaDialogueGraph*& OutGraph);
 	static bool CanReimport(UObject* ObjectRedirector, TArray<FString>& OutFilenames);
 	
 	// Main import function

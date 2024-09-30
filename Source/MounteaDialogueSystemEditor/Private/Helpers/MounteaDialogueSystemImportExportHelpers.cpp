@@ -40,6 +40,8 @@
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
+#include "ImportConfig/MounteaDialogueImportConfig.h"
+
 #include "UObject/SavePackage.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
@@ -57,71 +59,71 @@ bool UMounteaDialogueSystemImportExportHelpers::IsReimport(const FString& Filena
 	return false;
 }
 
-bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FString& FilePath, UMounteaDialogueGraph*& OutGraph)
+bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FString& FilePath, UObject* ObjectRedirector, UMounteaDialogueGraph*& OutGraph)
 {
-	if (OutGraph)
+	if (FilePath.IsEmpty())
 	{
-		if (FilePath.IsEmpty())
-		{
-			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Source File is empty."));
-			return false;
-		}
+		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Source File is empty."));
+		return false;
+	}
 
-		TArray<uint8> fileData;
-		if (!FFileHelper::LoadFileToArray(fileData, *FilePath))
-		{
-			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Failed to load file: %s"), *FilePath);
-			return false;
-		}
+	TArray<uint8> fileData;
+	if (!FFileHelper::LoadFileToArray(fileData, *FilePath))
+	{
+		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Failed to load file: %s"), *FilePath);
+		return false;
+	}
 
-		if (!IsZipFile(fileData))
-		{
-			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] File is not a valid mnteadlg/zip: %s"), *FilePath);
-			return false;
-		}
+	if (!IsZipFile(fileData))
+	{
+		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] File is not a valid mnteadlg/zip: %s"), *FilePath);
+		return false;
+	}
 
-		TMap<FString, FString> extractedFiles;
-		if (!ExtractFilesFromZip(fileData, extractedFiles))
-		{
-			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Failed to extract files from archive: %s"), *FilePath);
-			return false;
-		}
-		
-		if (!ValidateExtractedContent(extractedFiles))
-		{
-			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Invalid content in file: %s"), *FilePath);
-			return false;
-		}
+	TMap<FString, FString> extractedFiles;
+	if (!ExtractFilesFromZip(fileData, extractedFiles))
+	{
+		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Failed to extract files from archive: %s"), *FilePath);
+		return false;
+	}
+	
+	if (!ValidateExtractedContent(extractedFiles))
+	{
+		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Invalid content in file: %s"), *FilePath);
+		return false;
+	}
 
-		FGuid dialogueGuid;
-		if (extractedFiles.Contains("dialogueData.json"))
+	FGuid dialogueGuid;
+	if (extractedFiles.Contains("dialogueData.json"))
+	{
+		TSharedPtr<FJsonObject> JsonObject;
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(extractedFiles["dialogueData.json"]);
+		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
 		{
-			TSharedPtr<FJsonObject> JsonObject;
-			TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(extractedFiles["dialogueData.json"]);
-			if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+			if (JsonObject->HasField("dialogueName"))
 			{
-				if (JsonObject->HasField("dialogueName"))
-				{
-					dialogueGuid = FGuid(JsonObject->GetStringField("dialogueGuid"));
-				}
-				else
-				{
-					EditorLOG_WARNING(TEXT("[ReimportDialogueGraph] `dialogueGuid` field not found in dialogueData.json"));
-					return false;
-				}
+				dialogueGuid = FGuid(JsonObject->GetStringField("dialogueGuid"));
 			}
 			else
 			{
-				EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Failed to parse dialogueData.json"));
+				EditorLOG_WARNING(TEXT("[ReimportDialogueGraph] `dialogueGuid` field not found in dialogueData.json"));
 				return false;
 			}
 		}
 		else
 		{
-			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Invalid Dialogue source, missing dialogueData.json"));
+			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Failed to parse dialogueData.json"));
 			return false;
 		}
-
+	}
+	else
+	{
+		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Invalid Dialogue source, missing dialogueData.json"));
+		return false;
+	}
+	
+	if (OutGraph)
+	{
 		if (dialogueGuid != OutGraph->GetGraphGUID())
 		{
 			// TODO: Rather than return false process creating new dialogue? Maybe expose this option to settings?
@@ -129,9 +131,38 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 			return false;
 		}
 
-		
+		/*
+		 * TODO:
+		 * cleanup graph (delete all its Nodes)
+		 * Update all DataTables
+		 * Update all StringTables
+		 * reimport all audio (do not delete any)
+		 * create new nodes?
+		 */
+
+		OutGraph->ClearGraph();
+
+		return true;
 	}
-	
+
+	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
+	if (!importConfig)
+		return false;
+
+	if (importConfig->IsReimport(dialogueGuid))
+	{
+		auto importHistory = importConfig->ImportHistory;
+	}
+	else
+	{
+		// Create new, because:
+		// - we dont have OutGraph
+		// - config doesnt know this guid yet		
+		EObjectFlags flags = RF_Public | RF_Standalone | RF_Transactional;		
+		UMounteaDialogueGraph* NewGraph = NewObject<UMounteaDialogueGraph>(ObjectRedirector, UMounteaDialogueGraph::StaticClass(), FName(ObjectRedirector->GetName()), flags);
+		OutGraph = NewGraph;
+		return ImportDialogueGraph(FilePath, ObjectRedirector, FName(ObjectRedirector->GetName()), flags, NewGraph);
+	}
 	/*
 	 * TODO:
 	 * 1. Find Dialogue Graph from `UMounteaDialogueImportConfig`

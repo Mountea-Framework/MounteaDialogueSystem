@@ -39,7 +39,7 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 	if (UMounteaDialogueSystemImportExportHelpers::IsReimport(Filename))
 	{
 		UMounteaDialogueGraph* ExistingGraph = nullptr;
-		if (UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(Filename,ExistingGraph ))
+		if (UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(Filename,InParent, ExistingGraph))
 		{
 			if (ExistingGraph)
 			{
@@ -120,7 +120,7 @@ EReimportResult::Type UMounteaDialogueGraphFactory::Reimport(UObject* Obj)
 	 * 5. If guids match, then call to UMounteaDialogueSystemImportExportHelpers::Reimport with target graph
 	 */
 
-	return UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(ReimportPaths[0], targetGraph) ? EReimportResult::Succeeded : EReimportResult::Failed;
+	return UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(ReimportPaths[0], Obj, targetGraph) ? EReimportResult::Succeeded : EReimportResult::Failed;
 }
 
 int32 UMounteaDialogueGraphFactory::GetPriority() const
