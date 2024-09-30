@@ -1193,8 +1193,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 			EditorLOG_WARNING(TEXT("[PopulateDialogueRows] Participant object not found or invalid for NodeId: %s"), *NodeId);
 		}
 	}
-
-	// BREAKING, TODO: DEDUPLICATE HERE!
+	
 	// Group dialogue rows by nodeId
 	TMap<FString, TArray<TSharedPtr<FJsonObject>>> GroupedDialogueRows;
 	for (const auto& Row : dialogueRowsJsonArray)
@@ -1206,8 +1205,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 			GroupedDialogueRows.FindOrAdd(NodeId).Add(RowObject);
 		}
 	}
-
-	// BREAKING, TODO: DEDUPLICATE HERE!
+	
 	// Populate the DialogueRowsDataTable
 	for (const auto& GroupedRow : GroupedDialogueRows)
 	{
