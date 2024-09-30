@@ -1189,6 +1189,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 		}
 	}
 
+	// BREAKING, TODO: DEDUPLICATE HERE!
 	// Group dialogue rows by nodeId
 	TMap<FString, TArray<TSharedPtr<FJsonObject>>> GroupedDialogueRows;
 	for (const auto& Row : dialogueRowsJsonArray)
@@ -1201,6 +1202,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 		}
 	}
 
+	// BREAKING, TODO: DEDUPLICATE HERE!
 	// Populate the DialogueRowsDataTable
 	for (const auto& GroupedRow : GroupedDialogueRows)
 	{
@@ -1213,7 +1215,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 			
 			continue;
 		}
-
+		
 		FDialogueRow NewRow;
 		const FGuid newRowGuid = FGuid(GroupedRow.Key);
 		NewRow.RowGUID = newRowGuid;

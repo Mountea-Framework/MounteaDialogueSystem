@@ -460,6 +460,8 @@ public:
 	}
 
 	bool IsValid() const;
+
+	bool IsNearlyEqual(const FDialogueRow& Other) const;
 	
 	virtual void OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName) override
 	{
