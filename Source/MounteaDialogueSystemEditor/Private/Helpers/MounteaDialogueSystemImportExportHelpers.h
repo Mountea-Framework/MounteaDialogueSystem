@@ -36,6 +36,8 @@ public:
 	static bool IsReimport(const FString& Filename);
 	static bool ReimportDialogueGraph(const FString& FilePath, UObject* ObjectRedirector, UMounteaDialogueGraph*& OutGraph);
 	static bool CanReimport(UObject* ObjectRedirector, TArray<FString>& OutFilenames);
+
+	static void UpdateGraphImportDataConfig(const UMounteaDialogueGraph* Graph, const FString& JsonName, const FString& Json, const FString& PackagePath, const FString& AssetName);
 	
 	// Main import function
 	static bool ImportDialogueGraph(const FString& FilePath, UObject* InParent, FName Name, EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph);
@@ -53,7 +55,7 @@ public:
 private:
 	// Helper functions for populating specific parts of the graph
 	static bool PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& SourceFilePath, const TMap<FString, FString>& ExtractedFiles);
-	static bool PopulateCategories(UMounteaDialogueGraph* Graph, const FString& Json);
+	static bool PopulateCategories(UMounteaDialogueGraph* Graph, const FString& Json);	
 	static bool PopulateParticipants(const UMounteaDialogueGraph* Graph, const FString& Json);
 	static bool PopulateNodes(UMounteaDialogueGraph* Graph, const FString& Json);
 	static bool PopulateEdges(UMounteaDialogueGraph* Graph, const FString& Json);

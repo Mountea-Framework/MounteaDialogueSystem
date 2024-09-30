@@ -33,6 +33,15 @@ public:
 };
 
 USTRUCT()
+struct FDialogueImportFilesMap
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, meta=(NoResetToDefault), Category="Import")
+	TMap<TSoftObjectPtr<UObject>,FDialogueImportData> FileToContentMap;
+};
+
+USTRUCT()
 struct FDialogueImportSourceData
 {
 	GENERATED_BODY()

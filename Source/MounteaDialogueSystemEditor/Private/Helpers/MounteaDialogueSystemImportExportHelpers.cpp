@@ -602,6 +602,18 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueData(UMounteaDia
 {
 	const FString DialogueDataJson = ExtractedFiles["dialogueData.json"];
 
+	TSharedPtr<FJsonObject> JsonObject;
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(DialogueDataJson);
+	if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+	{
+		Graph->SetGraphGUID(FGuid(JsonObject->GetStringField("dialogueGuid")));
+	}
+	else
+	{
+		EditorLOG_ERROR(TEXT("[PopulateDialogueData] Failed to parse dialogueData.json during population"));
+		return false;
+	}
+	
 	Graph->SourceFile = SourceFilePath;
 	for (const auto& Itr : ExtractedFiles)
 	{
@@ -639,16 +651,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueData(UMounteaDia
 		importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
 	}
 
-	TSharedPtr<FJsonObject> JsonObject;
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(DialogueDataJson);
-	if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
-	{
-		Graph->SetGraphGUID(FGuid(JsonObject->GetStringField("dialogueGuid")));
-		return true;
-	}
-
-	EditorLOG_ERROR(TEXT("[PopulateDialogueData] Failed to parse dialogueData.json during population"));
-	return false;
+	return true;
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::PopulateCategories(UMounteaDialogueGraph* Graph, const FString& Json)
@@ -717,6 +720,35 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateCategories(UMounteaDialo
 	TagsManager.EditorRefreshGameplayTagTree();
 
 	return true;
+}
+
+void UMounteaDialogueSystemImportExportHelpers::UpdateGraphImportDataConfig(const UMounteaDialogueGraph* Graph, const FString& JsonName, const FString& Json, const FString& PackagePath, const FString& AssetName)
+{
+	const FString GameDirectory = FPaths::ProjectDir();
+	const FString UpdatedConfigFile = GameDirectory + "/Config/MounteaDialogueImportConfig.ini";
+
+	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
+
+	if (FPaths::FileExists(UpdatedConfigFile))
+	{
+		importConfig->LoadConfig(nullptr, *UpdatedConfigFile);
+	}
+	else
+	{
+		importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
+	}
+	
+	if (importConfig)
+	{
+		if (FDialogueImportSourceData* dialogueConfig = importConfig->ImportHistory.Find(Graph->GetGraphGUID()))
+		{
+			TMap<FString, FDialogueImportData>& currentData = dialogueConfig->ImportData;
+
+			currentData.Add(FString::Printf(TEXT("%s/%s"), *PackagePath, *AssetName), FDialogueImportData(JsonName, Json));
+
+			importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
+		}
+	}
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::PopulateParticipants(const UMounteaDialogueGraph* Graph, const FString& Json)
@@ -790,30 +822,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateParticipants(const UMoun
 	}
 
 	// Process Config Update
-	{
-		const FString GameDirectory = FPaths::ProjectDir();
-		const FString UpdatedConfigFile = GameDirectory + "/Config/MounteaDialogueImportConfig.ini";
-
-		UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
-
-		if (FPaths::FileExists(UpdatedConfigFile))
-		{
-			importConfig->LoadConfig(nullptr, *UpdatedConfigFile);
-		}
-		else
-		{
-			importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
-		}
-	
-		if (importConfig)
-		{
-			FDialogueImportSourceData importSourceData;
-			importSourceData.ImportData.Add(ParticipantsDataTable->GetOuter()->GetName(), FDialogueImportData(TEXT("participants.json"), Json));
-			importConfig->WriteToConfig(Graph->GetGraphGUID(), importSourceData);
-
-			importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
-		}
-	}
+	UpdateGraphImportDataConfig(Graph, TEXT("participants.json"), Json, PackagePath, AssetName);
 	
 	SaveAsset(ParticipantsDataTable);
 
@@ -1078,6 +1087,9 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 		EditorLOG_ERROR(TEXT("Failed to load Participants DataTable: %s"), *FullAssetPath);
 		return false;
 	}
+
+	// Process Config Update
+	UpdateGraphImportDataConfig(Graph, TEXT("dialogueRows.json"), dialogueRowsJson, PackagePath, DialogueRowsDataTableName);
 
 	// Create a mapping of node IDs to participant information
 	TMap<FString, FString> NodeParticipantMap;

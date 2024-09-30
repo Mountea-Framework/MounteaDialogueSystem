@@ -28,6 +28,7 @@
 #include "DetailsPanel/MounteaDialogueDecorator_Details.h"
 #include "HelpButton/MDSCommands.h"
 #include "HelpButton/MDSHelpStyle.h"
+#include "ImportConfig/MounteaDialogueImportConfig.h"
 #include "Interfaces/IMainFrameModule.h"
 
 const FString ChangelogURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/5.1/CHANGELOG.md");
@@ -216,6 +217,23 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		mainFrame.GetMainFrameCommandBindings()->Append(PluginCommands.ToSharedRef());
 
 		UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FMounteaDialogueSystemEditor::RegisterMenus));
+	}
+
+	// Load import config
+	{
+		const FString GameDirectory = FPaths::ProjectDir();
+		const FString UpdatedConfigFile = GameDirectory + "/Config/MounteaDialogueImportConfig.ini";
+
+		UMounteaDialogueImportConfig* ImportConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
+
+		if (FPaths::FileExists(UpdatedConfigFile))
+		{
+			ImportConfig->LoadConfig(nullptr, *UpdatedConfigFile);
+		}
+		else
+		{
+			ImportConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
+		}
 	}
 	
 	EditorLOG_WARNING(TEXT("MounteaDialogueSystemEditor module has been loaded"));
