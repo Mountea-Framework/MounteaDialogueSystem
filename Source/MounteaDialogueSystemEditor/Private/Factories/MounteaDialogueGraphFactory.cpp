@@ -37,10 +37,11 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 		return nullptr;
 	}
 
+	FString outMessage = TEXT("none");
 	if (UMounteaDialogueSystemImportExportHelpers::IsReimport(Filename))
 	{
 		UMounteaDialogueGraph* ExistingGraph = nullptr;
-		if (UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(Filename,InParent, ExistingGraph))
+		if (UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(Filename,InParent, ExistingGraph, outMessage))
 		{
 			if (ExistingGraph)
 			{
@@ -50,7 +51,7 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 		else
 		{
 			// Error notification
-			FNotificationInfo Info(FText::Format(LOCTEXT("ReImportFailed", "Failed to reimport Dialogue:\n{0}"), FText::FromString(InName.ToString())));
+			FNotificationInfo Info(FText::Format(LOCTEXT("ReImportFailed", "Failed to reimport Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(InName.ToString()), FText::FromString(outMessage)));
 			Info.ExpireDuration = 5.0f;
 			Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Error"));
 			FSlateNotificationManager::Get().AddNotification(Info);
@@ -59,8 +60,7 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 			return nullptr;
 		}
 	}
-
-	FString outMessage = TEXT("none");
+	
 	UMounteaDialogueGraph* NewGraph = NewObject<UMounteaDialogueGraph>(InParent, InClass, InName, Flags);
 	if (UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(Filename, InParent, InName, Flags, NewGraph, outMessage))
 	{
@@ -110,9 +110,11 @@ EReimportResult::Type UMounteaDialogueGraphFactory::Reimport(UObject* Obj)
 	UObjectRedirector* objectRedirector = Cast<UObjectRedirector>(Obj);
 	if (!objectRedirector)
 		return EReimportResult::Failed;
+
+	FString outMessage;
 	
 	UMounteaDialogueGraph* targetGraph = Cast<UMounteaDialogueGraph>(objectRedirector->DestinationObject);
-	return UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(ReimportPaths[0], Obj, targetGraph) ? EReimportResult::Succeeded : EReimportResult::Failed;
+	return UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(ReimportPaths[0], Obj, targetGraph, outMessage) ? EReimportResult::Succeeded : EReimportResult::Failed;
 }
 
 int32 UMounteaDialogueGraphFactory::GetPriority() const

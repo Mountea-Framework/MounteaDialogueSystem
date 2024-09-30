@@ -60,37 +60,42 @@ bool UMounteaDialogueSystemImportExportHelpers::IsReimport(const FString& Filena
 	return false;
 }
 
-bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FString& FilePath, UObject* ObjectRedirector, UMounteaDialogueGraph*& OutGraph)
+bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FString& FilePath, UObject* ObjectRedirector, UMounteaDialogueGraph*& OutGraph, FString& OutMessage)
 {
 	if (FilePath.IsEmpty())
 	{
-		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Source File is empty."));
+		OutMessage = TEXT("Source File is empty.");
+		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
 		return false;
 	}
 
 	TArray<uint8> fileData;
 	if (!FFileHelper::LoadFileToArray(fileData, *FilePath))
 	{
-		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Failed to load file: %s"), *FilePath);
+		OutMessage = FString::Printf( TEXT("Failed to load file: %s"), *FilePath);
+		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
 		return false;
 	}
 
 	if (!IsZipFile(fileData))
 	{
-		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] File is not a valid mnteadlg/zip: %s"), *FilePath);
+		OutMessage = FString::Printf( TEXT("File is not a valid mnteadlg/zip: %s"), *FilePath);
+		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
 		return false;
 	}
 
 	TMap<FString, FString> extractedFiles;
 	if (!ExtractFilesFromZip(fileData, extractedFiles))
 	{
-		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Failed to extract files from archive: %s"), *FilePath);
+		OutMessage = FString::Printf( TEXT("Failed to extract files from archive: %s"), *FilePath);
+		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
 		return false;
 	}
 	
 	if (!ValidateExtractedContent(extractedFiles))
 	{
-		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Invalid content in file: %s"), *FilePath);
+		OutMessage = FString::Printf( TEXT("Invalid content in file: %s"), *FilePath);
+		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
 		return false;
 	}
 
@@ -107,19 +112,22 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 			}
 			else
 			{
-				EditorLOG_WARNING(TEXT("[ReimportDialogueGraph] `dialogueGuid` field not found in dialogueData.json"));
+				OutMessage = FString::Printf( TEXT("`dialogueGuid` field not found in dialogueData.json"));
+				EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
 				return false;
 			}
 		}
 		else
 		{
-			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Failed to parse dialogueData.json"));
+			OutMessage = FString::Printf( TEXT("Failed to parse dialogueData.json"));
+			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
 			return false;
 		}
 	}
 	else
 	{
-		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Invalid Dialogue source, missing dialogueData.json"));
+		OutMessage = FString::Printf( TEXT("Invalid Dialogue source, missing dialogueData.json"));
+		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
 		return false;
 	}
 	
@@ -128,7 +136,8 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 		if (dialogueGuid != OutGraph->GetGraphGUID())
 		{
 			// TODO: Rather than return false process creating new dialogue? Maybe expose this option to settings?
-			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] Attempting to reimport different Graph.\nUnreal Graph: %s\nSource Graph: %s"), *OutGraph->GetGraphGUID().ToString(), *dialogueGuid.ToString());
+			OutMessage = FString::Printf( TEXT("Attempting to reimport different Graph.\nUnreal Graph: %s\nSource Graph: %s"), *OutGraph->GetGraphGUID().ToString(), *dialogueGuid.ToString());
+			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
 			return false;
 		}
 
@@ -145,10 +154,10 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 		if (!importConfig)
 			return false;
 
+		const FString selectedDirectory = FPaths::GetPath(ObjectRedirector->GetPackage()->GetName());
 		if (FDialogueImportSourceData* dialogueImportData = importConfig->ImportHistory.Find(dialogueGuid))
 		{
-			const FString selectedDirectory = FPaths::GetPath(ObjectRedirector->GetPackage()->GetName());
-			FString dialogueTargetPath = dialogueImportData->DialogueAssetPath;
+			const FString dialogueTargetPath = FPaths::GetPath(dialogueImportData->DialogueAssetPath);
 			if (!selectedDirectory.Equals(dialogueTargetPath))
 			{
 				// Cleanup
@@ -161,12 +170,21 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 				}
 				
 				// Calling to reimport with the CORRECT path
-				return ReimportDialogueGraph(dialogueTargetPath, ObjectRedirector, OutGraph);
+				return ReimportDialogueGraph(dialogueTargetPath, ObjectRedirector, OutGraph, OutMessage);
 			}
-			
-			// TODO: Rather than deleting DTs and STs just use existing ones and update them?
 		}
 
+		// TODO: Rather than deleting DTs and STs just use existing ones and update them?
+		// Get ST and update all texts based on Keys
+		// * if same key, update
+		// * if different, then add new value
+		// Same with DataTables
+		// NEVER REMOVE
+		// Clear Graph
+		// And then create all Nodes and Edges from JSON
+		// Basically copy-paste `ImportDialogueGraph` but without creating new assets (unless needed)
+		// * maybe modify the `ImportDialogueGraph`?
+		
 		OutGraph->ClearGraph();
 
 		return true;
@@ -175,7 +193,6 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
 	if (!importConfig)
 		return false;
-
 	
 	// Create new, because:
 	// - we dont have OutGraph

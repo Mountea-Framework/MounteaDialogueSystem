@@ -34,7 +34,7 @@ public:
 
 	// Main reimport logic
 	static bool IsReimport(const FString& Filename);
-	static bool ReimportDialogueGraph(const FString& FilePath, UObject* ObjectRedirector, UMounteaDialogueGraph*& OutGraph);
+	static bool ReimportDialogueGraph(const FString& FilePath, UObject* ObjectRedirector, UMounteaDialogueGraph*& OutGraph, FString& OutMessage);
 	static bool CanReimport(UObject* ObjectRedirector, TArray<FString>& OutFilenames);
 
 	static void UpdateGraphImportDataConfig(const UMounteaDialogueGraph* Graph, const FString& JsonName, const FString& Json, const FString& PackagePath, const FString& AssetName);
