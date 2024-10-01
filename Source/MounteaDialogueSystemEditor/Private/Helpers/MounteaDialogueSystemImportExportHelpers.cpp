@@ -261,7 +261,25 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 		// * maybe modify the `ImportDialogueGraph`?
 
 		OutGraph->ClearGraph();
-		PopulateGraphFromExtractedFiles(OutGraph, extractedFiles, FilePath);
+		
+		if (PopulateGraphFromExtractedFiles(OutGraph, extractedFiles, FilePath))
+		{
+			ImportAudioFiles(extractedFiles, ObjectRedirector, OutGraph);
+			
+			if (OutGraph->EdGraph)
+			{
+				if (UEdGraph_MounteaDialogueGraph *edGraph = Cast<UEdGraph_MounteaDialogueGraph>(OutGraph->EdGraph))
+					edGraph->RebuildMounteaDialogueGraph();
+			}
+		}
+
+		for (const auto &File : extractedFiles)
+		{
+			if (File.Key.StartsWith("audio/"))
+			{
+				IFileManager::Get().Delete(*File.Value);
+			}
+		}
 
 		OutMessage = FString::Printf(TEXT("Graph `%s` has been refreshed."), *OutGraph->GetName());
 
@@ -448,7 +466,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 		if (PopulateGraphFromExtractedFiles(OutGraph, extractedFiles, FilePath))
 		{
 			// 7. Import audio files if present
-			ImportAudioFiles(extractedFiles, InParent, OutGraph, Flags);
+			ImportAudioFiles(extractedFiles, InParent, OutGraph);
 
 			OutGraph->CreateGraph();
 			if (OutGraph->EdGraph)
@@ -707,7 +725,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateGraphFromExtractedFiles(
 	return true;
 }
 
-void UMounteaDialogueSystemImportExportHelpers::ImportAudioFiles(const TMap<FString, FString>& ExtractedFiles, UObject* InParent, UMounteaDialogueGraph* Graph, EObjectFlags Flags)
+void UMounteaDialogueSystemImportExportHelpers::ImportAudioFiles(const TMap<FString, FString>& ExtractedFiles, UObject* InParent, UMounteaDialogueGraph* Graph)
 {
 	FModuleManager::LoadModuleChecked<IAudioEditorModule>("AudioEditor");
 	IAudioEditorModule& AudioEditorModule = FModuleManager::GetModuleChecked<IAudioEditorModule>("AudioEditor");
