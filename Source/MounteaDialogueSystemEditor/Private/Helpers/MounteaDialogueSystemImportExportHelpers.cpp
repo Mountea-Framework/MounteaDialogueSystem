@@ -110,6 +110,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 		return false;
 	}
 
+	// TODO: with recursive calls FilePath is wrong so maybe do not call with different path?
 	TArray<uint8> fileData;
 	if (!FFileHelper::LoadFileToArray(fileData, *FilePath))
 	{
@@ -220,51 +221,11 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 			return false;
 		}
 
-		/*
-		 * TODO:
-		 * cleanup graph (delete all its Nodes)
-		 * Update all DataTables
-		 * Update all StringTables
-		 * reimport all audio (do not delete any)
-		 * create new nodes?
-		 */
-
-		const FString selectedDirectory = FPaths::GetPath(ObjectRedirector->GetPackage()->GetName());
-		if (FDialogueImportSourceData* dialogueImportData = importConfig->ImportHistory.Find(dialogueGuid))
-		{
-			const FString dialogueTargetPath = FPaths::GetPath(dialogueImportData->DialogueAssetPath);
-			if (!selectedDirectory.Equals(dialogueTargetPath))
-			{
-				// Cleanup
-				for (const auto &File : extractedFiles)
-				{
-					if (File.Key.StartsWith("audio/"))
-					{
-						IFileManager::Get().Delete(*File.Value);
-					}
-				}
-				
-				// Calling to reimport with the CORRECT path
-				return ReimportDialogueGraph(dialogueTargetPath, ObjectRedirector, OutGraph, OutMessage);
-			}
-		}
-
-		// TODO: Rather than deleting DTs and STs just use existing ones and update them?
-		// Get ST and update all texts based on Keys
-		// * if same key, update
-		// * if different, then add new value
-		// Same with DataTables
-		// NEVER REMOVE
-		// Clear Graph
-		// And then create all Nodes and Edges from JSON
-		// Basically copy-paste `ImportDialogueGraph` but without creating new assets (unless needed)
-		// * maybe modify the `ImportDialogueGraph`?
-
 		OutGraph->ClearGraph();
 		
 		if (PopulateGraphFromExtractedFiles(OutGraph, extractedFiles, FilePath))
 		{
-			ImportAudioFiles(extractedFiles, ObjectRedirector, OutGraph);
+			ImportAudioFiles(extractedFiles, OutGraph, OutGraph);
 			
 			if (OutGraph->EdGraph)
 			{
@@ -294,15 +255,6 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 	OutGraph = NewGraph;
 	FString outMessage;
 	return ImportDialogueGraph(FilePath, ObjectRedirector, FName(ObjectRedirector->GetName()), flags, NewGraph, outMessage);
-
-	/*
-	 * TODO:
-	 * 1. Find Dialogue Graph from `UMounteaDialogueImportConfig`
-	 * 2. If not found, return false
-	 * 3. If found, then clean the graph from all Nodes, Decorators etc. so its empty
-	 * 4. return `ImportDialogueGraph` with found Graph
-	 * 4.1 In future I would like to deduplicate the logic, but keep it simple for now
-	 */
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::CanReimport(UObject* ObjectRedirector, TArray<FString>& OutFilenames)
@@ -730,6 +682,9 @@ void UMounteaDialogueSystemImportExportHelpers::ImportAudioFiles(const TMap<FStr
 	FModuleManager::LoadModuleChecked<IAudioEditorModule>("AudioEditor");
 	IAudioEditorModule& AudioEditorModule = FModuleManager::GetModuleChecked<IAudioEditorModule>("AudioEditor");
 
+	const FString Directory = FPaths::GetPath(InParent->GetPackage()->GetName());
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
 	// Get the Dialogue Rows DataTable
 	FString PackagePath = FPackageName::GetLongPackagePath(InParent->GetPathName());
 	
@@ -747,7 +702,7 @@ void UMounteaDialogueSystemImportExportHelpers::ImportAudioFiles(const TMap<FStr
 	}
 
 	TMap<FGuid, USoundWave*> ImportedAudioMap;
-
+	
 	for (const auto& File : ExtractedFiles)
 	{
 		if (File.Key.StartsWith("audio/") && File.Key.EndsWith(".wav"))
@@ -768,11 +723,40 @@ void UMounteaDialogueSystemImportExportHelpers::ImportAudioFiles(const TMap<FStr
 			
 			FString RelativePackagePath = FString::Printf(TEXT("/Audio/%s"), *SubfolderPath);
 			FString FullPackagePath = PackagePath / RelativePackagePath / FPaths::GetBaseFilename(File.Key);
-			UPackage* SoundWavePackage = CreatePackage(*FullPackagePath);
+
+			FARFilter Filter;
+			Filter.PackagePaths.Add(FName(*FPackageName::GetLongPackagePath(FullPackagePath)));
+			Filter.ClassPaths.Add(UObject::StaticClass()->GetClassPathName());
+			Filter.PackageNames.Add(FName(*FPackageName::GetShortName(FullPackagePath)));
+
+			TArray<FAssetData> AssetDataList;
+			AssetRegistryModule.Get().GetAssets(Filter, AssetDataList);
+
+			USoundWave* ExistingSoundWave = nullptr;
+			if (AssetDataList.Num() > 0)
+			{
+				ExistingSoundWave = Cast<USoundWave>(AssetDataList[0].GetAsset());
+			}
+
+			UPackage* SoundWavePackage = nullptr;
+			USoundWave* ImportedSoundWave = nullptr;
+
+			if (ExistingSoundWave)
+			{
+				// Update existing asset
+				SoundWavePackage = ExistingSoundWave->GetOutermost();
+				SoundWavePackage->FullyLoad();
+				ImportedSoundWave = AudioEditorModule.ImportSoundWave(SoundWavePackage, ExistingSoundWave->GetName(), TempAudioPath);
+			}
+			else
+			{
+				// Create new asset
+				SoundWavePackage = CreatePackage(*FullPackagePath);
+				SoundWavePackage->FullyLoad();
+				ImportedSoundWave = AudioEditorModule.ImportSoundWave(SoundWavePackage, FPaths::GetBaseFilename(File.Key), TempAudioPath);
+			}
 			
 			SoundWavePackage->FullyLoad();
-			
-			USoundWave* ImportedSoundWave = AudioEditorModule.ImportSoundWave(SoundWavePackage, FPaths::GetBaseFilename(File.Key), TempAudioPath);
 
 			if (ImportedSoundWave)
 			{
