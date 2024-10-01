@@ -725,9 +725,10 @@ void UMounteaDialogueSystemImportExportHelpers::ImportAudioFiles(const TMap<FStr
 			FString FullPackagePath = PackagePath / RelativePackagePath / FPaths::GetBaseFilename(File.Key);
 
 			FARFilter Filter;
-			Filter.PackagePaths.Add(FName(*FPackageName::GetLongPackagePath(FullPackagePath)));
-			Filter.ClassPaths.Add(UObject::StaticClass()->GetClassPathName());
-			Filter.PackageNames.Add(FName(*FPackageName::GetShortName(FullPackagePath)));
+			const FString FullAssetPathComposite = FString::Printf(TEXT("%s%s"), *PackagePath, *RelativePackagePath);
+			Filter.PackagePaths.Add(FName(*FullAssetPathComposite));
+			Filter.ClassPaths.Add(USoundWave::StaticClass()->GetClassPathName());
+
 
 			TArray<FAssetData> AssetDataList;
 			AssetRegistryModule.Get().GetAssets(Filter, AssetDataList);
