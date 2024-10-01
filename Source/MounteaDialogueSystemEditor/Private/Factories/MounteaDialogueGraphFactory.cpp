@@ -45,6 +45,12 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 		{
 			if (ExistingGraph)
 			{
+				// Success notification
+				FNotificationInfo Info(FText::Format(LOCTEXT("ReImportSuccess", "Successfully reimported Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(InName.ToString()), FText::FromString(outMessage)));
+				Info.ExpireDuration = 5.0f;
+				Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Success"));
+				FSlateNotificationManager::Get().AddNotification(Info);
+				
 				return ExistingGraph;
 			}
 		}
@@ -53,7 +59,7 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 			// Error notification
 			FNotificationInfo Info(FText::Format(LOCTEXT("ReImportFailed", "Failed to reimport Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(InName.ToString()), FText::FromString(outMessage)));
 			Info.ExpireDuration = 5.0f;
-			Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Error"));
+			Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Info.Error"));
 			FSlateNotificationManager::Get().AddNotification(Info);
 			
 			bOutOperationCanceled = true;
