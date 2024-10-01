@@ -29,7 +29,6 @@
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
-#include "Framework/Notifications/NotificationManager.h"
 
 #include "Internationalization/StringTable.h"
 #include "Internationalization/StringTableCore.h"
@@ -44,20 +43,62 @@
 #include "Interfaces/IPluginManager.h"
 
 #include "UObject/SavePackage.h"
-#include "Widgets/Notifications/SNotificationList.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueSystemImportExportHelpers"
 
 bool UMounteaDialogueSystemImportExportHelpers::IsReimport(const FString& Filename)
 {
-	/*
-	 * TODO:
-	 * extract zip and read `dialogueData.json`
-	 * if failed, return false
-	 * if success, return UMounteaDialogueImportConfig->IsReimport(extractedGuid)
-	 */
+	if (Filename.IsEmpty())
+	{
+		return false;
+	}
 	
-	return false;
+	TArray<uint8> fileData;
+	if (!FFileHelper::LoadFileToArray(fileData, *Filename))
+	{
+		return false;
+	}
+
+	if (!IsZipFile(fileData))
+	{
+		return false;
+	}
+
+	TMap<FString, FString> extractedFiles;
+	if (!ExtractFilesFromZip(fileData, extractedFiles))
+	{
+		return false;
+	}
+
+	if (!ValidateExtractedContent(extractedFiles))
+	{
+		return false;
+	}
+
+	FGuid dialogueGuid;
+	if (extractedFiles.Contains("dialogueData.json"))
+	{
+		TSharedPtr<FJsonObject> JsonObject;
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(extractedFiles["dialogueData.json"]);
+		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+		{
+			if (JsonObject->HasField("dialogueGuid"))
+			{
+				dialogueGuid = FGuid(JsonObject->GetStringField("dialogueGuid"));
+			}
+			
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+	const UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
+	if (!importConfig)
+		return false;
+
+	return importConfig->ImportHistory.Contains(dialogueGuid);
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FString& FilePath, UObject* ObjectRedirector, UMounteaDialogueGraph*& OutGraph, FString& OutMessage)
@@ -106,7 +147,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(extractedFiles["dialogueData.json"]);
 		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
 		{
-			if (JsonObject->HasField("dialogueName"))
+			if (JsonObject->HasField("dialogueGuid"))
 			{
 				dialogueGuid = FGuid(JsonObject->GetStringField("dialogueGuid"));
 			}
@@ -130,6 +171,44 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
 		return false;
 	}
+
+	// TODO: from import config get History row by GUID
+	// From found history get path (DialogueAssetPath)
+	// Find UMounteaDialogueGraph asset from the Path
+	// set OutGraph to be the found one
+
+	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
+	if (!importConfig)
+		return false;
+
+	if (!OutGraph)
+	{		
+		if (importConfig->ImportHistory.Contains(dialogueGuid))
+		{
+			const FString dialoguePath = importConfig->ImportHistory.Find(dialogueGuid)->DialogueAssetPath;
+
+			const FString Directory = FPaths::GetPath(dialoguePath);
+			FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+			FARFilter Filter;
+			Filter.bRecursivePaths = false;
+			Filter.PackagePaths.Add(FName(*Directory));
+			Filter.ClassPaths.Add(UMounteaDialogueGraph::StaticClass()->GetClassPathName());
+
+			TArray<FAssetData> AssetDataList;
+			AssetRegistryModule.Get().GetAssets(Filter, AssetDataList);
+
+			for (const FAssetData& AssetData : AssetDataList)
+			{
+				UMounteaDialogueGraph* DialogueGraph = Cast<UMounteaDialogueGraph>(AssetData.GetAsset());
+				if (DialogueGraph && DialogueGraph->GetGraphGUID() == dialogueGuid)
+				{
+					OutGraph = DialogueGraph;
+					break;
+				}
+			}
+		}
+	}
 	
 	if (OutGraph)
 	{
@@ -149,10 +228,6 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 		 * reimport all audio (do not delete any)
 		 * create new nodes?
 		 */
-
-		UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
-		if (!importConfig)
-			return false;
 
 		const FString selectedDirectory = FPaths::GetPath(ObjectRedirector->GetPackage()->GetName());
 		if (FDialogueImportSourceData* dialogueImportData = importConfig->ImportHistory.Find(dialogueGuid))
@@ -192,10 +267,6 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 
 		return true;
 	}
-
-	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
-	if (!importConfig)
-		return false;
 	
 	// Create new, because:
 	// - we dont have OutGraph
