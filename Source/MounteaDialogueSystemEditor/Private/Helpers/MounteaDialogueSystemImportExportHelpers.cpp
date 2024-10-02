@@ -376,6 +376,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 	AssetRegistryModule.Get().GetAssets(Filter, AssetDataList);
 
 	// 5. Compare GUIDs and handle reimport or new import
+	bool bFoundGraphOk = false;
 	UMounteaDialogueGraph* ExistingGraph = nullptr;
 	for (const FAssetData& AssetData : AssetDataList)
 	{
@@ -396,9 +397,22 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 
 	if (AssetDataList.Num() > 0)
 	{
-		OutMessage = TEXT("A different Dialogue Graph already exists in this folder. Import canceled.");
-		EditorLOG_ERROR(TEXT("[ImportDialogueGraph] %s"), *OutMessage);
-		return false;
+		for (const FAssetData& AssetData : AssetDataList)
+		{
+			UMounteaDialogueGraph* DialogueGraph = Cast<UMounteaDialogueGraph>(AssetData.GetAsset());
+			if (DialogueGraph == OutGraph)
+			{
+				bFoundGraphOk = true;
+				break;
+			}
+		}
+
+		if (!bFoundGraphOk)
+		{
+			OutMessage = TEXT("A different Dialogue Graph already exists in this folder. Import canceled.");
+			EditorLOG_ERROR(TEXT("[ImportDialogueGraph] %s"), *OutMessage);
+			return false;
+		}
 	}
 
 	// 4. Validate content
@@ -1356,16 +1370,10 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 		for (const auto& RowObject : Rows)
 		{
 			FString Id = RowObject->GetStringField("id");
-			float duration = 0.f;
-			if (RowObject->HasField("duration"))
-			{
-				duration = RowObject->GetNumberField("duration");
-			} 
-			
 			FDialogueRowData RowData;
 			RowData.RowText = FText::FromStringTable(DialogueRowsStringTable->GetStringTableId(), Id);
 			RowData.RowGUID = FGuid(Id);
-			RowData.RowDuration = duration;
+			RowData.RowDuration = RowObject->GetNumberField("duration");;
 			NewRow.DialogueRowData.Add(RowData);
 		}
 
