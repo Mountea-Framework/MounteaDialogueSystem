@@ -666,7 +666,6 @@ void FAssetEditor_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 {
 	if (EditingGraph == nullptr)
 	{
-		EditorLOG_WARNING(TEXT("[RebuildMounteaDialogueGraph] EditingGraph is nullptr"));
 		return;
 	}
 
@@ -796,7 +795,7 @@ void FAssetEditor_MounteaDialogueGraph::DeleteSelectedNodes()
 
 		if (UEdNode_MounteaDialogueGraphNode* EdNode_Node = Cast<UEdNode_MounteaDialogueGraphNode>(EdNode))
 		{
-			EdNode_Node->Modify();
+			EdNode_Node->Modify(true);
 
 			const UEdGraphSchema* Schema = EdNode_Node->GetSchema();
 			if (Schema != nullptr)

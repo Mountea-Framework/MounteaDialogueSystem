@@ -396,6 +396,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText NodeTitle;
 
+	FIntPoint NodePosition;
+	
 #if WITH_EDITOR
 
 	/**

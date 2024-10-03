@@ -122,8 +122,7 @@ void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 	});
 }
 
-UEdNode_MounteaDialogueGraphEdge* UEdGraph_MounteaDialogueGraph::CreateEdgeNode(
-	UEdNode_MounteaDialogueGraphNode* StartNode, UEdNode_MounteaDialogueGraphNode* EndNode)
+UEdNode_MounteaDialogueGraphEdge* UEdGraph_MounteaDialogueGraph::CreateEdgeNode(UEdNode_MounteaDialogueGraphNode* StartNode, UEdNode_MounteaDialogueGraphNode* EndNode)
 {
 	UEdNode_MounteaDialogueGraphEdge* EdgeNode = NewObject<UEdNode_MounteaDialogueGraphEdge>(this);
 	EdgeNode->AllocateDefaultPins();

@@ -1594,32 +1594,15 @@ void UMounteaDialogueSystemImportExportHelpers::AddNodePosition(const TSharedPtr
 {
 	const TSharedPtr<FJsonObject> PositionObject = MakeShareable(new FJsonObject);
 
-	if (!Node->Graph || !Node->Graph->EdGraph)
+	if (!Node)
 	{
 		EditorLOG_WARNING(TEXT("[AddNodePosition] Invalid Graph or EdGraph for node %s"), *Node->GetName());
 		NodeObject->SetObjectField("position", PositionObject);
 		return;
 	}
-
-	const UEdGraph_MounteaDialogueGraph* MounteaGraphEditor = Cast<UEdGraph_MounteaDialogueGraph>(Node->Graph->EdGraph);
-	if (!MounteaGraphEditor)
-	{
-		EditorLOG_WARNING(TEXT("[AddNodePosition] Invalid MounteaGraphEditor for node %s"), *Node->GetName());
-		NodeObject->SetObjectField("position", PositionObject);
-		return;
-	}
-
-	const UEdNode_MounteaDialogueGraphNode* const * NodeEditorPtr = MounteaGraphEditor->NodeMap.Find(Node);
-	if (!NodeEditorPtr || !*NodeEditorPtr)
-	{
-		EditorLOG_WARNING(TEXT("[AddNodePosition] Node editor not found for node %s"), *Node->GetName());
-		NodeObject->SetObjectField("position", PositionObject);
-		return;
-	}
-
-	const UEdNode_MounteaDialogueGraphNode* NodeEditor = *NodeEditorPtr;
-	PositionObject->SetNumberField("x", NodeEditor->NodePosX);
-	PositionObject->SetNumberField("y", NodeEditor->NodePosY);
+	
+	PositionObject->SetNumberField("x", Node->NodePosition.X);
+	PositionObject->SetNumberField("y", Node->NodePosition.Y);
 	
 	NodeObject->SetObjectField("position", PositionObject);
 }

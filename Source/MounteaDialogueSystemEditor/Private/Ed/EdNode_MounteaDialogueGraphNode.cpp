@@ -171,6 +171,19 @@ FSlateIcon UEdNode_MounteaDialogueGraphNode::GetIconAndTint(FLinearColor& OutCol
 	return Icon;
 }
 
+bool UEdNode_MounteaDialogueGraphNode::Modify(bool bAlwaysMarkDirty)
+{
+	bool bSatisfied = Super::Modify(bAlwaysMarkDirty);
+
+	if (DialogueGraphNode)
+	{
+		DialogueGraphNode->NodePosition = FIntPoint(NodePosX, NodePosY);
+		DialogueGraphNode->Modify(true);
+	}
+	
+	return bSatisfied;
+}
+
 void UEdNode_MounteaDialogueGraphNode::PostEditUndo()
 {
 	Super::PostEditUndo();

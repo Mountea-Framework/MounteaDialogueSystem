@@ -54,6 +54,8 @@ public:
 	virtual FText GetTooltipText() const override;
 	virtual FSlateIcon GetIconAndTint(FLinearColor& OutColor) const override;
 
+	virtual bool Modify(bool bAlwaysMarkDirty) override;
+
 #if WITH_EDITOR
 	virtual void PostEditUndo() override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

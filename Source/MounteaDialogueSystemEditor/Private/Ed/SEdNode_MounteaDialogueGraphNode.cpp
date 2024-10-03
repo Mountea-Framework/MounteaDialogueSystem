@@ -1001,7 +1001,7 @@ void SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted(const FText& InText, 
 	if (MyNode != nullptr && MyNode->DialogueGraphNode != nullptr)
 	{
 		const FScopedTransaction Transaction(LOCTEXT("MounteaDiaogueGraphEditorRenameNode", "Mountea Diaogue Editor: Rename Node"));
-		MyNode->Modify();
+		MyNode->Modify(true);
 		MyNode->DialogueGraphNode->Modify();
 		MyNode->DialogueGraphNode->SetNodeTitle(InText);
 		UpdateGraphNode();
