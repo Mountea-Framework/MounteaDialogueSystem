@@ -32,6 +32,8 @@ class MOUNTEADIALOGUESYSTEMEDITOR_API UMounteaDialogueSystemImportExportHelpers 
 	
 public:
 
+	static void ShowNotification(const FText& Message, const float Duration, const FString& BrushName = TEXT("MDSStyleSet.Icon.Success"), const FSimpleDelegate& Hyperlink = FSimpleDelegate(), const FText& HyperlinkText = FText());
+
 	// Main reimport logic
 	static bool IsReimport(const FString& Filename);
 	static bool ReimportDialogueGraph(const FString& FilePath, UObject* ObjectRedirector, UMounteaDialogueGraph*& OutGraph, FString& OutMessage);

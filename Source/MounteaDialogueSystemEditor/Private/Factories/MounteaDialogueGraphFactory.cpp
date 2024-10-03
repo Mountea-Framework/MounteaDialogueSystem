@@ -29,11 +29,11 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 	if (!FactoryCanImport(Filename))
 	{
 		// Error notification
-		FNotificationInfo Info(FText::Format(LOCTEXT("PreImportFailed", "Unable to import Dialogue:\n{0}"), FText::FromString(InName.ToString())));
-		Info.ExpireDuration = 5.0f;
-		Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Error"));
-		FSlateNotificationManager::Get().AddNotification(Info);
-
+		UMounteaDialogueSystemImportExportHelpers::ShowNotification(
+		FText::Format(LOCTEXT("PreImportFailed", "Unable to import Dialogue:\n{0}"), FText::FromString(InName.ToString())),
+		5.f,
+		TEXT("MDSStyleSet.Info.Error"));
+		bOutOperationCanceled = true;
 		return nullptr;
 	}
 
@@ -46,21 +46,20 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 			if (ExistingGraph)
 			{
 				// Success notification
-				FNotificationInfo Info(FText::Format(LOCTEXT("ReImportSuccess", "Successfully reimported Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(InName.ToString()), FText::FromString(outMessage)));
-				Info.ExpireDuration = 5.0f;
-				Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Success"));
-				FSlateNotificationManager::Get().AddNotification(Info);
-				
+				UMounteaDialogueSystemImportExportHelpers::ShowNotification(
+				FText::Format(LOCTEXT("ReImportSuccess", "Successfully reimported Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(InName.ToString()), FText::FromString(outMessage)),
+				5.f,
+				TEXT("MDSStyleSet.Icon.Success"));
 				return ExistingGraph;
 			}
 		}
 		else
 		{
 			// Error notification
-			FNotificationInfo Info(FText::Format(LOCTEXT("ReImportFailed", "Failed to reimport Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(InName.ToString()), FText::FromString(outMessage)));
-			Info.ExpireDuration = 5.0f;
-			Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Info.Error"));
-			FSlateNotificationManager::Get().AddNotification(Info);
+			UMounteaDialogueSystemImportExportHelpers::ShowNotification(
+			FText::Format(LOCTEXT("ReImportFailed", "Failed to reimport Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(InName.ToString()), FText::FromString(outMessage)),
+			5.f,
+			TEXT("MDSStyleSet.Info.Error"));
 			
 			bOutOperationCanceled = true;
 			return nullptr;
@@ -71,20 +70,20 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 	if (UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(Filename, InParent, InName, Flags, NewGraph, outMessage))
 	{
 		// Success notification
-		FNotificationInfo Info(FText::Format(LOCTEXT("ImportSuccessful", "Successfully imported Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(InName.ToString()), FText::FromString(outMessage)));
-		Info.ExpireDuration = 5.0f;
-		Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Success"));
-		FSlateNotificationManager::Get().AddNotification(Info);
+		UMounteaDialogueSystemImportExportHelpers::ShowNotification(
+		FText::Format(LOCTEXT("ImportSuccessful", "Successfully imported Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(InName.ToString()), FText::FromString(outMessage)),
+		5.f,
+		TEXT("MDSStyleSet.Icon.Success"));
 		
 		return NewGraph;
 	}
 	else
 	{
 		// Error notification
-		FNotificationInfo Info(FText::Format(LOCTEXT("ImportFailed", "Failed to import Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(InName.ToString()), FText::FromString(outMessage)));
-		Info.ExpireDuration = 5.0f;
-		Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Info.Error"));
-		FSlateNotificationManager::Get().AddNotification(Info);
+		UMounteaDialogueSystemImportExportHelpers::ShowNotification(
+		FText::Format(LOCTEXT("ImportFailed", "Failed to import Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(InName.ToString()), FText::FromString(outMessage)),
+		5.f,
+		TEXT("MDSStyleSet.Info.Error"));
 	}
 
 	bOutOperationCanceled = true;
@@ -138,18 +137,18 @@ EReimportResult::Type UMounteaDialogueGraphFactory::Reimport(UObject* Obj)
 	if (bReimportSuccess)
 	{
 		// Success notification
-		FNotificationInfo Info(FText::Format(LOCTEXT("ImportSuccessful", "Successfully reimported Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(targetGraph->GetName()), FText::FromString(outMessage)));
-		Info.ExpireDuration = 5.0f;
-		Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Success"));
-		FSlateNotificationManager::Get().AddNotification(Info);
+		UMounteaDialogueSystemImportExportHelpers::ShowNotification(
+		FText::Format(LOCTEXT("ReImportSuccessful", "Successfully reimported Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(targetGraph->GetName()), FText::FromString(outMessage)),
+		5.f,
+		TEXT("MDSStyleSet.Icon.Success"));
 	}
 	else
 	{
 		// Error notification
-	    FNotificationInfo Info(FText::Format(LOCTEXT("ImportSuccessful", "Successfully imported Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(targetGraph->GetName()), FText::FromString(outMessage)));
-	    Info.ExpireDuration = 5.0f;
-	    Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Info.Error"));
-	    FSlateNotificationManager::Get().AddNotification(Info);
+		UMounteaDialogueSystemImportExportHelpers::ShowNotification(
+		FText::Format(LOCTEXT("ReImportFailed", "Failed to reimported Dialogue:\n{0}\n\nAdditional info: {1}"), FText::FromString(targetGraph->GetName()), FText::FromString(outMessage)),
+		5.f,
+		TEXT("MDSStyleSet.Info.Error"));
 	}
 	
 	return bReimportSuccess ? EReimportResult::Succeeded : EReimportResult::Failed;

@@ -696,10 +696,10 @@ void FAssetEditor_MounteaDialogueGraph::ExportGraph()
 	if (!CurrentGraphEditor.IsValid())
 	{
 		// Error notification
-		FNotificationInfo Info(LOCTEXT("ExportFailed", "Failed to export Dialogue Graph. Invalid Editor reference!"));
-		Info.ExpireDuration = 5.0f;
-		Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Error"));
-		FSlateNotificationManager::Get().AddNotification(Info);
+		UMounteaDialogueSystemImportExportHelpers::ShowNotification(
+		FText(LOCTEXT("ExportFailed_EditorInvalid", "Failed to export Dialogue Graph. Invalid Editor reference!")),
+		5.f,
+		TEXT("MDSStyleSet.Info.Error"));
 
 		return;
 	}
@@ -707,10 +707,10 @@ void FAssetEditor_MounteaDialogueGraph::ExportGraph()
 	if (!EditingGraph)
 	{
 		// Error notification
-		FNotificationInfo Info(LOCTEXT("ExportFailed", "Failed to export Dialogue Graph. Invalid Graph reference!"));
-		Info.ExpireDuration = 5.0f;
-		Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Error"));
-		FSlateNotificationManager::Get().AddNotification(Info);
+		UMounteaDialogueSystemImportExportHelpers::ShowNotification(
+		FText(LOCTEXT("ExportFailed_InvalidGraph", "Failed to export Dialogue Graph. Invalid Graph reference!")),
+		5.f,
+		TEXT("MDSStyleSet.Info.Error"));
 
 		return;
 	}
@@ -740,23 +740,21 @@ void FAssetEditor_MounteaDialogueGraph::ExportGraph()
 		if (UMounteaDialogueSystemImportExportHelpers::ExportDialogueGraph(EditingGraph, ChosenFilePath))
 		{
 			// Success notification
-			FNotificationInfo Info(FText::Format(LOCTEXT("ExportSuccessful", "Successfully exported {0}"), FText::FromString(EditingGraph->GetName())));
-			Info.ExpireDuration = 5.0f;
-			Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Success"));
-			Info.Hyperlink = FSimpleDelegate::CreateLambda([Path = ChosenFilePath]()
-			{
-				FPlatformProcess::ExploreFolder(*Path);
-			});
-			Info.HyperlinkText = LOCTEXT("ExportSuccessful_hyperlink", "click here to open export file folder");
-			FSlateNotificationManager::Get().AddNotification(Info);
+			UMounteaDialogueSystemImportExportHelpers::ShowNotification(
+			FText::Format(LOCTEXT("ExportSuccessful", "Successfully exported {0}"), FText::FromString(EditingGraph->GetName())),
+			5.f,
+			TEXT("MDSStyleSet.Icon.Success"),
+			FSimpleDelegate::CreateLambda([Path = ChosenFilePath](){ FPlatformProcess::ExploreFolder(*Path); }),
+			LOCTEXT("ExportSuccessful_hyperlink", "click here to open export file folder")
+			);
 		}
 		else
 		{
 			// Error notification
-			FNotificationInfo Info(FText::Format(LOCTEXT("ExportFailed", "Failed to export {0}"), FText::FromString(EditingGraph->GetName())));
-			Info.ExpireDuration = 5.0f;
-			Info.Image = FAppStyle::GetBrush(TEXT("MDSStyleSet.Icon.Error"));
-			FSlateNotificationManager::Get().AddNotification(Info);
+			UMounteaDialogueSystemImportExportHelpers::ShowNotification(
+			FText::Format(LOCTEXT("ExportFailed", "Failed to export {0}"), FText::FromString(EditingGraph->GetName())),
+			5.f,
+			TEXT("MDSStyleSet.Info.Error"));
 		}
 	}
 }

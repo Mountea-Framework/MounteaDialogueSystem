@@ -29,6 +29,7 @@
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
+#include "Framework/Notifications/NotificationManager.h"
 
 #include "Internationalization/StringTable.h"
 #include "Internationalization/StringTableCore.h"
@@ -43,6 +44,7 @@
 #include "Interfaces/IPluginManager.h"
 
 #include "UObject/SavePackage.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueSystemImportExportHelpers"
 
@@ -172,11 +174,6 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
 		return false;
 	}
-
-	// TODO: from import config get History row by GUID
-	// From found history get path (DialogueAssetPath)
-	// Find UMounteaDialogueGraph asset from the Path
-	// set OutGraph to be the found one
 
 	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
 	if (!importConfig)
@@ -819,7 +816,11 @@ void UMounteaDialogueSystemImportExportHelpers::ImportAudioFiles(const TMap<FStr
 bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& SourceFilePath, const TMap<FString, FString>& ExtractedFiles)
 {
 	const FString DialogueDataJson = ExtractedFiles["dialogueData.json"];
+	const FString newSourceFilePath = SourceFilePath;
 
+	Graph->SourceFile.Empty();
+	Graph->SourceData.Empty();
+	
 	TSharedPtr<FJsonObject> JsonObject;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(DialogueDataJson);
 	if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
@@ -831,11 +832,8 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueData(UMounteaDia
 		EditorLOG_ERROR(TEXT("[PopulateDialogueData] Failed to parse dialogueData.json during population"));
 		return false;
 	}
-
-	Graph->SourceFile.Empty();
-	Graph->SourceData.Empty();
 	
-	Graph->SourceFile = SourceFilePath;
+	Graph->SourceFile = newSourceFilePath;
 	for (const auto& Itr : ExtractedFiles)
 	{
 		FDialogueImportData NewSourceData;
@@ -2149,6 +2147,19 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateDialogueRowsJson(const 
 	FJsonSerializer::Serialize(DialogueRowsArray, Writer);
 
 	return OutputString;
+}
+
+void UMounteaDialogueSystemImportExportHelpers::ShowNotification(const FText& Message, const float Duration, const FString& BrushName, const FSimpleDelegate& Hyperlink, const FText& HyperlinkText)
+{
+	FNotificationInfo Info(Message);
+	Info.ExpireDuration = Duration;
+	Info.Image = FAppStyle::GetBrush(*BrushName);
+	if (Hyperlink.IsBound())
+	{
+		Info.Hyperlink = Hyperlink;
+		Info.HyperlinkText = HyperlinkText;
+	}
+	FSlateNotificationManager::Get().AddNotification(Info);
 }
 
 FString UMounteaDialogueSystemImportExportHelpers::GetRelativeAudioPath(const USoundBase* Sound, const FString& GraphFolder)
