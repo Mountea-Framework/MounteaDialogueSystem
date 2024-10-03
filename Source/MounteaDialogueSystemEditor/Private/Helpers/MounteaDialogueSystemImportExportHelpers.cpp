@@ -1283,6 +1283,8 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 	// Process Config Update
 	UpdateGraphImportDataConfig(Graph, TEXT("dialogueRows.json"), dialogueRowsJson, PackagePath, DialogueRowsDataTableName);
 
+	DialogueRowsDataTable->EmptyTable();
+
 	// Create a mapping of node IDs to participant information
 	TMap<FString, FString> NodeParticipantMap;
 	for (const auto& Node : dialogueNodesJsonArray)
@@ -1375,39 +1377,16 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 			RowData.RowGUID = FGuid(Id);
 			RowData.RowDuration = RowObject->GetNumberField("duration");;
 			NewRow.DialogueRowData.Add(RowData);
-		}
+		}		
 
 		TArray<FDialogueRow*> dialogueRows;
 		FString outString;
 		DialogueRowsDataTable->GetAllRows(outString, dialogueRows);
-
-		FDialogueRow* existingRowToUpdate = nullptr;
-		FName rowName;
 		
 		TArray<FName> rowNames = DialogueRowsDataTable->GetRowNames();
-		
-		for (int32 i = 0; i < dialogueRows.Num(); ++i)
-		{
-			auto* existingRow = dialogueRows[i];
-			if (existingRow && NewRow.IsNearlyEqual(*existingRow))
-			{
-				existingRowToUpdate = existingRow;
-				rowName = rowNames[i]; 
-				break;
-			}
-		}
-
-		if (existingRowToUpdate)
-		{
-			*existingRowToUpdate = NewRow;
-		}
-		else
-		{
-			FString newRowName = NewRow.DialogueParticipant.ToString();
-			newRowName.Append(TEXT("_")).Append(FString::FromInt(dialogueRows.Num()));
-			rowName = FName(*newRowName);
-			DialogueRowsDataTable->AddRow(rowName, NewRow);
-		}
+		FString newRowName = NewRow.DialogueParticipant.ToString();
+		newRowName.Append(TEXT("_")).Append(FString::FromInt(dialogueRows.Num()));
+		DialogueRowsDataTable->AddRow(FName(*newRowName), NewRow);
 
 		// Update nodes
 		if (Graph && Graph->GetAllNodes().Num() > 0)
@@ -1419,7 +1398,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 				if (UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node))
 				{
 					DialogueNode->SetDataTable(DialogueRowsDataTable);
-					DialogueNode->SetRowName(rowName);
+					DialogueNode->SetRowName(FName(*newRowName));
 				}
 			}
 		}
