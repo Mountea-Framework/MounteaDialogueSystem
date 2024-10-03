@@ -128,7 +128,7 @@ public:
 	 * ❗ Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
 	 * 
 	 * @param WorldContextObject	World Context Object
-	 * @param Initiator							Player Controller
+	 * @param Initiator							Player State
 	 * @param MainParticipant			Main participant, the one who owns the Dialogue Graph
 	 * @param DialogueParticipants	Other participants, could be NPCs or other Players
 	 */
@@ -140,7 +140,7 @@ public:
 	 * ❗ Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
 	 * 
 	 * @param WorldContextObject	World Context Object to read World info from
-	 * @param Initiator						Usually Player Controller or any Actor who implement `IMounteaDialogueManagerInterface`
+	 * @param Initiator						Usually Player State or any Actor who implement `IMounteaDialogueManagerInterface`
 	 * @param DialogueParticipant	Other person, could be NPC or other Player
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers", DisplayName="Advanced Dialogue Initialization", meta=(Keywords="start, initialize, dialogue"), meta=(CustomTag="MounteaK2Setter"))
