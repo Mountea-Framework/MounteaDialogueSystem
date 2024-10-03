@@ -355,6 +355,27 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	void ResetDialogueUIObjects();
 	virtual void ResetDialogueUIObjects_Implementation() = 0;
+
+	/**
+	 * Retrieves the Z-order of the dialogue widget.
+	 * The Z-order determines the rendering order of the widget, with higher values rendering on top of lower values.
+	 *
+	 * @return The current Z-order value of the dialogue widget.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
+	int32 GetDialogueWidgetZOrder() const;
+	virtual int32 GetDialogueWidgetZOrder_Implementation() const = 0;
+
+	/**
+	 * Sets a new Z-order for the dialogue widget.
+	 * The Z-order determines the rendering order of the widget, with higher values rendering on top of lower values.
+	 * ❗ Runtime changes are not allowed!
+	 *
+	 * @param NewZOrder The new Z-order value to be applied to the dialogue widget.
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
+	void SetDialogueWidgetZOrder(const int32 NewZOrder);
+	virtual void SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder) = 0;
 	
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() = 0;

@@ -311,6 +311,9 @@ public:
 	virtual bool RemoveDialogueUIObjects_Implementation(const TArray<UObject*>& DialogueObjectsToRemove) override;    
 	virtual void SetDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects) override;    
 	virtual void ResetDialogueUIObjects_Implementation() override;
+
+	virtual int32 GetDialogueWidgetZOrder_Implementation() const override {return DialogueWidgetZOrder; };
+	virtual void SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder) override;
 	
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() override
 	{ return OnDialogueInitialized; };
@@ -357,6 +360,14 @@ protected:
 	 */
 	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue|Manager", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
 	TSubclassOf<UUserWidget> DialogueWidgetClass = nullptr;
+
+	/**
+	 * The Z-order of the dialogue widget.
+	 * ❔ This determines the order in which the widget is rendered relative to other UI elements.
+	 * ❔ A higher Z-order means the widget will be rendered on top of others with lower Z-orders.
+	 */
+	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue|Manager", meta=(UIMin=0,ClampMin=0))
+	int32 DialogueWidgetZOrder;
 
 	/**
 	 * Mountea Dialogue Manager Default State.

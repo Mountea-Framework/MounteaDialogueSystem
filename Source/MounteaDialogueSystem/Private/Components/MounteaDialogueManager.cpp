@@ -17,7 +17,8 @@
 
 
 UMounteaDialogueManager::UMounteaDialogueManager()
-	: DefaultManagerState(EDialogueManagerState::EDMS_Enabled)
+	: DialogueWidgetZOrder(12)
+	, DefaultManagerState(EDialogueManagerState::EDMS_Enabled)
 	, DialogueContext(nullptr)
 	, ReplicatedDialogueContext(nullptr)
 	, bWasCursorVisible(false)
@@ -992,7 +993,7 @@ bool UMounteaDialogueManager::InvokeDialogueUI_Implementation(FString& Message)
 		return false;
 	}
 
-	if (DialogueWidgetPtr->AddToPlayerScreen() == false)
+	if (DialogueWidgetPtr->AddToPlayerScreen(Execute_GetDialogueWidgetZOrder(this)) == false)
 	{
 		Message = TEXT("Cannot display Dialogue Widget!");
 		return false;
@@ -1434,4 +1435,10 @@ void UMounteaDialogueManager::SetDialogueUIObjects_Implementation(const TArray<U
 void UMounteaDialogueManager::ResetDialogueUIObjects_Implementation()
 {
 	DialogueObjects.Empty();
+}
+
+void UMounteaDialogueManager::SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder)
+{
+	if (NewZOrder != DialogueWidgetZOrder)
+		DialogueWidgetZOrder = NewZOrder;
 }
