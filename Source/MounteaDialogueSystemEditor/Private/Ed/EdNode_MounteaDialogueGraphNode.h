@@ -56,6 +56,8 @@ public:
 
 	virtual bool Modify(bool bAlwaysMarkDirty) override;
 
+	virtual void UpdatePosition();
+
 #if WITH_EDITOR
 	virtual void PostEditUndo() override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

@@ -175,13 +175,18 @@ bool UEdNode_MounteaDialogueGraphNode::Modify(bool bAlwaysMarkDirty)
 {
 	bool bSatisfied = Super::Modify(bAlwaysMarkDirty);
 
+	UpdatePosition();
+	
+	return bSatisfied;
+}
+
+void UEdNode_MounteaDialogueGraphNode::UpdatePosition()
+{
 	if (DialogueGraphNode)
 	{
 		DialogueGraphNode->NodePosition = FIntPoint(NodePosX, NodePosY);
 		DialogueGraphNode->Modify(true);
 	}
-	
-	return bSatisfied;
 }
 
 void UEdNode_MounteaDialogueGraphNode::PostEditUndo()
