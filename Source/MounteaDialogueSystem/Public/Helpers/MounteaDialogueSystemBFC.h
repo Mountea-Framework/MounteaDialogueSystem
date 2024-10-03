@@ -139,11 +139,11 @@ public:
 	 * Tries to initialize Dialogue.
 	 * ❗ Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
 	 * 
-	 * @param WorldContextObject	World Context Object
-	 * @param Initiator						Usually Player Controller
+	 * @param WorldContextObject	World Context Object to read World info from
+	 * @param Initiator						Usually Player Controller or any Actor who implement `IMounteaDialogueManagerInterface`
 	 * @param DialogueParticipant	Other person, could be NPC or other Player
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers", meta=(Keywords="start, initialize, dialogue"), meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers", DisplayName="Advanced Dialogue Initialization", meta=(Keywords="start, initialize, dialogue"), meta=(CustomTag="MounteaK2Setter"))
 	static bool InitializeDialogue(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& DialogueParticipant);
 	
 	/**
@@ -152,7 +152,7 @@ public:
 	 * ❗ Preferred way to Initialize Dialogue is to call 'InitializeDialogue' instead❗
 	 * 
 	 * @param WorldContextObject	World Context Object
-	 * @param Initiator						Usually Player Controller
+	 * @param Initiator						Usually Player Controller or any Actor who implement `IMounteaDialogueManagerInterface`
 	 * @param DialogueParticipant	Other person, could be NPC or other Player
 	 * @param Context					Dialogue Context which is passed to Dialogue Manager
 	 */
