@@ -6,6 +6,7 @@ Mountea Dialogue System is an Open-source Mountea Framework Unreal Engine tool f
 [![YouTube](https://img.shields.io/badge/YouTube-Subscribe-red?style=flat&logo=youtube)](https://www.youtube.com/@mounteaframework)
 [![Discord](https://badgen.net/discord/online-members/2vXWEEN?label=Discord&logo=discord&logoColor=ffffff&color=7389D8)](https://discord.com/invite/2vXWEEN)
 [![Discord](https://badgen.net/discord/members/2vXWEEN?label=Discord&logo=discord&logoColor=ffffff&color=7389D8)](https://discord.com/invite/2vXWEEN)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/345048cfc8794b4191a400c84703100e)](https://app.codacy.com/gh/Mountea-Framework/MounteaDialogueSystem/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 ## Playable Demo
 Feel free to download the playable demo and take a look at what this plugin (in combination with its Dialogue sibling) can do in a matter of a few clicks!
