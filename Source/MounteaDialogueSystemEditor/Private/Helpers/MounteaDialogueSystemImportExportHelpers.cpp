@@ -10,9 +10,11 @@
 
 #include "AssetToolsModule.h"
 #include "AudioEditorModule.h"
+#include "ContentBrowserModule.h"
 
 #include "GameplayTagsManager.h"
 #include "GameplayTagsSettings.h"
+#include "IContentBrowserSingleton.h"
 
 #include "Engine/DataTable.h"
 
@@ -696,8 +698,23 @@ void UMounteaDialogueSystemImportExportHelpers::ImportAudioFiles(const TMap<FStr
 	const FString Directory = FPaths::GetPath(InParent->GetPackage()->GetName());
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-	// Get the Dialogue Rows DataTable
 	FString PackagePath = FPackageName::GetLongPackagePath(InParent->GetPathName());
+
+	// Create `audio` folder if one doesn't exist yet
+	{
+		FString AudioFolderPath = FPaths::Combine(
+			FPaths::ProjectContentDir(),
+			PackagePath.RightChop(6),
+			TEXT("audio")
+		);
+
+		FPaths::MakeStandardFilename(AudioFolderPath);
+
+		if (!FPaths::DirectoryExists(AudioFolderPath))
+		{
+			FPlatformFileManager::Get().GetPlatformFile().CreateDirectoryTree(*AudioFolderPath);
+		}
+	}
 	
 	// Extract just the asset name from InParent
 	FString AssetName = FPaths::GetBaseFilename(Graph->GetName());
@@ -726,7 +743,7 @@ void UMounteaDialogueSystemImportExportHelpers::ImportAudioFiles(const TMap<FStr
 			
 			FGuid RowDataGuid = FGuid(FPaths::GetBaseFilename(SubfolderPath));
 
-			FString DestinationPath = FPaths::Combine(FPaths::GetPath(InParent->GetPathName()), TEXT("Audio"), SubfolderPath);
+			FString DestinationPath = FPaths::Combine(FPaths::GetPath(InParent->GetPathName()), TEXT("audio"), SubfolderPath);
 			
 			FPlatformFileManager::Get().GetPlatformFile().CreateDirectoryTree(*DestinationPath);
 			
@@ -739,7 +756,6 @@ void UMounteaDialogueSystemImportExportHelpers::ImportAudioFiles(const TMap<FStr
 			const FString FullAssetPathComposite = FString::Printf(TEXT("%s%s"), *PackagePath, *RelativePackagePath);
 			Filter.PackagePaths.Add(FName(*FullAssetPathComposite));
 			Filter.ClassPaths.Add(USoundWave::StaticClass()->GetClassPathName());
-
 
 			TArray<FAssetData> AssetDataList;
 			AssetRegistryModule.Get().GetAssets(Filter, AssetDataList);
