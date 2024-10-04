@@ -33,37 +33,37 @@ public:
 	 * The title of the dialogue row.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	FText DialogueRowTitle							= LOCTEXT("DialogueRow_Title", "This is dialogue row title text.");
+	FText DialogueRowTitle					= LOCTEXT("DialogueRow_Title", "This is dialogue row title text.");
 
 	/**
 	 * The text of the dialogue row body.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	FText DialogueRowBody						= LOCTEXT("DialogueRow_Body", "This is dialogue option title text.");
+	FText DialogueRowBody					= LOCTEXT("DialogueRow_Body", "This is dialogue option title text.");
 
 	/**
 	 * The duration of the dialogue row.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	float RowDuration									= 0.f;
+	float RowDuration						= 0.f;
 
 	/**
 	 * The UI row ID.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	int32 UIRowID											= 0;
+	int32 UIRowID							= 0;
 
 	/**
 	 * An optional icon for the dialogue row.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	UTexture* RowOptionalIcon					= nullptr;
+	UTexture* RowOptionalIcon				= nullptr;
 
 	/**
 	 * The unique identifier for the dialogue row.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	FGuid RowGuid										= FGuid::NewGuid();
+	FGuid RowGuid							= FGuid::NewGuid();
 
 public:
 
@@ -72,12 +72,12 @@ public:
 	bool operator==(const FWidgetDialogueRow& Other) const
 	{
 		return
-		Other.RowGuid == RowGuid																				&&
+		Other.RowGuid == RowGuid												&&
 		Other.DialogueRowParticipantName.EqualTo(DialogueRowParticipantName)	&&
-		Other.DialogueRowTitle.EqualTo(DialogueRowTitle)											&&
-		Other.DialogueRowBody.EqualTo(DialogueRowBody)										&&
-		Other.UIRowID == UIRowID																					&&
-		FMath::IsNearlyEqual(Other.RowDuration, RowDuration)						&&
+		Other.DialogueRowTitle.EqualTo(DialogueRowTitle)						&&
+		Other.DialogueRowBody.EqualTo(DialogueRowBody)							&&
+		Other.UIRowID == UIRowID												&&
+		FMath::IsNearlyEqual(Other.RowDuration, RowDuration)				&&
 		Other.RowOptionalIcon == RowOptionalIcon;
 	}
 	
@@ -112,7 +112,7 @@ class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueRowInterface
 {
 	GENERATED_BODY()
 
-	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
+
 public:
 
 	
@@ -120,7 +120,7 @@ public:
 	 * 
 	 * @return 
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Getter"))
 	FWidgetDialogueRow GetDialogueWidgetRowData() const;
 	virtual FWidgetDialogueRow GetDialogueWidgetRowData_Implementation() const = 0;
 
@@ -128,28 +128,28 @@ public:
 	 * 
 	 * @param NewData 
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
 	void SetNewWidgetDialogueRowData(const FWidgetDialogueRow& NewData);
 	virtual void SetNewWidgetDialogueRowData_Implementation(const FWidgetDialogueRow& NewData) = 0;
 
 	/**
 	 * 
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
 	void ResetWidgetDialogueRow();
 	virtual void ResetWidgetDialogueRow_Implementation() = 0;
 
 	/**
 	 * 
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
 	void InitializeWidgetDialogueRow();
 	virtual void InitializeWidgetDialogueRow_Implementation() = 0;
 
 	/**
 	 * Stop the effect from play and finishes the text.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
 	void StopTypeWriterEffect ();
 	virtual void StopTypeWriterEffect_Implementation () = 0;
 
@@ -158,7 +158,7 @@ public:
 	 * @param SourceText		The full text to display.
 	 * @param Duration				The total duration for the typewriter effect.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
 	void StartTypeWriterEffect (const FText& SourceText, float Duration);
 	virtual void StartTypeWriterEffect_Implementation (const FText& SourceText, float Duration) = 0;
 
@@ -166,7 +166,7 @@ public:
 	 * Enables Type-Writer effect.
 	 * Based on implementation the effect can start or stop.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
 	void EnableTypeWriterEffect(bool bEnable);
 	virtual void EnableTypeWriterEffect_Implementation(bool bEnable) = 0;
 };

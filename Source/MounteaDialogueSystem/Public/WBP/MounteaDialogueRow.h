@@ -29,19 +29,19 @@ protected:
 	 * @param UpdatedText		The text that has been updated.
 	 * @param Alpha					The progress of the typewriter effect (0 to 1).
 	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Monutea|Dialogue")
-	void												OnTypeWriterEffectUpdated									(const FText& UpdatedText, float Alpha);
+	UFUNCTION(BlueprintImplementableEvent, Category="Monutea|Dialogue", meta=(CustomTag="MounteaK2Delegate"))
+	void				OnTypeWriterEffectUpdated								(const FText& UpdatedText, float Alpha);
 	
 	/**
      * Called when the typewriter effect is finished.
      */
 	UFUNCTION(BlueprintImplementableEvent, Category="Monutea|Dialogue")
-	void												OnTypeWriterEffectFinished									();
+	void				OnTypeWriterEffectFinished								();
 	
 	UFUNCTION()
-	void												UpdateTypeWriterEffect_Callback							(const FText& SourceText, int32 CurrentCharacterIndex, float TotalDuration);
+	void				UpdateTypeWriterEffect_Callback							(const FText& SourceText, int32 CurrentCharacterIndex, float TotalDuration);
 	UFUNCTION()
-	void												CompleteTypeWriterEffect_Callback						(const FText& SourceText);
+	void				CompleteTypeWriterEffect_Callback						(const FText& SourceText);
 
 
 protected:
@@ -57,25 +57,25 @@ protected:
 protected:
 	
 	// IMounteaDialogueUIBaseInterface implementation
-	virtual		bool								BindEvents_Implementation										()																										override
+	virtual		bool				BindEvents_Implementation					()																override
 	{return true;};
-	virtual		bool								UnbindEvents_Implementation									() 																									override
+	virtual		bool				UnbindEvents_Implementation					() 																override
 	{return true;};
-	virtual		void								ProcessStringCommand_Implementation				(const FString& Command, UObject* OptionalPayload = nullptr)		override
+	virtual		void				ProcessStringCommand_Implementation			(const FString& Command, UObject* OptionalPayload = nullptr)	override
 	{};
-	virtual		void								ApplyTheme_Implementation									()																										override
+	virtual		void				ApplyTheme_Implementation					()																override
 	{};
 	
 protected:
 	
 	// IMounteaDialogueRowInterface implementation
-	virtual		FWidgetDialogueRow	GetDialogueWidgetRowData_Implementation			() const																							override;
-	virtual		void								SetNewWidgetDialogueRowData_Implementation	(const FWidgetDialogueRow& NewData)										override;
-	virtual		void								ResetWidgetDialogueRow_Implementation				()																										override;
-	virtual		void								InitializeWidgetDialogueRow_Implementation			()																										override;
-	virtual		void								StopTypeWriterEffect_Implementation					()																										override;
-	virtual		void								StartTypeWriterEffect_Implementation					(const FText& SourceText, float Duration)										override;
-	virtual		void								EnableTypeWriterEffect_Implementation					(bool bEnable)																					override;
+	virtual		FWidgetDialogueRow	GetDialogueWidgetRowData_Implementation		() const														override;
+	virtual		void				SetNewWidgetDialogueRowData_Implementation	(const FWidgetDialogueRow& NewData)								override;
+	virtual		void				ResetWidgetDialogueRow_Implementation		()																override;
+	virtual		void				InitializeWidgetDialogueRow_Implementation	()																override;
+	virtual		void				StopTypeWriterEffect_Implementation			()																override;
+	virtual		void				StartTypeWriterEffect_Implementation		(const FText& SourceText, float Duration)						override;
+	virtual		void				EnableTypeWriterEffect_Implementation		(bool bEnable)													override;
 
 protected:
 
@@ -89,11 +89,11 @@ protected:
 	 * Defines whether the Row is using Type-Writer effect to display text.
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue", meta=(ExposeOnSpawn=true))
-	uint8											bUseTypeWriterEffect		: 1;
+	uint8								bUseTypeWriterEffect	: 1;
 
 	/**
 	 * Event triggered upon updating 'bUseTypeWriterEffect'
 	 */
-	UPROPERTY(BlueprintAssignable, BlueprintReadOnly, Category="Mountea|Dialogue")
-	FOnTypeWriterEffectChanged	OnTypeWriterEffectChanged;
+	UPROPERTY(BlueprintAssignable, BlueprintReadOnly, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Delegate"))
+	FOnTypeWriterEffectChanged			OnTypeWriterEffectChanged;
 };
