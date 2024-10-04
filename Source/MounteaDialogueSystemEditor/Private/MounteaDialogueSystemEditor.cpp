@@ -24,12 +24,14 @@
 #include "Styling/SlateStyleRegistry.h"
 
 #include "ToolMenus.h"
+#include "AssetActions/MounteaDialogueDataTableAssetAction.h"
 #include "DetailsPanel/MounteaDialogueDecorator_Details.h"
 #include "HelpButton/MDSCommands.h"
 #include "HelpButton/MDSHelpStyle.h"
+#include "ImportConfig/MounteaDialogueImportConfig.h"
 #include "Interfaces/IMainFrameModule.h"
 
-const FString ChangelogURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/5.2/CHANGELOG.md");
+const FString ChangelogURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/5.1/CHANGELOG.md");
 
 #define LOCTEXT_NAMESPACE "FMounteaDialogueSystemEditor"
 
@@ -74,19 +76,20 @@ void FMounteaDialogueSystemEditor::StartupModule()
 	
 	// Register new Category
 	{
-		FAssetToolsModule::GetModule().Get().RegisterAdvancedAssetCategory(FName("Mountea Dialogue"), FText::FromString("Mountea Dialogue"));
+		FAssetToolsModule::GetModule().Get().RegisterAdvancedAssetCategory(FName("Mountea Dialogue"), FText::FromString(TEXT("\U0001F538 Mountea Dialogue")));
 	}
 
 	// Asset Actions
 	{
-		MounteaDialogueGraphAssetActions = MakeShared<FMounteaDialogueGraphAssetAction>();
-		FAssetToolsModule::GetModule().Get().RegisterAssetTypeActions(MounteaDialogueGraphAssetActions.ToSharedRef());
+		AssetActions.Add(MakeShared<FMounteaDialogueGraphAssetAction>());
+		AssetActions.Add(MakeShared<FMounteaDialogueAdditionalDataAssetAction>());
+		AssetActions.Add(MakeShared<FMounteaDialogueDecoratorAssetAction>());
+		AssetActions.Add(MakeShared<FMounteaDialogueDataTableAssetAction>());
 
-		MounteaDialogueAdditionalDataAssetActions = MakeShared<FMounteaDialogueAdditionalDataAssetAction>();
-		FAssetToolsModule::GetModule().Get().RegisterAssetTypeActions(MounteaDialogueAdditionalDataAssetActions.ToSharedRef());
-		
-		MounteaDialogueDecoratorAssetAction = MakeShared<FMounteaDialogueDecoratorAssetAction>();
-		FAssetToolsModule::GetModule().Get().RegisterAssetTypeActions(MounteaDialogueDecoratorAssetAction.ToSharedRef());
+		for (const auto& Itr : AssetActions)
+		{
+			FAssetToolsModule::GetModule().Get().RegisterAssetTypeActions(Itr.ToSharedRef());
+		}
 	}
 
 	// Thumbnails and Icons
@@ -215,6 +218,23 @@ void FMounteaDialogueSystemEditor::StartupModule()
 
 		UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FMounteaDialogueSystemEditor::RegisterMenus));
 	}
+
+	// Load import config
+	{
+		const FString GameDirectory = FPaths::ProjectDir();
+		const FString UpdatedConfigFile = GameDirectory + "/Config/MounteaDialogueImportConfig.ini";
+
+		UMounteaDialogueImportConfig* ImportConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
+
+		if (FPaths::FileExists(UpdatedConfigFile))
+		{
+			ImportConfig->LoadConfig(nullptr, *UpdatedConfigFile);
+		}
+		else
+		{
+			ImportConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
+		}
+	}
 	
 	EditorLOG_WARNING(TEXT("MounteaDialogueSystemEditor module has been loaded"));
 }
@@ -235,8 +255,9 @@ void FMounteaDialogueSystemEditor::ShutdownModule()
 	{
 		if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
 		{
+			for (const auto& Itr : AssetActions)
 			{
-				FAssetToolsModule::GetModule().Get().UnregisterAssetTypeActions(MounteaDialogueGraphAssetActions.ToSharedRef());
+				FAssetToolsModule::GetModule().Get().UnregisterAssetTypeActions(Itr.ToSharedRef());
 			}
 		}
 	}

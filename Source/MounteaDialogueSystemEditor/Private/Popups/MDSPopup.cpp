@@ -1,12 +1,17 @@
+// All rights reserved Dominik Morse (Pavlicek) 2024
+
 #include "MDSPopup.h"
-#include "MDSPopupConfig.h"
-#include "EditorStyleSet.h"
-#include "Widgets/Layout/SScrollBox.h"
-#include "Widgets/Text/SRichTextBlock.h"
-#include "SWebBrowser.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
+#include "EditorStyleSet.h"
 #include "Helpers/MounteaDialogueGraphColors.h"
 #include "Interfaces/IPluginManager.h"
+#include "MDSPopupConfig.h"
+#include "Misc/FileHelper.h"
+#include "SWebBrowser.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
+#include "Widgets/Layout/SScrollBox.h"
+#include "Widgets/Text/SRichTextBlock.h"
 
 void MDSPopup::OnBrowserLinkClicked(const FSlateHyperlinkRun::FMetadata& Metadata)
 {
@@ -21,24 +26,26 @@ void MDSPopup::OnBrowserLinkClicked(const FSlateHyperlinkRun::FMetadata& Metadat
 void MDSPopup::FormatChangelog(FString& InChangelog)
 {
 	FString WelcomeMessage = FString(R"(
-<LargeText>Hello and thank you for using Mountea Dialogue System!</>
+<LargeText>Welcome, and thank you for choosing the Mountea Dialogue System!</>
 
-First thing first, if you've been enjoying using it, it would mean a lot if you could just drop <a id="browser" href="https://www.unrealengine.com/marketplace/en-US/product/ea38ae1f87b24807a66fdf4fa65ef521">a small review on the marketplace page</> :).
+We're delighted to have you on board. If you're enjoying your experience, we'd greatly appreciate it if you could take a moment to leave <a id="browser" href="https://www.unrealengine.com/marketplace/en-US/product/ea38ae1f87b24807a66fdf4fa65ef521">a quick review on our marketplace page</>. Your feedback means the world to us!
 
-I also made a paid <a id="browser" href="https://www.unrealengine.com/marketplace/en-US/product/fbe5d74e46b846f0aeb8ca759e64b71d">Modular Sword Pack</>. It's a simple yet powerful tool that allows creating thousands upon thousands of unique swords with a simple click, now with a free upgrade of Modular Scabbard System!
+Additionally, I'd like to invite you to check out the <a id="browser" href="https://www.unrealengine.com/marketplace/en-US/product/fbe5d74e46b846f0aeb8ca759e64b71d">Modular Sword Pack</>. This versatile tool allows you to create thousands of unique swords with ease, and now it includes the Modular Scabbard System at no extra cost.
 
-But let's keep it short, here are the cool new features (and bugfixes) of this version!
-
-
+Now, let's get straight to the exciting new features and bug fixes in this version!
 )");
+
 
 	if (InChangelog.IsEmpty())
 	{
-		const FString InvalidChangelog =FString(R"(
-		
-We are sorry, but there has been an error trying to access online Changelog. We are sorry for this.
-The changelist is available publicly <a id="browser" href="https://github.com/Mountea-Framework/MounteaDialogueSystem/blob/5.2/CHANGELOG.md">on our GitHub</>.
-		)");
+		const FString InvalidChangelog = FString(R"(
+We're sorry, but there was an error retrieving the online Changelog. We apologize for the inconvenience.
+
+You can still access the complete changelog publicly <a id="browser" href="https://github.com/Mountea-Framework/MounteaInteractionSystem/blob/5.4/CHANGELOG.md">on our GitHub</>.
+
+Thank you for your understanding!
+)");
+
 
 
 		InChangelog = InChangelog.Append(WelcomeMessage).Append(InvalidChangelog);
@@ -46,13 +53,20 @@ The changelist is available publicly <a id="browser" href="https://github.com/Mo
 	}
 	
 	InChangelog = InChangelog.RightChop(109);
-	InChangelog = InChangelog.Replace(TEXT("### Added"), TEXT("<RichTextBlock.Bold>Added</>"));
-	InChangelog = InChangelog.Replace(TEXT("### Fixed"), TEXT("<RichTextBlock.Bold>Fixed</>"));
-	InChangelog = InChangelog.Replace(TEXT("### Changed"), TEXT("<RichTextBlock.Bold>Changed</>"));
-	InChangelog = InChangelog.Replace(TEXT("> -"), TEXT("*"));
+	InChangelog = InChangelog.Replace(TEXT("### Added"),		TEXT("<RichTextBlock.BoldHighlight>Added</>"));
+	InChangelog = InChangelog.Replace(TEXT("### Fixed"),		TEXT("<RichTextBlock.BoldHighlight>Fixed</>"));
+	InChangelog = InChangelog.Replace(TEXT("### Changed"),		TEXT("<RichTextBlock.BoldHighlight>Changed</>"));
+	
+	InChangelog = InChangelog.Replace(TEXT("> -"),				TEXT("*"));
+	InChangelog = InChangelog.Replace(TEXT(">   -"),			TEXT("   *"));
+	InChangelog = InChangelog.Replace(TEXT(">     -"),			TEXT("     *"));
 
-	InChangelog = InChangelog.Replace(TEXT("**Version"), TEXT("<LargeText>Version"));
-	InChangelog = InChangelog.Replace(TEXT("**"), TEXT("</>"));
+
+	FormatTextWithTags(InChangelog, TEXT("***"), TEXT("***"),		TEXT("<RichTextBlock.Italic>"),			TEXT("</>"));
+	
+	FormatTextWithTags(InChangelog, TEXT("**"), TEXT("**"),		TEXT("<LargeText>"),					TEXT("</>"));
+
+	FormatTextWithTags(InChangelog, TEXT("`"), TEXT("`"),			TEXT("<RichTextBlock.TextHighlight>"),	TEXT("</>"));
 	
 	const FString TempString = InChangelog;
 
@@ -61,11 +75,65 @@ The changelist is available publicly <a id="browser" href="https://github.com/Mo
 	InChangelog = WelcomeMessage.Append(TempString);
 }
 
+void MDSPopup::FormatTextWithTags(FString &SourceText, const FString &StartMarker, const FString &EndMarker, const FString &StartTag, const FString &EndTag)
+{
+	int32 StartIndex = 0;
+	while ((StartIndex = SourceText.Find(StartMarker, ESearchCase::CaseSensitive, ESearchDir::FromStart, StartIndex)) != INDEX_NONE)
+	{
+		int32 EndIndex = SourceText.Find(StartMarker, ESearchCase::CaseSensitive, ESearchDir::FromStart, StartIndex + StartMarker.Len());
+		if (EndIndex != INDEX_NONE)
+		{
+			FString TextToFormat = SourceText.Mid(StartIndex + StartMarker.Len(), EndIndex - StartIndex - StartMarker.Len());
+
+			FString FormattedText = FString::Printf(TEXT("%s%s%s"), *StartTag, *TextToFormat, *EndTag);
+			SourceText = SourceText.Left(StartIndex) + FormattedText + SourceText.Mid(EndIndex + StartMarker.Len());
+
+			StartIndex = StartIndex + FormattedText.Len();
+		}
+		else
+		{
+			break;
+		}
+	}
+}
+
+FPluginVersion MDSPopup::GetPluginVersion()
+{
+	const FName PluginName = TEXT("MounteaDialogueSystem");
+	const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(PluginName.ToString());
+	if (!Plugin.IsValid())
+	{
+		return FPluginVersion("1", "0.0.0.1");
+	}
+
+	const FString PluginFilePath = Plugin->GetBaseDir() / FString::Printf(TEXT("%s.uplugin"), *PluginName.ToString());
+
+	FString FileContents;
+	if (!FFileHelper::LoadFileToString(FileContents, *PluginFilePath))
+	{
+		return FPluginVersion("1", "0.0.0.1");
+	}
+	
+	TSharedPtr<FJsonObject> JsonObject;
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(FileContents);
+	if (!FJsonSerializer::Deserialize(Reader, JsonObject) || !JsonObject.IsValid())
+	{
+		return FPluginVersion("1", "0.0.0.1");
+	}
+
+	const int32 VersionNumber = JsonObject->GetIntegerField("Version");
+	const FString VersionName = JsonObject->GetStringField("VersionName");
+
+	const FString Version = FString::Printf(TEXT("%d"), VersionNumber);
+
+	return FPluginVersion(Version, VersionName);
+}
+
 void MDSPopup::Register(const FString& Changelog)
 {
 	const FString PluginDirectory = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"))->GetBaseDir();
 	const FString UpdatedConfigFile = PluginDirectory + "/Config/UpdateConfig.ini";
-	FString CurrentPluginVersion = "0.0.0.1";
+	FString CurrentPluginVersion = GetPluginVersion().PluginVersionName;
 
 	UMDSPopupConfig* MDSPopupConfig = GetMutableDefault<UMDSPopupConfig>();
 

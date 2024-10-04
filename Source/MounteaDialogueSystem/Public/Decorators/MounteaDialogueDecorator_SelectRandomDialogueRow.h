@@ -30,14 +30,14 @@ public:
 protected:
 
 	UPROPERTY(SaveGame, Category="Random", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, InlineEditConditionToggle))
-	bool															bUseRange;
+	bool			bUseRange;
 
 	/**
 	 * Allows select random number from given Range.
 	 * If range exceeds or is invalid, first valid random index is used.
 	 */
 	UPROPERTY(SaveGame, Category="Random", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, EditCondition="bUseRange"))
-	FIntPoint													RandomRange;
+	FIntPoint		RandomRange;
 
 private:
 	

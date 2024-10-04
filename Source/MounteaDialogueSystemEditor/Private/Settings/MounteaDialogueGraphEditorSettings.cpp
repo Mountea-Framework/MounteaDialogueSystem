@@ -36,6 +36,8 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
 
 	bAllowNativeDecoratorsEdit = false;
 	bUseAdvancedWiring = true;
+
+	bDisplayStandardNodes = false;
 }
 
 #if WITH_EDITOR
