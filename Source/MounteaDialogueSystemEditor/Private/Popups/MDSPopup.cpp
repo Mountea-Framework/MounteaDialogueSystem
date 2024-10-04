@@ -25,17 +25,26 @@ void MDSPopup::OnBrowserLinkClicked(const FSlateHyperlinkRun::FMetadata& Metadat
 
 void MDSPopup::FormatChangelog(FString& InChangelog)
 {
+	FString partyEmoji = TEXT("🎉");
+	FString miracleEmoji = TEXT("✨");
+
+	FString HeaderMessage = partyEmoji + FString(R"(<LargeText>Welcome, and thank you for choosing the Mountea Dialogue System!</>)") + TEXT(" ") + partyEmoji;
 	FString WelcomeMessage = FString(R"(
-<LargeText>Welcome, and thank you for choosing the Mountea Dialogue System!</>
 
 We're delighted to have you on board. If you're enjoying your experience, we'd greatly appreciate it if you could take a moment to leave <a id="browser" href="https://www.unrealengine.com/marketplace/en-US/product/ea38ae1f87b24807a66fdf4fa65ef521">a quick review on our marketplace page</>. Your feedback means the world to us!
 
 Additionally, I'd like to invite you to check out the <a id="browser" href="https://www.unrealengine.com/marketplace/en-US/product/fbe5d74e46b846f0aeb8ca759e64b71d">Modular Sword Pack</>. This versatile tool allows you to create thousands of unique swords with ease, and now it includes the Modular Scabbard System at no extra cost.
 
-Now, let's get straight to the exciting new features and bug fixes in this version!
 )");
 
+	FString DialoguerMessage = miracleEmoji + FString(R"(<LargeText>We're thrilled to announce a game-changing addition to our toolkit: the new standalone dialogue builder!</>)") + TEXT(" ") + miracleEmoji; 
+	FString RestOfMessage =  FString(R"(
 
+You can now easily <a id="browser" href="https://mountea-framework.github.io/MounteaDialoguer/">check it out here</>, a powerful tool that allows you to create, manage, and refine dialogues like never before. This tool isn't just built for Unreal Engine - it's designed to export dialogues for any engine and media format. Seamlessly import your dialogues into Unreal and export them back for other platforms, making your creative process more flexible and efficient than ever!
+
+Now, let's get straight to the exciting new features and bug fixes in this version!
+)");
+	
 	if (InChangelog.IsEmpty())
 	{
 		const FString InvalidChangelog = FString(R"(
@@ -46,9 +55,7 @@ You can still access the complete changelog publicly <a id="browser" href="https
 Thank you for your understanding!
 )");
 
-
-
-		InChangelog = InChangelog.Append(WelcomeMessage).Append(InvalidChangelog);
+		InChangelog = InChangelog.Append(WelcomeMessage).Append(DialoguerMessage).Append(RestOfMessage).Append(InvalidChangelog);
 		return;
 	}
 	
@@ -57,9 +64,9 @@ Thank you for your understanding!
 	InChangelog = InChangelog.Replace(TEXT("### Fixed"),		TEXT("<RichTextBlock.BoldHighlight>Fixed</>"));
 	InChangelog = InChangelog.Replace(TEXT("### Changed"),		TEXT("<RichTextBlock.BoldHighlight>Changed</>"));
 	
-	InChangelog = InChangelog.Replace(TEXT("> -"),				TEXT("*"));
-	InChangelog = InChangelog.Replace(TEXT(">   -"),			TEXT("   *"));
-	InChangelog = InChangelog.Replace(TEXT(">     -"),			TEXT("     *"));
+	InChangelog = InChangelog.Replace(TEXT("> -"),				TEXT("●"));
+	InChangelog = InChangelog.Replace(TEXT(">   -"),			TEXT("   ○"));
+	InChangelog = InChangelog.Replace(TEXT(">     -"),			TEXT("     •"));
 
 
 	FormatTextWithTags(InChangelog, TEXT("***"), TEXT("***"),		TEXT("<RichTextBlock.Italic>"),			TEXT("</>"));
@@ -72,7 +79,7 @@ Thank you for your understanding!
 
 	InChangelog.Empty();
 
-	InChangelog = WelcomeMessage.Append(TempString);
+	InChangelog = InChangelog.Append(HeaderMessage).Append(WelcomeMessage).Append(DialoguerMessage).Append(RestOfMessage).Append(TempString);
 }
 
 void MDSPopup::FormatTextWithTags(FString &SourceText, const FString &StartMarker, const FString &EndMarker, const FString &StartTag, const FString &EndTag)
