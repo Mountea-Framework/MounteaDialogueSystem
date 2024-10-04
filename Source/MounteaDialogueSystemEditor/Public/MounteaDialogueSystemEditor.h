@@ -47,17 +47,25 @@ private:
 	
 	void OnGetResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 	UFUNCTION() void SendHTTPGet();
+	void OnGetResponse_Tags(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
+	UFUNCTION() void SendHTTPGet_Tags();
 
+	void DialoguerButtonClicked();
 	void PluginButtonClicked();
 	void RegisterMenus();
+
+protected:
+		
+	bool DoesHaveValidTags() const;
+	void RefreshGameplayTags();
+	void UpdateTagsConfig(const FString& NewContent);
+	void CreateTagsConfig(const FString& NewContent);
 
 private:
 	
 	TSharedPtr<class FUICommandList> PluginCommands;
 	TSharedPtr<FSlateStyleSet> DialogueTreeSet;
-	TSharedPtr<class FMounteaDialogueGraphAssetAction> MounteaDialogueGraphAssetActions;
-	TSharedPtr<class FMounteaDialogueAdditionalDataAssetAction> MounteaDialogueAdditionalDataAssetActions;
-	TSharedPtr<class FMounteaDialogueDecoratorAssetAction> MounteaDialogueDecoratorAssetAction;
+	TArray<TSharedPtr<class FAssetTypeActions_Base>> AssetActions;
 	
 	TSharedPtr<struct FGraphPanelNodeFactory> GraphPanelNodeFactory_MounteaDialogueGraph;
 	TArray< TSharedPtr<IAssetTypeActions> > CreatedAssetTypeActions;

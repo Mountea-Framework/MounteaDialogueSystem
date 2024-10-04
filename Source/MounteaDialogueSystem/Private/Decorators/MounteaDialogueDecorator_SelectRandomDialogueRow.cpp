@@ -47,7 +47,7 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Impleme
 
 	if (!Context->GetActiveDialogueRow().IsValid())
 	{
-		LOG_WARNING(TEXT("[ExecuteDecorator] %s ActiveDialogueRow is invalid!!\nExecution is skipped."), *(GetDecoratorName().ToString()));
+		LOG_WARNING(TEXT("[ExecuteDecorator] %s ActiveDialogueRow is invalid!\nExecution is skipped."), *(GetDecoratorName().ToString()));
 		return;
 	}
 	if (Context->GetActiveDialogueRow().DialogueRowData.Num() == 0)

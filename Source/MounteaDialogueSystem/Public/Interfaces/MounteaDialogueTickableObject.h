@@ -29,7 +29,7 @@ public:
 	 * 
 	 * @param ParentTickable The tickable object to register.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Tick")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Tick", meta=(CustomTag="MounteaK2Setter"))
 	void RegisterTick(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable);
 	virtual void RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) = 0;
 
@@ -38,7 +38,7 @@ public:
 	 * 
 	 * @param ParentTickable The tickable object to unregister.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Tick")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Tick", meta=(CustomTag="MounteaK2Setter"))
 	void UnregisterTick(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable);
 	virtual void UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) = 0;
 
@@ -49,7 +49,7 @@ public:
 	 * @param ParentTick The parent object responsible for ticking.param DeltaTime
 	 * @param DeltaTime The time since the last tick.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Tick")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Tick", meta=(CustomTag="MounteaK2Setter"))
 	void TickMounteaEvent(UObject* SelfRef, UObject* ParentTick, float DeltaTime);
 	virtual void TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime) = 0;
 

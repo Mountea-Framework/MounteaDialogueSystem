@@ -85,7 +85,7 @@ private:
 	
 	void CreateInternalWidgets();
 	TSharedRef<SGraphEditor> CreateViewportWidget();
-
+	
 	void BindCommands();
 	void CreateEdGraph();
 	void CreateCommandList();
@@ -97,6 +97,7 @@ private:
 	void RebuildMounteaDialogueGraph();
 
 	void SummonSearchUI(FString NewSearch = FString(), bool bSelectFirstResult = false);
+	void ExportGraph();
 
 #pragma region GraphEditorCommands
 
