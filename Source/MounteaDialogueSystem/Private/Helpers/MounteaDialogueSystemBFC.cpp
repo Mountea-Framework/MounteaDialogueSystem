@@ -924,13 +924,15 @@ UObject* UMounteaDialogueSystemBFC::GetObjectByClass(UObject* Object, const TSub
 	return nullptr;
 }
 
-UActorComponent* UMounteaDialogueSystemBFC::GetSingleComponentByInterface(const AActor* Target, TSubclassOf<UInterface> InterfaceFilter)
+UActorComponent* UMounteaDialogueSystemBFC::GetSingleComponentByInterface(const AActor* Target, TSubclassOf<UInterface> InterfaceFilter, bool& bResult)
 {
+	bResult = false;
 	if (Target == nullptr) return nullptr;
 
 	TArray<UActorComponent*> TempComps = Target->GetComponentsByInterface(InterfaceFilter);
 
 	if (TempComps.IsEmpty()) return nullptr;
 
+	bResult = true;
 	return TempComps[0];
 }

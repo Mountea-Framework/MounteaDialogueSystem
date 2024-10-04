@@ -163,6 +163,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorator", meta=(CompactNodeTitle="OwningNode"), meta=(CustomTag="MounteaK2Getter"))
 	UMounteaDialogueGraphNode* GetOwningNode() const;
+	
 	/**
 	 * Returns Owning Graph of this Decorator.
 	 *
@@ -170,11 +171,13 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorator", meta=(CompactNodeTitle="OwningGraph"), meta=(CustomTag="MounteaK2Getter"))
 	UMounteaDialogueGraph* GetOwningGraph() const;
+	
 	/**
 	 * Returns Owning Object of this Decorator.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorator", meta=(CompactNodeTitle="Owner"), meta=(CustomTag="MounteaK2Getter"))
 	UObject* GetOwner() const;
+	
 	/**
 	 * Returns Owner Participant Interface.
 	 */

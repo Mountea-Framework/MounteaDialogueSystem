@@ -158,9 +158,23 @@ public:
 	 */
 	static bool InitializeDialogueWithContext(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant, UMounteaDialogueContext* Context);
 
+	/**
+	 * Adds new participants to the Dialogue Manager.
+	 * 
+	 * @param WorldContextObject The context within which the world exists.
+	 * @param NewParticipants A list of dialogue participants to be added.
+	 * @return Returns true if the participants were successfully added, false otherwise.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(CompactNodeTitle="Dialogue Manager", Keywords="manager, dialogue, master, initialize"), meta=(CustomTag="MounteaK2Setter"))
 	static bool AddParticipants(AActor* WorldContextObject, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 
+	/**
+	 * Removes participants from the Dialogue Manager.
+	 * 
+	 * @param WorldContextObject The context within which the world exists.
+	 * @param NewParticipants A list of dialogue participants to be removed.
+	 * @return Returns true if the participants were successfully removed, false otherwise.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(CompactNodeTitle="Dialogue Manager", Keywords="manager, dialogue, master, initialize"), meta=(CustomTag="MounteaK2Setter"))
 	static bool RemoveParticipants(AActor* WorldContextObject, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 
@@ -199,6 +213,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="guid, node, find, search, get"), meta=(CustomTag="MounteaK2Getter"))
 	static TArray<UMounteaDialogueGraphNode*> FindNodesByGUID(const UMounteaDialogueGraph* FromGraph, const TArray<FGuid> Guids);
 
+	/**
+	 * Converts an array of dialogue nodes to their respective GUIDs.
+	 * 
+	 * @param Nodes The array of dialogue graph nodes to be converted.
+	 * @return An array of GUIDs corresponding to the provided dialogue nodes.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="guid, node, convert, transform"), meta=(CustomTag="MounteaK2Getter"))
 	static TArray<FGuid> NodesToGuids(TArray<UMounteaDialogueGraphNode*> Nodes);
 	
@@ -268,6 +288,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(CompactNodeTitle="Get Dialogue Row", Keywords="row, dialogue"), meta=(CustomTag="MounteaK2Getter"))
 	static FDialogueRow GetDialogueRow(const UMounteaDialogueGraphNode* Node);
 
+	/**
+	 * Finds a specific dialogue row in a DataTable.
+	 * 
+	 * @param Table The DataTable where the dialogue row is stored.
+	 * @param RowName The name of the row to find.
+	 * @return The found dialogue row, or an empty dialogue row if not found.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(CompactNodeTitle="Find Dialogue Row", Keywords="row, dialogue"), meta=(CustomTag="MounteaK2Getter"))
 	static FDialogueRow FindDialogueRow(const UDataTable* Table, const FName RowName)
 	{
@@ -290,7 +317,11 @@ public:
 	static float GetRowDuration(const struct FDialogueRowData& Row);
 
 	/**
+	 * Retrieves the subtitles settings for the dialogue system.
 	 * 
+	 * @param WorldContextObject The context within which the world exists.
+	 * @param OptionalFilterClass An optional filter class used to refine the subtitles settings.
+	 * @return Returns the settings related to dialogue subtitles, or default settings if none are found.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(CompactNodeTitle="Subtitles Settings", Keywords="settings, subtitles, font"), meta=(CustomTag="MounteaK2Getter"))
 	static FSubtitlesSettings GetSubtitlesSettings(const UObject* WorldContextObject, const FUIRowID& OptionalFilterClass)
@@ -324,6 +355,13 @@ public:
 
 	static bool DoesPreviousNodeSkipActiveNode(const UMounteaDialogueGraph* ParentGraph, const FGuid PreviousNode);
 
+	/**
+	 * Gets the execution mode of a specific row within the dialogue context.
+	 * 
+	 * @param DialogueContext The current dialogue context.
+	 * @param RowIndex The index of the row to retrieve the execution mode for.
+	 * @return The execution mode of the specified row.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="get, find, retrieve"), meta=(CustomTag="MounteaK2Getter"))
 	static ERowExecutionMode GetActiveRowExecutionMode(UMounteaDialogueContext* DialogueContext, const int32 RowIndex);
 
@@ -342,7 +380,15 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta = (ClassFilter = "Object"), meta=(DeterminesOutputType = "ClassFilter"), meta=(CustomTag="MounteaK2Getter"))
 	static UObject* GetObjectByClass(UObject* Object, const TSubclassOf<UObject> ClassFilter, bool& bResult);
 
+	/**
+	 * Retrieves a single component from an actor that implements a specified interface.
+	 * 
+	 * @param Target The actor from which to retrieve the component.
+	 * @param InterfaceFilter The interface type used to filter components.
+	 * @param bResult		(Out) `true` if the Component is of the specified Interface type; `false` otherwise.
+	 * @return The actor component that implements the specified interface, or null if none found.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta = (ClassFilter = "Interface"), meta=(DeterminesOutputType = "InterfaceFilter"), meta=(CustomTag="MounteaK2Getter"))
-	static UActorComponent* GetSingleComponentByInterface(const AActor* Target, TSubclassOf<UInterface> InterfaceFilter);
+	static UActorComponent* GetSingleComponentByInterface(const AActor* Target, TSubclassOf<UInterface> InterfaceFilter, bool& bResult);
 
 };

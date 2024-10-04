@@ -39,6 +39,7 @@ public:
 #pragma region Variables
 
 protected:
+	
 	/**
 	 * The list of decorators for the dialogue graph.
 	 * Decorators are used to add extra functionality or behavior to the nodes in the graph.
@@ -63,6 +64,7 @@ protected:
 	FGuid GraphGUID;
 
 public:
+	
 	// Pointer to the starting node of the dialogue graph.
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	TObjectPtr<UMounteaDialogueGraphNode> StartNode = nullptr;
@@ -100,6 +102,7 @@ public:
 #pragma region Functions
 
 public:
+
 	/**
 	 * Returns the GUID of the graph.
 	 *
@@ -111,16 +114,28 @@ public:
 	// Allows setting graph guid directly.
 	void SetGraphGUID(const FGuid& NewGuid);
 
+	/**
+	 * Finds a dialogue node by its GUID.
+	 * 
+	 * @param NodeGuid The GUID of the node to find.
+	 * @return The dialogue node with the specified GUID, or nullptr if not found.
+	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Graph", meta=(CustomTag="MounteaK2Getter"))
 	UMounteaDialogueGraphNode* FindNodeByGuid(const FGuid& NodeGuid);
 
 	/**
 	 * Returns an array containing all nodes in the dialogue graph.
+	 * 
 	 * @return An array of all nodes in the dialogue graph.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Graph", meta=(CustomTag="MounteaK2Getter"))
 	TArray<UMounteaDialogueGraphNode*> GetAllNodes() const;
 
+	/**
+	 * Returns the root nodes of the dialogue graph.
+	 * 
+	 * @return An array of all root nodes in the graph.
+	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Graph", meta=(CustomTag="MounteaK2Getter"))
 	TArray<UMounteaDialogueGraphNode*> GetRootNodes() const;
 

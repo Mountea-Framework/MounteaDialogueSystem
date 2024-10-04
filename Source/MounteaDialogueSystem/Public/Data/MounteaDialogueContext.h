@@ -117,6 +117,7 @@ public:
 	{ return DialogueParticipant; };
 	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> GetDialogueParticipants() const
 	{ return DialogueParticipants; }
+	
 	/**
 	 * Returns the Active Node object.
 	 * ❗ Might be null
@@ -125,6 +126,7 @@ public:
 	 */
 	UMounteaDialogueGraphNode* GetActiveNode() const
 	{ return ActiveNode; };
+	
 	/**
 	 * Returns lsit of Children Nodes from Active Node.
 	 * ❗ Might be empty
@@ -133,6 +135,7 @@ public:
 	 */
 	TArray<UMounteaDialogueGraphNode*> GetChildrenNodes() const
 	{ return AllowedChildNodes; };
+	
 	/**
 	 * Returns Active Dialogue Row if any.
 	 * ❗ Might return invalid
@@ -141,6 +144,7 @@ public:
 	 */
 	FDialogueRow GetActiveDialogueRow() const
 	{ return ActiveDialogueRow; };
+	
 	/**
 	 *Returns the Active Dialogue Row Data Index.
 	 * 
@@ -148,6 +152,7 @@ public:
 	 */
 	int32 GetActiveDialogueRowDataIndex() const
 	{ return ActiveDialogueRowDataIndex; };
+	
 	/**
 	 * Returns the map of nodes traversed during this dialogue instance.
 	 * 
@@ -195,6 +200,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateDialogueParticipant"), meta=(CustomTag="MounteaK2Setter"))
 	virtual void UpdateDialogueParticipantBP(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
+	
 	/**
 	 * Updates Active Dialogue Node in Context.
 	 * 
@@ -203,6 +209,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateActiveDialogueNode"), meta=(CustomTag="MounteaK2Setter"))
 	virtual void UpdateActiveDialogueNodeBP(UMounteaDialogueGraphNode* NewActiveNode);
+	
 	/**
 	 * Updates the active dialogue row.
 	 * 
@@ -210,6 +217,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateActiveDialogueRow"), meta=(CustomTag="MounteaK2Setter"))
 	virtual void UpdateActiveDialogueRowBP(const FDialogueRow& NewActiveRow);
+	
 	/**
 	 * Updates the active dialogue row Data Index.
 	 * 
@@ -217,6 +225,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateActiveDialogueRowDataIndex"), meta=(CustomTag="MounteaK2Setter"))
 	virtual void UpdateActiveDialogueRowDataIndexBP(int32 NewIndex);
+	
 	/**
 	 * Updates Dialogue Player Participant.
 	 *
@@ -225,6 +234,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateDialoguePlayerParticipant"), meta=(CustomTag="MounteaK2Setter"))
 	void UpdateDialoguePlayerParticipantBP(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
+	
 	/**
 	 * Updates Dialogue Active Participant.
 	 *

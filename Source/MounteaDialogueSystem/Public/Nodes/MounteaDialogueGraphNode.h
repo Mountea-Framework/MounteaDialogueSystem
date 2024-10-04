@@ -31,6 +31,7 @@ public:
 
 #pragma region ReadOnly
 public:
+	
 	/**
 	 * Array of parent nodes for the current active node in the dialogue traversal.
 	 *❗ Parent nodes are nodes that have a directed edge pointing to the current active node.
@@ -69,6 +70,7 @@ public:
 
 
 protected:
+	
 	/**
 	 * The unique identifier for this Dialogue Graph Node.
 	 *❗ This is used to differentiate between nodes, and must be unique within the graph.
@@ -78,6 +80,7 @@ protected:
 	FGuid NodeGUID;
 
 private:
+	
 	/**
 	 * The world that owns this Dialogue Graph Node.
 	 *❗ This is the world in which this Dialogue Graph Node is currently running.
@@ -90,6 +93,7 @@ private:
 
 #pragma region Editable
 public:
+	
 	/**
 	 * The array of allowed input classes for this Dialogue Node.
 	 *❗ Only nodes with classes from this array can be connected as inputs to this node.
@@ -101,6 +105,7 @@ public:
 	/** Defines whether this Node will start automatically or if requires input.*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mountea|Dialogue")
 	uint8 bAutoStarts : 1;
+	
 	/**
 	 * The maximum number of children nodes that this node can have.
 	 *❗ If this value is -1, then there is no limit on the number of children nodes.
@@ -108,6 +113,7 @@ public:
 	 */
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Base")
 	int32 MaxChildrenNodes = -1;
+	
 	/**
 	 * Indicates whether this node inherits the decorators from its parent Graph.
 	 *❗ If true, the decorators of the parent Graph will be inherited and applied to this node during processing.
@@ -157,16 +163,22 @@ public:
 	{ return bAutoStarts; };
 
 	/**
+	 * Pre-processes the dialogue node before it is activated.
+	 * This function is called before the main processing of the node.
 	 * 
-	 * @param Manager 
+	 * @param Manager The dialogue manager interface responsible for managing the current dialogue.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Setter"))
 	void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	virtual void PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 
 	/**
+	 * Processes the dialogue node by evaluating the dialogue context and executing node logic.
+	 * This function broadcasts relevant events and checks for valid dialogue context, world, and graph ownership.
+	 * If conditions are satisfied, it executes the node decorators and notifies the manager.
 	 * 
-	 * @param Manager 
+	 * @param Manager The dialogue manager interface responsible for managing the current dialogue. 
+	 *                It handles context and broadcasts events such as dialogue failure or node start.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Setter"))
 	void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
@@ -191,8 +203,11 @@ public:
 	virtual bool CanStartNode_Implementation() const;
 
 	/**
+	 * Evaluates all decorators attached to the dialogue node and the owning graph, if applicable.
+	 * This function checks each decorator and returns whether they are satisfied, indicating that the node can be executed.
+	 * Inherited graph decorators are also considered if applicable.
 	 * 
-	 * @return 
+	 * @return Returns true if all node and graph decorators are valid, false otherwise.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Validate"))
 	bool EvaluateDecorators() const;
