@@ -431,11 +431,12 @@ bool FMounteaDialogueSystemEditor::DoesHaveValidTags() const
 	
 	const FString PluginDirectory = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"))->GetBaseDir();
 	const FString ConfigFilePath = PluginDirectory + "/Config/Tags/MounteaDialogueSystemTags.ini";
+	FString NormalizedConfigFilePath = FConfigCacheIni::NormalizeConfigIniPath(ConfigFilePath);
 
 	if (FPaths::FileExists(ConfigFilePath))
 	{
 		FString ConfigContent;
-		FConfigFile* ConfigFile = GConfig->Find(ConfigFilePath);
+		FConfigFile* ConfigFile = GConfig->Find(NormalizedConfigFilePath);
 
 		return true;
 	}
@@ -457,8 +458,9 @@ void FMounteaDialogueSystemEditor::UpdateTagsConfig(const FString& NewContent)
 
 	const FString PluginDirectory = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"))->GetBaseDir();
 	const FString ConfigFilePath = PluginDirectory + "/Config/Tags/MounteaDialogueSystemTags.ini";
+	FString NormalizedConfigFilePath = FConfigCacheIni::NormalizeConfigIniPath(ConfigFilePath);
 
-	FConfigFile* CurrentConfig = GConfig->Find(ConfigFilePath);
+	FConfigFile* CurrentConfig = GConfig->Find(NormalizedConfigFilePath);
 
 	FString CurrentContent;
 	CurrentConfig->WriteToString(CurrentContent);
