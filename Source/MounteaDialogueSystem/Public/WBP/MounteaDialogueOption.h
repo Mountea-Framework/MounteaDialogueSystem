@@ -20,13 +20,13 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueOption : public UUserWidget, pub
 protected:
 	
 	// IMounteaDialogueOptionInterface implementation
-	virtual		FDialogueOptionData				GetDialogueOptionData_Implementation			() const														override;
-	virtual		void											SetNewDialogueOptionData_Implementation	(const FDialogueOptionData& NewData)	override;
-	virtual		void											ResetDialogueOptionData_Implementation		()																	override;
-	virtual		void											ProcessOptionSelected_Implementation			()																	override;
-	virtual		void											InitializeDialogueOption_Implementation			()																	override;
+	virtual		FDialogueOptionData				GetDialogueOptionData_Implementation	() const								override;
+	virtual		void							SetNewDialogueOptionData_Implementation	(const FDialogueOptionData& NewData)	override;
+	virtual		void							ResetDialogueOptionData_Implementation	()										override;
+	virtual		void							ProcessOptionSelected_Implementation	()										override;
+	virtual		void							InitializeDialogueOption_Implementation	()										override;
 
-	virtual		FOnDialogueOptionSelected& GetDialogueOptionSelectedHandle					()																	override
+	virtual		FOnDialogueOptionSelected&		GetDialogueOptionSelectedHandle			()										override
 	{ return OnDialogueOptionSelected; };
 
 protected:
@@ -35,11 +35,11 @@ protected:
 	 * Dialogue Option Data.
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue", meta=(ExposeOnSpawn=true))
-	FDialogueOptionData 										DialogueOptionData;
+	FDialogueOptionData 								DialogueOptionData;
 
 	/**
 	 * Event called upon selecting Dialogue Option.
 	 */
-	UPROPERTY(BlueprintReadOnly, BlueprintCallable, VisibleAnywhere, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, BlueprintCallable, VisibleAnywhere, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Delegate"))
 	FOnDialogueOptionSelected							OnDialogueOptionSelected;
 };

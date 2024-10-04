@@ -26,7 +26,7 @@ namespace MounteaDialogueWidgetCommands
  * 
  * Holds a list of settings that are used to further improve and tweak Dialogues.
  */
-UCLASS(config = MounteaSettings, defaultconfig)
+UCLASS(config = MounteaSettings, defaultconfig,ProjectUserConfig)
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSystemSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
@@ -129,7 +129,7 @@ public:
 	 * Returns Default Dialogue Widget if any is defined.
 	 * ❗ Might return Null❗
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
 	TSoftClassPtr<UUserWidget> GetDefaultDialogueWidget() const
 	{
 		if (DefaultDialogueWidgetClass.IsNull())
@@ -141,38 +141,58 @@ public:
 	}
 
 	/**
+	 * Returns whether skipping a dialogue row skips the whole row or only the audio.
 	 * 
-	 * @return True if skipping finishes the whole row, False if only skips audio.
+	 * @return True if skipping finishes the entire row, false if it only skips the audio.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Validate"))
 	bool CanSkipWholeRow() const
 	{
 		return bSkipRowWithAudioSkip;
 	}
-	
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+
+	/**
+	 * Returns the current input mode used during dialogue.
+	 * 
+	 * @return The input mode (e.g., Game Only, UI Only, or Game and UI) set for dialogue interaction.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
 	EInputMode GetDialogueInputMode() const
 	{ return InputMode; };
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	/**
+	 * Retrieves the duration coefficient used for automatic dialogue row progression.
+	 * 
+	 * @return The speed coefficient per 100 characters for the `Automatic` RowDurationMode.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
 	float GetDurationCoefficient() const
 	{ return DurationCoefficient; };
 	
 	/**
-	 * Returns whether Subtitles are allowed or not.
+	 * Returns whether subtitles are allowed or not.
+	 * 
+	 * @return True if subtitles are allowed, false otherwise.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Validate"))
 	bool SubtitlesAllowed() const
 	{ return bAllowSubtitles; };
 
 	/**
-	 * Returns Widget Update Frequency in seconds.
+	 * Returns the update frequency of the dialogue widgets.
+	 * 
+	 * @return The frequency, in seconds, at which the widgets are updated.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="Update Frequency", Keywords="update, refresh, tick, frequency"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CompactNodeTitle="Update Frequency", Keywords="update, refresh, tick, frequency"), meta=(CustomTag="MounteaK2Getter"))
 	float GetWidgetUpdateFrequency() const
 	{ return UpdateFrequency; };
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(CompactNodeTitle="SkipFadeDuration", Keywords="skip, fade, easy, smooth"))
+	/**
+	 * Retrieves the fade duration when skipping voice or audio in the dialogue.
+	 * 
+	 * @return The duration, in seconds, of the fade-out effect when audio is skipped.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CompactNodeTitle="SkipFadeDuration", Keywords="skip, fade, easy, smooth"), meta=(CustomTag="MounteaK2Getter"))
 	float GetSkipFadeDuration() const
 	{ return SkipFadeDuration; };
 
@@ -182,9 +202,10 @@ public:
 	 * 
 	 * If 'SubtitlesSettingsOverrides' are specified but invalid, 'SubtitlesSettings' are returned instead like no optional filters were provided.
 	 * 
-	 * @param RowID	Optional Class and Row ID of UserWidget to filter out the override Settings
+	 * @param RowID Optional row ID of the UserWidget for which to search for override settings.
+	 * @return The subtitles settings for the given row or the default settings if no override is found.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
 	FSubtitlesSettings GetSubtitlesSettings(const FUIRowID& RowID) const
 	{ 
 		if (SubtitlesSettingsOverrides.Contains(RowID))
@@ -199,9 +220,15 @@ public:
 	};
 
 	/**
+	 * Sets new subtitles settings for a specific widget or applies them globally.
 	 * 
+	 * If a valid `RowID` is provided, the new settings will override the subtitles settings for that widget. 
+	 * If no `RowID` is specified or it is invalid, the new settings are applied globally to all widgets.
+	 * 
+	 * @param NewSettings The new subtitles settings to apply.
+	 * @param RowID The row ID of the UserWidget for which to apply the settings. If not provided, the settings apply globally.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Setter"))
 	void SetSubtitlesSettings(const FSubtitlesSettings& NewSettings, FUIRowID& RowID)
 	{
 		if (RowID.RowWidgetClass == nullptr)
@@ -217,6 +244,8 @@ public:
 		}
 
 		SubtitlesSettingsOverrides.Add(RowID, NewSettings);
+
+		SaveConfig();
 	}
 
 protected:

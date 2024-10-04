@@ -31,14 +31,14 @@ public:
 protected:
 
 	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, RequiredAssetDataTags = "RowStructure=/Script/MounteaDialogueSystem.DialogueRow"))
-	TObjectPtr<UDataTable>							DataTable;
+	TObjectPtr<UDataTable>		DataTable;
 
 	/** Name of row in the table that we want */
 	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
-	FName														RowName;
+	FName						RowName;
 
 	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(UIMin=0, ClampMin=0, NoResetToDefault, EditCondition="DataTable!=nullptr"))
-	int32														RowIndex;
+	int32						RowIndex;
 
 private:
 	

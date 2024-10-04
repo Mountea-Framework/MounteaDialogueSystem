@@ -1,3 +1,5 @@
+// All rights reserved Dominik Morse (Pavlicek) 2024
+
 #include "MDSPopup_GraphValidation.h"
 #include "EditorStyleSet.h"
 #include "Widgets/Layout/SScrollBox.h"

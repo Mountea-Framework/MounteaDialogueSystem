@@ -7,8 +7,8 @@
 
 void FMDSCommands::RegisterCommands()
 {
-	UI_COMMAND(PluginAction, "Support", "Opens Mountea Framework Support channel", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control|EModifierKey::Shift|EModifierKey::Alt, EKeys::X));
-	//UI_COMMAND(WikiAction, "Wiki", "Opens Mountea Dialogue System Wiki page", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control|EModifierKey::Shift|EModifierKey::Alt, EKeys::C));
+	UI_COMMAND(PluginAction, "Support", "🆘 Open Mountea Framework Support channel", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control|EModifierKey::Shift|EModifierKey::Alt, EKeys::X));
+	UI_COMMAND(DialoguerAction, "Dialoguer", "🧭 Open Mountea Dialoguer Standalone Tool", EUserInterfaceActionType::Button, FInputChord());
 }
 
 #undef LOCTEXT_NAMESPACE

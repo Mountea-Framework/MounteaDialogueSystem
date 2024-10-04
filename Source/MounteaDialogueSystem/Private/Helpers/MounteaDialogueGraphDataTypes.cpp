@@ -26,12 +26,38 @@ void FDialogueRow::DeserializeDialogueRowData()
 }
 */
 
-bool FDialogueRow::IsValid() const
+/*
+void FDialogueRow::OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName)
 {
-	return
-	RowGUID.IsValid() &&
-	DialogueRowData.Num() > 0;
+	FTableRowBase::OnDataTableChanged(InDataTable, InRowName);
+
+	if (!InDataTable)
+	{
+		return;
+	}
+
+	const FName* FoundRowName = nullptr;
+	
+	for (const auto& Pair : InDataTable->GetRowMap())
+	{
+		const FDialogueRow* RowPtr = reinterpret_cast<const FDialogueRow*>(Pair.Value);
+		if (RowPtr == this)
+		{
+			FoundRowName = &Pair.Key;
+			break;
+		}
+	}
+
+	if (FoundRowName)
+	{
+		if (*FoundRowName != InRowName)
+		{
+			RowGUID = FGuid::NewGuid();
+			UE_LOG(LogTemp, Warning, TEXT("Updated GUID"))
+		}
+	}
 }
+*/
 
 FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct()
 	: ActiveDialogueParticipant(nullptr)

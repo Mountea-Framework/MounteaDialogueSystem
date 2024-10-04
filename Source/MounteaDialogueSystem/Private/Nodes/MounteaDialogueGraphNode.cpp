@@ -36,9 +36,19 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode(): Graph(nullptr), OwningWo
 	bAutoStarts = false;
 }
 
+void UMounteaDialogueGraphNode::SetNodeGUID(const FGuid& NewGuid)
+{
+	NodeGUID = NewGuid;
+}
+
 UMounteaDialogueGraph* UMounteaDialogueGraphNode::GetGraph() const
 {
 	return Graph;
+}
+
+FGuid UMounteaDialogueGraphNode::GetGraphGUID() const
+{
+	return Graph ? Graph->GetGraphGUID() : FGuid();
 }
 
 void UMounteaDialogueGraphNode::SetNewWorld(UWorld* NewWorld)
@@ -94,14 +104,14 @@ void UMounteaDialogueGraphNode::ProcessNode_Implementation(const TScriptInterfac
 
 	if (!GetGraph())
 	{
-		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid owning Graph!!"));
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid owning Graph!"));
 		return;
 	}
 	
 	UMounteaDialogueContext* Context = Manager->GetDialogueContext();
 	if (!Context || !UMounteaDialogueSystemBFC::IsContextValid(Context))
 	{
-		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid Dialogue Context!!"));
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid Dialogue Context!"));
 		return;
 	}
 	
@@ -426,7 +436,7 @@ FText UMounteaDialogueGraphNode::GetDefaultTooltipBody() const
 	
 	const FText Implements = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_ImplementsTooltip", "Implements Decorators: {0}"), ImplementsNumber);
 	
-	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0}\n\n{1}\n{2}"), NodeTypeName,  Inherits, Implements);
+	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0} - {1}\n\n{2}\n{3}"), NodeTypeName, FText::FromString(NodeGUID.ToString()),  Inherits, Implements);
 }
 
 #endif
