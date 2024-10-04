@@ -191,7 +191,7 @@ public:
 	/**
 	 * Source file from import.
 	 */
-	UPROPERTY(VisibleAnywhere, Category = "Mountea|Import")
+	UPROPERTY(VisibleAnywhere, Category = "Mountea|Import", meta=(NoResetToDefault))
 	FString SourceFile;
 
 	/**

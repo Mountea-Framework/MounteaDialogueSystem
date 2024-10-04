@@ -187,7 +187,8 @@ void FMounteaDialogueGraphAssetAction::ExecuteReimportDialogue(TArray<TWeakObjec
 		if (!IFileManager::Get().FileExists(*DialogueGraph->SourceFile)) continue;
 
 		FString outMessage;
-		UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(DialogueGraph->SourceFile, DialogueGraph, DialogueGraph, outMessage);
+		const bool bResult = UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(DialogueGraph->SourceFile, DialogueGraph, DialogueGraph, outMessage);
+		UMounteaDialogueSystemImportExportHelpers::ShowNotification(FText::FromString(outMessage), 5.f,bResult ? TEXT("MDSStyleSet.Icon.Success") : TEXT("MDSStyleSet.Info.Error"));
 	}
 }
 

@@ -10,11 +10,9 @@
 
 #include "AssetToolsModule.h"
 #include "AudioEditorModule.h"
-#include "ContentBrowserModule.h"
 
 #include "GameplayTagsManager.h"
 #include "GameplayTagsSettings.h"
-#include "IContentBrowserSingleton.h"
 
 #include "Engine/DataTable.h"
 
@@ -29,7 +27,6 @@
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
-#include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
 #include "Framework/Notifications/NotificationManager.h"
 
