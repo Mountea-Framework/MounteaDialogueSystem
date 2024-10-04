@@ -4,6 +4,7 @@
 #include "Decorators/MounteaDialogueDecorator_OnlyFirstTime.h"
 
 #include "Data/MounteaDialogueContext.h"
+#include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
@@ -25,16 +26,42 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::ValidateDecorator_Implementation(T
 	{
 		bSatisfied = false;
 		
-		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_OnlyFirstTime_Validation01", "Decorator {0}: is not allowed in Graph Decorators!\nAttach this Decorator to Node instead."), Name);
+		const FText TempText = FText::Format(
+			LOCTEXT("MounteaDialogueDecorator_OnlyFirstTime_Validation01",
+				"Decorator {0}: is not allowed in Graph Decorators!\nAttach this Decorator to a Node instead."),
+				Name);
 		ValidationMessages.Add(TempText);
 	}
-
-	if (GetOwningNode()->IsA(UMounteaDialogueGraphNode_StartNode::StaticClass()))
+	else
 	{
-		bSatisfied = false;
+		if (GetOwningNode()->IsA(UMounteaDialogueGraphNode_StartNode::StaticClass()))
+		{
+			bSatisfied = false;
 		
-		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_OnlyFirstTime_Validation02", "Decorator {0}: is not allowed for Start Nodes!!\nAttach this Decorator to following Nodes instead."), Name);
-		ValidationMessages.Add(TempText);
+			const FText TempText = FText::Format(
+				LOCTEXT("MounteaDialogueDecorator_OnlyFirstTime_Validation02",
+					"Decorator {0}: is not allowed for Start Nodes!\nAttach this decorator to subsequent nodes instead."),
+					Name);
+			ValidationMessages.Add(TempText);
+		}
+
+		const auto* OwningNode = GetOwningNode();
+		const auto* ParentGraph = OwningNode ? OwningNode->Graph : nullptr;
+		const UMounteaDialogueGraphNode* startNode = ParentGraph ? ParentGraph->StartNode : nullptr;
+
+		if (startNode && startNode->ChildrenNodes.IsValidIndex(0))
+		{
+			if (OwningNode == startNode->ChildrenNodes[0])
+			{
+				bSatisfied = false;
+				const FText TempText = FText::Format(
+					LOCTEXT("MounteaDialogueDecorator_OnlyFirstTime_Validation03",
+					"Decorator {0}: is not allowed for the first dialogue Node after the Start node!\nAttach this decorator to subsequent nodes instead."),
+					Name);
+				ValidationMessages.Add(TempText);
+			}
+		}
+
 	}
 
 	return bSatisfied;
@@ -43,6 +70,11 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::ValidateDecorator_Implementation(T
 bool UMounteaDialogueDecorator_OnlyFirstTime::EvaluateDecorator_Implementation()
 {
 	bool bSatisfied = Super::EvaluateDecorator_Implementation();
+
+	if (!OwningManager)
+	{
+		return false;
+	}
 	// Let's return BP Updatable Context rather than Raw
 	if (!Context)
 	{

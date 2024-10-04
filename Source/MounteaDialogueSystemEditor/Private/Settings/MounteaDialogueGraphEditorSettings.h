@@ -67,10 +67,12 @@ enum class EArrowType : uint8
 
 #pragma endregion 
 
+class UMounteaDialogueGraphNode;
+
 /**
  * Mountea Dialogue System global settings.
  */
-UCLASS(config = MounteaSettings)
+UCLASS(config = MounteaSettings, DefaultConfig, ProjectUserConfig)
 class MOUNTEADIALOGUESYSTEMEDITOR_API UMounteaDialogueGraphEditorSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
@@ -121,6 +123,22 @@ private:
 
 #pragma endregion 
 
+#pragma region BlueprintNodes
+
+	/**
+	 * ❗ EXPERIMENTAL FEATURE
+	 * If case of any compile issues TURN THIS ON
+	 *
+	 * If turned off, then standard Nodes will be hidden and Blueprint Graphs will display only custom K2 Nodes.
+	 * Might cause issues if you create Blueprint Classes that directly implement Dialogue Interfaces.
+	 *
+	 * This will also cause Interface Functions to disappear from `My Blueprint` panel, unless class inherits from C++ class which already implemented Interface functions.
+	 */
+	UPROPERTY(config, EditDefaultsOnly,  Category = "BlueprintNodes", meta=(ConfigRestartRequired=true))
+	bool bDisplayStandardNodes;
+	
+#pragma endregion
+	
 #pragma region GraphWiring
 	
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(UIMin=0.1f, ClampMin=0.1f, UIMax=1.5f, ClampMax=1.5f))
@@ -197,8 +215,18 @@ private:
 	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
 	float CoolDownRate;
 
-#pragma endregion 
+#pragma endregion
 
+#pragma region GameplayTags
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags")
+	uint8 bAllowAutoGameplayTagsCheck : 1;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay=true)
+	FString GameplayTagsURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini");
+	
+#pragma endregion
+	
 #if WITH_EDITOR
 	virtual FText GetSectionText() const override
 	{
@@ -329,6 +357,23 @@ public:
 
 #pragma endregion 
 
+#pragma region BlueprintNodes_Getters
+
+	bool DisplayStandardNodes() const
+	{ return bDisplayStandardNodes; };;
+	
+#pragma endregion
+
+#pragma region GameplayTags_Getters
+
+	bool AllowCheckTagUpdate() const
+	{ return bAllowAutoGameplayTagsCheck; };
+
+	FString GetGameplayTagsURL() const
+	{ return GameplayTagsURL; };
+	
+#pragma endregion
+	
 #pragma region EDITOR
 	
 #if WITH_EDITOR

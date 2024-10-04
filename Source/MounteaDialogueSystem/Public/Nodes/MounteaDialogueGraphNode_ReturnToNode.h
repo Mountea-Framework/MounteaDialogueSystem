@@ -40,7 +40,7 @@ public:
 	 * Dialogue Node to which this Node leads to.
 	 */
 	UPROPERTY(SaveGame, Category="Private", VisibleAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, DisplayThumbnail="false"))
-	UMounteaDialogueGraphNode* SelectedNode;
+	TObjectPtr<UMounteaDialogueGraphNode> SelectedNode;
 
 	/**
 	 * Filters OUT all nodes by that class.
@@ -72,32 +72,39 @@ private:
 	UFUNCTION()
 	TArray<FString> GetRowNames() const
 	{
-		if (Graph)
+		TArray<FString> nodeNames;
+		if (!Graph)
 		{
-			TArray<FString> NodesNames;
-			for (const auto& Itr : Graph->GetAllNodes())
+			return nodeNames;
+		}
+		for (const auto& Itr : Graph->GetAllNodes())
+		{
+			if (!Itr)
 			{
-				if (Itr)
+				continue;
+			}
+			
+			// Check if this is allowed class
+			bool bIsAllowed = true;
+			for (auto& ItrClass : AllowedNodesFilter)
+			{
+				if (Itr->IsA(ItrClass))
 				{
-					// Check if this is allowed class
-					bool bIsAllowed = true;
-					for (auto& ItrClass : AllowedNodesFilter)
-					{
-						if (Itr->IsA(ItrClass)) bIsAllowed = false;
-					}
-					
-					// Show only those allowed
-					if (bIsAllowed)
-					{
-						FString AllowedIndex = FString::FromInt(Graph->AllNodes.Find(Itr));
-						NodesNames.Add(AllowedIndex);
-					}
+					bIsAllowed = false;
+					break;
 				}
 			}
 
-			return NodesNames;
+			if (!bIsAllowed)
+			{
+				continue;
+			}
+			
+			// Show only those allowed
+			FString AllowedIndex = FString::FromInt(Graph->AllNodes.Find(Itr));
+			nodeNames.Add(AllowedIndex);
 		}
 
-		return TArray<FString>();
+		return nodeNames;
 	}
 };
