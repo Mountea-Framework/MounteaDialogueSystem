@@ -260,7 +260,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 				FToolMenuEntry& dialoguerEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(
 					FMDSCommands::Get().DialoguerAction,
 					TAttribute<FText>(FText::FromString("Dialoguer")),
-					TAttribute<FText>(FText::FromString(TEXT("🧭 Open Mountea Dialoguer Standalone Tool"))),
+					TAttribute<FText>(FText::FromString(TEXT("🧭 Open Mountea Dialoguer Standalone Tool\n\n❔ Mountea Dialoguer is a standalone tool created for Dialogue crafting. Mountea Dialogue System supports native import for `.mnteadlg` files."))),
 					FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Dialoguer.Icon")
 				));
 				dialoguerEntry.SetCommandList(PluginCommands);
