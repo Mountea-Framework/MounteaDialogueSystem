@@ -33,9 +33,9 @@ void UMounteaDialogueParticipant::BeginPlay()
 
 	OnDialogueGraphChanged.AddUniqueDynamic(this, &UMounteaDialogueParticipant::OnDialogueGraphChangedEvent);
 
-	SetParticipantState(GetDefaultParticipantState());
+	Execute_SetParticipantState(this, Execute_GetDefaultParticipantState(this));
 
-	SetAudioComponent(FindAudioComponent());
+	Execute_SetAudioComponent(this,FindAudioComponent());
 
 	Execute_InitializeParticipant(this);
 }
@@ -143,9 +143,9 @@ void UMounteaDialogueParticipant::SkipParticipantVoice_Implementation(USoundBase
 	}
 }
 
-bool UMounteaDialogueParticipant::CanStartDialogue() const
+bool UMounteaDialogueParticipant::CanStartDialogue_Implementation() const
 {
-	switch (GetParticipantState())
+	switch (Execute_GetParticipantState(this))
 	{
 		case EDialogueParticipantState::EDPS_Active:
 		case EDialogueParticipantState::EDPS_Disabled:
@@ -167,7 +167,7 @@ void UMounteaDialogueParticipant::SaveStartingNode_Implementation(UMounteaDialog
 	OnStartingNodeSaved.Broadcast(StartingNode);
 }
 
-void UMounteaDialogueParticipant::SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph)
+void UMounteaDialogueParticipant::SetDialogueGraph_Implementation(UMounteaDialogueGraph* NewDialogueGraph)
 {
 	if (ParticipantState == EDialogueParticipantState::EDPS_Active) return;
 
@@ -193,7 +193,7 @@ void UMounteaDialogueParticipant::SetDialogueGraph(UMounteaDialogueGraph* NewDia
 	}
 }
 
-void UMounteaDialogueParticipant::SetParticipantState(const EDialogueParticipantState NewState)
+void UMounteaDialogueParticipant::SetParticipantState_Implementation(const EDialogueParticipantState NewState)
 {
 	if (NewState == ParticipantState)
 	{
@@ -220,7 +220,7 @@ void UMounteaDialogueParticipant::SetParticipantState(const EDialogueParticipant
 	}
 }
 
-void UMounteaDialogueParticipant::SetDefaultParticipantState(const EDialogueParticipantState NewState)
+void UMounteaDialogueParticipant::SetDefaultParticipantState_Implementation(const EDialogueParticipantState NewState)
 {
 	if (!GetOwner())
 	{
@@ -237,7 +237,7 @@ void UMounteaDialogueParticipant::SetDefaultParticipantState(const EDialoguePart
 	}
 }
 
-void UMounteaDialogueParticipant::SetAudioComponent(UAudioComponent* NewAudioComponent)
+void UMounteaDialogueParticipant::SetAudioComponent_Implementation(UAudioComponent* NewAudioComponent)
 {
 	if (AudioComponent == NewAudioComponent) return;
 	
@@ -262,67 +262,47 @@ void UMounteaDialogueParticipant::SetAudioComponent(UAudioComponent* NewAudioCom
 	}
 }
 
-AActor* UMounteaDialogueParticipant::GetOwningActor_Implementation() const
-{
-	return GetOwner();
-}
-
 //TODO: instead of the Actor handling this logic realtime, make FRunnable queue and let data be calculated async way
 void UMounteaDialogueParticipant::SaveTraversedPath_Implementation(TArray<FDialogueTraversePath>& InPath)
 {
-	TMap<FGuid, FDialogueTraversePath> PathMap;
-
-	// Insert or update existing entries from CurrentPath
-	for (auto& Path : TraversedPath)
+	TMap<TPair<FGuid, FGuid>, int32> PathMap;
+	PathMap.Reserve(TraversedPath.Num() + InPath.Num());
+	
+	for (const auto& Path : TraversedPath)
 	{
-		PathMap.Add(Path.NodeGuid, Path);
+		PathMap.Add(Path.GetGuidPair(), Path.TraverseCount);
 	}
 
-	// Update counts or add new entries from InPath
-	for (auto& Path : InPath)
+	for (const auto& Path : InPath)
 	{
-		if (FDialogueTraversePath* FoundPath = PathMap.Find(Path.NodeGuid))
-		{
-			FoundPath->TraverseCount += Path.TraverseCount; // Increment existing count
-		}
-		else
-		{
-			PathMap.Add(Path.NodeGuid, Path); // Add new entry
-		}
+		int32& Count = PathMap.FindOrAdd(Path.GetGuidPair());
+		Count += Path.TraverseCount;
 	}
-
-	// Convert map back to array
-	TraversedPath.Empty();
+	
+	TraversedPath.Empty(PathMap.Num());
 	for (const auto& Pair : PathMap)
 	{
-		TraversedPath.Add(Pair.Value);
+		TraversedPath.Add(FDialogueTraversePath(Pair.Key.Key, Pair.Key.Value, Pair.Value));
 	}
-
-	// Traverse path has been updated! Great job.
-}
-
-FGameplayTag UMounteaDialogueParticipant::GetParticipantTag() const
-{
-	return ParticipantTag;
 }
 
 void UMounteaDialogueParticipant::RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
 {
 	SetComponentTickEnabled(true);
 
-	if (GetDialogueGraph())
+	if (auto dialogueGraph = Execute_GetDialogueGraph(this))
 	{
-		GetDialogueGraph()->Execute_RegisterTick(GetDialogueGraph(), this);
+		dialogueGraph->Execute_RegisterTick(dialogueGraph, this);
 	}
 }
 
 void UMounteaDialogueParticipant::UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
 {
 	SetComponentTickEnabled(false);
-
-	if (GetDialogueGraph())
+	
+	if (auto parentGraph = Execute_GetDialogueGraph(this))
 	{
-		GetDialogueGraph()->Execute_UnregisterTick(GetDialogueGraph(), this);
+		parentGraph->Execute_UnregisterTick(parentGraph, this);
 	}
 }
 
@@ -359,22 +339,22 @@ void UMounteaDialogueParticipant::OnResp_ParticipantState()
 
 void UMounteaDialogueParticipant::SetDialogueGraph_Server_Implementation(UMounteaDialogueGraph* NewGraph)
 {
-	SetDialogueGraph(NewGraph);
+	Execute_SetDialogueGraph(this, NewGraph);
 }
 
 void UMounteaDialogueParticipant::SetAudioComponent_Server_Implementation(UAudioComponent* NewAudioComponent)
 {
-	SetAudioComponent(NewAudioComponent	);
+	Execute_SetAudioComponent(this, NewAudioComponent);
 }
 
 void UMounteaDialogueParticipant::SetDefaultParticipantState_Server_Implementation(const EDialogueParticipantState NewState)
 {
-	SetDefaultParticipantState(NewState);
+	Execute_SetDefaultParticipantState(this, NewState);
 }
 
 void UMounteaDialogueParticipant::SetParticipantState_Server_Implementation(const EDialogueParticipantState NewState)
 {
-	SetParticipantState(NewState);
+	Execute_SetParticipantState(this, NewState);
 }
 
 void UMounteaDialogueParticipant::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

@@ -25,7 +25,7 @@ class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueWBPInterface
 {
 	GENERATED_BODY()
 
-	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
+
 public:
 
 	/**
@@ -34,7 +34,7 @@ public:
 	 * @param DialogueManager	Dialogue Manager Interface reference. Request 'GetDialogueContext' to retrieve data to display.
 	 * @param Command			String command. All commands are defined in ProjectSettings/MounteaFramework/MounteaDialogueSystem.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Mountea|Dialogue|Widget")
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Mountea|Dialogue|UserInterface|Dialogue", meta=(CustomTag="MounteaK2Setter"))
 	void RefreshDialogueWidget(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command);
 
 	/**
@@ -42,6 +42,6 @@ public:
 	 * 
 	 * @param SelectionGUID The GUID of the selected option.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Mountea|Dialogue|Widget")
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Mountea|Dialogue|UserInterface|Dialogue", meta=(CustomTag="MounteaK2Setter"))
 	void OnOptionSelected(const FGuid& SelectionGUID);
 };

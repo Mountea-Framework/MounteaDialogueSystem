@@ -56,7 +56,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDialogueWidgetCommand, const TScri
 /**
  * Mountea Dialogue Manager Interface.
  * 
- * Should attached directly to Player Controller or used for Components that are attached to some Controller.
+ * Should be attached directly to Player State.
  * Provides options to start and stop dialogue as well as ability to select dialogue options.
  */
 class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueManagerInterface
@@ -70,19 +70,20 @@ public:
 	 *
 	 * @param NodeGUID The GUID of the selected node.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="select, chosen, option"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="select, chosen, option"), meta=(CustomTag="MounteaK2Setter"))
 	void CallDialogueNodeSelected(const FGuid& NodeGUID);
 	
 	/**
 	 * Starts the Dialogue if possible.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="start"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="start"), meta=(CustomTag="MounteaK2Setter"))
 	void StartDialogue();
 	virtual void StartDialogue_Implementation() = 0;
+	
 	/**
 	 * Closes the Dialogue if is active.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="exit, close"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="exit, close"), meta=(CustomTag="MounteaK2Setter"))
 	void CloseDialogue();
 	virtual void CloseDialogue_Implementation() = 0;
 
@@ -94,7 +95,7 @@ public:
 	 * @param Message InMessage to be populated with error message explaining why returns false
 	 * @return true if UI can be added to screen, false if cannot
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="show, widget"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="show, widget"), meta=(CustomTag="MounteaK2Setter"))
 	bool InvokeDialogueUI(FString& Message);
 	virtual bool InvokeDialogueUI_Implementation(FString& Message) = 0;
 
@@ -107,7 +108,7 @@ public:
 	 * @param Command				Command to be processed.
 	 * @return								true if UI can be update, false if cannot
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="show, widget"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="show, widget"), meta=(CustomTag="MounteaK2Setter"))
 	bool UpdateDialogueUI(FString& Message, const FString& Command);
 	virtual bool UpdateDialogueUI_Implementation(FString& Message, const FString& Command) = 0;
 
@@ -117,7 +118,7 @@ public:
 	 * 
 	 * @return true if UI can be removed from screen, false if cannot
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="close, exit, stop, widget"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="close, exit, stop, widget"), meta=(CustomTag="MounteaK2Setter"))
 	bool CloseDialogueUI();
 	virtual bool CloseDialogueUI_Implementation() = 0;
 
@@ -125,7 +126,7 @@ public:
 	 * 
 	 * @param Command	
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="UI, widget, process"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="UI, widget, process"), meta=(CustomTag="MounteaK2Setter"))
 	void ExecuteWidgetCommand(const FString& Command);
 	virtual void ExecuteWidgetCommand_Implementation(const FString& Command) = 0;
 	
@@ -157,7 +158,7 @@ public:
 	 * ❔ Dialogue Data contain Dialogue Data Rows, which are individual dialogue lines, which can be skipped.
 	 * ❔ Once all Dialogue Data Rows are finished, Dialogue Data is finished as well.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	void StartExecuteDialogueRow();
 	virtual void StartExecuteDialogueRow_Implementation() = 0;
 	
@@ -166,7 +167,7 @@ public:
 	 * ❔ Dialogue Data contain Dialogue Data Rows, which are individual dialogue lines, which can be skipped.
 	 * ❔ Once all Dialogue Data Rows are finished, Dialogue Data is finished as well.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	void FinishedExecuteDialogueRow();
 	virtual void FinishedExecuteDialogueRow_Implementation() = 0;
 
@@ -174,7 +175,7 @@ public:
 	 * Requests next dialogue row.
 	 * Contains validation that current row must be 'ExecutionMode::AwaitInput'.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	void TriggerNextDialogueRow();
 	virtual void TriggerNextDialogueRow_Implementation() = 0;
 
@@ -183,7 +184,7 @@ public:
 	 *
 	 * @return The dialogue context object for this instance.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
 	UMounteaDialogueContext* GetDialogueContextEvent() const;
 	UMounteaDialogueContext* GetDialogueContextEvent_Implementation() const
 	{
@@ -195,7 +196,7 @@ public:
 	 *
 	 * @return The widget used to display the current dialogue.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="UI, Widget"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="UI, Widget"), meta=(CustomTag="MounteaK2Getter"))
 	UUserWidget* GetDialogueWidget() const;
 	virtual UUserWidget* GetDialogueWidget_Implementation() const = 0;
 
@@ -204,7 +205,7 @@ public:
 	 *
 	 * @return The owning actor for this Dialogue Manager Component.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
 	AActor* GetOwningActor() const;
 	virtual AActor* GetOwningActor_Implementation() const
 	{
@@ -216,14 +217,14 @@ public:
 	 * Asks Active Node to 'PreProcessNode' and then to 'ProcessNode'.
 	 * In this preparation stage, Nodes are asked to process all Decorators.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	void PrepareNode();
 	virtual void PrepareNode_Implementation() {};
 
 	/**
 	 * Calls to the Node to Process it.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	void ProcessNode();
 	virtual void ProcessNode_Implementation() = 0;
 	
@@ -250,7 +251,7 @@ public:
 	 * 
 	 * @return ManagerState	Manager state value
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
 	EDialogueManagerState GetState() const;
 	EDialogueManagerState GetState_Implementation() const
 	{ return GetDialogueManagerState(); };
@@ -268,7 +269,7 @@ public:
 	 * 
 	 * @param NewState	Manager State to be set as Manager State
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="state, status"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="state, status"), meta=(CustomTag="MounteaK2Setter"))
 	void SetDialogueManagerState(const EDialogueManagerState NewState);
 	virtual void SetDialogueManagerState_Implementation(const EDialogueManagerState NewState) = 0;
 
@@ -293,14 +294,14 @@ public:
 	 * @param OwningPlayerState		The player state that owns this dialogue instance.
 	 * @param Participants					A structure containing all the participants involved in the dialogue.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="start,begin,initialize,initiate"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="start,begin,initialize,initiate"), meta=(CustomTag="MounteaK2Setter"))
 	void InitializeDialogue(APlayerState* OwningPlayerState, const FDialogueParticipants& Participants);
 	virtual void InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const FDialogueParticipants& Participants) = 0;
 
 	/**
 	 * Skips the current dialogue row.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="UI, Widget"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="UI, Widget"), meta=(CustomTag="MounteaK2Setter"))
 	void SkipDialogueRow();
 	virtual void SkipDialogueRow_Implementation() = 0;
 
@@ -309,7 +310,7 @@ public:
 	 * @param NewDialogueObject The object to add.
 	 * @return True if the object was successfully added, false otherwise.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	bool AddDialogueUIObject(UObject* NewDialogueObject);
 	virtual bool AddDialogueUIObject_Implementation(UObject* NewDialogueObject) = 0;
 
@@ -318,7 +319,7 @@ public:
 	 * @param NewDialogueObjects Array of objects to add.
 	 * @return Number of objects successfully added.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	bool AddDialogueUIObjects(const TArray<UObject* >& NewDialogueObjects);
 	virtual bool AddDialogueUIObjects_Implementation(const TArray<UObject* >& NewDialogueObjects) = 0;
 
@@ -327,7 +328,7 @@ public:
 	 * @param DialogueObjectToRemove The object to remove.
 	 * @return True if the object was successfully removed, false otherwise.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	bool RemoveDialogueUIObject(UObject* DialogueObjectToRemove);
 	virtual bool RemoveDialogueUIObject_Implementation(UObject* DialogueObjectToRemove) = 0;
 
@@ -336,7 +337,7 @@ public:
 	 * @param DialogueObjectsToRemove Array of objects to remove.
 	 * @return Number of objects successfully removed.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	bool RemoveDialogueUIObjects(const TArray<UObject* >& DialogueObjectsToRemove);
 	virtual bool RemoveDialogueUIObjects_Implementation(const TArray<UObject* >& DialogueObjectsToRemove) = 0;
 
@@ -344,16 +345,37 @@ public:
 	 * Sets the entire array of dialogue UI objects, replacing any existing objects.
 	 * @param NewDialogueObjects The new array of dialogue UI objects.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	void SetDialogueUIObjects(const TArray<UObject* >& NewDialogueObjects);
 	virtual void SetDialogueUIObjects_Implementation(const TArray<UObject* >& NewDialogueObjects) = 0;
 
 	/**
 	 * Resets the dialogue manager, removing all dialogue UI objects.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	void ResetDialogueUIObjects();
 	virtual void ResetDialogueUIObjects_Implementation() = 0;
+
+	/**
+	 * Retrieves the Z-order of the dialogue widget.
+	 * The Z-order determines the rendering order of the widget, with higher values rendering on top of lower values.
+	 *
+	 * @return The current Z-order value of the dialogue widget.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
+	int32 GetDialogueWidgetZOrder() const;
+	virtual int32 GetDialogueWidgetZOrder_Implementation() const = 0;
+
+	/**
+	 * Sets a new Z-order for the dialogue widget.
+	 * The Z-order determines the rendering order of the widget, with higher values rendering on top of lower values.
+	 * ❗ Runtime changes are not allowed!
+	 *
+	 * @param NewZOrder The new Z-order value to be applied to the dialogue widget.
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
+	void SetDialogueWidgetZOrder(const int32 NewZOrder);
+	virtual void SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder) = 0;
 	
 	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() = 0;

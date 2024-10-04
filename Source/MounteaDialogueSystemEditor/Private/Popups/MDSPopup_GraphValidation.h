@@ -1,4 +1,7 @@
+// All rights reserved Dominik Morse (Pavlicek) 2024
+
 #pragma once
+
 #include "Framework/Text/SlateHyperlinkRun.h"
 
 class SScrollBox;

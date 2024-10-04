@@ -2,10 +2,9 @@
 
 #include "Graph/MounteaDialogueGraph.h"
 
-#include "Misc/DataValidation.h"
-
 #include "Edges/MounteaDialogueGraphEdge.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Misc/DataValidation.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
@@ -31,6 +30,26 @@ FGuid UMounteaDialogueGraph::GetGraphGUID() const
 	return GraphGUID;
 }
 
+void UMounteaDialogueGraph::SetGraphGUID(const FGuid& NewGuid)
+{
+	GraphGUID = NewGuid;
+}
+
+UMounteaDialogueGraphNode* UMounteaDialogueGraph::FindNodeByGuid(const FGuid& NodeGuid)
+{
+	TArray<UMounteaDialogueGraphNode*> allDialogueNodes = AllNodes;
+	allDialogueNodes.AddUnique(StartNode);
+	for (UMounteaDialogueGraphNode* Node : allDialogueNodes)
+	{
+		if (Node && Node->GetNodeGUID() == NodeGuid)
+		{
+			return Node;
+		}
+	}
+
+	return nullptr;
+}
+
 TArray<UMounteaDialogueGraphNode*> UMounteaDialogueGraph::GetAllNodes() const
 {
 	return AllNodes;
@@ -50,7 +69,7 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraph::GetGraphDecorators() co
 {
 	TArray<FMounteaDialogueDecorator> TempReturn;
 	TArray<FMounteaDialogueDecorator> Return;
-	
+
 	for (auto Itr : GraphDecorators)
 	{
 		if (Itr.DecoratorType != nullptr)
@@ -65,7 +84,7 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraph::GetGraphDecorators() co
 		
 	}
 	*/
-	
+
 	Return = TempReturn;
 	return Return;
 }
@@ -91,12 +110,12 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraph::GetAllDecorators() cons
 bool UMounteaDialogueGraph::CanStartDialogueGraph() const
 {
 	bool bSatisfied = true;
-	
+
 	if (AllNodes.Num() == 0)
 	{
 		return false;
 	}
-	
+
 	for (const auto& Itr : AllNodes)
 	{
 		if (!Itr)
@@ -109,9 +128,9 @@ bool UMounteaDialogueGraph::CanStartDialogueGraph() const
 			return false;
 		}
 	}
-	
+
 	auto Decorators = GetAllDecorators();
-	
+
 	if (Decorators.Num() == 0)
 	{
 		return bSatisfied;
@@ -125,7 +144,7 @@ bool UMounteaDialogueGraph::CanStartDialogueGraph() const
 
 	if (DecoratorValidations.Num() > 0)
 	{
-		for(auto Itr : DecoratorValidations)
+		for (auto Itr : DecoratorValidations)
 		{
 			LOG_ERROR(TEXT("%s"), *Itr.ToString());
 		}
@@ -149,7 +168,7 @@ void UMounteaDialogueGraph::CreateGraph()
 	}
 
 	StartNode = ConstructDialogueNode<UMounteaDialogueGraphNode_StartNode>();
-	if (StartNode != nullptr )
+	if (StartNode != nullptr)
 	{
 		StartNode->Graph = this;
 
@@ -187,11 +206,12 @@ void UMounteaDialogueGraph::PostInitProperties()
 #if WITH_EDITOR
 
 	CreateGraph();
-	
+
 #endif
 }
 
-void UMounteaDialogueGraph::RegisterTick_Implementation( const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+void UMounteaDialogueGraph::RegisterTick_Implementation(
+	const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
 {
 	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
 	{
@@ -199,7 +219,8 @@ void UMounteaDialogueGraph::RegisterTick_Implementation( const TScriptInterface<
 	}
 }
 
-void UMounteaDialogueGraph::UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+void UMounteaDialogueGraph::UnregisterTick_Implementation(
+	const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
 {
 	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
 	{
@@ -357,6 +378,20 @@ EDataValidationResult UMounteaDialogueGraph::IsDataValid(FDataValidationContext&
 	}
 	
 	return EDataValidationResult::Invalid;
+}
+
+UMounteaDialogueGraphNode* UMounteaDialogueGraph::ConstructDialogueNode(
+	TSubclassOf<UMounteaDialogueGraphNode> NodeClass)
+{
+	// Set flag to be transactional so it registers with undo system
+	UMounteaDialogueGraphNode* DialogueNode = NewObject<UMounteaDialogueGraphNode>(
+		this, NodeClass, NAME_None, RF_Transactional);
+	if (DialogueNode)
+	{
+		DialogueNode->OnCreatedInEditor();
+		DialogueNode->Graph = this;
+	}
+	return DialogueNode;
 }
 
 #endif
