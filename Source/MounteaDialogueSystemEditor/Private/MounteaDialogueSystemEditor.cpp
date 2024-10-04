@@ -3,6 +3,7 @@
 #include "MounteaDialogueSystemEditor.h"
 
 #include "AssetToolsModule.h"
+#include "GameplayTagsManager.h"
 #include "HttpModule.h"
 #include "AssetActions/MounteaDialogueAdditionalDataAssetAction.h"
 #include "AssetActions/MounteaDialogueDecoratorAssetAction.h"
@@ -30,6 +31,7 @@
 #include "HelpButton/MDSHelpStyle.h"
 #include "ImportConfig/MounteaDialogueImportConfig.h"
 #include "Interfaces/IMainFrameModule.h"
+#include "Settings/MounteaDialogueGraphEditorSettings.h"
 
 const FString ChangelogURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/5.1/CHANGELOG.md");
 
@@ -61,9 +63,10 @@ void FMounteaDialogueSystemEditor::StartupModule()
 	{
 		Http = &FHttpModule::Get();
 		SendHTTPGet();
+		SendHTTPGet_Tags();
 	}
 	
-	// Button Icons
+	// Register Style
 	{
 		FMounteaDialogueGraphEditorStyle::Initialize();
 	}
@@ -205,19 +208,67 @@ void FMounteaDialogueSystemEditor::StartupModule()
 			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::PluginButtonClicked), 
 			FCanExecuteAction()
 		);
-		/*
+		
 		PluginCommands->MapAction
 		(
-			FMDSCommands::Get().WikiAction,
-			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::PluginButtonClicked), 
+			FMDSCommands::Get().DialoguerAction,
+			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::DialoguerButtonClicked), 
 			FCanExecuteAction()
 		);
-		*/
+		
 		IMainFrameModule& mainFrame = FModuleManager::Get().LoadModuleChecked<IMainFrameModule>("MainFrame");
 		mainFrame.GetMainFrameCommandBindings()->Append(PluginCommands.ToSharedRef());
 
 		UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FMounteaDialogueSystemEditor::RegisterMenus));
 	}
+
+	// Register in Window tab
+	{
+		UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Help");
+		{
+			FToolMenuSection& Section = Menu->FindOrAddSection("MounteaFramework");
+			Section.Label = FText::FromString(TEXT("Mountea Framework"));
+						
+			FToolMenuEntry Entry = Section.AddMenuEntryWithCommandList
+			(
+				FMDSCommands::Get().PluginAction,
+				PluginCommands,
+				NSLOCTEXT("MounteaSupport", "TabTitle", "Mountea Support"),
+				NSLOCTEXT("MounteaSupport", "TooltipText", "Opens Mountea Framework Support channel"),
+				FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Help.Icon")
+			);
+		}
+	}
+
+	// Register in Level Editor Toolbar
+	{
+		UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar.PlayToolBar");
+		{
+			FToolMenuSection& Section = ToolbarMenu->FindOrAddSection("MounteaFramework");
+			{
+				Section.Label = FText::FromString(TEXT("Mountea Framework"));
+				
+				FToolMenuEntry& helpEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(
+					FMDSCommands::Get().PluginAction,
+					TAttribute<FText>(FText::FromString("Support")),
+					TAttribute<FText>(FText::FromString(TEXT("🆘 Open Mountea Framework Support channel"))),
+					FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Help.Icon")
+				));
+				helpEntry.SetCommandList(PluginCommands);
+				helpEntry.InsertPosition.Position = EToolMenuInsertType::First;
+				
+				FToolMenuEntry& dialoguerEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(
+					FMDSCommands::Get().DialoguerAction,
+					TAttribute<FText>(FText::FromString("Dialoguer")),
+					TAttribute<FText>(FText::FromString(TEXT("🧭 Open Mountea Dialoguer Standalone Tool"))),
+					FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Dialoguer.Icon")
+				));
+				dialoguerEntry.SetCommandList(PluginCommands);
+				dialoguerEntry.InsertPosition.Position = EToolMenuInsertType::Default;
+			}
+		}
+	}
+
 
 	// Load import config
 	{
@@ -234,6 +285,14 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		{
 			ImportConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
 		}
+	}
+
+	// Force GameplayTags
+	{
+		TSharedPtr<IPlugin> ThisPlugin = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"));
+		check(ThisPlugin.IsValid());
+	
+		UGameplayTagsManager::Get().AddTagIniSearchPath(ThisPlugin->GetBaseDir() / TEXT("Config") / TEXT("Tags"));
 	}
 	
 	EditorLOG_WARNING(TEXT("MounteaDialogueSystemEditor module has been loaded"));
@@ -331,6 +390,163 @@ void FMounteaDialogueSystemEditor::SendHTTPGet()
 	Request->SetHeader("User-Agent", "X-UnrealEngine-Agent");
 	Request->SetHeader("Content-Type", "text");
 	Request->ProcessRequest();
+}
+
+void FMounteaDialogueSystemEditor::SendHTTPGet_Tags()
+{
+	const UMounteaDialogueGraphEditorSettings* Settings = GetDefault<UMounteaDialogueGraphEditorSettings>();
+	if (DoesHaveValidTags())
+	{
+		
+		if (!Settings->AllowCheckTagUpdate())
+		{
+			return;
+		}
+	}
+	
+	const TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = Http->CreateRequest();
+	
+	Request->OnProcessRequestComplete().BindRaw(this, &FMounteaDialogueSystemEditor::OnGetResponse_Tags);
+	Request->SetURL(Settings->GetGameplayTagsURL());
+
+	Request->SetVerb("GET");
+	Request->SetHeader("User-Agent", "X-UnrealEngine-Agent");
+	Request->SetHeader("Content-Type", "text");
+	Request->ProcessRequest();
+}
+
+void FMounteaDialogueSystemEditor::DialoguerButtonClicked()
+{
+	const FString URL = "https://mountea-framework.github.io/MounteaDialoguer/";
+
+	if (!URL.IsEmpty())
+	{
+		FPlatformProcess::LaunchURL(*URL, nullptr, nullptr);
+	}
+}
+
+bool FMounteaDialogueSystemEditor::DoesHaveValidTags() const
+{
+	if (!GConfig) return false;
+	
+	const FString PluginDirectory = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"))->GetBaseDir();
+	const FString ConfigFilePath = PluginDirectory + "/Config/Tags/MounteaDialogueSystemTags.ini";
+
+	if (FPaths::FileExists(ConfigFilePath))
+	{
+		FString ConfigContent;
+		FConfigFile* ConfigFile = GConfig->Find(ConfigFilePath);
+
+		return true;
+	}
+	
+	return false;
+}
+
+void FMounteaDialogueSystemEditor::RefreshGameplayTags()
+{
+	TSharedPtr<IPlugin> ThisPlugin = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"));
+	check(ThisPlugin.IsValid());
+	
+	UGameplayTagsManager::Get().EditorRefreshGameplayTagTree();
+}
+
+void FMounteaDialogueSystemEditor::UpdateTagsConfig(const FString& NewContent)
+{
+	if (!GConfig) return;
+
+	const FString PluginDirectory = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"))->GetBaseDir();
+	const FString ConfigFilePath = PluginDirectory + "/Config/Tags/MounteaDialogueSystemTags.ini";
+
+	FConfigFile* CurrentConfig = GConfig->Find(ConfigFilePath);
+
+	FString CurrentContent;
+	CurrentConfig->WriteToString(CurrentContent);
+
+	TArray<FString> Lines;
+	NewContent.ParseIntoArray(Lines, TEXT("\n"), true);
+
+	TArray<FString> CleanedLines;
+	for (FString& Itr : Lines)
+	{
+		if (Itr.Equals("[/Script/GameplayTags.GameplayTagsList]")) continue;
+
+		if (Itr.Contains("GameplayTagList="))
+		{
+			FString NewValue = Itr.Replace(TEXT("GameplayTagList="), TEXT(""));
+
+			CleanedLines.Add(NewValue);
+		}
+	}
+
+	if (!CurrentContent.Equals(NewContent))
+	{
+		TArray<FString> CurrentLines;
+		FConfigFile NewConfig;
+		NewConfig.SetArray(TEXT("/Script/GameplayTags.GameplayTagsList"), TEXT("GameplayTagList"), CleanedLines);
+		CurrentConfig->GetArray(TEXT("/Script/GameplayTags.GameplayTagsList"), TEXT("GameplayTagList"), CurrentLines);
+
+		for (const FString& Itr : CleanedLines)
+		{
+			if (CurrentLines.Contains(Itr)) continue;
+
+			CurrentLines.AddUnique(Itr);
+		}
+
+		CurrentConfig->SetArray(TEXT("/Script/GameplayTags.GameplayTagsList"), TEXT("GameplayTagList"), CurrentLines);
+		CurrentConfig->Write(ConfigFilePath);
+
+		RefreshGameplayTags();
+	}
+}
+
+void FMounteaDialogueSystemEditor::CreateTagsConfig(const FString& NewContent)
+{
+	if (!GConfig) return;
+
+	const FString PluginDirectory = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"))->GetBaseDir();
+	const FString ConfigFilePath = PluginDirectory + "/Config/Tags/MounteaDialogueSystemTags.ini";
+
+	TArray<FString> Lines;
+	NewContent.ParseIntoArray(Lines, TEXT("\n"), true);
+
+	TArray<FString> CleanedLines;
+	for (FString& Itr : Lines)
+	{
+		if (Itr.Equals("[/Script/GameplayTags.GameplayTagsList]")) continue;
+
+		if (Itr.Contains("GameplayTagList="))
+		{
+			FString NewValue = Itr.Replace(TEXT("GameplayTagList="), TEXT(""));
+
+			CleanedLines.Add(NewValue);
+		}
+	}
+	
+	FConfigFile NewConfig;
+	NewConfig.SetArray(TEXT("/Script/GameplayTags.GameplayTagsList"), TEXT("GameplayTagList"), CleanedLines);
+	NewConfig.Write(ConfigFilePath);
+}
+
+void FMounteaDialogueSystemEditor::OnGetResponse_Tags(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
+{
+	FString ResponseBody;
+	if (Response.Get() == nullptr) return;
+	
+	if (Response.IsValid() && Response->GetResponseCode() == 200)
+	{
+		ResponseBody = Response->GetContentAsString();
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
+	}
+	
+	if (!DoesHaveValidTags())
+	{
+		CreateTagsConfig(ResponseBody);
+	}
+	else
+	{
+		UpdateTagsConfig(ResponseBody);
+	}
 }
 
 void FMounteaDialogueSystemEditor::PluginButtonClicked()

@@ -5,7 +5,7 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphEditorSettings"
 
-UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings()
+UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAllowAutoGameplayTagsCheck(true)
 {
 	NodeType = ENodeType::ENT_SoftCorners;
 	NodeTheme = ENodeTheme::ENT_DarkTheme;

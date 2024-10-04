@@ -217,6 +217,16 @@ private:
 
 #pragma endregion
 
+#pragma region GameplayTags
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags")
+	uint8 bAllowAutoGameplayTagsCheck : 1;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay=true)
+	FString GameplayTagsURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini");
+	
+#pragma endregion
+	
 #if WITH_EDITOR
 	virtual FText GetSectionText() const override
 	{
@@ -351,6 +361,16 @@ public:
 
 	bool DisplayStandardNodes() const
 	{ return bDisplayStandardNodes; };;
+	
+#pragma endregion
+
+#pragma region GameplayTags_Getters
+
+	bool AllowCheckTagUpdate() const
+	{ return bAllowAutoGameplayTagsCheck; };
+
+	FString GetGameplayTagsURL() const
+	{ return GameplayTagsURL; };
 	
 #pragma endregion
 	

@@ -11,7 +11,11 @@ class FMDSCommands : public TCommands<FMDSCommands>
 public:
 
 	FMDSCommands()
-	: TCommands<FMDSCommands>(TEXT("MounteaSupport"), NSLOCTEXT("Contexts", "Support", "Mountea Dialogue System"), NAME_None, FMDSHelpStyle::GetAppStyleSetName())
+	: TCommands<FMDSCommands>(
+		TEXT("MounteaSupport"),
+		NSLOCTEXT("Contexts", "Support", "Mountea Dialogue System"),
+		NAME_None,
+		FMDSHelpStyle::GetAppStyleSetName())
 	{
 	}
 
@@ -21,5 +25,5 @@ public:
 public:
 	
 	TSharedPtr< FUICommandInfo > PluginAction;
-	//TSharedPtr< FUICommandInfo > WikiAction;
+	TSharedPtr< FUICommandInfo > DialoguerAction;
 };
