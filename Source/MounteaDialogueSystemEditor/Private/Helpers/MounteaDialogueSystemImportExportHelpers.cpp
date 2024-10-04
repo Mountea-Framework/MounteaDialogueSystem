@@ -83,9 +83,9 @@ bool UMounteaDialogueSystemImportExportHelpers::IsReimport(const FString& Filena
 		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(extractedFiles["dialogueData.json"]);
 		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
 		{
-			if (JsonObject->HasField("dialogueGuid"))
+			if (JsonObject->HasField(TEXT("dialogueGuid")))
 			{
-				dialogueGuid = FGuid(JsonObject->GetStringField("dialogueGuid"));
+				dialogueGuid = FGuid(JsonObject->GetStringField(TEXT("dialogueGuid")));
 			}
 			
 		}
@@ -149,9 +149,9 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(extractedFiles["dialogueData.json"]);
 		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
 		{
-			if (JsonObject->HasField("dialogueGuid"))
+			if (JsonObject->HasField(TEXT("dialogueGuid")))
 			{
-				dialogueGuid = FGuid(JsonObject->GetStringField("dialogueGuid"));
+				dialogueGuid = FGuid(JsonObject->GetStringField(TEXT("dialogueGuid")));
 			}
 			else
 			{
@@ -293,14 +293,14 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 	{
 		OutMessage = FString::Printf(TEXT("Failed to extract files from archive: %s"), *FilePath);
 		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
-		return nullptr;
+		return false;
 	}
 
 	// 2. Make sure it's a zip file
 	if (!IsZipFile(fileData))
 	{
 		EditorLOG_ERROR(TEXT("[FactoryCreateFile] File is not a valid mnteadlg/zip: %s"), *FilePath);
-		return nullptr;
+		return false;
 	}
 
 	// 3. Extract and read content
@@ -309,7 +309,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 	{
 		OutMessage = FString::Printf(TEXT("Failed to extract files from archive: %s"), *FilePath);
 		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
-		return nullptr;
+		return false;
 	}
 
 	// 3. Read the GUID from dialogueData.json
@@ -321,15 +321,15 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(extractedFiles["dialogueData.json"]);
 		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
 		{
-			if (JsonObject->HasField("dialogueGuid"))
+			if (JsonObject->HasField(TEXT("dialogueGuid")))
 			{
-				FString guidString = JsonObject->GetStringField("dialogueGuid");
+				FString guidString = JsonObject->GetStringField(TEXT("dialogueGuid"));
 				FGuid::Parse(guidString, importedGuid);
 			}
 			
-			if (JsonObject->HasField("dialogueName"))
+			if (JsonObject->HasField(TEXT("dialogueGuid")))
 			{
-				dialogueName = JsonObject->GetStringField("dialogueName");
+				dialogueName = JsonObject->GetStringField(TEXT("dialogueGuid"));
 			}
 			else
 			{
@@ -349,7 +349,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 	{
 		OutMessage = TEXT("dialogueData.json not found in extracted files");
 		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
-		return nullptr;
+		return false;
 	}
 
 	if (!importedGuid.IsValid())
@@ -416,7 +416,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 	{
 		OutMessage = FString::Printf(TEXT("Invalid content in file: %s"), *FilePath);
 		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
-		return nullptr;
+		return false;
 	}
 	const FName assetName = !dialogueName.IsEmpty() ? FName(*dialogueName) : Name;
 
@@ -460,7 +460,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 		}
 	}
 
-	return nullptr;
+	return false;
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::ExportDialogueGraph(const UMounteaDialogueGraph* Graph, const FString& FilePath)
@@ -838,7 +838,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueData(UMounteaDia
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(DialogueDataJson);
 	if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
 	{
-		Graph->SetGraphGUID(FGuid(JsonObject->GetStringField("dialogueGuid")));
+		Graph->SetGraphGUID(FGuid(JsonObject->GetStringField(TEXT("dialogueGuid"))));
 	}
 	else
 	{
@@ -908,8 +908,8 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateCategories(UMounteaDialo
 			continue;
 		}
 
-		FString Name = Category->GetStringField("name");
-		FString Parent = Category->GetStringField("parent");
+		FString Name = Category->GetStringField(TEXT("name"));
+		FString Parent = Category->GetStringField(TEXT("parent"));
 
 		FString FullTag;
 		if (Parent.IsEmpty())
@@ -1000,8 +1000,8 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateParticipants(const UMoun
 			continue;
 		}
 
-		FString Name = Participant->GetStringField("name");
-		FString Category = Participant->GetStringField("category");
+		FString Name = Participant->GetStringField(TEXT("name"));
+		FString Category = Participant->GetStringField(TEXT("category"));
 
 		FDialogueParticipant* NewRow = new FDialogueParticipant();
 		NewRow->ParticipantName = FName(*Name);
@@ -1060,7 +1060,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateNodes(UMounteaDialogueGr
 			continue;
 		}
 
-		const FString NodeType = NodeObject->GetStringField("type");
+		const FString NodeType = NodeObject->GetStringField(TEXT("type"));
 		if (NodeType == "leadNode")
 		{
 			LeadNodes.Add(NodeValue);
@@ -1129,18 +1129,18 @@ void UMounteaDialogueSystemImportExportHelpers::PopulateNodeData(UMounteaDialogu
 		return;
 	}
 
-	Node->SetNodeGUID(FGuid(JsonObject->GetStringField("id")));
-	Node->NodeTitle = FText::FromString(JsonObject->GetObjectField("data")->GetStringField("title"));
+	Node->SetNodeGUID(FGuid(JsonObject->GetStringField((TEXT("id")))));
+	Node->NodeTitle = FText::FromString(JsonObject->GetObjectField(TEXT("data"))->GetStringField(TEXT("title")));
 
-	TSharedPtr<FJsonObject> AdditionalInfoObject = JsonObject->GetObjectField("data")->GetObjectField("additionalInfo");
-	if (AdditionalInfoObject->HasField("targetNodeId") && Node->Graph)
+	TSharedPtr<FJsonObject> AdditionalInfoObject = JsonObject->GetObjectField(TEXT("data"))->GetObjectField(TEXT("additionalInfo"));
+	if (AdditionalInfoObject->HasField(TEXT("targetNodeId")) && Node->Graph)
 	{
 		if (UMounteaDialogueGraphNode_ReturnToNode* returnToNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(Node))
 		{
-			UMounteaDialogueGraphNode* targetNode = returnToNode->Graph->FindNodeByGuid(FGuid(AdditionalInfoObject->GetStringField("targetNodeId")));
+			UMounteaDialogueGraphNode* targetNode = returnToNode->Graph->FindNodeByGuid(FGuid(AdditionalInfoObject->GetStringField(TEXT("targetNodeId"))));
 			const int32 targetNodeIndex = returnToNode->Graph->AllNodes.Find(targetNode);
 			returnToNode->SelectedNodeIndex = FString::FromInt(targetNodeIndex);
-			returnToNode->SelectedNode = returnToNode->Graph->FindNodeByGuid(FGuid(AdditionalInfoObject->GetStringField("targetNodeId")));
+			returnToNode->SelectedNode = returnToNode->Graph->FindNodeByGuid(FGuid(AdditionalInfoObject->GetStringField(TEXT("targetNodeId"))));
 
 			returnToNode->ReturnNodeUpdated.ExecuteIfBound();
 		}
@@ -1173,8 +1173,8 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateEdges(UMounteaDialogueGr
 			continue;
 		}
 
-		FString SourceID = EdgeObject->GetStringField("source");
-		FString TargetID = EdgeObject->GetStringField("target");
+		FString SourceID = EdgeObject->GetStringField(TEXT("source"));
+		FString TargetID = EdgeObject->GetStringField(TEXT("target"));
 
 		UMounteaDialogueGraphNode* SourceNode = Graph->FindNodeByGuid(FGuid(SourceID));
 		UMounteaDialogueGraphNode* TargetNode = Graph->FindNodeByGuid(FGuid(TargetID));
@@ -1253,8 +1253,8 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 		for (const auto& Row : dialogueRowsJsonArray)
 		{
 			const TSharedPtr<FJsonObject>& RowObject = Row->AsObject();
-			FString Id = RowObject->GetStringField("id");
-			FString Text = RowObject->GetStringField("text");
+			FString Id = RowObject->GetStringField(TEXT("id"));
+			FString Text = RowObject->GetStringField(TEXT("text"));
 			Table->GetMutableStringTable()->SetSourceString(Id, Text);
 		}
 	});
@@ -1266,14 +1266,14 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 			const TSharedPtr<FJsonObject>& NodeObject = Node->AsObject();
 			if (!NodeObject.IsValid()) continue;
 			
-			FString Id = NodeObject->GetStringField("id");
-			const TSharedPtr<FJsonObject>& DataObject = NodeObject->GetObjectField("data");
+			FString Id = NodeObject->GetStringField(TEXT("id"));
+			const TSharedPtr<FJsonObject>& DataObject = NodeObject->GetObjectField(TEXT("data"));
 			if (!DataObject.IsValid()) continue;
 			
-			const TSharedPtr<FJsonObject>& AdditionalInfoObject = DataObject->GetObjectField("additionalInfo");
+			const TSharedPtr<FJsonObject>& AdditionalInfoObject = DataObject->GetObjectField(TEXT("additionalInfo"));
 			if (!AdditionalInfoObject.IsValid()) continue;
 			
-			FString DisplayName = AdditionalInfoObject->GetStringField("displayName");
+			FString DisplayName = AdditionalInfoObject->GetStringField(TEXT("displayName"));
 			Table->GetMutableStringTable()->SetSourceString(Id, DisplayName);
 		}
 	});
@@ -1303,18 +1303,18 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 		const TSharedPtr<FJsonObject>& NodeObject = Node->AsObject();
 		if (!NodeObject.IsValid()) continue;
 		
-		FString NodeId = NodeObject->GetStringField("id");
-		const TSharedPtr<FJsonObject>& DataObject = NodeObject->GetObjectField("data");
+		FString NodeId = NodeObject->GetStringField(TEXT("id"));
+		const TSharedPtr<FJsonObject>& DataObject = NodeObject->GetObjectField(TEXT("data"));
 		if (!DataObject.IsValid()) continue;
 		
-		const TSharedPtr<FJsonObject>& AdditionalInfoObject = DataObject->GetObjectField("additionalInfo");
+		const TSharedPtr<FJsonObject>& AdditionalInfoObject = DataObject->GetObjectField(TEXT("additionalInfo"));
 		if (!AdditionalInfoObject.IsValid()) continue;
 		
 		const TSharedPtr<FJsonObject>* ParticipantObject = nullptr;
-		if (AdditionalInfoObject->TryGetObjectField("participant", ParticipantObject) && ParticipantObject != nullptr)
+		if (AdditionalInfoObject->TryGetObjectField(TEXT("participant"), ParticipantObject) && ParticipantObject != nullptr)
 		{
 			FString ParticipantName;
-			if ((*ParticipantObject)->TryGetStringField("name", ParticipantName))
+			if ((*ParticipantObject)->TryGetStringField(TEXT("name"), ParticipantName))
 			{
 				NodeParticipantMap.Add(NodeId, ParticipantName);
 			}
@@ -1336,7 +1336,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 		const TSharedPtr<FJsonObject>& RowObject = Row->AsObject();
 		if (RowObject.IsValid())
 		{
-			FString NodeId = RowObject->GetStringField("nodeId");
+			FString NodeId = RowObject->GetStringField(TEXT("nodeId"));
 			GroupedDialogueRows.FindOrAdd(NodeId).Add(RowObject);
 		}
 	}
@@ -1382,11 +1382,11 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDia
 		// Add FDialogueRowData for each row in the group
 		for (const auto& RowObject : Rows)
 		{
-			FString Id = RowObject->GetStringField("id");
+			FString Id = RowObject->GetStringField(TEXT("id"));
 			FDialogueRowData RowData;
 			RowData.RowText = FText::FromStringTable(DialogueRowsStringTable->GetStringTableId(), Id);
 			RowData.RowGUID = FGuid(Id);
-			RowData.RowDuration = RowObject->GetNumberField("duration");;
+			RowData.RowDuration = RowObject->GetNumberField(TEXT("duration"));;
 			NewRow.DialogueRowData.Add(RowData);
 		}		
 
@@ -1587,7 +1587,7 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateNodesJson(const TArray<
 		}
 
 		TSharedPtr<FJsonObject> NodeObject = MakeShareable(new FJsonObject);
-		NodeObject->SetStringField("id", Data.Node->GetNodeGUID().ToString());
+		NodeObject->SetStringField((TEXT("id")), Data.Node->GetNodeGUID().ToString());
 		NodeObject->SetStringField("type", Data.Type);
 
 		AddNodePosition(NodeObject, Data.Node);
@@ -1675,7 +1675,7 @@ void UMounteaDialogueSystemImportExportHelpers::AddDialogueNodeData(const TShare
 	for (const auto& RowData : DialogueRowRef->DialogueRowData)
 	{
 		const TSharedPtr<FJsonObject> RowObject = MakeShareable(new FJsonObject);
-		RowObject->SetStringField("id", RowData.RowGUID.ToString());
+		RowObject->SetStringField((TEXT("id")), RowData.RowGUID.ToString());
 		RowObject->SetStringField("text", RowData.RowText.ToString());
 		RowObject->SetStringField("audio", GetRelativeAudioPath(RowData.RowSound, GraphFolder));
 		DialogueRowsArray.Add(MakeShareable(new FJsonValueObject(RowObject)));
@@ -1716,7 +1716,7 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateEdgesJson(const UMounte
 			const TSharedPtr<FJsonObject> EdgeObject = MakeShareable(new FJsonObject);
 
 			FString EdgeId = FString::Printf(TEXT("reactflow__edge-%s-%s"), *Node->GetNodeGUID().ToString(), *ChildNode->GetNodeGUID().ToString());
-			EdgeObject->SetStringField("id", EdgeId);
+			EdgeObject->SetStringField((TEXT("id")), EdgeId);
 			EdgeObject->SetStringField("source", Node->GetNodeGUID().ToString());
 			EdgeObject->SetStringField("target", ChildNode->GetNodeGUID().ToString());
 			EdgeObject->SetStringField("type", "customEdge");
@@ -1986,8 +1986,8 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateCategoriesJson(const UM
 		const TSharedPtr<FJsonObject>& ObjectA = A->AsObject();
 		const TSharedPtr<FJsonObject>& ObjectB = B->AsObject();
 		
-		const FString NameA = ObjectA->GetStringField("name");
-		const FString NameB = ObjectB->GetStringField("name");
+		const FString NameA = ObjectA->GetStringField(TEXT("name"));
+		const FString NameB = ObjectB->GetStringField(TEXT("name"));
 		
 		return NameA < NameB;
 	});
@@ -2129,7 +2129,7 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateDialogueRowsJson(const 
 		{
 			TSharedPtr<FJsonObject> RowObject = MakeShareable(new FJsonObject);
 
-			RowObject->SetStringField("id", RowData.RowGUID.ToString());
+			RowObject->SetStringField((TEXT("id")), RowData.RowGUID.ToString());
 			RowObject->SetStringField("text", RowData.RowText.ToString());
 			RowObject->SetStringField("audioPath", GetRelativeAudioPath(RowData.RowSound, GraphFolder));
 			RowObject->SetStringField("nodeId", NodeData.Node->GetNodeGUID().ToString());

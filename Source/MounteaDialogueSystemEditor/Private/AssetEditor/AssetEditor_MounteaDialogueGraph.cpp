@@ -446,7 +446,7 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 					for (const auto& JsonValue : JsonArray)
 					{
 						const TSharedPtr<FJsonObject> NodeObject = JsonValue->AsObject();
-						const FGuid NodeObjectGuid = FGuid(NodeObject->GetStringField("id"));
+						const FGuid NodeObjectGuid = FGuid(NodeObject->GetStringField((TEXT("id"))));
 						if (NodeObjectGuid == Node->GetNodeGUID())
 						{
 							FoundNode = NodeObject;
@@ -456,9 +456,9 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 
 					if (FoundNode.IsValid())
 					{
-						TSharedPtr<FJsonObject> PositionObject = FoundNode->GetObjectField("position");
-						const float X = PositionObject->GetNumberField("x");
-						const float Y = PositionObject->GetNumberField("y");
+						TSharedPtr<FJsonObject> PositionObject = FoundNode->GetObjectField(TEXT("position"));
+						const float X = PositionObject->GetNumberField(TEXT("x"));
+						const float Y = PositionObject->GetNumberField(TEXT("y"));
 
 						DummyNewNode->NodePosX = X;
 						DummyNewNode->NodePosY = Y;
