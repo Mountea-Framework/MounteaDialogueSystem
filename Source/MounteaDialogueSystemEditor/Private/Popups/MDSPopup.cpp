@@ -57,9 +57,9 @@ Thank you for your understanding!
 	InChangelog = InChangelog.Replace(TEXT("### Fixed"),		TEXT("<RichTextBlock.BoldHighlight>Fixed</>"));
 	InChangelog = InChangelog.Replace(TEXT("### Changed"),		TEXT("<RichTextBlock.BoldHighlight>Changed</>"));
 	
-	InChangelog = InChangelog.Replace(TEXT("> -"),				TEXT("*"));
-	InChangelog = InChangelog.Replace(TEXT(">   -"),			TEXT("   *"));
-	InChangelog = InChangelog.Replace(TEXT(">     -"),			TEXT("     *"));
+	InChangelog = InChangelog.Replace(TEXT("> -"),				TEXT("●"));
+	InChangelog = InChangelog.Replace(TEXT(">   -"),			TEXT("   ○"));
+	InChangelog = InChangelog.Replace(TEXT(">     -"),			TEXT("     •"));
 
 
 	FormatTextWithTags(InChangelog, TEXT("***"), TEXT("***"),		TEXT("<RichTextBlock.Italic>"),			TEXT("</>"));
