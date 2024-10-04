@@ -499,7 +499,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ExportDialogueGraph(const UMount
 	}
 	
 	FString AudioDirectory = ExportDirectory;
-	AudioDirectory.Append(TEXT("/Audio"));
+	AudioDirectory.Append(TEXT("/audio"));
 	
 	TSet<FString> AudioDirectories;
 	for (const FString& ExportedAudioFile : ExportedAudioFiles)
@@ -746,7 +746,7 @@ void UMounteaDialogueSystemImportExportHelpers::ImportAudioFiles(const TMap<FStr
 			
 			FString FullDestinationPath = FPaths::Combine(DestinationPath, FPaths::GetCleanFilename(File.Key));
 			
-			FString RelativePackagePath = FString::Printf(TEXT("/Audio/%s"), *SubfolderPath);
+			FString RelativePackagePath = FString::Printf(TEXT("/audio/%s"), *SubfolderPath);
 			FString FullPackagePath = PackagePath / RelativePackagePath / FPaths::GetBaseFilename(File.Key);
 
 			FARFilter Filter;
@@ -1747,14 +1747,14 @@ bool UMounteaDialogueSystemImportExportHelpers::ExportAudioFiles(const TArray<FS
 
 		// Extract the relative path
 		FString RelativePath = AudioFile;
-		int32 AudioIndex = RelativePath.Find(TEXT("/Audio/"));
+		int32 AudioIndex = RelativePath.Find(TEXT("/audio/"));
 		if (AudioIndex != INDEX_NONE)
 		{
-			RelativePath = RelativePath.RightChop(AudioIndex + 7); // +7 to skip "/Audio/"
+			RelativePath = RelativePath.RightChop(AudioIndex + 7); // +7 to skip "/audio/"
 		}
 		else
 		{
-			EditorLOG_WARNING(TEXT("[ExportAudioFiles] Couldn't find '/Audio/' in path: %s"), *AudioFile);
+			EditorLOG_WARNING(TEXT("[ExportAudioFiles] Couldn't find '/audio/' in path: %s"), *AudioFile);
 			// Use the full path as a fallback
 		}
 

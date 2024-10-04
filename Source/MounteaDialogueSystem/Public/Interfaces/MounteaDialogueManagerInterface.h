@@ -56,7 +56,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDialogueWidgetCommand, const TScri
 /**
  * Mountea Dialogue Manager Interface.
  * 
- * Should attached directly to Player Controller or used for Components that are attached to some Controller.
+ * Should be attached directly to Player State.
  * Provides options to start and stop dialogue as well as ability to select dialogue options.
  */
 class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueManagerInterface

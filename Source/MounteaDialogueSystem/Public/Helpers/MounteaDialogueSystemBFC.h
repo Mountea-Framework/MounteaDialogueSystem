@@ -152,7 +152,7 @@ public:
 	 * ❗ Preferred way to Initialize Dialogue is to call 'InitializeDialogue' instead❗
 	 * 
 	 * @param WorldContextObject	World Context Object
-	 * @param Initiator						Usually Player Controller or any Actor who implement `IMounteaDialogueManagerInterface`
+	 * @param Initiator						Usually Player State or any Actor who implement `IMounteaDialogueManagerInterface`
 	 * @param DialogueParticipant	Other person, could be NPC or other Player
 	 * @param Context					Dialogue Context which is passed to Dialogue Manager
 	 */
