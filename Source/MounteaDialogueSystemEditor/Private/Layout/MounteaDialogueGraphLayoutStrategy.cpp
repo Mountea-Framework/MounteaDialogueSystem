@@ -23,11 +23,13 @@ UMounteaDialogueGraphLayoutStrategy::~UMounteaDialogueGraphLayoutStrategy()
 
 int32 UMounteaDialogueGraphLayoutStrategy::GetNodeWidth(UEdNode_MounteaDialogueGraphNode* EdNode)
 {
+	if (!EdNode || !EdNode->SEdNode) return 100;
 	return EdNode->SEdNode->GetCachedGeometry().GetLocalSize().X;
 }
 
 int32 UMounteaDialogueGraphLayoutStrategy::GetNodeHeight(UEdNode_MounteaDialogueGraphNode* EdNode)
 {
+	if (!EdNode || !EdNode->SEdNode) return 150;
 	return EdNode->SEdNode->GetCachedGeometry().GetLocalSize().Y;
 }
 

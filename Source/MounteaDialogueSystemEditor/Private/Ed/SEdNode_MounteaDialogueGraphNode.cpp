@@ -140,6 +140,17 @@ BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 {
+	if (GraphNode)
+	{
+		if (auto dialogueGraphNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
+		{
+			if (dialogueGraphNode->SEdNode == nullptr)
+			{
+				dialogueGraphNode->SEdNode = this;
+			}
+		}
+	}
+	
 	const FMargin NodePadding = FMargin(2.0f);
 	const FMargin UnifiedRowsPadding = FMargin(0.f, 1.15f, 0.f, 0.f);
 
@@ -990,7 +1001,7 @@ void SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted(const FText& InText, 
 	if (MyNode != nullptr && MyNode->DialogueGraphNode != nullptr)
 	{
 		const FScopedTransaction Transaction(LOCTEXT("MounteaDiaogueGraphEditorRenameNode", "Mountea Diaogue Editor: Rename Node"));
-		MyNode->Modify();
+		MyNode->Modify(true);
 		MyNode->DialogueGraphNode->Modify();
 		MyNode->DialogueGraphNode->SetNodeTitle(InText);
 		UpdateGraphNode();

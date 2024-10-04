@@ -22,8 +22,7 @@ UEdGraph_MounteaDialogueGraph::~UEdGraph_MounteaDialogueGraph()
 
 void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 {
-	EditorLOG_INFO(TEXT("UMounteaDialogueGraphEdGraph::RebuildMounteaDialogueGraph has been called"));
-
+	
 	UMounteaDialogueGraph* Graph = GetMounteaDialogueGraph();
 
 	Clear();
@@ -42,7 +41,8 @@ void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 			Graph->AllNodes.Add(MounteaDialogueGraphNode);
 
 			EdNode->SetDialogueNodeIndex( Graph->AllNodes.Find(EdNode->DialogueGraphNode) );
-
+			EdNode->UpdatePosition();
+			
 			for (int PinIdx = 0; PinIdx < EdNode->Pins.Num(); ++PinIdx)
 			{
 				UEdGraphPin* Pin = EdNode->Pins[PinIdx];
@@ -100,7 +100,7 @@ void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 			Edge->StartNode->Edges.Add(Edge->EndNode, Edge);
 		}
 	}
-
+	
 	for (int i = 0; i < Graph->AllNodes.Num(); ++i)
 	{
 		UMounteaDialogueGraphNode* Node = Graph->AllNodes[i];
@@ -108,7 +108,7 @@ void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 		{
 			Graph->RootNodes.Add(Node);
 
-			SortNodes(Node);
+			//SortNodes(Node);
 		}
 
 		Node->Graph = Graph;
@@ -121,6 +121,19 @@ void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 		UEdNode_MounteaDialogueGraphNode* EdNode_RNode = NodeMap[&R];
 		return EdNode_LNode->NodePosX < EdNode_RNode->NodePosX;
 	});
+}
+
+UEdNode_MounteaDialogueGraphEdge* UEdGraph_MounteaDialogueGraph::CreateEdgeNode(UEdNode_MounteaDialogueGraphNode* StartNode, UEdNode_MounteaDialogueGraphNode* EndNode)
+{
+	UEdNode_MounteaDialogueGraphEdge* EdgeNode = NewObject<UEdNode_MounteaDialogueGraphEdge>(this);
+	EdgeNode->AllocateDefaultPins();
+	EdgeNode->CreateConnections(StartNode, EndNode);
+	EdgeNode->MounteaDialogueGraphEdge = NewObject<UMounteaDialogueGraphEdge>(GetMounteaDialogueGraph());
+	EdgeNode->MounteaDialogueGraphEdge->StartNode = StartNode->DialogueGraphNode;
+	EdgeNode->MounteaDialogueGraphEdge->EndNode = EndNode->DialogueGraphNode;
+	EdgeNode->MounteaDialogueGraphEdge->Graph = GetMounteaDialogueGraph();
+
+	return EdgeNode;
 }
 
 UMounteaDialogueGraph* UEdGraph_MounteaDialogueGraph::GetMounteaDialogueGraph() const
@@ -145,7 +158,7 @@ bool UEdGraph_MounteaDialogueGraph::Modify(bool bAlwaysMarkDirty)
 void UEdGraph_MounteaDialogueGraph::PostEditUndo()
 {
 	NotifyGraphChanged();
-	
+
 	Super::PostEditUndo();
 }
 
@@ -162,11 +175,11 @@ bool UEdGraph_MounteaDialogueGraph::JumpToNode(const UMounteaDialogueGraphNode* 
 void UEdGraph_MounteaDialogueGraph::Clear()
 {
 	UMounteaDialogueGraph* Graph = GetMounteaDialogueGraph();
-
 	Graph->ClearGraph();
+	
 	NodeMap.Reset();
 	EdgeMap.Reset();
-
+	
 	for (int i = 0; i < Nodes.Num(); ++i)
 	{
 		if (UEdNode_MounteaDialogueGraphNode* EdNode = Cast<UEdNode_MounteaDialogueGraphNode>(Nodes[i]))
@@ -182,7 +195,7 @@ void UEdGraph_MounteaDialogueGraph::Clear()
 void UEdGraph_MounteaDialogueGraph::SortNodes(UMounteaDialogueGraphNode* RootNode)
 {
 	int Level = 0;
-	TArray<UMounteaDialogueGraphNode*> CurrLevelNodes = { RootNode };
+	TArray<UMounteaDialogueGraphNode*> CurrLevelNodes = {RootNode};
 	TArray<UMounteaDialogueGraphNode*> NextLevelNodes;
 
 	while (CurrLevelNodes.Num() != 0)

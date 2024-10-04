@@ -12,13 +12,13 @@ FString UMounteaDialogueContext::ToString() const
 	FString returnValue;
 
 	FString activeDialoguePart = FString("Active Dialogue Participant: ");
-	activeDialoguePart.Append(ActiveDialogueParticipant.GetObject() ? ActiveDialogueParticipant->Execute_GetTag(ActiveDialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
+	activeDialoguePart.Append(ActiveDialogueParticipant.GetObject() ? ActiveDialogueParticipant->Execute_GetParticipantTag(ActiveDialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
 
 	FString playerDialoguePart = FString("Player Dialogue Participant: ");
-	playerDialoguePart.Append(PlayerDialogueParticipant.GetObject() ? PlayerDialogueParticipant->Execute_GetTag(PlayerDialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
+	playerDialoguePart.Append(PlayerDialogueParticipant.GetObject() ? PlayerDialogueParticipant->Execute_GetParticipantTag(PlayerDialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
 
 	FString otherDialoguePart = FString("Other Dialogue Participant: ");
-	otherDialoguePart.Append(DialogueParticipant.GetObject() ? DialogueParticipant->Execute_GetTag(DialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
+	otherDialoguePart.Append(DialogueParticipant.GetObject() ? DialogueParticipant->Execute_GetParticipantTag(DialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
 
 	FString allDialogueParts = FString("Dialogue Participants: ");
 	allDialogueParts.Append(FString::Printf(TEXT("%d"), DialogueParticipants.Num()));
@@ -119,21 +119,26 @@ void UMounteaDialogueContext::UpdateActiveDialogueParticipant(const TScriptInter
 
 void UMounteaDialogueContext::AddTraversedNode(const UMounteaDialogueGraphNode* TraversedNode)
 {
-	if (!TraversedNode) return;
-	
-	// If we have already passed over this Node, then just increase the counter
-	if (TraversedPath.Contains(TraversedNode->GetNodeGUID()))
+	if (!TraversedNode || !TraversedNode->Graph)
 	{
-		if (FDialogueTraversePath* ExistingRow = TraversedPath.FindByKey(TraversedNode->GetNodeGUID()))
-		{
-			ExistingRow->TraverseCount++;
-		}
+		return;
+	}
+	
+	FDialogueTraversePath* ExistingRow = TraversedPath.FindByPredicate([&](FDialogueTraversePath& Path)
+	{
+		return Path.NodeGuid == TraversedNode->GetNodeGUID() && Path.GraphGuid == TraversedNode->GetGraphGUID();
+	});
+
+	if (ExistingRow)
+	{
+		ExistingRow->TraverseCount++;
 	}
 	else
 	{
 		FDialogueTraversePath NewRow;
 		{
 			NewRow.NodeGuid = TraversedNode->GetNodeGUID();
+			NewRow.GraphGuid = TraversedNode->GetGraphGUID();
 			NewRow.TraverseCount = 1;
 		}
 		TraversedPath.Add(NewRow);
