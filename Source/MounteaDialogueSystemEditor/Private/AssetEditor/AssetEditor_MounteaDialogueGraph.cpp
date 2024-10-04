@@ -27,6 +27,7 @@
 #include "Layout/ForceDirectedSolveLayoutStrategy.h"
 #include "Layout/MounteaDialogueGraphLayoutStrategy.h"
 #include "Layout/TreeSolveLayoutStrategy.h"
+#include "Misc/DataValidation.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 #include "Popups/MDSPopup_GraphValidation.h"
 #include "Search/MounteaDialogueSearchUtils.h"
@@ -194,7 +195,7 @@ void FAssetEditor_MounteaDialogueGraph::UnregisterTabSpawners(const TSharedRef<F
 
 bool FAssetEditor_MounteaDialogueGraph::CloseWindow()
 {
-	const bool bSatisfied = FAssetEditorToolkit::CloseWindow();
+	const bool bSatisfied = FAssetEditorToolkit::CloseWindow(EAssetEditorCloseReason::AssetEditorHostClosed);
 
 	if (EditingGraph)
 	{
@@ -1112,26 +1113,30 @@ void FAssetEditor_MounteaDialogueGraph::ValidateGraph()
 		ValidationWindow->RequestDestroyWindow();
 	}
 
-	UEdGraph_MounteaDialogueGraph* EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
+	const UEdGraph_MounteaDialogueGraph* EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
 	check(EdGraph != nullptr);
 
-	const FScopedTransaction Transaction(LOCTEXT("MounteaDialogueGraphEditorValidateGraph",
-												"Mountea Dialogue Graph Editor: Validate Graph."));
+	const FScopedTransaction Transaction(LOCTEXT("MounteaDialogueGraphEditorValidateGraph", "Mountea Dialogue Graph Editor: Validate Graph."));
 
-	UMounteaDialogueGraph* MounteaGraph = EdGraph->GetMounteaDialogueGraph();
+	const UMounteaDialogueGraph* MounteaGraph = EdGraph->GetMounteaDialogueGraph();
 	check(MounteaGraph != nullptr);
-
+	
 	RebuildMounteaDialogueGraph();
-
-	TArray<FText> ValidationMessages;
-	if (MounteaGraph->ValidateGraph(ValidationMessages, true) == false)
+	
+	FDataValidationContext ValidationContext;
+	if (MounteaGraph->ValidateGraph(ValidationContext, true) == false)
 	{
-		ValidationWindow = MDSPopup_GraphValidation::Open(ValidationMessages);
+		TArray<FText> Errors, Warnings;
+		ValidationContext.SplitIssues(Errors, Warnings);
+
+		TArray<FText> Combined = Errors;
+		Combined.Append(Warnings);
+		
+		ValidationWindow = MDSPopup_GraphValidation::Open(Combined);
 	}
 	else
 	{
-		ValidationMessages.Empty();
-		ValidationWindow = MDSPopup_GraphValidation::Open(ValidationMessages);
+		ValidationWindow = MDSPopup_GraphValidation::Open(TArray<FText>());
 	}
 }
 

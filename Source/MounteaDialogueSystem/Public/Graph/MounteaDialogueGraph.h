@@ -27,8 +27,7 @@ struct FMounteaDialogueDecorator;
  * Can be manually created from Content Browser, using Mountea Dialogue category.
  * Comes with Node editor, which provides easy to follow visual way to create Dialogue Trees.
  */
-UCLASS(BlueprintType, ClassGroup=("Mountea|Dialogue"), DisplayName="Mountea Dialogue Tree",
-	HideCategories=("Hidden", "Private", "Base"), AutoExpandCategories=("Mountea", "Dialogue"))
+UCLASS(BlueprintType, ClassGroup=("Mountea|Dialogue"), DisplayName="Mountea Dialogue Tree", HideCategories=("Hidden", "Private", "Base"), AutoExpandCategories=("Mountea", "Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraph : public UObject, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()
@@ -234,7 +233,7 @@ public:
 
 public:
 	// Construct and initialize a node within this Dialogue.
-	template <class T>
+	template<class T>
 	T* ConstructDialogueNode(TSubclassOf<UMounteaDialogueGraphNode> DialogueNodeClass = T::StaticClass())
 	{
 		// Set flag to be transactional so it registers with undo system
@@ -242,6 +241,7 @@ public:
 		DialogueNode->OnCreatedInEditor();
 		return DialogueNode;
 	}
+
 
 	UMounteaDialogueGraphNode* ConstructDialogueNode(TSubclassOf<UMounteaDialogueGraphNode> NodeClass);
 
