@@ -148,7 +148,7 @@ struct FSubtitlesSettings
 	FGuid SettingsGUID;
 
 public:
-	FSubtitlesSettings() : FontColor(FLinearColor::White), ShadowOffset(1.5f, 1.25f), ShadowColor(FLinearColor::Black)
+	FSubtitlesSettings() : FontColor(FLinearColor::White), ShadowOffset(1.5f, 1.25f), ShadowColor(FLinearColor::Black), SettingsGUID(FGuid::NewGuid())
 	{
 		SubtitlesFont = FCoreStyle::GetDefaultFontStyle("Regular", 16, FFontOutlineSettings(1));
 	};
@@ -398,8 +398,7 @@ public:
 	 * 
 	 * Unique Key when searching and binding this Row.
 	 */
-	UPROPERTY(/*Transient, */VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay,
-		meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate))
+	UPROPERTY(/*Transient, */VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate))
 	FGuid RowGUID;
 	
 	/**
@@ -588,4 +587,70 @@ struct FMounteaDialogueContextReplicatedStruct
 
 	void SetData(class UMounteaDialogueContext* Source);
 	bool IsValid() const;
+};
+
+/**
+ * 
+ */
+USTRUCT(BlueprintType)
+struct FDialogueTraversePath
+{
+	GENERATED_BODY()
+
+public:
+	
+	FDialogueTraversePath()
+		: NodeGuid(FGuid::NewGuid())
+		, GraphGuid(FGuid::NewGuid())
+		, TraverseCount(0)
+	{}
+
+	FDialogueTraversePath(const FGuid& InNodeGuid, const FGuid& InGraphGuid, int32 InTraverseCount = 1)
+		: NodeGuid(InNodeGuid)
+		, GraphGuid(InGraphGuid)
+		, TraverseCount(FMath::Max(0, InTraverseCount))
+	{}
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	FGuid NodeGuid = FGuid::NewGuid();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	FGuid GraphGuid = FGuid::NewGuid();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	int32 TraverseCount;
+
+	bool operator==(const FDialogueTraversePath& Other) const
+	{
+		return NodeGuid == Other.NodeGuid && GraphGuid == Other.GraphGuid;
+	}
+
+	bool operator!=(const FDialogueTraversePath& Other) const
+	{
+		return !(*this == Other);
+	}
+
+	FDialogueTraversePath& operator+=(const FDialogueTraversePath& Other)
+	{
+		if (NodeGuid == Other.NodeGuid && GraphGuid == Other.GraphGuid)
+		{
+			TraverseCount += Other.TraverseCount;
+		}
+		return *this;
+	}
+
+	friend uint32 GetTypeHash(const FDialogueTraversePath& Path)
+	{
+		return HashCombine(GetTypeHash(Path.NodeGuid), GetTypeHash(Path.GraphGuid));
+	}
+
+	void IncrementCount(int32 IncrementBy = 1)
+	{
+		TraverseCount += FMath::Max(0, IncrementBy);
+	}
+
+	TPair<FGuid, FGuid> GetGuidPair() const
+	{
+		return TPair<FGuid, FGuid>(NodeGuid, GraphGuid);
+	}
 };
