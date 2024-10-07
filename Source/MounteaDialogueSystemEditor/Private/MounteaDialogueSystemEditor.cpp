@@ -251,6 +251,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 
 		UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu(MenuName);
 		{
+			ToolbarMenu->RemoveSection("MounteaFramework"); // Cleanup
 			FToolMenuEntry& Entry = ToolbarMenu->FindOrAddSection("MounteaFramework")
 				.AddEntry(FToolMenuEntry::InitComboButton(
 					"MounteaMenu",
