@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MDSHelpStyle.h"
+#include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 
 
 class FMDSCommands : public TCommands<FMDSCommands>
@@ -15,7 +15,7 @@ public:
 		TEXT("MounteaSupport"),
 		NSLOCTEXT("Contexts", "Support", "Mountea Dialogue System"),
 		NAME_None,
-		FMDSHelpStyle::GetAppStyleSetName())
+		FMounteaDialogueGraphEditorStyle::GetAppStyleSetName())
 	{
 	}
 

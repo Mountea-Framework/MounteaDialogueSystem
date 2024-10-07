@@ -44,59 +44,59 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet = MakeShareable(new FSlateStyleSet(GetAppStyleSetName()));
 	StyleSet->SetContentRoot(IPluginManager::Get().FindPlugin("MounteaDialogueSystem")->GetBaseDir() / TEXT("Resources"));
 	
-	StyleSet->Set("MDSStyleSet.MounteaLogo.small", new IMAGE_BRUSH(TEXT("Mountea_Logo"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.MounteaLogo.Small", new IMAGE_BRUSH(TEXT("Mountea_Logo"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.MounteaLogo", new IMAGE_BRUSH(TEXT("Mountea_Logo"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.MounteaLogo.large", new IMAGE_BRUSH(TEXT("Mountea_Logo"), Icon64x64));
 
-	StyleSet->Set("MDSStyleSet.OpenGraphSourceIcon.small", new IMAGE_BRUSH(TEXT("OpenGraphSourceIcon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.OpenGraphSourceIcon.Small", new IMAGE_BRUSH(TEXT("OpenGraphSourceIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.OpenGraphSourceIcon", new IMAGE_BRUSH(TEXT("OpenGraphSourceIcon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.OpenGraphSourceIcon.large", new IMAGE_BRUSH(TEXT("OpenGraphSourceIcon"), Icon64x64));
 
-	StyleSet->Set("MDSStyleSet.Icon.Warning.small", new IMAGE_BRUSH(TEXT("InfoWarning_Icon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Icon.Warning.Small", new IMAGE_BRUSH(TEXT("InfoWarning_Icon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Icon.Warning", new IMAGE_BRUSH(TEXT("InfoWarning_Icon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.Icon.Warning.large", new IMAGE_BRUSH(TEXT("InfoWarning_Icon"), Icon64x64));
 
-	StyleSet->Set("MDSStyleSet.Icon.Success.small", new IMAGE_BRUSH(TEXT("InfoSuccess_Icon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Icon.Success.Small", new IMAGE_BRUSH(TEXT("InfoSuccess_Icon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Icon.Success", new IMAGE_BRUSH(TEXT("InfoSuccess_Icon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.Icon.Success.large", new IMAGE_BRUSH(TEXT("InfoSuccess_Icon"), Icon64x64));
 
-	StyleSet->Set("MDSStyleSet.Info.Error.small", new IMAGE_BRUSH(TEXT("InfoError_Icon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Info.Error.Small", new IMAGE_BRUSH(TEXT("InfoError_Icon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Info.Error", new IMAGE_BRUSH(TEXT("InfoError_Icon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.Info.Error.large", new IMAGE_BRUSH(TEXT("InfoError_Icon"), Icon64x64));
 
-	StyleSet->Set("MDSStyleSet.K2Node_GetterIcon.small", new IMAGE_BRUSH(TEXT("K2Node_GetterIcon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.K2Node_GetterIcon.Small", new IMAGE_BRUSH(TEXT("K2Node_GetterIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.K2Node_GetterIcon", new IMAGE_BRUSH(TEXT("K2Node_GetterIcon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.K2Node_GetterIcon.large", new IMAGE_BRUSH(TEXT("K2Node_GetterIcon"), Icon64x64));
 
-	StyleSet->Set("MDSStyleSet.K2Node_SetterIcon.small", new IMAGE_BRUSH(TEXT("K2Node_SetterIcon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.K2Node_SetterIcon.Small", new IMAGE_BRUSH(TEXT("K2Node_SetterIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.K2Node_SetterIcon", new IMAGE_BRUSH(TEXT("K2Node_SetterIcon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.K2Node_SetterIcon.large", new IMAGE_BRUSH(TEXT("K2Node_SetterIcon"), Icon64x64));
 	
-	StyleSet->Set("MDSStyleSet.K2Node_ValidateIcon.small", new IMAGE_BRUSH(TEXT("K2Node_ValidateIcon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.K2Node_ValidateIcon.Small", new IMAGE_BRUSH(TEXT("K2Node_ValidateIcon"), Icon16x16));
     StyleSet->Set("MDSStyleSet.K2Node_ValidateIcon", new IMAGE_BRUSH(TEXT("K2Node_ValidateIcon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.K2Node_ValidateIcon.large", new IMAGE_BRUSH(TEXT("K2Node_ValidateIcon"), Icon64x64));
 
-	StyleSet->Set("MDSStyleSet.K2Node_MessageIcon.small", new IMAGE_BRUSH(TEXT("K2Node_MessageIcon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.K2Node_MessageIcon.Small", new IMAGE_BRUSH(TEXT("K2Node_MessageIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.K2Node_MessageIcon", new IMAGE_BRUSH(TEXT("K2Node_MessageIcon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.K2Node_MessageIcon.large", new IMAGE_BRUSH(TEXT("K2Node_MessageIcon"), Icon64x64));
 
-	StyleSet->Set("MDSStyleSet.AutoArrange.small", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.AutoArrange.Small", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.AutoArrange", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.AutoArrange.large", new IMAGE_BRUSH(TEXT("AutoArrangeIcon"), Icon64x64));
 
-	StyleSet->Set("MDSStyleSet.ExportGraph.small", new IMAGE_BRUSH(TEXT("ExportGraphIcon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.ExportGraph.Small", new IMAGE_BRUSH(TEXT("ExportGraphIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.ExportGraph", new IMAGE_BRUSH(TEXT("ExportGraphIcon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.ExportGraph.large", new IMAGE_BRUSH(TEXT("ExportGraphIcon"), Icon64x64));
 
-	StyleSet->Set("MDSStyleSet.ReimportGraph.small", new IMAGE_BRUSH(TEXT("ReimportGraphIcon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.ReimportGraph.Small", new IMAGE_BRUSH(TEXT("ReimportGraphIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.ReimportGraph", new IMAGE_BRUSH(TEXT("ReimportGraphIcon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.ReimportGraph.large", new IMAGE_BRUSH(TEXT("ReimportGraphIcon"), Icon64x64));
 	
-	StyleSet->Set("MDSStyleSet.GraphSettings.small", new IMAGE_BRUSH(TEXT("GraphSettings"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.GraphSettings.Small", new IMAGE_BRUSH(TEXT("GraphSettings"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.GraphSettings", new IMAGE_BRUSH(TEXT("GraphSettings"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.GraphSettings.large", new IMAGE_BRUSH(TEXT("GraphSettings"), Icon64x64));
 
-	StyleSet->Set("MDSStyleSet.ValidateGraph.small", new IMAGE_BRUSH(TEXT("ValidateGraph"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.ValidateGraph.Small", new IMAGE_BRUSH(TEXT("ValidateGraph"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.ValidateGraph", new IMAGE_BRUSH(TEXT("ValidateGraph"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.ValidateGraph.large", new IMAGE_BRUSH(TEXT("ValidateGraph"), Icon64x64));
 	
@@ -117,7 +117,7 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.Node.IndexCircle", new IMAGE_BRUSH(TEXT("IndexIcon"), Icon16x16));
 
 	StyleSet->Set("MDSStyleSet.Icon.OK", new IMAGE_BRUSH(TEXT("OKIcon"), Icon16x16));
-	StyleSet->Set("MDSStyleSet.Icon.Error", new IMAGE_BRUSH(TEXT("ErroIcon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Icon.Error", new IMAGE_BRUSH(TEXT("ErrorIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Icon.BulletPoint", new IMAGE_BRUSH(TEXT("CircleBox"), Icon16x16));
 	
 	StyleSet->Set("MDSStyleSet.Graph.CornerImage", new IMAGE_BRUSH(TEXT("Icon128"), Icon128x128));
@@ -126,21 +126,29 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.Icon.Edit", new IMAGE_BRUSH(TEXT("EditIcon"), Icon12x12));
 	
 	StyleSet->Set("MDSStyleSet.Buttons.Documentation", new IMAGE_BRUSH(TEXT("Documentation"), Icon200x70));
-	StyleSet->Set("MDSStyleSet.Buttons.Documentation.small", new IMAGE_BRUSH(TEXT("DocumentationIcon"), Icon12x12));
+	StyleSet->Set("MDSStyleSet.Buttons.Documentation.Small", new IMAGE_BRUSH(TEXT("DocumentationIcon"), Icon12x12));
 
 	StyleSet->Set("MDSStyleSet.Node.Icon.large", new IMAGE_BRUSH(TEXT("DialogueNodeIcon"), Icon64x64));
 	StyleSet->Set("MDSStyleSet.Node.Icon", new IMAGE_BRUSH(TEXT("DialogueNodeIcon"), Icon16x16));
-	StyleSet->Set("MDSStyleSet.Node.Icon.small", new IMAGE_BRUSH(TEXT("DialogueNodeIcon"), Icon12x12));
+	StyleSet->Set("MDSStyleSet.Node.Icon.Small", new IMAGE_BRUSH(TEXT("DialogueNodeIcon"), Icon12x12));
 
 	StyleSet->Set("MDSStyleSet.Icon.Close", new IMAGE_BRUSH(TEXT("CloseIcon"), Icon12x12));
-	StyleSet->Set("MDSStyleSet.Icon.SupportDiscord", new IMAGE_BRUSH(TEXT("DiscordIcon"), Icon12x12));
+	StyleSet->Set("MDSStyleSet.Icon.SupportDiscord", new IMAGE_BRUSH(TEXT("Help_Icon"), Icon12x12));
 	StyleSet->Set("MDSStyleSet.Icon.HeartIcon", new IMAGE_BRUSH(TEXT("HeartIcon"), Icon12x12));
 	StyleSet->Set("MDSStyleSet.Icon.UBIcon", new IMAGE_BRUSH(TEXT("UnrealBucketIcon"), Icon12x12));
 	StyleSet->Set("MDSStyleSet.Icon.MoneyIcon", new IMAGE_BRUSH(TEXT("MoneyIcon"), Icon12x12));
 
-	StyleSet->Set("MDSStyleSet.Help.Icon", new IMAGE_BRUSH(TEXT("Help_Icon"), Icon16x16));
-	StyleSet->Set("MDSStyleSet.Dialoguer.Icon", new IMAGE_BRUSH(TEXT("Dialoguer_Icon"), Icon16x16));
-	StyleSet->Set("MDSStyleSet.Wiki.Icon", new IMAGE_BRUSH(TEXT("Wiki_Icon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Help", new IMAGE_BRUSH(TEXT("Help_Icon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.Help.Small", new IMAGE_BRUSH(TEXT("Help_Icon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Help.large", new IMAGE_BRUSH(TEXT("Help_Icon"), Icon64x64));
+
+	StyleSet->Set("MDSStyleSet.Dialoguer", new IMAGE_BRUSH(TEXT("Dialoguer_Icon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.Dialoguer.Small", new IMAGE_BRUSH(TEXT("Dialoguer_Icon"), Icon16x16));	
+	StyleSet->Set("MDSStyleSet.Dialoguer.large", new IMAGE_BRUSH(TEXT("Dialoguer_Icon"), Icon64x64));
+
+	StyleSet->Set("MDSStyleSet.Wiki", new IMAGE_BRUSH(TEXT("Wiki_Icon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.Wiki.Small", new IMAGE_BRUSH(TEXT("Wiki_Icon"), Icon16x16));	
+	StyleSet->Set("MDSStyleSet.Wiki.large", new IMAGE_BRUSH(TEXT("Wiki_Icon"), Icon64x64));
 
 	const FButtonStyle MounteaButtonStyle = FButtonStyle()
 		.SetNormal(BOX_BRUSH("RoundedSelection_16x", 4.0f / 16.0f, FLinearColor(1, 1, 1, 0.1f)))

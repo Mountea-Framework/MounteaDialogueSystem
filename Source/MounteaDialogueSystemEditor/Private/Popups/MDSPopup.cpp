@@ -10,6 +10,7 @@
 #include "SWebBrowser.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "Widgets/Layout/SScaleBox.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Text/SRichTextBlock.h"
 
@@ -264,10 +265,15 @@ void MDSPopup::Open(const FString& Changelog)
 			
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
-					[
-						SNew(SImage)
-						.ColorAndOpacity(FLinearColor::Red)
-						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.HeartIcon"))
+					[						
+						SNew(SScaleBox)
+						.VAlign(VAlign_Center)
+						.HAlign(HAlign_Center)
+						[
+							SNew(SImage)
+							.ColorAndOpacity(FLinearColor::Red)
+							.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.HeartIcon"))
+						]
 					]
 				]
 			]
@@ -305,8 +311,13 @@ void MDSPopup::Open(const FString& Changelog)
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
 					[
-						SNew(SImage)
-						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.MoneyIcon"))
+						SNew(SScaleBox)
+						.VAlign(VAlign_Center)
+						.HAlign(HAlign_Center)
+						[
+							SNew(SImage)
+							.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.MoneyIcon"))
+						]
 					]
 				]
 			]
@@ -343,9 +354,14 @@ void MDSPopup::Open(const FString& Changelog)
 			
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
-					[
-						SNew(SImage)
-						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.SupportDiscord"))
+					[						
+						SNew(SScaleBox)
+						.VAlign(VAlign_Center)
+						.HAlign(HAlign_Center)
+						[
+							SNew(SImage)
+							.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.SupportDiscord"))
+						]
 					]
 				]
 			]
@@ -383,8 +399,13 @@ void MDSPopup::Open(const FString& Changelog)
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
 					[
-						SNew(SImage)
-						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.UBIcon"))
+						SNew(SScaleBox)
+						.VAlign(VAlign_Center)
+						.HAlign(HAlign_Center)
+						[
+							SNew(SImage)
+							.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.UBIcon"))
+						]
 					]
 				]
 			]
@@ -421,9 +442,15 @@ void MDSPopup::Open(const FString& Changelog)
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
 					[
-						SNew(SImage)
-						.ColorAndOpacity(FLinearColor::Red)
-						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.Close"))
+						
+						SNew(SScaleBox)
+						.VAlign(VAlign_Center)
+						.HAlign(HAlign_Center)
+						[
+							SNew(SImage)
+							.ColorAndOpacity(FLinearColor::Red)
+							.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.Close"))
+						]
 					]
 				]
 			]

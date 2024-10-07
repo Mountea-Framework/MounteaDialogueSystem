@@ -28,7 +28,6 @@
 #include "AssetActions/MounteaDialogueDataTableAssetAction.h"
 #include "DetailsPanel/MounteaDialogueDecorator_Details.h"
 #include "HelpButton/MDSCommands.h"
-#include "HelpButton/MDSHelpStyle.h"
 #include "ImportConfig/MounteaDialogueImportConfig.h"
 #include "Interfaces/IMainFrameModule.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
@@ -197,9 +196,6 @@ void FMounteaDialogueSystemEditor::StartupModule()
 
 	// Register Menu Buttons
 	{
-		FMDSHelpStyle::Initialize();
-		FMDSHelpStyle::ReloadTextures();
-
 		FMDSCommands::Register();
 
 		PluginCommands = MakeShareable(new FUICommandList);
@@ -237,7 +233,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 				PluginCommands,
 				NSLOCTEXT("MounteaSupport", "TabTitle", "Mountea Support"),
 				NSLOCTEXT("MounteaSupport", "TooltipText", "Opens Mountea Framework Support channel"),
-				FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Help.Icon")
+				FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Help")
 			);
 		}
 	}
@@ -319,8 +315,6 @@ void FMounteaDialogueSystemEditor::ShutdownModule()
 		UToolMenus::UnRegisterStartupCallback(this);
 
 		UToolMenus::UnregisterOwner(this);
-
-		FMDSHelpStyle::Shutdown();
 
 		FMDSCommands::Unregister();
 	}
@@ -563,7 +557,7 @@ void FMounteaDialogueSystemEditor::RegisterMenus()
 					PluginCommands,
 					LOCTEXT("MounteaSystemEditor_SupportButton_Label", "Mountea Support"),
 					LOCTEXT("MounteaSystemEditor_SupportButton_ToolTip", "🆘 Open Mountea Framework Support channel"),
-					FSlateIcon(FMDSHelpStyle::GetAppStyleSetName(), "MDSStyleSet.Help.Icon")
+					FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Help")
 				);
 				SupportEntry.Name = FName("MounteaFrameworkSupport");
 			}
@@ -582,7 +576,7 @@ void FMounteaDialogueSystemEditor::RegisterMenus()
 					FOnGetContent::CreateRaw(this, &FMounteaDialogueSystemEditor::MakeMounteaMenuWidget),
 					LOCTEXT("MounteaMainMenu_Label", "Mountea Framework"),
 					LOCTEXT("MounteaMainMenu_Tooltip", "📂 Open Mountea Framework menu.\n\n❔ Provides link to Documentation, Support Discord and Dialogue tool."),
-					FSlateIcon(FAppStyle::Get().GetStyleSetName(), "MDSStyleSet.Dialoguer.Icon"),
+					FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Dialoguer"),
 					false,
 					"MounteaMenu"
 				));
@@ -605,7 +599,7 @@ TSharedRef<SWidget> FMounteaDialogueSystemEditor::MakeMounteaMenuWidget() const
 		MenuBuilder.AddMenuEntry(
 			LOCTEXT("MounteaSystemEditor_SupportButton_Label", "Mountea Support"),
 			LOCTEXT("MounteaSystemEditor_SupportButton_ToolTip", "🆘 Open Mountea Framework Support channel"),
-			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Help.Icon"),
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Help"),
 			FUIAction(
 				FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::PluginButtonClicked)
 			)
@@ -614,7 +608,7 @@ TSharedRef<SWidget> FMounteaDialogueSystemEditor::MakeMounteaMenuWidget() const
 		MenuBuilder.AddMenuEntry(
 			LOCTEXT("MounteaSystemEditor_WikiButton_Label", "Mountea Wiki"),
 			LOCTEXT("MounteaSystemEditor_WikiButton_ToolTip", "📖 Open Mountea Framework Documentation"),
-			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Wiki.Icon"),
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Wiki"),
 			FUIAction(
 				FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::WikiButtonClicked)
 			)
@@ -628,7 +622,7 @@ TSharedRef<SWidget> FMounteaDialogueSystemEditor::MakeMounteaMenuWidget() const
 		MenuBuilder.AddMenuEntry(
 			LOCTEXT("MounteaSystemEditor_DialoguerButton_Label", "Mountea Dialoguer"),
 			LOCTEXT("MounteaSystemEditor_DialoguerButton_ToolTip", "⛰ Open Mountea Dialoguer Standalone Tool\n\n❔ Mountea Dialoguer is a standalone tool created for Dialogue crafting. Mountea Dialogue System supports native import for `.mnteadlg` files."),
-			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Dialoguer.Icon"),
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Dialoguer"),
 			FUIAction(
 				FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::DialoguerButtonClicked)
 			)
