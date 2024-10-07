@@ -4,6 +4,7 @@
 
 #include "Edges/MounteaDialogueGraphEdge.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Misc/DataValidation.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
@@ -234,7 +235,7 @@ void UMounteaDialogueGraph::TickMounteaEvent_Implementation(UObject* SelfRef, UO
 
 #if WITH_EDITOR
 
-bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat)
+bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat) const
 {
 	bool bReturnValue = true;
 
