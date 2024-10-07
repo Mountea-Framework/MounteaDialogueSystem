@@ -37,6 +37,8 @@ const FString ChangelogURL = FString("https://raw.githubusercontent.com/Mountea-
 
 #define LOCTEXT_NAMESPACE "FMounteaDialogueSystemEditor"
 
+static const FName MenuName("LevelEditor.LevelEditorToolBar.PlayToolBar");
+
 class FGraphPanelNodeFactory_MounteaDialogueGraph : public FGraphPanelNodeFactory
 {
 public:
@@ -242,33 +244,30 @@ void FMounteaDialogueSystemEditor::StartupModule()
 
 	// Register in Level Editor Toolbar
 	{
-		UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar.PlayToolBar");
+		if (!UToolMenus::Get()->IsMenuRegistered(MenuName))
 		{
-			FToolMenuSection& Section = ToolbarMenu->FindOrAddSection("MounteaFramework");
-			{
-				Section.Label = FText::FromString(TEXT("Mountea Framework"));
-				
-				FToolMenuEntry& helpEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(
-					FMDSCommands::Get().PluginAction,
-					TAttribute<FText>(FText::FromString("Support")),
-					TAttribute<FText>(FText::FromString(TEXT("🆘 Open Mountea Framework Support channel"))),
-					FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Help.Icon")
+			
+		}
+
+		UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu(MenuName);
+		{
+			FToolMenuEntry& Entry = ToolbarMenu->FindOrAddSection("MounteaFramework")
+				.AddEntry(FToolMenuEntry::InitComboButton(
+					"MounteaMenu",
+					FUIAction(),
+					FOnGetContent::CreateRaw(this, &FMounteaDialogueSystemEditor::MakeMounteaMenuWidget),
+					LOCTEXT("MounteaMainMenu_Label", "Mountea Framework"),
+					LOCTEXT("MounteaMainMenu_Tooltip", "Open Mountea Framework menu.\nProvides link to Documentation, Support Discord and Dialogue tool."),
+					FSlateIcon(FAppStyle::Get().GetStyleSetName(), "MDSStyleSet.Dialoguer.Icon"),
+					false,
+					"MounteaMenu"
 				));
-				helpEntry.SetCommandList(PluginCommands);
-				helpEntry.InsertPosition.Position = EToolMenuInsertType::First;
-				
-				FToolMenuEntry& dialoguerEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(
-					FMDSCommands::Get().DialoguerAction,
-					TAttribute<FText>(FText::FromString("Dialoguer")),
-					TAttribute<FText>(FText::FromString(TEXT("🧭 Open Mountea Dialoguer Standalone Tool\n\n❔ Mountea Dialoguer is a standalone tool created for Dialogue crafting. Mountea Dialogue System supports native import for `.mnteadlg` files."))),
-					FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Dialoguer.Icon")
-				));
-				dialoguerEntry.SetCommandList(PluginCommands);
-				dialoguerEntry.InsertPosition.Position = EToolMenuInsertType::Default;
-			}
+            
+			Entry.Label = LOCTEXT("MounteaFramework_Label", "Mountea Framework");
+			Entry.Name = TEXT("MounteaMenu");
+			Entry.SetCommandList(PluginCommands);
 		}
 	}
-
 
 	// Load import config
 	{
@@ -415,9 +414,29 @@ void FMounteaDialogueSystemEditor::SendHTTPGet_Tags()
 	Request->ProcessRequest();
 }
 
-void FMounteaDialogueSystemEditor::DialoguerButtonClicked()
+void FMounteaDialogueSystemEditor::DialoguerButtonClicked() const
 {
 	const FString URL = "https://mountea-framework.github.io/MounteaDialoguer/";
+
+	if (!URL.IsEmpty())
+	{
+		FPlatformProcess::LaunchURL(*URL, nullptr, nullptr);
+	}
+}
+
+void FMounteaDialogueSystemEditor::WikiButtonClicked() const
+{
+	const FString URL = "https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Getting-Started";
+
+	if (!URL.IsEmpty())
+	{
+		FPlatformProcess::LaunchURL(*URL, nullptr, nullptr);
+	}
+}
+
+void FMounteaDialogueSystemEditor::PluginButtonClicked() const
+{
+	const FString URL = "https://discord.gg/2vXWEEN";
 
 	if (!URL.IsEmpty())
 	{
@@ -549,16 +568,6 @@ void FMounteaDialogueSystemEditor::OnGetResponse_Tags(FHttpRequestPtr Request, F
 	}
 }
 
-void FMounteaDialogueSystemEditor::PluginButtonClicked()
-{
-	const FString URL = "https://discord.gg/2vXWEEN";
-
-	if (!URL.IsEmpty())
-	{
-		FPlatformProcess::LaunchURL(*URL, nullptr, nullptr);
-	}
-}
-
 void FMounteaDialogueSystemEditor::RegisterMenus()
 {
 	// Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
@@ -619,6 +628,47 @@ void FMounteaDialogueSystemEditor::RegisterMenus()
 		}
 
 	}
+}
+
+TSharedRef<SWidget> FMounteaDialogueSystemEditor::MakeMounteaMenuWidget() const
+{
+    FMenuBuilder MenuBuilder(true, PluginCommands);
+
+    MenuBuilder.BeginSection("MounteaMenuOptions", LOCTEXT("MounteaMenuOptions_Options", "Mountea Framework"));
+    {
+        // Dialoguer Entry
+        MenuBuilder.AddMenuEntry(
+            LOCTEXT("MounteaSystemEditor_DialoguerButton_Label", "Mountea Dialoguer"),
+            LOCTEXT("MounteaSystemEditor_DialoguerButton_ToolTip", "🧭 Open Mountea Dialoguer Standalone Tool\n\n❔ Mountea Dialoguer is a standalone tool created for Dialogue crafting. Mountea Dialogue System supports native import for `.mnteadlg` files."),
+            FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Dialoguer.Icon"),
+            FUIAction(
+                FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::DialoguerButtonClicked)
+            )
+        );
+
+        // Support Entry
+        MenuBuilder.AddMenuEntry(
+            LOCTEXT("MounteaSystemEditor_SupportButton_Label", "Mountea Support"),
+            LOCTEXT("MounteaSystemEditor_SupportButton_ToolTip", "🆘 Open Mountea Framework Support channel"),
+            FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Help.Icon"),
+            FUIAction(
+                FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::PluginButtonClicked)
+            )
+        );
+
+        // Wiki Entry
+        MenuBuilder.AddMenuEntry(
+            LOCTEXT("MounteaSystemEditor_WikiButton_Label", "Mountea Wiki"),
+            LOCTEXT("MounteaSystemEditor_WikiButton_ToolTip", "🆘 Open Mountea Framework Documentation"),
+            FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Dialoguer.Icon"),
+            FUIAction(
+                FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::WikiButtonClicked)
+            )
+        );
+    }
+    MenuBuilder.EndSection();
+
+    return MenuBuilder.MakeWidget();
 }
 
 #undef LOCTEXT_NAMESPACE
