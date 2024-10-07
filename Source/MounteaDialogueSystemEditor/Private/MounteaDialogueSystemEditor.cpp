@@ -195,7 +195,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		PropertyModule.NotifyCustomizationModuleChanged();
 	}
 
-	// Register Help Button
+	// Register Menu Buttons
 	{
 		FMDSHelpStyle::Initialize();
 		FMDSHelpStyle::ReloadTextures();
@@ -239,35 +239,6 @@ void FMounteaDialogueSystemEditor::StartupModule()
 				NSLOCTEXT("MounteaSupport", "TooltipText", "Opens Mountea Framework Support channel"),
 				FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Help.Icon")
 			);
-		}
-	}
-
-	// Register in Level Editor Toolbar
-	{
-		if (!UToolMenus::Get()->IsMenuRegistered(MenuName))
-		{
-			
-		}
-
-		UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu(MenuName);
-		{
-			ToolbarMenu->RemoveSection("MounteaFramework"); // Cleanup
-			FToolMenuEntry& Entry = ToolbarMenu->FindOrAddSection("MounteaFramework")
-				.AddEntry(FToolMenuEntry::InitComboButton(
-					"MounteaMenu",
-					FUIAction(),
-					FOnGetContent::CreateRaw(this, &FMounteaDialogueSystemEditor::MakeMounteaMenuWidget),
-					LOCTEXT("MounteaMainMenu_Label", "Mountea Framework"),
-					LOCTEXT("MounteaMainMenu_Tooltip", "📂 Open Mountea Framework menu.\n\n❔ Provides link to Documentation, Support Discord and Dialogue tool."),
-					FSlateIcon(FAppStyle::Get().GetStyleSetName(), "MDSStyleSet.Dialoguer.Icon"),
-					false,
-					"MounteaMenu"
-				));
-			
-			Entry.Label = LOCTEXT("MounteaFramework_Label", "Mountea Framework");
-			Entry.Name = TEXT("MounteaMenu");
-			Entry.StyleNameOverride = "CalloutToolbar";
-			Entry.SetCommandList(PluginCommands);
 		}
 	}
 
@@ -581,7 +552,7 @@ void FMounteaDialogueSystemEditor::RegisterMenus()
 		{
 			if (Menu->ContainsSection("MounteaFramework") == false)
 			{
-				FToolMenuSection& Section = Menu->FindOrAddSection("Mountea Framework");
+				FToolMenuSection& Section = Menu->FindOrAddSection("MounteaFramework");
 				
 				Section.InsertPosition.Position = EToolMenuInsertType::First;
 				Section.Label = FText::FromString(TEXT("Mountea Framework"));
@@ -590,45 +561,37 @@ void FMounteaDialogueSystemEditor::RegisterMenus()
 				(
 					FMDSCommands::Get().PluginAction,
 					PluginCommands,
-					NSLOCTEXT("MounteaSupport", "TabTitle", "Mountea Support"),
-					NSLOCTEXT("MounteaSupport", "TooltipText", "Opens Mountea Framework Support channel"),
-					FSlateIcon(FMDSHelpStyle::GetAppStyleSetName(), "MDSHelpStyleSet.Toolbar.HelpIcon.small")
+					LOCTEXT("MounteaSystemEditor_SupportButton_Label", "Mountea Support"),
+					LOCTEXT("MounteaSystemEditor_SupportButton_ToolTip", "🆘 Open Mountea Framework Support channel"),
+					FSlateIcon(FMDSHelpStyle::GetAppStyleSetName(), "MDSStyleSet.Help.Icon")
 				);
 				SupportEntry.Name = FName("MounteaFrameworkSupport");
-				
-				/*
-				FToolMenuEntry WikiEntry = Section.AddMenuEntryWithCommandList
-				(
-					FMDSCommands::Get().WikiAction,
-					PluginCommands,
-					NSLOCTEXT("MounteaDialogueWiki", "TabTitle", "Dialogue Wiki"),
-					NSLOCTEXT("MounteaDialogueWiki", "TooltipText", "Opens Mountea Dialogue System Wiki page"),
-					FSlateIcon(FMDSHelpStyle::GetAppStyleSetName(), "MDSHelpStyleSet.Toolbar.HelpIcon.small")
-				);
-				WikiEntry.Name = FName("MounteaDialogueWiki");
-				*/
 			}
 		}
 	}
 
 	// Register in Level Editor Toolbar
 	{
-		if (UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar"))
+		UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu(MenuName);
 		{
-			if (ToolbarMenu->ContainsSection("MounteaFramework") == false)
-			{
-				FToolMenuSection& Section = ToolbarMenu->FindOrAddSection("Mountea Framework");
-				Section.Label = FText::FromString(TEXT("Mountea Framework"));
+			ToolbarMenu->RemoveSection("MounteaFramework"); // Cleanup
+			FToolMenuEntry& Entry = ToolbarMenu->FindOrAddSection("MounteaFramework")
+				.AddEntry(FToolMenuEntry::InitComboButton(
+					"MounteaMenu",
+					FUIAction(),
+					FOnGetContent::CreateRaw(this, &FMounteaDialogueSystemEditor::MakeMounteaMenuWidget),
+					LOCTEXT("MounteaMainMenu_Label", "Mountea Framework"),
+					LOCTEXT("MounteaMainMenu_Tooltip", "📂 Open Mountea Framework menu.\n\n❔ Provides link to Documentation, Support Discord and Dialogue tool."),
+					FSlateIcon(FAppStyle::Get().GetStyleSetName(), "MDSStyleSet.Dialoguer.Icon"),
+					false,
+					"MounteaMenu"
+				));
 			
-				FToolMenuEntry& Entry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FMDSCommands::Get().PluginAction));
-				Entry.SetCommandList(PluginCommands);
-			
-				Entry.InsertPosition.Position = EToolMenuInsertType::First;
-				Entry.Icon = FSlateIcon(FMDSHelpStyle::GetAppStyleSetName(), "MDSHelpStyleSet.Toolbar.HelpIcon");
-				Entry.Name = FName("MounteaFrameworkSupport");
-			}
+			Entry.Label = LOCTEXT("MounteaFramework_Label", "Mountea Framework");
+			Entry.Name = TEXT("MounteaMenu");
+			Entry.StyleNameOverride = "CalloutToolbar";
+			Entry.SetCommandList(PluginCommands);
 		}
-
 	}
 }
 
