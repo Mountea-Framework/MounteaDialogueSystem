@@ -75,7 +75,7 @@ private:
 	TArray< TSharedPtr<IAssetTypeActions> > CreatedAssetTypeActions;
 
 	EAssetTypeCategories::Type MounteaDialogueGraphAssetCategoryBit;
-	FHttpModule* Http;
+	FHttpModule* Http = nullptr;
 
 	TArray<FName> RegisteredCustomClassLayouts;
 	TArray<FName> RegisteredCustomPropertyTypeLayout;
