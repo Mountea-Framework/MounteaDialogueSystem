@@ -228,8 +228,8 @@ public:
 
 #if WITH_EDITOR
 
-	virtual bool ValidateGraph(FDataValidationContext& Context, bool RichTextFormat) const;
-	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+	virtual bool ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat) const;
+	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
 
 public:
 	// Construct and initialize a node within this Dialogue.

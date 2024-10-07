@@ -443,7 +443,6 @@ void MDSPopup::Open(const FString& Changelog)
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
 					[
-						
 						SNew(SScaleBox)
 						.VAlign(VAlign_Center)
 						.HAlign(HAlign_Center)
