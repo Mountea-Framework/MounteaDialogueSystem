@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 >   - If Participant has Saved Node which is from different Graph than the current one, then Dialogue ignores Saved Node and continues from start
 > - Fixed Decorators initialization
 >   - Ensured all Decorators have Manager and Participant before validation
+> - Fixed broken Input Actions and Mappings
 
 ### Changed
 > - *Traversed Path* now contains Graph ID
