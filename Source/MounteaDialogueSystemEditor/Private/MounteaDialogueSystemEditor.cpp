@@ -417,13 +417,11 @@ bool FMounteaDialogueSystemEditor::DoesHaveValidTags() const
 	
 	const FString PluginDirectory = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"))->GetBaseDir();
 	const FString ConfigFilePath = PluginDirectory + "/Config/Tags/MounteaDialogueSystemTags.ini";
-
-	if (FPaths::FileExists(ConfigFilePath))
+	const FString NormalizedConfigFilePath =  FConfigCacheIni::NormalizeConfigIniPath(ConfigFilePath);
+	
+	if (FPaths::FileExists(NormalizedConfigFilePath))
 	{
-		FString ConfigContent;
-		FConfigFile* ConfigFile = GConfig->Find(ConfigFilePath);
-
-		return true;
+		return GConfig->Find(NormalizedConfigFilePath) != nullptr;
 	}
 	
 	return false;
@@ -443,8 +441,9 @@ void FMounteaDialogueSystemEditor::UpdateTagsConfig(const FString& NewContent)
 
 	const FString PluginDirectory = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"))->GetBaseDir();
 	const FString ConfigFilePath = PluginDirectory + "/Config/Tags/MounteaDialogueSystemTags.ini";
+	const FString NormalizedConfigFilePath =  FConfigCacheIni::NormalizeConfigIniPath(ConfigFilePath);
 
-	FConfigFile* CurrentConfig = GConfig->Find(ConfigFilePath);
+	FConfigFile* CurrentConfig = GConfig->Find(NormalizedConfigFilePath);
 
 	FString CurrentContent;
 	CurrentConfig->WriteToString(CurrentContent);
@@ -492,7 +491,7 @@ void FMounteaDialogueSystemEditor::CreateTagsConfig(const FString& NewContent)
 
 	const FString PluginDirectory = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"))->GetBaseDir();
 	const FString ConfigFilePath = PluginDirectory + "/Config/Tags/MounteaDialogueSystemTags.ini";
-
+	const FString NormalizedConfigFilePath =  FConfigCacheIni::NormalizeConfigIniPath(ConfigFilePath);
 	TArray<FString> Lines;
 	NewContent.ParseIntoArray(Lines, TEXT("\n"), true);
 
@@ -511,7 +510,7 @@ void FMounteaDialogueSystemEditor::CreateTagsConfig(const FString& NewContent)
 	
 	FConfigFile NewConfig;
 	NewConfig.SetArray(TEXT("/Script/GameplayTags.GameplayTagsList"), TEXT("GameplayTagList"), CleanedLines);
-	NewConfig.Write(ConfigFilePath);
+	NewConfig.Write(NormalizedConfigFilePath);
 }
 
 void FMounteaDialogueSystemEditor::OnGetResponse_Tags(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
