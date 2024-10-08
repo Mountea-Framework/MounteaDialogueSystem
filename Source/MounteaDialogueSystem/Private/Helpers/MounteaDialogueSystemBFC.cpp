@@ -315,11 +315,11 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 	UMounteaDialogueGraphNode* NodeToStart = MainParticipant->Execute_GetSavedStartingNode(MainParticipant.GetObject());
 	if (!NodeToStart || NodeToStart->CanStartNode() == false)
 	{
-		NodeToStart = Graph->GetStartNode();
+		NodeToStart = GetFirstChildNode(Graph->GetStartNode());
 	}
 	else if (NodeToStart && NodeToStart->Graph != Graph)
 	{
-		NodeToStart = Graph->GetStartNode();
+		NodeToStart = GetFirstChildNode(Graph->GetStartNode());
 	}
 	
 	if (NodeToStart == nullptr)
@@ -640,9 +640,9 @@ UMounteaDialogueGraphNode* UMounteaDialogueSystemBFC::GetFirstChildNode(const UM
 {
 	if (ParentNode == nullptr) return nullptr;
 
-	if (ParentNode->GetChildrenNodes().IsValidIndex(0))
+	if (ParentNode->GetChildrenNodes().IsValidIndex(0) && ParentNode->GetChildrenNodes()[0]->CanStartNode())
 	{
-		return ParentNode->GetChildrenNodes()[0]->CanStartNode() ? ParentNode->GetChildrenNodes()[0] : nullptr;
+		return ParentNode->GetChildrenNodes()[0];
 	}
 
 	return nullptr;

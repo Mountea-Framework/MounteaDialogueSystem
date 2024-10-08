@@ -10,6 +10,8 @@
 class FHttpModule;
 class FSlateStyleSet;
 
+DECLARE_DELEGATE_OneParam(FOnMounteaMenuSelected, FString);
+
 class FMounteaDialogueSystemEditor : public IModuleInterface
 {
 	public:
@@ -49,10 +51,12 @@ private:
 	UFUNCTION() void SendHTTPGet();
 	void OnGetResponse_Tags(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 	UFUNCTION() void SendHTTPGet_Tags();
-
-	void DialoguerButtonClicked();
-	void PluginButtonClicked();
+	
+	void DialoguerButtonClicked() const;
+	void WikiButtonClicked() const;
+	void PluginButtonClicked() const;
 	void RegisterMenus();
+	TSharedRef<SWidget> MakeMounteaMenuWidget() const;
 
 protected:
 		
@@ -71,7 +75,7 @@ private:
 	TArray< TSharedPtr<IAssetTypeActions> > CreatedAssetTypeActions;
 
 	EAssetTypeCategories::Type MounteaDialogueGraphAssetCategoryBit;
-	FHttpModule* Http;
+	FHttpModule* Http = nullptr;
 
 	TArray<FName> RegisteredCustomClassLayouts;
 	TArray<FName> RegisteredCustomPropertyTypeLayout;
