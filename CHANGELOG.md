@@ -4,6 +4,44 @@ Current Version: 2.0.0.51
 
 All notable changes to this project will be documented in this file.
 
+**Version 2.0.2.51**
+### Added 
+> - Typewriter Effect
+>   - Effect is in *Dialogue Row*
+>   - Effect can be turned on/off using Decorator
+> - *Import/Export* logic *(THIS FEATURE MIGHT BE UNSTABLE)*
+>   - Every Dialogue can be export as *mnteadlg* file
+>   - Dialogue can be import to *Mountea Dialoguer* tool and reimported back again
+>   - New config file in Project Settings contains all import info for reimports
+> - Right-click menu now contains *Dialogue Data table shortcut*
+> - Z-Order value in Dialogue Widget
+>   - Manager has Getter/Setter functions for updating the Z-Order
+> - Auto Gameplay Tags download
+>   - This way default Gameplay Tags will always be present
+> - Added helper function *GetObjectByClass* which can input Object, Class and will return Object of the selected class (instead of casting)
+> - Added custom K2Nodes visuals
+
+### Fixed
+> - Fixed *WBP_DialoguerRow_WithIcon* missing reference 
+> - Fixed functions documentation to mention Player *State* instead of Controller
+> - Fixed dialogue initialization crash with Saved Node
+>   - If Participant has Saved Node which is from different Graph than the current one, then Dialogue ignores Saved Node and continues from start
+> - Fixed Decorators initialization
+>   - Ensured all Decorators have Manager and Participant before validation
+> - Fixed broken Input Actions and Mappings
+
+### Changed
+> - *Traversed Path* now contains Graph ID
+> - Right-click menu updated
+>   - Menu is now on top
+> - *AllowOnlyFirstTime* decorator will result in failed validation if attached to *first* dialogue node after start node
+> - Toolbar Ribbon buttons reworked
+>   - Dropdown menu now offers more links with better descriptions
+> - Updated welcome screen and validation screen with updated icons
+> - *InitializeDialogue* function from Function Library has been renamed to *Advanced Dialogue Initialization*
+> - All functions are now categorized by *Class*
+>   - Manager function are in *Mountea|Dialogue|Manager* section etc.
+
 **Version 2.0.0.51**
 ### Added
 > - Dialogue Nodes can be created in blueprints
@@ -42,7 +80,6 @@ All notable changes to this project will be documented in this file.
 > - Added: More robust logs for `InitializeDialogue`
 > - Added: New Dialogue Row Data Duration Mode `Manual` to allow Manual skipping of Row Datas
 > - Added: New and nicer Menu Selector
-> - Added: Default GameplayTags
 
 ### Fixed
 > - Fixed: Editor Crash fix for Auto Arrange
