@@ -29,7 +29,7 @@ protected:
 	 * @param UpdatedText		The text that has been updated.
 	 * @param Alpha					The progress of the typewriter effect (0 to 1).
 	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Monutea|Dialogue", meta=(CustomTag="MounteaK2Delegate"))
+	UFUNCTION(BlueprintImplementableEvent, Category="Monutea|Dialogue")
 	void				OnTypeWriterEffectUpdated								(const FText& UpdatedText, float Alpha);
 	
 	/**
