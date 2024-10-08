@@ -4,7 +4,7 @@ Current Version: 2.0.0.51
 
 All notable changes to this project will be documented in this file.
 
-**Version 2.0.2.51**
+**Version 2.0.2**
 ### Added 
 > - Typewriter Effect
 >   - Effect is in *Dialogue Row*
@@ -42,7 +42,7 @@ All notable changes to this project will be documented in this file.
 > - All functions are now categorized by *Class*
 >   - Manager function are in *Mountea|Dialogue|Manager* section etc.
 
-**Version 2.0.0.51**
+**Version 2.0.0**
 ### Added
 > - Dialogue Nodes can be created in blueprints
 >   - That means you can create your own Nodes!
@@ -74,7 +74,7 @@ All notable changes to this project will be documented in this file.
 > - Dialogue Node and pre-defined Decorators require `FDialogueRow` DataTable
 > - Dialogue Decorators don't have drop arrow in the list anymore - replaced with `Delete` button
 
-**Version 1.0.6.51**
+**Version 1.0.6**
 ### Added
 > - Added: Advanced Wiring Style for Nodes
 > - Added: More robust logs for `InitializeDialogue`
@@ -91,7 +91,7 @@ All notable changes to this project will be documented in this file.
 > - Changed: Lead Node now can point to multiple Answer Nodes
 > - Changed: Answer Node now can point to multiple Lead Nodes
 
-**Version 1.0.5.51**
+**Version 1.0.5**
 ### Added
 > - Added: Added support for Gameplay Tags (beta)
 
@@ -104,7 +104,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 > - Changed: Exposed `bDoesAutoStart` for Dialogue Nodes
 
-**Version 1.0.0.51**
+**Version 1.0.0**
 ### Added
 > - Added: Mountea Dialogue Graph
 > - Added: Mountea Dialogue Node
