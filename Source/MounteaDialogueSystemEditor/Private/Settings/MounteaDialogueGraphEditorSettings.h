@@ -221,10 +221,23 @@ private:
 
 #pragma region GameplayTags
 
-	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags")
+	/**
+	 * Allow automatic gameplay tag checks.
+	 * 
+	 * If set to true, the system will automatically verify and update gameplay tags on engine startup.
+	 * Default is True.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", meta=(ConfigRestartRequired=true))
 	uint8 bAllowAutoGameplayTagsCheck : 1;
 
-	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay=true)
+	/**
+	 * URL for the Gameplay Tags configuration file.
+	 * 
+	 * This URL points to a remote file containing base gameplay tag definitions.
+	 * The system will use this URL to download and apply the tags if allowed.
+	 * Default: @link https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay=true, meta=(ConfigRestartRequired=true))
 	FString GameplayTagsURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini");
 	
 #pragma endregion
