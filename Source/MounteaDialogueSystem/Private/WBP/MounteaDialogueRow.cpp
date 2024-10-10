@@ -1,6 +1,5 @@
 ﻿// All rights reserved Dominik Morse (Pavlicek) 2024.
 
-
 #include "WBP/MounteaDialogueRow.h"
 #include "TimerManager.h"
 
