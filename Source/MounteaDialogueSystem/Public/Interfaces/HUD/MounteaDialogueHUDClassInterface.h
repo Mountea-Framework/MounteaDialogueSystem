@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "Widgets/Layout/Anchors.h"
-#include "SlateCore/Public/Layout/Margin.h"
+#include "Layout/Margin.h"
 #include "MounteaDialogueHUDClassInterface.generated.h"
 
 
