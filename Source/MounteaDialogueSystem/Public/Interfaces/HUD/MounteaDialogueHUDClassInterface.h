@@ -36,8 +36,8 @@ public:
 	virtual UUserWidget* GetViewportWidget_Implementation() const = 0;
 
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|HUD|Viewport")
-	void AddChildWidgetToViewport(UUserWidget* ChildWidget, const int32 ZOrder = 0, const FAnchors WidgetAnchors = FAnchors(), const FMargin& WidgetMargin = FMargin());
-	virtual void AddChildWidgetToViewport_Implementation(UUserWidget* ChildWidget, const int32 ZOrder = 0, const FAnchors WidgetAnchors = FAnchors(), const FMargin& WidgetMargin = FMargin()) = 0;
+	void AddChildWidgetToViewport(UUserWidget* ChildWidget, const int32 ZOrder = 0, const FAnchors WidgetAnchors = FAnchors(0.f,0.f,1.f,1.f), const FMargin& WidgetMargin = FMargin());
+	virtual void AddChildWidgetToViewport_Implementation(UUserWidget* ChildWidget, const int32 ZOrder = 0, const FAnchors WidgetAnchors = FAnchors(0.f,0.f,1.f,1.f), const FMargin& WidgetMargin = FMargin()) = 0;
 
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|HUD|Viewport")
 	void RemoveChildWidgetFromViewport(UUserWidget* ChildWidget);

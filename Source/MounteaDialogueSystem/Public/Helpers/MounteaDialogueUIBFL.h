@@ -15,6 +15,34 @@ struct FDialogueOptionData;
 struct FDialogueRow;
 struct FWidgetDialogueRow;
 
+USTRUCT(BlueprintType)
+struct FWidgetAdditionParams
+{
+	GENERATED_BODY()
+
+	FWidgetAdditionParams()
+	{
+		ZOrder = 0;
+		Anchors = FAnchors(0.f, 0.f, 1.f, 1.f);
+		Margin = FMargin();
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 ZOrder;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FAnchors Anchors;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FMargin Margin;
+
+	// Static function to get default params
+	static FWidgetAdditionParams GetDefault()
+	{
+		return FWidgetAdditionParams();
+	}
+};
+
 /**
  * 
  */
@@ -124,12 +152,10 @@ public:
 	 *
 	 * @param ViewportManager    The viewport manager, an actor that implements the MounteaDialogueHUDClassInterface.
 	 * @param ChildWidget        The child widget to be added to the viewport.
-	 * @param ZOrder             The Z-order index of the child widget, determining its rendering order within the viewport.
-	 * @param WidgetAnchors      The anchors for the widget, determining how the widget is positioned relative to the viewport.
-	 * @param WidgetMargin       The margin for the widget, defining the padding or offset from the viewport bounds.
+	 * @param WidgetParams   Contains 3 options:\n 1. the anchors for the widget, determining how the widget is positioned relative to its parent\n2. the margin for the widget, defining the padding or offset from the parent's bounds\n3. The Z-order index of the child widget, determining its rendering order within the parent
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Setter", HideSelfPin="true"))
-	static void AddChildWidgetToViewport(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueHUDClassInterface")) AActor* ViewportManager, UUserWidget* ChildWidget, const int32 ZOrder = 0, const FAnchors WidgetAnchors = FAnchors(), const FMargin& WidgetMargin = FMargin());
+	static void AddChildWidgetToViewport(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueHUDClassInterface")) AActor* ViewportManager, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams = FWidgetAdditionParams());
 
 	/**
 	 * Removes a child widget from the viewport using the specified viewport manager that implements MounteaDialogueHUDClassInterface.
@@ -145,12 +171,10 @@ public:
 	 *
 	 * @param ParentWidget    The parent widget that should implement the MounteaDialogueViewportWidgetInterface.
 	 * @param ChildWidget     The child widget to be added.
-	 * @param ZOrder          The Z-order index of the child widget, determining its rendering order within the parent.
-	 * @param WidgetAnchors   The anchors for the widget, determining how the widget is positioned relative to its parent.
-	 * @param WidgetMargin    The margin for the widget, defining the padding or offset from the parent's bounds.
+	 * @param WidgetParams   Contains 3 options:\n 1. the anchors for the widget, determining how the widget is positioned relative to its parent\n2. the margin for the widget, defining the padding or offset from the parent's bounds\n3. The Z-order index of the child widget, determining its rendering order within the parent
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Setter", HideSelfPin="true"))
-	static void AddChildWidget(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueViewportWidgetInterface")) UUserWidget* ParentWidget, UUserWidget* ChildWidget, const int32 ZOrder = 0, const FAnchors WidgetAnchors = FAnchors(), const FMargin& WidgetMargin = FMargin());
+	static void AddChildWidget(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueViewportWidgetInterface")) UUserWidget* ParentWidget, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams = FWidgetAdditionParams());
 
 	/**
 	 * Removes a child widget from the specified parent widget that implements the MounteaDialogueViewportWidgetInterface.

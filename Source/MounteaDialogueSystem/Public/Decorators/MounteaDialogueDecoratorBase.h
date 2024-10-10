@@ -61,7 +61,7 @@ public:
 		return nullptr;
 	}
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator") //, meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator") "))
 	FString GetDecoratorDocumentationLink() const;
 	virtual FString GetDecoratorDocumentationLink_Implementation() const
 	{
@@ -76,14 +76,14 @@ public:
 	 * In Blueprints should be used to cache values to avoid overhead in 'ExecuteDecorator'.
 	 * Dialogue Manager will not override if empty. If need to override with nullptr use `SetOwningManager` instead.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator") //, meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator") "))
 	void InitializeDecorator(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager);
 	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager);
 
 	/**
 	 * @return Owning Dialogue Manager.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator") //, meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator") "))
 	TScriptInterface<IMounteaDialogueManagerInterface> GetManager() const;
 	virtual TScriptInterface<IMounteaDialogueManagerInterface> GetManager_Implementation() const
 	{ return OwningManager; };
@@ -100,7 +100,7 @@ public:
 	 * Cleans up the Decorator.
 	 * In Blueprints should be used to reset cached values to avoid blocking garbage collector.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator") //, meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator") "))
 	void CleanupDecorator();
 	virtual void CleanupDecorator_Implementation()
 	{
@@ -133,7 +133,7 @@ public:
 	 * Executes the Decorator.
 	 * Useful for triggering special events per Node, for instance, switching dialogue cameras.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator") //, meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator") "))
 	void ExecuteDecorator();
 	virtual void ExecuteDecorator_Implementation();
 

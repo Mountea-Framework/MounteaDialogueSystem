@@ -146,7 +146,7 @@ UUserWidget* UMounteaDialogueUIBFL::GetViewportWidget(AActor* ViewportManager)
 	return nullptr;
 }
 
-void UMounteaDialogueUIBFL::AddChildWidgetToViewport(AActor* ViewportManager, UUserWidget* ChildWidget, const int32 ZOrder, const FAnchors WidgetAnchors, const FMargin& WidgetMargin)
+void UMounteaDialogueUIBFL::AddChildWidgetToViewport(AActor* ViewportManager, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams)
 {
 	if (!IsValid(ViewportManager))
 	{
@@ -156,7 +156,7 @@ void UMounteaDialogueUIBFL::AddChildWidgetToViewport(AActor* ViewportManager, UU
 	
 	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
 	{
-		return IMounteaDialogueHUDClassInterface::Execute_AddChildWidgetToViewport(ViewportManager, ChildWidget, ZOrder, WidgetAnchors, WidgetMargin);
+		return IMounteaDialogueHUDClassInterface::Execute_AddChildWidgetToViewport(ViewportManager, ChildWidget, WidgetParams.ZOrder, WidgetParams.Anchors, WidgetParams.Margin);
 	}
 
 	LOG_ERROR(TEXT("[AddChildWidgetToViewport] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
@@ -178,7 +178,7 @@ void UMounteaDialogueUIBFL::RemoveChildWidgetFromViewport(AActor* ViewportManage
 	LOG_ERROR(TEXT("[RemoveChildWidgetFromViewport] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
 }
 
-void UMounteaDialogueUIBFL::AddChildWidget(UUserWidget* ParentWidget, UUserWidget* ChildWidget, const int32 ZOrder, const FAnchors WidgetAnchors, const FMargin& WidgetMargin)
+void UMounteaDialogueUIBFL::AddChildWidget(UUserWidget* ParentWidget, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams)
 {
 	if (!IsValid(ParentWidget))
 	{
@@ -188,7 +188,7 @@ void UMounteaDialogueUIBFL::AddChildWidget(UUserWidget* ParentWidget, UUserWidge
 	
 	if (ParentWidget->Implements<UMounteaDialogueViewportWidgetInterface>())
 	{
-		return IMounteaDialogueViewportWidgetInterface::Execute_AddChildWidget(ParentWidget, ChildWidget, ZOrder, WidgetAnchors, WidgetMargin);
+		return IMounteaDialogueViewportWidgetInterface::Execute_AddChildWidget(ParentWidget, ChildWidget, WidgetParams.ZOrder, WidgetParams.Anchors, WidgetParams.Margin);
 	}
 
 	LOG_ERROR(TEXT("[AddChildWidget] ParentWidget does not implement `MounteaDialogueViewportWidgetInterface`!"));
