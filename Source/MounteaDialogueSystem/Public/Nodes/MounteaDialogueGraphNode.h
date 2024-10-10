@@ -86,7 +86,7 @@ private:
 	 *❗ This is the world in which this Dialogue Graph Node is currently running.
 	 *❔ Can be used for accessing world-related functionality.
 	 */
-	UPROPERTY(VisibleAnywhere, Category = "Mountea|Dialogue", AdvancedDisplay=true)
+	UPROPERTY(VisibleAnywhere, Category = "Mountea|Dialogue", AdvancedDisplay)
 	UWorld* OwningWorld;
 
 #pragma endregion

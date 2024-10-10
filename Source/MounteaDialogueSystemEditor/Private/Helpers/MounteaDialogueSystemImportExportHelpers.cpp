@@ -212,7 +212,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 		if (dialogueGuid != OutGraph->GetGraphGUID())
 		{
 			// TODO: Rather than return false process creating new dialogue? Maybe expose this option to settings?
-			OutMessage = FString::Printf( TEXT("Attempting to reimport different Graph.\nUnreal Graph: %s\nSource Graph: %s"), *OutGraph->GetGraphGUID().ToString(), *dialogueGuid.ToString());
+			OutMessage = FString::Printf( TEXT("Attempting to reimport different Graph.\nUnreal Graph: %s\nSource Graph: %s"), *OutGraph->GetGraphGUID().ToString(EGuidFormats::DigitsWithHyphensLower), *dialogueGuid.ToString(EGuidFormats::DigitsWithHyphensLower));
 			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
 			return false;
 		}
@@ -1587,7 +1587,7 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateNodesJson(const TArray<
 		}
 
 		TSharedPtr<FJsonObject> NodeObject = MakeShareable(new FJsonObject);
-		NodeObject->SetStringField("id", Data.Node->GetNodeGUID().ToString());
+		NodeObject->SetStringField("id", Data.Node->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
 		NodeObject->SetStringField("type", Data.Type);
 
 		AddNodePosition(NodeObject, Data.Node);
@@ -1675,7 +1675,7 @@ void UMounteaDialogueSystemImportExportHelpers::AddDialogueNodeData(const TShare
 	for (const auto& RowData : DialogueRowRef->DialogueRowData)
 	{
 		const TSharedPtr<FJsonObject> RowObject = MakeShareable(new FJsonObject);
-		RowObject->SetStringField("id", RowData.RowGUID.ToString());
+		RowObject->SetStringField("id", RowData.RowGUID.ToString(EGuidFormats::DigitsWithHyphensLower));
 		RowObject->SetStringField("text", RowData.RowText.ToString());
 		RowObject->SetStringField("audio", GetRelativeAudioPath(RowData.RowSound, GraphFolder));
 		DialogueRowsArray.Add(MakeShareable(new FJsonValueObject(RowObject)));
@@ -1687,7 +1687,7 @@ void UMounteaDialogueSystemImportExportHelpers::AddJumpNodeData(const TSharedPtr
 {
 	if (Node && Node->SelectedNode)
 	{
-		AdditionalInfoObject->SetStringField("targetNodeId", Node->SelectedNode->GetNodeGUID().ToString());
+		AdditionalInfoObject->SetStringField("targetNodeId", Node->SelectedNode->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
 	}
 	else
 	{
@@ -1715,10 +1715,10 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateEdgesJson(const UMounte
 
 			const TSharedPtr<FJsonObject> EdgeObject = MakeShareable(new FJsonObject);
 
-			FString EdgeId = FString::Printf(TEXT("reactflow__edge-%s-%s"), *Node->GetNodeGUID().ToString(), *ChildNode->GetNodeGUID().ToString());
+			FString EdgeId = FString::Printf(TEXT("reactflow__edge-%s-%s"), *Node->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower), *ChildNode->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
 			EdgeObject->SetStringField("id", EdgeId);
-			EdgeObject->SetStringField("source", Node->GetNodeGUID().ToString());
-			EdgeObject->SetStringField("target", ChildNode->GetNodeGUID().ToString());
+			EdgeObject->SetStringField("source", Node->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
+			EdgeObject->SetStringField("target", ChildNode->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
 			EdgeObject->SetStringField("type", "customEdge");
 
 			EdgesArray.Add(MakeShareable(new FJsonValueObject(EdgeObject)));
@@ -2009,7 +2009,7 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateDialogueDataJson(const 
 
 	TSharedPtr<FJsonObject> DialogueDataObject = MakeShareable(new FJsonObject);
 
-	DialogueDataObject->SetStringField("dialogueGuid", Graph->GetGraphGUID().ToString());
+	DialogueDataObject->SetStringField("dialogueGuid", Graph->GetGraphGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
 	DialogueDataObject->SetStringField("dialogueName", Graph->GetName());
 
 	const FDateTime CurrentTime = FDateTime::UtcNow();
@@ -2129,10 +2129,10 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateDialogueRowsJson(const 
 		{
 			TSharedPtr<FJsonObject> RowObject = MakeShareable(new FJsonObject);
 
-			RowObject->SetStringField("id", RowData.RowGUID.ToString());
+			RowObject->SetStringField("id", RowData.RowGUID.ToString(EGuidFormats::DigitsWithHyphensLower));
 			RowObject->SetStringField("text", RowData.RowText.ToString());
 			RowObject->SetStringField("audioPath", GetRelativeAudioPath(RowData.RowSound, GraphFolder));
-			RowObject->SetStringField("nodeId", NodeData.Node->GetNodeGUID().ToString());
+			RowObject->SetStringField("nodeId", NodeData.Node->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
 
 			DialogueRowsArray.Add(MakeShareable(new FJsonValueObject(RowObject)));
 		}
