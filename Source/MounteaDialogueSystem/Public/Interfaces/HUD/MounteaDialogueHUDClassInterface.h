@@ -32,6 +32,10 @@ public:
 	virtual void InitializeViewportWidget_Implementation() = 0;
 
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|HUD|Viewport")
+	class UUserWidget* GetViewportWidget() const;
+	virtual UUserWidget* GetViewportWidget_Implementation() const = 0;
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|HUD|Viewport")
 	void AddChildWidgetToViewport(UUserWidget* ChildWidget, const int32 ZOrder = 0, const FAnchors WidgetAnchors = FAnchors(), const FMargin& WidgetMargin = FMargin());
 	virtual void AddChildWidgetToViewport_Implementation(UUserWidget* ChildWidget, const int32 ZOrder = 0, const FAnchors WidgetAnchors = FAnchors(), const FMargin& WidgetMargin = FMargin()) = 0;
 

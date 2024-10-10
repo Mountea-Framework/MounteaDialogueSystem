@@ -5,6 +5,7 @@
 
 #include "Blueprint/GameViewportSubsystem.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Interfaces/HUD/MounteaDialogueHUDClassInterface.h"
 #include "Interfaces/UMG/MounteaDialogueOptionInterface.h"
 #include "Interfaces/UMG/MounteaDialogueRowInterface.h"
 #include "Interfaces/UMG/MounteaDialogueViewportWidgetInterface.h"
@@ -93,6 +94,66 @@ int32 UMounteaDialogueUIBFL::GetWidgetZOrder(UUserWidget* Widget, UObject* World
 	}
 
 	return -1;
+}
+
+TSubclassOf<UUserWidget> UMounteaDialogueUIBFL::GetViewportBaseClass(AActor* ViewportManager)
+{
+	TScriptInterface<IMounteaDialogueHUDClassInterface> viewportManager = ViewportManager;
+	if (!viewportManager.GetObject() || !viewportManager.GetInterface())
+	{
+		LOG_ERROR(TEXT("[GetViewportBaseClass] Viewport manager does not implement `MounteaDialogueHUDClassInterface`!"))
+		return nullptr;
+	}
+
+	return viewportManager->Execute_GetViewportBaseClass(ViewportManager);
+}
+
+void UMounteaDialogueUIBFL::InitializeViewportWidget(AActor* ViewportManager)
+{
+	TScriptInterface<IMounteaDialogueHUDClassInterface> viewportManager = ViewportManager;
+	if (!viewportManager.GetObject() || !viewportManager.GetInterface())
+	{
+		LOG_ERROR(TEXT("[InitializeViewportWidget] Viewport manager does not implement `MounteaDialogueHUDClassInterface`!"))
+		return;
+	}
+
+	viewportManager->Execute_InitializeViewportWidget(ViewportManager);
+}
+
+UUserWidget* UMounteaDialogueUIBFL::GetViewportWidget(AActor* ViewportManager)
+{
+	TScriptInterface<IMounteaDialogueHUDClassInterface> viewportManager = ViewportManager;
+	if (!viewportManager.GetObject() || !viewportManager.GetInterface())
+	{
+		LOG_ERROR(TEXT("[GetViewportWidget] Viewport manager does not implement `MounteaDialogueHUDClassInterface`!"))
+		return nullptr;
+	}
+
+	return viewportManager->Execute_GetViewportWidget(ViewportManager);
+}
+
+void UMounteaDialogueUIBFL::AddChildWidgetToViewport(AActor* ViewportManager, UUserWidget* ChildWidget, const int32 ZOrder, const FAnchors WidgetAnchors, const FMargin& WidgetMargin)
+{
+	TScriptInterface<IMounteaDialogueHUDClassInterface> viewportManager = ViewportManager;
+	if (!viewportManager.GetObject() || !viewportManager.GetInterface())
+	{
+		LOG_ERROR(TEXT("[AddChildWidgetToViewport] Viewport manager does not implement `MounteaDialogueHUDClassInterface`!"))
+		return;
+	}
+
+	viewportManager->Execute_AddChildWidgetToViewport(ViewportManager, ChildWidget, ZOrder, WidgetAnchors, WidgetMargin);
+}
+
+void UMounteaDialogueUIBFL::RemoveChildWidgetFromViewport(AActor* ViewportManager, UUserWidget* ChildWidget)
+{
+	TScriptInterface<IMounteaDialogueHUDClassInterface> viewportManager = ViewportManager;
+	if (!viewportManager.GetObject() || !viewportManager.GetInterface())
+	{
+		LOG_ERROR(TEXT("[RemoveChildWidgetFromViewport] Viewport manager does not implement `MounteaDialogueHUDClassInterface`!"))
+		return;
+	}
+
+	viewportManager->Execute_RemoveChildWidgetFromViewport(ViewportManager, ChildWidget);
 }
 
 void UMounteaDialogueUIBFL::AddChildWidget(UUserWidget* ParentWidget, UUserWidget* ChildWidget, const int32 ZOrder, const FAnchors WidgetAnchors, const FMargin& WidgetMargin)
