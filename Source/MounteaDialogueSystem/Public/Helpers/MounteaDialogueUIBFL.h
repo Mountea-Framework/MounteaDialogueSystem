@@ -27,16 +27,15 @@ struct FWidgetAdditionParams
 		Margin = FMargin();
 	}
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Helpers|UI")
 	int32 ZOrder;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Helpers|UI")
 	FAnchors Anchors;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Helpers|UI")
 	FMargin Margin;
-
-	// Static function to get default params
+	
 	static FWidgetAdditionParams GetDefault()
 	{
 		return FWidgetAdditionParams();

@@ -1,4 +1,4 @@
-﻿// // All rights reserved Dominik Morse (Pavlicek) 2024
+﻿// All rights reserved Dominik Morse (Pavlicek) 2024
 
 
 #include "Interfaces/HUD/MounteaDialogueHUDClassInterface.h"

@@ -1,11 +1,13 @@
-﻿// // All rights reserved Dominik Morse (Pavlicek) 2024
+﻿// All rights reserved Dominik Morse (Pavlicek) 2024
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "Widgets/Layout/Anchors.h"
+#include "SlateCore/Public/Layout/Margin.h"
 #include "MounteaDialogueHUDClassInterface.generated.h"
+
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI, BlueprintType, Blueprintable)
