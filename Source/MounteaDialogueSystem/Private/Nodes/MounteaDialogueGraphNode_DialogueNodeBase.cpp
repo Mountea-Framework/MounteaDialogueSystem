@@ -2,12 +2,10 @@
 
 
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
-
 #include "TimerManager.h"
 #include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Misc/DataValidation.h"
-
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_DialogueNodeBase"
 
