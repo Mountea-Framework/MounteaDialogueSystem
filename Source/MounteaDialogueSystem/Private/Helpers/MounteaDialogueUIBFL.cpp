@@ -3,9 +3,11 @@
 
 #include "Helpers/MounteaDialogueUIBFL.h"
 
+#include "Blueprint/GameViewportSubsystem.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/UMG/MounteaDialogueOptionInterface.h"
 #include "Interfaces/UMG/MounteaDialogueRowInterface.h"
+#include "Interfaces/UMG/MounteaDialogueViewportWidgetInterface.h"
 #include "Internationalization/Regex.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 
@@ -72,4 +74,47 @@ FText UMounteaDialogueUIBFL::ReplaceRegexInText(const FString& Regex, const FTex
 	formattedString += sourceString.Mid(previousPosition);
 	
 	return FText::FromString(formattedString);
+}
+
+int32 UMounteaDialogueUIBFL::GetWidgetZOrder(UUserWidget* Widget, UObject* WorldContext)
+{
+	if (!Widget || !WorldContext)
+		return -1;
+
+	ULocalPlayer* localPlayer = Widget->GetOwningLocalPlayer();
+	if (localPlayer)
+	{
+		if (UGameViewportSubsystem* viewportSubsystem = UGameViewportSubsystem::Get(WorldContext->GetWorld()))
+		{
+			FGameViewportWidgetSlot widgetSlot = viewportSubsystem->GetWidgetSlot(Widget);
+
+			return widgetSlot.ZOrder;
+		}
+	}
+
+	return -1;
+}
+
+void UMounteaDialogueUIBFL::AddChildWidget(UUserWidget* ParentWidget, UUserWidget* ChildWidget, const int32 ZOrder, const FAnchors WidgetAnchors, const FMargin& WidgetMargin)
+{
+	TScriptInterface<IMounteaDialogueViewportWidgetInterface> parentInterface = ParentWidget;
+	if (!parentInterface.GetObject() || !parentInterface.GetInterface())
+	{
+		LOG_ERROR(TEXT("[AddChildWidget] ParentWidget does not implement `MounteaDialogueViewportWidgetInterface`!"))
+		return;
+	}
+
+	parentInterface->Execute_AddChildWidget(ParentWidget, ChildWidget, ZOrder, WidgetAnchors, WidgetMargin);
+}
+
+void UMounteaDialogueUIBFL::RemoveChildWidget(UUserWidget* ParentWidget, UUserWidget* ChildWidget)
+{
+	TScriptInterface<IMounteaDialogueViewportWidgetInterface> parentInterface = ParentWidget;
+	if (!parentInterface.GetObject() || !parentInterface.GetInterface())
+	{
+		LOG_ERROR(TEXT("[RemoveChildWidget] ParentWidget does not implement `MounteaDialogueViewportWidgetInterface`!"))
+		return;
+	}
+
+	parentInterface->Execute_RemoveChildWidget(ParentWidget, ChildWidget);
 }
