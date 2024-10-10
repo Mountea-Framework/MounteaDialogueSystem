@@ -98,84 +98,114 @@ int32 UMounteaDialogueUIBFL::GetWidgetZOrder(UUserWidget* Widget, UObject* World
 
 TSubclassOf<UUserWidget> UMounteaDialogueUIBFL::GetViewportBaseClass(AActor* ViewportManager)
 {
-	TScriptInterface<IMounteaDialogueHUDClassInterface> viewportManager = ViewportManager;
-	if (!viewportManager.GetObject() || !viewportManager.GetInterface())
+	if (!IsValid(ViewportManager))
 	{
-		LOG_ERROR(TEXT("[GetViewportBaseClass] Viewport manager does not implement `MounteaDialogueHUDClassInterface`!"))
+		LOG_ERROR(TEXT("[GetViewportBaseClass] Invalid Viewport Manager provided!"));
 		return nullptr;
 	}
+	
+	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
+	{
+		return IMounteaDialogueHUDClassInterface::Execute_GetViewportBaseClass(ViewportManager);
+	}
 
-	return viewportManager->Execute_GetViewportBaseClass(ViewportManager);
+	LOG_ERROR(TEXT("[GetViewportWidget] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
+	return nullptr;
 }
 
 void UMounteaDialogueUIBFL::InitializeViewportWidget(AActor* ViewportManager)
 {
-	TScriptInterface<IMounteaDialogueHUDClassInterface> viewportManager = ViewportManager;
-	if (!viewportManager.GetObject() || !viewportManager.GetInterface())
+	if (!IsValid(ViewportManager))
 	{
-		LOG_ERROR(TEXT("[InitializeViewportWidget] Viewport manager does not implement `MounteaDialogueHUDClassInterface`!"))
+		LOG_ERROR(TEXT("[InitializeViewportWidget] Invalid Viewport Manager provided!"));
 		return;
 	}
+	
+	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
+	{
+		return IMounteaDialogueHUDClassInterface::Execute_InitializeViewportWidget(ViewportManager);
+	}
 
-	viewportManager->Execute_InitializeViewportWidget(ViewportManager);
+	LOG_ERROR(TEXT("[InitializeViewportWidget] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
 }
 
 UUserWidget* UMounteaDialogueUIBFL::GetViewportWidget(AActor* ViewportManager)
 {
-	TScriptInterface<IMounteaDialogueHUDClassInterface> viewportManager = ViewportManager;
-	if (!viewportManager.GetObject() || !viewportManager.GetInterface())
+	if (!IsValid(ViewportManager))
 	{
-		LOG_ERROR(TEXT("[GetViewportWidget] Viewport manager does not implement `MounteaDialogueHUDClassInterface`!"))
+		LOG_ERROR(TEXT("[GetViewportWidget] Invalid Viewport Manager provided!"));
 		return nullptr;
 	}
+	
+	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
+	{
+		return IMounteaDialogueHUDClassInterface::Execute_GetViewportWidget(ViewportManager);
+	}
 
-	return viewportManager->Execute_GetViewportWidget(ViewportManager);
+	LOG_ERROR(TEXT("[GetViewportWidget] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
+	return nullptr;
 }
 
 void UMounteaDialogueUIBFL::AddChildWidgetToViewport(AActor* ViewportManager, UUserWidget* ChildWidget, const int32 ZOrder, const FAnchors WidgetAnchors, const FMargin& WidgetMargin)
 {
-	TScriptInterface<IMounteaDialogueHUDClassInterface> viewportManager = ViewportManager;
-	if (!viewportManager.GetObject() || !viewportManager.GetInterface())
+	if (!IsValid(ViewportManager))
 	{
-		LOG_ERROR(TEXT("[AddChildWidgetToViewport] Viewport manager does not implement `MounteaDialogueHUDClassInterface`!"))
+		LOG_ERROR(TEXT("[AddChildWidgetToViewport] Invalid Viewport Manager provided!"));
 		return;
 	}
+	
+	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
+	{
+		return IMounteaDialogueHUDClassInterface::Execute_AddChildWidgetToViewport(ViewportManager, ChildWidget, ZOrder, WidgetAnchors, WidgetMargin);
+	}
 
-	viewportManager->Execute_AddChildWidgetToViewport(ViewportManager, ChildWidget, ZOrder, WidgetAnchors, WidgetMargin);
+	LOG_ERROR(TEXT("[AddChildWidgetToViewport] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
 }
 
 void UMounteaDialogueUIBFL::RemoveChildWidgetFromViewport(AActor* ViewportManager, UUserWidget* ChildWidget)
 {
-	TScriptInterface<IMounteaDialogueHUDClassInterface> viewportManager = ViewportManager;
-	if (!viewportManager.GetObject() || !viewportManager.GetInterface())
+	if (!IsValid(ViewportManager))
 	{
-		LOG_ERROR(TEXT("[RemoveChildWidgetFromViewport] Viewport manager does not implement `MounteaDialogueHUDClassInterface`!"))
+		LOG_ERROR(TEXT("[RemoveChildWidgetFromViewport] Invalid Viewport Manager provided!"));
 		return;
 	}
+	
+	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
+	{
+		return IMounteaDialogueHUDClassInterface::Execute_RemoveChildWidgetFromViewport(ViewportManager, ChildWidget);
+	}
 
-	viewportManager->Execute_RemoveChildWidgetFromViewport(ViewportManager, ChildWidget);
+	LOG_ERROR(TEXT("[RemoveChildWidgetFromViewport] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
 }
 
 void UMounteaDialogueUIBFL::AddChildWidget(UUserWidget* ParentWidget, UUserWidget* ChildWidget, const int32 ZOrder, const FAnchors WidgetAnchors, const FMargin& WidgetMargin)
 {
-	TScriptInterface<IMounteaDialogueViewportWidgetInterface> parentInterface = ParentWidget;
-	if (!parentInterface.GetObject() || !parentInterface.GetInterface())
+	if (!IsValid(ParentWidget))
 	{
-		LOG_ERROR(TEXT("[AddChildWidget] ParentWidget does not implement `MounteaDialogueViewportWidgetInterface`!"))
+		LOG_ERROR(TEXT("[AddChildWidget] Invalid Parent Widget provided!"));
 		return;
 	}
+	
+	if (ParentWidget->Implements<UMounteaDialogueViewportWidgetInterface>())
+	{
+		return IMounteaDialogueViewportWidgetInterface::Execute_AddChildWidget(ParentWidget, ChildWidget, ZOrder, WidgetAnchors, WidgetMargin);
+	}
 
-	parentInterface->Execute_AddChildWidget(ParentWidget, ChildWidget, ZOrder, WidgetAnchors, WidgetMargin);
+	LOG_ERROR(TEXT("[AddChildWidget] ParentWidget does not implement `MounteaDialogueViewportWidgetInterface`!"));
 }
 
 void UMounteaDialogueUIBFL::RemoveChildWidget(UUserWidget* ParentWidget, UUserWidget* ChildWidget)
 {
-	TScriptInterface<IMounteaDialogueViewportWidgetInterface> parentInterface = ParentWidget;
-	if (!parentInterface.GetObject() || !parentInterface.GetInterface())
+	if (!IsValid(ParentWidget))
 	{
-		LOG_ERROR(TEXT("[RemoveChildWidget] ParentWidget does not implement `MounteaDialogueViewportWidgetInterface`!"))
+		LOG_ERROR(TEXT("[RemoveChildWidget] Invalid Parent Widget provided!"));
 		return;
 	}
+	
+	if (ParentWidget->Implements<UMounteaDialogueViewportWidgetInterface>())
+	{
+		return IMounteaDialogueViewportWidgetInterface::Execute_RemoveChildWidget(ParentWidget, ChildWidget);
+	}
 
-	parentInterface->Execute_RemoveChildWidget(ParentWidget, ChildWidget);
+	LOG_ERROR(TEXT("[RemoveChildWidget] ParentWidget does not implement `MounteaDialogueViewportWidgetInterface`!"));
 }
