@@ -291,7 +291,7 @@ public:
 	virtual void ExecuteWidgetCommand_Implementation(const FString& Command) override;
 	
 	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) override;
-	virtual void SetDialogueWidget(UUserWidget* NewDialogueWidgetPtr) override;
+	virtual void SetDialogueWidget_Implementation(UUserWidget* NewDialogueWidgetPtr) override;
 	virtual UUserWidget* GetDialogueWidget_Implementation() const override;
 
 	virtual void StartExecuteDialogueRow_Implementation() override;
