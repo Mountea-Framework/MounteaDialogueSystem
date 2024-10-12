@@ -352,7 +352,8 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 		}
 	}
 	
-	const TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
+	TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
+	SortNodes(StartNode_Children);
 	
 	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
 	Context->SetDialogueContext(MainParticipant, NodeToStart, StartNode_Children);
@@ -448,7 +449,8 @@ bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextOb
 		NodeToStart = GetFirstChildNode(NodeToStart);
 	}
 	
-	const TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
+	TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
+	SortNodes(StartNode_Children);
 
 	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
 	Context->SetDialogueContext(DialogueParticipant, NodeToStart, StartNode_Children);
@@ -670,6 +672,12 @@ TArray<UMounteaDialogueGraphNode*> UMounteaDialogueSystemBFC::GetAllowedChildNod
 
 	return ReturnNodes;
 }
+
+void UMounteaDialogueSystemBFC::SortNodes(TArray<UMounteaDialogueGraphNode*>& SortedNodes)
+{
+	SortNodes<UMounteaDialogueGraphNode>(SortedNodes);
+}
+
 
 FDialogueRow UMounteaDialogueSystemBFC::GetDialogueRow(const UMounteaDialogueGraphNode* Node)
 {

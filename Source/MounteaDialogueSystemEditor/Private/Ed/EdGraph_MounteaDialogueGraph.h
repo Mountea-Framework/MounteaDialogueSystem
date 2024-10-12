@@ -53,7 +53,7 @@ protected:
 	void Clear();
 	void SortNodes(UMounteaDialogueGraphNode* RootNode);
 	
-	void ResetExecutionOrders();
+	void ResetExecutionOrders() const;
 	static UMounteaDialogueGraphNode* GetParentNode(const UMounteaDialogueGraphNode& Node);
 	void AssignExecutionOrder();
 	static void AssignNodeToLayer(UMounteaDialogueGraphNode* Node, int32 LayerIndex, TMap<int32, TArray<UMounteaDialogueGraphNode*>>& LayeredNodes);

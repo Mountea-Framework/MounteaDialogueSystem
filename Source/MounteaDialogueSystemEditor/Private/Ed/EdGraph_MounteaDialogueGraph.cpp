@@ -229,7 +229,7 @@ void UEdGraph_MounteaDialogueGraph::SortNodes(UMounteaDialogueGraphNode* RootNod
 	}
 }
 
-void UEdGraph_MounteaDialogueGraph::ResetExecutionOrders()
+void UEdGraph_MounteaDialogueGraph::ResetExecutionOrders() const
 {
 	UMounteaDialogueGraph* Graph = GetMounteaDialogueGraph();
 	if (!Graph) return;
@@ -275,6 +275,7 @@ void UEdGraph_MounteaDialogueGraph::AssignExecutionOrder()
 		TArray<UMounteaDialogueGraphNode*>& NodesInLayer = LayeredNodes[LayerIndex];
 		NodesInLayer.Sort([this](const UMounteaDialogueGraphNode& A, const UMounteaDialogueGraphNode& B)
 		{
+			// Prefer node order based on their parent's order
 			UEdNode_MounteaDialogueGraphNode* EdNode_A = NodeMap[&A];
 			UEdNode_MounteaDialogueGraphNode* EdNode_B = NodeMap[&B];
 
@@ -282,7 +283,7 @@ void UEdGraph_MounteaDialogueGraph::AssignExecutionOrder()
 			UMounteaDialogueGraphNode* ParentB = GetParentNode(B);
 			if (ParentA->ExecutionOrder == ParentB->ExecutionOrder)
 			{
-				return EdNode_A->NodePosX < EdNode_B->NodePosX;  // Sort by X when parents are the same
+				return EdNode_A->NodePosX < EdNode_B->NodePosX;
 			}
 			return ParentA->ExecutionOrder < ParentB->ExecutionOrder;
 		});

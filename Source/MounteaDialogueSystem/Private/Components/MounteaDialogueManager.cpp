@@ -129,7 +129,9 @@ void UMounteaDialogueManager::CallDialogueNodeSelected_Implementation(const FGui
 	}
 
 	// Straight up set dialogue row from Node and index to 0
-	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, selectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(selectedNode));
+	auto allowedChildNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(selectedNode);
+	UMounteaDialogueSystemBFC::SortNodes(allowedChildNodes);
+	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, selectedNode, allowedChildNodes);
 	DialogueContext->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode));
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 
@@ -249,7 +251,8 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 	
 	OnDialogueNodeFinishedEvent(DialogueContext);
 
-	const TArray<UMounteaDialogueGraphNode*> allowedChildrenNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(DialogueContext->ActiveNode);
+	TArray<UMounteaDialogueGraphNode*> allowedChildrenNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(DialogueContext->ActiveNode);
+	UMounteaDialogueSystemBFC::SortNodes(allowedChildrenNodes);
 
 	// If there are only Complete Nodes left or no DialogueNodes left, just shut it down
 	if (allowedChildrenNodes.Num() == 0)
@@ -269,8 +272,10 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 		{
 			OnDialogueClosed.Broadcast(DialogueContext);	
 		}
-		
-		DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, newActiveNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(newActiveNode));
+
+		auto allowedChildNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(newActiveNode);
+		UMounteaDialogueSystemBFC::SortNodes(allowedChildNodes);
+		DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, newActiveNode, allowedChildNodes);
 		
 		OnDialogueNodeSelected.Broadcast(DialogueContext);
 

@@ -41,7 +41,7 @@ FDialogueRow UMounteaDialogueUIBFL::GetDialogueNodeRow(UMounteaDialogueGraphNode
 TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> UMounteaDialogueUIBFL::FilterDialogueFriendlyNodes(const TArray<UMounteaDialogueGraphNode*>& RawNodes)
 {
 	TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> returnArray;
-
+	
 	for (const auto& Itr : RawNodes)
 	{
 		if (!Itr) continue;
@@ -52,6 +52,7 @@ TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> UMounteaDialogueUIBFL::Filte
 		}
 	}
 
+	UMounteaDialogueSystemBFC::SortNodes(returnArray);
 	return returnArray;
 }
 
