@@ -1130,6 +1130,7 @@ void UMounteaDialogueSystemImportExportHelpers::PopulateNodeData(UMounteaDialogu
 
 	Node->SetNodeGUID(FGuid(JsonObject->GetStringField((TEXT("id")))));
 	Node->NodeTitle = FText::FromString(JsonObject->GetObjectField(TEXT("data"))->GetStringField(TEXT("title")));
+	Node->ExecutionOrder = JsonObject->GetIntegerField(TEXT("executionOrder"));
 
 	TSharedPtr<FJsonObject> AdditionalInfoObject = JsonObject->GetObjectField(TEXT("data"))->GetObjectField(TEXT("additionalInfo"));
 	if (AdditionalInfoObject->HasField(TEXT("targetNodeId")) && Node->Graph)
@@ -1588,6 +1589,7 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateNodesJson(const TArray<
 		TSharedPtr<FJsonObject> NodeObject = MakeShareable(new FJsonObject);
 		NodeObject->SetStringField((TEXT("id")), Data.Node->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
 		NodeObject->SetStringField("type", Data.Type);
+		NodeObject->SetNumberField(TEXT("executionOrder"), Data.Node->ExecutionOrder);
 
 		AddNodePosition(NodeObject, Data.Node);
 		AddNodeData(NodeObject, Data.Node);
