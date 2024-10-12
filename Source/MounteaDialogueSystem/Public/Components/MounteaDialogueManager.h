@@ -418,13 +418,6 @@ protected:
 	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	FTimerHandle TimerHandle_RowTimer;
 
-	 /**
-	 * Is saved once Dialogue starts.
-	 * Once Dialogue ends, cached value is set back again.
-	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay)
-	uint8 bWasCursorVisible : 1;
-
 	/**
 	 * 
 	 */
