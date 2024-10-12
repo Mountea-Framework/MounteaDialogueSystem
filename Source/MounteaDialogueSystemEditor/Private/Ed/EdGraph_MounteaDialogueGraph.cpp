@@ -11,6 +11,7 @@
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Helpers/MounteaDialogueGraphEditorUtilities.h"
 #include "Helpers/MounteaDialogueSystemEditorBFC.h"
+#include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 UEdGraph_MounteaDialogueGraph::UEdGraph_MounteaDialogueGraph()
 {
@@ -146,11 +147,13 @@ bool UEdGraph_MounteaDialogueGraph::Modify(bool bAlwaysMarkDirty)
 {
 	bool Rtn = Super::Modify(bAlwaysMarkDirty);
 
+	ResetExecutionOrders();
+	AssignExecutionOrder();
+	
 	for (int32 i = 0; i < Nodes.Num(); ++i)
 	{
 		Nodes[i]->Modify();
 	}
-
 	return Rtn;
 }
 
@@ -257,14 +260,12 @@ void UEdGraph_MounteaDialogueGraph::AssignExecutionOrder()
 	if (!Graph) return;
 
 	TMap<int32, TArray<UMounteaDialogueGraphNode*>> LayeredNodes;
-	int32 CurrentExecutionOrder = 0;
-
-	for (UMounteaDialogueGraphNode* RootNode : Graph->RootNodes)
+	int32 CurrentExecutionOrder = 1;
+	
+	if (UMounteaDialogueGraphNode* RootNode = Graph->GetStartNode())
 	{
-		if (RootNode)
-		{
-			AssignNodeToLayer(RootNode, 0, LayeredNodes);
-		}
+		RootNode->ExecutionOrder = 0;
+		AssignNodeToLayer(RootNode, 0, LayeredNodes);
 	}
 
 	for (int32 LayerIndex = 0; LayeredNodes.Contains(LayerIndex); ++LayerIndex)
@@ -277,7 +278,8 @@ void UEdGraph_MounteaDialogueGraph::AssignExecutionOrder()
 
 			UMounteaDialogueGraphNode* ParentA = GetParentNode(A);
 			UMounteaDialogueGraphNode* ParentB = GetParentNode(B);
-			
+
+			if (!ParentA && !ParentB) return EdNode_A->NodePosX < EdNode_B->NodePosX;
 			if (ParentA && !ParentB) return true;
 			if (!ParentA && ParentB) return false;
 			
@@ -289,23 +291,22 @@ void UEdGraph_MounteaDialogueGraph::AssignExecutionOrder()
 				}
 			}
 
-			// If we reach here, either both nodes have no parents or have parents with the same execution order
+			// If we reach here, either both nodes have parents with the same execution order
 			// In this case, sort based on X position
 			return EdNode_A->NodePosX < EdNode_B->NodePosX;
 		});
 
 		for (UMounteaDialogueGraphNode* Node : NodesInLayer)
 		{
-			if (Node)
+			if (!Node) continue;
+			if (Node->IsA(UMounteaDialogueGraphNode_StartNode::StaticClass())) continue;
+			if (GetParentNode(*Node))
 			{
-				if (UMounteaDialogueGraphNode* ParentNode = GetParentNode(*Node))
-				{
-					Node->ExecutionOrder = CurrentExecutionOrder++;
-				}
-				else
-				{
-					Node->ExecutionOrder = INDEX_NONE;
-				}
+				Node->ExecutionOrder = CurrentExecutionOrder++;
+			}
+			else
+			{
+				Node->ExecutionOrder = INDEX_NONE;
 			}
 		}
 	}

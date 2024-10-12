@@ -118,7 +118,6 @@ UEdGraphNode* FAssetSchemaAction_MounteaDialogueGraph_NewNode::PerformAction(UEd
 
 		ResultNode = NodeTemplate;
 	}
-	
 	return ResultNode;
 }
 
