@@ -36,6 +36,9 @@ void UEdNode_MounteaDialogueGraphNode::SetMounteaDialogueGraphNode(UMounteaDialo
 		bAllowDuplicate = DialogueGraphNode->bAllowPaste;
 		bAllowPaste = DialogueGraphNode->bAllowPaste;
 	}
+
+	if (GetDialogueGraphEdGraph())
+		GetDialogueGraphEdGraph()->AssignExecutionOrder();
 }
 
 UEdGraph_MounteaDialogueGraph* UEdNode_MounteaDialogueGraphNode::GetDialogueGraphEdGraph() const

@@ -186,4 +186,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Setter", HideSelfPin="true"))
 	static void RemoveChildWidget(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueViewportWidgetInterface")) UUserWidget* ParentWidget, UUserWidget* ChildWidget);
 
+	/**
+	 * Returns all Dialogue Options from the specified Dialogue Options Container parent widget that implements the MounteaDialogueOptionsContainerInterface.
+	 *
+	 * @param ParentWidget    The parent widget that should implement the MounteaDialogueOptionsContainerInterface.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Setter", HideSelfPin="true"))
+	static TArray<UUserWidget*> GetDialogueOptions(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueOptionsContainerInterface")) UUserWidget* ParentWidget);
 };

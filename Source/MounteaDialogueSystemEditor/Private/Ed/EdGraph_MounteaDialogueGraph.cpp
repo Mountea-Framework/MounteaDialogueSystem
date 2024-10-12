@@ -11,6 +11,7 @@
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Helpers/MounteaDialogueGraphEditorUtilities.h"
 #include "Helpers/MounteaDialogueSystemEditorBFC.h"
+#include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 UEdGraph_MounteaDialogueGraph::UEdGraph_MounteaDialogueGraph()
 {
@@ -22,7 +23,6 @@ UEdGraph_MounteaDialogueGraph::~UEdGraph_MounteaDialogueGraph()
 
 void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 {
-	
 	UMounteaDialogueGraph* Graph = GetMounteaDialogueGraph();
 
 	Clear();
@@ -121,6 +121,8 @@ void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 		UEdNode_MounteaDialogueGraphNode* EdNode_RNode = NodeMap[&R];
 		return EdNode_LNode->NodePosX < EdNode_RNode->NodePosX;
 	});
+
+	AssignExecutionOrder();
 }
 
 UEdNode_MounteaDialogueGraphEdge* UEdGraph_MounteaDialogueGraph::CreateEdgeNode(UEdNode_MounteaDialogueGraphNode* StartNode, UEdNode_MounteaDialogueGraphNode* EndNode)
@@ -145,13 +147,13 @@ bool UEdGraph_MounteaDialogueGraph::Modify(bool bAlwaysMarkDirty)
 {
 	bool Rtn = Super::Modify(bAlwaysMarkDirty);
 
-	GetMounteaDialogueGraph()->Modify();
-
+	ResetExecutionOrders();
+	AssignExecutionOrder();
+	
 	for (int32 i = 0; i < Nodes.Num(); ++i)
 	{
 		Nodes[i]->Modify();
 	}
-
 	return Rtn;
 }
 
@@ -224,5 +226,100 @@ void UEdGraph_MounteaDialogueGraph::SortNodes(UMounteaDialogueGraphNode* RootNod
 		CurrLevelNodes = NextLevelNodes;
 		NextLevelNodes.Reset();
 		++Level;
+	}
+}
+
+void UEdGraph_MounteaDialogueGraph::ResetExecutionOrders() const
+{
+	UMounteaDialogueGraph* Graph = GetMounteaDialogueGraph();
+	if (!Graph) return;
+
+	for (UMounteaDialogueGraphNode* Node : Graph->AllNodes)
+	{
+		if (Node)
+		{
+			Node->ExecutionOrder = INDEX_NONE;
+		}
+	}
+}
+
+UMounteaDialogueGraphNode* UEdGraph_MounteaDialogueGraph::GetParentNode(const UMounteaDialogueGraphNode& Node)
+{
+	if (Node.ParentNodes.Num() > 0)
+	{
+		return Node.ParentNodes[0];
+	}
+	return nullptr;
+}
+
+void UEdGraph_MounteaDialogueGraph::AssignExecutionOrder()
+{
+	ResetExecutionOrders();
+
+	UMounteaDialogueGraph* Graph = GetMounteaDialogueGraph();
+	if (!Graph) return;
+
+	TMap<int32, TArray<UMounteaDialogueGraphNode*>> LayeredNodes;
+	int32 CurrentExecutionOrder = 1;
+	
+	if (UMounteaDialogueGraphNode* RootNode = Graph->GetStartNode())
+	{
+		RootNode->ExecutionOrder = 0;
+		AssignNodeToLayer(RootNode, 0, LayeredNodes);
+	}
+
+	for (int32 LayerIndex = 0; LayeredNodes.Contains(LayerIndex); ++LayerIndex)
+	{
+		TArray<UMounteaDialogueGraphNode*>& NodesInLayer = LayeredNodes[LayerIndex];
+		NodesInLayer.Sort([this](const UMounteaDialogueGraphNode& A, const UMounteaDialogueGraphNode& B)
+		{
+			UEdNode_MounteaDialogueGraphNode* EdNode_A = NodeMap[&A];
+			UEdNode_MounteaDialogueGraphNode* EdNode_B = NodeMap[&B];
+
+			UMounteaDialogueGraphNode* ParentA = GetParentNode(A);
+			UMounteaDialogueGraphNode* ParentB = GetParentNode(B);
+
+			if (!ParentA && !ParentB) return EdNode_A->NodePosX < EdNode_B->NodePosX;
+			if (ParentA && !ParentB) return true;
+			if (!ParentA && ParentB) return false;
+			
+			if (ParentA && ParentB)
+			{
+				if (ParentA->ExecutionOrder != ParentB->ExecutionOrder)
+				{
+					return ParentA->ExecutionOrder < ParentB->ExecutionOrder;
+				}
+			}
+
+			// If we reach here, either both nodes have parents with the same execution order
+			// In this case, sort based on X position
+			return EdNode_A->NodePosX < EdNode_B->NodePosX;
+		});
+
+		for (UMounteaDialogueGraphNode* Node : NodesInLayer)
+		{
+			if (!Node) continue;
+			if (Node->IsA(UMounteaDialogueGraphNode_StartNode::StaticClass())) continue;
+			if (GetParentNode(*Node))
+			{
+				Node->ExecutionOrder = CurrentExecutionOrder++;
+			}
+			else
+			{
+				Node->ExecutionOrder = INDEX_NONE;
+			}
+		}
+	}
+}
+
+void UEdGraph_MounteaDialogueGraph::AssignNodeToLayer(UMounteaDialogueGraphNode* Node, int32 LayerIndex, TMap<int32, TArray<UMounteaDialogueGraphNode*>>& LayeredNodes)
+{
+	if (!Node) return;
+
+	LayeredNodes.FindOrAdd(LayerIndex).Add(Node);
+
+	for (UMounteaDialogueGraphNode* ChildNode : Node->ChildrenNodes)
+	{
+		AssignNodeToLayer(ChildNode, LayerIndex + 1, LayeredNodes);
 	}
 }
