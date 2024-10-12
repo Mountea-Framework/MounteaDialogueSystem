@@ -2,6 +2,7 @@
 
 #include "AssetGraphScheme_MounteaDialogueGraph.h"
 
+#include "FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph.h"
 #include "FConnectionDrawingPolicy_MounteaDialogueGraph.h"
 #include "GraphEditorActions.h"
 #include "Graph/MounteaDialogueGraph.h"
@@ -432,7 +433,6 @@ bool UAssetGraphScheme_MounteaDialogueGraph::CreateAutomaticConversionNodeAndCon
 
 FConnectionDrawingPolicy* UAssetGraphScheme_MounteaDialogueGraph::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj) const
 {
-	/*
 	if (const UMounteaDialogueGraphEditorSettings* MounteaDialogueGraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
 	{
 		if (MounteaDialogueGraphEditorSettings->AllowAdvancedWiring())
@@ -440,7 +440,6 @@ FConnectionDrawingPolicy* UAssetGraphScheme_MounteaDialogueGraph::CreateConnecti
 			return new FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
 		}
 	}
-	*/
 	
 	return new FConnectionDrawingPolicy_MounteaDialogueGraph(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
 }

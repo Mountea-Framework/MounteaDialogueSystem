@@ -1114,8 +1114,7 @@ void FAssetEditor_MounteaDialogueGraph::ValidateGraph()
 	UEdGraph_MounteaDialogueGraph* EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
 	check(EdGraph != nullptr);
 
-	const FScopedTransaction Transaction(LOCTEXT("MounteaDialogueGraphEditorValidateGraph",
-												"Mountea Dialogue Graph Editor: Validate Graph."));
+	const FScopedTransaction Transaction(LOCTEXT("MounteaDialogueGraphEditorValidateGraph", "Mountea Dialogue Graph Editor: Validate Graph."));
 
 	UMounteaDialogueGraph* MounteaGraph = EdGraph->GetMounteaDialogueGraph();
 	check(MounteaGraph != nullptr);
