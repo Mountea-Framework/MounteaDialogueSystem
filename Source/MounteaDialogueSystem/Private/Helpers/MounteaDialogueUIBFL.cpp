@@ -11,6 +11,7 @@
 #include "Interfaces/UMG/MounteaDialogueViewportWidgetInterface.h"
 #include "Internationalization/Regex.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
+#include "WBP/MounteaDialogueOptionsContainer.h"
 
 FDialogueOptionData UMounteaDialogueUIBFL::NewDialogueOptionData(const FGuid& Node, const FDialogueRow& DialogueRow)
 {
@@ -208,4 +209,22 @@ void UMounteaDialogueUIBFL::RemoveChildWidget(UUserWidget* ParentWidget, UUserWi
 	}
 
 	LOG_ERROR(TEXT("[RemoveChildWidget] ParentWidget does not implement `MounteaDialogueViewportWidgetInterface`!"));
+}
+
+TArray<UUserWidget*> UMounteaDialogueUIBFL::GetDialogueOptions(UUserWidget* ParentWidget)
+{
+	TArray<UUserWidget*> dialogueOptions;
+	if (!IsValid(ParentWidget))
+	{
+		LOG_ERROR(TEXT("[GetDialogueOptions] Invalid Parent Widget provided!"));
+		return dialogueOptions;
+	}
+	
+	if (ParentWidget->Implements<UMounteaDialogueOptionsContainer>())
+	{
+		return IMounteaDialogueOptionsContainerInterface::Execute_GetDialogueOptions(ParentWidget);
+	}
+
+	LOG_ERROR(TEXT("[GetDialogueOptions] ParentWidget does not implement `MounteaDialogueOptionsContainerInterface`!"));
+	return dialogueOptions;
 }
