@@ -129,8 +129,8 @@ FPluginVersion MDSPopup::GetPluginVersion()
 		return FPluginVersion("1", "0.0.0.1");
 	}
 
-	const int32 VersionNumber = JsonObject->GetIntegerField("Version");
-	const FString VersionName = JsonObject->GetStringField("VersionName");
+	const int32 VersionNumber = JsonObject->GetIntegerField(TEXT("Version"));
+	const FString VersionName = JsonObject->GetStringField(TEXT("VersionName"));
 
 	const FString Version = FString::Printf(TEXT("%d"), VersionNumber);
 

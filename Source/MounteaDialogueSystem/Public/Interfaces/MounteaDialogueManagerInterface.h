@@ -151,7 +151,9 @@ public:
 	 * ❔ Using null value resets saved value
 	 * @param DialogueUIPtr	UserWidget pointer to be saved as Dialogue UI
 	 */
-	virtual void SetDialogueWidget(UUserWidget* DialogueUIPtr) = 0;
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
+	void SetDialogueWidget(UUserWidget* DialogueUIPtr);
+	virtual void SetDialogueWidget_Implementation(UUserWidget* DialogueUIPtr) = 0;
 
 	/**
 	 * Starts Dialogue Row execution.

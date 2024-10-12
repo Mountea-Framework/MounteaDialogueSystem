@@ -3,6 +3,7 @@
 #include "Components/MounteaDialogueManager.h"
 
 #include "TimerManager.h"
+#include "Blueprint/GameViewportSubsystem.h"
 
 #include "Graph/MounteaDialogueGraph.h"
 
@@ -21,7 +22,6 @@ UMounteaDialogueManager::UMounteaDialogueManager()
 	, DefaultManagerState(EDialogueManagerState::EDMS_Enabled)
 	, DialogueContext(nullptr)
 	, ReplicatedDialogueContext(nullptr)
-	, bWasCursorVisible(false)
 	, DialogueContextReplicationKey(0)
 {
 	bAutoActivate = true;
@@ -43,22 +43,22 @@ void UMounteaDialogueManager::BeginPlay()
 
 	// Setup bindings
 	{
-		OnDialogueInitialized.							AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueInitializedEvent_Internal);
+		OnDialogueInitialized.					AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueInitializedEvent_Internal);
 	
-		OnDialogueContextUpdated.					AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent_Internal);
+		OnDialogueContextUpdated.				AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent_Internal);
 		OnDialogueUserInterfaceChanged.			AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueUserInterfaceChangedEvent_Internal);
 	
-		OnDialogueStarted.									AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueStartedEvent_Internal);
-		OnDialogueClosed.									AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueClosedEvent_Internal);
+		OnDialogueStarted.						AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueStartedEvent_Internal);
+		OnDialogueClosed.						AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueClosedEvent_Internal);
 
-		OnDialogueNodeSelected.						AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal);
-		OnDialogueNodeStarted.						AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeStartedEvent_Internal);
-		OnDialogueNodeFinished.						AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal);
+		OnDialogueNodeSelected.					AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal);
+		OnDialogueNodeStarted.					AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeStartedEvent_Internal);
+		OnDialogueNodeFinished.					AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal);
 
-		OnDialogueRowStarted.							AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal);
-		OnDialogueRowFinished.						AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueRowFinishedEvent_Internal);
+		OnDialogueRowStarted.					AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueRowStartedEvent_Internal);
+		OnDialogueRowFinished.					AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueRowFinishedEvent_Internal);
 
-		OnDialogueVoiceStartRequest.				AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal);
+		OnDialogueVoiceStartRequest.			AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceStartRequestEvent_Internal);
 		OnDialogueVoiceSkipRequest.				AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal);
 
 		OnNextDialogueRowDataRequested.		AddUniqueDynamic(this, &UMounteaDialogueManager::NextDialogueRowDataRequested);
@@ -129,7 +129,9 @@ void UMounteaDialogueManager::CallDialogueNodeSelected_Implementation(const FGui
 	}
 
 	// Straight up set dialogue row from Node and index to 0
-	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, selectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(selectedNode));
+	auto allowedChildNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(selectedNode);
+	UMounteaDialogueSystemBFC::SortNodes(allowedChildNodes);
+	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, selectedNode, allowedChildNodes);
 	DialogueContext->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode));
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 
@@ -249,7 +251,8 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 	
 	OnDialogueNodeFinishedEvent(DialogueContext);
 
-	const TArray<UMounteaDialogueGraphNode*> allowedChildrenNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(DialogueContext->ActiveNode);
+	TArray<UMounteaDialogueGraphNode*> allowedChildrenNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(DialogueContext->ActiveNode);
+	UMounteaDialogueSystemBFC::SortNodes(allowedChildrenNodes);
 
 	// If there are only Complete Nodes left or no DialogueNodes left, just shut it down
 	if (allowedChildrenNodes.Num() == 0)
@@ -269,8 +272,10 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 		{
 			OnDialogueClosed.Broadcast(DialogueContext);	
 		}
-		
-		DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, newActiveNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(newActiveNode));
+
+		auto allowedChildNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(newActiveNode);
+		UMounteaDialogueSystemBFC::SortNodes(allowedChildNodes);
+		DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, newActiveNode, allowedChildNodes);
 		
 		OnDialogueNodeSelected.Broadcast(DialogueContext);
 
@@ -539,6 +544,7 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 	{
 		if (DialogueWidgetPtr)
 		{
+			OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, nullptr);
 			DialogueWidgetPtr->RemoveFromParent();
 			DialogueWidgetPtr = nullptr;
 		}
@@ -651,7 +657,7 @@ void UMounteaDialogueManager::SetDialogueWidgetClass(const TSubclassOf<UUserWidg
 	}
 }
 
-void UMounteaDialogueManager::SetDialogueWidget(UUserWidget* NewDialogueWidgetPtr)
+void UMounteaDialogueManager::SetDialogueWidget_Implementation(UUserWidget* NewDialogueWidgetPtr)
 {
 	DialogueWidgetPtr = NewDialogueWidgetPtr;
 
@@ -993,19 +999,16 @@ bool UMounteaDialogueManager::InvokeDialogueUI_Implementation(FString& Message)
 		return false;
 	}
 
-	if (DialogueWidgetPtr->AddToPlayerScreen(Execute_GetDialogueWidgetZOrder(this)) == false)
+	const int32 dialogueWidgetZOrder = Execute_GetDialogueWidgetZOrder(this);
+	if (DialogueWidgetPtr->AddToPlayerScreen(dialogueWidgetZOrder) == false)
 	{
+		LOG_INFO(TEXT("[InvokeDialogueUI] Added Dialogue UI with ZOrder: %d"), dialogueWidgetZOrder)
 		Message = TEXT("Cannot display Dialogue Widget!");
 		return false;
 	}
 	
-	bWasCursorVisible = playerController->bShowMouseCursor;
-
 	// This event should be responsible for calling logic in Player Controller
 	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidgetPtr);
-	
-	// This Component should not be responsible for setting up Player Controller!
-	playerController->SetShowMouseCursor(true);
 	
 	return Execute_UpdateDialogueUI(this, Message, MounteaDialogueWidgetCommands::CreateDialogueWidget);
 }
@@ -1048,13 +1051,13 @@ bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
 		return false;
 	}
 
-	playerController->SetShowMouseCursor(bWasCursorVisible);
+	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, nullptr);
 
 	if (DialogueWidgetPtr->Implements<UMounteaDialogueWBPInterface>())
 	{
 		FString errorMessage;
 		Execute_UpdateDialogueUI(this, errorMessage, MounteaDialogueWidgetCommands::CloseDialogueWidget);
-
+		
 		DialogueWidgetPtr = nullptr;
 
 		return true;
@@ -1440,5 +1443,22 @@ void UMounteaDialogueManager::ResetDialogueUIObjects_Implementation()
 void UMounteaDialogueManager::SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder)
 {
 	if (NewZOrder != DialogueWidgetZOrder)
+	{
 		DialogueWidgetZOrder = NewZOrder;
+		auto dialogueWidget = Execute_GetDialogueWidget(this);
+		if (dialogueWidget)
+		{
+			ULocalPlayer* localPlayer = dialogueWidget->GetOwningLocalPlayer();
+			if (localPlayer)
+			{
+				if (UGameViewportSubsystem* viewportSubsystem = UGameViewportSubsystem::Get(GetWorld()))
+				{
+					FGameViewportWidgetSlot widgetSlot = viewportSubsystem->GetWidgetSlot(dialogueWidget);
+					widgetSlot.ZOrder = NewZOrder;
+
+					viewportSubsystem->AddWidgetForPlayer(dialogueWidget, localPlayer, widgetSlot);
+				}
+			}
+		}
+	}
 }

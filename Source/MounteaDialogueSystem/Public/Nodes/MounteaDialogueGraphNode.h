@@ -30,6 +30,7 @@ public:
 #pragma region Variables
 
 #pragma region ReadOnly
+	
 public:
 	
 	/**
@@ -68,6 +69,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	int32 NodeIndex = INDEX_NONE;
 
+	/** Execution order within Parent's scope */
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
+	int32 ExecutionOrder = INDEX_NONE;
 
 protected:
 	
@@ -86,7 +90,7 @@ private:
 	 *❗ This is the world in which this Dialogue Graph Node is currently running.
 	 *❔ Can be used for accessing world-related functionality.
 	 */
-	UPROPERTY(VisibleAnywhere, Category = "Mountea|Dialogue", AdvancedDisplay=true)
+	UPROPERTY(VisibleAnywhere, Category = "Mountea|Dialogue", AdvancedDisplay)
 	UWorld* OwningWorld;
 
 #pragma endregion

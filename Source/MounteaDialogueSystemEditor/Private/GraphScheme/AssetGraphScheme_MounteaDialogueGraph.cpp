@@ -2,6 +2,7 @@
 
 #include "AssetGraphScheme_MounteaDialogueGraph.h"
 
+#include "FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph.h"
 #include "FConnectionDrawingPolicy_MounteaDialogueGraph.h"
 #include "GraphEditorActions.h"
 #include "Graph/MounteaDialogueGraph.h"
@@ -117,7 +118,6 @@ UEdGraphNode* FAssetSchemaAction_MounteaDialogueGraph_NewNode::PerformAction(UEd
 
 		ResultNode = NodeTemplate;
 	}
-	
 	return ResultNode;
 }
 
@@ -445,7 +445,6 @@ FConnectionDrawingPolicy* UAssetGraphScheme_MounteaDialogueGraph::CreateConnecti
 		}
 	}
 	*/
-	
 	return new FConnectionDrawingPolicy_MounteaDialogueGraph(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
 }
 

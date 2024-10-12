@@ -291,7 +291,7 @@ public:
 	virtual void ExecuteWidgetCommand_Implementation(const FString& Command) override;
 	
 	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) override;
-	virtual void SetDialogueWidget(UUserWidget* NewDialogueWidgetPtr) override;
+	virtual void SetDialogueWidget_Implementation(UUserWidget* NewDialogueWidgetPtr) override;
 	virtual UUserWidget* GetDialogueWidget_Implementation() const override;
 
 	virtual void StartExecuteDialogueRow_Implementation() override;
@@ -417,13 +417,6 @@ protected:
 	 */
 	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	FTimerHandle TimerHandle_RowTimer;
-
-	 /**
-	 * Is saved once Dialogue starts.
-	 * Once Dialogue ends, cached value is set back again.
-	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay)
-	uint8 bWasCursorVisible : 1;
 
 	/**
 	 * 
