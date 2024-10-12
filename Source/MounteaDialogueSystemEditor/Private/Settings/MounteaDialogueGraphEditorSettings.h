@@ -151,10 +151,10 @@ private:
 	bool bUseAdvancedWiring;
 
 	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]", EditCondition="bUseAdvancedWiring"))
-	FVector2D AdvancedWiringConnectionTangent = FVector2D(0.0f, 220.f);
+	FVector2D AdvancedWiringConnectionTangent = FVector2D(0.0f, 350.f);
 
 	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]", EditCondition="bUseAdvancedWiring"))
-	float ControlPointDistance = 150.0f;
+	float ControlPointDistance = 100.0f;
 	
 	/* Advanced Wiring doesn't work now
 	
