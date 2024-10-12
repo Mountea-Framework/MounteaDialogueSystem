@@ -36,6 +36,9 @@ void UEdNode_MounteaDialogueGraphNode::SetMounteaDialogueGraphNode(UMounteaDialo
 		bAllowDuplicate = DialogueGraphNode->bAllowPaste;
 		bAllowPaste = DialogueGraphNode->bAllowPaste;
 	}
+
+	if (GetDialogueGraphEdGraph())
+		GetDialogueGraphEdGraph()->AssignExecutionOrder();
 }
 
 UEdGraph_MounteaDialogueGraph* UEdNode_MounteaDialogueGraphNode::GetDialogueGraphEdGraph() const
@@ -186,11 +189,6 @@ void UEdNode_MounteaDialogueGraphNode::UpdatePosition()
 	{
 		DialogueGraphNode->NodePosition = FIntPoint(NodePosX, NodePosY);
 		DialogueGraphNode->Modify(true);
-	}
-
-	if (auto graphEditor = GetDialogueGraphEdGraph())
-	{
-		
 	}
 }
 

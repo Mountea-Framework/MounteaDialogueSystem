@@ -86,18 +86,8 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Draw(TMap<TSharedRef<SWidget
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FGeometry& StartGeom, const FGeometry& EndGeom, const FConnectionParams& Params)
 {
-	// Get a reasonable seed point (halfway between the boxes)
 	const FVector2D StartCenter = FGeometryHelper::CenterOf(StartGeom);
 	const FVector2D EndCenter = FGeometryHelper::CenterOf(EndGeom);
-	const FVector2D SeedPoint = (StartCenter + EndCenter) * 0.5f;
-
-	/*
-	// Find the (approximate) closest points between the two boxes
-	const FVector2D StartAnchorPoint = FGeometryHelper::FindClosestPointOnGeom(StartGeom, SeedPoint);
-	const FVector2D EndAnchorPoint = FGeometryHelper::FindClosestPointOnGeom(EndGeom, SeedPoint);
-
-	DrawSplineWithArrow(StartAnchorPoint, EndAnchorPoint, Params);
-	*/
 
 	DrawSplineWithArrow(StartCenter, EndCenter, Params);
 }
@@ -107,11 +97,8 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FV
 	// bUserFlag1 indicates that we need to reverse the direction of connection (used by debugger)
 	const FVector2D& P0 = Params.bUserFlag1 ? EndPoint : StartPoint;
 	const FVector2D& P1 = Params.bUserFlag1 ? StartPoint : EndPoint;
-
-	EditorLOG_INFO(TEXT("%s I %s"), *P0.ToString(), *P1.ToString() )
 	
 	FConnectionParams NewParams = Params;
-	//NewParams.bDrawBubbles = true;
 	
 	if (const UMounteaDialogueGraphEditorSettings* MounteaDialogueGraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
 	{
@@ -126,7 +113,7 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawPreviewConnector(const F
 	FConnectionParams Params;
 	DetermineWiringStyle(Pin, nullptr, /*inout*/ Params);
 
-	if (Pin->Direction == EEdGraphPinDirection::EGPD_Output)
+	if (Pin->Direction == EGPD_Output)
 	{
 		DrawSplineWithArrow(FGeometryHelper::FindClosestPointOnGeom(PinGeometry, EndPoint), EndPoint, Params);
 	}
@@ -175,43 +162,34 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineLinkGeometry(FArran
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(const FVector2D& StartAnchorPoint, const FVector2D& EndAnchorPoint, const FConnectionParams& Params)
 {
-	const float LineSeparationAmount = 4.5f;
-
 	const FVector2D DeltaPos = EndAnchorPoint - StartAnchorPoint;
 	const FVector2D UnitDelta = DeltaPos.GetSafeNormal();
-	const FVector2D Normal = FVector2D(DeltaPos.Y, -DeltaPos.X).GetSafeNormal();
 
-	// Come up with the final start/end points
-	const FVector2D DirectionBias = Normal * LineSeparationAmount;
-	const FVector2D LengthBias = ArrowRadius.X * UnitDelta;
-	const FVector2D StartPoint = StartAnchorPoint + DirectionBias + LengthBias;
-	const FVector2D EndPoint = EndAnchorPoint + DirectionBias - LengthBias;
-		
+	const FVector2D StartPoint = StartAnchorPoint;
+	const FVector2D EndPoint = EndAnchorPoint - (ArrowRadius.X * UnitDelta);
+
+	const float nodesDelta = abs(StartPoint.X - EndPoint.X);
+	
+	float OffsetValue = 0.f;
 	const UMounteaDialogueGraphEditorSettings* GraphSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
-	if (GraphSettings == nullptr || GraphSettings->AllowAdvancedWiring() == false)
-	{
-		DrawConnection(WireLayerID, StartPoint, EndPoint, Params);
-		return;
-	}
-
-	const bool bIsAligned = FMath::IsNearlyEqual(EndPoint.X, StartPoint.X, GraphSettings->GetControlPointDistance() * ZoomFactor);
-		
-	// Choose connection drawing method based on conditions
-	if (bIsAligned)
+	if (GraphSettings == nullptr || GraphSettings->AllowAdvancedWiring() == false || nodesDelta <= GraphSettings->GetControlPointDistance())
 	{
 		DrawConnection(WireLayerID, StartPoint, EndPoint, Params);
 	}
 	else
 	{
-		DrawCurvedConnection(WireLayerID, StartPoint, EndPoint, Params);
+		OffsetValue = -3.f;
+		const FVector2D ConnectionEndPoint = FVector2D(EndPoint.X, EndPoint.Y + OffsetValue);
+		DrawCurvedConnection(WireLayerID, StartPoint, ConnectionEndPoint, Params);
+		
 	}
 
 	// Draw the arrow
 	if (ArrowImage)
 	{
-		const FVector2D ArrowDrawPos = EndPoint - ArrowRadius;
-		
-		const float AngleInRadians = FMath::DegreesToRadians(90.f); //FMath::Atan2(DeltaPos.Y, DeltaPos.X);
+		FVector2D ArrowDrawPos = EndPoint - ArrowRadius;
+		ArrowDrawPos.Y += OffsetValue;
+		const float AngleInRadians = FMath::DegreesToRadians(90.f);
 
 		FSlateDrawElement::MakeRotatedBox(
 			DrawElementsList,
@@ -227,46 +205,24 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(c
 	}
 }
 
-/*
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnectionDown(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
-{
-	// Constants for Bezier control points
-	FVector2D ControlPoint1 = FVector2D(Start.X, Start.Y + (End.Y - Start.Y) / 3); // Adjust to create a smooth curve
-	FVector2D ControlPoint2 = FVector2D(End.X, End.Y - (End.Y - Start.Y) / 3);
-
-	FSlateDrawElement::MakeCubicBezierSpline(
-		DrawElementsList,
-		LayerId,
-		FPaintGeometry(),
-		Start,
-		ControlPoint1,
-		ControlPoint2,
-		End,
-		Params.WireThickness,
-		ESlateDrawEffect::None,
-		Params.WireColor
-	);
-}
-*/
-
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawCurvedConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
 {
 	const UMounteaDialogueGraphEditorSettings* GraphSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
 
-	FVector2D LeaveTangent = GraphSettings->GetAdvancedWiringConnectionTangent().GetAbs();
-	FVector2D ArriveTangent = GraphSettings->GetAdvancedWiringConnectionTangent().GetAbs();
-	
-	const int32 SideValue = End.X >= 0 ? 1 : -1;
+	FVector2D Tangent = GraphSettings->GetAdvancedWiringConnectionTangent().GetAbs();
 
-	LeaveTangent.X *= -SideValue;
-	ArriveTangent.X *= SideValue;
+	const int32 SideValue = (End.X > Start.X) ? 1 : -1;
 
-	LeaveTangent.Y *= SideValue;
-	ArriveTangent.Y *= -SideValue;
+	Tangent.X *= SideValue;
+	Tangent.Y *= 0.5f;
 	
-	// Control points derived from the tangents
-	FVector2D ControlPoint1 = Start + (LeaveTangent * ZoomFactor);
-	FVector2D ControlPoint2 = End + (ArriveTangent * ZoomFactor);
+	FVector2D ControlPoint1 = Start + (Tangent * ZoomFactor);
+	FVector2D ControlPoint2 = End - (Tangent * ZoomFactor);
+	
+	ControlPoint1 = FMath::Lerp(Start, ControlPoint1, 0.6f);
+	ControlPoint2 = FMath::Lerp(End, ControlPoint2, 0.6f);
+	
+	const FVector2D connectionEnd = FVector2D(End.X, End.Y + 5.f);
 
 	FSlateDrawElement::MakeCubicBezierSpline(
 		DrawElementsList,
@@ -275,7 +231,7 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawCurvedConnection(int32 L
 		Start,
 		ControlPoint1,
 		ControlPoint2,
-		End,
+		connectionEnd,
 		Params.WireThickness,
 		ESlateDrawEffect::None,
 		Params.WireColor
