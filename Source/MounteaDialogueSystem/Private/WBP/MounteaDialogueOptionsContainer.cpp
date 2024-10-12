@@ -126,3 +126,12 @@ void UMounteaDialogueOptionsContainer::ProcessOptionSelected_Implementation(cons
 		dialogueInterface->Execute_OnOptionSelected(ParentDialogueWidget, SelectedOption);
 	}
 }
+
+TArray<UUserWidget*> UMounteaDialogueOptionsContainer::GetDialogueOptions_Implementation() const
+{
+	TArray<TObjectPtr<UUserWidget>> dialogueOptions;
+	for (const auto dialogueOption : DialogueOptions)
+		dialogueOptions.Add(dialogueOption.Value);
+
+	return dialogueOptions;
+}

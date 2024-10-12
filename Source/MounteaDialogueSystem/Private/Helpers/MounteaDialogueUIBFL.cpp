@@ -11,6 +11,7 @@
 #include "Interfaces/UMG/MounteaDialogueViewportWidgetInterface.h"
 #include "Internationalization/Regex.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
+#include "WBP/MounteaDialogueOptionsContainer.h"
 
 FDialogueOptionData UMounteaDialogueUIBFL::NewDialogueOptionData(const FGuid& Node, const FDialogueRow& DialogueRow)
 {
@@ -40,7 +41,7 @@ FDialogueRow UMounteaDialogueUIBFL::GetDialogueNodeRow(UMounteaDialogueGraphNode
 TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> UMounteaDialogueUIBFL::FilterDialogueFriendlyNodes(const TArray<UMounteaDialogueGraphNode*>& RawNodes)
 {
 	TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> returnArray;
-
+	
 	for (const auto& Itr : RawNodes)
 	{
 		if (!Itr) continue;
@@ -51,6 +52,7 @@ TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> UMounteaDialogueUIBFL::Filte
 		}
 	}
 
+	UMounteaDialogueSystemBFC::SortNodes(returnArray);
 	return returnArray;
 }
 
@@ -208,4 +210,22 @@ void UMounteaDialogueUIBFL::RemoveChildWidget(UUserWidget* ParentWidget, UUserWi
 	}
 
 	LOG_ERROR(TEXT("[RemoveChildWidget] ParentWidget does not implement `MounteaDialogueViewportWidgetInterface`!"));
+}
+
+TArray<UUserWidget*> UMounteaDialogueUIBFL::GetDialogueOptions(UUserWidget* ParentWidget)
+{
+	TArray<UUserWidget*> dialogueOptions;
+	if (!IsValid(ParentWidget))
+	{
+		LOG_ERROR(TEXT("[GetDialogueOptions] Invalid Parent Widget provided!"));
+		return dialogueOptions;
+	}
+	
+	if (ParentWidget->Implements<UMounteaDialogueOptionsContainer>())
+	{
+		return IMounteaDialogueOptionsContainerInterface::Execute_GetDialogueOptions(ParentWidget);
+	}
+
+	LOG_ERROR(TEXT("[GetDialogueOptions] ParentWidget does not implement `MounteaDialogueOptionsContainerInterface`!"));
+	return dialogueOptions;
 }

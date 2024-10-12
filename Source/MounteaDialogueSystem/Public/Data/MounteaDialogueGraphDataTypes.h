@@ -59,14 +59,11 @@ enum class EDialogueParticipantState : uint8
 UENUM(BlueprintType)
 enum class ERowDurationMode : uint8
 {
-	ERDM_Manual UMETA(DisplayName="Manual",
-					Tooltip="Row won't start automatically and will wait for `NextDialogueRow` request.", hidden),
-	ERDM_Duration UMETA(DisplayName="Duration",
-						Tooltip="Uses either duration of 'Row Sound' or value from 'Duration'."),
+	ERDM_Manual UMETA(DisplayName="Manual", Tooltip="Row won't start automatically and will wait for `NextDialogueRow` request.", hidden),
+	ERDM_Duration UMETA(DisplayName="Duration", Tooltip="Uses either duration of 'Row Sound' or value from 'Duration'."),
 	EDRM_Override UMETA(DisplayName="Override", Tooltip="Uses 'Duration Override' value."),
 	EDRM_Add UMETA(DisplayName="Add Time", Tooltip="Adds 'Duration Override' value to 'Duration'."),
-	ERDM_AutoCalculate UMETA(DisplayName="Calculate",
-							Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds."),
+	ERDM_AutoCalculate UMETA(DisplayName="Calculate", Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds."),
 
 	Default UMETA(hidden)
 };
