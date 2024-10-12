@@ -30,6 +30,7 @@ public:
 #pragma region Variables
 
 #pragma region ReadOnly
+	
 public:
 	
 	/**
@@ -68,6 +69,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
 	int32 NodeIndex = INDEX_NONE;
 
+	/** Execution order within Parent's scope */
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
+	int32 ExecutionOrder = INDEX_NONE;
 
 protected:
 	

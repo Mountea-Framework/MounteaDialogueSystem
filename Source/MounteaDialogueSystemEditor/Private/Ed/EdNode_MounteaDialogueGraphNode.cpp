@@ -187,6 +187,11 @@ void UEdNode_MounteaDialogueGraphNode::UpdatePosition()
 		DialogueGraphNode->NodePosition = FIntPoint(NodePosX, NodePosY);
 		DialogueGraphNode->Modify(true);
 	}
+
+	if (auto graphEditor = GetDialogueGraphEdGraph())
+	{
+		
+	}
 }
 
 void UEdNode_MounteaDialogueGraphNode::PostEditUndo()
