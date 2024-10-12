@@ -50,7 +50,7 @@ const FName FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID(TEXT("Search"
 
 void FAssetEditor_MounteaDialogueGraph::OnPackageSaved(const FString& String, UPackage* Package, FObjectPostSaveContext ObjectPostSaveContext)
 {
-	RebuildMounteaDialogueGraph();
+	//RebuildMounteaDialogueGraph();
 }
 
 FAssetEditor_MounteaDialogueGraph::FAssetEditor_MounteaDialogueGraph()
@@ -1070,8 +1070,7 @@ void FAssetEditor_MounteaDialogueGraph::AutoArrange()
 	UEdGraph_MounteaDialogueGraph* EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
 	check(EdGraph != nullptr);
 
-	const FScopedTransaction Transaction(LOCTEXT("MounteaDialogueGraphEditorAutoArrange",
-												"Mountea Dialogue Graph Editor: Auto Arrange all Nodes"));
+	const FScopedTransaction Transaction(LOCTEXT("MounteaDialogueGraphEditorAutoArrange", "Mountea Dialogue Graph Editor: Auto Arrange all Nodes"));
 
 	EdGraph->Modify(true);
 

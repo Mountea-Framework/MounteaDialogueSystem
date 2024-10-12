@@ -429,14 +429,13 @@ FText UMounteaDialogueGraphNode::GetDefaultTooltipBody() const
 {
 	const FText InheritsValue = bInheritGraphDecorators ? LOCTEXT("True","Yes") : LOCTEXT("False","No");
 	const FText Inherits = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_InheritsTooltip", "Inherits Graph Decorators: {0}"), InheritsValue);
-
 	FText ImplementsNumber;
 	if (NodeDecorators.Num() == 0) ImplementsNumber = LOCTEXT("None","-");
 	else ImplementsNumber = FText::FromString(FString::FromInt(NodeDecorators.Num()));
 	
 	const FText Implements = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_ImplementsTooltip", "Implements Decorators: {0}"), ImplementsNumber);
 	
-	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0} - {1}\n\n{2}\n{3}"), NodeTypeName, FText::FromString(NodeGUID.ToString()),  Inherits, Implements);
+	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0} - {1}\n\n{2}\n{3}\nNode Execution Order: {4}"), NodeTypeName, FText::FromString(NodeGUID.ToString(EGuidFormats::DigitsWithHyphensLower)),  Inherits, Implements, ExecutionOrder);
 }
 
 #endif
