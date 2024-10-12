@@ -1069,8 +1069,7 @@ void FAssetEditor_MounteaDialogueGraph::AutoArrange()
 	UEdGraph_MounteaDialogueGraph* EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
 	check(EdGraph != nullptr);
 
-	const FScopedTransaction Transaction(LOCTEXT("MounteaDialogueGraphEditorAutoArrange",
-												"Mountea Dialogue Graph Editor: Auto Arrange all Nodes"));
+	const FScopedTransaction Transaction(LOCTEXT("MounteaDialogueGraphEditorAutoArrange", "Mountea Dialogue Graph Editor: Auto Arrange all Nodes"));
 
 	EdGraph->Modify(true);
 
