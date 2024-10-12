@@ -209,8 +209,7 @@ void UMounteaDialogueGraph::PostInitProperties()
 #endif
 }
 
-void UMounteaDialogueGraph::RegisterTick_Implementation(
-	const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+void UMounteaDialogueGraph::RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
 {
 	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
 	{
@@ -218,8 +217,7 @@ void UMounteaDialogueGraph::RegisterTick_Implementation(
 	}
 }
 
-void UMounteaDialogueGraph::UnregisterTick_Implementation(
-	const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+void UMounteaDialogueGraph::UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
 {
 	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
 	{

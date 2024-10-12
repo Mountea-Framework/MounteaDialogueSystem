@@ -22,7 +22,6 @@ UMounteaDialogueManager::UMounteaDialogueManager()
 	, DefaultManagerState(EDialogueManagerState::EDMS_Enabled)
 	, DialogueContext(nullptr)
 	, ReplicatedDialogueContext(nullptr)
-	, bWasCursorVisible(false)
 	, DialogueContextReplicationKey(0)
 {
 	bAutoActivate = true;
@@ -1003,13 +1002,8 @@ bool UMounteaDialogueManager::InvokeDialogueUI_Implementation(FString& Message)
 		return false;
 	}
 	
-	bWasCursorVisible = playerController->bShowMouseCursor;
-
 	// This event should be responsible for calling logic in Player Controller
 	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidgetPtr);
-	
-	// This Component should not be responsible for setting up Player Controller!
-	playerController->SetShowMouseCursor(true);
 	
 	return Execute_UpdateDialogueUI(this, Message, MounteaDialogueWidgetCommands::CreateDialogueWidget);
 }
@@ -1053,8 +1047,6 @@ bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
 	}
 
 	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, nullptr);
-
-	playerController->SetShowMouseCursor(bWasCursorVisible);
 
 	if (DialogueWidgetPtr->Implements<UMounteaDialogueWBPInterface>())
 	{

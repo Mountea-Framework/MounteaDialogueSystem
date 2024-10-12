@@ -717,48 +717,47 @@ float UMounteaDialogueSystemBFC::GetRowDuration(const FDialogueRowData& Row)
 	switch (Row.RowDurationMode)
 	{
 		case ERowDurationMode::ERDM_Duration:
+		{
+			if (Row.RowSound)
 			{
-				if (Row.RowSound)
-				{
-					ReturnValue = Row.RowSound->Duration;
-					break;
-				}
-						
-				ReturnValue =  Row.RowDuration;
-			}
-			break;
-		case ERowDurationMode::EDRM_Override:
-			{
-				ReturnValue = Row.RowDurationOverride;
-			}
-			break;
-		case ERowDurationMode::EDRM_Add:
-			{
-				if (Row.RowSound)
-				{
-					ReturnValue = Row.RowSound->Duration;
-					ReturnValue = ReturnValue + Row.RowDurationOverride;
-					break;
-				}
-				ReturnValue = Row.RowDurationOverride;
-			}
-			break;
-		case ERowDurationMode::ERDM_AutoCalculate:
-			{
-				//TODO: Make 8:100 ratio editable in Settings!
-				if (GetDialogueSystemSettings_Internal())
-				{
-					ReturnValue= ((Row.RowText.ToString().Len() * GetDialogueSystemSettings_Internal()->GetDurationCoefficient()) / 100.f);
-				}
-				else
-				{
-					ReturnValue= ((Row.RowText.ToString().Len() * 8.f) / 100.f);
-				}
+				ReturnValue = Row.RowSound->Duration;
 				break;
 			}
+			ReturnValue =  Row.RowDuration;
+			break;
+		}
+		case ERowDurationMode::EDRM_Override:
+		{
+			ReturnValue = Row.RowDurationOverride;
+			break;
+		}
+		case ERowDurationMode::EDRM_Add:
+		{
+			if (Row.RowSound)
+			{
+				ReturnValue = Row.RowSound->Duration;
+				ReturnValue = ReturnValue + Row.RowDurationOverride;
+				break;
+			}
+			ReturnValue = Row.RowDurationOverride;
+			break;
+		}
+		case ERowDurationMode::ERDM_AutoCalculate:
+		{
+			if (GetDialogueSystemSettings_Internal())
+			{
+				ReturnValue= ((Row.RowText.ToString().Len() * GetDialogueSystemSettings_Internal()->GetDurationCoefficient()) / 100.f);
+			}
+			else
+			{
+				ReturnValue= ((Row.RowText.ToString().Len() * 8.f) / 100.f);
+			}
+			break;
+		}
 	}
 
-	ReturnValue = FMath::Max(1.f, ReturnValue);
+	// Timer running in background need some time and replication takes a few ms, too
+	ReturnValue = FMath::Max(UE_KINDA_SMALL_NUMBER, ReturnValue);
 		
 	return ReturnValue;
 }
