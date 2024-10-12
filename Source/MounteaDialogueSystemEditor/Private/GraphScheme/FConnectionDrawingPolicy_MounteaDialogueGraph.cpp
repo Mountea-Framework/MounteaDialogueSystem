@@ -194,7 +194,7 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(c
 		return;
 	}
 
-	const bool bIsAligned = FMath::IsNearlyEqual(EndPoint.X, StartPoint.X, GraphSettings->GetControlPointDistance());
+	const bool bIsAligned = FMath::IsNearlyEqual(EndPoint.X, StartPoint.X, GraphSettings->GetControlPointDistance() * ZoomFactor);
 		
 	// Choose connection drawing method based on conditions
 	if (bIsAligned)
