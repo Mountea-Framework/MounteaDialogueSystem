@@ -10,26 +10,29 @@ FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph::FConnectionDrawingPolicy_
 	: FKismetConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj)
 	, StoredBackLayerID(InBackLayerID)
 	, StoredFrontLayerID(InFrontLayerID)
+	, ZoomFactor(InZoomFactor)
+	, RoundRadius(FMath::Clamp(20.0f / InZoomFactor, 5.0f, 10.0f))
+	, WireThickness(1.5f)
 {
 	if (const UMounteaDialogueGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
 	{
 		switch (GraphEditorSettings->GetArrowType())
 		{
-			case EArrowType::ERT_SimpleArrow:
-				ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.SimpleArrow"));
-				break;
-			case EArrowType::ERT_HollowArrow:
-				ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.HollowArrow"));
-				break;
-			case EArrowType::ERT_FancyArrow:
-				ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.FancyArrow"));
-				break;
-			case EArrowType::ERT_Bubble:
-				ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.Bubble"));
-				break;
-			case EArrowType::ERT_None:
-			default:
-				ArrowImage = nullptr;
+		case EArrowType::ERT_SimpleArrow:
+			ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.SimpleArrow"));
+			break;
+		case EArrowType::ERT_HollowArrow:
+			ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.HollowArrow"));
+			break;
+		case EArrowType::ERT_FancyArrow:
+			ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.FancyArrow"));
+			break;
+		case EArrowType::ERT_Bubble:
+			ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.Bubble"));
+			break;
+		case EArrowType::ERT_None:
+		default:
+			ArrowImage = nullptr;
 		}
 	}
 	else
@@ -57,55 +60,170 @@ void FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph::DrawSplineWithArrow(
 
 FVector2D FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph::ComputeSplineTangent(const FVector2D& Start, const FVector2D& End) const
 {
-	return FVector2D(0.f, 0.f);  // Not used for Manhattan-style lines
+	return FVector2D(0.0f, 1.0f);  // Default tangent for top-down connections
 }
 
-void FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph::DrawManhattanConnection(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)
+void FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph::DrawManhattanConnection(const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
 {
-	const float VerticalOffset = 20.0f;  // Adjust this value to control the vertical segment positioning
-	const float HorizontalOffset = 0.0f;  // Adjust this value to control the horizontal segment positioning
+	const FVector2D StartDirection(0.0f, 1.0f);
+	const FVector2D EndDirection(0.0f, -1.0f);
 
-	TArray<FVector2D> Points;
-	Points.Add(StartPoint);
-
-	// Determine if we need to go up or down first
-	if (EndPoint.Y > StartPoint.Y)
+	if (FMath::IsNearlyEqual((End - Start).SizeSquared(), 0.0f, KINDA_SMALL_NUMBER))
 	{
-		// Go down first
-		Points.Add(FVector2D(StartPoint.X, StartPoint.Y + VerticalOffset));
-		Points.Add(FVector2D(EndPoint.X - HorizontalOffset, StartPoint.Y + VerticalOffset));
-		Points.Add(FVector2D(EndPoint.X - HorizontalOffset, EndPoint.Y));
-	}
-	else
-	{
-		// Go up first
-		Points.Add(FVector2D(StartPoint.X, EndPoint.Y - VerticalOffset));
-		Points.Add(FVector2D(EndPoint.X - HorizontalOffset, EndPoint.Y - VerticalOffset));
-		Points.Add(FVector2D(EndPoint.X - HorizontalOffset, EndPoint.Y));
+		return;
 	}
 
-	Points.Add(EndPoint);
+	const float DistanceY = End.Y - Start.Y;
+	const float DistanceX = End.X - Start.X;
 
-	// Draw the Manhattan connection
-	for (int32 i = 0; i < Points.Num() - 1; ++i)
+	if (FMath::IsNearlyZero(DistanceX, 1.0f))
 	{
+		// Straight vertical line
 		FSlateDrawElement::MakeLines(
 			DrawElementsList,
 			StoredBackLayerID,
 			FPaintGeometry(),
-			{ Points[i], Points[i + 1] },
+			{ Start, End },
 			ESlateDrawEffect::None,
 			Params.WireColor,
 			false,
-			Params.WireThickness
+			Params.WireThickness * WireThickness
+		);
+	}
+	else if (DistanceY < 2 * RoundRadius)
+	{
+		// Direct connection with a single curve
+		FVector2D MidPoint = (Start + End) * 0.5f;
+		FVector2D MidDirection = FVector2D(DistanceX, 0.0f).GetSafeNormal();
+
+		DrawRadius(Start, StartDirection, MidPoint, MidDirection, 90);
+		DrawRadius(MidPoint, MidDirection, End, EndDirection, 90);
+	}
+	else
+	{
+		// Connection with vertical segments and two curves
+		FVector2D VerticalStart, VerticalStartDirection;
+		FVector2D VerticalEnd, VerticalEndDirection;
+		
+		if (DistanceX > 0)
+		{
+			// Normal case: target is to the right
+			DrawSimpleRadius(Start, StartDirection, 90, VerticalStart, VerticalStartDirection);
+			DrawSimpleRadius(End, EndDirection, -90, VerticalEnd, VerticalEndDirection);
+		}
+		else
+		{
+			// Inverted case: target is to the left
+			DrawSimpleRadius(Start, StartDirection, -90, VerticalStart, VerticalStartDirection);
+			DrawSimpleRadius(End, EndDirection, 90, VerticalEnd, VerticalEndDirection);
+		}
+
+		// Draw vertical segment
+		FSlateDrawElement::MakeLines(
+			DrawElementsList,
+			StoredBackLayerID,
+			FPaintGeometry(),
+			{ VerticalStart, FVector2D(VerticalStart.X, VerticalEnd.Y) },
+			ESlateDrawEffect::None,
+			Params.WireColor,
+			false,
+			Params.WireThickness * WireThickness
+		);
+
+		// Draw horizontal segment
+		FSlateDrawElement::MakeLines(
+			DrawElementsList,
+			StoredBackLayerID,
+			FPaintGeometry(),
+			{ FVector2D(VerticalStart.X, VerticalEnd.Y), FVector2D(VerticalEnd.X, VerticalEnd.Y) },
+			ESlateDrawEffect::None,
+			Params.WireColor,
+			false,
+			Params.WireThickness * WireThickness
 		);
 	}
 
-	float imageOffset = ArrowImage ? ArrowImage->GetImageSize().X / 2 : 8.f;
-	FVector2D ArrowEndpoint = FVector2D(EndPoint.X - imageOffset, EndPoint.Y - VerticalOffset - imageOffset);
+	// Draw the arrow
+	DrawArrow(FVector2D(End.X, End.Y - GetRadiusOffset(90)), End, Params);
+}
+	
+void FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph::DrawSimpleRadius(const FVector2D& Start, const FVector2D& StartDirection, const int32& AngleDeg, FVector2D& out_End, FVector2D& out_EndDirection)
+{
+	float StartOffset = GetRadiusOffset(AngleDeg, false);
+	float PerpendicularOffset = GetRadiusOffset(AngleDeg, true);
+	FVector2D PerpendicularDirection = StartDirection.GetRotated(FMath::Sign(AngleDeg) * 90);
+	out_EndDirection = StartDirection.GetRotated(AngleDeg);
 
-	// Draw the arrow at the end
-	DrawArrow(Points[Points.Num() - 2], ArrowEndpoint, Params);
+	out_End = Start + (StartDirection * StartOffset + PerpendicularDirection * PerpendicularOffset);
+	DrawRadius(Start, StartDirection, out_End, out_EndDirection, AngleDeg);
+}
+
+void FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph::DrawRadius(const FVector2D& Start, const FVector2D& StartDirection, const FVector2D& End, const FVector2D& EndDirection, const int32& AngleDeg)
+{
+	const float Tangent = GetRadiusTangent(AngleDeg);
+
+	FSlateDrawElement::MakeDrawSpaceSpline(
+		DrawElementsList,
+		StoredBackLayerID,
+		Start, StartDirection * Tangent,
+		End, EndDirection * Tangent,
+		WireThickness
+	);
+}
+
+float FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph::GetRadiusOffset(const int32& AngleDeg, bool Perpendicular) const
+{
+	float RadiusOffset = 1.0f;
+	int32 AbsAngle = FMath::Abs(AngleDeg);
+
+	if (Perpendicular)
+	{
+		AbsAngle = 180 - AbsAngle;
+	}
+
+	switch (AbsAngle)
+	{
+		case 45:
+			RadiusOffset *= FMath::Sqrt(2.0f) / 2.0f;
+			break;
+		case 90:
+			RadiusOffset = 1.0f;  // Direct adjustment for 90-degree angles
+			break;
+		case 135:
+			RadiusOffset *= (1.0f - (FMath::Sqrt(2.0f) / 2.0f));
+			break;
+		case 180:
+			RadiusOffset *= 1.0f;  // Avoid extreme radius for straight lines
+			break;
+	}
+
+	return RadiusOffset * ZoomFactor * FMath::Clamp(RoundRadius, 10.0f, 20.0f);  // Clamp the radius for stability
+}
+
+float FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph::GetRadiusTangent(const int32& AngleDeg) const
+{
+	float Tangent = 2 * FMath::Sqrt(2.0f) - 1;
+
+	switch (FMath::Abs(AngleDeg))
+	{
+		case 0:
+			Tangent *= 4.0f / Tangent;
+			break;
+		case 45:
+			Tangent *= 0.55166f;
+			break;
+		case 90:
+			Tangent = 4 * (FMath::Sqrt(2.0f) - 1);
+			break;
+		case 135:
+			Tangent *= 2.0f / Tangent;
+			break;
+		case 180:
+			Tangent *= 4.0f / Tangent;
+			break;
+	}
+
+	return Tangent * ZoomFactor * RoundRadius;
 }
 
 void FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph::DrawArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)

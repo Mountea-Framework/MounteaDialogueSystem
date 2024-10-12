@@ -16,11 +16,19 @@ public:
 	virtual FVector2D ComputeSplineTangent(const FVector2D& Start, const FVector2D& End) const override;
 
 protected:
-	void DrawManhattanConnection(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params);
+	void DrawManhattanConnection(const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params);
+	void DrawSimpleRadius(const FVector2D& Start, const FVector2D& StartDirection, const int32& AngleDeg, FVector2D& out_End, FVector2D& out_EndDirection);
+	void DrawRadius(const FVector2D& Start, const FVector2D& StartDirection, const FVector2D& End, const FVector2D& EndDirection, const int32& AngleDeg);
 	void DrawArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params);
+
+	float GetRadiusOffset(const int32& AngleDeg, bool Perpendicular = false) const;
+	float GetRadiusTangent(const int32& AngleDeg) const;
 
 private:
 	int32 StoredBackLayerID;
 	int32 StoredFrontLayerID;
+	float ZoomFactor;
+	float RoundRadius;
+	float WireThickness;
 };
 
