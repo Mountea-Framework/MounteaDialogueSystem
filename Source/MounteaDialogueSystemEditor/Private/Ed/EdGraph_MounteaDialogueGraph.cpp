@@ -121,6 +121,8 @@ void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 		UEdNode_MounteaDialogueGraphNode* EdNode_RNode = NodeMap[&R];
 		return EdNode_LNode->NodePosX < EdNode_RNode->NodePosX;
 	});
+
+	AssignExecutionOrder();
 }
 
 UEdNode_MounteaDialogueGraphEdge* UEdGraph_MounteaDialogueGraph::CreateEdgeNode(UEdNode_MounteaDialogueGraphNode* StartNode, UEdNode_MounteaDialogueGraphNode* EndNode)
@@ -224,5 +226,86 @@ void UEdGraph_MounteaDialogueGraph::SortNodes(UMounteaDialogueGraphNode* RootNod
 		CurrLevelNodes = NextLevelNodes;
 		NextLevelNodes.Reset();
 		++Level;
+	}
+}
+
+void UEdGraph_MounteaDialogueGraph::ResetExecutionOrders() const
+{
+	UMounteaDialogueGraph* Graph = GetMounteaDialogueGraph();
+	if (!Graph) return;
+
+	for (UMounteaDialogueGraphNode* Node : Graph->AllNodes)
+	{
+		if (Node)
+		{
+			Node->ExecutionOrder = INDEX_NONE;
+		}
+	}
+}
+
+UMounteaDialogueGraphNode* UEdGraph_MounteaDialogueGraph::GetParentNode(const UMounteaDialogueGraphNode& Node)
+{
+	if (Node.ParentNodes.Num() > 0)
+	{
+		return Node.ParentNodes[0];
+	}
+	return nullptr;
+}
+
+void UEdGraph_MounteaDialogueGraph::AssignExecutionOrder()
+{
+	ResetExecutionOrders();
+
+	UMounteaDialogueGraph* Graph = GetMounteaDialogueGraph();
+	if (!Graph) return;
+
+	TMap<int32, TArray<UMounteaDialogueGraphNode*>> LayeredNodes;
+	int32 CurrentExecutionOrder = 0;
+
+	for (UMounteaDialogueGraphNode* RootNode : Graph->RootNodes)
+	{
+		if (RootNode)
+		{
+			AssignNodeToLayer(RootNode, 0, LayeredNodes);
+		}
+	}
+
+	for (int32 LayerIndex = 0; LayeredNodes.Contains(LayerIndex); ++LayerIndex)
+	{
+		TArray<UMounteaDialogueGraphNode*>& NodesInLayer = LayeredNodes[LayerIndex];
+		NodesInLayer.Sort([this](const UMounteaDialogueGraphNode& A, const UMounteaDialogueGraphNode& B)
+		{
+			// Prefer node order based on their parent's order
+			UEdNode_MounteaDialogueGraphNode* EdNode_A = NodeMap[&A];
+			UEdNode_MounteaDialogueGraphNode* EdNode_B = NodeMap[&B];
+
+			UMounteaDialogueGraphNode* ParentA = GetParentNode(A);
+			UMounteaDialogueGraphNode* ParentB = GetParentNode(B);
+			if (ParentA->ExecutionOrder == ParentB->ExecutionOrder)
+			{
+				return EdNode_A->NodePosX < EdNode_B->NodePosX;
+			}
+			return ParentA->ExecutionOrder < ParentB->ExecutionOrder;
+		});
+
+		for (UMounteaDialogueGraphNode* Node : NodesInLayer)
+		{
+			if (Node)
+			{
+				Node->ExecutionOrder = CurrentExecutionOrder++;
+			}
+		}
+	}
+}
+
+void UEdGraph_MounteaDialogueGraph::AssignNodeToLayer(UMounteaDialogueGraphNode* Node, int32 LayerIndex, TMap<int32, TArray<UMounteaDialogueGraphNode*>>& LayeredNodes)
+{
+	if (!Node) return;
+
+	LayeredNodes.FindOrAdd(LayerIndex).Add(Node);
+
+	for (UMounteaDialogueGraphNode* ChildNode : Node->ChildrenNodes)
+	{
+		AssignNodeToLayer(ChildNode, LayerIndex + 1, LayeredNodes);
 	}
 }

@@ -25,9 +25,7 @@ public:
 
 	virtual void RebuildMounteaDialogueGraph();
 	UEdNode_MounteaDialogueGraphNode* CreateEdNode(UMounteaDialogueGraphNode* DialogueNode);
-	UEdNode_MounteaDialogueGraphEdge* CreateEdgeNode(UEdNode_MounteaDialogueGraphNode* StartNode,
-													UEdNode_MounteaDialogueGraphNode* EndNode);
-	void UpdateNodesPositions();
+	UEdNode_MounteaDialogueGraphEdge* CreateEdgeNode(UEdNode_MounteaDialogueGraphNode* StartNode, UEdNode_MounteaDialogueGraphNode* EndNode);
 
 	UMounteaDialogueGraph* GetMounteaDialogueGraph() const;
 
@@ -54,6 +52,11 @@ protected:
 
 	void Clear();
 	void SortNodes(UMounteaDialogueGraphNode* RootNode);
+	
+	void ResetExecutionOrders() const;
+	static UMounteaDialogueGraphNode* GetParentNode(const UMounteaDialogueGraphNode& Node);
+	void AssignExecutionOrder();
+	static void AssignNodeToLayer(UMounteaDialogueGraphNode* Node, int32 LayerIndex, TMap<int32, TArray<UMounteaDialogueGraphNode*>>& LayeredNodes);
 
 private:
 

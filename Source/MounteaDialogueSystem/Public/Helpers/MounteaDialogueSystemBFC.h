@@ -249,7 +249,7 @@ public:
 	 */ 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="diaogue, child, nodes"), meta=(CustomTag="MounteaK2Getter"))
 	static TArray<UMounteaDialogueGraphNode*> GetAllowedChildNodes(const UMounteaDialogueGraphNode* ParentNode);
-
+	
 	/**
 	 * Returns whether Dialogue Row is valid or not.
 	 * 
@@ -390,5 +390,22 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta = (ClassFilter = "Interface"), meta=(DeterminesOutputType = "InterfaceFilter"), meta=(CustomTag="MounteaK2Getter"))
 	static UActorComponent* GetSingleComponentByInterface(const AActor* Target, TSubclassOf<UInterface> InterfaceFilter, bool& bResult);
+
+	template <typename NodeType>
+	static void SortNodes(TArray<NodeType*>& SortedNodes)
+	{
+		SortedNodes.Sort([](const NodeType& A, const NodeType& B)
+		{
+			return A.ExecutionOrder < B.ExecutionOrder;
+		});
+	}
+
+	/**
+	 * Sorts given array of Dialogue Nodes based on their Execution Order.
+	 * 
+	 * @param SortedNodes OUT Nodes array that will be sorted
+	 */ 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="sort,order,diaogue,child,nodes"), meta=(CustomTag="MounteaK2Getter"))
+	static void SortNodes(TArray<UMounteaDialogueGraphNode*>& SortedNodes);
 
 };

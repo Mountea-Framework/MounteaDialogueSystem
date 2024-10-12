@@ -117,4 +117,8 @@ public:
 	void ProcessOptionSelected(const FGuid& SelectedOption, UUserWidget* CallingWidget);
 	virtual void ProcessOptionSelected_Implementation(const FGuid& SelectedOption, UUserWidget* CallingWidget) = 0;
 
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|OptionsContainer")
+	TArray<UUserWidget*> GetDialogueOptions() const;
+	virtual TArray<UUserWidget*> GetDialogueOptions_Implementation() const = 0;
+
 };
