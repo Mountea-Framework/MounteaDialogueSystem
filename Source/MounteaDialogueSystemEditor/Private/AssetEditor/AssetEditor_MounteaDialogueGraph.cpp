@@ -49,7 +49,7 @@ const FName FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID(TEXT("Search"
 
 void FAssetEditor_MounteaDialogueGraph::OnPackageSaved(const FString& String, UPackage* Package, FObjectPostSaveContext ObjectPostSaveContext)
 {
-	RebuildMounteaDialogueGraph();
+	//RebuildMounteaDialogueGraph();
 }
 
 FAssetEditor_MounteaDialogueGraph::FAssetEditor_MounteaDialogueGraph()

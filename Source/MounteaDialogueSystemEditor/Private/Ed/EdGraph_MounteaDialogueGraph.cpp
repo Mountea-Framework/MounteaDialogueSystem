@@ -22,7 +22,6 @@ UEdGraph_MounteaDialogueGraph::~UEdGraph_MounteaDialogueGraph()
 
 void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 {
-	
 	UMounteaDialogueGraph* Graph = GetMounteaDialogueGraph();
 
 	Clear();
@@ -146,8 +145,6 @@ UMounteaDialogueGraph* UEdGraph_MounteaDialogueGraph::GetMounteaDialogueGraph() 
 bool UEdGraph_MounteaDialogueGraph::Modify(bool bAlwaysMarkDirty)
 {
 	bool Rtn = Super::Modify(bAlwaysMarkDirty);
-
-	GetMounteaDialogueGraph()->Modify();
 
 	for (int32 i = 0; i < Nodes.Num(); ++i)
 	{
@@ -275,24 +272,40 @@ void UEdGraph_MounteaDialogueGraph::AssignExecutionOrder()
 		TArray<UMounteaDialogueGraphNode*>& NodesInLayer = LayeredNodes[LayerIndex];
 		NodesInLayer.Sort([this](const UMounteaDialogueGraphNode& A, const UMounteaDialogueGraphNode& B)
 		{
-			// Prefer node order based on their parent's order
 			UEdNode_MounteaDialogueGraphNode* EdNode_A = NodeMap[&A];
 			UEdNode_MounteaDialogueGraphNode* EdNode_B = NodeMap[&B];
 
 			UMounteaDialogueGraphNode* ParentA = GetParentNode(A);
 			UMounteaDialogueGraphNode* ParentB = GetParentNode(B);
-			if (ParentA->ExecutionOrder == ParentB->ExecutionOrder)
+			
+			if (ParentA && !ParentB) return true;
+			if (!ParentA && ParentB) return false;
+			
+			if (ParentA && ParentB)
 			{
-				return EdNode_A->NodePosX < EdNode_B->NodePosX;
+				if (ParentA->ExecutionOrder != ParentB->ExecutionOrder)
+				{
+					return ParentA->ExecutionOrder < ParentB->ExecutionOrder;
+				}
 			}
-			return ParentA->ExecutionOrder < ParentB->ExecutionOrder;
+
+			// If we reach here, either both nodes have no parents or have parents with the same execution order
+			// In this case, sort based on X position
+			return EdNode_A->NodePosX < EdNode_B->NodePosX;
 		});
 
 		for (UMounteaDialogueGraphNode* Node : NodesInLayer)
 		{
 			if (Node)
 			{
-				Node->ExecutionOrder = CurrentExecutionOrder++;
+				if (UMounteaDialogueGraphNode* ParentNode = GetParentNode(*Node))
+				{
+					Node->ExecutionOrder = CurrentExecutionOrder++;
+				}
+				else
+				{
+					Node->ExecutionOrder = INDEX_NONE;
+				}
 			}
 		}
 	}
