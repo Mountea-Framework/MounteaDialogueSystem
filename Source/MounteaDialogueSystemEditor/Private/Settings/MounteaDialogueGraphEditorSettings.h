@@ -146,7 +146,7 @@ private:
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(UIMin=0.1f, ClampMin=0.1f, UIMax=1.5f, ClampMax=1.5f))
 	float WireWidth;
 
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring") //, meta=(ConfigRestartRequired=true))
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring")
 	EArrowType ArrowType;
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]"))
@@ -157,40 +157,6 @@ private:
 
 	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]", EditCondition="bUseAdvancedWiring"))
 	float ControlPointDistance = 100.0f;
-	
-	/* Advanced Wiring doesn't work now
-	
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	EWiringStyle WireStyle;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	uint32 HorizontalOffset = 16;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	EBubbleDrawRule BubbleDrawRule;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	int32 BubbleZoomThreshold;
-
-	// Space between bubbles on the wires. Default: 20.0
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta = (ClampMin = "10.0", ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	float BubbleSpace = 20.0f;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta = (ClampMin = "10.0", ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	float BubbleSize = 2.0f;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta = (ClampMin = "10.0", ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	float BubbleSpeed = 2.0f;
-	
-	// Disable the offset for pins. Default: false
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	bool DisablePinOffset = false;
-
-	// Fix default zoomed-out wire displacement. Default: true
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	bool FixZoomDisplacement = true;
-
-	*/
 
 #pragma endregion
 
@@ -321,32 +287,9 @@ public:
 
 	float GetControlPointDistance() const
 	{ return ControlPointDistance; };
-	
-	/*
-	EWiringStyle GetWireStyle() const
-	{ return WireStyle; };
 
-	int32 GetHorizontalOffset() const
-	{ return HorizontalOffset; };
-
-	EBubbleDrawRule GetBubbleDrawRule() const
-	{ return  BubbleDrawRule; };
-
-	int32 GetBubbleZoomThreshold() const
-	{ return BubbleZoomThreshold; };
-
-	float GetBubbleSpace() const
-	{ return BubbleSpace; };
-
-	float GetBubbleSpeed() const
-	{ return BubbleSpeed; };
-
-	float GetBubbleSize() const
-	{ return BubbleSize; };
-	*/
 #pragma endregion 
 
-	
 #pragma region GraphArrange_Getters
 	
 	EAutoLayoutStrategyType GetAutoLayoutStrategy() const
