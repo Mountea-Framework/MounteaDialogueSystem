@@ -273,8 +273,11 @@ void UEdGraph_MounteaDialogueGraph::AssignExecutionOrder()
 		TArray<UMounteaDialogueGraphNode*>& NodesInLayer = LayeredNodes[LayerIndex];
 		NodesInLayer.Sort([this](const UMounteaDialogueGraphNode& A, const UMounteaDialogueGraphNode& B)
 		{
-			UEdNode_MounteaDialogueGraphNode* EdNode_A = NodeMap[&A];
-			UEdNode_MounteaDialogueGraphNode* EdNode_B = NodeMap[&B];
+			if (!NodeMap.Contains(&A)) return false;
+			if (!NodeMap.Contains(&B)) return false;
+			
+			UEdNode_MounteaDialogueGraphNode* EdNode_A = NodeMap.FindRef(&A);
+			UEdNode_MounteaDialogueGraphNode* EdNode_B = NodeMap.FindRef(&B);
 
 			UMounteaDialogueGraphNode* ParentA = GetParentNode(A);
 			UMounteaDialogueGraphNode* ParentB = GetParentNode(B);
