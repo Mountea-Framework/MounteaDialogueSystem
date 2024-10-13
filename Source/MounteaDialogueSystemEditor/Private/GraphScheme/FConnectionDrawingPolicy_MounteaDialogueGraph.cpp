@@ -172,7 +172,7 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(c
 	
 	float OffsetValue = 0.f;
 	const UMounteaDialogueGraphEditorSettings* GraphSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
-	if (GraphSettings == nullptr || GraphSettings->AllowAdvancedWiring() == false || nodesDelta <= GraphSettings->GetControlPointDistance())
+	if (GraphSettings == nullptr || GraphSettings->AllowAdvancedWiring() == false || nodesDelta <= GraphSettings->GetControlPointDistance() * ZoomFactor)
 	{
 		DrawConnection(WireLayerID, StartPoint, EndPoint, Params);
 	}
