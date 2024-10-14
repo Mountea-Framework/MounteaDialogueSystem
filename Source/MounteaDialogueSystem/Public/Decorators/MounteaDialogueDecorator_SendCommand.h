@@ -11,7 +11,7 @@
  *
  * Implements native support send Command to Dialogue Participant.
  */
-UCLASS( BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue"), DisplayName="Send Command")
+UCLASS( BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue,Command"), DisplayName="Send Command")
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecorator_SendCommand : public UMounteaDialogueDecoratorBase
 {
 	GENERATED_BODY()
