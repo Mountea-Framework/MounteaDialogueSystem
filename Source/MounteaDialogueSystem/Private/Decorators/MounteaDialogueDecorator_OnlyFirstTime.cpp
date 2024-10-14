@@ -6,6 +6,7 @@
 #include "Data/MounteaDialogueContext.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_OnlyFirstTime"
@@ -21,8 +22,9 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::ValidateDecorator_Implementation(T
 {
 	bool bSatisfied = Super::ValidateDecorator_Implementation(ValidationMessages);
 	const FText Name = GetDecoratorName();
+	const auto* OwningNode = GetOwningNode();
 	
-	if (GetOwningNode() && GetOwningNode()->IsA(UMounteaDialogueGraphNode_StartNode::StaticClass()))
+	if (OwningNode && OwningNode->IsA(UMounteaDialogueGraphNode_StartNode::StaticClass()))
 	{
 		bSatisfied = false;
 		
@@ -32,8 +34,18 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::ValidateDecorator_Implementation(T
 				Name);
 		ValidationMessages.Add(TempText);
 	}
+
+	if (OwningNode && OwningNode->IsA(UMounteaDialogueGraphNode_ReturnToNode::StaticClass()))
+	{
+		bSatisfied = false;
+		
+		const FText TempText = FText::Format(
+			LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_ReturnNode",
+				"Decorator {0}: is not allowed for Return Nodes!\nAttach this decorator to different nodes instead."),
+				Name);
+		ValidationMessages.Add(TempText);
+	}
 	
-	const auto* OwningNode = GetOwningNode();
 	const auto* ParentGraph = OwningNode ? OwningNode->Graph : nullptr;
 	const UMounteaDialogueGraphNode* startNode = ParentGraph ? ParentGraph->StartNode : nullptr;
 

@@ -197,6 +197,17 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator")
 	bool IsDecoratorAllowedForGraph() const;
 	virtual bool IsDecoratorAllowedForGraph_Implementation() const {  return true;  };
+
+	/**
+	 * Defines if more than 1 instance of this decorator can be attached to single Node/Graph.
+	 * Generally false, however, in some cases true is required: sending UI commands, playing sound or for generic
+	 * use decorators that might be repurposed multiple times.
+	 * 
+	 * @return Whether decorator can be stacked or not
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator")
+	bool IsDecoratorStackable() const;
+	virtual bool IsDecoratorStackable_Implementation() const {  return false;  };
 	
 	FText GetDecoratorName() const;
 
