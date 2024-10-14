@@ -11,7 +11,7 @@
  *
  * Implements native support send Command to Dialogue Participant.
  */
-UCLASS( BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue"), DisplayName="Send Command")
+UCLASS( BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue,Command"), DisplayName="Send Command")
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecorator_SendCommand : public UMounteaDialogueDecoratorBase
 {
 	GENERATED_BODY()
@@ -21,6 +21,7 @@ public:
 	virtual void CleanupDecorator_Implementation() override;
 	virtual bool ValidateDecorator_Implementation(TArray<FText>& ValidationMessages) override;
 	virtual void ExecuteDecorator_Implementation() override;
+	virtual bool IsDecoratorStackable_Implementation() const override {return true; };
 
 	virtual  FString GetDecoratorDocumentationLink_Implementation() const override
 	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Decorator:-Send-Command"); }
