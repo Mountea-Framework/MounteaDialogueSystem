@@ -293,14 +293,14 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 	{
 		OutMessage = FString::Printf(TEXT("Failed to extract files from archive: %s"), *FilePath);
 		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
-		return nullptr;
+		return false;
 	}
 
 	// 2. Make sure it's a zip file
 	if (!IsZipFile(fileData))
 	{
 		EditorLOG_ERROR(TEXT("[FactoryCreateFile] File is not a valid mnteadlg/zip: %s"), *FilePath);
-		return nullptr;
+		return false;
 	}
 
 	// 3. Extract and read content
@@ -309,7 +309,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 	{
 		OutMessage = FString::Printf(TEXT("Failed to extract files from archive: %s"), *FilePath);
 		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
-		return nullptr;
+		return false;
 	}
 
 	// 3. Read the GUID from dialogueData.json
@@ -349,7 +349,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 	{
 		OutMessage = TEXT("dialogueData.json not found in extracted files");
 		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
-		return nullptr;
+		return false;
 	}
 
 	if (!importedGuid.IsValid())
@@ -416,7 +416,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 	{
 		OutMessage = FString::Printf(TEXT("Invalid content in file: %s"), *FilePath);
 		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
-		return nullptr;
+		return false;
 	}
 	const FName assetName = !dialogueName.IsEmpty() ? FName(*dialogueName) : Name;
 
@@ -460,7 +460,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 		}
 	}
 
-	return nullptr;
+	return false;
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::ExportDialogueGraph(const UMounteaDialogueGraph* Graph, const FString& FilePath)
