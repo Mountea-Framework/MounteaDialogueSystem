@@ -5,6 +5,7 @@
 #include "TimerManager.h"
 #include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Misc/DataValidation.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_DialogueNodeBase"
 
@@ -104,9 +105,9 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNodeRuntime_Implementat
 
 #if WITH_EDITOR
 
-bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
+bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(FDataValidationContext& Context, const bool RichFormat) const
 {
-	bool bResult = Super::ValidateNode(ValidationsMessages, RichFormat);
+	bool bResult = Super::ValidateNode(Context, RichFormat);
 
 	if (DataTable == nullptr)
 	{
@@ -123,7 +124,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 		FString(NodeTitle.ToString()).
 		Append(": Does not contain any Dialogue Data Table!");
 	
-		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
 	if (RowName.IsNone())
@@ -141,7 +142,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 		FString(NodeTitle.ToString()).
 		Append(": Does not contain valid Dialogue Row!");
 	
-		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
 	if (MaxChildrenNodes > -1 && ChildrenNodes.Num() > MaxChildrenNodes)
@@ -161,11 +162,11 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 		FString(NodeTitle.ToString()).
 		Append(": Has more than ").Append(FString::FromInt(MaxChildrenNodes)).Append(" Children Nodes!");
 	
-		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
-	const FString Context;
-	const FDialogueRow* SelectedRow = DataTable!=nullptr ? DataTable->FindRow<FDialogueRow>(RowName, Context) : nullptr;
+	const FString ContextString;
+	const FDialogueRow* SelectedRow = DataTable!=nullptr ? DataTable->FindRow<FDialogueRow>(RowName, ContextString) : nullptr;
 
 	if (SelectedRow == nullptr)
 	{
@@ -182,7 +183,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 		FString(NodeTitle.ToString()).
 		Append(": Invalid Selected Row!");
 	
-		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
 	if (SelectedRow)
@@ -201,8 +202,8 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 			const FString TextReturn =
 			FString(NodeTitle.ToString()).
 			Append(": Invalid Selected Row! No Dialogue Data Rows inside!");
-	
-			ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+			
+			Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 		}
 	}
 	

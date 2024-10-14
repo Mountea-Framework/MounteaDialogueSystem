@@ -471,7 +471,7 @@ public:
 	virtual bool CanCreateConnection(UMounteaDialogueGraphNode* Other, enum EEdGraphPinDirection Direction, FText& ErrorMessage);
 
 	// Validation function responsible for generating user friendly validation messages
-	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat);
+	virtual bool ValidateNode(FDataValidationContext& Context, const bool RichFormat) const;
 
 	// Once Node is pasted, this function is called
 	virtual void OnPasted();
