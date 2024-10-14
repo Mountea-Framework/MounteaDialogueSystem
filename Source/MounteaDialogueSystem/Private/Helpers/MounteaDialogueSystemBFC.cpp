@@ -493,8 +493,8 @@ bool UMounteaDialogueSystemBFC::InitializeDialogueWithContext(const UObject* Wor
 	DialogueManager->GetDialogueInitializedEventHandle().Broadcast(Context);
 	for (const auto& Itr : dialogueGraph->GetGraphScopeDecorators())
 	{
-		if (Itr != nullptr)
-			Itr->ExecuteDecorator();
+		if (Itr.DecoratorType != nullptr)
+			Itr.DecoratorType->ExecuteDecorator();
 	}
 	return true;
 }

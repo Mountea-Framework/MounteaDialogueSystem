@@ -88,7 +88,7 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraph::GetGraphDecorators() co
 	return Return;
 }
 
-TArray<UMounteaDialogueDecoratorBase*> UMounteaDialogueGraph::GetGraphScopeDecorators() const
+TArray<FMounteaDialogueDecorator> UMounteaDialogueGraph::GetGraphScopeDecorators() const
 {
 	return GraphScopeDecorators;
 }

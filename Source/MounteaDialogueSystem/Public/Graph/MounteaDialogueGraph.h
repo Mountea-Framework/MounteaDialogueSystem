@@ -56,8 +56,8 @@ protected:
 	 * This array should contain an instance of each decorator used in the graph.
 	 * The order of the decorators in this array determines the order in which they will be applied to the nodes.
 	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Instanced, Category = "Mountea|Dialogue", NoClear, meta=(NoResetToDefault))
-	TArray<TObjectPtr<UMounteaDialogueDecoratorBase>> GraphScopeDecorators;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,  Category = "Mountea|Dialogue", NoClear, meta=(NoResetToDefault))
+	TArray<FMounteaDialogueDecorator> GraphScopeDecorators;
 
 	/**
 	 * A set of gameplay tags associated with this dialogue graph.
@@ -166,7 +166,7 @@ public:
 	TArray<FMounteaDialogueDecorator> GetGraphDecorators() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Graph", meta=(CustomTag="MounteaK2Getter"))
-	TArray<UMounteaDialogueDecoratorBase*> GetGraphScopeDecorators() const;
+	TArray<FMounteaDialogueDecorator> GetGraphScopeDecorators() const;
 	
 	/**
 	 * Returns the array of decorators that are associated with this graph and its nodes.
