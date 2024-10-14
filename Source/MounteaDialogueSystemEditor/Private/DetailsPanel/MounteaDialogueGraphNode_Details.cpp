@@ -553,6 +553,8 @@ void FMounteaDialogueGraphNode_Details::CustomizeDetails(IDetailLayoutBuilder& D
 	if (UMounteaDialogueGraphNode_StartNode* EditingDialogueNode = Cast<UMounteaDialogueGraphNode_StartNode>(EditingNode) )
 	{
 		DetailBuilder.HideProperty(GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_StartNode, NodeDecorators));
+		DetailBuilder.HideProperty(GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_StartNode, bInheritGraphDecorators));
+		DetailBuilder.HideProperty(GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_StartNode, bAutoStarts));
 	}
 
 	// Hide those categories in Graph Editor
