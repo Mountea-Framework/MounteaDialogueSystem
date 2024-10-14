@@ -330,8 +330,8 @@ void UMounteaDialogueGraph::AddDuplicateDecoratorErrors(TArray<FText>& Validatio
 {
 	for (const auto& Itr : DuplicatedDecoratorsMap)
 	{
-		const FString RichTextReturn = FString::Printf(TEXT("* <RichTextBlock.Bold>Dialogue Graph</>: has Node Decorator <RichTextBlock.Bold>%s</> %dx times! Please, avoid duplicates!"), *Itr.Key->GetName().LeftChop(2), Itr.Value);
-		const FString TextReturn = FString::Printf(TEXT("Dialogue Graph: has Node Decorator %s %dx times! Please, avoid duplicates!"), *Itr.Key->GetName().LeftChop(2), Itr.Value);
+		const FString RichTextReturn = FString::Printf(TEXT("* <RichTextBlock.Bold>Dialogue Graph</>: has Node Decorator <RichTextBlock.Bold>%s</> %dx times! Please, avoid duplicates!"), *Itr.Key->GetName(), Itr.Value);
+		const FString TextReturn = FString::Printf(TEXT("Dialogue Graph: has Node Decorator %s %dx times! Please, avoid duplicates!"), *Itr.Key->GetName(), Itr.Value);
 
 		ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
 	}
