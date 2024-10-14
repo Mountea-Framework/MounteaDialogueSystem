@@ -12,6 +12,10 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecoratorBase"
 
+UMounteaDialogueDecoratorBase::UMounteaDialogueDecoratorBase()
+{
+}
+
 void UMounteaDialogueDecoratorBase::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
 {
 	OwningWorld = World;
@@ -72,6 +76,17 @@ bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(TArray<FTex
 		ValidationMessages.Add(TempText);
 
 		bSatisfied = false;
+	}
+
+	if (!GetOwningNode() && !IsDecoratorAllowedForGraph())
+	{
+		bSatisfied = false;
+		
+		const FText TempText = FText::Format(
+			LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_Node",
+				"Decorator {0}: is not allowed in Graph Decorators!\nAttach this Decorator to a Node instead."),
+				Name);
+		ValidationMessages.Add(TempText);
 	}
 		
 	return bSatisfied;

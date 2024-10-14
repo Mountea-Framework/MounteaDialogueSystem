@@ -462,6 +462,12 @@ bool UMounteaDialogueSystemBFC::InitializeDialogueWithContext(const UObject* Wor
 		LOG_ERROR(TEXT("[InitializeDialogueWithContext] Missing DialogueParticipant. Cannot Initialize dialogue."));
 		return false;
 	}
+	auto dialogueGraph = DialogueParticipant->Execute_GetDialogueGraph(DialogueParticipant.GetObject());
+	if (dialogueGraph == nullptr)
+	{
+		LOG_ERROR(TEXT("[InitializeDialogueWithContext] Participant has no Dialogue Graph!"));
+		return false;
+	}
 	if (Context == nullptr)
 	{
 		LOG_ERROR(TEXT("[InitializeDialogueWithContext] Missing Dialogue Context. Cannot Initialize dialogue."));
@@ -481,6 +487,11 @@ bool UMounteaDialogueSystemBFC::InitializeDialogueWithContext(const UObject* Wor
 	}
 
 	DialogueManager->GetDialogueInitializedEventHandle().Broadcast(Context);
+	for (const auto& Itr : dialogueGraph->GetGraphScopeDecorators())
+	{
+		if (Itr.DecoratorType != nullptr)
+			Itr.DecoratorType->ExecuteDecorator();
+	}
 	return true;
 }
 
