@@ -5,6 +5,7 @@
 
 #include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_OverrideDialogue"
 
@@ -34,6 +35,17 @@ bool UMounteaDialogueDecorator_OverrideDialogue::ValidateDecorator_Implementatio
 		ValidationMessages.Add(TempText);
 		
 		bSatisfied = false;
+	}
+	
+	if (GetOwningNode() && GetOwningNode()->IsA(UMounteaDialogueGraphNode_StartNode::StaticClass()))
+	{
+		bSatisfied = false;
+		
+		const FText TempText = FText::Format(
+			LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_StartNode",
+				"Decorator {0}: is not allowed for Start Nodes!\nAttach this decorator to subsequent nodes instead."),
+				Name);
+		ValidationMessages.Add(TempText);
 	}
 	
 	return bSatisfied;

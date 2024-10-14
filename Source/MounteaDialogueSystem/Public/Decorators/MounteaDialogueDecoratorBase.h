@@ -35,6 +35,10 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecoratorBase : public UObject, 
 
 public:
 
+	UMounteaDialogueDecoratorBase();
+
+public:
+
 	FORCEINLINE ULevel* GetLevel() const
 	{
 		return GetTypedOuter<ULevel>();
@@ -185,6 +189,15 @@ public:
 	TScriptInterface<IMounteaDialogueParticipantInterface> GetOwnerParticipant() const
 	{ return OwnerParticipant; };
 
+	/**
+	 *	Defines whether this Decorator can be attached to Graph directly, or whether only Node attachment is allowed.
+	 * 
+	 * @return True if can be attached to graph, false otherwise.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator")
+	bool IsDecoratorAllowedForGraph() const;
+	virtual bool IsDecoratorAllowedForGraph_Implementation() const {  return true;  };
+	
 	FText GetDecoratorName() const;
 
 #pragma region TickableInterface
