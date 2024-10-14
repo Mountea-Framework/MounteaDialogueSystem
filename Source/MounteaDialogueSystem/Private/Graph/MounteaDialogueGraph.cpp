@@ -4,6 +4,7 @@
 
 #include "Edges/MounteaDialogueGraphEdge.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Misc/DataValidation.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 

@@ -417,11 +417,14 @@ bool FMounteaDialogueSystemEditor::DoesHaveValidTags() const
 	
 	const FString PluginDirectory = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"))->GetBaseDir();
 	const FString ConfigFilePath = PluginDirectory + "/Config/Tags/MounteaDialogueSystemTags.ini";
-	const FString NormalizedConfigFilePath =  FConfigCacheIni::NormalizeConfigIniPath(ConfigFilePath);
-	
-	if (FPaths::FileExists(NormalizedConfigFilePath))
+	FString NormalizedConfigFilePath = FConfigCacheIni::NormalizeConfigIniPath(ConfigFilePath);
+
+	if (FPaths::FileExists(ConfigFilePath))
 	{
-		return GConfig->Find(NormalizedConfigFilePath) != nullptr;
+		FString ConfigContent;
+		FConfigFile* ConfigFile = GConfig->Find(NormalizedConfigFilePath);
+
+		return true;
 	}
 	
 	return false;
@@ -441,7 +444,7 @@ void FMounteaDialogueSystemEditor::UpdateTagsConfig(const FString& NewContent)
 
 	const FString PluginDirectory = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"))->GetBaseDir();
 	const FString ConfigFilePath = PluginDirectory + "/Config/Tags/MounteaDialogueSystemTags.ini";
-	const FString NormalizedConfigFilePath =  FConfigCacheIni::NormalizeConfigIniPath(ConfigFilePath);
+	FString NormalizedConfigFilePath = FConfigCacheIni::NormalizeConfigIniPath(ConfigFilePath);
 
 	FConfigFile* CurrentConfig = GConfig->Find(NormalizedConfigFilePath);
 
@@ -491,7 +494,7 @@ void FMounteaDialogueSystemEditor::CreateTagsConfig(const FString& NewContent)
 
 	const FString PluginDirectory = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"))->GetBaseDir();
 	const FString ConfigFilePath = PluginDirectory + "/Config/Tags/MounteaDialogueSystemTags.ini";
-	const FString NormalizedConfigFilePath =  FConfigCacheIni::NormalizeConfigIniPath(ConfigFilePath);
+
 	TArray<FString> Lines;
 	NewContent.ParseIntoArray(Lines, TEXT("\n"), true);
 
@@ -510,7 +513,7 @@ void FMounteaDialogueSystemEditor::CreateTagsConfig(const FString& NewContent)
 	
 	FConfigFile NewConfig;
 	NewConfig.SetArray(TEXT("/Script/GameplayTags.GameplayTagsList"), TEXT("GameplayTagList"), CleanedLines);
-	NewConfig.Write(NormalizedConfigFilePath);
+	NewConfig.Write(ConfigFilePath);
 }
 
 void FMounteaDialogueSystemEditor::OnGetResponse_Tags(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)

@@ -140,18 +140,19 @@ FPluginVersion MDSPopup::GetPluginVersion()
 void MDSPopup::Register(const FString& Changelog)
 {
 	const FString PluginDirectory = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"))->GetBaseDir();
-	const FString UpdatedConfigFile = PluginDirectory + "/Config/UpdateConfig.ini";
-	FString CurrentPluginVersion = GetPluginVersion().PluginVersionName;
+	const FString ConfigFilePath = PluginDirectory + "/Config/UpdateConfig.ini";
+	FString NormalizedConfigFilePath = FConfigCacheIni::NormalizeConfigIniPath(ConfigFilePath);
 
+	FString CurrentPluginVersion = GetPluginVersion().PluginVersionName;
 	UMDSPopupConfig* MDSPopupConfig = GetMutableDefault<UMDSPopupConfig>();
 
-	if (FPaths::FileExists(UpdatedConfigFile))
+	if (FPaths::FileExists(NormalizedConfigFilePath))
 	{
-		MDSPopupConfig->LoadConfig(nullptr, *UpdatedConfigFile);
+		MDSPopupConfig->LoadConfig(nullptr, *NormalizedConfigFilePath);
 	}
 	else
 	{
-		MDSPopupConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
+		MDSPopupConfig->SaveConfig(CPF_Config, *NormalizedConfigFilePath);
 	}
 
 	// Override Plugin Version from GitHub
@@ -159,18 +160,18 @@ void MDSPopup::Register(const FString& Changelog)
 	{
 		FString ChangelogVersion = Changelog.Left(24);
 		ChangelogVersion = ChangelogVersion.Right(7);
-		
 		CurrentPluginVersion = ChangelogVersion;
 	}
-	
+
 	if (MDSPopupConfig->PluginVersionUpdate != CurrentPluginVersion)
 	{
 		MDSPopupConfig->PluginVersionUpdate = CurrentPluginVersion;
-		MDSPopupConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
+		MDSPopupConfig->SaveConfig(CPF_Config, *NormalizedConfigFilePath);
 
 		Open(Changelog);
 	}
 }
+
 
 void MDSPopup::Open(const FString& Changelog)
 {
@@ -442,7 +443,6 @@ void MDSPopup::Open(const FString& Changelog)
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
 					[
-						
 						SNew(SScaleBox)
 						.VAlign(VAlign_Center)
 						.HAlign(HAlign_Center)
