@@ -239,7 +239,7 @@ void UMounteaDialogueGraph::TickMounteaEvent_Implementation(UObject* SelfRef, UO
 
 #if WITH_EDITOR
 
-bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat) const
+bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat)
 {
 	bool bReturnValue = true;
 
