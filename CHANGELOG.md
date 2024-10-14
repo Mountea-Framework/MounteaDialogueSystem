@@ -22,8 +22,8 @@ All notable changes to this project will be documented in this file.
 > - Added custom K2Nodes visuals
 
 ### Fixed
-> - Fixed `WBP_DialoguerRow_WithIcon `missing reference 
-> - Fixed functions documentation to mention Player `State `instead of Controller
+> - Fixed `WBP_DialoguerRow_WithIcon` missing reference 
+> - Fixed functions documentation to mention Player `State` instead of Controller
 > - Fixed dialogue initialization crash with Saved Node
 >   - If Participant has Saved Node which is from different Graph than the current one, then Dialogue ignores Saved Node and continues from start
 > - Fixed Decorators initialization
@@ -31,16 +31,16 @@ All notable changes to this project will be documented in this file.
 > - Fixed broken Input Actions and Mappings
 
 ### Changed
-> - `Traversed Path `now contains Graph ID
+> - `Traversed Path` now contains Graph ID
 > - Right-click menu updated
 >   - Menu is now on top
-> - `AllowOnlyFirstTime `decorator will result in failed validation if attached to `first `dialogue node after start node
+> - `AllowOnlyFirstTime` decorator will result in failed validation if attached to `first` dialogue node after start node
 > - Toolbar Ribbon buttons reworked
 >   - Dropdown menu now offers more links with better descriptions
 > - Updated welcome screen and validation screen with updated icons
-> - `InitializeDialogue `function from Function Library has been renamed to `Advanced Dialogue Initialization*
-> - All functions are now categorized by `Class*
->   - Manager function are in `Mountea|Dialogue|Manager `section etc.
+> - `InitializeDialogue` function from Function Library has been renamed to `Advanced Dialogue Initialization`
+> - All functions are now categorized by `Class`
+>   - Manager function are in `Mountea|Dialogue|Manager` section etc.
 
 **Version 2.0.0**
 ### Added
