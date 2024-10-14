@@ -337,6 +337,10 @@ bool UMounteaDialogueGraphNode::	ValidateNode(TArray<FText>& ValidationsMessages
 		TMap<UClass*, int32> DuplicatedDecoratorsMap;
 		for (const auto& Itr : UsedNodeDecorators)
 		{
+			if (!Itr) continue;
+
+			if (Itr->IsDecoratorStackable()) continue;;
+			
 			int32 ClassAppearance = 1;
 			for (const auto& Itr2 : UsedNodeDecorators)
 			{
@@ -434,7 +438,10 @@ FText UMounteaDialogueGraphNode::GetDefaultTooltipBody() const
 	
 	const FText Implements = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_ImplementsTooltip", "Implements Decorators: {0}"), ImplementsNumber);
 	
-	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0} ({1})\n\n{2}\n{3}\nNode Execution Order: {4}"), NodeTypeName, FText::FromString(NodeGUID.ToString(EGuidFormats::DigitsWithHyphensLower)),  Inherits, Implements, ExecutionOrder);
+	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0} ({1})\n\n{2}\n{3}\nNode Execution Order: {4}\nNode Index: {5}"),
+		NodeTypeName,
+		FText::FromString(NodeGUID.ToString(EGuidFormats::DigitsWithHyphensLower)),
+		Inherits, Implements, ExecutionOrder, NodeIndex);
 }
 
 #endif
