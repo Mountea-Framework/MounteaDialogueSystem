@@ -27,7 +27,7 @@ struct FMounteaDialogueDecorator;
  * Can be manually created from Content Browser, using Mountea Dialogue category.
  * Comes with Node editor, which provides easy to follow visual way to create Dialogue Trees.
  */
-UCLASS(BlueprintType, ClassGroup=("Mountea|Dialogue"), DisplayName="Mountea Dialogue Tree", HideCategories=("Hidden", "Private", "Base"), AutoExpandCategories=("Mountea", "Dialogue"))
+UCLASS(BlueprintType, ClassGroup=("Mountea|Dialogue"), DisplayName="Mountea Dialogue Tree",	HideCategories=("Hidden", "Private", "Base"), AutoExpandCategories=("Mountea", "Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraph : public UObject, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()
@@ -47,6 +47,16 @@ protected:
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue", NoClear, meta=(NoResetToDefault))
 	TArray<FMounteaDialogueDecorator> GraphDecorators;
+
+	/**
+	 * The list of decorators for the dialogue graph. Those decorators will be executed in beginning of the graph only!
+	 * Those decorators will not be inherited by Graph Nodes!
+	 * Decorators are used to add extra functionality or behavior to the nodes in the graph.
+	 * This array should contain an instance of each decorator used in the graph.
+	 * The order of the decorators in this array determines the order in which they will be applied to the nodes.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,  Category = "Mountea|Dialogue", NoClear, meta=(NoResetToDefault))
+	TArray<FMounteaDialogueDecorator> GraphScopeDecorators;
 
 	/**
 	 * A set of gameplay tags associated with this dialogue graph.
@@ -154,6 +164,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Graph", meta=(CustomTag="MounteaK2Getter"))
 	TArray<FMounteaDialogueDecorator> GetGraphDecorators() const;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Graph", meta=(CustomTag="MounteaK2Getter"))
+	TArray<FMounteaDialogueDecorator> GetGraphScopeDecorators() const;
+	
 	/**
 	 * Returns the array of decorators that are associated with this graph and its nodes.
 	 *
@@ -228,12 +241,21 @@ public:
 
 #if WITH_EDITOR
 
-	virtual bool ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat) const;
+	virtual bool ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat);
+	virtual bool ValidateDecorators(TArray<FText>& ValidationErrors, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators, const FString& DecoratorTypeName);
+	virtual bool ValidateGraphDecorators(TArray<FText>& ValidationErrors, bool RichTextFormat);
+	virtual bool ValidateGraphScopeDecorators(TArray<FText>& ValidationErrors, bool RichTextFormat);
+	virtual bool ValidateStartNode(TArray<FText>& ValidationErrors, bool RichTextFormat);
+	virtual bool ValidateAllNodes(TArray<FText>& ValidationErrors, bool RichTextFormat);
+	virtual void FindDuplicatedDecorators(const TArray<UMounteaDialogueDecoratorBase*>& UsedNodeDecorators, TMap<UClass*, int32>& DuplicatedDecoratorsMap);
+	virtual void AddInvalidDecoratorError(TArray<FText>& ValidationErrors, bool RichTextFormat, int32 Index, const FString& DecoratorTypeName);
+	virtual void AddDuplicateDecoratorErrors(TArray<FText>& ValidationErrors, bool RichTextFormat, const TMap<UClass*, int32>& DuplicatedDecoratorsMap);
+	virtual void AddDecoratorErrors(TArray<FText>& ValidationErrors, bool RichTextFormat, const TArray<FText>& DecoratorErrors);
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
 
 public:
 	// Construct and initialize a node within this Dialogue.
-	template<class T>
+	template <class T>
 	T* ConstructDialogueNode(TSubclassOf<UMounteaDialogueGraphNode> DialogueNodeClass = T::StaticClass())
 	{
 		// Set flag to be transactional so it registers with undo system
@@ -241,7 +263,6 @@ public:
 		DialogueNode->OnCreatedInEditor();
 		return DialogueNode;
 	}
-
 
 	UMounteaDialogueGraphNode* ConstructDialogueNode(TSubclassOf<UMounteaDialogueGraphNode> NodeClass);
 
