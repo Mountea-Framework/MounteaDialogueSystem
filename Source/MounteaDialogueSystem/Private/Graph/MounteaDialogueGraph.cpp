@@ -241,9 +241,15 @@ void UMounteaDialogueGraph::TickMounteaEvent_Implementation(UObject* SelfRef, UO
 bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat)
 {
 	bool bReturnValue = true;
-
+	
 	// GRAPH DECORATORS VALIDATION
 	{
+		/**
+		 *
+		 *	GRAPH DECORATORS
+		 * 
+		 */
+		
 		TArray<UMounteaDialogueDecoratorBase*> UsedNodeDecorators;
 		for (int i = 0; i < GraphDecorators.Num(); i++)
 		{
@@ -319,10 +325,124 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 				ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
 			}
 		}
+
+		/**
+		 *
+		 *	RESET VALIDATION CONTAINERS
+		 * 
+		 */
+
+		DuplicatedDecoratorsMap.Empty();
+		UsedNodeDecorators.Empty();
+
+		/**
+		 *
+		 *	GRAPH SCOPED DECORATORS
+		 * 
+		 */
+
+		for (int i = 0; i < GraphScopeDecorators.Num(); i++)
+		{
+			if (GraphScopeDecorators.IsValidIndex(i) && GraphScopeDecorators[i].DecoratorType)
+			{
+				UsedNodeDecorators.Add(GraphScopeDecorators[i].DecoratorType);
+			}
+			else
+			{
+				const FString RichTextReturn =
+					FString("* ").
+					Append(TEXT("<RichTextBlock.Bold>Dialogue Graph</>")).
+					Append(": has ").
+					Append(TEXT("<RichTextBlock.Bold>invalid</> Node Decorator at Index: ")).
+					Append(FString::FromInt(i)).
+					Append(".");
+
+				const FString TextReturn =
+					GetName().
+					Append(": has ").
+					Append(TEXT("INVALID Node Decorator at Index: ")).
+					Append(FString::FromInt(i)).
+					Append(".");
+
+				ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
+
+				bReturnValue = false;
+			}
+		}
+		
+		for (const auto& Itr : UsedNodeDecorators)
+		{
+			int32 ClassAppearance = 1;
+			for (const auto& Itr2 : UsedNodeDecorators)
+			{
+				if (Itr != Itr2 && Itr->GetClass() == Itr2->GetClass())
+				{
+					auto A = Itr->GetClass()->GetName();
+					ClassAppearance++;
+				}
+			}
+
+			if (ClassAppearance > 1 && DuplicatedDecoratorsMap.Contains(Itr->GetClass()) == false)
+			{
+				DuplicatedDecoratorsMap.Add(Itr->GetClass(), ClassAppearance);
+			}
+		}
+
+		if (DuplicatedDecoratorsMap.Num() > 0)
+		{
+			for (const auto& Itr : DuplicatedDecoratorsMap)
+			{
+				bReturnValue = false;
+
+				const FString RichTextReturn =
+					FString("* ").
+					Append(TEXT("<RichTextBlock.Bold>Dialogue Graph</>")).
+					Append(": has Node Decorator ").
+					Append("<RichTextBlock.Bold>").
+					Append(Itr.Key->GetName().LeftChop(2)).
+					Append("</> ").
+					Append(FString::FromInt(Itr.Value)).
+					Append("x times! Please, avoid duplicates!");
+
+				const FString TextReturn =
+					FString(TEXT("Dialogue Graph: has Node Decorator ")).
+					Append(Itr.Key->GetName().LeftChop(2)).
+					Append(" ").
+					Append(FString::FromInt(Itr.Value)).
+					Append("x times! Please, avoid duplicates!");
+
+				ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
+			}
+		}
 	}
 
 	// GRAPH DECORATORS VALIDATION
 	for (auto Itr : GetGraphDecorators())
+	{
+		TArray<FText> DecoratorErrors;
+		if (Itr.ValidateDecorator(DecoratorErrors) == false)
+		{
+			for (auto Error : DecoratorErrors)
+			{
+				const FString ErrorTextRich =
+					FString("* ").
+					Append(TEXT("<RichTextBlock.Bold>Dialogue Graph</>: ")).
+					Append(FString(Error.ToString()));
+
+				const FString ErrorTextSimple =
+					GetName().
+					Append(": ").
+					Append(FString(Error.ToString()));
+
+				ValidationErrors.Add(FText::FromString(RichTextFormat ? ErrorTextRich : ErrorTextSimple));
+
+				bReturnValue = false;
+			}
+		}
+	}
+
+	// GRAPH SCOPED DECORATORS VALIDATION
+	for (auto Itr : GetGraphScopeDecorators())
 	{
 		TArray<FText> DecoratorErrors;
 		if (Itr.ValidateDecorator(DecoratorErrors) == false)
