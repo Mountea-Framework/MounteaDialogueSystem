@@ -107,9 +107,9 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::IsFirstTime() const
 	{
 		ParticipantInterface = Context->GetDialogueParticipant();
 	}
-	bool bParticipantRemembers = UMounteaDialogueSystemBFC::HasNodeBeenTraversed(GetOwningNode(), ParticipantInterface);
-	bool bContextRemembers = UMounteaDialogueSystemBFC::HasNodeBeenTraversedV2(GetOwningNode(), Context);
-	return !bParticipantRemembers || bContextRemembers;
+	const bool bParticipantRemembers = UMounteaDialogueSystemBFC::HasNodeBeenTraversed(GetOwningNode(), ParticipantInterface);
+	const bool bContextRemembers = UMounteaDialogueSystemBFC::HasNodeBeenTraversedV2(GetOwningNode(), Context);
+	return !bParticipantRemembers || !bContextRemembers;
 }
 
 UMounteaDialogueContext* UMounteaDialogueDecorator_OnlyFirstTime::GetContext() const
