@@ -44,12 +44,6 @@ public:
 
 protected:
 
-	UMounteaDialogueContext* GetContext() const
-	{ return Context; };
-
-private:
-	
-	UPROPERTY()
-	TObjectPtr<UMounteaDialogueContext> Context = nullptr;
+	UMounteaDialogueContext* GetContext() const;
 	
 };

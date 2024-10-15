@@ -47,7 +47,9 @@ void UMounteaDialogueDecorator_OverrideOnlyFirstTime::ExecuteDecorator_Implement
 
 		const auto NewRow = UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName);
 	
-		TempContext->UpdateActiveDialogueRow( UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName) );
+		TempContext->UpdateActiveDialogueRow( NewRow );
+
+		OwningManager->UpdateDialogueContext();
 	}
 }
 
