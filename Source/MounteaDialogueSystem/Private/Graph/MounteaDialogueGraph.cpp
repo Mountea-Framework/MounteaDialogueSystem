@@ -247,12 +247,6 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 	bReturnValue &= ValidateDecorators(ValidationErrors, RichTextFormat, GraphDecorators, TEXT("Node"));
 	bReturnValue &= ValidateDecorators(ValidationErrors, RichTextFormat, GraphScopeDecorators, TEXT("Scoped Node"));
 
-	// Validate individual graph decorators
-	bReturnValue &= ValidateGraphDecorators(ValidationErrors, RichTextFormat);
-
-	// Validate scoped graph decorators
-	bReturnValue &= ValidateGraphScopeDecorators(ValidationErrors, RichTextFormat);
-
 	// Validate Start Node
 	bReturnValue &= ValidateStartNode(ValidationErrors, RichTextFormat);
 
@@ -290,8 +284,8 @@ bool UMounteaDialogueGraph::ValidateDecorators(TArray<FText>& ValidationErrors, 
 		AddDuplicateDecoratorErrors(ValidationErrors, RichTextFormat, DuplicatedDecoratorsMap);
 		bReturnValue = false;
 	}
-
-	return bReturnValue;
+	
+	return bReturnValue && ValidateGraphDecorators(ValidationErrors, RichTextFormat, Decorators);
 }
 
 void UMounteaDialogueGraph::FindDuplicatedDecorators(const TArray<UMounteaDialogueDecoratorBase*>& UsedNodeDecorators, TMap<UClass*, int32>& DuplicatedDecoratorsMap)
@@ -338,25 +332,10 @@ void UMounteaDialogueGraph::AddDuplicateDecoratorErrors(TArray<FText>& Validatio
 	}
 }
 
-bool UMounteaDialogueGraph::ValidateGraphDecorators(TArray<FText>& ValidationErrors, bool RichTextFormat)
+bool UMounteaDialogueGraph::ValidateGraphDecorators(TArray<FText>& ValidationErrors, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators)
 {
 	bool bReturnValue = true;
-	for (auto Itr : GetGraphDecorators())
-	{
-		TArray<FText> DecoratorErrors;
-		if (!Itr.ValidateDecorator(DecoratorErrors))
-		{
-			AddDecoratorErrors(ValidationErrors, RichTextFormat, DecoratorErrors);
-			bReturnValue = false;
-		}
-	}
-	return bReturnValue;
-}
-
-bool UMounteaDialogueGraph::ValidateGraphScopeDecorators(TArray<FText>& ValidationErrors, bool RichTextFormat)
-{
-	bool bReturnValue = true;
-	for (auto Itr : GetGraphScopeDecorators())
+	for (auto Itr : Decorators)
 	{
 		TArray<FText> DecoratorErrors;
 		if (!Itr.ValidateDecorator(DecoratorErrors))

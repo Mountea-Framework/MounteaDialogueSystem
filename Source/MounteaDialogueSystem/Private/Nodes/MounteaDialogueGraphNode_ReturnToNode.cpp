@@ -6,6 +6,7 @@
 #include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
+#include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_ReturnToNode"
 
@@ -31,6 +32,7 @@ UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode()
 	// Disable those Node Classes
 	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_ReturnToNode::StaticClass());
 	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_CompleteNode::StaticClass());
+	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
 }
 
 void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
