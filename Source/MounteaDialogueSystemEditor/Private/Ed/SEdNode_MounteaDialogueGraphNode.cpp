@@ -115,8 +115,11 @@ void SEdNode_MounteaDialogueGraphNode::OnMouseEnter(const FGeometry& MyGeometry,
 {
 	//bIsHovered = true;
 
-	SetToolTipText(GetTooltipText());
-	OnVisualizeTooltip(GetToolTip()->AsWidget());
+	if (GetToolTip().IsValid())
+	{
+		SetToolTipText(GetTooltipText());
+		OnVisualizeTooltip(GetToolTip()->AsWidget());
+	}
 	
 	SGraphNode::OnMouseEnter(MyGeometry, MouseEvent);
 }
@@ -124,7 +127,7 @@ void SEdNode_MounteaDialogueGraphNode::OnMouseEnter(const FGeometry& MyGeometry,
 void SEdNode_MounteaDialogueGraphNode::OnMouseLeave(const FPointerEvent& MouseEvent)
 {
 	//bIsHovered = false;
-
+	
 	SetToolTipText(FText::GetEmpty());
 	OnToolTipClosing();
 	
