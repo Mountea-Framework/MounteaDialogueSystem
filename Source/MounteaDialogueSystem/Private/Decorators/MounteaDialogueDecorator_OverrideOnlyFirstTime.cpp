@@ -56,4 +56,9 @@ void UMounteaDialogueDecorator_OverrideOnlyFirstTime::ExecuteDecorator_Implement
 	}
 }
 
+bool UMounteaDialogueDecorator_OverrideOnlyFirstTime::EvaluateDecorator_Implementation()
+{
+	return OwningManager != nullptr;
+}
+
 #undef LOCTEXT_NAMESPACE

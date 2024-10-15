@@ -355,16 +355,12 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
 	Context->SetDialogueContext(MainParticipant, NodeToStart, TArray<UMounteaDialogueGraphNode*>());
 
-	TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
-	SortNodes(StartNode_Children);
-
 	auto dialogueNodeToStart = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(NodeToStart);
 
 	FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
 	newDialogueTableHandle.DataTable = dialogueNodeToStart->GetDataTable();
 	newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();
 
-	Context->UpdateAllowedChildrenNodes(StartNode_Children);
 	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(Initiator));
 	Context->AddDialogueParticipants(DialogueParticipants);
 	
@@ -457,9 +453,6 @@ bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextOb
 		NodeToStart = GetFirstChildNode(NodeToStart);
 	}
 	
-	TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
-	SortNodes(StartNode_Children);
-
 	auto dialogueNodeToStart = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(NodeToStart);
 
 	FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
@@ -467,7 +460,6 @@ bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextOb
 	newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();
 
 	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
-	Context->SetDialogueContext(DialogueParticipant, NodeToStart, StartNode_Children);
 	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(Initiator));
 	Context->UpdateActiveDialogueTable(dialogueNodeToStart ? newDialogueTableHandle : FDataTableRowHandle());
 	
@@ -511,6 +503,11 @@ bool UMounteaDialogueSystemBFC::InitializeDialogueWithContext(const UObject* Wor
 		if (Itr.DecoratorType != nullptr)
 			Itr.DecoratorType->ExecuteDecorator();
 	}
+
+	TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(Context->ActiveNode);
+	SortNodes(StartNode_Children);
+	Context->UpdateAllowedChildrenNodes(StartNode_Children);
+	
 	return true;
 }
 

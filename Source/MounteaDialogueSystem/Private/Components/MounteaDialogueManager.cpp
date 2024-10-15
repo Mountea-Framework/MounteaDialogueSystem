@@ -1183,8 +1183,7 @@ void UMounteaDialogueManager::UpdateDialogueContext_Client_Implementation(const 
 
 			// Find data locally
 			FDialogueRow selectedRow = UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveDialogueTableHandle.DataTable,DialogueContext->ActiveDialogueTableHandle.RowName);
-			DialogueContext->ActiveDialogueRow = selectedRow;//dialogueRow.IsValid() ? dialogueRow : UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
-			LOG_WARNING(TEXT("[Update Context] Using Row: %s"), *selectedRow.ToString())
+			DialogueContext->ActiveDialogueRow = selectedRow.IsValid() ? selectedRow : UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
 		}
 	}
 	else
