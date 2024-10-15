@@ -4,6 +4,7 @@
 #include "Decorators/MounteaDialogueDecorator_OverrideOnlyFirstTime.h"
 
 #include "Data/MounteaDialogueContext.h"
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_OverrideOnlyFirstTime"
@@ -42,7 +43,6 @@ void UMounteaDialogueDecorator_OverrideOnlyFirstTime::ExecuteDecorator_Implement
 	{
 		// We assume Context and Manager are already valid, but safety is safety
 		if (!UMounteaDialogueSystemBFC::IsContextValid(TempContext) ) return;
-
 		if (!IsFirstTime()) return;
 
 		const auto NewRow = UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName);
