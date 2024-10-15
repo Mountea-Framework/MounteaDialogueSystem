@@ -243,9 +243,15 @@ bool UMounteaDialogueGraph::ValidateGraph(TArray<FText>& ValidationErrors, bool 
 {
 	bool bReturnValue = true;
 
+	TArray<FText> GraphDecoratorsErrors;
+	TArray<FText> GraphScopedDecoratorErrors;
+	
 	// Validate Graph and Scoped Decorators
-	bReturnValue &= ValidateDecorators(ValidationErrors, RichTextFormat, GraphDecorators, TEXT("Node"));
-	bReturnValue &= ValidateDecorators(ValidationErrors, RichTextFormat, GraphScopeDecorators, TEXT("Scoped Node"));
+	bReturnValue &= ValidateDecorators(GraphDecoratorsErrors, RichTextFormat, GraphDecorators, TEXT("Graph"));
+	bReturnValue &= ValidateDecorators(GraphScopedDecoratorErrors, RichTextFormat, GraphScopeDecorators, TEXT("Scoped Graph"));
+
+	AddDecoratorErrors(ValidationErrors, RichTextFormat, GraphDecoratorsErrors);
+	AddDecoratorErrors(ValidationErrors, RichTextFormat, GraphScopedDecoratorErrors);
 
 	// Validate Start Node
 	bReturnValue &= ValidateStartNode(ValidationErrors, RichTextFormat);
@@ -261,7 +267,7 @@ bool UMounteaDialogueGraph::ValidateDecorators(TArray<FText>& ValidationErrors, 
 	bool bReturnValue = true;
 
 	TArray<UMounteaDialogueDecoratorBase*> UsedNodeDecorators;
-	TMap<UClass*, int32> DuplicatedDecoratorsMap;
+	TMap<UMounteaDialogueDecoratorBase*, int32> DuplicatedDecoratorsMap;
 
 	// Collect valid decorators
 	for (int i = 0; i < Decorators.Num(); i++)
@@ -288,7 +294,7 @@ bool UMounteaDialogueGraph::ValidateDecorators(TArray<FText>& ValidationErrors, 
 	return bReturnValue && ValidateGraphDecorators(ValidationErrors, RichTextFormat, Decorators);
 }
 
-void UMounteaDialogueGraph::FindDuplicatedDecorators(const TArray<UMounteaDialogueDecoratorBase*>& UsedNodeDecorators, TMap<UClass*, int32>& DuplicatedDecoratorsMap)
+void UMounteaDialogueGraph::FindDuplicatedDecorators(const TArray<UMounteaDialogueDecoratorBase*>& UsedNodeDecorators, TMap<UMounteaDialogueDecoratorBase*, int32>& DuplicatedDecoratorsMap)
 {
 	for (const auto& Itr : UsedNodeDecorators)
 	{
@@ -306,29 +312,31 @@ void UMounteaDialogueGraph::FindDuplicatedDecorators(const TArray<UMounteaDialog
 			}
 		}
 
-		if (ClassAppearance > 1 && !DuplicatedDecoratorsMap.Contains(Itr->GetClass()))
+		if (ClassAppearance > 1 && !DuplicatedDecoratorsMap.Contains(Itr))
 		{
-			DuplicatedDecoratorsMap.Add(Itr->GetClass(), ClassAppearance);
+			DuplicatedDecoratorsMap.Add(Itr, ClassAppearance);
 		}
 	}
 }
 
 void UMounteaDialogueGraph::AddInvalidDecoratorError(TArray<FText>& ValidationErrors, bool RichTextFormat, int32 Index, const FString& DecoratorTypeName)
 {
-	const FString RichTextReturn = FString::Printf(TEXT("* <RichTextBlock.Bold>Dialogue Graph</>: has <RichTextBlock.Bold>invalid</> %s Decorator at Index: %d."), *DecoratorTypeName, Index);
-	const FString TextReturn = FString::Printf(TEXT("%s: has INVALID %s Decorator at Index: %d."), *GetName(), *DecoratorTypeName, Index);
+	const FText TempRichText = FText::Format(INVTEXT("invalid <RichTextBlock.Bold>{0} Decorator</> at Index: {1}."), FText::FromString(DecoratorTypeName), FText::FromString(FString::FromInt(Index)));
+	const FText TempText = FText::Format(INVTEXT("invalid <RichTextBlock.Bold>{0} Decorator</> at Index: {1}."), FText::FromString(DecoratorTypeName), FText::FromString(FString::FromInt(Index)));
 
-	ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
+	ValidationErrors.Add(FText(RichTextFormat ? TempRichText : TempText));
 }
 
-void UMounteaDialogueGraph::AddDuplicateDecoratorErrors(TArray<FText>& ValidationErrors, bool RichTextFormat, const TMap<UClass*, int32>& DuplicatedDecoratorsMap)
+void UMounteaDialogueGraph::AddDuplicateDecoratorErrors(TArray<FText>& ValidationErrors, bool RichTextFormat, const TMap<UMounteaDialogueDecoratorBase*, int32>& DuplicatedDecoratorsMap)
 {
 	for (const auto& Itr : DuplicatedDecoratorsMap)
 	{
-		const FString RichTextReturn = FString::Printf(TEXT("* <RichTextBlock.Bold>Dialogue Graph</>: has Node Decorator <RichTextBlock.Bold>%s</> %dx times! Please, avoid duplicates!"), *Itr.Key->GetName(), Itr.Value);
-		const FString TextReturn = FString::Printf(TEXT("Dialogue Graph: has Node Decorator %s %dx times! Please, avoid duplicates!"), *Itr.Key->GetName(), Itr.Value);
+		const FText TempRichText = FText::Format(INVTEXT(" has Node Decorator <RichTextBlock.Bold>{0}</> {1}x times! Please, avoid duplicates!"), 
+			Itr.Key->GetDecoratorName(), Itr.Value);
+		const FText TempText = FText::Format(INVTEXT("Dialogue Graph: has Node Decorator {0} {1}x times! Please, avoid duplicates!"), 
+			Itr.Key->GetDecoratorName(), Itr.Value);
 
-		ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
+		ValidationErrors.Add(RichTextFormat ? TempRichText : TempText);
 	}
 }
 
@@ -337,10 +345,8 @@ bool UMounteaDialogueGraph::ValidateGraphDecorators(TArray<FText>& ValidationErr
 	bool bReturnValue = true;
 	for (auto Itr : Decorators)
 	{
-		TArray<FText> DecoratorErrors;
-		if (!Itr.ValidateDecorator(DecoratorErrors))
+		if (!Itr.ValidateDecorator(ValidationErrors))
 		{
-			AddDecoratorErrors(ValidationErrors, RichTextFormat, DecoratorErrors);
 			bReturnValue = false;
 		}
 	}
@@ -351,10 +357,10 @@ void UMounteaDialogueGraph::AddDecoratorErrors(TArray<FText>& ValidationErrors, 
 {
 	for (auto Error : DecoratorErrors)
 	{
-		const FString ErrorTextRich = FString::Printf(TEXT("* <RichTextBlock.Bold>Dialogue Graph</>: %s"), *Error.ToString());
-		const FString ErrorTextSimple = FString::Printf(TEXT("%s: %s"), *GetName(), *Error.ToString());
+		const FText TempRichText = FText::Format(INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: {0}"), Error);
+		const FText TempText = FText::Format(INVTEXT("{0}: {1}"), FText::FromString(GetName()), Error);
 
-		ValidationErrors.Add(FText::FromString(RichTextFormat ? ErrorTextRich : ErrorTextSimple));
+		ValidationErrors.Add(RichTextFormat ? TempRichText : TempText);
 	}
 }
 
@@ -362,10 +368,10 @@ bool UMounteaDialogueGraph::ValidateStartNode(TArray<FText>& ValidationErrors, b
 {
 	if (StartNode == nullptr)
 	{
-		const FString RichTextReturn = FString(TEXT("* <RichTextBlock.Bold>Dialogue Graph</>: Has no Start Node!"));
-		const FString TextReturn = FString::Printf(TEXT("%s: Has no Start Node!"), *GetName());
+		const FText TempRichText = INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: Has no Start Node!");
+		const FText TempText = FText::Format(INVTEXT("{0}: Has no Start Node!"), FText::FromString(GetName()));
 
-		ValidationErrors.Add(FText::FromString(RichTextFormat ? RichTextReturn : TextReturn));
+		ValidationErrors.Add(RichTextFormat ? TempRichText : TempText);
 		return false;
 	}
 	return true;

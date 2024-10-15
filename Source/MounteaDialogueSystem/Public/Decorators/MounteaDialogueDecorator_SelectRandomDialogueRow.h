@@ -38,9 +38,4 @@ protected:
 	 */
 	UPROPERTY(SaveGame, Category="Random", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, EditCondition="bUseRange"))
 	FIntPoint		RandomRange;
-
-private:
-	
-	UPROPERTY()
-	TObjectPtr<UMounteaDialogueContext> Context = nullptr;
 };

@@ -3,6 +3,7 @@
 #include "Decorators/MounteaDialogueDecoratorBase.h"
 
 #include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Interfaces/MounteaDialogueManagerInterface.h"
 
 #if WITH_EDITOR
 #include "Editor.h"
@@ -12,6 +13,10 @@
 
 UMounteaDialogueDecoratorBase::UMounteaDialogueDecoratorBase()
 {
+#if WITH_EDITORONLY_DATA
+	DecoratorName = GetClass()->GetDisplayNameText();
+#endif
+	DecoratorName = FText::FromString(GetName());
 }
 
 void UMounteaDialogueDecoratorBase::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
@@ -41,7 +46,6 @@ void UMounteaDialogueDecoratorBase::SetOwningManager_Implementation(const TScrip
 bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
 {
 	bool bSatisfied = true;
-	const FText Name = FText::FromString(GetName());
 
 	// This is to ensure we are not throwing InvalidWorld errors in Editor with no Gameplay.
 	bool bIsEditorCall = false;
@@ -54,7 +58,7 @@ bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(TArray<FTex
 	
 	if (GetOwningWorld() == nullptr && bIsEditorCall == false)
 	{
-		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_Base_Validation_World", "[{0}]: No valid World!"), Name);
+		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_Base_Validation_World", "[{0}]: No valid World!"), GetDecoratorName());
 		ValidationMessages.Add(TempText);
 
 		bSatisfied = false;
@@ -62,7 +66,7 @@ bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(TArray<FTex
 
 	if (DecoratorState == EDecoratorState::Uninitialized && bIsEditorCall == false)
 	{
-		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_Base_Validation_State", "[{0}]: Not Initialized properly!"), Name);
+		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_Base_Validation_State", "[{0}]: Not Initialized properly!"), GetDecoratorName());
 		ValidationMessages.Add(TempText);
 
 		bSatisfied = false;
@@ -70,7 +74,7 @@ bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(TArray<FTex
 	
 	if (GetOwner() == nullptr)
 	{
-		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_Base_Validation_Owner", "[{0}]: No valid Owner!"), Name);
+		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_Base_Validation_Owner", "[{0}]: No valid Owner!"), GetDecoratorName());
 		ValidationMessages.Add(TempText);
 
 		bSatisfied = false;
@@ -83,7 +87,7 @@ bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(TArray<FTex
 		const FText TempText = FText::Format(
 			LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_Node",
 				"Decorator {0}: is not allowed in Graph Decorators!\nAttach this Decorator to a Node instead."),
-				Name);
+				GetDecoratorName());
 		ValidationMessages.Add(TempText);
 	}
 		
@@ -122,10 +126,15 @@ UObject* UMounteaDialogueDecoratorBase::GetOwner() const
 
 FText UMounteaDialogueDecoratorBase::GetDecoratorName() const
 {
-#if WITH_EDITORONLY_DATA
-	return GetClass()->GetDisplayNameText();
-#endif
-	return FText::FromString(GetName());
+	return DecoratorName;
+}
+
+UMounteaDialogueContext* UMounteaDialogueDecoratorBase::GetContext() const
+{
+	if (OwningManager)
+		return OwningManager->Execute_GetDialogueContextEvent(OwningManager.GetObject());
+
+	return nullptr;
 }
 
 void UMounteaDialogueDecoratorBase::RegisterTick_Implementation( const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)

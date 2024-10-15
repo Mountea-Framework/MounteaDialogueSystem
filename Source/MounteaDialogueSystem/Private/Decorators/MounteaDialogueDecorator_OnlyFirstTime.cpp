@@ -112,12 +112,4 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::IsFirstTime() const
 	return !bParticipantRemembers || !bContextRemembers;
 }
 
-UMounteaDialogueContext* UMounteaDialogueDecorator_OnlyFirstTime::GetContext() const
-{
-	if (OwningManager)
-		return OwningManager->Execute_GetDialogueContextEvent(OwningManager.GetObject());
-
-	return nullptr;
-};
-
 #undef LOCTEXT_NAMESPACE

@@ -208,8 +208,13 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator")
 	bool IsDecoratorStackable() const;
 	virtual bool IsDecoratorStackable_Implementation() const {  return false;  };
-	
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mountea|Dialogue|Decorator")
 	FText GetDecoratorName() const;
+	
+protected:
+
+	class UMounteaDialogueContext* GetContext() const;
 
 #pragma region TickableInterface
 	
@@ -225,6 +230,9 @@ public:
 #pragma endregion
 	
 protected:
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Decorator")
+	FText DecoratorName;
 
 	UPROPERTY()
 	EDecoratorState											DecoratorState		=	EDecoratorState::Uninitialized;
