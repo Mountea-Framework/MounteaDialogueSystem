@@ -98,9 +98,9 @@ void UMounteaDialogueDecorator_OnlyFirstTime::ExecuteDecorator_Implementation()
 
 bool UMounteaDialogueDecorator_OnlyFirstTime::IsFirstTime() const
 {
-	if (!GetOwningNode()) return false;
+	if (!GetOwningNode()) return true;
 	const auto Context = GetContext();
-	if (!Context) return false;
+	if (!Context) return true;
 	
 	TScriptInterface<IMounteaDialogueParticipantInterface> ParticipantInterface = GetOwnerParticipant();
 	if (!ParticipantInterface.GetObject())
@@ -112,6 +112,11 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::IsFirstTime() const
 }
 
 UMounteaDialogueContext* UMounteaDialogueDecorator_OnlyFirstTime::GetContext() const
-{ return OwningManager->Execute_GetDialogueContextEvent(OwningManager.GetObject()); };
+{
+	if (OwningManager)
+		return OwningManager->Execute_GetDialogueContextEvent(OwningManager.GetObject());
+
+	return nullptr;
+};
 
 #undef LOCTEXT_NAMESPACE

@@ -46,10 +46,13 @@ void UMounteaDialogueDecorator_OverrideOnlyFirstTime::ExecuteDecorator_Implement
 		if (!IsFirstTime()) return;
 
 		const auto NewRow = UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName);
-	
-		TempContext->UpdateActiveDialogueRow( NewRow );
 
-		OwningManager->UpdateDialogueContext();
+		FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
+		newDialogueTableHandle.DataTable = DataTable;
+		newDialogueTableHandle.RowName = RowName;
+		
+		TempContext->UpdateActiveDialogueTable(newDialogueTableHandle);
+		TempContext->UpdateActiveDialogueRow( NewRow );
 	}
 }
 

@@ -77,6 +77,9 @@ public:
 	 */
 	UPROPERTY(/*Replicated, */VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TArray<TObjectPtr<UMounteaDialogueGraphNode>> AllowedChildNodes;
+
+	UPROPERTY(/*Replicated, */VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	FDataTableRowHandle ActiveDialogueTableHandle;
 	
 	/**
 	 * Active Dialogue Row from Active Node. 
@@ -135,6 +138,9 @@ public:
 	 */
 	TArray<UMounteaDialogueGraphNode*> GetChildrenNodes() const
 	{ return AllowedChildNodes; };
+
+	FDataTableRowHandle GetActiveDataTable() const
+	{ return ActiveDialogueTableHandle; };
 	
 	/**
 	 * Returns Active Dialogue Row if any.
@@ -165,6 +171,7 @@ public:
 	virtual void UpdateDialogueParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
 	virtual void UpdateActiveDialogueNode(UMounteaDialogueGraphNode* NewActiveNode);
 	virtual void UpdateAllowedChildrenNodes(const TArray<UMounteaDialogueGraphNode*>& NewNodes);
+	virtual void UpdateActiveDialogueTable(const FDataTableRowHandle& NewHandle);
 	virtual void UpdateActiveDialogueRow(const FDialogueRow& NewActiveRow);
 	virtual void UpdateActiveDialogueRowDataIndex(int32 NewIndex);
 	void UpdateDialoguePlayerParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
@@ -209,6 +216,9 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateActiveDialogueNode"), meta=(CustomTag="MounteaK2Setter"))
 	virtual void UpdateActiveDialogueNodeBP(UMounteaDialogueGraphNode* NewActiveNode);
+
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateActiveDialogueRowDataIndex"), meta=(CustomTag="MounteaK2Setter"))
+	virtual void UpdateActiveDialogueRowDataIndexBP(int32 NewIndex);
 	
 	/**
 	 * Updates the active dialogue row.
@@ -219,12 +229,12 @@ public:
 	virtual void UpdateActiveDialogueRowBP(const FDialogueRow& NewActiveRow);
 	
 	/**
-	 * Updates the active dialogue row Data Index.
+	 * Updates the active dialogue Table.
 	 * 
-	 * @param NewIndex - The new active dialogue data row Index.
+	 * @param NewTable - New table to be used
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateActiveDialogueRowDataIndex"), meta=(CustomTag="MounteaK2Setter"))
-	virtual void UpdateActiveDialogueRowDataIndexBP(int32 NewIndex);
+	virtual void UpdateActiveDialogueTableBP(const FDataTableRowHandle& NewTable);
 	
 	/**
 	 * Updates Dialogue Player Participant.

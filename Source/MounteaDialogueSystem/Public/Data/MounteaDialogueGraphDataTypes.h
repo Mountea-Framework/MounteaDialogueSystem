@@ -395,8 +395,7 @@ public:
 	 * 
 	 * Unique Key when searching and binding this Row.
 	 */
-	UPROPERTY(/*Transient, */VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay,
-		meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate))
+	UPROPERTY(/*Transient, */VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate))
 	FGuid RowGUID;
 	
 	/**
@@ -516,6 +515,8 @@ public:
 			}
 		}
 	}
+
+	FString ToString() const;
 };
 #undef LOCTEXT_NAMESPACE
 
@@ -577,6 +578,8 @@ struct FMounteaDialogueContextReplicatedStruct
 	FGuid PreviousActiveNodeGuid;
 	UPROPERTY()
 	TArray<FGuid> AllowedChildNodes;
+	UPROPERTY()
+	FDataTableRowHandle ActiveDialogueTableHandle;
 	UPROPERTY()
 	int32 ActiveDialogueRowDataIndex = 0;
 

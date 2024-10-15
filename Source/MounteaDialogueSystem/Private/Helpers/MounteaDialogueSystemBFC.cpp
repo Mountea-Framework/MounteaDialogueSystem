@@ -352,11 +352,19 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 		}
 	}
 	
+	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
+	Context->SetDialogueContext(MainParticipant, NodeToStart, TArray<UMounteaDialogueGraphNode*>());
+
 	TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
 	SortNodes(StartNode_Children);
-	
-	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
-	Context->SetDialogueContext(MainParticipant, NodeToStart, StartNode_Children);
+
+	auto dialogueNodeToStart = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(NodeToStart);
+
+	FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
+	newDialogueTableHandle.DataTable = dialogueNodeToStart->GetDataTable();
+	newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();
+
+	Context->UpdateAllowedChildrenNodes(StartNode_Children);
 	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(Initiator));
 	Context->AddDialogueParticipants(DialogueParticipants);
 	
@@ -452,9 +460,16 @@ bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextOb
 	TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
 	SortNodes(StartNode_Children);
 
+	auto dialogueNodeToStart = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(NodeToStart);
+
+	FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
+	newDialogueTableHandle.DataTable = dialogueNodeToStart->GetDataTable();
+	newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();
+
 	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
 	Context->SetDialogueContext(DialogueParticipant, NodeToStart, StartNode_Children);
 	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(Initiator));
+	Context->UpdateActiveDialogueTable(dialogueNodeToStart ? newDialogueTableHandle : FDataTableRowHandle());
 	
 	return  InitializeDialogueWithContext(WorldContextObject, Initiator, DialogueParticipant, Context);
 }
@@ -729,6 +744,16 @@ FDialogueRow UMounteaDialogueSystemBFC::GetDialogueRow(const UMounteaDialogueGra
 
 	return *Row;
 }
+
+FDialogueRow UMounteaDialogueSystemBFC::GetDialogueRow(const UDataTable* SourceTable, const FName& SourceName)
+{
+	if (!SourceTable)
+		return FDialogueRow();
+
+	const FDialogueRow* FoundRow = SourceTable->FindRow<FDialogueRow>(SourceName, TEXT(""));
+	return FoundRow ? *FoundRow : FDialogueRow();
+}
+
 
 float UMounteaDialogueSystemBFC::GetRowDuration(const FDialogueRowData& Row)
 {

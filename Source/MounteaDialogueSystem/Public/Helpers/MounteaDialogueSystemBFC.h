@@ -287,7 +287,8 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(CompactNodeTitle="Get Dialogue Row", Keywords="row, dialogue"), meta=(CustomTag="MounteaK2Getter"))
 	static FDialogueRow GetDialogueRow(const UMounteaDialogueGraphNode* Node);
-
+	static FDialogueRow GetDialogueRow(const UDataTable* SourceTable, const FName& SourceName);
+	
 	/**
 	 * Finds a specific dialogue row in a DataTable.
 	 * 
