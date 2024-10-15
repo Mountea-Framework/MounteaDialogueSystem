@@ -139,6 +139,43 @@ const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetIndexBrush() const
 	return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges");
 }
 
+FText SEdNode_MounteaDialogueGraphNode::GetNodeTitle() const
+{
+	FText NodeTitle =  INVTEXT("Dialogue Node");
+	if (const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
+	{
+		if (EdParentNode->DialogueGraphNode)
+		{
+			NodeTitle = EdParentNode->DialogueGraphNode->GetNodeTitle();
+		}
+	}
+	return NodeTitle;
+}
+
+TSharedRef<SWidget> SEdNode_MounteaDialogueGraphNode::CreateNameSlotWidget()
+{
+	if (GUnrealEd && !GUnrealEd->IsPlayingSessionInEditor())
+	{
+		TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, GraphNode);		
+		return SNew(SInlineEditableTextBlock)
+			.Style(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitleInlineEditableText")
+			.Text(GetNodeTitle())
+			.OnVerifyTextChanged(this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
+			.OnTextCommitted(this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
+			.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
+			.IsSelected(this, &SEdNode_MounteaDialogueGraphNode::IsSelectedExclusively)
+			.Justification(ETextJustify::Center)
+			.Visibility(EVisibility::Visible);
+	}
+	
+	return SNew(STextBlock)
+			.Text(GetNodeTitle())
+			.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitle")
+			.Justification(ETextJustify::Center)
+			.Visibility(EVisibility::Visible);
+}
+
+
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
@@ -169,6 +206,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 
 	TSharedPtr<SErrorText> ErrorText;
 	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, GraphNode);
+	TSharedPtr<SWidget> TitleWidget = CreateNameSlotWidget();
 
 	TSharedPtr<SVerticalBox> StackBox;
 	TSharedPtr<SVerticalBox> UniformBox;
@@ -396,18 +434,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 														  .HAlign(HAlign_Center)
 														  .AutoHeight()
 														[
-															// TODO: This seems to be causing issues in PIE, so for PIE lets replace with regular TEXT
-															SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-															.Style(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitleInlineEditableText")
-															.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
-															.OnVerifyTextChanged(
-															this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
-															.OnTextCommitted(
-															this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
-															.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
-															.IsSelected(this, &SEdNode_MounteaDialogueGraphNode::IsSelectedExclusively)
-															.Justification(ETextJustify::Center)
-															.Visibility(EVisibility::Visible)
+															TitleWidget.ToSharedRef()
 														]
 														
 														+ SVerticalBox::Slot()
