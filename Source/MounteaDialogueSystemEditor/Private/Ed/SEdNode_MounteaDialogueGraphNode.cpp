@@ -13,7 +13,9 @@
 #include "SlateOptMacros.h"
 #include "SGraphPin.h"
 #include "GraphEditorSettings.h"
+#include "UnrealEdGlobals.h"
 #include "Blueprint/UserWidget.h"
+#include "Editor/UnrealEdEngine.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
@@ -114,13 +116,11 @@ void SEdNode_MounteaDialogueGraphNode::Construct(const FArguments& InArgs, UEdNo
 void SEdNode_MounteaDialogueGraphNode::OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
 	//bIsHovered = true;
-
-	if (GetToolTip().IsValid())
+	if (GUnrealEd && !GUnrealEd->IsPlayingSessionInEditor())
 	{
 		SetToolTipText(GetTooltipText());
 		OnVisualizeTooltip(GetToolTip()->AsWidget());
 	}
-	
 	SGraphNode::OnMouseEnter(MyGeometry, MouseEvent);
 }
 
@@ -396,6 +396,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 														  .HAlign(HAlign_Center)
 														  .AutoHeight()
 														[
+															// TODO: This seems to be causing issues in PIE, so for PIE lets replace with regular TEXT
 															SAssignNew(InlineEditableText, SInlineEditableTextBlock)
 															.Style(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitleInlineEditableText")
 															.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
