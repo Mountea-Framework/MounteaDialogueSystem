@@ -154,23 +154,13 @@ FText SEdNode_MounteaDialogueGraphNode::GetNodeTitle() const
 
 TSharedRef<SWidget> SEdNode_MounteaDialogueGraphNode::CreateNameSlotWidget()
 {
-	if (GUnrealEd && !GUnrealEd->IsPlayingSessionInEditor())
-	{
-		TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, GraphNode);		
-		return SNew(SInlineEditableTextBlock)
+	return SAssignNew(InlineEditableText, SInlineEditableTextBlock)
 			.Style(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitleInlineEditableText")
 			.Text(GetNodeTitle())
 			.OnVerifyTextChanged(this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
 			.OnTextCommitted(this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
 			.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
 			.IsSelected(this, &SEdNode_MounteaDialogueGraphNode::IsSelectedExclusively)
-			.Justification(ETextJustify::Center)
-			.Visibility(EVisibility::Visible);
-	}
-	
-	return SNew(STextBlock)
-			.Text(GetNodeTitle())
-			.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitle")
 			.Justification(ETextJustify::Center)
 			.Visibility(EVisibility::Visible);
 }
