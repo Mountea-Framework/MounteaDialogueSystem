@@ -41,15 +41,4 @@ public:
 	// Returns whether Owning Node has never been called before.
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Validate"))
 	bool IsFirstTime() const;
-
-protected:
-
-	UMounteaDialogueContext* GetContext() const
-	{ return Context; };
-
-private:
-	
-	UPROPERTY()
-	TObjectPtr<UMounteaDialogueContext> Context = nullptr;
-	
 };

@@ -1152,7 +1152,15 @@ void FAssetEditor_MounteaDialogueGraph::OnRenameNode()
 		const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 		for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
 		{
-			UEdGraphNode* SelectedNode = Cast<UEdGraphNode>(*NodeIt);
+			UEdNode_MounteaDialogueGraphNode* SelectedNode = Cast<UEdNode_MounteaDialogueGraphNode>(*NodeIt);
+			if (SelectedNode)
+			{
+				UMounteaDialogueGraphNode* GraphNode = Cast<UMounteaDialogueGraphNode>(SelectedNode->DialogueGraphNode);
+				if (GraphNode && !GraphNode->bCanRenameNode)
+				{
+					return;
+				}
+			}
 			if (SelectedNode != nullptr && SelectedNode->bCanRenameNode)
 			{
 				CurrentGraphEditor->IsNodeTitleVisible(SelectedNode, true);
@@ -1165,7 +1173,32 @@ void FAssetEditor_MounteaDialogueGraph::OnRenameNode()
 bool FAssetEditor_MounteaDialogueGraph::CanRenameNodes() const
 {
 	check(GetSettings() != nullptr);
-	return GetSettings()->AllowRenameNodes() == true && GetSelectedNodes().Num() == 1;
+	if (GetSettings()->AllowRenameNodes() == false) return false;
+	if (GetSelectedNodes().Num() != 1) return false; 
+
+	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
+	if (CurrentGraphEditor.IsValid())
+	{
+		const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
+		for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
+		{
+			UEdNode_MounteaDialogueGraphNode* SelectedNode = Cast<UEdNode_MounteaDialogueGraphNode>(*NodeIt);
+			if (SelectedNode)
+			{
+				UMounteaDialogueGraphNode* GraphNode = Cast<UMounteaDialogueGraphNode>(SelectedNode->DialogueGraphNode);
+				if (GraphNode && !GraphNode->bCanRenameNode)
+				{
+					return false;
+				}
+			}
+			
+			if (SelectedNode != nullptr && !SelectedNode->bCanRenameNode)
+			{
+				return false;
+			}
+		}
+	}
+	return true;
 }
 
 void FAssetEditor_MounteaDialogueGraph::OnSelectedNodesChanged(const TSet<UObject*>& NewSelection)
