@@ -12,14 +12,14 @@
 UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 {
 #if WITH_EDITORONLY_DATA
-	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeTitle", "Answer Node");
-	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeInternalTitle", "Answer Node");
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeContextMenuName", "Answer Node");
 	
 	BackgroundColor = FLinearColor(FColor::Turquoise);
 
 	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_AnswerTooltip", "* This Node represents Player's answers.\n* This Node requires Player's input to be started.\n* Requires Dialogue Data Table to work properly.");
 #endif
+	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeTitle", "Answer Node");	
+	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeInternalTitle", "Answer Node");
 	
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_LeadNode::StaticClass());
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());

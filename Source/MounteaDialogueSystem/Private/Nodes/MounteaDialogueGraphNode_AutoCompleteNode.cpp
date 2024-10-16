@@ -7,10 +7,9 @@
 
 UMounteaDialogueGraphNode_AutoCompleteNode::UMounteaDialogueGraphNode_AutoCompleteNode()
 {
-#if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_AutoCompleteNodeTitle", "Auto Complete Dialogue");
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_AutoCompleteNodeInternalTitle", "Auto Complete Dialogue");
-	
+#if WITH_EDITORONLY_DATA
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_AutoCompleteNodeContextMenuName", "Auto Complete Dialogue");
 	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_AutoCompleteTooltip", "* This Node will automatically complete Dialogue.\n* Same functionality as Node being left with no branching or children.\n* Does help performance, however, is not required.");
 

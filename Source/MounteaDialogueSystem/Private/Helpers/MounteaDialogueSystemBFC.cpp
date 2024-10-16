@@ -352,11 +352,9 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 		}
 	}
 	
-	TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
-	SortNodes(StartNode_Children);
-	
 	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
-	Context->SetDialogueContext(MainParticipant, NodeToStart, StartNode_Children);
+	Context->SetDialogueContext(MainParticipant, NodeToStart, TArray<UMounteaDialogueGraphNode*>());
+
 	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(Initiator));
 	Context->AddDialogueParticipants(DialogueParticipants);
 	
@@ -449,12 +447,15 @@ bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextOb
 		NodeToStart = GetFirstChildNode(NodeToStart);
 	}
 	
-	TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(NodeToStart);
-	SortNodes(StartNode_Children);
+	auto dialogueNodeToStart = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(NodeToStart);
+
+	FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
+	newDialogueTableHandle.DataTable = dialogueNodeToStart->GetDataTable();
+	newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();
 
 	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
-	Context->SetDialogueContext(DialogueParticipant, NodeToStart, StartNode_Children);
 	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(Initiator));
+	Context->UpdateActiveDialogueTable(dialogueNodeToStart ? newDialogueTableHandle : FDataTableRowHandle());
 	
 	return  InitializeDialogueWithContext(WorldContextObject, Initiator, DialogueParticipant, Context);
 }
@@ -496,6 +497,11 @@ bool UMounteaDialogueSystemBFC::InitializeDialogueWithContext(const UObject* Wor
 		if (Itr.DecoratorType != nullptr)
 			Itr.DecoratorType->ExecuteDecorator();
 	}
+
+	TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(Context->ActiveNode);
+	SortNodes(StartNode_Children);
+	Context->UpdateAllowedChildrenNodes(StartNode_Children);
+	
 	return true;
 }
 
@@ -695,40 +701,50 @@ FDialogueRow UMounteaDialogueSystemBFC::GetDialogueRow(const UMounteaDialogueGra
 	if (!Node)
 	{
 		LOG_ERROR(TEXT("[GetDialogueRow] Invalid Node input!"))
-		return FDialogueRow();
+		return FDialogueRow::Invalid();
 	}
 	const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNodeBase = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node);
 		
 	if (!DialogueNodeBase)
 	{
-		LOG_ERROR(TEXT("[GetDialogueRow] Invalid Dialogue Node input!"))
-		return FDialogueRow();
+		LOG_WARNING(TEXT("[GetDialogueRow] Invalid Dialogue Node input!"))
+		return FDialogueRow::Invalid();
 	}
 	if (DialogueNodeBase->GetDataTable() == nullptr)
 	{
 		LOG_ERROR(TEXT("[GetDialogueRow] Node %s has empty Data Table!"), *DialogueNodeBase->GetNodeTitle().ToString())
-		return FDialogueRow();
+		return FDialogueRow::Invalid();
 	}
 	if (DialogueNodeBase->GetDataTable()->RowStruct->IsChildOf(FDialogueRow::StaticStruct()) == false)
 	{
 		LOG_ERROR(TEXT("[GetDialogueRow] Node %s has invalid Data Table data!"), *DialogueNodeBase->GetNodeTitle().ToString())
-		return FDialogueRow();
+		return FDialogueRow::Invalid();
 	}
 
 	const FDialogueRow* Row = DialogueNodeBase->GetDataTable()->FindRow<FDialogueRow>(DialogueNodeBase->GetRowName(), FString("") );
 	if (!Row)
 	{
 		LOG_WARNING(TEXT("[GetDialogueRow] Node %s has no Row Data by ID: %s!"), *DialogueNodeBase->GetNodeTitle().ToString(), *DialogueNodeBase->GetRowName().ToString())
-		return FDialogueRow();
+		return FDialogueRow::Invalid();
 	}
 	if (IsDialogueRowValid(*Row) == false)
 	{
 		LOG_ERROR(TEXT("[GetDialogueRow] Node %s has invalid Dialogue Row %s"), *DialogueNodeBase->GetNodeTitle().ToString(), *DialogueNodeBase->GetRowName().ToString())
-		return FDialogueRow();
+		return FDialogueRow::Invalid();
 	}
 
 	return *Row;
 }
+
+FDialogueRow UMounteaDialogueSystemBFC::GetDialogueRow(const UDataTable* SourceTable, const FName& SourceName)
+{
+	if (!SourceTable)
+		return FDialogueRow::Invalid();
+
+	const FDialogueRow* FoundRow = SourceTable->FindRow<FDialogueRow>(SourceName, TEXT(""));
+	return FoundRow ? *FoundRow : FDialogueRow::Invalid();
+}
+
 
 float UMounteaDialogueSystemBFC::GetRowDuration(const FDialogueRowData& Row)
 {
