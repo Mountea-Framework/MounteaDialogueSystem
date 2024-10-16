@@ -29,6 +29,11 @@ protected:
 
 private:
 
+	UFUNCTION()
+	void OnDelayDurationExpired(const TScriptInterface<IMounteaDialogueManagerInterface>& MounteaDialogueManagerInterface);
+	
+private:
+
 	FTimerHandle TimerHandle_NodeDelay;
 
 #if WITH_EDITOR

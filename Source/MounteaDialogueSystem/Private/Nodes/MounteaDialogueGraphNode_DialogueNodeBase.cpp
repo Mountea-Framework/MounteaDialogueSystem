@@ -5,6 +5,7 @@
 #include "TimerManager.h"
 #include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Nodes/MounteaDialogueGraphNode_Delay.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_DialogueNodeBase"
 
@@ -21,6 +22,8 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 	
 	bAutoStarts = false;
 	bUseGameplayTags = true;
+
+	AllowedInputClasses.Add(UMounteaDialogueGraphNode_Delay::StaticClass());
 }
 
 void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)

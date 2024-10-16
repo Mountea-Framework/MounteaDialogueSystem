@@ -134,13 +134,17 @@ void UMounteaDialogueManager::CallDialogueNodeSelected_Implementation(const FGui
 	// Straight up set dialogue row from Node and index to 0
 	auto allowedChildNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(selectedNode);
 	UMounteaDialogueSystemBFC::SortNodes(allowedChildNodes);
-	
-	FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
-	newDialogueTableHandle.DataTable = selectedDialogueNode->GetDataTable();
-	newDialogueTableHandle.RowName = selectedDialogueNode->GetRowName();
+
+	if (selectedDialogueNode)
+	{
+		FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
+		newDialogueTableHandle.DataTable = selectedDialogueNode->GetDataTable();
+		newDialogueTableHandle.RowName = selectedDialogueNode->GetRowName();
+		
+		DialogueContext->UpdateActiveDialogueTable(selectedNode ? newDialogueTableHandle : FDataTableRowHandle());
+	}
 	
 	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, selectedNode, allowedChildNodes);	
-	DialogueContext->UpdateActiveDialogueTable(selectedNode ? newDialogueTableHandle : FDataTableRowHandle());
 	DialogueContext->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode));
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 
@@ -1220,8 +1224,7 @@ void UMounteaDialogueManager::StartExecuteDialogueRow_Client_Implementation()
 {
 	const int32 Index = DialogueContext->GetActiveDialogueRowDataIndex();
 	const auto Row = DialogueContext->GetActiveDialogueRow();
-	const auto RowData = Row.DialogueRowData.Array()[Index];
-	
+		
 	if (DialogueContext->DialogueParticipant)
 	{
 		if (UMounteaDialogueSystemBFC::DoesPreviousNodeSkipActiveNode(DialogueContext->DialogueParticipant->Execute_GetDialogueGraph(DialogueContext->DialogueParticipant.GetObject()), DialogueContext->PreviousActiveNode))
@@ -1231,8 +1234,11 @@ void UMounteaDialogueManager::StartExecuteDialogueRow_Client_Implementation()
 			return;
 		}
 	}
+
+	const bool bValidRowData = Row.DialogueRowData.Array().IsValidIndex(Index);
+	const FDialogueRowData RowData = bValidRowData ? Row.DialogueRowData.Array()[Index] : FDialogueRowData();;
 	
-	if (RowData.RowDurationMode != ERowDurationMode::ERDM_Manual)
+	if (bValidRowData && RowData.RowDurationMode != ERowDurationMode::ERDM_Manual)
 	{
 		FTimerDelegate Delegate;
 		Delegate.BindUObject(this, &UMounteaDialogueManager::FinishedExecuteDialogueRow_Implementation);

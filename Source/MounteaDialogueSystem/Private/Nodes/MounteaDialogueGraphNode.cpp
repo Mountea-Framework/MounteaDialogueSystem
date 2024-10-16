@@ -261,7 +261,7 @@ bool UMounteaDialogueGraphNode::CanCreateConnection(UMounteaDialogueGraphNode* O
 	return true;
 }
 
-bool UMounteaDialogueGraphNode::	ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
+bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
 {
 	bool bResult = true;
 	if (ParentNodes.Num() == 0 && ChildrenNodes.Num() == 0)

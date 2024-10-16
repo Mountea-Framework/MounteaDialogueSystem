@@ -355,12 +355,6 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
 	Context->SetDialogueContext(MainParticipant, NodeToStart, TArray<UMounteaDialogueGraphNode*>());
 
-	auto dialogueNodeToStart = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(NodeToStart);
-
-	FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
-	newDialogueTableHandle.DataTable = dialogueNodeToStart->GetDataTable();
-	newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();
-
 	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(Initiator));
 	Context->AddDialogueParticipants(DialogueParticipants);
 	
@@ -713,7 +707,7 @@ FDialogueRow UMounteaDialogueSystemBFC::GetDialogueRow(const UMounteaDialogueGra
 		
 	if (!DialogueNodeBase)
 	{
-		LOG_ERROR(TEXT("[GetDialogueRow] Invalid Dialogue Node input!"))
+		LOG_WARNING(TEXT("[GetDialogueRow] Invalid Dialogue Node input!"))
 		return FDialogueRow();
 	}
 	if (DialogueNodeBase->GetDataTable() == nullptr)
