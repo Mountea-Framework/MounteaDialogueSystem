@@ -6,6 +6,7 @@
 #include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/MounteaDialogueManagerInterface.h"
+#include "TimerManager.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_DelayNode"
@@ -20,10 +21,11 @@ UMounteaDialogueGraphNode_Delay::UMounteaDialogueGraphNode_Delay()
 	
 	BackgroundColor = FLinearColor(FColor::FromHex("007ddc"));
 	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_DelayTooltip", "* This Node does nothing but waits until its Timer expires\n* After expiration following node is selected automatically");
+	bCanRenameNode = false;
 #endif
 	
 	bAutoStarts = true;
-	bCanRenameNode = false;
+	
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode::StaticClass());
 
 	MaxChildrenNodes = 1;

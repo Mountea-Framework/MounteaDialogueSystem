@@ -43,7 +43,10 @@ void PrintLog(const ELogVerbosity::Type Verbosity, const FString& Message, FLine
 
 	if (isVerbosityAllowed)
 	{
+#if WITH_EDITOR
 		FMsg::Logf(__FILE__, __LINE__, LogMounteaDialogueSystem.GetCategoryName(), Verbosity, TEXT("%s"), *Message);
+#endif
+		
 		UKismetSystemLibrary::PrintString(GWorld, Message, true, true, Color, Duration);
 	}
 }
