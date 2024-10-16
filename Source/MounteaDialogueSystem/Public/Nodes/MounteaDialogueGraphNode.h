@@ -388,6 +388,10 @@ public:
 	// Defines whether this Node can be manually created
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	bool bAllowManualCreate;
+
+	// Defines whether Node can be renamed
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	bool bCanRenameNode;
 	
 	// Display name of the Node menu category
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
@@ -405,16 +409,16 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText NodeTooltipText;
 
+#endif
+
 	// User friendly node type name
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText NodeTypeName;
 
-#endif
-
 	// Display title of the Node
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText NodeTitle;
-
+	
 	FIntPoint NodePosition;
 	
 #if WITH_EDITOR

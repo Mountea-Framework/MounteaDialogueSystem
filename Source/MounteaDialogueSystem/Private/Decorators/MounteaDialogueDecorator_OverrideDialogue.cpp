@@ -69,16 +69,21 @@ void UMounteaDialogueDecorator_OverrideDialogue::ExecuteDecorator_Implementation
 	Super::ExecuteDecorator_Implementation();
 
 	if (!OwningManager) return;
-	
-	// Let's return BP Updatable Context rather than Raw
-	Context = OwningManager->GetDialogueContext();
 
-	// We assume Context and Manager are already valid, but safety is safety
-	if (!Context || !OwningManager.GetInterface() || !UMounteaDialogueSystemBFC::IsContextValid(Context) ) return;
-	
-	const auto NewRow = UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName);
-	
-	Context->UpdateActiveDialogueRow( UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName) );
+	if (const auto TempContext = GetContext())
+	{
+		// We assume Context and Manager are already valid, but safety is safety
+		if (!UMounteaDialogueSystemBFC::IsContextValid(TempContext) ) return;
+
+		const auto NewRow = UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName);
+
+		FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
+		newDialogueTableHandle.DataTable = DataTable;
+		newDialogueTableHandle.RowName = RowName;
+		
+		TempContext->UpdateActiveDialogueTable(newDialogueTableHandle);
+		TempContext->UpdateActiveDialogueRow( NewRow );
+	}
 }
 
 #undef LOCTEXT_NAMESPACE
