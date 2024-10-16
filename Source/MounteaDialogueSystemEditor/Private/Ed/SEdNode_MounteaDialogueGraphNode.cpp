@@ -156,7 +156,7 @@ TSharedRef<SWidget> SEdNode_MounteaDialogueGraphNode::CreateNameSlotWidget()
 {
 	return SAssignNew(InlineEditableText, SInlineEditableTextBlock)
 	.Style(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitleInlineEditableText")
-	.Text(GetNodeTitle())
+	.Text(this, &SEdNode_MounteaDialogueGraphNode::GetNodeTitle)
 	.OnVerifyTextChanged(this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
 	.OnTextCommitted(this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
 	.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
