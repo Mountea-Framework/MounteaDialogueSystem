@@ -31,7 +31,7 @@ TSoftClassPtr<UUserWidget> UMounteaDialogueOptionsContainer::GetDialogueOptionCl
 void UMounteaDialogueOptionsContainer::SetDialogueOptionClass_Implementation(const TSoftClassPtr<UUserWidget>& NewDialogueOptionClass)
 {
 	if (NewDialogueOptionClass.LoadSynchronous() != DialogueOptionClass.LoadSynchronous())
-	DialogueOptionClass = NewDialogueOptionClass;
+		DialogueOptionClass = NewDialogueOptionClass;
 }
 
 void UMounteaDialogueOptionsContainer::AddNewDialogueOption_Implementation(UMounteaDialogueGraphNode_DialogueNodeBase* NewDialogueOption)
