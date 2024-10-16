@@ -15,6 +15,7 @@
 #include "Interfaces/MounteaDialogueWBPInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 
 
 UMounteaDialogueManager::UMounteaDialogueManager()
@@ -128,10 +129,22 @@ void UMounteaDialogueManager::CallDialogueNodeSelected_Implementation(const FGui
 		return;
 	}
 
+	auto selectedDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(selectedNode);
+
 	// Straight up set dialogue row from Node and index to 0
 	auto allowedChildNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(selectedNode);
 	UMounteaDialogueSystemBFC::SortNodes(allowedChildNodes);
-	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, selectedNode, allowedChildNodes);
+
+	if (selectedDialogueNode)
+	{
+		FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
+		newDialogueTableHandle.DataTable = selectedDialogueNode->GetDataTable();
+		newDialogueTableHandle.RowName = selectedDialogueNode->GetRowName();
+		
+		DialogueContext->UpdateActiveDialogueTable(selectedNode ? newDialogueTableHandle : FDataTableRowHandle());
+	}
+	
+	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, selectedNode, allowedChildNodes);	
 	DialogueContext->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode));
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 
@@ -201,8 +214,6 @@ void UMounteaDialogueManager::OnDialogueNodeSelectedEvent_Internal(UMounteaDialo
 	OnDialogueNodeSelectedEvent(Context);
 
 	NetPushDialogueContext();
-
-	LOG_INFO(TEXT("[OnDialogueNodeSelectedEvent] Node Selected: %s"), *Context->GetActiveNode()->GetNodeTitle().ToString())
 	
 	if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
 	{
@@ -273,9 +284,16 @@ void UMounteaDialogueManager::OnDialogueNodeFinishedEvent_Internal(UMounteaDialo
 			OnDialogueClosed.Broadcast(DialogueContext);	
 		}
 
+		auto newActiveDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(newActiveNode);
 		auto allowedChildNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(newActiveNode);
 		UMounteaDialogueSystemBFC::SortNodes(allowedChildNodes);
+
+		FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
+		newDialogueTableHandle.DataTable = newActiveDialogueNode->GetDataTable();
+		newDialogueTableHandle.RowName = newActiveDialogueNode->GetRowName();
+		
 		DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, newActiveNode, allowedChildNodes);
+		DialogueContext->UpdateActiveDialogueTable(newActiveDialogueNode ? newDialogueTableHandle : FDataTableRowHandle());
 		
 		OnDialogueNodeSelected.Broadcast(DialogueContext);
 
@@ -580,6 +598,7 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 	DialogueContext->DialogueContextUpdatedFromBlueprint.RemoveDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent);
 	
 	DialogueContext->SetDialogueContext(nullptr, nullptr, TArray<UMounteaDialogueGraphNode*>());
+	DialogueContext->UpdateDialogueParticipant(nullptr);
 	DialogueContext->MarkAsGarbage();
 	DialogueContext = nullptr;
 
@@ -1153,6 +1172,7 @@ void UMounteaDialogueManager::UpdateDialogueContext_Client_Implementation(const 
 			DialogueContext->DialogueParticipant = NewDialogueContext.DialogueParticipant;
 			DialogueContext->DialogueParticipants = NewDialogueContext.DialogueParticipants;
 			DialogueContext->ActiveDialogueRowDataIndex = NewDialogueContext.ActiveDialogueRowDataIndex;
+			DialogueContext->ActiveDialogueTableHandle = NewDialogueContext.ActiveDialogueTableHandle;
 
 			UMounteaDialogueGraph* activeGraph = DialogueContext->DialogueParticipant->Execute_GetDialogueGraph(DialogueContext->DialogueParticipant.GetObject());
 
@@ -1166,7 +1186,11 @@ void UMounteaDialogueManager::UpdateDialogueContext_Client_Implementation(const 
 			DialogueContext->PreviousActiveNode = NewDialogueContext.PreviousActiveNodeGuid;
 
 			// Find data locally
-			DialogueContext->ActiveDialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
+			UMounteaDialogueGraphNode_DialogueNodeBase* dialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(DialogueContext->ActiveNode);
+
+			const FDialogueRow selectedRow = dialogueNode ? UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveDialogueTableHandle.DataTable,DialogueContext->ActiveDialogueTableHandle.RowName) : FDialogueRow::Invalid();
+			if (dialogueNode)
+				DialogueContext->ActiveDialogueRow = selectedRow.IsValid() ? selectedRow : UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
 		}
 	}
 	else
@@ -1203,8 +1227,7 @@ void UMounteaDialogueManager::StartExecuteDialogueRow_Client_Implementation()
 {
 	const int32 Index = DialogueContext->GetActiveDialogueRowDataIndex();
 	const auto Row = DialogueContext->GetActiveDialogueRow();
-	const auto RowData = Row.DialogueRowData.Array()[Index];
-	
+		
 	if (DialogueContext->DialogueParticipant)
 	{
 		if (UMounteaDialogueSystemBFC::DoesPreviousNodeSkipActiveNode(DialogueContext->DialogueParticipant->Execute_GetDialogueGraph(DialogueContext->DialogueParticipant.GetObject()), DialogueContext->PreviousActiveNode))
@@ -1214,8 +1237,11 @@ void UMounteaDialogueManager::StartExecuteDialogueRow_Client_Implementation()
 			return;
 		}
 	}
+
+	const bool bValidRowData = Row.DialogueRowData.Array().IsValidIndex(Index);
+	const FDialogueRowData RowData = bValidRowData ? Row.DialogueRowData.Array()[Index] : FDialogueRowData();;
 	
-	if (RowData.RowDurationMode != ERowDurationMode::ERDM_Manual)
+	if (bValidRowData && RowData.RowDurationMode != ERowDurationMode::ERDM_Manual)
 	{
 		FTimerDelegate Delegate;
 		Delegate.BindUObject(this, &UMounteaDialogueManager::FinishedExecuteDialogueRow_Implementation);

@@ -243,13 +243,12 @@ public:
 
 	virtual bool ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat);
 	virtual bool ValidateDecorators(TArray<FText>& ValidationErrors, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators, const FString& DecoratorTypeName);
-	virtual bool ValidateGraphDecorators(TArray<FText>& ValidationErrors, bool RichTextFormat);
-	virtual bool ValidateGraphScopeDecorators(TArray<FText>& ValidationErrors, bool RichTextFormat);
+	virtual bool ValidateGraphDecorators(TArray<FText>& ValidationErrors, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators);
 	virtual bool ValidateStartNode(TArray<FText>& ValidationErrors, bool RichTextFormat);
 	virtual bool ValidateAllNodes(TArray<FText>& ValidationErrors, bool RichTextFormat);
-	virtual void FindDuplicatedDecorators(const TArray<UMounteaDialogueDecoratorBase*>& UsedNodeDecorators, TMap<UClass*, int32>& DuplicatedDecoratorsMap);
+	virtual void FindDuplicatedDecorators(const TArray<UMounteaDialogueDecoratorBase*>& UsedNodeDecorators, TMap<UMounteaDialogueDecoratorBase*, int32>& DuplicatedDecoratorsMap);
 	virtual void AddInvalidDecoratorError(TArray<FText>& ValidationErrors, bool RichTextFormat, int32 Index, const FString& DecoratorTypeName);
-	virtual void AddDuplicateDecoratorErrors(TArray<FText>& ValidationErrors, bool RichTextFormat, const TMap<UClass*, int32>& DuplicatedDecoratorsMap);
+	virtual void AddDuplicateDecoratorErrors(TArray<FText>& ValidationErrors, bool RichTextFormat, const TMap<UMounteaDialogueDecoratorBase*, int32>& DuplicatedDecoratorsMap);
 	virtual void AddDecoratorErrors(TArray<FText>& ValidationErrors, bool RichTextFormat, const TArray<FText>& DecoratorErrors);
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
 

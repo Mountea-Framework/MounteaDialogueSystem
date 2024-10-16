@@ -570,23 +570,22 @@ void FMounteaDialogueSystemEditor::RegisterMenus()
 	{
 		UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu(MenuName);
 		{
-			ToolbarMenu->RemoveSection("MounteaFramework"); // Cleanup
-			FToolMenuEntry& Entry = ToolbarMenu->FindOrAddSection("MounteaFramework")
-				.AddEntry(FToolMenuEntry::InitComboButton(
-					"MounteaMenu",
-					FUIAction(),
-					FOnGetContent::CreateRaw(this, &FMounteaDialogueSystemEditor::MakeMounteaMenuWidget),
-					LOCTEXT("MounteaMainMenu_Label", "Mountea Framework"),
-					LOCTEXT("MounteaMainMenu_Tooltip", "📂 Open Mountea Framework menu.\n\n❔ Provides link to Documentation, Support Discord and Dialogue tool."),
-					FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Dialoguer"),
-					false,
-					"MounteaMenu"
-				));
-			
-			Entry.Label = LOCTEXT("MounteaFramework_Label", "Mountea Framework");
-			Entry.Name = TEXT("MounteaMenu");
-			Entry.StyleNameOverride = "CalloutToolbar";
-			Entry.SetCommandList(PluginCommands);
+			FToolMenuSection& Entry = ToolbarMenu->FindOrAddSection("MounteaDialogueFramework");
+			FToolMenuEntry& MenuEntry = Entry.AddEntry(FToolMenuEntry::InitComboButton(
+				"MounteaMenu",
+				FUIAction(),
+				FOnGetContent::CreateRaw(this, &FMounteaDialogueSystemEditor::MakeMounteaMenuWidget),
+				LOCTEXT("MounteaMainMenu_Label", "Mountea Dialogue Menu"),
+				LOCTEXT("MounteaMainMenu_Tooltip", "📂 Open Mountea Dialogue menu.\n\n❔ Provides link to Documentation, Support Discord and Dialogue tool."),
+				FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.DialogueSystemIcon"),
+				false,
+				"MounteaMenu"
+			));
+				
+			MenuEntry.Label = LOCTEXT("MounteaMainMenu_Label", "Mountea Dialogue Menu");
+			MenuEntry.Name = TEXT("MounteaMenu");
+			MenuEntry.StyleNameOverride = "CalloutToolbar";
+			MenuEntry.SetCommandList(PluginCommands);
 		}
 	}
 }
@@ -608,8 +607,8 @@ TSharedRef<SWidget> FMounteaDialogueSystemEditor::MakeMounteaMenuWidget() const
 		);
 		// Wiki Entry
 		MenuBuilder.AddMenuEntry(
-			LOCTEXT("MounteaSystemEditor_WikiButton_Label", "Mountea Wiki"),
-			LOCTEXT("MounteaSystemEditor_WikiButton_ToolTip", "📖 Open Mountea Framework Documentation"),
+			LOCTEXT("MounteaSystemEditor_WikiButton_Label", "Mountea Dialogue Wiki"),
+			LOCTEXT("MounteaSystemEditor_WikiButton_ToolTip", "📖 Open Mountea Dialogue Documentation"),
 			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Wiki"),
 			FUIAction(
 				FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::WikiButtonClicked)
