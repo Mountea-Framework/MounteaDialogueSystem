@@ -186,7 +186,7 @@ public:
 	 *
 	 * @return The dialogue context object for this instance.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", DisplayName="GetDialogueContext", meta=(CustomTag="MounteaK2Getter"))
 	UMounteaDialogueContext* GetDialogueContextEvent() const;
 	UMounteaDialogueContext* GetDialogueContextEvent_Implementation() const
 	{

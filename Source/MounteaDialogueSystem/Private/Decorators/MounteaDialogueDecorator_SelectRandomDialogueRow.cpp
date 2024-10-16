@@ -12,9 +12,6 @@
 void UMounteaDialogueDecorator_SelectRandomDialogueRow::CleanupDecorator_Implementation()
 {
 	Super::CleanupDecorator_Implementation();
-
-	Context = nullptr;
-	OwningManager = nullptr;
 }
 
 bool UMounteaDialogueDecorator_SelectRandomDialogueRow::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
@@ -38,19 +35,18 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Impleme
 	Super::ExecuteDecorator_Implementation();
 
 	if (!OwningManager) return;
-	if (!Context) Context = OwningManager->GetDialogueContext();
-	if (!Context)
+	if (!GetContext())
 	{
 		LOG_ERROR(TEXT("[ExecuteDecorator] %s Has no Context!\nExecution is skipped."), *(GetDecoratorName().ToString()));
 		return;
 	}
 
-	if (!Context->GetActiveDialogueRow().IsValid())
+	if (!GetContext()->GetActiveDialogueRow().IsValid())
 	{
 		LOG_WARNING(TEXT("[ExecuteDecorator] %s ActiveDialogueRow is invalid!\nExecution is skipped."), *(GetDecoratorName().ToString()));
 		return;
 	}
-	if (Context->GetActiveDialogueRow().DialogueRowData.Num() == 0)
+	if (GetContext()->GetActiveDialogueRow().DialogueRowData.Num() == 0)
 	{
 		LOG_WARNING(TEXT("[ExecuteDecorator] %s DialogueRowData is empty!\nExecution is skipped."), *(GetDecoratorName().ToString()));
 		return;
@@ -67,14 +63,14 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Impleme
 		ClampedRange = RandomRange;
 	}
 
-	const int32 MaxValue = Context->GetActiveDialogueRow().DialogueRowData.Num() - 1;
+	const int32 MaxValue = GetContext()->GetActiveDialogueRow().DialogueRowData.Num() - 1;
 	const int32 Range = FMath::RandRange
 	(
 		FMath::Max(0, ClampedRange.X),
 		FMath::Min(MaxValue, ClampedRange.Y)
 	);
 
-	Context->UpdateActiveDialogueRowDataIndex(Range);
+	GetContext()->UpdateActiveDialogueRowDataIndex(Range);
 }
 
 

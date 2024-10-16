@@ -10,6 +10,8 @@ struct FDialogueRowData;
 struct FDialogueRow;
 class UTexture;
 
+class UTexture;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTypeWriterEffectChanged, bool, bEnabled);
 
 #define LOCTEXT_NAMESPACE "DialogueRow"

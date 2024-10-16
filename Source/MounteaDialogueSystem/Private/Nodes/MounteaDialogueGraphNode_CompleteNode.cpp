@@ -6,10 +6,9 @@
 
 UMounteaDialogueGraphNode_CompleteNode::UMounteaDialogueGraphNode_CompleteNode()
 {
-#if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_CompleteNodeTitle", "Complete Dialogue");
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_CompleteNodeInternalTitle", "Complete Dialogue");
-	
+#if WITH_EDITORONLY_DATA
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_CompleteNodeContextMenuName", "Complete Dialogue");
 	BackgroundColor = FLinearColor(1, 0, 0, 1);
 

@@ -21,6 +21,20 @@ class USoundBase;
 class UTexture;
 class UDataAsset;
 
+UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
+enum class EMounteaDialogueLoggingVerbosity : uint8
+{
+	None		= 0			UMETA(hidden),
+	// Toggle Info On/Off. Info level provides most basic information. Color is green.
+	Info		= 1 << 0,
+	// Toggle Warning On/Off. Warning level provides information about issues that might affect dialogue, but are not blockers.
+	Warning		= 1 << 1,
+	// Toggle Error On/Off. Error level provides information about issues that will block dialogue.
+	Error		= 1 << 2
+};
+ENUM_CLASS_FLAGS(EMounteaDialogueLoggingVerbosity)
+
+
 /**
  * Dialogue Manager State
  * 
@@ -515,7 +529,19 @@ public:
 			}
 		}
 	}
+
+	FString ToString() const;
+	
+	static FDialogueRow Invalid()
+	{
+		FDialogueRow Row;
+		Row.RowGUID.Invalidate();
+		Row.DialogueRowData.Empty();
+		return Row;
+	}
 };
+
+
 #undef LOCTEXT_NAMESPACE
 
 /**
@@ -576,6 +602,8 @@ struct FMounteaDialogueContextReplicatedStruct
 	FGuid PreviousActiveNodeGuid;
 	UPROPERTY()
 	TArray<FGuid> AllowedChildNodes;
+	UPROPERTY()
+	FDataTableRowHandle ActiveDialogueTableHandle;
 	UPROPERTY()
 	int32 ActiveDialogueRowDataIndex = 0;
 
