@@ -14,7 +14,7 @@
 
 UMounteaDialogueDecoratorBase::UMounteaDialogueDecoratorBase()
 {
-	DecoratorName = FText::FromString(GetName());
+	DecoratorName = GetClass()->GetDisplayNameText();
 }
 
 void UMounteaDialogueDecoratorBase::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)

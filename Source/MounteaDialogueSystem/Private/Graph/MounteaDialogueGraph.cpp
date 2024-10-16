@@ -325,7 +325,7 @@ void UMounteaDialogueGraph::AddDuplicateDecoratorErrors(FDataValidationContext& 
 {
 	for (const auto& Itr : DuplicatedDecoratorsMap) 
 	{
-		const FText TempRichText = FText::Format(INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: <RichTextBlock.Bold>{0}</> has Node Decorator <RichTextBlock.Bold>{1}</> {2}x times! Please, avoid duplicates!"), 
+		const FText TempRichText = FText::Format(INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: <RichTextBlock.Bold>{0}</>\nNode Decorator <RichTextBlock.Bold>{1}</> {2}x times! Please, avoid duplicates!"), 
 			FText::FromString(DecoratorTypeName), Itr.Key->GetDecoratorName(), Itr.Value);
 		const FText TempText = FText::Format(INVTEXT("{0}: {1} has Node Decorator {2} {3}x times! Please, avoid duplicates!"), 
 			FText::FromString(GetName()), FText::FromString(DecoratorTypeName), Itr.Key->GetDecoratorName(), Itr.Value);
@@ -355,7 +355,7 @@ void UMounteaDialogueGraph::AddDecoratorErrors(FDataValidationContext& Context, 
 {
 	for (auto Error : DecoratorErrors)
 	{
-		const FText TempRichText = FText::Format(INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: <RichTextBlock.Bold>{0}</> {1}"),  FText::FromString(DecoratorTypeName), Error);
+		const FText TempRichText = FText::Format(INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: <RichTextBlock.Bold>{0}</>\n{1}"),  FText::FromString(DecoratorTypeName), Error);
 		const FText TempText = FText::Format(INVTEXT("{0}: {1} {2}"), FText::FromString(GetName()),  FText::FromString(DecoratorTypeName), Error);
 
 		Context.AddError(RichTextFormat ? TempRichText : TempText);
