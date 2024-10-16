@@ -14,7 +14,11 @@
 
 UMounteaDialogueDecoratorBase::UMounteaDialogueDecoratorBase()
 {
+#if WITH_EDITORONLY_DATA
 	DecoratorName = GetClass()->GetDisplayNameText();
+#else
+	DecoratorName = FText::FromString(GetName());
+#endif	
 }
 
 void UMounteaDialogueDecoratorBase::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
