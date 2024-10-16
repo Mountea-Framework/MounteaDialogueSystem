@@ -8,7 +8,6 @@
 #include "MounteaDialogueGraphNode.generated.h"
 
 class IMounteaDialogueManagerInterface;
-class UMounteaDialogueGraph;
 class UMounteaDialogueGraphEdge;
 
 /**
@@ -60,7 +59,7 @@ public:
 	 * Pointer to the parent dialogue graph of this node.
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", meta=(DisplayThumbnail=false))
-	UMounteaDialogueGraph* Graph;
+	class UMounteaDialogueGraph* Graph;
 	
 	/**
 	 * Temporary NodeIndex.
