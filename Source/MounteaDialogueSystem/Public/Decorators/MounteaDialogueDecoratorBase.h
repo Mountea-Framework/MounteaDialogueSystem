@@ -234,10 +234,10 @@ public:
 	
 protected:
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Private")
+	UPROPERTY(BlueprintReadOnly, Category="Private")
 	FText DecoratorName;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Private")
+	UPROPERTY(BlueprintReadOnly, Category="Private")
 	TSet<TSoftClassPtr<UMounteaDialogueGraphNode>> BlacklistedNodes;
 
 	UPROPERTY()

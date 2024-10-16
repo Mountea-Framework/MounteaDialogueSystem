@@ -14,9 +14,6 @@
 
 UMounteaDialogueDecoratorBase::UMounteaDialogueDecoratorBase()
 {
-#if WITH_EDITORONLY_DATA
-	DecoratorName = GetClass()->GetDisplayNameText();
-#endif
 	DecoratorName = FText::FromString(GetName());
 }
 
