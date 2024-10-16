@@ -25,6 +25,8 @@ UMounteaDialogueSystemSettings::UMounteaDialogueSystemSettings()
 	DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::AddDialogueOptions);
 	DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::RemoveDialogueOptions);
 
+	LogVerbosity = static_cast<uint8>(EMounteaDialogueLoggingVerbosity::Warning) | static_cast<uint8>(EMounteaDialogueLoggingVerbosity::Error);
+
 #if WITH_EDITOR
 	SubtitlesSettings.SubtitlesFont = SetupDefaultFontSettings();
 	if (SubtitlesSettings.SettingsGUID.IsValid() == false)	SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
@@ -61,6 +63,21 @@ void UMounteaDialogueSystemSettings::PostEditChangeProperty(FPropertyChangedEven
 		if (DialogueWidgetCommands.Contains(MounteaDialogueWidgetCommands::RemoveDialogueOptions) == false)
 			DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::RemoveDialogueOptions);
 	}
+}
+
+TSoftClassPtr<UUserWidget> UMounteaDialogueSystemSettings::GetDefaultDialogueWidget() const
+{
+	if (DefaultDialogueWidgetClass.IsNull())
+	{
+		return nullptr;
+	}
+
+	return  DefaultDialogueWidgetClass;
+}
+
+EMounteaDialogueLoggingVerbosity UMounteaDialogueSystemSettings::GetAllowedLoggVerbosity() const
+{
+	return static_cast<EMounteaDialogueLoggingVerbosity>(LogVerbosity);
 }
 
 FSlateFontInfo UMounteaDialogueSystemSettings::SetupDefaultFontSettings() const

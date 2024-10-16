@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
 #include "Engine/DeveloperSettings.h"
 #include "MounteaDialogueSystemSettings.generated.h"
@@ -92,6 +91,13 @@ protected:
 	uint8 bAllowSubtitles : 1;
 
 	/**
+	 * Defines logging level that is allowed to be shown.
+	 * Affects on-screen messages.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "Logging", meta=(Bitmask, BitmaskEnum="/Script/MounteaDialogueSystem.EMounteaDialogueLoggingVerbosity"))
+	uint8 LogVerbosity;
+
+	/**
 	 * List of General Dialogue Settings.
 	 * Defines font, sizes etc. for all subtitles.
 	 * If any Widget is supposed to be overriden and use different setup for subtitles, just add that override to 'SubtitlesSettingsOverrides'.
@@ -130,15 +136,7 @@ public:
 	 * ❗ Might return Null❗
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
-	TSoftClassPtr<UUserWidget> GetDefaultDialogueWidget() const
-	{
-		if (DefaultDialogueWidgetClass.IsNull())
-		{
-			return nullptr;
-		}
-
-		return  DefaultDialogueWidgetClass;
-	}
+	TSoftClassPtr<UUserWidget> GetDefaultDialogueWidget() const;
 
 	/**
 	 * Returns whether skipping a dialogue row skips the whole row or only the audio.
@@ -248,6 +246,9 @@ public:
 		SaveConfig();
 	}
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
+	EMounteaDialogueLoggingVerbosity GetAllowedLoggVerbosity() const;
+	
 protected:
 
 #if WITH_EDITOR
