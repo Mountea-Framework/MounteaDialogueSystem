@@ -21,15 +21,15 @@ class USoundBase;
 class UTexture;
 class UDataAsset;
 
-UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class EMounteaDialogueLoggingVerbosity : uint8
 {
-	None        = 0			UMETA(hidden),
-	Info		= 1 << 1	UMETA(DisplayName="Info"),
-	Warning		= 1 << 2	UMETA(DisplayName="Warning"),
-	Error		= 1 << 3	UMETA(DisplayName="Error")
+	None		= 0			UMETA(hidden),
+	Info		= 1 << 0	UMETA(DisplayName = "Info"),	// Value: 1
+	Warning		= 1 << 1	UMETA(DisplayName = "Warning"), // Value: 2
+	Error		= 1 << 2	UMETA(DisplayName = "Error")	// Value: 4
 };
 ENUM_CLASS_FLAGS(EMounteaDialogueLoggingVerbosity)
+
 
 /**
  * Dialogue Manager State
