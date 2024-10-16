@@ -94,18 +94,20 @@ bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(TArray<FTex
 
 	if (GetOwningNode())
 	{
-		for (const auto& Itr : BlacklistedNodes)
+		for (const auto& Itr : GetBlacklistedNodeTypes())
 		{
-			UClass* blacklistedNodeClass = Itr.LoadSynchronous();
-			if (Itr && Itr.LoadSynchronous() && GetOwningNode()->IsA(blacklistedNodeClass))
+			if (Itr && GetOwningNode()->IsA(Itr))
 			{
 				bSatisfied = false;
+				FText guiltyNodeName = FText::FromString(Itr->GetName());
+				if (const UMounteaDialogueGraphNode* guiltyNode = Cast<UMounteaDialogueGraphNode>(Itr->ClassDefaultObject))
+					guiltyNodeName = guiltyNode->NodeTypeName;
 		
 				const FText TempText = FText::Format(
 					LOCTEXT("MounteaDialogueDecorator_Validation_Blacklist",
 						"Decorator {0}: is not allowed for Node Class: {1}!\nAttach this Decorator to a different Node instead."),
 						GetDecoratorName(),
-						FText::FromString(Itr->GetDefaultObjectName().ToString()));
+						guiltyNodeName);
 				ValidationMessages.Add(TempText);
 			}
 		}
@@ -144,7 +146,19 @@ UObject* UMounteaDialogueDecoratorBase::GetOwner() const
 	return GetOuter();
 }
 
-FText UMounteaDialogueDecoratorBase::GetDecoratorName() const
+TSet<TSubclassOf<UMounteaDialogueGraphNode>> UMounteaDialogueDecoratorBase::GetBlacklistedNodeTypes_Implementation() const
+{
+	TSet<TSubclassOf<UMounteaDialogueGraphNode>> resultSet;
+	for (const auto& Itr : BlacklistedNodes)
+	{
+		if (Itr && Itr.LoadSynchronous())
+			resultSet.Add(Itr.LoadSynchronous());
+	}
+
+	return resultSet;
+}
+
+FText UMounteaDialogueDecoratorBase::GetDecoratorName_Implementation() const
 {
 	return DecoratorName;
 }
