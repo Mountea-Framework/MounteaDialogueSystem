@@ -192,7 +192,7 @@ public:
 	 * 
 	 * @return True if can be attached to graph, false otherwise.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue|Decorator")
 	bool IsDecoratorAllowedForGraph() const;
 	virtual bool IsDecoratorAllowedForGraph_Implementation() const {  return true;  };
 
@@ -206,8 +206,16 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator")
 	bool IsDecoratorStackable() const;
 	virtual bool IsDecoratorStackable_Implementation() const {  return false;  };
-	
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure, Category = "Mountea|Dialogue|Decorator")
 	FText GetDecoratorName() const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue|Decorator")
+	TSet<TSubclassOf<UMounteaDialogueGraphNode>> GetBlacklistedNodeTypes() const;
+	
+protected:
+
+	class UMounteaDialogueContext* GetContext() const;
 
 #pragma region TickableInterface
 	
@@ -224,11 +232,17 @@ public:
 	
 protected:
 
-	UPROPERTY()
-	EDecoratorState											DecoratorState		=	EDecoratorState::Uninitialized;
+	UPROPERTY(BlueprintReadOnly, Category="Private")
+	FText DecoratorName;
+
+	UPROPERTY(BlueprintReadOnly, Category="Private")
+	TSet<TSoftClassPtr<UMounteaDialogueGraphNode>> BlacklistedNodes;
 
 	UPROPERTY()
-	TObjectPtr<UWorld>										OwningWorld			=	nullptr;
+	EDecoratorState	DecoratorState	=	EDecoratorState::Uninitialized;
+
+	UPROPERTY()
+	TObjectPtr<UWorld>	OwningWorld	=	nullptr;
 	UPROPERTY()
 	TScriptInterface<IMounteaDialogueParticipantInterface>	OwnerParticipant	=	nullptr;
 	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue|Decorator")

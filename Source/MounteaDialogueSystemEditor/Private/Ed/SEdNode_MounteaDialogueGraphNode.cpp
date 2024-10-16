@@ -13,7 +13,9 @@
 #include "SlateOptMacros.h"
 #include "SGraphPin.h"
 #include "GraphEditorSettings.h"
+#include "UnrealEdGlobals.h"
 #include "Blueprint/UserWidget.h"
+#include "Editor/UnrealEdEngine.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
@@ -114,17 +116,18 @@ void SEdNode_MounteaDialogueGraphNode::Construct(const FArguments& InArgs, UEdNo
 void SEdNode_MounteaDialogueGraphNode::OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
 	//bIsHovered = true;
-
-	SetToolTipText(GetTooltipText());
-	OnVisualizeTooltip(GetToolTip()->AsWidget());
-	
+	if (GUnrealEd && !GUnrealEd->IsPlayingSessionInEditor())
+	{
+		SetToolTipText(GetTooltipText());
+		OnVisualizeTooltip(GetToolTip()->AsWidget());
+	}
 	SGraphNode::OnMouseEnter(MyGeometry, MouseEvent);
 }
 
 void SEdNode_MounteaDialogueGraphNode::OnMouseLeave(const FPointerEvent& MouseEvent)
 {
 	//bIsHovered = false;
-
+	
 	SetToolTipText(FText::GetEmpty());
 	OnToolTipClosing();
 	
@@ -135,6 +138,33 @@ const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetIndexBrush() const
 {
 	return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges");
 }
+
+FText SEdNode_MounteaDialogueGraphNode::GetNodeTitle() const
+{
+	FText NodeTitle =  INVTEXT("Dialogue Node");
+	if (const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
+	{
+		if (EdParentNode->DialogueGraphNode)
+		{
+			NodeTitle = EdParentNode->DialogueGraphNode->GetNodeTitle();
+		}
+	}
+	return NodeTitle;
+}
+
+TSharedRef<SWidget> SEdNode_MounteaDialogueGraphNode::CreateNameSlotWidget()
+{
+	return SAssignNew(InlineEditableText, SInlineEditableTextBlock)
+	.Style(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitleInlineEditableText")
+	.Text(this, &SEdNode_MounteaDialogueGraphNode::GetNodeTitle)
+	.OnVerifyTextChanged(this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
+	.OnTextCommitted(this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
+	.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
+	.IsSelected(this, &SEdNode_MounteaDialogueGraphNode::IsSelectedExclusively)
+	.Justification(ETextJustify::Center)
+	.Visibility(EVisibility::Visible);
+}
+
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -166,6 +196,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 
 	TSharedPtr<SErrorText> ErrorText;
 	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, GraphNode);
+	TSharedPtr<SWidget> TitleWidget = CreateNameSlotWidget();
 
 	TSharedPtr<SVerticalBox> StackBox;
 	TSharedPtr<SVerticalBox> UniformBox;
@@ -393,17 +424,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 														  .HAlign(HAlign_Center)
 														  .AutoHeight()
 														[
-															SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-															.Style(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitleInlineEditableText")
-															.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
-															.OnVerifyTextChanged(
-															this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
-															.OnTextCommitted(
-															this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
-															.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
-															.IsSelected(this, &SEdNode_MounteaDialogueGraphNode::IsSelectedExclusively)
-															.Justification(ETextJustify::Center)
-															.Visibility(EVisibility::Visible)
+															TitleWidget.ToSharedRef()
 														]
 														
 														+ SVerticalBox::Slot()
@@ -985,7 +1006,7 @@ bool SEdNode_MounteaDialogueGraphNode::IsNameReadOnly() const
 	UMounteaDialogueGraph* MounteaDialogueGraphNode = EdNode_Node->DialogueGraphNode->Graph;
 	check(MounteaDialogueGraphNode != nullptr);
 
-	return !MounteaDialogueGraphNode->bCanRenameNode || SGraphNode::IsNameReadOnly();
+	return (!MounteaDialogueGraphNode->bCanRenameNode && !EdNode_Node->DialogueGraphNode->bCanRenameNode) || SGraphNode::IsNameReadOnly();
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

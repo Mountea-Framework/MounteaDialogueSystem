@@ -7,14 +7,15 @@
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Misc/DataValidation.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
+#include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_ReturnToNode"
 
 UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode() : bAutoCompleteSelectedNode(false), SelectedNode(nullptr)
 {
-#if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeTitle", "Return To Node");
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeInternalTitle", "Return To Node");
+#if WITH_EDITORONLY_DATA
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeContextMenu", "Return To Node");
 	BackgroundColor = FLinearColor(FColor::White);
 
@@ -32,6 +33,7 @@ UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode()
 	// Disable those Node Classes
 	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_ReturnToNode::StaticClass());
 	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_CompleteNode::StaticClass());
+	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
 }
 
 void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
@@ -40,13 +42,16 @@ void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode_Implementation(const TS
 	{
 		if (const auto Context = Manager->GetDialogueContext())
 		{
-			LOG_WARNING(TEXT("[ProcessNode - Return to Node] Updating Context"))
+			auto dialogueNodeToStart = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(SelectedNode);
 			
 			Context->SetDialogueContext(Context->DialogueParticipant, SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
 
 			Context->ActiveDialogueRowDataIndex = 	UMounteaDialogueSystemBFC::GetDialogueRow(SelectedNode).DialogueRowData.Num() - 1; // Force-set the last row
-			
-			Manager->GetDialogueNodeSelectedEventHandle().Broadcast(Context);	
+			FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
+			newDialogueTableHandle.DataTable = dialogueNodeToStart->GetDataTable();
+			newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();
+			Context->UpdateActiveDialogueTable(dialogueNodeToStart ? newDialogueTableHandle : FDataTableRowHandle());
+			Manager->GetDialogueNodeSelectedEventHandle().Broadcast(Context);
 
 			if (bAutoCompleteSelectedNode)
 			{

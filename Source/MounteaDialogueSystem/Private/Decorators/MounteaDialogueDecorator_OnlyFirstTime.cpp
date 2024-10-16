@@ -14,8 +14,6 @@
 void UMounteaDialogueDecorator_OnlyFirstTime::CleanupDecorator_Implementation()
 {
 	Super::CleanupDecorator_Implementation();
-
-	Context = nullptr;
 }
 
 bool UMounteaDialogueDecorator_OnlyFirstTime::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
@@ -73,6 +71,8 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::EvaluateDecorator_Implementation()
 	{
 		return false;
 	}
+
+	auto Context = GetContext();
 	// Let's return BP Updatable Context rather than Raw
 	if (!Context)
 	{
@@ -94,22 +94,22 @@ void UMounteaDialogueDecorator_OnlyFirstTime::ExecuteDecorator_Implementation()
 	Super::ExecuteDecorator_Implementation();
 	
 	if (!OwningManager) return;
-
-	// Let's return BP Updatable Context rather than Raw
-	if (!Context) Context = OwningManager->GetDialogueContext();
 }
 
 bool UMounteaDialogueDecorator_OnlyFirstTime::IsFirstTime() const
 {
-	if (!GetOwningNode()) return false;
-
+	if (!GetOwningNode()) return true;
+	const auto Context = GetContext();
+	if (!Context) return true;
+	
 	TScriptInterface<IMounteaDialogueParticipantInterface> ParticipantInterface = GetOwnerParticipant();
-	if (Context)
+	if (!ParticipantInterface.GetObject())
 	{
 		ParticipantInterface = Context->GetDialogueParticipant();
 	}
-
-	return !UMounteaDialogueSystemBFC::HasNodeBeenTraversed(GetOwningNode(), ParticipantInterface) || UMounteaDialogueSystemBFC::HasNodeBeenTraversedV2(GetOwningNode(), Context);
+	const bool bParticipantRemembers = UMounteaDialogueSystemBFC::HasNodeBeenTraversed(GetOwningNode(), ParticipantInterface);
+	const bool bContextRemembers = UMounteaDialogueSystemBFC::HasNodeBeenTraversedV2(GetOwningNode(), Context);
+	return !bParticipantRemembers || !bContextRemembers;
 }
 
 #undef LOCTEXT_NAMESPACE

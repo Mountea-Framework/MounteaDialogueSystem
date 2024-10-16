@@ -10,6 +10,7 @@
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Helpers/MounteaDialogueGraphColors.h"
 #include "Helpers/MounteaDialogueGraphEditorUtilities.h"
+#include "Nodes/MounteaDialogueGraphNode_Delay.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
@@ -554,6 +555,11 @@ void FMounteaDialogueGraphNode_Details::CustomizeDetails(IDetailLayoutBuilder& D
 	{
 		DetailBuilder.HideProperty(GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_StartNode, NodeDecorators));
 		DetailBuilder.HideProperty(GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_StartNode, bInheritGraphDecorators));
+		DetailBuilder.HideProperty(GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_StartNode, bAutoStarts));
+	}
+
+	if (UMounteaDialogueGraphNode_Delay* EditingDialogueNode = Cast<UMounteaDialogueGraphNode_Delay>(EditingNode) )
+	{
 		DetailBuilder.HideProperty(GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_StartNode, bAutoStarts));
 	}
 

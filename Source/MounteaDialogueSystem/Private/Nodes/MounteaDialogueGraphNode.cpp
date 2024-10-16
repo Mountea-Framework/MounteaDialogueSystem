@@ -14,6 +14,8 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode(): Graph(nullptr), OwningWo
 	NodeGUID = FGuid::NewGuid();
 	bInheritGraphDecorators = true;
 
+	NodeTypeName = LOCTEXT("MounteaDialogueNode_InternalName", "MounteaDialogueGraphNode");
+
 #if WITH_EDITORONLY_DATA
 	CompatibleGraphType = UMounteaDialogueGraph::StaticClass();
 
@@ -27,10 +29,8 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode(): Graph(nullptr), OwningWo
 	bAllowDelete = true;
 	bAllowPaste = true;
 	bAllowManualCreate = true;
-
-	NodeTypeName = LOCTEXT("MounteaDialogueNode_InternalName", "MounteaDialogueGraphNode");
-	NodeTooltipText = LOCTEXT("MounteaDialogueNode_Tooltip",
-	                          "Mountea Dialogue Base Node.\n\nChild Nodes provide more Information.");
+	bCanRenameNode = true;	
+	NodeTooltipText = LOCTEXT("MounteaDialogueNode_Tooltip", "Mountea Dialogue Base Node.\n\nChild Nodes provide more Information.");
 #endif
 
 	bAutoStarts = false;
