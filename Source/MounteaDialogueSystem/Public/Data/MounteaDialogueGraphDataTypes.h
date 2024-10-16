@@ -438,14 +438,6 @@ public:
 		RowGUID = FGuid::NewGuid();
 	}
 
-	static FDialogueRow Invalid()
-	{
-		FDialogueRow Row;
-		Row.RowGUID.Invalidate();
-		Row.DialogueRowData.Empty();
-		return Row;
-	}
-
 public:
 	
 	inline FDialogueRow& operator=(const FDialogueRow& Other)
@@ -539,7 +531,17 @@ public:
 	}
 
 	FString ToString() const;
+	
+	static FDialogueRow Invalid()
+	{
+		FDialogueRow Row;
+		Row.RowGUID.Invalidate();
+		Row.DialogueRowData.Empty();
+		return Row;
+	}
 };
+
+
 #undef LOCTEXT_NAMESPACE
 
 /**

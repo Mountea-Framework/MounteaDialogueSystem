@@ -234,6 +234,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Decorator")
 	FText DecoratorName;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Decorator")
+	TSet<TSoftClassPtr<UMounteaDialogueGraphNode>> BlacklistedNodes;
+
 	UPROPERTY()
 	EDecoratorState											DecoratorState		=	EDecoratorState::Uninitialized;
 

@@ -4,6 +4,7 @@
 
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Interfaces/MounteaDialogueManagerInterface.h"
+#include "Nodes/MounteaDialogueGraphNode.h"
 
 #if WITH_EDITOR
 #include "Editor.h"
@@ -85,10 +86,29 @@ bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(TArray<FTex
 		bSatisfied = false;
 		
 		const FText TempText = FText::Format(
-			LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_Node",
+			LOCTEXT("MounteaDialogueDecorator_Validation_Node",
 				"Decorator {0}: is not allowed in Graph Decorators!\nAttach this Decorator to a Node instead."),
 				GetDecoratorName());
 		ValidationMessages.Add(TempText);
+	}
+
+	if (GetOwningNode())
+	{
+		for (const auto& Itr : BlacklistedNodes)
+		{
+			UClass* blacklistedNodeClass = Itr.LoadSynchronous();
+			if (Itr && Itr.LoadSynchronous() && GetOwningNode()->IsA(blacklistedNodeClass))
+			{
+				bSatisfied = false;
+		
+				const FText TempText = FText::Format(
+					LOCTEXT("MounteaDialogueDecorator_Validation_Blacklist",
+						"Decorator {0}: is not allowed for Node Class: {1}!\nAttach this Decorator to a different Node instead."),
+						GetDecoratorName(),
+						FText::FromString(Itr->GetDefaultObjectName().ToString()));
+				ValidationMessages.Add(TempText);
+			}
+		}
 	}
 		
 	return bSatisfied;
