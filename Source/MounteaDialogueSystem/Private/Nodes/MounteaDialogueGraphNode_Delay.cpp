@@ -99,9 +99,9 @@ FText UMounteaDialogueGraphNode_Delay::GetNodeCategory_Implementation() const
 	return LOCTEXT("MounteaDialogueGraphNode_DelayNodeCategory", "Utilities");
 }
 
-bool UMounteaDialogueGraphNode_Delay::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
+bool UMounteaDialogueGraphNode_Delay::ValidateNode(FDataValidationContext& Context, const bool RichFormat) const
 {
-	bool bSatisfied = Super::ValidateNode(ValidationsMessages, RichFormat);
+	bool bSatisfied = Super::ValidateNode(Context, RichFormat);
 	bSatisfied = bSatisfied && DelayDuration > 0.0f;
 
 	// TODO: Implement return texts
