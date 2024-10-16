@@ -21,12 +21,16 @@ class USoundBase;
 class UTexture;
 class UDataAsset;
 
+UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class EMounteaDialogueLoggingVerbosity : uint8
 {
 	None		= 0			UMETA(hidden),
-	Info		= 1 << 0	UMETA(DisplayName = "Info"),	// Value: 1
-	Warning		= 1 << 1	UMETA(DisplayName = "Warning"), // Value: 2
-	Error		= 1 << 2	UMETA(DisplayName = "Error")	// Value: 4
+	// Toggle Info On/Off. Info level provides most basic information. Color is green.
+	Info		= 1 << 0,
+	// Toggle Warning On/Off. Warning level provides information about issues that might affect dialogue, but are not blockers.
+	Warning		= 1 << 1,
+	// Toggle Error On/Off. Error level provides information about issues that will block dialogue.
+	Error		= 1 << 2
 };
 ENUM_CLASS_FLAGS(EMounteaDialogueLoggingVerbosity)
 

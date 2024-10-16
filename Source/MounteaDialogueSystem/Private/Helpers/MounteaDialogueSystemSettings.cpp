@@ -25,7 +25,7 @@ UMounteaDialogueSystemSettings::UMounteaDialogueSystemSettings()
 	DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::AddDialogueOptions);
 	DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::RemoveDialogueOptions);
 
-	LogVerbosity = static_cast<uint8>(EMounteaDialogueLoggingVerbosity::Warning) | static_cast<uint8>(EMounteaDialogueLoggingVerbosity::Error);
+	LogVerbosity = 14; // hack it
 
 #if WITH_EDITOR
 	SubtitlesSettings.SubtitlesFont = SetupDefaultFontSettings();
