@@ -21,7 +21,8 @@ public:
 	virtual void OnMouseLeave(const FPointerEvent& MouseEvent) override;
 
 	const FSlateBrush* GetIndexBrush() const;
-	
+	FText GetNodeTitle() const;
+
 	virtual void UpdateGraphNode() override;
 	virtual void CreatePinWidgets() override;
 	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
@@ -78,6 +79,8 @@ public:
 	EVisibility GetUnifiedVisibility() const;
 
 	FText GetTooltipText() const;
+
+	TSharedRef<SWidget> CreateNameSlotWidget();
 
 protected:
 	TSharedPtr<SBorder> NodeBody;

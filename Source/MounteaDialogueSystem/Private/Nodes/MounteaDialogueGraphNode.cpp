@@ -5,7 +5,6 @@
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
-#include "Misc/DataValidation.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueNode"
 
@@ -13,6 +12,8 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode(): Graph(nullptr), OwningWo
 {
 	NodeGUID = FGuid::NewGuid();
 	bInheritGraphDecorators = true;
+
+	NodeTypeName = LOCTEXT("MounteaDialogueNode_InternalName", "MounteaDialogueGraphNode");
 
 #if WITH_EDITORONLY_DATA
 	CompatibleGraphType = UMounteaDialogueGraph::StaticClass();
@@ -27,10 +28,8 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode(): Graph(nullptr), OwningWo
 	bAllowDelete = true;
 	bAllowPaste = true;
 	bAllowManualCreate = true;
-
-	NodeTypeName = LOCTEXT("MounteaDialogueNode_InternalName", "MounteaDialogueGraphNode");
-	NodeTooltipText = LOCTEXT("MounteaDialogueNode_Tooltip",
-	                          "Mountea Dialogue Base Node.\n\nChild Nodes provide more Information.");
+	bCanRenameNode = true;	
+	NodeTooltipText = LOCTEXT("MounteaDialogueNode_Tooltip", "Mountea Dialogue Base Node.\n\nChild Nodes provide more Information.");
 #endif
 
 	bAutoStarts = false;
@@ -262,7 +261,7 @@ bool UMounteaDialogueGraphNode::CanCreateConnection(UMounteaDialogueGraphNode* O
 	return true;
 }
 
-bool UMounteaDialogueGraphNode::ValidateNode(FDataValidationContext& Context, const bool RichFormat) const
+bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
 {
 	bool bResult = true;
 	if (ParentNodes.Num() == 0 && ChildrenNodes.Num() == 0)
@@ -280,7 +279,7 @@ bool UMounteaDialogueGraphNode::ValidateNode(FDataValidationContext& Context, co
 		FString(NodeTitle.ToString()).
 		Append(": This Node has no Connections!");
 		
-		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
 	if (bAllowInputNodes && ParentNodes.Num() == 0)
@@ -298,7 +297,7 @@ bool UMounteaDialogueGraphNode::ValidateNode(FDataValidationContext& Context, co
 		FString(NodeTitle.ToString()).
 		Append(": This Node requires Inputs, however, none are found!");
 		
-		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
 	// DECORATORS VALIDATION
@@ -329,7 +328,7 @@ bool UMounteaDialogueGraphNode::ValidateNode(FDataValidationContext& Context, co
 				Append(FString::FromInt(i )).
 				Append(".");
 		
-				Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+				ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 
 				bResult = false;
 			}
@@ -385,7 +384,7 @@ bool UMounteaDialogueGraphNode::ValidateNode(FDataValidationContext& Context, co
 				Append(FString::FromInt(Itr.Value)).
 				Append("x times! Please, avoid duplicates!");
 		
-				Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+				ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 			}
 		}
 
@@ -409,7 +408,7 @@ bool UMounteaDialogueGraphNode::ValidateNode(FDataValidationContext& Context, co
 					Append(": ").
 					Append(FString(Error.ToString()));
 		
-					Context.AddError(FText::FromString(RichFormat ? ErrorTextRich : ErrorTextSimple));
+					ValidationsMessages.Add(FText::FromString(RichFormat ? ErrorTextRich : ErrorTextSimple));
 
 					bResult = false;
 				}

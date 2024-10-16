@@ -89,6 +89,11 @@ void UMounteaDialogueContext::UpdateAllowedChildrenNodes(const TArray<UMounteaDi
 	AllowedChildNodes = NewNodes;
 }
 
+void UMounteaDialogueContext::UpdateActiveDialogueTable(const FDataTableRowHandle& NewHandle)
+{
+	ActiveDialogueTableHandle = NewHandle;
+}
+
 void UMounteaDialogueContext::UpdateActiveDialogueRow(const FDialogueRow& NewActiveRow)
 {
 	ActiveDialogueRow = NewActiveRow;
@@ -221,6 +226,13 @@ void UMounteaDialogueContext::UpdateActiveDialogueRowBP(const FDialogueRow& NewA
 {
 	UpdateActiveDialogueRow(NewActiveRow);
 	
+	DialogueContextUpdatedFromBlueprint.Broadcast(this);
+}
+
+void UMounteaDialogueContext::UpdateActiveDialogueTableBP(const FDataTableRowHandle& NewTable)
+{
+	UpdateActiveDialogueTable(NewTable);
+
 	DialogueContextUpdatedFromBlueprint.Broadcast(this);
 }
 

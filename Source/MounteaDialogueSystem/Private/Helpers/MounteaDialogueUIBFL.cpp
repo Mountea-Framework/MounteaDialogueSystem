@@ -35,7 +35,7 @@ FDialogueRow UMounteaDialogueUIBFL::GetDialogueNodeRow(UMounteaDialogueGraphNode
 		return UMounteaDialogueSystemBFC::GetDialogueRow(FromNode);
 	}
 
-	return FDialogueRow();
+	return FDialogueRow::Invalid();
 }
 
 TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> UMounteaDialogueUIBFL::FilterDialogueFriendlyNodes(const TArray<UMounteaDialogueGraphNode*>& RawNodes)

@@ -28,28 +28,26 @@ public:
 
 	static FText GetNodeTitle(UMounteaDialogueGraphNode* Node)
 	{
-		if (!Node) return FText::FromString("Invalid Node");
-		
-		if (GetMounteaDialogueEditorSettings())
+		if (!Node) 
 		{
-			if (GetMounteaDialogueEditorSettings()->ShowAutomaticNames())
-			{
-				if (const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNodeBase = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node))
-				{
-					if (DialogueNodeBase->GetDataTable())
-					{
-						FString ReturnString;
-						DialogueNodeBase->GetRowName().ToString(ReturnString);
-
-						return FText::FromString(ReturnString);
-					}
-				}
-
-				return Node->GetInternalName();
-			}
+			return FText::FromString("Invalid Node");
 		}
-		
-		return Node->GetNodeTitle();
+
+		const UMounteaDialogueGraphEditorSettings* const EditorSettings = GetMounteaDialogueEditorSettings();
+		if (!EditorSettings || !EditorSettings->ShowAutomaticNames())
+		{
+			return Node->GetNodeTitle();
+		}
+
+		const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNodeBase = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node);
+		if (!DialogueNodeBase || !DialogueNodeBase->GetDataTable())
+		{
+			return Node->GetNodeTitle();
+		}
+
+		FString ReturnString;
+		DialogueNodeBase->GetRowName().ToString(ReturnString);
+		return FText::FromString(ReturnString);
 	}
 
 	static ENodeTheme GetNodeTheme()

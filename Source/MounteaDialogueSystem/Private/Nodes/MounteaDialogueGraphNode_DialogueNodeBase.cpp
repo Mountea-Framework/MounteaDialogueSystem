@@ -5,15 +5,15 @@
 #include "TimerManager.h"
 #include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
-#include "Misc/DataValidation.h"
+#include "Nodes/MounteaDialogueGraphNode_Delay.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_DialogueNodeBase"
 
 UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNodeBase()
 {
-#if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseTitle", "Dialogue Node Base");
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseInternalTitle", "Dialogue Node Base");
+#if WITH_EDITORONLY_DATA
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseContextMenu", "Dialogue Node");
 	BackgroundColor = FLinearColor(FColor::Orange);
 
@@ -22,6 +22,8 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 	
 	bAutoStarts = false;
 	bUseGameplayTags = true;
+
+	AllowedInputClasses.Add(UMounteaDialogueGraphNode_Delay::StaticClass());
 }
 
 void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
@@ -105,9 +107,9 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNodeRuntime_Implementat
 
 #if WITH_EDITOR
 
-bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(FDataValidationContext& Context, const bool RichFormat) const
+bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
 {
-	bool bResult = Super::ValidateNode(Context, RichFormat);
+	bool bResult = Super::ValidateNode(ValidationsMessages, RichFormat);
 
 	if (DataTable == nullptr)
 	{
@@ -124,7 +126,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(FDataValidationCon
 		FString(NodeTitle.ToString()).
 		Append(": Does not contain any Dialogue Data Table!");
 	
-		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
 	if (RowName.IsNone())
@@ -142,7 +144,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(FDataValidationCon
 		FString(NodeTitle.ToString()).
 		Append(": Does not contain valid Dialogue Row!");
 	
-		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
 	if (MaxChildrenNodes > -1 && ChildrenNodes.Num() > MaxChildrenNodes)
@@ -162,11 +164,11 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(FDataValidationCon
 		FString(NodeTitle.ToString()).
 		Append(": Has more than ").Append(FString::FromInt(MaxChildrenNodes)).Append(" Children Nodes!");
 	
-		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
-	const FString ContextString;
-	const FDialogueRow* SelectedRow = DataTable!=nullptr ? DataTable->FindRow<FDialogueRow>(RowName, ContextString) : nullptr;
+	const FString Context;
+	const FDialogueRow* SelectedRow = DataTable!=nullptr ? DataTable->FindRow<FDialogueRow>(RowName, Context) : nullptr;
 
 	if (SelectedRow == nullptr)
 	{
@@ -183,7 +185,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(FDataValidationCon
 		FString(NodeTitle.ToString()).
 		Append(": Invalid Selected Row!");
 	
-		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
 	if (SelectedRow)
@@ -202,8 +204,8 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(FDataValidationCon
 			const FString TextReturn =
 			FString(NodeTitle.ToString()).
 			Append(": Invalid Selected Row! No Dialogue Data Rows inside!");
-			
-			Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+	
+			ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 		}
 	}
 	

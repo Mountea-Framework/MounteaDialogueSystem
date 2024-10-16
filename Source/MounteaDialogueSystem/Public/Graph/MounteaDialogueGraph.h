@@ -241,17 +241,16 @@ public:
 
 #if WITH_EDITOR
 
-	virtual bool ValidateGraph(FDataValidationContext& Context, bool RichTextFormat) const;
-	virtual bool ValidateDecorators(FDataValidationContext& Context, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators, const FString& DecoratorTypeName) const;
-	virtual bool ValidateGraphDecorators(FDataValidationContext& Context, bool RichTextFormat) const;
-	virtual bool ValidateGraphScopeDecorators(FDataValidationContext& Context, bool RichTextFormat) const;
-	virtual bool ValidateStartNode(FDataValidationContext& Context, bool RichTextFormat) const;
-	virtual bool ValidateAllNodes(FDataValidationContext& Context, bool RichTextFormat) const;
-	virtual void FindDuplicatedDecorators(const TArray<UMounteaDialogueDecoratorBase*>& UsedNodeDecorators, TMap<UClass*, int32>& DuplicatedDecoratorsMap) const;
-	virtual void AddInvalidDecoratorError(FDataValidationContext& Context, bool RichTextFormat, int32 Index, const FString& DecoratorTypeName) const;
-	virtual void AddDuplicateDecoratorErrors(FDataValidationContext& Context, bool RichTextFormat, const TMap<UClass*, int32>& DuplicatedDecoratorsMap) const;
-	virtual void AddDecoratorErrors(FDataValidationContext& Context, bool RichTextFormat, const TArray<FText>& DecoratorErrors) const;
-	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) override;
+	virtual bool ValidateGraph(TArray<FText>& ValidationErrors, bool RichTextFormat);
+	virtual bool ValidateDecorators(TArray<FText>& ValidationErrors, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators, const FString& DecoratorTypeName);
+	virtual bool ValidateGraphDecorators(TArray<FText>& ValidationErrors, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators);
+	virtual bool ValidateStartNode(TArray<FText>& ValidationErrors, bool RichTextFormat);
+	virtual bool ValidateAllNodes(TArray<FText>& ValidationErrors, bool RichTextFormat);
+	virtual void FindDuplicatedDecorators(const TArray<UMounteaDialogueDecoratorBase*>& UsedNodeDecorators, TMap<UMounteaDialogueDecoratorBase*, int32>& DuplicatedDecoratorsMap);
+	virtual void AddInvalidDecoratorError(TArray<FText>& ValidationErrors, bool RichTextFormat, int32 Index, const FString& DecoratorTypeName);
+	virtual void AddDuplicateDecoratorErrors(TArray<FText>& ValidationErrors, bool RichTextFormat, const TMap<UMounteaDialogueDecoratorBase*, int32>& DuplicatedDecoratorsMap);
+	virtual void AddDecoratorErrors(TArray<FText>& ValidationErrors, bool RichTextFormat, const TArray<FText>& DecoratorErrors);
+	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
 
 public:
 	// Construct and initialize a node within this Dialogue.
