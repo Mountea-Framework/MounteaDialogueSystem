@@ -12,9 +12,9 @@
 
 UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode() : bAutoCompleteSelectedNode(false), SelectedNode(nullptr)
 {
-#if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeTitle", "Return To Node");
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeInternalTitle", "Return To Node");
+#if WITH_EDITORONLY_DATA
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeContextMenu", "Return To Node");
 	BackgroundColor = FLinearColor(FColor::White);
 

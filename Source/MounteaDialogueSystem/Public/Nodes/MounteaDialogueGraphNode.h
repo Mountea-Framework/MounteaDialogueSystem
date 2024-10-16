@@ -409,11 +409,11 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText NodeTooltipText;
 
+#endif
+
 	// User friendly node type name
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
 	FText NodeTypeName;
-
-#endif
 
 	// Display title of the Node
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")

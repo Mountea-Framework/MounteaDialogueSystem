@@ -13,10 +13,9 @@
 UMounteaDialogueGraphNode_Delay::UMounteaDialogueGraphNode_Delay()
 	: DelayDuration(3.f)
 {
-#if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_DelayNodeBaseTitle", "Delay Node");
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_DelayNodeBaseInternalTitle", "Delay Node");
-	
+#if WITH_EDITORONLY_DATA
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_DelayNodeContextMenuName", "Delay Node");
 	
 	BackgroundColor = FLinearColor(FColor::FromHex("007ddc"));

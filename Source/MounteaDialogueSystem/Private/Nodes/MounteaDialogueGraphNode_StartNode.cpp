@@ -7,10 +7,11 @@
 
 UMounteaDialogueGraphNode_StartNode::UMounteaDialogueGraphNode_StartNode()
 {
-#if WITH_EDITORONLY_DATA
-	bAllowInputNodes = false;
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_StartNodeTitle", "Start Dialogue");
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_StartNodeInternalTitle", "Start Dialogue");
+#if WITH_EDITORONLY_DATA
+	bAllowInputNodes = false;
+	
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_StartNodeContextMenuName", "Start Dialogue");
 	BackgroundColor = FLinearColor(0, 1, 0, 1);
 	
