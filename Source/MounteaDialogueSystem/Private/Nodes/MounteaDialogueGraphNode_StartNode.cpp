@@ -19,6 +19,7 @@ UMounteaDialogueGraphNode_StartNode::UMounteaDialogueGraphNode_StartNode()
 	bAllowPaste = false;
 	bAllowDelete = false;
 	bAllowManualCreate = false;
+	bCanRenameNode = false;
 
 	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_CompleteTooltip", "* This Node will be added to the Dialogue Graph automatically when Graph is created.\n* This Node cannot be created manually.\n* This Node cannot be deleted from Graph.\n* Does not implement any logic, works as an Anchor starting point.");
 #endif

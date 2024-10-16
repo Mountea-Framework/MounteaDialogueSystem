@@ -26,6 +26,7 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode(): Graph(nullptr), OwningWo
 	bAllowDelete = true;
 	bAllowPaste = true;
 	bAllowManualCreate = true;
+	bCanRenameNode = true;
 
 	NodeTypeName = LOCTEXT("MounteaDialogueNode_InternalName", "MounteaDialogueGraphNode");
 	NodeTooltipText = LOCTEXT("MounteaDialogueNode_Tooltip",

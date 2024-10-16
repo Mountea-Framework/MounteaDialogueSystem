@@ -261,7 +261,7 @@ public:
 		FGuid InvalidGuid;
 		InvalidGuid.Invalidate();
 		
-		return Row.RowGUID != InvalidGuid || Row.DialogueParticipant.IsEmpty() == false;
+		return Row.RowGUID != InvalidGuid && Row.DialogueParticipant.IsEmpty() == false && Row.DialogueRowData.Num() > 0;
 	}
 
 	/**
@@ -275,7 +275,7 @@ public:
 		FGuid InvalidGuid;
 		InvalidGuid.Invalidate();
 
-		return Data.RowGUID != InvalidGuid || !Data.RowText.IsEmpty() || !Data.RowText.EqualTo(FText::FromString("Dialogue Example"));
+		return Data.RowGUID != InvalidGuid &&( !Data.RowText.IsEmpty() || !Data.RowText.EqualTo(FText::FromString("Dialogue Example")));
 	}
 	
 	/**
@@ -299,12 +299,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(CompactNodeTitle="Find Dialogue Row", Keywords="row, dialogue"), meta=(CustomTag="MounteaK2Getter"))
 	static FDialogueRow FindDialogueRow(const UDataTable* Table, const FName RowName)
 	{
-		if (Table == nullptr) return FDialogueRow();
-		if (Table->RowStruct->IsChildOf(FDialogueRow::StaticStruct()) == false) return FDialogueRow();
+		if (Table == nullptr) return FDialogueRow::Invalid();
+		if (Table->RowStruct->IsChildOf(FDialogueRow::StaticStruct()) == false) return FDialogueRow::Invalid();
 
 		const FDialogueRow* Row = Table->FindRow<FDialogueRow>(RowName, FString("") );
-		if (!Row) return FDialogueRow();
-		if (IsDialogueRowValid(*Row) == false) return FDialogueRow();
+		if (!Row) return FDialogueRow::Invalid();
+		if (IsDialogueRowValid(*Row) == false) return FDialogueRow::Invalid();
 
 		return *Row;
 	};

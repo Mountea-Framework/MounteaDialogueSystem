@@ -21,11 +21,12 @@ public:
 	UMounteaDialogueGraphNode_Delay();
 
 	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
+	virtual FText GetNodeTitle_Implementation() const override;
 
 protected:
 
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault,Units = "s", UIMin = 0.01, ClampMin = 0.01))
-	float DelayDuration;
+	int32 DelayDuration;
 
 private:
 

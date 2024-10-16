@@ -155,14 +155,14 @@ FText SEdNode_MounteaDialogueGraphNode::GetNodeTitle() const
 TSharedRef<SWidget> SEdNode_MounteaDialogueGraphNode::CreateNameSlotWidget()
 {
 	return SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-			.Style(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitleInlineEditableText")
-			.Text(GetNodeTitle())
-			.OnVerifyTextChanged(this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
-			.OnTextCommitted(this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
-			.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
-			.IsSelected(this, &SEdNode_MounteaDialogueGraphNode::IsSelectedExclusively)
-			.Justification(ETextJustify::Center)
-			.Visibility(EVisibility::Visible);
+	.Style(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitleInlineEditableText")
+	.Text(GetNodeTitle())
+	.OnVerifyTextChanged(this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
+	.OnTextCommitted(this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
+	.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
+	.IsSelected(this, &SEdNode_MounteaDialogueGraphNode::IsSelectedExclusively)
+	.Justification(ETextJustify::Center)
+	.Visibility(EVisibility::Visible);
 }
 
 
@@ -1006,7 +1006,7 @@ bool SEdNode_MounteaDialogueGraphNode::IsNameReadOnly() const
 	UMounteaDialogueGraph* MounteaDialogueGraphNode = EdNode_Node->DialogueGraphNode->Graph;
 	check(MounteaDialogueGraphNode != nullptr);
 
-	return !MounteaDialogueGraphNode->bCanRenameNode || SGraphNode::IsNameReadOnly();
+	return (!MounteaDialogueGraphNode->bCanRenameNode && !EdNode_Node->DialogueGraphNode->bCanRenameNode) || SGraphNode::IsNameReadOnly();
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

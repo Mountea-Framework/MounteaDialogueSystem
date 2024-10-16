@@ -24,7 +24,7 @@ UMounteaDialogueGraphNode_Delay::UMounteaDialogueGraphNode_Delay()
 #endif
 	
 	bAutoStarts = true;
-
+	bCanRenameNode = false;
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode::StaticClass());
 
 	MaxChildrenNodes = 1;
@@ -45,6 +45,11 @@ void UMounteaDialogueGraphNode_Delay::ProcessNode_Implementation(const TScriptIn
 		TScriptInterface<IMounteaDialogueManagerInterface> MounteaDialogueManagerInterface = Manager;
 		MounteaDialogueManagerInterface->GetDialogueNodeFinishedEventHandle().Broadcast(Manager->GetDialogueContext());
 	}
+}
+
+FText UMounteaDialogueGraphNode_Delay::GetNodeTitle_Implementation() const
+{
+	return FText::Format(LOCTEXT("MounteaDialogueGraphNode_DelayNodeTitle", "Delay: {0}s"), FText::FromString(FString::FromInt(DelayDuration)));
 }
 
 void UMounteaDialogueGraphNode_Delay::OnDelayDurationExpired(const TScriptInterface<IMounteaDialogueManagerInterface>& MounteaDialogueManagerInterface)

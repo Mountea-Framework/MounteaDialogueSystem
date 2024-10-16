@@ -438,6 +438,14 @@ public:
 		RowGUID = FGuid::NewGuid();
 	}
 
+	static FDialogueRow Invalid()
+	{
+		FDialogueRow Row;
+		Row.RowGUID.Invalidate();
+		Row.DialogueRowData.Empty();
+		return Row;
+	}
+
 public:
 	
 	inline FDialogueRow& operator=(const FDialogueRow& Other)

@@ -1186,8 +1186,11 @@ void UMounteaDialogueManager::UpdateDialogueContext_Client_Implementation(const 
 			DialogueContext->PreviousActiveNode = NewDialogueContext.PreviousActiveNodeGuid;
 
 			// Find data locally
-			FDialogueRow selectedRow = UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveDialogueTableHandle.DataTable,DialogueContext->ActiveDialogueTableHandle.RowName);
-			DialogueContext->ActiveDialogueRow = selectedRow.IsValid() ? selectedRow : UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
+			UMounteaDialogueGraphNode_DialogueNodeBase* dialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(DialogueContext->ActiveNode);
+
+			const FDialogueRow selectedRow = dialogueNode ? UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveDialogueTableHandle.DataTable,DialogueContext->ActiveDialogueTableHandle.RowName) : FDialogueRow::Invalid();
+			if (dialogueNode)
+				DialogueContext->ActiveDialogueRow = selectedRow.IsValid() ? selectedRow : UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
 		}
 	}
 	else
