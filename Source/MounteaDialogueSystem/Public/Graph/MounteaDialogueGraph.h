@@ -243,14 +243,13 @@ public:
 
 	virtual bool ValidateGraph(FDataValidationContext& Context, bool RichTextFormat) const;
 	virtual bool ValidateDecorators(FDataValidationContext& Context, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators, const FString& DecoratorTypeName) const;
-	virtual bool ValidateGraphDecorators(FDataValidationContext& Context, bool RichTextFormat) const;
-	virtual bool ValidateGraphScopeDecorators(FDataValidationContext& Context, bool RichTextFormat) const;
+	virtual bool ValidateGraphDecorators(FDataValidationContext& Context, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators, const FString& DecoratorTypeName) const;
 	virtual bool ValidateStartNode(FDataValidationContext& Context, bool RichTextFormat) const;
 	virtual bool ValidateAllNodes(FDataValidationContext& Context, bool RichTextFormat) const;
-	virtual void FindDuplicatedDecorators(const TArray<UMounteaDialogueDecoratorBase*>& UsedNodeDecorators, TMap<UClass*, int32>& DuplicatedDecoratorsMap) const;
+	virtual void FindDuplicatedDecorators(const TArray<UMounteaDialogueDecoratorBase*>& UsedNodeDecorators, TMap<UMounteaDialogueDecoratorBase*, int32>& DuplicatedDecoratorsMap) const;
 	virtual void AddInvalidDecoratorError(FDataValidationContext& Context, bool RichTextFormat, int32 Index, const FString& DecoratorTypeName) const;
-	virtual void AddDuplicateDecoratorErrors(FDataValidationContext& Context, bool RichTextFormat, const TMap<UClass*, int32>& DuplicatedDecoratorsMap) const;
-	virtual void AddDecoratorErrors(FDataValidationContext& Context, bool RichTextFormat, const TArray<FText>& DecoratorErrors) const;
+	virtual void AddDuplicateDecoratorErrors(FDataValidationContext& Context, bool RichTextFormat, const TMap<UMounteaDialogueDecoratorBase*, int32>& DuplicatedDecoratorsMap, const FString& DecoratorTypeName) const;
+	virtual void AddDecoratorErrors(FDataValidationContext& Context, bool RichTextFormat, const TArray<FText>& DecoratorErrors, const FString& DecoratorTypeName) const;
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) override;
 
 public:

@@ -59,6 +59,30 @@ void FDialogueRow::OnDataTableChanged(const UDataTable* InDataTable, const FName
 }
 */
 
+FString FDialogueRow::ToString() const
+{
+	FString Result;
+
+	Result += FString::Printf(TEXT("RowTitle: %s"), *RowTitle.ToString());
+	Result += FString::Printf(TEXT(", DialogueParticipant: %s"), *DialogueParticipant.ToString());
+	Result += FString::Printf(TEXT(", UIRowID: %d"), UIRowID);
+	Result += FString::Printf(TEXT(", RowGUID: %s"), *RowGUID.ToString(EGuidFormats::DigitsWithHyphensLower));
+
+	if (RowOptionalIcon)
+	{
+		Result += TEXT(", RowOptionalIcon: Yes");
+	}
+	else
+	{
+		Result += TEXT(", RowOptionalIcon: No");
+	}
+
+	Result += FString::Printf(TEXT(", DialogueRowData Count: %d"), DialogueRowData.Num());
+
+	return Result;
+}
+
+
 FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct()
 	: ActiveDialogueParticipant(nullptr)
 	, PlayerDialogueParticipant(nullptr)
@@ -66,6 +90,7 @@ FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct
 	, ActiveNodeGuid(FGuid::NewGuid())
 	, PreviousActiveNodeGuid(FGuid::NewGuid())
 	, AllowedChildNodes(TArray<FGuid>())
+	, ActiveDialogueTableHandle(FDataTableRowHandle())
 	, ActiveDialogueRowDataIndex(0)
 {}
 
@@ -74,9 +99,10 @@ FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct
 	, PlayerDialogueParticipant(Source ? Source->PlayerDialogueParticipant : nullptr)
 	, DialogueParticipant(Source ? Source->DialogueParticipant : nullptr)
 	, DialogueParticipants(Source ? Source->DialogueParticipants : TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>())
-	, ActiveNodeGuid(Source ? ( Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid::NewGuid() ) : FGuid::NewGuid())
-	, PreviousActiveNodeGuid( Source ? Source->PreviousActiveNode : FGuid::NewGuid() )
+	, ActiveNodeGuid(Source ? ( Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid() ) : FGuid())
+	, PreviousActiveNodeGuid( Source ? Source->PreviousActiveNode : FGuid() )
 	, AllowedChildNodes(Source ? UMounteaDialogueSystemBFC::NodesToGuids(Source->AllowedChildNodes) : TArray<FGuid>())
+	, ActiveDialogueTableHandle(Source ? Source->ActiveDialogueTableHandle : FDataTableRowHandle())
 	, ActiveDialogueRowDataIndex(Source ? Source->ActiveDialogueRowDataIndex : 0)
 {
 }
@@ -91,8 +117,9 @@ void FMounteaDialogueContextReplicatedStruct::SetData(UMounteaDialogueContext* S
 	DialogueParticipant = Source->DialogueParticipant;
 	DialogueParticipants = Source->DialogueParticipants;
 	ActiveDialogueRowDataIndex = Source->ActiveDialogueRowDataIndex;
-	ActiveNodeGuid = Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid::NewGuid();
-	PreviousActiveNodeGuid = Source ? Source->PreviousActiveNode : FGuid::NewGuid();
+	ActiveNodeGuid = Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid();
+	PreviousActiveNodeGuid = Source ? Source->PreviousActiveNode : FGuid();
+	ActiveDialogueTableHandle = Source->ActiveDialogueTableHandle;
 	AllowedChildNodes = UMounteaDialogueSystemBFC::NodesToGuids(Source->AllowedChildNodes);
 	ActiveDialogueRowDataIndex = Source->ActiveDialogueRowDataIndex;
 }

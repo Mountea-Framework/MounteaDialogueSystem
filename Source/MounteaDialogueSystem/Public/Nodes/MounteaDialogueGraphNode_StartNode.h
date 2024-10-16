@@ -15,7 +15,7 @@
  * This Node cannot be deleted from Graph.
  * Does not implement any logic, works as an Anchor starting point.
  */
-UCLASS(ClassGroup=("Mountea|Dialogue"), DisplayName="Start Node", meta=(ToolTip="Mountea Dialogue Tree: Start Node"))
+UCLASS(ClassGroup=("Mountea|Dialogue"), NotBlueprintable, DisplayName="Start Node", meta=(ToolTip="Mountea Dialogue Tree: Start Node"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_StartNode : public UMounteaDialogueGraphNode
 {
 	GENERATED_BODY()

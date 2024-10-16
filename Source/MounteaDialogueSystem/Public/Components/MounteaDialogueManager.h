@@ -305,11 +305,11 @@ public:
 	virtual void SetDialogueManagerState_Implementation(const EDialogueManagerState NewState) override;
 	virtual void SetDefaultDialogueManagerState(const EDialogueManagerState NewState) override;
 
-	virtual bool AddDialogueUIObject_Implementation(UObject* NewDialogueObject) override;    
-	virtual bool AddDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects) override;    
-	virtual bool RemoveDialogueUIObject_Implementation(UObject* DialogueObjectToRemove) override;    
-	virtual bool RemoveDialogueUIObjects_Implementation(const TArray<UObject*>& DialogueObjectsToRemove) override;    
-	virtual void SetDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects) override;    
+	virtual bool AddDialogueUIObject_Implementation(UObject* NewDialogueObject) override;
+	virtual bool AddDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects) override;
+	virtual bool RemoveDialogueUIObject_Implementation(UObject* DialogueObjectToRemove) override;
+	virtual bool RemoveDialogueUIObjects_Implementation(const TArray<UObject*>& DialogueObjectsToRemove) override;
+	virtual void SetDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects) override;
 	virtual void ResetDialogueUIObjects_Implementation() override;
 
 	virtual int32 GetDialogueWidgetZOrder_Implementation() const override {return DialogueWidgetZOrder; };
@@ -488,14 +488,14 @@ protected:
 
 namespace MounteaDialogueManagerHelpers
 {
-    struct FDialogueRowDataInfo
-    {
-        int32				IncreasedIndex;
-        bool				bIsActiveRowValid;
-        bool				bDialogueRowDataValid;
-    	ERowExecutionMode	NextRowExecutionMode;
-    	ERowExecutionMode	ActiveRowExecutionMode;
-    };
+	struct FDialogueRowDataInfo
+	{
+		int32				IncreasedIndex;
+		bool				bIsActiveRowValid;
+		bool				bDialogueRowDataValid;
+		ERowExecutionMode	NextRowExecutionMode;
+		ERowExecutionMode	ActiveRowExecutionMode;
+	};
 
-    inline FDialogueRowDataInfo GetDialogueRowDataInfo(const UMounteaDialogueContext* DialogueContext);
+	inline FDialogueRowDataInfo GetDialogueRowDataInfo(const UMounteaDialogueContext* DialogueContext);
 }

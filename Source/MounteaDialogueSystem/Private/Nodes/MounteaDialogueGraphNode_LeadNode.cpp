@@ -12,10 +12,9 @@
 
 UMounteaDialogueGraphNode_LeadNode::UMounteaDialogueGraphNode_LeadNode()
 {
-#if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_LeadNodeBaseTitle", "Lead Node");
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_LeadNodeBaseInternalTitle", "Lead Node");
-	
+#if WITH_EDITORONLY_DATA	
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_LeadNodeContextMenuName", "Lead Node");
 	
 	BackgroundColor = FLinearColor(FColor::Orange);
