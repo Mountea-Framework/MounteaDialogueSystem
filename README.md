@@ -1,14 +1,14 @@
-# MounteaDialogueSystem
-Mountea Dialogue System is an Open-source Mountea Framework Unreal Engine tool for creating (not just) complex dialogues within its own editor and validation system.
-
-
-[![Unreal Marketplace-808080](https://github.com/user-attachments/assets/7b2b9448-4e89-4ecf-b7e9-fa72aadc7c02)](https://www.unrealengine.com/marketplace/en-US/product/ea38ae1f87b24807a66fdf4fa65ef521)
-[![UE](https://img.shields.io/badge/supported-4.26%2B-green)](https://github.com/Mountea-Framework/MounteaDialogueSystem/edit/master/README.md#compatible-engine-version)
+[![Documentation](https://img.shields.io/badge/documentation-github?style=flat&logo=GitHub&labelColor=5a5a5a&color=98c510)](https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Getting-Started)
+[![Marketplace](https://img.shields.io/badge/marketplace-epicgames?style=flat&logo=UnrealEngine&labelColor=5a5a5a&color=98c510)](https://www.unrealengine.com/marketplace/en-US/product/ea38ae1f87b24807a66fdf4fa65ef521)
+![UE](https://img.shields.io/badge/supported-4.26%2B-green)
 [![License](https://img.shields.io/github/license/Mountea-Framework/ActorInteractionPlugin)](https://github.com/Mountea-Framework/MounteaDialogueSystem/blob/master/LICENSE)
 [![YouTube](https://img.shields.io/badge/YouTube-Subscribe-red?style=flat&logo=youtube)](https://www.youtube.com/@mounteaframework)
 [![Discord](https://badgen.net/discord/online-members/2vXWEEN?label=Discord&logo=discord&logoColor=ffffff&color=7389D8)](https://discord.com/invite/2vXWEEN)
 [![Discord](https://badgen.net/discord/members/2vXWEEN?label=Discord&logo=discord&logoColor=ffffff&color=7389D8)](https://discord.com/invite/2vXWEEN)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/345048cfc8794b4191a400c84703100e)](https://app.codacy.com/gh/Mountea-Framework/MounteaDialogueSystem/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+
+# MounteaDialogueSystem
+Mountea Dialogue System is an Open-source Mountea Framework Unreal Engine tool for creating (not just) complex dialogues within its own editor and validation system.
 
 ## Playable Demo
 Feel free to download the playable demo and take a look at what this plugin (in combination with its Dialogue sibling) can do in a matter of a few clicks!
