@@ -43,7 +43,7 @@ void UMounteaDialogueDecorator_OverrideParticipants::CleanupDecorator_Implementa
 	Override_ActiveParticipantInterface = nullptr;
 }
 
-bool UMounteaDialogueDecorator_OverrideParticipants::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
+bool UMounteaDialogueDecorator_OverrideParticipants::ValidateDecorator_Implementation(UPARAM(ref) TArray<FText>& ValidationMessages)
 {
 	bool bSatisfied =  Super::ValidateDecorator_Implementation(ValidationMessages);
 	const FText Name = FText::FromString(GetName());
