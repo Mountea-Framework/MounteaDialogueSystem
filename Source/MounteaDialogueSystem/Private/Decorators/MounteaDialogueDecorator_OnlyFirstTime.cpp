@@ -16,7 +16,7 @@ void UMounteaDialogueDecorator_OnlyFirstTime::CleanupDecorator_Implementation()
 	Super::CleanupDecorator_Implementation();
 }
 
-bool UMounteaDialogueDecorator_OnlyFirstTime::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
+bool UMounteaDialogueDecorator_OnlyFirstTime::ValidateDecorator_Implementation(UPARAM(ref) TArray<FText>& ValidationMessages)
 {
 	bool bSatisfied = Super::ValidateDecorator_Implementation(ValidationMessages);
 	const FText Name = GetDecoratorName();
