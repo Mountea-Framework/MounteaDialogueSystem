@@ -119,8 +119,8 @@ public:
 	 * Validation is called before Context is initialized!
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator")
-	bool ValidateDecorator(TArray<FText>& ValidationMessages);
-	virtual bool ValidateDecorator_Implementation(TArray<FText>& ValidationMessages);
+	bool ValidateDecorator(UPARAM(ref) TArray<FText>& ValidationMessages);
+	virtual bool ValidateDecorator_Implementation(UPARAM(ref) TArray<FText>& ValidationMessages);
 	
 	/**
 	 * Evaluates the Decorator.
@@ -266,7 +266,7 @@ public:
 
 	void InitializeDecorator(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& OwningManager) const;
 
-	bool ValidateDecorator(TArray<FText>& ValidationMessages) const;
+	bool ValidateDecorator(UPARAM(ref) TArray<FText>& ValidationMessages) const;
 
 	void CleanupDecorator() const;
 

@@ -17,7 +17,7 @@ void UMounteaDialogueDecorator_OverrideDialogue::CleanupDecorator_Implementation
 	Context = nullptr;
 }
 
-bool UMounteaDialogueDecorator_OverrideDialogue::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
+bool UMounteaDialogueDecorator_OverrideDialogue::ValidateDecorator_Implementation(UPARAM(ref) TArray<FText>& ValidationMessages)
 {
 	bool bSatisfied = Super::ValidateDecorator_Implementation(ValidationMessages);
 	const FText Name = GetDecoratorName();
