@@ -21,7 +21,7 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecorator_SaveNodeAsStart : publ
 public:
 	
 	virtual void CleanupDecorator_Implementation() override;
-	virtual bool ValidateDecorator_Implementation(TArray<FText>& ValidationMessages) override;
+	virtual bool ValidateDecorator_Implementation(UPARAM(ref) TArray<FText>& ValidationMessages) override;
 	virtual void ExecuteDecorator_Implementation() override;
 	virtual bool IsDecoratorAllowedForGraph_Implementation() const override {  return false;  };
 

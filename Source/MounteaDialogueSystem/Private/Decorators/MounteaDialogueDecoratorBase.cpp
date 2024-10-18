@@ -45,7 +45,7 @@ void UMounteaDialogueDecoratorBase::SetOwningManager_Implementation(const TScrip
 	OwningManager = NewOwningManager;
 }
 
-bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
+bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(UPARAM(ref) TArray<FText>& ValidationMessages)
 {
 	bool bSatisfied = true;
 
@@ -207,7 +207,7 @@ void FMounteaDialogueDecorator::InitializeDecorator(UWorld* World, const TScript
 	return;
 }
 
-bool FMounteaDialogueDecorator::ValidateDecorator(TArray<FText>& ValidationMessages) const
+bool FMounteaDialogueDecorator::ValidateDecorator(UPARAM(ref) TArray<FText>& ValidationMessages) const
 {
 	if (DecoratorType)
 	{

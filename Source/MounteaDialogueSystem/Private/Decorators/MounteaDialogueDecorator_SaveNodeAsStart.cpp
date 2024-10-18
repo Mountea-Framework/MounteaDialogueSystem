@@ -18,7 +18,7 @@ void UMounteaDialogueDecorator_SaveNodeAsStart::CleanupDecorator_Implementation(
 	OwningManager = nullptr;
 }
 
-bool UMounteaDialogueDecorator_SaveNodeAsStart::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
+bool UMounteaDialogueDecorator_SaveNodeAsStart::ValidateDecorator_Implementation(UPARAM(ref) TArray<FText>& ValidationMessages)
 {
 	bool bSatisfied = Super::ValidateDecorator_Implementation(ValidationMessages);
 	const FText Name = GetDecoratorName();
