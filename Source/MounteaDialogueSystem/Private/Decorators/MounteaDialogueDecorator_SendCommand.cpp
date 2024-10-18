@@ -12,7 +12,7 @@ void UMounteaDialogueDecorator_SendCommand::CleanupDecorator_Implementation()
 	Super::CleanupDecorator_Implementation();
 }
 
-bool UMounteaDialogueDecorator_SendCommand::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
+bool UMounteaDialogueDecorator_SendCommand::ValidateDecorator_Implementation(UPARAM(ref) TArray<FText>& ValidationMessages)
 {
 	bool bSatisfied =  Super::ValidateDecorator_Implementation(ValidationMessages);
 

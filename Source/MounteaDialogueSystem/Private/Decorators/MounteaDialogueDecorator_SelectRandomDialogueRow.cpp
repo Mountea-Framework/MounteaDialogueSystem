@@ -14,7 +14,7 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::CleanupDecorator_Impleme
 	Super::CleanupDecorator_Implementation();
 }
 
-bool UMounteaDialogueDecorator_SelectRandomDialogueRow::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
+bool UMounteaDialogueDecorator_SelectRandomDialogueRow::ValidateDecorator_Implementation(UPARAM(ref) TArray<FText>& ValidationMessages)
 {
 	bool bSatisfied = Super::ValidateDecorator_Implementation(ValidationMessages);
 	const FText Name = GetDecoratorName();
