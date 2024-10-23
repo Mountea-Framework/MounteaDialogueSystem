@@ -146,6 +146,8 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.Dialoguer.Small", new IMAGE_BRUSH(TEXT("Dialoguer_Icon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Dialoguer.large", new IMAGE_BRUSH(TEXT("Dialoguer_Icon"), Icon64x64));
 
+	StyleSet->Set("MDSStyleSet.Launcher", new IMAGE_BRUSH(TEXT("MPLIcon"), Icon40x40));
+
 	StyleSet->Set("MDSStyleSet.Wiki", new IMAGE_BRUSH(TEXT("Wiki_Icon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.Wiki.Small", new IMAGE_BRUSH(TEXT("Wiki_Icon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Wiki.large", new IMAGE_BRUSH(TEXT("Wiki_Icon"), Icon64x64));
