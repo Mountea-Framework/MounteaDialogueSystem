@@ -52,6 +52,7 @@ private:
 	void OnGetResponse_Tags(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 	UFUNCTION() void SendHTTPGet_Tags();
 	
+	void LauncherButtonClicked() const;
 	void DialoguerButtonClicked() const;
 	void WikiButtonClicked() const;
 	void PluginButtonClicked() const;
