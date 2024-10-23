@@ -381,6 +381,16 @@ void FMounteaDialogueSystemEditor::SendHTTPGet_Tags()
 	Request->ProcessRequest();
 }
 
+void FMounteaDialogueSystemEditor::LauncherButtonClicked() const
+{
+	const FString URL = "https://github.com/Mountea-Framework/MounteaProjectLauncher";
+
+	if (!URL.IsEmpty())
+	{
+		FPlatformProcess::LaunchURL(*URL, nullptr, nullptr);
+	}
+}
+
 void FMounteaDialogueSystemEditor::DialoguerButtonClicked() const
 {
 	const FString URL = "https://mountea-framework.github.io/MounteaDialoguer/";
@@ -629,6 +639,16 @@ TSharedRef<SWidget> FMounteaDialogueSystemEditor::MakeMounteaMenuWidget() const
 			)
 		);
 	}
+	
+	// Launcher Tool Entry
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("MounteaSystemEditor_LauncherButton_Label", "Mountea Project Launcher"),
+		LOCTEXT("MounteaSystemEditor_LauncherButton_ToolTip", "🚀 Open Mountea Project Launcher\n\n❔ Mountea Project Launcher is a standalone tool created for project launcher which can launch projects locally with multiple settings.\nUseful for testing."),
+		FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Launcher"),
+		FUIAction(
+			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::LauncherButtonClicked)
+		)
+	);
 	MenuBuilder.EndSection();
 
 	return MenuBuilder.MakeWidget();
