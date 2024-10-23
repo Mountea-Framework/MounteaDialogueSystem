@@ -4,6 +4,50 @@ Current Version: 2.0.3.54
 
 All notable changes to this project will be documented in this file.
 
+**Version 2.0.4**
+### Added
+> - Graph Scoped Decorators
+>   - Enables decorators to be scoped to run only when Graph starts
+>   - Helps prevent unintended effects across multiple nodes
+> - Option to Enable logging channels
+>   - Allows selective activation of logging channels for better debugging
+>   - NetMode logging information
+>      - Additional logging details to track network replication states
+> - Execution order to Nodes
+>   - Nodes now have explicit execution order control
+>   - Ensures predictable flow in complex dialogue graphs
+> - New Delay Node `VERY EXPERIMENTAL`
+>   - Introduces a pause in Graph execution
+>   - Currently experimental, use with caution!
+> - Hidden variables for StartNode, ReturnToNode, and DelayNode in graph editor
+>   - Hidden in editor to reduce visual clutter
+> - Toolbar Button updated with Dialogue buttons separated from Interaction ones
+> - Decorators now have `Blacklisted Node`, showing an error message if attached to such
+>   - Prevents decorators from attaching to incompatible nodes
+
+### Fixed
+> - Decorators evaluation (First Time Only)
+>   - Fixed issue with decorators not evaluating correctly for `OnlyOnce` type of Decorators
+> - Graph Validation
+>   - Improved validation to catch more potential issues
+>   - Graph errors are now shown in PIE, too
+> - `IsValid` function to validate DialogueRow
+>   - Function now properly checks DialogueRow for validity
+> - OptionsContainer not propagating OptionClass properly
+>   - Now correctly propagates the `OptionClass`
+> - `PIE` bug where engine crashed when hovered over Node in Graph (while in breakpoint)
+>   - Resolved crash occurring during debugging in Play-In-Editor (PIE)
+> - `PIE` bug where Node title was not visible in Graph (while in breakpoint)
+>   - Node titles now remain visible during debugging in PIE
+
+### Updated
+> - Graph connection visual
+>   - Improved visuals for connections between nodes.
+> - Sorting algorithm to respect Execution Order
+>   - Algorithm updated to ensure nodes follow the correct execution sequence.
+> - Enabled (almost) 0s dialogue durations
+>   - Allows rapid transitions with very short or nearly zero-duration dialogues.
+
 **Version 2.0.3**
 ### Added 
 > - Typewriter Effect
