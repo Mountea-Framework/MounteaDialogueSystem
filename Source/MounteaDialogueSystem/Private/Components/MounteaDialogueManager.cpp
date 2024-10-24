@@ -974,6 +974,8 @@ void UMounteaDialogueManager::SetDialogueWidgetClass_Server_Implementation(TSubc
 
 bool UMounteaDialogueManager::InvokeDialogueUI_Implementation(FString& Message)
 {
+	RefreshDialogueWidgetHelper(this,  MounteaDialogueWidgetCommands::CreateDialogueWidget);
+	
 	if (UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal() == nullptr)
 	{
 		Message = TEXT("Cannot find Dialogue Settings!");
@@ -1034,17 +1036,17 @@ bool UMounteaDialogueManager::InvokeDialogueUI_Implementation(FString& Message)
 
 bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, const FString& Command)
 {
+	OnDialogueWidgetCommandRequested.Broadcast(this, Command);
+	
 	if (!DialogueWidgetPtr)
 	{
 		LOG_ERROR(TEXT("[Dialogue Command Request] Invalid Dialogue Widget!"))
 
 		return false;
 	}
-
 	
 	LOG_INFO(TEXT("[Dialogue Command Requested] %s"), *Command)
-	
-	OnDialogueWidgetCommandRequested.Broadcast(this, Command);
+
 	
 	if (DialogueWidgetPtr)
 	{
@@ -1057,6 +1059,8 @@ bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, 
 
 bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
 {
+	OnDialogueWidgetCommandRequested.Broadcast(this, MounteaDialogueWidgetCommands::CloseDialogueWidget);
+	
 	APlayerController* playerController = UMounteaDialogueSystemBFC::FindPlayerController(GetOwner());
 	if (playerController == nullptr)
 	{
@@ -1098,15 +1102,19 @@ void UMounteaDialogueManager::ExecuteWidgetCommand_Implementation(const FString&
 		{
 			FString resultMessage;
 			Execute_UpdateDialogueUI(this, resultMessage, Command);
+
+			RefreshDialogueWidgetHelper(this, Command);
 		}
 		else
 		{
 			UpdateDialogueUI_Client(Command);
+			RefreshDialogueWidgetHelper(this, Command);
 		}
 	}
 	else
 	{
 		UpdateDialogueUI_Client(Command);
+		RefreshDialogueWidgetHelper(this, Command);
 	}
 }
 
@@ -1359,10 +1367,7 @@ void UMounteaDialogueManager::RefreshDialogueWidgetHelper(const TScriptInterface
 	{
 		if (dialogueObject)
 		{
-			if ( const TScriptInterface<IMounteaDialogueWBPInterface> dialogueInterface = dialogueObject.Get() )	
-			{
-				IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, DialogueManager, WidgetCommand);
-			}
+			IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, DialogueManager, WidgetCommand);
 		}
 	}
 }
@@ -1375,8 +1380,7 @@ bool UMounteaDialogueManager::AddDialogueUIObject_Implementation(UObject* NewDia
 		return false;
 	}
 
-	const TScriptInterface<IMounteaDialogueWBPInterface> dialogueObject = NewDialogueObject;
-	if (dialogueObject.GetInterface() == nullptr || dialogueObject.GetObject() == nullptr)
+	if (!NewDialogueObject->Implements<UMounteaDialogueWBPInterface>())
 	{
 		LOG_WARNING(TEXT("[AddDialogueUIObject] Input parameter does not implement 'IMounteaDialogueWBPInterface'!"));
 		return false;
