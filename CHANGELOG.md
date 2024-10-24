@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 > - Option to Enable logging channels
 >   - Allows selective activation of logging channels for better debugging
 >   - NetMode logging information
->      - Additional logging details to track network replication states
+>     - Additional logging details to track network replication states
 > - Execution order to Nodes
 >   - Nodes now have explicit execution order control
 >   - Ensures predictable flow in complex dialogue graphs
