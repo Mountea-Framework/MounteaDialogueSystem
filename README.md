@@ -19,7 +19,7 @@ Feel free to download the playable demo and take a look at what this plugin (in 
 </p>
 
 ## Discord Channel
-<a href="https://discord.gg/2vXWEEN"><img src="https://static.wikia.nocookie.net/siivagunner/images/9/9f/Discord_icon.svg/revision/latest?cb=20210814160101" alt="Discord LINK" width="100" height="100"></a>
+<a href="https://discord.gg/2vXWEEN"><img src="https://static.wikia.nocookie.net/siivagunner/images/9/9f/Discord_icon.svg/revision/latest?cb=20210814160101" alt="Discord LINK" width="64" height="64"></a>
 
 Join support and community Discord!
 
@@ -45,10 +45,10 @@ Engine Version | Plugin Version | Support
 UE 4.26 | [1.0.0.426](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.426) | 🟪
 UE 4.27 | [1.0.0.427](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.427) | 🟪
 UE 5.00 | [1.0.0.50](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.50) | 🟪
-UE 5.1 | [2.0.0.51](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.4.51) | 🟥
-UE 5.2 | [2.0.0.52](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.4.52) | 🟩
-UE 5.3 | [2.0.0.53](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.4.53) | 🟩
-UE 5.4 | [2.0.0.54](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.4.54) | 🟩
+UE 5.1 | [2.0.4.51](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.4.51) | 🟥
+UE 5.2 | [2.0.4.52](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.4.52) | 🟩
+UE 5.3 | [2.0.4.53](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.4.53) | 🟩
+UE 5.4 | [2.0.4.54](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.4.54) | 🟩
 
 ## Features
 ### Graph Editor
