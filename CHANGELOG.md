@@ -40,7 +40,7 @@ All notable changes to this project will be documented in this file.
 > - `PIE` bug where Node title was not visible in Graph (while in breakpoint)
 >   - Node titles now remain visible during debugging in PIE
 
-### Updated
+### Changed
 > - Graph connection visual
 >   - Improved visuals for connections between nodes.
 > - Sorting algorithm to respect Execution Order
