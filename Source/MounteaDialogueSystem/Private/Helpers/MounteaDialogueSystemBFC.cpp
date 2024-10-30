@@ -513,7 +513,7 @@ bool UMounteaDialogueSystemBFC::AddParticipants(AActor* WorldContextObject, cons
 		return false;
 	}
 
-	UMounteaDialogueContext* Context = Manager->GetDialogueContext();
+	UMounteaDialogueContext* Context = Manager->Execute_GetDialogueContext(Manager.GetObject());
 
 	if (!Context)
 	{
@@ -531,7 +531,7 @@ bool UMounteaDialogueSystemBFC::RemoveParticipants(AActor* WorldContextObject, c
 		return false;
 	}
 
-	UMounteaDialogueContext* Context = Manager->GetDialogueContext();
+	UMounteaDialogueContext* Context = Manager->Execute_GetDialogueContext(Manager.GetObject());
 
 	if (!Context)
 	{

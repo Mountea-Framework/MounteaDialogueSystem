@@ -39,7 +39,7 @@ void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode_Implementation(const TS
 {
 	if (SelectedNode && Manager)
 	{
-		if (const auto Context = Manager->GetDialogueContext())
+		if (const auto Context = Manager->Execute_GetDialogueContext(Manager.GetObject()))
 		{
 			auto dialogueNodeToStart = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(SelectedNode);
 			

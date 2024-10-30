@@ -36,7 +36,7 @@ void UMounteaDialogueGraphNode_LeadNode::PreProcessNode_Implementation(const TSc
 		// Switch Active Participant to NPC
 		if (Manager.GetInterface())
 		{
-			if (const auto TempContext = Manager->GetDialogueContext())
+			if (const auto TempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
 			{
 				TempContext->UpdateActiveDialogueParticipant(TempContext->GetDialogueParticipant());
 			}

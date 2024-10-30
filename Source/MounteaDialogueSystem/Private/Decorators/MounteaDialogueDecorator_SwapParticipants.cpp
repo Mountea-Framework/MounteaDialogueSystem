@@ -24,7 +24,7 @@ void UMounteaDialogueDecorator_SwapParticipants::ExecuteDecorator_Implementation
 	if (!Context)
 	{
 		// Let's return BP Updatable Context rather than Raw
-		Context = OwningManager->GetDialogueContext();
+		Context = OwningManager->Execute_GetDialogueContext(OwningManager.GetObject());
 	}
 
 	if (!Context) return;

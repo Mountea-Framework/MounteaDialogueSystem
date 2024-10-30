@@ -30,7 +30,7 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode_Implementation(cons
 {
 	if (Manager)
 	{
-		if (UMounteaDialogueContext* Context = Manager->GetDialogueContext())
+		if (UMounteaDialogueContext* Context = Manager->Execute_GetDialogueContext(Manager.GetObject()))
 		{
 			GetWorld()->GetTimerManager().ClearTimer(Manager->GetDialogueRowTimerHandle());
 
@@ -54,7 +54,7 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode_Implementation(c
 		// Switch Participants based on Tags
 		if (Manager.GetInterface())
 		{
-			if (const auto TempContext = Manager->GetDialogueContext())
+			if (const auto TempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
 			{
 				const TScriptInterface<IMounteaDialogueParticipantInterface> BestMatchingParticipant = UMounteaDialogueSystemBFC::FindBestMatchingParticipant(Manager.GetObject(), TempContext);
 				

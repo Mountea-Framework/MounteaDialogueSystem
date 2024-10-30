@@ -107,7 +107,7 @@ void UMounteaDialogueGraphNode::ProcessNode_Implementation(const TScriptInterfac
 		return;
 	}
 	
-	UMounteaDialogueContext* Context = Manager->GetDialogueContext();
+	UMounteaDialogueContext* Context = Manager->Execute_GetDialogueContext(Manager.GetObject());
 	if (!Context || !UMounteaDialogueSystemBFC::IsContextValid(Context))
 	{
 		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid Dialogue Context!"));
