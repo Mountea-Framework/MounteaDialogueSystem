@@ -19,7 +19,7 @@ Feel free to download the playable demo and take a look at what this plugin (in 
 </p>
 
 ## Discord Channel
-<a href="https://discord.gg/2vXWEEN"><img src="https://static.wikia.nocookie.net/siivagunner/images/9/9f/Discord_icon.svg/revision/latest?cb=20210814160101" alt="Discord LINK" width="64" height="64"></a>
+<a href="https://discord.gg/2vXWEEN"><img src="https://anbhelp.zendesk.com/hc/article_attachments/360021176052/discord.gif" alt="Discord LINK" width="100"></a>
 
 Join support and community Discord!
 
@@ -27,7 +27,7 @@ Join support and community Discord!
 Online [Documentation](https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Getting-Started) including a Quick Start guide which will help you set up the plugin in a few easy-to-follow steps.
 
 ## Tutorial videos
-<a href="https://www.youtube.com/playlist?list=PLIU53wA8zZmg5eBKEcpZr7G8JBBZ4QPKq"><img src="https://upload.wikimedia.org/wikipedia/commons/e/ef/Youtube_logo.png" alt="TUTORIAL playlist" width="150" height="100"></a>
+<a href="https://www.youtube.com/playlist?list=PLIU53wA8zZmg5eBKEcpZr7G8JBBZ4QPKq"><img src="https://cdnl.iconscout.com/lottie/premium/thumb/youtube-8622218-6842833.gif" alt="TUTORIAL playlist" width="150"></a>
 
 ## Compatible Engine Version
 
