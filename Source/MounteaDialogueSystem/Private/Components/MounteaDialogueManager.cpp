@@ -194,7 +194,7 @@ void UMounteaDialogueManager::OnDialogueStartedEvent_Internal(UMounteaDialogueCo
 
 void UMounteaDialogueManager::OnDialogueClosedEvent_Internal(UMounteaDialogueContext* Context)
 {
-	switch (GetDialogueManagerState())
+	switch (Execute_GetState(this))
 	{
 		case EDialogueManagerState::EDMS_Disabled:
 		case EDialogueManagerState::EDMS_Enabled:
@@ -637,7 +637,7 @@ AActor* UMounteaDialogueManager::GetOwningActor_Implementation() const
 	return GetOwner();
 }
 
-TSubclassOf<UUserWidget> UMounteaDialogueManager::GetDialogueWidgetClass() const
+TSubclassOf<UUserWidget> UMounteaDialogueManager::GetDialogueWidgetClass_Implementation() const
 {
 	if (DialogueWidgetClass.Get() != nullptr)
 	{
@@ -987,7 +987,7 @@ bool UMounteaDialogueManager::InvokeDialogueUI_Implementation(FString& Message)
 		return true;
 	}
 	
-	if (GetDialogueWidgetClass() == nullptr)
+	if (Execute_GetDialogueWidgetClass(this) == nullptr)
 	{
 		Message = TEXT("Invalid Widget Class! Setup Widget class at least in Project settings!");
 		return false;
@@ -1006,7 +1006,7 @@ bool UMounteaDialogueManager::InvokeDialogueUI_Implementation(FString& Message)
 		return false;
 	}
 	
-	DialogueWidgetPtr = CreateWidget<UUserWidget>(playerController,  GetDialogueWidgetClass());
+	DialogueWidgetPtr = CreateWidget<UUserWidget>(playerController,  Execute_GetDialogueWidgetClass(this));
 	
 	if (DialogueWidgetPtr == nullptr)
 	{
