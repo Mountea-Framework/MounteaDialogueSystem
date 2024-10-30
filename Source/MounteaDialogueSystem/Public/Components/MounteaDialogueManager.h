@@ -242,6 +242,8 @@ protected:
 public:
 
 	virtual AActor* GetOwningActor_Implementation() const override;
+	virtual UObject* GetManagerObject_Implementation() override
+	{ return this; };
 	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass_Implementation() const override;
 	
 	virtual UMounteaDialogueContext* GetDialogueContext_Implementation() const override

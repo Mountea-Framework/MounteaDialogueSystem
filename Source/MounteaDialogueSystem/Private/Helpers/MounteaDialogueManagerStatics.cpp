@@ -8,6 +8,11 @@ AActor* UMounteaDialogueManagerStatics::GetOwningActor(UObject* Target)
 	return ExecuteIfImplements<AActor*>(Target, TEXT("GetOwningActor"), &IMounteaDialogueManagerInterface::Execute_GetOwningActor);
 }
 
+UObject* UMounteaDialogueManagerStatics::GetManagerObject(UObject* Target)
+{
+	return ExecuteIfImplements<UObject*>(Target, TEXT("GetManagerObject"), &IMounteaDialogueManagerInterface::Execute_GetManagerObject);
+}
+
 UMounteaDialogueContext* UMounteaDialogueManagerStatics::GetDialogueContext(UObject* Target)
 {
 	return ExecuteIfImplements<UMounteaDialogueContext*>(Target, TEXT("GetDialogueContext"), &IMounteaDialogueManagerInterface::Execute_GetDialogueContext);

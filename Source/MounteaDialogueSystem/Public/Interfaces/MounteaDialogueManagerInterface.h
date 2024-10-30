@@ -209,6 +209,18 @@ public:
 	};
 
 	/**
+	 * Returns the owning actor for this Dialogue Manager Component.
+	 *
+	 * @return The owning actor for this Dialogue Manager Component.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UObject* GetManagerObject();
+	virtual UObject* GetManagerObject_Implementation()
+	{
+		return nullptr;
+	};
+
+	/**
 	 * Prepares the node for execution.
 	 * Asks Active Node to 'PreProcessNode' and then to 'ProcessNode'.
 	 * In this preparation stage, Nodes are asked to process all Decorators.

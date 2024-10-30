@@ -67,7 +67,7 @@ void UMounteaDialogueManager::BeginPlay()
 		OnDialogueWidgetCommandRequested.AddUniqueDynamic(this, &UMounteaDialogueManager::RefreshDialogueWidgetHelper);
 	}
 	
-	Execute_SetDialogueManagerState(this, GetDefaultDialogueManagerState());
+	Execute_SetDialogueManagerState(this, Execute_GetDefaultDialogueManagerState(this));
 }
 
 void UMounteaDialogueManager::NetPushDialogueContext()

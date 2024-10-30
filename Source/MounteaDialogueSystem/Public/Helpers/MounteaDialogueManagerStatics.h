@@ -64,6 +64,15 @@ public:
 	static AActor* GetOwningActor(UObject* Target);
 
 	/**
+	 * Returns the Dialogue Manager as Object.
+	 *
+	 * @param Target	Dialogue Manager object. Must implement `IMounteaDialogueManager` interface.
+	 * @return The Dialogue Manager as Object.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
+	static UObject* GetManagerObject(UObject* Target);
+
+	/**
 	 * Retrieves current Dialogue Context.
 	 * 
 	 * ❗ Could be null
