@@ -171,7 +171,7 @@ FText UK2Node_MounteaDialogueCallFunction::GetFunctionContextString() const
 
 	if (Settings && !Settings->DisplayStandardNodes())
 	{
-		FText ContextString = LOCTEXT("MounteaDialogueCallFunctionContext", "Target is Mountea Dialogue System");
+		FText ContextString = LOCTEXT("MounteaDialogueCallFunctionContext", "Source is Mountea Dialogue System");
 	
 		const UFunction* Function = GetTargetFunction();
 		UClass* CurrentSelfClass = (Function != nullptr) ? Function->GetOwnerClass() : nullptr;
@@ -187,7 +187,7 @@ FText UK2Node_MounteaDialogueCallFunction::GetFunctionContextString() const
 
 			FFormatNamedArguments Args;
 			Args.Add(TEXT("TargetName"), TargetText);
-			ContextString = FText::Format(LOCTEXT("CallFunctionOnDifferentContext", "Target is {TargetName}"), Args);
+			ContextString = FText::Format(LOCTEXT("CallFunctionOnDifferentContext", "Source is {TargetName}"), Args);
 		}
 		return ContextString;
 	}
