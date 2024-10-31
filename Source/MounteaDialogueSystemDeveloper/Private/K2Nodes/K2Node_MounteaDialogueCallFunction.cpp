@@ -14,9 +14,7 @@ void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabas
 	Super::GetMenuActions(actionRegistrar);
 
 	UClass* nodeClass = GetClass();
-
-	auto Settings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>();
-
+	
 	// Lambda for node customization
 	auto customizeNodeLambda = [](UEdGraphNode* newNode, bool bIsTemplateNode, UFunction* relevantFunction, UClass* relevantClass)
 	{
@@ -54,16 +52,9 @@ void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabas
 
 			for (UFunction* itrFunction : classFunctions)
 			{
-				if (Settings && !Settings->DisplayStandardNodes())
+				if (!itrFunction->HasAnyFunctionFlags(FUNC_BlueprintEvent))
 				{
 					itrFunction->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
-				}
-				else
-				{
-					if (!itrFunction->HasAnyFunctionFlags(FUNC_BlueprintEvent))
-					{
-						itrFunction->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
-					}
 				}
 
 				UBlueprintNodeSpawner* nodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
@@ -176,30 +167,31 @@ FSlateIcon UK2Node_MounteaDialogueCallFunction::GetIconAndTint(FLinearColor& out
 
 FText UK2Node_MounteaDialogueCallFunction::GetFunctionContextString() const
 {
+	auto Settings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>();
+
+	if (Settings && !Settings->DisplayStandardNodes())
+	{
+		FText ContextString = LOCTEXT("MounteaDialogueCallFunctionContext", "Target is Mountea Dialogue System");
+	
+		const UFunction* Function = GetTargetFunction();
+		UClass* CurrentSelfClass = (Function != nullptr) ? Function->GetOwnerClass() : nullptr;
+		UClass const* TrueSelfClass = CurrentSelfClass;
+		if (CurrentSelfClass && CurrentSelfClass->ClassGeneratedBy)
+		{
+			TrueSelfClass = CurrentSelfClass->GetAuthoritativeClass();
+		}
+
+		if (TrueSelfClass != nullptr)
+		{
+			const FText TargetText = TrueSelfClass->GetDisplayNameText();
+
+			FFormatNamedArguments Args;
+			Args.Add(TEXT("TargetName"), TargetText);
+			ContextString = FText::Format(LOCTEXT("CallFunctionOnDifferentContext", "Target is {TargetName}"), Args);
+		}
+		return ContextString;
+	}
 	return Super::GetFunctionContextString();
-	
-	/* TODO: let's wrap this into settings? So users can enable/disable the context (breaking auto allign of BlueprintAssist plugin!
-	FText ContextString = LOCTEXT("MounteaDialogueCallFunctionContext", "Target is Mountea Dialogue System");
-	
-	const UFunction* Function = GetTargetFunction();
-	UClass* CurrentSelfClass = (Function != nullptr) ? Function->GetOwnerClass() : nullptr;
-	UClass const* TrueSelfClass = CurrentSelfClass;
-	if (CurrentSelfClass && CurrentSelfClass->ClassGeneratedBy)
-	{
-		TrueSelfClass = CurrentSelfClass->GetAuthoritativeClass();
-	}
-
-	if (TrueSelfClass != nullptr)
-	{
-		const FText TargetText = TrueSelfClass->GetDisplayNameText();
-
-		FFormatNamedArguments Args;
-		Args.Add(TEXT("TargetName"), TargetText);
-		ContextString = FText::Format(LOCTEXT("CallFunctionOnDifferentContext", "Target is {TargetName}"), Args);
-	}
-
-	return ContextString;
-	*/
 }
 
 void UK2Node_MounteaDialogueCallFunction::Initialize(const UFunction* relevantFunction, UClass* relevantClass)
