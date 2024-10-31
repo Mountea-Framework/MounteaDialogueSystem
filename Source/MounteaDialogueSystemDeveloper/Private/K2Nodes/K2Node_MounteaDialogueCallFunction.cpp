@@ -5,6 +5,7 @@
 #include "MounteaDialogueSystemEditor/Private/EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "MounteaDialogueSystemEditor/Private/Settings/MounteaDialogueGraphEditorSettings.h"
 #include "BlueprintNodeSpawner.h"
+#include "Kismet2/BlueprintEditorUtils.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueCallFunction"
 
@@ -79,7 +80,6 @@ FText UK2Node_MounteaDialogueCallFunction::GetToolTipHeading() const
 	return LOCTEXT("MounteaDialogueCallFunctionFunctions", "Mountea Dialogue Function");
 }
 
-
 EFunctionCallType UK2Node_MounteaDialogueCallFunction::GetFunctionType() const
 {
 	if (const UFunction* localFunction = GetTargetFunction())
@@ -136,7 +136,6 @@ FText UK2Node_MounteaDialogueCallFunction::GetTooltipText() const
 	}
 }
 
-
 FLinearColor UK2Node_MounteaDialogueCallFunction::GetNodeTitleColor() const
 {
 	switch (GetFunctionRole())
@@ -173,6 +172,34 @@ FSlateIcon UK2Node_MounteaDialogueCallFunction::GetIconAndTint(FLinearColor& out
 		default:
 			return Super::GetIconAndTint(outColor);
 	}
+}
+
+FText UK2Node_MounteaDialogueCallFunction::GetFunctionContextString() const
+{
+	return Super::GetFunctionContextString();
+	
+	/* TODO: let's wrap this into settings? So users can enable/disable the context (breaking auto allign of BlueprintAssist plugin!
+	FText ContextString = LOCTEXT("MounteaDialogueCallFunctionContext", "Target is Mountea Dialogue System");
+	
+	const UFunction* Function = GetTargetFunction();
+	UClass* CurrentSelfClass = (Function != nullptr) ? Function->GetOwnerClass() : nullptr;
+	UClass const* TrueSelfClass = CurrentSelfClass;
+	if (CurrentSelfClass && CurrentSelfClass->ClassGeneratedBy)
+	{
+		TrueSelfClass = CurrentSelfClass->GetAuthoritativeClass();
+	}
+
+	if (TrueSelfClass != nullptr)
+	{
+		const FText TargetText = TrueSelfClass->GetDisplayNameText();
+
+		FFormatNamedArguments Args;
+		Args.Add(TEXT("TargetName"), TargetText);
+		ContextString = FText::Format(LOCTEXT("CallFunctionOnDifferentContext", "Target is {TargetName}"), Args);
+	}
+
+	return ContextString;
+	*/
 }
 
 void UK2Node_MounteaDialogueCallFunction::Initialize(const UFunction* relevantFunction, UClass* relevantClass)
