@@ -377,12 +377,8 @@ protected:
 	/**
 	 * Dialogue Context which is used to contain temporary data.
 	 */
-	UPROPERTY(ReplicatedUsing=OnRep_DialogueContext, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
+	UPROPERTY(VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	TObjectPtr<UMounteaDialogueContext> DialogueContext = nullptr;
-
-	/** replicated struct*/
-	UPROPERTY()
-	FMounteaDialogueContextReplicatedStruct ReplicatedDialogueContext;
 
 	/**
 	 * TimerHandle managing Dialogue Row.
@@ -422,8 +418,8 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void CallDialogueNodeSelected_Server(const FGuid& NodeGuid);
 	
-	UFUNCTION(Client, Reliable)
-	void UpdateDialogueContext_Client(const FMounteaDialogueContextReplicatedStruct& NewDialogueContext);
+	UFUNCTION(NetMulticast, Reliable)
+	void UpdateDialogueContext_Multicast(const FMounteaDialogueContextReplicatedStruct& NewDialogueContext);
 
 	UFUNCTION(Server, Reliable)
 	void StartDialogue_Server();
@@ -454,13 +450,10 @@ protected:
 
 	UFUNCTION()
 	void OnRep_ManagerState();
-	UFUNCTION()
-	void OnRep_DialogueContext();
 
 	void NetPushDialogueContext();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	
 #pragma endregion
 

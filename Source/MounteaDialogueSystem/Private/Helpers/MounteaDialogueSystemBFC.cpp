@@ -122,16 +122,26 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC
 	{
 		return ParticipantComp;
 	}
+
+	APawn* playerPawn = Cast<APawn>(WorldContextObject);
+	if (playerPawn)
+	{
+		return GetPlayerDialogueParticipant(playerPawn);
+	}
+
+	const APlayerState* playerState = Cast<APlayerState>(WorldContextObject);
+	if (playerState)
+	{
+		return GetPlayerDialogueParticipant(playerState->GetPawn());
+	}
 	
-	const APlayerController* PlayerController = WorldContextObject->GetWorld()->GetFirstPlayerController();
-
-	if (!PlayerController) return nullptr;
-
-	const APawn* PlayerPawn = PlayerController->GetPawn();
-
-	if (PlayerPawn == nullptr) return nullptr;
-
-	return PlayerPawn->FindComponentByInterface(UMounteaDialogueParticipantInterface::StaticClass());
+	const APlayerController* playerController = Cast<APlayerController>(WorldContextObject);
+	if (playerController)
+	{
+		return GetPlayerDialogueParticipant(playerController->GetPawn());
+	}
+	
+	return nullptr;
 }
 
 bool UMounteaDialogueSystemBFC::IsContextValid(const UMounteaDialogueContext* Context)
