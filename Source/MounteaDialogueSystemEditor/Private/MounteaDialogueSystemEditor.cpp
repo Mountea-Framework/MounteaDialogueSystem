@@ -24,6 +24,8 @@
 #include "Serialization/JsonReader.h"
 #include "Styling/SlateStyleRegistry.h"
 
+#include "PythonScriptPlugin.h"
+
 #include "ToolMenus.h"
 #include "AssetActions/MounteaDialogueDataTableAssetAction.h"
 #include "DetailsPanel/MounteaDialogueDecorator_Details.h"
@@ -261,6 +263,24 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		check(ThisPlugin.IsValid());
 	
 		UGameplayTagsManager::Get().AddTagIniSearchPath(ThisPlugin->GetBaseDir() / TEXT("Config") / TEXT("Tags"));
+	}
+
+
+	// Initialize Python support
+	if (IPluginManager::Get().FindPlugin("PythonScriptPlugin"))
+	{
+		const FString PluginDir = IPluginManager::Get().FindPlugin("MounteaDialogueSystem")->GetBaseDir();
+		const FString PythonPath = FPaths::Combine(PluginDir, TEXT("Content/Python"));
+		
+		// Add plugin's Python path to sys.path
+		FPythonScriptPlugin::Get()->AddToModuleSearchPaths(PythonPath);
+		
+		// Execute startup script if it exists
+		const FString StartupScript = FPaths::Combine(PythonPath, TEXT("startup/__init__.py"));
+		if (FPaths::FileExists(StartupScript))
+		{
+			FPythonScriptPlugin::Get()->ExecPythonCommand(*FString::Printf(TEXT("import sys; sys.path.append('%s'); import startup"), *PythonPath));
+		}
 	}
 	
 	EditorLOG_WARNING(TEXT("MounteaDialogueSystemEditor module has been loaded"));
