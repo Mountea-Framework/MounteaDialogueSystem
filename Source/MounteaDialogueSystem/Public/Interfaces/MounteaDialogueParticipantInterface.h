@@ -17,14 +17,16 @@ class UMounteaDialogueParticipantInterface : public UInterface
 
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
+class IMounteaDialogueManagerInterface;
 
 struct FDialogueRow;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueGraphChanged,						UMounteaDialogueGraph*, NewGraph);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantStateChanged,			const EDialogueParticipantState&, NewState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueGraphChanged, UMounteaDialogueGraph*, NewGraph);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantStateChanged, const EDialogueParticipantState&, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantAudioComponentChanged,	const UAudioComponent*, NewAudioComp);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FParticipantStartingNodeSaved,				const UMounteaDialogueGraphNode*, NewSavedNode);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FParticipantCommandRequested,				const FString&, Command, UObject*, OptionalPayload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FParticipantStartingNodeSaved, const UMounteaDialogueGraphNode*, NewSavedNode);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FParticipantCommandRequested, const FString&, Command, UObject*, OptionalPayload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueUpdated, const TScriptInterface<IMounteaDialogueManagerInterface>&, OwningManager);
 
 /**
  * 
@@ -284,6 +286,7 @@ public:
 	virtual FDialogueParticipantAudioComponentChanged& GetDialogueParticipantAudioComponentChangedEventHandle() = 0;
 	virtual FParticipantStartingNodeSaved& GetParticipantStartingNodeSavedEventHandle() = 0;
 	virtual FParticipantCommandRequested& GetParticipantCommandRequestedEventHandle() = 0;
+	virtual FDialogueUpdated& GetDialogueUpdatedEventHandle() = 0;
 
 #pragma endregion 
 };

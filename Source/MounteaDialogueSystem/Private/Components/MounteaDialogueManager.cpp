@@ -698,8 +698,6 @@ void UMounteaDialogueManager::StartExecuteDialogueRow_Implementation()
 	}
 	else // Dedicated server
 	{
-		//UpdateDialogueContext_Multicast(FMounteaDialogueContextReplicatedStruct(DialogueContext));
-		
 		UpdateDialogueUI_Client(MounteaDialogueWidgetCommands::ShowDialogueRow);
 	}
 
@@ -1146,55 +1144,62 @@ void UMounteaDialogueManager::InitializeDialogue_Server_Implementation(APlayerSt
 void UMounteaDialogueManager::UpdateDialogueContext_Multicast_Implementation(const FMounteaDialogueContextReplicatedStruct& NewDialogueContext)
 {
 	// Process multicast to clients only (no OnRep for us)
-	if (GetOwner() && GetOwner()->HasAuthority())
-		return;
-	
-	if (NewDialogueContext.IsValid())
+	if (GetOwner() && !GetOwner()->HasAuthority())
 	{
-		if (!DialogueContext)
+		if (NewDialogueContext.IsValid())
 		{
-			LOG_INFO(TEXT("[UpdateDialogueContext] No Context available, creating new local one."))
-			DialogueContext = NewObject<UMounteaDialogueContext>(this);
-		}
+			if (!DialogueContext)
+			{
+				LOG_INFO(TEXT("[UpdateDialogueContext] No Context available, creating new local one."))
+				DialogueContext = NewObject<UMounteaDialogueContext>(this);
+			}
 	
-		if (DialogueContext)
-		{
-			DialogueContext->ActiveDialogueParticipant = NewDialogueContext.ActiveDialogueParticipant;
-			DialogueContext->PlayerDialogueParticipant = NewDialogueContext.PlayerDialogueParticipant;
-			DialogueContext->DialogueParticipant = NewDialogueContext.DialogueParticipant;
-			DialogueContext->DialogueParticipants = NewDialogueContext.DialogueParticipants;
-			DialogueContext->ActiveDialogueRowDataIndex = NewDialogueContext.ActiveDialogueRowDataIndex;
-			DialogueContext->ActiveDialogueTableHandle = NewDialogueContext.ActiveDialogueTableHandle;
+			if (DialogueContext)
+			{
+				DialogueContext->ActiveDialogueParticipant = NewDialogueContext.ActiveDialogueParticipant;
+				DialogueContext->PlayerDialogueParticipant = NewDialogueContext.PlayerDialogueParticipant;
+				DialogueContext->DialogueParticipant = NewDialogueContext.DialogueParticipant;
+				DialogueContext->DialogueParticipants = NewDialogueContext.DialogueParticipants;
+				DialogueContext->ActiveDialogueRowDataIndex = NewDialogueContext.ActiveDialogueRowDataIndex;
+				DialogueContext->ActiveDialogueTableHandle = NewDialogueContext.ActiveDialogueTableHandle;
 
-			UMounteaDialogueGraph* activeGraph = DialogueContext->DialogueParticipant->Execute_GetDialogueGraph(DialogueContext->DialogueParticipant.GetObject());
+				UMounteaDialogueGraph* activeGraph = DialogueContext->DialogueParticipant->Execute_GetDialogueGraph(DialogueContext->DialogueParticipant.GetObject());
 
-			// Find Active Node
-			DialogueContext->ActiveNode = UMounteaDialogueSystemBFC::FindNodeByGUID(activeGraph, NewDialogueContext.ActiveNodeGuid);
+				// Find Active Node
+				DialogueContext->ActiveNode = UMounteaDialogueSystemBFC::FindNodeByGUID(activeGraph, NewDialogueContext.ActiveNodeGuid);
 
-			// Find child Nodes
-			DialogueContext->AllowedChildNodes = UMounteaDialogueSystemBFC::FindNodesByGUID(activeGraph, NewDialogueContext.AllowedChildNodes);
+				// Find child Nodes
+				DialogueContext->AllowedChildNodes = UMounteaDialogueSystemBFC::FindNodesByGUID(activeGraph, NewDialogueContext.AllowedChildNodes);
 
-			// Find Previous Active Node
-			DialogueContext->PreviousActiveNode = NewDialogueContext.PreviousActiveNodeGuid;
+				// Find Previous Active Node
+				DialogueContext->PreviousActiveNode = NewDialogueContext.PreviousActiveNodeGuid;
 
-			// Find data locally
-			UMounteaDialogueGraphNode_DialogueNodeBase* dialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(DialogueContext->ActiveNode);
+				// Find data locally
+				UMounteaDialogueGraphNode_DialogueNodeBase* dialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(DialogueContext->ActiveNode);
 
-			const FDialogueRow selectedRow = dialogueNode ? UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveDialogueTableHandle.DataTable,DialogueContext->ActiveDialogueTableHandle.RowName) : FDialogueRow::Invalid();
-			if (dialogueNode)
-				DialogueContext->ActiveDialogueRow = selectedRow.IsValid() ? selectedRow : UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
+				const FDialogueRow selectedRow = dialogueNode ? UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveDialogueTableHandle.DataTable,DialogueContext->ActiveDialogueTableHandle.RowName) : FDialogueRow::Invalid();
+				if (dialogueNode)
+					DialogueContext->ActiveDialogueRow = selectedRow.IsValid() ? selectedRow : UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode);
+			}
 		}
+		else
+		{
+			if (DialogueContext)
+			{
+				DialogueContext->MarkAsGarbage();
+				DialogueContext = nullptr;
+			}
+		}
+
+		OnDialogueContextUpdated.Broadcast(DialogueContext);
 	}
-	else
+
+	// Broadcast updates to all Participants
+	for (const auto& participant : DialogueContext->DialogueParticipants)
 	{
-		if (DialogueContext)
-		{
-			DialogueContext->MarkAsGarbage();
-			DialogueContext = nullptr;
-		}
+		if (participant.GetObject())
+			participant->GetDialogueUpdatedEventHandle().Broadcast(this);
 	}
-
-	OnDialogueContextUpdated.Broadcast(DialogueContext);
 }
 
 void UMounteaDialogueManager::CallDialogueNodeSelected_Server_Implementation(const FGuid& NodeGuid)

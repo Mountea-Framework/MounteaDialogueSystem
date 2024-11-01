@@ -184,6 +184,12 @@ protected:
 	 */
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Participant")
 	FParticipantCommandRequested ParticipantCommandRequested;
+	/**
+	 * Event called once Dialogue updates.
+	 * Manager calls to Every participant. This serves as notification rather than passing any data.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Participant")
+	FDialogueUpdated OnDialogueUpdated;
 	
 #pragma endregion 
 
@@ -258,6 +264,8 @@ public:
 	{ return OnStartingNodeSaved; };
 	virtual FParticipantCommandRequested& GetParticipantCommandRequestedEventHandle() override
 	{return ParticipantCommandRequested; };
+	virtual FDialogueUpdated& GetDialogueUpdatedEventHandle() override
+	{ return OnDialogueUpdated; };
 	
 #pragma endregion 
 
