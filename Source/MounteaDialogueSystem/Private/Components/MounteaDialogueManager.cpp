@@ -66,6 +66,12 @@ void UMounteaDialogueManager::BeginPlay()
 	}
 	
 	Execute_SetDialogueManagerState(this, Execute_GetDefaultDialogueManagerState(this));
+
+	// Force replicate Owner to avoid setup issues with less experienced users
+	if (GetOwner() && !GetOwner()->GetIsReplicated() && GetIsReplicated())
+	{
+		GetOwner()->SetReplicates(GetIsReplicated());
+	}
 }
 
 void UMounteaDialogueManager::NetPushDialogueContext()

@@ -101,7 +101,7 @@ protected:
 	* ❗ In order to start Dialogue, this value must not be Disabled.
 	* ❔ Can be updated using SetDialogueParticipantState function.
 	*/
-	UPROPERTY(ReplicatedUsing=OnResp_ParticipantState, Transient, VisibleAnywhere,  Category="Mountea|Dialogue|Participant", AdvancedDisplay,  meta=(NoResetToDefault))
+	UPROPERTY(ReplicatedUsing=OnResp_ParticipantState, Transient, VisibleAnywhere,  Category="Mountea|Dialogue|Participant",  meta=(NoResetToDefault))
 	EDialogueParticipantState ParticipantState;
 
 	/**
@@ -223,8 +223,7 @@ public:
 
 	virtual void SetDialogueGraph_Implementation(UMounteaDialogueGraph* NewDialogueGraph) override;
 
-	virtual EDialogueParticipantState GetParticipantState_Implementation() const override
-	{ return  ParticipantState; };
+	virtual EDialogueParticipantState GetParticipantState_Implementation() const override;
 
 	virtual void SetParticipantState_Implementation(const EDialogueParticipantState NewState) override;
 	

@@ -38,6 +38,12 @@ void UMounteaDialogueParticipant::BeginPlay()
 	Execute_SetAudioComponent(this,FindAudioComponent());
 
 	Execute_InitializeParticipant(this);
+
+	// Force replicate Owner to avoid setup issues with less experienced users
+	if (GetOwner() && !GetOwner()->GetIsReplicated() && GetIsReplicated())
+	{
+		GetOwner()->SetReplicates(GetIsReplicated());
+	}
 }
 
 void UMounteaDialogueParticipant::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -193,6 +199,9 @@ void UMounteaDialogueParticipant::SetDialogueGraph_Implementation(UMounteaDialog
 	}
 }
 
+EDialogueParticipantState UMounteaDialogueParticipant::GetParticipantState_Implementation() const
+{ return  ParticipantState; };
+
 void UMounteaDialogueParticipant::SetParticipantState_Implementation(const EDialogueParticipantState NewState)
 {
 	if (NewState == ParticipantState)
@@ -206,18 +215,19 @@ void UMounteaDialogueParticipant::SetParticipantState_Implementation(const EDial
 		LOG_ERROR(TEXT("[SetParticipantState] Component has no Owner!"))
 		return;
 	}
-	if (GetOwner()->HasAuthority())
-	{
-		ParticipantState = NewState;
-
-		UpdateParticipantTick();
-
-		OnDialogueParticipantStateChanged.Broadcast(NewState);
-	}
-	else
+	
+	if (!GetOwner()->HasAuthority())
 	{
 		SetParticipantState_Server(NewState);
 	}
+	
+	LOG_WARNING(TEXT("[SetParticipantState] Setting new state value to %s"), *UMounteaDialogueSystemBFC::GetEnumFriendlyName(NewState))
+
+	ParticipantState = NewState;
+
+	UpdateParticipantTick();
+	
+	OnDialogueParticipantStateChanged.Broadcast(NewState);
 }
 
 void UMounteaDialogueParticipant::SetDefaultParticipantState_Implementation(const EDialogueParticipantState NewState)

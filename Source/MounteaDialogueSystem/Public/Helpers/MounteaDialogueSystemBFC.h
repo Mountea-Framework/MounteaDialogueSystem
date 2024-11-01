@@ -406,4 +406,25 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="sort,order,diaogue,child,nodes"), meta=(CustomTag="MounteaK2Getter"))
 	static void SortNodes(TArray<UMounteaDialogueGraphNode*>& SortedNodes);
 
+	template<typename T>
+	static FString GetEnumFriendlyName(const T EnumValue, const bool bShortName = false)
+	{
+		static_assert(TIsEnum<T>::Value, "Template parameter must be an enum type");
+    
+		const UEnum* EnumPtr = StaticEnum<T>();
+		if (ensure(EnumPtr))
+		{
+			if (bShortName)
+			{
+				return EnumPtr->GetDisplayNameTextByValue(static_cast<int64>(EnumValue)).ToString();
+			}
+			else
+			{
+				return EnumPtr->GetDisplayNameTextByValue(static_cast<int64>(EnumValue)).ToString();
+			}
+		}
+    
+		return TEXT("Invalid");
+	}
+
 };
