@@ -29,6 +29,7 @@
 #include "AssetActions/MounteaDialogueDataTableAssetAction.h"
 #include "DetailsPanel/MounteaDialogueDecorator_Details.h"
 #include "HelpButton/MDSCommands.h"
+#include "Helpers/MounteaDialogueFixUtilities.h"
 #include "ImportConfig/MounteaDialogueImportConfig.h"
 #include "Interfaces/IMainFrameModule.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
@@ -214,6 +215,12 @@ void FMounteaDialogueSystemEditor::StartupModule()
 			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::DialoguerButtonClicked), 
 			FCanExecuteAction()
 		);
+
+		PluginCommands->MapAction(
+			FMDSCommands::Get().FixMounteaNodesAction,
+			FExecuteAction::CreateStatic(&FMounteaDialogueFixUtilities::ExecutePythonFixer),
+			FCanExecuteAction::CreateStatic(&FMounteaDialogueFixUtilities::CanExecute)
+		);
 		
 		IMainFrameModule& mainFrame = FModuleManager::Get().LoadModuleChecked<IMainFrameModule>("MainFrame");
 		mainFrame.GetMainFrameCommandBindings()->Append(PluginCommands.ToSharedRef());
@@ -269,14 +276,14 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
 
 		ContentBrowserModule.GetAllAssetViewContextMenuExtenders().Add(
-			FContentBrowserMenuExtender_SelectedAssets::CreateLambda([](const TArray<FAssetData>& SelectedAssets)
+			FContentBrowserMenuExtender_SelectedAssets::CreateLambda([this](const TArray<FAssetData>& SelectedAssets)
 			{
 				TSharedRef<FExtender> Extender = MakeShared<FExtender>();
 
 				Extender->AddMenuExtension(
 					"CommonAssetActions",
 					EExtensionHook::Before,
-					TSharedPtr<FUICommandList>(),
+					PluginCommands,
 					FMenuExtensionDelegate::CreateLambda([SelectedAssets](FMenuBuilder& MenuBuilder)
 					{
 						MenuBuilder.BeginSection("MounteaActions", LOCTEXT("MounteaActionsMenuHeading", "Mountea Actions"));
