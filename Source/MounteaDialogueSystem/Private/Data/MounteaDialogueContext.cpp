@@ -3,6 +3,7 @@
 
 #include "Data/MounteaDialogueContext.h"
 
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Interfaces/MounteaDialogueParticipantInterface.h"
 #include "Net/UnrealNetwork.h"
 
@@ -299,18 +300,4 @@ bool UMounteaDialogueContext::RemoveDialogueParticipantsBP(const TArray<TScriptI
 	}
 
 	return false;
-}
-
-void UMounteaDialogueContext::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	UObject::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueParticipant);
-	DOREPLIFETIME(UMounteaDialogueContext, PlayerDialogueParticipant);
-	DOREPLIFETIME(UMounteaDialogueContext, DialogueParticipant);
-	DOREPLIFETIME(UMounteaDialogueContext, DialogueParticipants);
-	DOREPLIFETIME(UMounteaDialogueContext, ActiveNode);
-	DOREPLIFETIME(UMounteaDialogueContext, AllowedChildNodes);
-	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueRowDataIndex);
-	DOREPLIFETIME(UMounteaDialogueContext, TraversedPath);
 }
