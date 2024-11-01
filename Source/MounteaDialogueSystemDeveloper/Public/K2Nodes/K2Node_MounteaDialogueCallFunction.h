@@ -31,5 +31,5 @@ public:
 	virtual FLinearColor GetNodeTitleColor() const override;
 	virtual FName GetCornerIcon() const override;
 	virtual FSlateIcon GetIconAndTint(FLinearColor& outColor) const override;
-
+	virtual FText GetFunctionContextString() const override;
 };

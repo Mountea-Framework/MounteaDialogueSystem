@@ -44,7 +44,7 @@ void UMounteaDialogueGraphNode_Delay::ProcessNode_Implementation(const TScriptIn
 	else
 	{
 		TScriptInterface<IMounteaDialogueManagerInterface> MounteaDialogueManagerInterface = Manager;
-		MounteaDialogueManagerInterface->GetDialogueNodeFinishedEventHandle().Broadcast(Manager->GetDialogueContext());
+		MounteaDialogueManagerInterface->GetDialogueNodeFinishedEventHandle().Broadcast(Manager->Execute_GetDialogueContext(Manager.GetObject()));
 	}
 }
 
@@ -69,7 +69,7 @@ void UMounteaDialogueGraphNode_Delay::OnDelayDurationExpired(const TScriptInterf
 	
 	TimerHandle_NodeDelay.Invalidate();
 	
-	if (const auto Context = MounteaDialogueManagerInterface->GetDialogueContext())
+	if (const auto Context = MounteaDialogueManagerInterface->Execute_GetDialogueContext(MounteaDialogueManagerInterface.GetObject()))
 	{
 		MounteaDialogueManagerInterface->GetDialogueNodeFinishedEventHandle().Broadcast(Context);
 		

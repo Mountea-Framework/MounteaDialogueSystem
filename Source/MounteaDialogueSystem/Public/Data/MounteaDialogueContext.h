@@ -101,9 +101,6 @@ public:
 	UPROPERTY(/*Replicated, */VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue", meta=(NoResetToDefault))
 	TArray<FDialogueTraversePath> TraversedPath;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue")
-	int32 RepKey = 0;
-
 public:
 
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(CompactNodeTitle="To String"), meta=(CustomTag="MounteaK2Setter"))
@@ -183,11 +180,6 @@ public:
 	virtual bool RemoveDialogueParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 	virtual bool RemoveDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant);
 	virtual void ClearDialogueParticipants();
-	
-	int GetRepKey() const
-	{ return RepKey; }
-	void IncreaseRepKey()
-	{ RepKey++; };
 		
 	/**
 	 * Sets the dialogue context.
@@ -268,8 +260,9 @@ public:
 	
 	FDialogueContextUpdatedFromBlueprint DialogueContextUpdatedFromBlueprint;
 
-protected:
+private:
 
-	//virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	//virtual bool IsSupportedForNetworking() const override {return true;} ;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual bool IsSupportedForNetworking() const override {return true;};
+	
 };

@@ -76,7 +76,7 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::EvaluateDecorator_Implementation()
 	// Let's return BP Updatable Context rather than Raw
 	if (!Context)
 	{
-		Context = OwningManager->GetDialogueContext();
+		Context = OwningManager->Execute_GetDialogueContext(OwningManager.GetObject());
 	}
 
 	// We can live for a moment without Context, because this Decorator might be called before Context is initialized

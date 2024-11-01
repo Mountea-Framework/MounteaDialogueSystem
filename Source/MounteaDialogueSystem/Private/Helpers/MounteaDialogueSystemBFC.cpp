@@ -122,16 +122,26 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC
 	{
 		return ParticipantComp;
 	}
+
+	APawn* playerPawn = Cast<APawn>(WorldContextObject);
+	if (playerPawn)
+	{
+		return GetPlayerDialogueParticipant(playerPawn);
+	}
+
+	const APlayerState* playerState = Cast<APlayerState>(WorldContextObject);
+	if (playerState)
+	{
+		return GetPlayerDialogueParticipant(playerState->GetPawn());
+	}
 	
-	const APlayerController* PlayerController = WorldContextObject->GetWorld()->GetFirstPlayerController();
-
-	if (!PlayerController) return nullptr;
-
-	const APawn* PlayerPawn = PlayerController->GetPawn();
-
-	if (PlayerPawn == nullptr) return nullptr;
-
-	return PlayerPawn->FindComponentByInterface(UMounteaDialogueParticipantInterface::StaticClass());
+	const APlayerController* playerController = Cast<APlayerController>(WorldContextObject);
+	if (playerController)
+	{
+		return GetPlayerDialogueParticipant(playerController->GetPawn());
+	}
+	
+	return nullptr;
 }
 
 bool UMounteaDialogueSystemBFC::IsContextValid(const UMounteaDialogueContext* Context)
@@ -191,7 +201,7 @@ bool UMounteaDialogueSystemBFC::CloseDialogue(AActor* WorldContextObject, const 
 		return false;
 	}
 		
-	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
+	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>(WorldContextObject);
 	Context->SetDialogueContext(DialogueParticipant, nullptr, TArray<UMounteaDialogueGraphNode*>());
 		
 	GetDialogueManager(WorldContextObject)->GetDialogueClosedEventHandle().Broadcast(Context);
@@ -220,7 +230,7 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 
 	if (MainParticipant->Execute_CanStartDialogue(MainParticipant.GetObject()) == false)
 	{
-		LOG_ERROR(TEXT("[StartDialogue]  Main Participant cannot starti Dialogue!. Cannot start dialogue."));
+		LOG_ERROR(TEXT("[StartDialogue] Main Participant cannot start Dialogue!. Cannot start dialogue."));
 		return false;
 	}
 
@@ -352,7 +362,7 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 		}
 	}
 	
-	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
+	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>(DialogueManager.GetObject());
 	Context->SetDialogueContext(MainParticipant, NodeToStart, TArray<UMounteaDialogueGraphNode*>());
 
 	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(Initiator));
@@ -453,7 +463,7 @@ bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextOb
 	newDialogueTableHandle.DataTable = dialogueNodeToStart->GetDataTable();
 	newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();
 
-	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
+	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>(DialogueManager.GetObject());
 	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(Initiator));
 	Context->UpdateActiveDialogueTable(dialogueNodeToStart ? newDialogueTableHandle : FDataTableRowHandle());
 	
@@ -513,7 +523,7 @@ bool UMounteaDialogueSystemBFC::AddParticipants(AActor* WorldContextObject, cons
 		return false;
 	}
 
-	UMounteaDialogueContext* Context = Manager->GetDialogueContext();
+	UMounteaDialogueContext* Context = Manager->Execute_GetDialogueContext(Manager.GetObject());
 
 	if (!Context)
 	{
@@ -531,7 +541,7 @@ bool UMounteaDialogueSystemBFC::RemoveParticipants(AActor* WorldContextObject, c
 		return false;
 	}
 
-	UMounteaDialogueContext* Context = Manager->GetDialogueContext();
+	UMounteaDialogueContext* Context = Manager->Execute_GetDialogueContext(Manager.GetObject());
 
 	if (!Context)
 	{

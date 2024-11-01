@@ -101,7 +101,7 @@ protected:
 	* ❗ In order to start Dialogue, this value must not be Disabled.
 	* ❔ Can be updated using SetDialogueParticipantState function.
 	*/
-	UPROPERTY(ReplicatedUsing=OnResp_ParticipantState, Transient, VisibleAnywhere,  Category="Mountea|Dialogue|Participant", AdvancedDisplay,  meta=(NoResetToDefault))
+	UPROPERTY(ReplicatedUsing=OnResp_ParticipantState, Transient, VisibleAnywhere,  Category="Mountea|Dialogue|Participant",  meta=(NoResetToDefault))
 	EDialogueParticipantState ParticipantState;
 
 	/**
@@ -184,6 +184,12 @@ protected:
 	 */
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Participant")
 	FParticipantCommandRequested ParticipantCommandRequested;
+	/**
+	 * Event called once Dialogue updates.
+	 * Manager calls to Every participant. This serves as notification rather than passing any data.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Participant")
+	FDialogueUpdated OnDialogueUpdated;
 	
 #pragma endregion 
 
@@ -217,8 +223,7 @@ public:
 
 	virtual void SetDialogueGraph_Implementation(UMounteaDialogueGraph* NewDialogueGraph) override;
 
-	virtual EDialogueParticipantState GetParticipantState_Implementation() const override
-	{ return  ParticipantState; };
+	virtual EDialogueParticipantState GetParticipantState_Implementation() const override;
 
 	virtual void SetParticipantState_Implementation(const EDialogueParticipantState NewState) override;
 	
@@ -258,6 +263,8 @@ public:
 	{ return OnStartingNodeSaved; };
 	virtual FParticipantCommandRequested& GetParticipantCommandRequestedEventHandle() override
 	{return ParticipantCommandRequested; };
+	virtual FDialogueUpdated& GetDialogueUpdatedEventHandle() override
+	{ return OnDialogueUpdated; };
 	
 #pragma endregion 
 

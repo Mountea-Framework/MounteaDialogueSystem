@@ -15,7 +15,7 @@
  * ❔ Allows any Actor to be Dialogue Manager
  * ❔ Implements 'IMounteaDialogueManagerInterface'.
  */
-UCLASS(ClassGroup=(Mountea), Blueprintable,  AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"), meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Manager"))
+UCLASS(ClassGroup=(Mountea), Blueprintable,  AutoExpandCategories=("Mountea","Dialogue","Mountea|Dialogue"), meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Manager"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueManager : public UActorComponent, public IMounteaDialogueManagerInterface
 {
 	GENERATED_BODY()
@@ -240,50 +240,26 @@ protected:
 #pragma region InterfaceImplementations
 
 public:
-	
+
 	virtual AActor* GetOwningActor_Implementation() const override;
-
-	/**
-	 * Returns Dialogue Widget Class if any exists already.
-	 * ❗ If none specified per Manager will return Class from Project Settings
-	 * ❗ Could return null
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(Keywords="UI, Widget"), meta=(CustomTag="MounteaK2Getter"))
-	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const override;
-
-	/**
-	 * Returns Dialogue Context if any exists.
-	 * ❗ Could return null
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(Keywords="Context, Get"), meta=(CustomTag="MounteaK2Getter"))
-	virtual UMounteaDialogueContext* GetDialogueContext() const override
+	virtual UObject* GetManagerObject_Implementation() override
+	{ return this; };
+	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass_Implementation() const override;
+	
+	virtual UMounteaDialogueContext* GetDialogueContext_Implementation() const override
 	{ return DialogueContext; };
+	virtual EDialogueManagerState GetState_Implementation() const override
+	{ return ManagerState; };
 
-	/**
-	 * Returns the current state of the Dialogue Manager.
-	 * @return The current state of the Dialogue Manager.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(Keywords="Context, Get"), meta=(CustomTag="MounteaK2Getter"))
-	virtual EDialogueManagerState GetDialogueManagerState() const override
-	{ return  ManagerState; };
-
-	/**
-	 * Returns the default state of the Dialogue Manager.
-	 * @return The default state of the Dialogue Manager.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(Keywords="Context, Get"), meta=(CustomTag="MounteaK2Getter"))
-	virtual EDialogueManagerState GetDefaultDialogueManagerState() const override
+	virtual EDialogueManagerState GetDefaultDialogueManagerState_Implementation() const override
 	{ return DefaultManagerState; };
-	
-	virtual void PrepareNode_Implementation() override;
-	
-public:
 
 	virtual void InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const FDialogueParticipants& Participants) override;
 
 	virtual void StartDialogue_Implementation() override;
 	virtual void CloseDialogue_Implementation() override;
 	virtual void ProcessNode_Implementation() override;
+	virtual void PrepareNode_Implementation() override;
 	
 	virtual bool InvokeDialogueUI_Implementation(FString& Message) override;
 	virtual bool UpdateDialogueUI_Implementation(FString& Message, const FString& Command) override;
@@ -297,7 +273,6 @@ public:
 	virtual void StartExecuteDialogueRow_Implementation() override;
 	virtual void FinishedExecuteDialogueRow_Implementation() override;
 	virtual void TriggerNextDialogueRow_Implementation() override;
-	UFUNCTION() void NextDialogueRowDataRequested(UMounteaDialogueContext* Context);
 	
 	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) override;
 	virtual void SkipDialogueRow_Implementation() override;
@@ -402,12 +377,8 @@ protected:
 	/**
 	 * Dialogue Context which is used to contain temporary data.
 	 */
-	UPROPERTY(/*ReplicatedUsing=OnRep_DialogueContext,*/ VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
+	UPROPERTY(VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	TObjectPtr<UMounteaDialogueContext> DialogueContext = nullptr;
-
-	/** replicated struct*/
-	UPROPERTY()
-	FMounteaDialogueContextReplicatedStruct ReplicatedDialogueContext;
 
 	/**
 	 * TimerHandle managing Dialogue Row.
@@ -444,8 +415,8 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void CallDialogueNodeSelected_Server(const FGuid& NodeGuid);
 	
-	UFUNCTION(Client, Reliable)
-	void UpdateDialogueContext_Client(const FMounteaDialogueContextReplicatedStruct& NewDialogueContext);
+	UFUNCTION(NetMulticast, Reliable)
+	void UpdateDialogueContext_Multicast(const FMounteaDialogueContextReplicatedStruct& NewDialogueContext);
 
 	UFUNCTION(Server, Reliable)
 	void StartDialogue_Server();
@@ -468,19 +439,19 @@ protected:
 	void RequestVoiceStop_Client(USoundBase* SoundBase);
 	UFUNCTION(Server, Reliable)
 	void TriggerNextDialogueRow_Server();
-
+	
 	UFUNCTION(Server, Reliable)
 	void PostUIInitialized();
+	
+	UFUNCTION() void NextDialogueRowDataRequested(UMounteaDialogueContext* Context);
 
 	UFUNCTION()
 	void OnRep_ManagerState();
-	/*UFUNCTION()
-	void OnRep_DialogueContext();*/
 
 	void NetPushDialogueContext();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
+	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	
 #pragma endregion
 

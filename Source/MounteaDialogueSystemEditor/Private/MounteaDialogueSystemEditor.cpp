@@ -3,6 +3,7 @@
 #include "MounteaDialogueSystemEditor.h"
 
 #include "AssetToolsModule.h"
+#include "ContentBrowserModule.h"
 #include "GameplayTagsManager.h"
 #include "HttpModule.h"
 #include "AssetActions/MounteaDialogueAdditionalDataAssetAction.h"
@@ -28,6 +29,7 @@
 #include "AssetActions/MounteaDialogueDataTableAssetAction.h"
 #include "DetailsPanel/MounteaDialogueDecorator_Details.h"
 #include "HelpButton/MDSCommands.h"
+#include "Helpers/MounteaDialogueFixUtilities.h"
 #include "ImportConfig/MounteaDialogueImportConfig.h"
 #include "Interfaces/IMainFrameModule.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
@@ -213,6 +215,12 @@ void FMounteaDialogueSystemEditor::StartupModule()
 			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::DialoguerButtonClicked), 
 			FCanExecuteAction()
 		);
+
+		PluginCommands->MapAction(
+			FMDSCommands::Get().FixMounteaNodesAction,
+			FExecuteAction::CreateStatic(&FMounteaDialogueFixUtilities::ExecutePythonFixer),
+			FCanExecuteAction::CreateStatic(&FMounteaDialogueFixUtilities::CanExecute)
+		);
 		
 		IMainFrameModule& mainFrame = FModuleManager::Get().LoadModuleChecked<IMainFrameModule>("MainFrame");
 		mainFrame.GetMainFrameCommandBindings()->Append(PluginCommands.ToSharedRef());
@@ -261,6 +269,40 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		check(ThisPlugin.IsValid());
 	
 		UGameplayTagsManager::Get().AddTagIniSearchPath(ThisPlugin->GetBaseDir() / TEXT("Config") / TEXT("Tags"));
+	}
+
+	// Extend Menu
+	{
+		FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
+
+		ContentBrowserModule.GetAllAssetViewContextMenuExtenders().Add(
+			FContentBrowserMenuExtender_SelectedAssets::CreateLambda([this](const TArray<FAssetData>& SelectedAssets)
+			{
+				TSharedRef<FExtender> Extender = MakeShared<FExtender>();
+
+				Extender->AddMenuExtension(
+					"CommonAssetActions",
+					EExtensionHook::Before,
+					PluginCommands,
+					FMenuExtensionDelegate::CreateLambda([SelectedAssets](FMenuBuilder& MenuBuilder)
+					{
+						MenuBuilder.BeginSection("MounteaActions", LOCTEXT("MounteaActionsMenuHeading", "Mountea Actions"));
+						{
+							MenuBuilder.AddMenuEntry(
+								FMDSCommands::Get().FixMounteaNodesAction,
+								NAME_None,
+								LOCTEXT("MounteaAction", "Fix Mountea Nodes"),
+								LOCTEXT("MounteaActionTooltip", "🔧 Fix old Mountea nodes with new ones"),
+								FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Adjust")
+							);
+						}
+						MenuBuilder.EndSection();
+					})
+				);
+
+				return Extender;
+			})
+		);
 	}
 	
 	EditorLOG_WARNING(TEXT("MounteaDialogueSystemEditor module has been loaded"));

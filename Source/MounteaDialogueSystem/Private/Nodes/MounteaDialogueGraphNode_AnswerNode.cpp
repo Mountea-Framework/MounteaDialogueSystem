@@ -36,7 +36,7 @@ void UMounteaDialogueGraphNode_AnswerNode::PreProcessNode_Implementation(const T
 		// Switch Active Participant to Player
 		if (Manager.GetInterface())
 		{
-			if (const auto TempContext = Manager->GetDialogueContext())
+			if (const auto TempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
 			{
 				TempContext->UpdateActiveDialogueParticipant(TempContext->GetDialoguePlayerParticipant());
 			}

@@ -17,14 +17,16 @@ class UMounteaDialogueParticipantInterface : public UInterface
 
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
+class IMounteaDialogueManagerInterface;
 
 struct FDialogueRow;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueGraphChanged,						UMounteaDialogueGraph*, NewGraph);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantStateChanged,			const EDialogueParticipantState&, NewState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueGraphChanged, UMounteaDialogueGraph*, NewGraph);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantStateChanged, const EDialogueParticipantState&, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantAudioComponentChanged,	const UAudioComponent*, NewAudioComp);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FParticipantStartingNodeSaved,				const UMounteaDialogueGraphNode*, NewSavedNode);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FParticipantCommandRequested,				const FString&, Command, UObject*, OptionalPayload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FParticipantStartingNodeSaved, const UMounteaDialogueGraphNode*, NewSavedNode);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FParticipantCommandRequested, const FString&, Command, UObject*, OptionalPayload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueUpdated, const TScriptInterface<IMounteaDialogueManagerInterface>&, OwningManager);
 
 /**
  * 
@@ -110,7 +112,7 @@ public:
 	 * It does come with Native C++ implementation, which can be overriden in child C++ classes.
 	 * ❗ If you are using Blueprint implementation, don't forget to call Parent Node, which contains all parent implementations.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Validate"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	bool CanStartDialogue() const;
 	virtual bool CanStartDialogue_Implementation() const = 0;
 	
@@ -119,7 +121,7 @@ public:
 	 *
 	 * @return The owning actor for this Dialogue Participant Component.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	AActor* GetOwningActor() const;
 	virtual AActor* GetOwningActor_Implementation() const = 0;
 	
@@ -128,7 +130,7 @@ public:
 	 *
 	 * @param NewStartingNode The node to set as the starting node
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	void SaveStartingNode(UMounteaDialogueGraphNode* NewStartingNode);
 	virtual void SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode) = 0;
 	
@@ -138,7 +140,7 @@ public:
 	 *
 	 * @param InPath The traversed path of the dialogue graph to be saved.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	void SaveTraversedPath(TArray<FDialogueTraversePath>& InPath);
 	virtual void SaveTraversedPath_Implementation(TArray<FDialogueTraversePath>& InPath) = 0;
 	
@@ -146,7 +148,7 @@ public:
 	 * Getter for Participant Gameplay Tag.
 	 * @return Participant Gameplay Tag if any is associated.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	FGameplayTag GetParticipantTag() const;
 	virtual FGameplayTag GetParticipantTag_Implementation() const = 0;
 	
@@ -154,7 +156,7 @@ public:
 	 * Helps initialize Participant.
 	 * ❔ Is being called in BeginPlay.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	void InitializeParticipant();
 	virtual void InitializeParticipant_Implementation() = 0;
 
@@ -163,7 +165,7 @@ public:
 	 * @param ParticipantVoice The sound to play.
 	 * ❗ The sound should be a valid USoundBase object, otherwise nothing will be played.
 	 */ 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	void PlayParticipantVoice(USoundBase* ParticipantVoice);
 	virtual void PlayParticipantVoice_Implementation(USoundBase* ParticipantVoice) = 0;
 
@@ -172,7 +174,7 @@ public:
 	 * @param ParticipantVoice The sound to skip. Can be left empty.
 	 * ❗ The sound should be a valid USoundBase object, otherwise nothing will be skipped.
 	 */ 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	void SkipParticipantVoice(USoundBase* ParticipantVoice);
 	virtual void SkipParticipantVoice_Implementation(USoundBase* ParticipantVoice) = 0;
 		
@@ -182,7 +184,7 @@ public:
 	 * 
 	 * @return The saved starting node, or nullptr if there is none
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	UMounteaDialogueGraphNode* GetSavedStartingNode() const;
 	virtual UMounteaDialogueGraphNode* GetSavedStartingNode_Implementation() const = 0;
 	
@@ -193,7 +195,7 @@ public:
 	 *
 	 * @return A pointer to the dialogue graph
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	UMounteaDialogueGraph* GetDialogueGraph() const;
 	virtual UMounteaDialogueGraph* GetDialogueGraph_Implementation() const = 0;
 
@@ -203,14 +205,14 @@ public:
 	 *
 	 * @param NewDialogueGraph	A pointer to the dialogue graph to be used
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	void SetDialogueGraph(UMounteaDialogueGraph* NewDialogueGraph);
 	virtual void SetDialogueGraph_Implementation(UMounteaDialogueGraph* NewDialogueGraph) = 0;
 
 	/**
 	 * Returns the current state of the Dialogue Participant.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	EDialogueParticipantState GetParticipantState() const;
 	virtual EDialogueParticipantState GetParticipantState_Implementation() const = 0;
 	
@@ -219,14 +221,14 @@ public:
 	 * 
 	 * @param NewState The new state to set the dialogue participant to
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	void SetParticipantState(const EDialogueParticipantState NewState);
 	virtual void SetParticipantState_Implementation(const EDialogueParticipantState NewState) = 0;
 	
 	/**
 	 * Returns the default state of the Dialogue Participant.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	EDialogueParticipantState GetDefaultParticipantState() const;
 	virtual EDialogueParticipantState GetDefaultParticipantState_Implementation() const = 0;
 	
@@ -235,7 +237,7 @@ public:
 	 * 
 	 * @param NewState The new state to set the dialogue participant to
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	void SetDefaultParticipantState(const EDialogueParticipantState NewState);
 	virtual void SetDefaultParticipantState_Implementation(const EDialogueParticipantState NewState) = 0;
 
@@ -243,7 +245,7 @@ public:
 	 * Returns the audio component used to play the participant voices.
 	 * ❗ Could be null
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	UAudioComponent* GetAudioComponent() const;
 	virtual UAudioComponent* GetAudioComponent_Implementation() const = 0;
 	
@@ -252,24 +254,26 @@ public:
 	 *
 	 * @param NewAudioComponent The new audio component to use for dialogue audio.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	void SetAudioComponent(UAudioComponent* NewAudioComponent);
 	virtual void SetAudioComponent_Implementation(UAudioComponent* NewAudioComponent) = 0;
 
 	/**
-	 * 
-	 * @return 
+	 * Gets the traversed path of the Dialogue Participant.
+	 *
+	 * @return Array of traversed dialogue paths
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	TArray<FDialogueTraversePath> GetTraversedPath() const;
 	virtual TArray<FDialogueTraversePath> GetTraversedPath_Implementation() const = 0;
 
 	/**
-	 * 
-	 * @param Command 
-	 * @param Payload 
+	 * Processes a dialogue command for the Dialogue Participant.
+	 *
+	 * @param Command   The command to process
+	 * @param Payload   Optional payload object for the command
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	void ProcessDialogueCommand(const FString& Command, UObject* Payload);
 	virtual void ProcessDialogueCommand_Implementation(const FString& Command, UObject* Payload) = 0;
 	
@@ -282,6 +286,7 @@ public:
 	virtual FDialogueParticipantAudioComponentChanged& GetDialogueParticipantAudioComponentChangedEventHandle() = 0;
 	virtual FParticipantStartingNodeSaved& GetParticipantStartingNodeSavedEventHandle() = 0;
 	virtual FParticipantCommandRequested& GetParticipantCommandRequestedEventHandle() = 0;
+	virtual FDialogueUpdated& GetDialogueUpdatedEventHandle() = 0;
 
 #pragma endregion 
 };
