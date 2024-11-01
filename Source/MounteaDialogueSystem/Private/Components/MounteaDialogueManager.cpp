@@ -76,6 +76,7 @@ void UMounteaDialogueManager::NetPushDialogueContext()
 		DialogueContextReplicationKey++;
 		if (DialogueContext)
 		{
+			LOG_ERROR(TEXT("[NetPushDialogueContext] Updating Dialogue Context"))
 			DialogueContext->IncreaseRepKey();
 		}
 
@@ -172,11 +173,11 @@ void UMounteaDialogueManager::OnDialogueInitializedEvent_Internal(UMounteaDialog
 
 void UMounteaDialogueManager::OnDialogueInitialized_Multicast_Implementation(UMounteaDialogueContext* Context)
 {
-	OnDialogueInitializedEvent(Context);
-	
 	OnDialogueContextUpdated.Broadcast(Context);
 
 	OnDialogueStarted.Broadcast(Context);
+
+	OnDialogueInitializedEvent(Context);
 }
 
 void UMounteaDialogueManager::OnDialogueContextUpdatedEvent_Internal(UMounteaDialogueContext* NewContext)
@@ -1339,6 +1340,7 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, ManagerState, COND_InitialOrOwner);
+	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, DialogueContext, COND_None);
 }
 
 bool UMounteaDialogueManager::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
