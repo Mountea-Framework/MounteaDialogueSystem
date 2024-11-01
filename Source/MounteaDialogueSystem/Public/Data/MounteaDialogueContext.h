@@ -262,6 +262,7 @@ public:
 
 private:
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool IsSupportedForNetworking() const override {return true;};
 	
 };

@@ -151,8 +151,11 @@ void UMounteaDialogueManager::OnDialogueInitializedEvent_Internal(UMounteaDialog
 {
 	if (Context)
 	{
-		if (GetOwner() && GetOwner()->HasAuthority())
-			OnDialogueInitialized_Multicast(Context);
+		OnDialogueContextUpdated.Broadcast(Context);
+
+		OnDialogueStarted.Broadcast(Context);
+
+		OnDialogueInitializedEvent(Context);
 		
 		Context->DialogueContextUpdatedFromBlueprint.AddUniqueDynamic(this, &UMounteaDialogueManager::OnDialogueContextUpdatedEvent);
 	}
@@ -163,18 +166,10 @@ void UMounteaDialogueManager::OnDialogueInitializedEvent_Internal(UMounteaDialog
 	}
 }
 
-void UMounteaDialogueManager::OnDialogueInitialized_Multicast_Implementation(UMounteaDialogueContext* Context)
-{
-	OnDialogueContextUpdated.Broadcast(Context);
-
-	OnDialogueStarted.Broadcast(Context);
-
-	OnDialogueInitializedEvent(Context);
-}
-
 void UMounteaDialogueManager::OnDialogueContextUpdatedEvent_Internal(UMounteaDialogueContext* NewContext)
 {
-	SetDialogueContext(NewContext);
+	if (GetOwner() && GetOwner()->HasAuthority())
+		SetDialogueContext(NewContext);
 }
 
 void UMounteaDialogueManager::OnDialogueUserInterfaceChangedEvent_Internal(TSubclassOf<UUserWidget> DialogueUIClass, UUserWidget* DialogueUIWidget)
@@ -415,20 +410,6 @@ void UMounteaDialogueManager::OnDialogueVoiceSkipRequestEvent_Internal(USoundBas
 	{
 		RequestVoiceStop_Client(VoiceToSkip);
 	}
-
-	/*
-	if (auto dialogueSettings = UMounteaDialogueSystemBFC::GetDialogueSystemSettings())
-	{
-		bool bCanSkipRow = dialogueSettings->CanSkipWholeRow();
-		bool bNodeInversion = UMounteaDialogueSystemBFC::DoesNodeInvertSkipSettings(DialogueContext->ActiveNode);
-		bool finalValue = bCanSkipRow != bNodeInversion;
-
-		if (!finalValue)
-		{
-			return;
-		}
-	}
-	*/
 
 	// This is brute force that I want to change in next big update, sorry for this.
 	if (UMounteaDialogueSystemBFC::DoesPreviousNodeSkipActiveNode(DialogueContext->DialogueParticipant->Execute_GetDialogueGraph(DialogueContext->DialogueParticipant.GetObject()), DialogueContext->PreviousActiveNode))
@@ -1303,6 +1284,11 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, ManagerState, COND_InitialOrOwner);
+}
+
+bool UMounteaDialogueManager::ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	return Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
 }
 
 MounteaDialogueManagerHelpers::FDialogueRowDataInfo MounteaDialogueManagerHelpers::GetDialogueRowDataInfo(const UMounteaDialogueContext* DialogueContext)

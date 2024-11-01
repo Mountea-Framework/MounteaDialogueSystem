@@ -301,3 +301,8 @@ bool UMounteaDialogueContext::RemoveDialogueParticipantsBP(const TArray<TScriptI
 
 	return false;
 }
+
+void UMounteaDialogueContext::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+}

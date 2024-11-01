@@ -401,9 +401,6 @@ protected:
 
 protected:
 
-	UFUNCTION(NetMulticast, Unreliable)
-	void OnDialogueInitialized_Multicast(UMounteaDialogueContext* Context);
-
 	UFUNCTION(Server, Reliable)
 	void SetDialogueManagerState_Server(const EDialogueManagerState NewState);
 	UFUNCTION(Server, Reliable)
@@ -454,6 +451,7 @@ protected:
 	void NetPushDialogueContext();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	
 #pragma endregion
 
