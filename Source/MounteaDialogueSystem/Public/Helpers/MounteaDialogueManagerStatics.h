@@ -361,11 +361,12 @@ public:
 	static void InitializeDialogueV2(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, APlayerState* OwningPlayerState, const FDialogueParticipants& Participants);
 	
 	/**
-	 * Starts the Dialogue if possible.
+	 * Starts the Dialogue if possible. Should not be called directly!
+	 * Use `InitializeDialogue` instead.
 	 *
 	 * @param Target	Dialogue Manager object. Must implement `IMounteaDialogueManager` interface.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="start"), meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	static void StartDialogue(UObject* Target);
 
 	/**

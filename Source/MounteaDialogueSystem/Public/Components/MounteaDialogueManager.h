@@ -377,7 +377,7 @@ protected:
 	/**
 	 * Dialogue Context which is used to contain temporary data.
 	 */
-	UPROPERTY(/*ReplicatedUsing=OnRep_DialogueContext,*/ VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
+	UPROPERTY(ReplicatedUsing=OnRep_DialogueContext, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	TObjectPtr<UMounteaDialogueContext> DialogueContext = nullptr;
 
 	/** replicated struct*/
@@ -404,6 +404,9 @@ protected:
 #pragma region Functions
 
 protected:
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void OnDialogueInitialized_Multicast(UMounteaDialogueContext* Context);
 
 	UFUNCTION(Server, Reliable)
 	void SetDialogueManagerState_Server(const EDialogueManagerState NewState);
@@ -443,7 +446,7 @@ protected:
 	void RequestVoiceStop_Client(USoundBase* SoundBase);
 	UFUNCTION(Server, Reliable)
 	void TriggerNextDialogueRow_Server();
-
+	
 	UFUNCTION(Server, Reliable)
 	void PostUIInitialized();
 	
@@ -451,8 +454,8 @@ protected:
 
 	UFUNCTION()
 	void OnRep_ManagerState();
-	/*UFUNCTION()
-	void OnRep_DialogueContext();*/
+	UFUNCTION()
+	void OnRep_DialogueContext();
 
 	void NetPushDialogueContext();
 

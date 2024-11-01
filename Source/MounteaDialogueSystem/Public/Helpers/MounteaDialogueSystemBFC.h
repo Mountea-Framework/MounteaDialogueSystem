@@ -120,7 +120,6 @@ public:
 	 * @param WorldContextObject	World Context Object
 	 * @param DialogueParticipant	Dialogue with which Participant to close
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers", meta=(Keywords="close, exit, dialogue"), meta=(CustomTag="MounteaK2Setter"))
 	static bool CloseDialogue(AActor* WorldContextObject, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant);
 
 	/**
@@ -132,7 +131,6 @@ public:
 	 * @param MainParticipant			Main participant, the one who owns the Dialogue Graph
 	 * @param DialogueParticipants	Other participants, could be NPCs or other Players
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers", meta=(Keywords="start, initialize, dialogue"), meta=(CustomTag="MounteaK2Setter"))
 	static bool StartDialogue(const UObject* WorldContextObject, APlayerState* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants);
 	
 	/**
@@ -143,7 +141,6 @@ public:
 	 * @param Initiator						Usually Player State or any Actor who implement `IMounteaDialogueManagerInterface`
 	 * @param DialogueParticipant	Other person, could be NPC or other Player
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers", DisplayName="Advanced Dialogue Initialization", meta=(Keywords="start, initialize, dialogue"), meta=(CustomTag="MounteaK2Setter"))
 	static bool InitializeDialogue(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& DialogueParticipant);
 	
 	/**

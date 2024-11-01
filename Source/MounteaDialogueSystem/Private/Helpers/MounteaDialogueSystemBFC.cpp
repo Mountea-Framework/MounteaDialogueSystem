@@ -191,7 +191,7 @@ bool UMounteaDialogueSystemBFC::CloseDialogue(AActor* WorldContextObject, const 
 		return false;
 	}
 		
-	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
+	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>(WorldContextObject);
 	Context->SetDialogueContext(DialogueParticipant, nullptr, TArray<UMounteaDialogueGraphNode*>());
 		
 	GetDialogueManager(WorldContextObject)->GetDialogueClosedEventHandle().Broadcast(Context);
@@ -220,7 +220,7 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 
 	if (MainParticipant->Execute_CanStartDialogue(MainParticipant.GetObject()) == false)
 	{
-		LOG_ERROR(TEXT("[StartDialogue]  Main Participant cannot starti Dialogue!. Cannot start dialogue."));
+		LOG_ERROR(TEXT("[StartDialogue] Main Participant cannot start Dialogue!. Cannot start dialogue."));
 		return false;
 	}
 
@@ -352,7 +352,7 @@ bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject,
 		}
 	}
 	
-	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
+	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>(DialogueManager.GetObject());
 	Context->SetDialogueContext(MainParticipant, NodeToStart, TArray<UMounteaDialogueGraphNode*>());
 
 	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(Initiator));
@@ -453,7 +453,7 @@ bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextOb
 	newDialogueTableHandle.DataTable = dialogueNodeToStart->GetDataTable();
 	newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();
 
-	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>();
+	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>(DialogueManager.GetObject());
 	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(Initiator));
 	Context->UpdateActiveDialogueTable(dialogueNodeToStart ? newDialogueTableHandle : FDataTableRowHandle());
 	

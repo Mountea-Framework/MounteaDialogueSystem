@@ -301,7 +301,6 @@ bool UMounteaDialogueContext::RemoveDialogueParticipantsBP(const TArray<TScriptI
 	return false;
 }
 
-/*
 void UMounteaDialogueContext::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	UObject::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -315,4 +314,3 @@ void UMounteaDialogueContext::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueRowDataIndex);
 	DOREPLIFETIME(UMounteaDialogueContext, TraversedPath);
 }
-*/
