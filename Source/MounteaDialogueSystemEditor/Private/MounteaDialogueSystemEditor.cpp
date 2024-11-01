@@ -3,6 +3,7 @@
 #include "MounteaDialogueSystemEditor.h"
 
 #include "AssetToolsModule.h"
+#include "ContentBrowserModule.h"
 #include "GameplayTagsManager.h"
 #include "HttpModule.h"
 #include "AssetActions/MounteaDialogueAdditionalDataAssetAction.h"
@@ -23,8 +24,6 @@
 #include "Popups/MDSPopup.h"
 #include "Serialization/JsonReader.h"
 #include "Styling/SlateStyleRegistry.h"
-
-#include "PythonScriptPlugin.h"
 
 #include "ToolMenus.h"
 #include "AssetActions/MounteaDialogueDataTableAssetAction.h"
@@ -265,22 +264,38 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		UGameplayTagsManager::Get().AddTagIniSearchPath(ThisPlugin->GetBaseDir() / TEXT("Config") / TEXT("Tags"));
 	}
 
-
-	// Initialize Python support
-	if (IPluginManager::Get().FindPlugin("PythonScriptPlugin"))
+	// Extend Menu
 	{
-		const FString PluginDir = IPluginManager::Get().FindPlugin("MounteaDialogueSystem")->GetBaseDir();
-		const FString PythonPath = FPaths::Combine(PluginDir, TEXT("Content/Python"));
-		
-		// Add plugin's Python path to sys.path
-		FPythonScriptPlugin::Get()->AddToModuleSearchPaths(PythonPath);
-		
-		// Execute startup script if it exists
-		const FString StartupScript = FPaths::Combine(PythonPath, TEXT("startup/__init__.py"));
-		if (FPaths::FileExists(StartupScript))
-		{
-			FPythonScriptPlugin::Get()->ExecPythonCommand(*FString::Printf(TEXT("import sys; sys.path.append('%s'); import startup"), *PythonPath));
-		}
+		FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
+
+		ContentBrowserModule.GetAllAssetViewContextMenuExtenders().Add(
+			FContentBrowserMenuExtender_SelectedAssets::CreateLambda([](const TArray<FAssetData>& SelectedAssets)
+			{
+				TSharedRef<FExtender> Extender = MakeShared<FExtender>();
+
+				Extender->AddMenuExtension(
+					"CommonAssetActions",
+					EExtensionHook::Before,
+					TSharedPtr<FUICommandList>(),
+					FMenuExtensionDelegate::CreateLambda([SelectedAssets](FMenuBuilder& MenuBuilder)
+					{
+						MenuBuilder.BeginSection("MounteaActions", LOCTEXT("MounteaActionsMenuHeading", "Mountea Actions"));
+						{
+							MenuBuilder.AddMenuEntry(
+								FMDSCommands::Get().FixMounteaNodesAction,
+								NAME_None,
+								LOCTEXT("MounteaAction", "Fix Mountea Nodes"),
+								LOCTEXT("MounteaActionTooltip", "🔧 Fix old Mountea nodes with new ones"),
+								FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Adjust")
+							);
+						}
+						MenuBuilder.EndSection();
+					})
+				);
+
+				return Extender;
+			})
+		);
 	}
 	
 	EditorLOG_WARNING(TEXT("MounteaDialogueSystemEditor module has been loaded"));

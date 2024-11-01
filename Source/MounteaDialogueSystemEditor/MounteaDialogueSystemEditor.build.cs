@@ -71,10 +71,15 @@ public class MounteaDialogueSystemEditor : ModuleRules
 				"BlueprintGraph",
 				"InputCore", 
 				
+				"PythonScriptPlugin", 
+				"Blutility",
+				
 				"MainFrame",
 				
 				"GameplayTags",
-				"DesktopPlatform",
+				"DesktopPlatform", 
+				
+				"UMGEditor", 
 				// ... add private dependencies that you statically link with here ...
 			}
 		);

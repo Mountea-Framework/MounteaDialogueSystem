@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, List, Dict
 import json
-import yaml
 import unreal
 
 
@@ -60,11 +59,6 @@ class NodeReplacementManager:
     def load_from_json(self, file_path: str):
         with open(file_path, 'r') as f:
             data = json.load(f)
-            self.replacements = [NodeReplacement.from_dict(item) for item in data['replacements']]
-
-    def load_from_yaml(self, file_path: str):
-        with open(file_path, 'r') as f:
-            data = yaml.safe_load(f)
             self.replacements = [NodeReplacement.from_dict(item) for item in data['replacements']]
 
     def get_replacements(self) -> List[tuple[str, str]]:
