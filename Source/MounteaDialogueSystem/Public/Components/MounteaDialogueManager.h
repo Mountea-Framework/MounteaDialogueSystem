@@ -66,9 +66,12 @@ protected:
 	virtual void SetManagerState_Implementation(const EDialogueManagerState NewState) override;
 	virtual EDialogueManagerState GetDefaultManagerState_Implementation() const override;
 	virtual void SetDefaultManagerState(const EDialogueManagerState NewState) override;
-	
+	virtual EDialogueManagerType GetDialogueManagerType() const override;
+
+	virtual bool CanStartDialogue_Implementation() const override;;
 	virtual UMounteaDialogueContext* GetDialogueContext_Implementation() const override;
 	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) override;
+	virtual void UpdateDialogueContext_Implementation(UMounteaDialogueContext* NewContext) override;
 
 	virtual void RequestStartDialogue_Implementation(AActor* DialogueInitiator, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& InitialParticipants) override;
 	virtual void CloseDialogue_Implementation() override;
@@ -102,6 +105,17 @@ protected:
 	virtual void ProcessDialogueRow_Implementation() override;
 	virtual void DialogueRowProcessed_Implementation() override;
 	virtual void SkipDialogueRow_Implementation() override;
+
+private:
+
+	UFUNCTION(Server, Reliable)
+	void SetManagerState_Server(const EDialogueManagerState NewState);
+	UFUNCTION(Server, Unreliable)
+	void SetDefaultManagerState_Server(const EDialogueManagerState NewState);
+	UFUNCTION(Server, Reliable)
+	void SetDialogueContext_Server(UMounteaDialogueContext* NewContext);
+	UFUNCTION(Server, Reliable)
+	void UpdateDialogueContext_Server(UMounteaDialogueContext* NewContext);
 	
 protected:
 	

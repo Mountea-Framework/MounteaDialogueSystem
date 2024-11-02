@@ -109,6 +109,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Context", meta=(CustomTag="MounteaK2Validate"))
 	virtual bool IsValid() const;
 
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(CompactNodeTitle="To String"), meta=(CustomTag="MounteaK2Setter"))
+	void UpdateDialogueContext(UMounteaDialogueContext* Other);
+
 	TScriptInterface<IMounteaDialogueParticipantInterface> GetActiveDialogueParticipant() const
 	{ return ActiveDialogueParticipant; };
 	TScriptInterface<IMounteaDialogueParticipantInterface> GetDialoguePlayerParticipant() const
@@ -264,5 +267,14 @@ private:
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool IsSupportedForNetworking() const override {return true;};
-	
+
+public:
+
+	UMounteaDialogueContext* operator += (const UMounteaDialogueContext* Other);
+	UMounteaDialogueContext* operator+=(const TObjectPtr<UMounteaDialogueContext>& Other)
+	{
+		if (!Other) return this;
+		return (*this) += Other.Get();
+	}
+	UMounteaDialogueContext* operator += (const FMounteaDialogueContextReplicatedStruct& Other);
 };

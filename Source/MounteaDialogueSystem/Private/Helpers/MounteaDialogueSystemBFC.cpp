@@ -861,8 +861,42 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC
 	return resultValue;
 }
 
-APlayerController* UMounteaDialogueSystemBFC::FindPlayerController(AActor* ForActor)
+APawn* UMounteaDialogueSystemBFC::FindPlayerPawn(AActor* ForActor, int& SearchDepth)
 {
+	SearchDepth++;
+	if (SearchDepth >= 8)
+		return nullptr;
+	
+	if (APawn* playerPawn = Cast<APawn>(ForActor))
+		return playerPawn;
+
+	if (APlayerState* playerState = Cast<APlayerState>(ForActor))
+		return playerState->GetPawn();
+
+	if (APlayerController* playerController = Cast<APlayerController>(ForActor))
+	{
+		if (playerController->IsLocalPlayerController())
+			return playerController->GetPawn();
+		else
+		{
+			return FindPlayerPawn(playerController->PlayerState, SearchDepth);
+		}
+	}
+
+	if (AActor* ownerActor = ForActor->GetOwner())
+	{
+		return FindPlayerPawn(ownerActor, SearchDepth);
+	}
+
+	return nullptr;
+}
+
+APlayerController* UMounteaDialogueSystemBFC::FindPlayerController(AActor* ForActor, int& SearchDepth)
+{
+	SearchDepth++;
+	if (SearchDepth >= 8)
+		return nullptr;
+	
 	if (APlayerController* playerController = Cast<APlayerController>(ForActor))
 	{
 		return playerController;
@@ -878,11 +912,9 @@ APlayerController* UMounteaDialogueSystemBFC::FindPlayerController(AActor* ForAc
 		return Cast<APlayerController>(actorPawn->GetController());
 	}
 	
-	// Check the owner recursively, sorry performance :(
-	// TODO: Limit depth!
 	if (AActor* ownerActor = ForActor->GetOwner())
 	{
-		return FindPlayerController(ownerActor);
+		return FindPlayerController(ownerActor, SearchDepth);
 	}
 	
 	return nullptr;

@@ -109,6 +109,8 @@ public:
 	 */
 	virtual void SetDefaultManagerState(const EDialogueManagerState NewState) = 0;
 
+	virtual EDialogueManagerType GetDialogueManagerType() const = 0;
+
 	// --- Context functions ------------------------------
 	
 	/**
@@ -129,7 +131,15 @@ public:
 	 */
 	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) = 0;
 
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void UpdateDialogueContext(UMounteaDialogueContext* NewContext);
+	virtual void UpdateDialogueContext_Implementation(UMounteaDialogueContext* NewContext) = 0;
+
 	// --- Dialogue Lifecycle functions ------------------------------
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	bool CanStartDialogue() const;
+	virtual bool CanStartDialogue_Implementation() const = 0;
 
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	void RequestStartDialogue(AActor* DialogueInitiator, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& InitialParticipants);

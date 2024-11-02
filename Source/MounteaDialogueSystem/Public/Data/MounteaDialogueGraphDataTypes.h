@@ -35,6 +35,15 @@ enum class EMounteaDialogueLoggingVerbosity : uint8
 ENUM_CLASS_FLAGS(EMounteaDialogueLoggingVerbosity)
 
 
+UENUM(BlueprintType)
+enum class EDialogueManagerType : uint8
+{
+	EDMT_PlayerDialogue UMETA(DisplayName="Player (Active) Dialogue"),
+	EDMT_EnvironmentDialogue UMETA(DisplayName="Environment (Passive) Dialogue"),
+
+	Default UMETA(hidden)
+};
+
 /**
  * Dialogue Manager State
  * 
