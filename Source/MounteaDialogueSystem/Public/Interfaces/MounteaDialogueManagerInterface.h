@@ -23,7 +23,7 @@ public:
 	TObjectPtr<AActor> MainParticipant = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Manager")
-	TArray<TObjectPtr<AActor>> OtherParticipants;
+	TArray<TObjectPtr<UObject>> OtherParticipants;
 };
 
 UINTERFACE(MinimalAPI, BlueprintType, Blueprintable)
@@ -88,9 +88,7 @@ public:
 	 * 
 	 * @param NewState	Manager State to be set as Manager State
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
-	void SetManagerState(const EDialogueManagerState NewState);
-	virtual void SetManagerState_Implementation(const EDialogueManagerState NewState) = 0;
+	virtual void SetManagerState(const EDialogueManagerState NewState);
 
 	/**
 	 * Retrieves current Default Dialogue Manager State.
@@ -142,8 +140,18 @@ public:
 	virtual bool CanStartDialogue_Implementation() const = 0;
 
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
-	void RequestStartDialogue(AActor* DialogueInitiator, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& InitialParticipants);
-	virtual void RequestStartDialogue_Implementation(AActor* DialogueInitiator, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& InitialParticipants) = 0;
+	void RequestStartDialogue(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
+	virtual void RequestStartDialogue_Implementation(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants) = 0;
+
+	virtual void DialogueStartRequestReceived(const bool bResult, const FString& ResultMessage) = 0;
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void StartDialogue();
+	virtual void StartDialogue_Implementation() = 0;
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void RequestCloseDialogue();
+	virtual void RequestCloseDialogue_Implementation() = 0;
 
 	/**
 	 * Closes the Dialogue if is active.
@@ -212,7 +220,7 @@ public:
 	// --- Screen UI functions ------------------------------
 
 	/**
-	 * Tries to Invoke Dialogue UI.
+	 * Tries to Create Dialogue UI.
 	 * This function servers a purpose to try showing Dialogue UI to player.
 	 * ❔ If this function fails, Message will be populated with error message explaining what went wrong.
 	 * 
@@ -220,8 +228,8 @@ public:
 	 * @return true if UI can be added to screen, false if cannot
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
-	bool InvokeDialogueUI(FString& Message);
-	virtual bool InvokeDialogueUI_Implementation(FString& Message) = 0;
+	bool CreateDialogueUI(FString& Message);
+	virtual bool CreateDialogueUI_Implementation(FString& Message) = 0;
 
 	/**
 	 * Tries to Update Dialogue UI.

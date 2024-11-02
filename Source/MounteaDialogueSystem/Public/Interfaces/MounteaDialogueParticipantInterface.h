@@ -106,6 +106,10 @@ class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueParticipantInterface
 public:
 
 #pragma region Functions
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
+	bool CanParticipateInDialogue() const;
+	virtual bool CanParticipateInDialogue_Implementation() const = 0;
 	
 	/*
 	 * A way to determine whether the Dialogue can even start.

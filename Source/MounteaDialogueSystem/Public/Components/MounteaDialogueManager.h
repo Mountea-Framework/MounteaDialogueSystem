@@ -58,12 +58,12 @@ public:
 	{ return OnDialogueWidgetCommandRequested; };
 	virtual FTimerHandle& GetDialogueRowTimerHandle() override
 	{ return TimerHandle_RowTimer; }; 
-
-protected:
+	
+public:
 
 	virtual AActor* GetOwningActor_Implementation() const override;
 	virtual EDialogueManagerState GetManagerState_Implementation() const override;
-	virtual void SetManagerState_Implementation(const EDialogueManagerState NewState) override;
+	virtual void SetManagerState(const EDialogueManagerState NewState) override;
 	virtual EDialogueManagerState GetDefaultManagerState_Implementation() const override;
 	virtual void SetDefaultManagerState(const EDialogueManagerState NewState) override;
 	virtual EDialogueManagerType GetDialogueManagerType() const override;
@@ -73,7 +73,11 @@ protected:
 	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) override;
 	virtual void UpdateDialogueContext_Implementation(UMounteaDialogueContext* NewContext) override;
 
-	virtual void RequestStartDialogue_Implementation(AActor* DialogueInitiator, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& InitialParticipants) override;
+	virtual void RequestStartDialogue_Implementation(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants) override;
+	virtual void RequestCloseDialogue_Implementation() override;
+	UFUNCTION()
+	virtual void DialogueStartRequestReceived(const bool bResult, const FString& ResultMessage) override;
+	virtual void StartDialogue_Implementation() override;
 	virtual void CloseDialogue_Implementation() override;
 	
 	virtual void UpdateWorldDialogueUI_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, FString& Message, const FString& Command) override;
@@ -84,7 +88,7 @@ protected:
 	virtual void SetDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects) override;
 	virtual void ResetDialogueUIObjects_Implementation() override;
 
-	virtual bool InvokeDialogueUI_Implementation(FString& Message) override;
+	virtual bool CreateDialogueUI_Implementation(FString& Message) override;
 	virtual bool UpdateDialogueUI_Implementation(FString& Message, const FString& Command) override;
 	virtual bool CloseDialogueUI_Implementation() override;
 
@@ -116,7 +120,11 @@ private:
 	void SetDialogueContext_Server(UMounteaDialogueContext* NewContext);
 	UFUNCTION(Server, Reliable)
 	void UpdateDialogueContext_Server(UMounteaDialogueContext* NewContext);
-	
+	UFUNCTION(Server, Reliable)
+	void RequestStartDialogue_Server(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
+	UFUNCTION()
+	void OnRep_ManagerState();
+
 protected:
 	
 	/**
@@ -276,9 +284,6 @@ protected:
 
 protected:
 	
-	UFUNCTION()
-	void OnRep_ManagerState();
-
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 

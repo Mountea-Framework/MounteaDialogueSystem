@@ -88,9 +88,9 @@ void UMounteaDialogueManagerStatics::CloseDialogue(const TScriptInterface<IMount
 	if (Target.GetObject()) Target->Execute_CloseDialogue(Target.GetObject());
 }
 
-bool UMounteaDialogueManagerStatics::InvokeDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, FString& Message)
+bool UMounteaDialogueManagerStatics::CreateDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, FString& Message)
 {
-	return Target.GetObject() ? Target->Execute_InvokeDialogueUI(Target.GetObject(), Message) : false;
+	return Target.GetObject() ? Target->Execute_CreateDialogueUI(Target.GetObject(), Message) : false;
 }
 
 bool UMounteaDialogueManagerStatics::UpdateDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, FString& Message, const FString& Command)

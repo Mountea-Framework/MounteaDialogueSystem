@@ -211,14 +211,14 @@ public:
 	// --- Widget functions ------------------------------
 
 	/**
-	 * Tries to Invoke Dialogue UI.
+	 * Tries to Create Dialogue UI.
 	 *
 	 * @param Target	Dialogue Manager interface.
 	 * @param Message	InMessage to be populated with error message explaining why returns false
 	 * @return			true if UI can be added to screen, false if cannot
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Invoke Dialogue UI", meta=(Keywords="show,widget"), meta=(CustomTag="MounteaK2Setter"))
-	static bool InvokeDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, FString& Message);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Create Dialogue UI", meta=(Keywords="show,widget"), meta=(CustomTag="MounteaK2Setter"))
+	static bool CreateDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, FString& Message);
 
 	/**
 	 * Tries to Update Dialogue UI.

@@ -47,6 +47,11 @@ void UMounteaDialogueManager::BeginPlay()
 	{
 		GetOwner()->SetReplicates(true);
 	}
+
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		OnDialogueStartRequested.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueStartRequestReceived);
+	}
 }
 
 void UMounteaDialogueManager::OnRep_ManagerState()
@@ -54,14 +59,13 @@ void UMounteaDialogueManager::OnRep_ManagerState()
 	switch (ManagerState)
 	{
 		case EDialogueManagerState::EDMS_Disabled:
-			Execute_CloseDialogueUI(this);
+			Execute_CloseDialogue(this);
 			break;
 		case EDialogueManagerState::EDMS_Enabled:
-			Execute_CloseDialogueUI(this);
+			Execute_CloseDialogue(this);
 			break;
 		case EDialogueManagerState::EDMS_Active:
-			FString resultMessage;
-			Execute_InvokeDialogueUI(this, resultMessage);
+			Execute_StartDialogue(this);
 			break;
 	}
 }
@@ -108,7 +112,7 @@ EDialogueManagerState UMounteaDialogueManager::GetManagerState_Implementation() 
 	return ManagerState;
 }
 
-void UMounteaDialogueManager::SetManagerState_Implementation(const EDialogueManagerState NewState)
+void UMounteaDialogueManager::SetManagerState(const EDialogueManagerState NewState)
 {
 	if (NewState == ManagerState)
 	{
@@ -128,7 +132,7 @@ void UMounteaDialogueManager::SetManagerState_Implementation(const EDialogueMana
 
 void UMounteaDialogueManager::SetManagerState_Server_Implementation(const EDialogueManagerState NewState)
 {
-	Execute_SetManagerState(this, NewState);
+	SetManagerState(NewState);
 }
 
 EDialogueManagerState UMounteaDialogueManager::GetDefaultManagerState_Implementation() const
@@ -210,7 +214,8 @@ void UMounteaDialogueManager::UpdateDialogueContext_Server_Implementation(UMount
 	// TODO: multicast context with information who is the current Manager, so it won't be updated locally?
 }
 
-void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* DialogueInitiator, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& InitialParticipants)
+// TODO: let's find a middle-point between Server authority and reducing double-runs at some point (what steps should be done on Server only?)
+void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants)
 {
 	bool bSatisfied = true;
 	TArray<FText> errorMessages;
@@ -222,19 +227,37 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 		bSatisfied = false;
 	}
 
-	if (!InitialParticipants.Num())
+	if (!InitialParticipants.MainParticipant)
 	{
-		errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "MissingParticipants", "`InitialParticipants` is empty!"));
+		errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "MissingParticipant", "`MainParticipant` is not valid!"));
 		bSatisfied = false;
 	}
 
+	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> dialogueParticipants;
+	bool bMainParticipantFound = true;
+	const TScriptInterface<IMounteaDialogueParticipantInterface> mainParticipant = UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(InitialParticipants.MainParticipant, bMainParticipantFound);
+	if (!bMainParticipantFound || !mainParticipant.GetObject())
+	{
+		errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "InvalidParticipant", "Main Participant doesn't have `Dialogue Participant` component or doesn't implement the `IMounteaDialogueParticipantInterface`!"));
+		bSatisfied = false;
+	}
+
+	if (bMainParticipantFound)
+	{
+		dialogueParticipants.Add(mainParticipant);
+
+		if (!mainParticipant->Execute_CanStartDialogue(InitialParticipants.MainParticipant))
+		{
+			errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "ParticipantCannotStart", "Main Participant Cannot Start Dialogue!"));
+			bSatisfied = false;
+		}
+	}
+	
 	if (!Execute_CanStartDialogue(this))
 	{
 		errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "CannotStart", "Cannot Start Dialogue!"));
 		bSatisfied = false;
 	}
-
-	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> dialogueParticipants = InitialParticipants;
 
 	switch (GetDialogueManagerType()) {
 		case EDialogueManagerType::EDMT_PlayerDialogue:
@@ -249,7 +272,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 			else
 			{
 				bool bPlayerParticipantFound = true;
-				TScriptInterface<IMounteaDialogueParticipantInterface> playerParticipant = UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(playerPawn, bPlayerParticipantFound);
+				const TScriptInterface<IMounteaDialogueParticipantInterface> playerParticipant = UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(playerPawn, bPlayerParticipantFound);
 				if (!bPlayerParticipantFound || !playerParticipant.GetObject())
 				{
 					errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "InvalidPawn", "Player Pawn doesn't have `Dialogue Participant` component or doesn't implement the `IMounteaDialogueParticipantInterface`!"));
@@ -284,9 +307,9 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 			errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "EmptyParticipant", "Dialogue Participant is not Valid!"));
 			bSatisfied = false;
 		}
-		else if (!dialogueParticipant->Execute_CanStartDialogue(dialogueParticipantObject))
+		else if (!dialogueParticipant->Execute_CanParticipateInDialogue(dialogueParticipantObject))
 		{
-			const FText message = FText::Format(NSLOCTEXT("RequestStartDialogue", "ParticipantCannotStart", "Dialogue Participant {0} cannot start Dialogue!"), FText::FromString(dialogueParticipantObject->GetName()));
+			const FText message = FText::Format(NSLOCTEXT("RequestStartDialogue", "ParticipantCannotStart", "Dialogue Participant {0} cannot Participate in Dialogue!"), FText::FromString(dialogueParticipantObject->GetName()));
 			errorMessages.Add(message);
 			bSatisfied = false;
 		}
@@ -295,16 +318,64 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 	if (bSatisfied)
 	{
 		errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "OK", "OK"));
+
+		// TODO: construct DialogueContext here
+	}
+
+	// Request Start on Server
+	if (GetOwner() && !GetOwner()->HasAuthority())
+	{
+		RequestStartDialogue_Server(DialogueInitiator, InitialParticipants);
 	}
 
 	const FText finalErrorMessage = FText::Join(FText::FromString("\n"), errorMessages);
 	OnDialogueStartRequested.Broadcast(bSatisfied, finalErrorMessage.ToString());
 }
 
+void UMounteaDialogueManager::RequestStartDialogue_Server_Implementation(AActor* DialogueInitiator,const FDialogueParticipants& InitialParticipants)
+{
+	Execute_RequestStartDialogue(this, DialogueInitiator, InitialParticipants);
+}
 
+void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
+{
+	if (GetOwner() && !GetOwner()->HasAuthority())
+	{
+		SetManagerState(DefaultManagerState); // Let's close Dialogue by changing state
+	}
 
+	// Don't wait for Server, close dialogue anyways?
+	// Execute_CloseDialogue(this);
+}
 
+void UMounteaDialogueManager::DialogueStartRequestReceived(const bool bResult, const FString& ResultMessage)
+{
+	if (bResult)
+	{
+		SetManagerState(EDialogueManagerState::EDMS_Active);
+	}
+	else
+	{
+		SetManagerState(DefaultManagerState);
+		OnDialogueFailed.Broadcast(ResultMessage);
+	}
+}
 
+void UMounteaDialogueManager::StartDialogue_Implementation()
+{
+	FString resultMessage;
+	Execute_CreateDialogueUI(this, resultMessage);
+
+	// Start Node Loop
+}
+
+void UMounteaDialogueManager::CloseDialogue_Implementation()
+{
+	// Unbind all UI Objects
+	Execute_CloseDialogueUI(this);
+
+	// Close Node Loop
+}
 
 
 void UMounteaDialogueManager::UpdateWorldDialogueUI_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, FString& Message, const FString& Command)
@@ -438,6 +509,8 @@ void UMounteaDialogueManager::SetDialogueWidgetZOrder_Implementation(const int32
 		}
 	}
 }
+
+
 
 
 
