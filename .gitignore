@@ -73,6 +73,9 @@ Plugins/*/Intermediate/*
 # Cache files for the editor to use
 DerivedDataCache/*
 
+# Python cache
+Content/Python/__pycache__/*
+
 # Ignore project specific files
 *.png~
 Config/MDSConfig.ini

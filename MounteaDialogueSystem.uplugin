@@ -44,11 +44,5 @@
 				"Win64"
 			]
 		}
-	],
-	"Plugins": [
-	{
-	  "Name": "PythonScriptPlugin",
-	  "Enabled": true
-	}
-  ]
+	]
 }
