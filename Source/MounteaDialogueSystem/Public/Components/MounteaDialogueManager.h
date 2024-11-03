@@ -83,6 +83,7 @@ public:
 	virtual void DialogueStartRequestReceived(const bool bResult, const FString& ResultMessage) override;
 	virtual void StartDialogue_Implementation() override;
 	virtual void CloseDialogue_Implementation() override;
+	virtual void CleanupDialogue_Implementation() override;
 	
 	virtual void UpdateWorldDialogueUI_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, FString& Message, const FString& Command) override;
 	virtual bool AddDialogueUIObject_Implementation(UObject* NewDialogueObject) override;
@@ -103,6 +104,8 @@ public:
 	virtual UUserWidget* GetDialogueWidget_Implementation() const override;
 	virtual int32 GetDialogueWidgetZOrder_Implementation() const override;
 	virtual void SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder) override;
+
+	
 
 	virtual void PrepareNode_Implementation() override;
 	virtual void NodePrepared_Implementation() override;
@@ -128,6 +131,8 @@ private:
 	void RequestStartDialogue_Server(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
 	UFUNCTION(Server, Reliable)
 	void NotifyContextChanged(const FMounteaDialogueContextReplicatedStruct& NewContextData);
+	UFUNCTION(Server, Reliable)
+	void CleanupDialogue_Server();
 	UFUNCTION()
 	void OnRep_ManagerState();
 

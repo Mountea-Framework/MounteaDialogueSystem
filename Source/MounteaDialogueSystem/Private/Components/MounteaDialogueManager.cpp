@@ -392,8 +392,7 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 	
 	FString resultMessage;
 	Execute_CreateDialogueUI(this, resultMessage);
-
-	// Start Node Loop
+	
 	Execute_PrepareNode(this);
 }
 
@@ -403,10 +402,25 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 	Execute_CloseDialogueUI(this);
 
 	// Close Node Loop
+	Execute_CleanupDialogue(this);
 
 	SetDialogueContext(nullptr);
 }
 
+void UMounteaDialogueManager::CleanupDialogue_Implementation()
+{
+	if (!IsValid(DialogueContext))
+		return;
+
+	// TODO: Reset Nodes, Reset Decorators, Reset Graph
+	if (GetOwner() && !GetOwner()->HasAuthority())
+		CleanupDialogue_Server();
+}
+
+void UMounteaDialogueManager::CleanupDialogue_Server_Implementation()
+{
+	Execute_CleanupDialogue(this);
+}
 
 void UMounteaDialogueManager::UpdateWorldDialogueUI_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, FString& Message, const FString& Command)
 {
@@ -539,6 +553,8 @@ void UMounteaDialogueManager::SetDialogueWidgetZOrder_Implementation(const int32
 		}
 	}
 }
+
+
 
 
 

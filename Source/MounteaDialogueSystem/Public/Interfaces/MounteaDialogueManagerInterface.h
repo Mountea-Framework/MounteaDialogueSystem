@@ -325,6 +325,12 @@ public:
 	void SetDialogueWidgetZOrder(const int32 NewZOrder);
 	virtual void SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder) = 0;
 
+	// --- Dialogue Loop functions ------------------------------
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void CleanupDialogue();
+	virtual void CleanupDialogue_Implementation() = 0;
+
 	// --- Node Loop functions ------------------------------
 
 	/**
