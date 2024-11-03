@@ -52,11 +52,6 @@ bool UMounteaDialogueContext::IsValid() const
 	return ActiveNode != nullptr && DialogueParticipant.GetInterface() != nullptr && PlayerDialogueParticipant.GetInterface() != nullptr;
 }
 
-void UMounteaDialogueContext::UpdateDialogueContext(UMounteaDialogueContext* Other)
-{
-	*this += Other;
-}
-
 void UMounteaDialogueContext::SetDialogueContext(const TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant, UMounteaDialogueGraphNode* NewActiveNode, const TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes)
 {
 	DialogueParticipant = NewParticipant;

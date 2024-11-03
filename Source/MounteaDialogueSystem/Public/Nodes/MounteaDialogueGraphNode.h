@@ -60,7 +60,7 @@ public:
 	 * Pointer to the parent dialogue graph of this node.
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", meta=(DisplayThumbnail=false))
-	UMounteaDialogueGraph* Graph;
+	TObjectPtr<UMounteaDialogueGraph> Graph;
 	
 	/**
 	 * Temporary NodeIndex.
@@ -91,7 +91,7 @@ private:
 	 *❔ Can be used for accessing world-related functionality.
 	 */
 	UPROPERTY(VisibleAnywhere, Category = "Mountea|Dialogue", AdvancedDisplay)
-	UWorld* OwningWorld;
+	TObjectPtr<UWorld> OwningWorld;
 
 #pragma endregion
 
@@ -164,8 +164,8 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Validate"))
 	virtual bool DoesAutoStart() const
-	{ return bAutoStarts; };
-
+	{ return bAutoStarts; }
+	
 	/**
 	 * Pre-processes the dialogue node before it is activated.
 	 * This function is called before the main processing of the node.
@@ -311,6 +311,10 @@ public:
 	bool ValidateNodeRuntime() const;
 	virtual bool ValidateNodeRuntime_Implementation() const
 	{ return true; };
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Validate"))
+	void CleanupNode();
+	virtual void CleanupNode_Implementation();
 	
 public:
 

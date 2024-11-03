@@ -193,328 +193,6 @@ bool UMounteaDialogueSystemBFC::ExecuteDecorators(const UObject* WorldContextObj
 	return true;
 }
 
-bool UMounteaDialogueSystemBFC::CloseDialogue(AActor* WorldContextObject, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant)
-{
-	if (!GetDialogueManager(WorldContextObject))
-	{
-		LOG_ERROR(TEXT("[CloseDialogue] Cannot find Dialogue Manager. Cannot close dialogue."));
-		return false;
-	}
-		
-	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>(WorldContextObject);
-	Context->SetDialogueContext(DialogueParticipant, nullptr, TArray<UMounteaDialogueGraphNode*>());
-		
-	GetDialogueManager(WorldContextObject)->GetDialogueClosedEventHandle().Broadcast(Context);
-	return true;
-}
-
-bool UMounteaDialogueSystemBFC::StartDialogue(const UObject* WorldContextObject, APlayerState* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants)
-{
-	if (!WorldContextObject)
-	{
-		LOG_ERROR(TEXT("[StartDialogue] Missing WorldContextObject. Cannot start dialogue."));
-		return false;
-	}
-
-	if (!Initiator)
-	{
-		LOG_ERROR(TEXT("[StartDialogue] Missing Initiator Player Contorller. Cannot start dialogue."));
-		return false;
-	}
-
-	if (MainParticipant.GetInterface() == nullptr || MainParticipant.GetObject() == nullptr)
-	{
-		LOG_ERROR(TEXT("[StartDialogue] Invalid Main Participant!. Cannot start dialogue."));
-		return false;
-	}
-
-	if (MainParticipant->Execute_CanStartDialogue(MainParticipant.GetObject()) == false)
-	{
-		LOG_ERROR(TEXT("[StartDialogue] Main Participant cannot start Dialogue!. Cannot start dialogue."));
-		return false;
-	}
-
-	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> AllDialogueParticipants = DialogueParticipants;
-	if (AllDialogueParticipants.Contains(MainParticipant) == false)
-	{
-		AllDialogueParticipants.Add(MainParticipant);
-	}
-
-	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> UnavailableParticipants;
-	for (auto Itr : AllDialogueParticipants)
-	{
-		if (Itr.GetInterface() == nullptr && Itr.GetObject() != nullptr)
-		{
-			// When passing interfaces through array sometimes they loose the interface pointer, this might solve the issue - however its dirty af
-			Itr.SetInterface(Cast<IMounteaDialogueParticipantInterface>(Itr.GetObject()));
-		}
-		if (Itr.GetInterface() == nullptr || Itr.GetObject() == nullptr)
-		{
-			UnavailableParticipants.Add(Itr);
-			LOG_ERROR(TEXT("[StartDialogue] Dialogue Participant %d is invalid! Participant will be ignored."), DialogueParticipants.Find(Itr));
-			continue;
-		}
-		
-		if (!Itr->Execute_GetOwningActor(Itr.GetObject()))
-		{
-			UnavailableParticipants.Add(Itr);
-			LOG_ERROR(TEXT("[StartDialogue] Dialogue Participant %d has no Owning Actor. Check whether function `GetOwningActor` is implemented. Participant will be ignored."), DialogueParticipants.Find(Itr));
-			continue;
-		}
-
-		if (!Itr->Execute_CanStartDialogue(Itr.GetObject()))
-		{
-			UnavailableParticipants.Add(Itr);
-			LOG_INFO(TEXT("[StartDialogue] Dialogie Participant %d cannot Start Dialogue, so it will be ignored"), DialogueParticipants.Find(Itr))
-		}
-
-		Itr->Execute_InitializeParticipant(Itr.GetObject());
-		
-	}
-
-	if (UnavailableParticipants.Num() == AllDialogueParticipants.Num())
-	{
-		LOG_ERROR(TEXT("[StartDialogue] None of %d Dialogue Participants can Start Dialogue! Dialogue will not launch!"), DialogueParticipants.Num())
-		return false;
-	}
-	
-	UWorld* TempWorld = WorldContextObject->GetWorld();
-	if (!TempWorld) TempWorld = Initiator->GetWorld();
-
-	const TScriptInterface<IMounteaDialogueManagerInterface> DialogueManager = GetDialogueManager(Initiator);
-	if (DialogueManager == nullptr)
-	{
-		LOG_ERROR(TEXT("[StartDialogue] Unable to find Dialogue Manager. Cannot Initialize dialogue."));
-		return false;
-	}
-
-	switch (DialogueManager->Execute_GetState(DialogueManager.GetObject() ))
-	{
-		case EDialogueManagerState::EDMS_Disabled:
-			LOG_ERROR(TEXT("[StartDialogue] Dialogue Manager is Disabled!"))
-			return false;
-		case EDialogueManagerState::EDMS_Enabled:
-			break;
-		case EDialogueManagerState::EDMS_Active:
-			LOG_ERROR(TEXT("[StartDialogue] Dialogue Manager is already Active!"))
-			return false;
-	}
-	
-	const UMounteaDialogueGraph* Graph = MainParticipant->Execute_GetDialogueGraph(MainParticipant.GetObject());
-
-	if (!Graph)
-	{
-		LOG_ERROR(TEXT("[StartDialogue] WorldContextObject is Invalid. Cannot Initialize dialogue."));
-		return false;
-	}
-
-	for (const auto& Itr : Graph->GetAllNodes())
-	{
-		if (Itr)
-			Itr->InitializeNode(TempWorld);
-	}
-
-	for (auto Itr : Graph->GetAllDecorators())
-	{
-		if (Itr.DecoratorType)
-			Itr.InitializeDecorator(TempWorld, MainParticipant, DialogueManager);
-	}
-
-	if (Graph->CanStartDialogueGraph() == false)
-	{
-		LOG_ERROR(TEXT("[StartDialogue] Dialogue Graph cannot Start. Cannot Initialize dialogue."));
-		return false;
-	}
-
-	UMounteaDialogueGraphNode* NodeToStart = MainParticipant->Execute_GetSavedStartingNode(MainParticipant.GetObject());
-	if (!NodeToStart || NodeToStart->CanStartNode() == false)
-	{
-		NodeToStart = GetFirstChildNode(Graph->GetStartNode());
-	}
-	else if (NodeToStart && NodeToStart->Graph != Graph)
-	{
-		NodeToStart = GetFirstChildNode(Graph->GetStartNode());
-	}
-	
-	if (NodeToStart == nullptr)
-	{
-		LOG_ERROR(TEXT("[StartDialogue] Dialogue Graph has no Nodes to start. Cannot start dialogue."));
-		return false;
-	}
-	
-	if (NodeToStart->GetClass()->IsChildOf(UMounteaDialogueGraphNode_StartNode::StaticClass()))
-	{
-		if (GetFirstChildNode(NodeToStart) == nullptr)
-		{
-			LOG_ERROR(TEXT("[StartDialogue] Dialogue Graph has only Start Node and no Nodes to start. Cannot start dialogue."));
-			return false;
-		}
-
-		NodeToStart = GetFirstChildNode(NodeToStart);
-	}
-
-	const TArray<FMounteaDialogueDecorator> graphDecorators = Graph->GetAllDecorators();
-	for (const auto& Itr : graphDecorators)
-	{
-		if (Itr.DecoratorType)
-		{
-			Itr.DecoratorType->SetOwningManager(DialogueManager);
-		}
-	}
-	
-	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>(DialogueManager.GetObject());
-	Context->SetDialogueContext(MainParticipant, NodeToStart, TArray<UMounteaDialogueGraphNode*>());
-
-	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(Initiator));
-	Context->AddDialogueParticipants(DialogueParticipants);
-	
-	return InitializeDialogueWithContext(WorldContextObject, Initiator, MainParticipant, Context);
-}
-
-bool UMounteaDialogueSystemBFC::InitializeDialogue(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& DialogueParticipant)
-{
-	if (!DialogueParticipant)
-	{
-		LOG_ERROR(TEXT("[InitializeDialogue] Missing DialogueParticipant. Cannot Initialize dialogue."));
-		return false;
-	}
-
-	if (!DialogueParticipant->Execute_GetOwningActor(DialogueParticipant.GetObject()))
-	{
-		LOG_ERROR(TEXT("[InitializeDialogue] Dialogue Participant found no Owning Actor. Check whether function `GetOwningActor` is implemented. Cannot Initialize dialogue."));
-		return false;
-	}
-	
-	UWorld* TempWorld = Initiator->GetWorld();
-	if (!TempWorld) TempWorld = DialogueParticipant->Execute_GetOwningActor(DialogueParticipant.GetObject())->GetWorld();
-	
-	if (Initiator == nullptr && DialogueParticipant.GetInterface() == nullptr)
-	{
-		LOG_ERROR(TEXT("[InitializeDialogue] Initiator is empty AND Participant is invalid. Cannot Initialize dialogue."));
-		return false;
-	}
-
-	const TScriptInterface<IMounteaDialogueManagerInterface> DialogueManager = GetDialogueManager(Initiator);
-	if (DialogueManager== nullptr)
-	{
-		LOG_ERROR(TEXT("[InitializeDialogue] WorldContextObject is Invalid. Cannot Initialize dialogue."));
-		return false;
-	}
-
-	if (DialogueParticipant->Execute_CanStartDialogue(DialogueParticipant.GetObject()) == false)
-	{
-		LOG_ERROR(TEXT("[InitializeDialogue] WorldContextObject is Invalid. Cannot Initialize dialogue."));
-		return false;
-	}
-
-	const UMounteaDialogueGraph* Graph = DialogueParticipant->Execute_GetDialogueGraph(DialogueParticipant.GetObject());
-
-	if (Graph == nullptr)
-	{
-		LOG_ERROR(TEXT("[InitializeDialogue] Dialogue participant has no Graph. Cannot Initialize dialogue."));
-		return false;
-	}
-
-	for (const auto& Itr : Graph->GetAllNodes())
-	{
-		if (Itr)
-		{
-			Itr->InitializeNode(TempWorld);
-		}
-	}
-
-	for (auto Itr : Graph->GetAllDecorators())
-	{
-		Itr.InitializeDecorator(TempWorld, DialogueParticipant, DialogueManager);
-	}
-
-	if (Graph->CanStartDialogueGraph() == false)
-	{
-		LOG_ERROR(TEXT("[InitializeDialogue] Dialogue Graph cannot Start. Cannot Initialize dialogue."));
-		return false;
-	}
-
-	UMounteaDialogueGraphNode* NodeToStart = DialogueParticipant->GetSavedStartingNode();
-	if (!NodeToStart || NodeToStart->CanStartNode() == false)
-	{
-		NodeToStart = Graph->GetStartNode();
-	}
-	
-	if (NodeToStart == nullptr)
-	{
-		LOG_ERROR(TEXT("[InitializeDialogue] Dialogue Graph has no Nodes to start. Cannot Initialize dialogue."));
-		return false;
-	}
-	
-	if (NodeToStart->GetClass()->IsChildOf(UMounteaDialogueGraphNode_StartNode::StaticClass()))
-	{
-		if (GetFirstChildNode(NodeToStart) == nullptr)
-		{
-			LOG_ERROR(TEXT("[InitializeDialogue] Dialogue Graph has only Start Node and no Nodes to start. Cannot Initialize dialogue."));
-			return false;
-		}
-
-		NodeToStart = GetFirstChildNode(NodeToStart);
-	}
-	
-	auto dialogueNodeToStart = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(NodeToStart);
-
-	FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
-	newDialogueTableHandle.DataTable = dialogueNodeToStart->GetDataTable();
-	newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();
-
-	UMounteaDialogueContext* Context = NewObject<UMounteaDialogueContext>(DialogueManager.GetObject());
-	Context->UpdateDialoguePlayerParticipant(GetPlayerDialogueParticipant(Initiator));
-	Context->UpdateActiveDialogueTable(dialogueNodeToStart ? newDialogueTableHandle : FDataTableRowHandle());
-	
-	return  InitializeDialogueWithContext(WorldContextObject, Initiator, DialogueParticipant, Context);
-}
-
-bool UMounteaDialogueSystemBFC::InitializeDialogueWithContext(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant, UMounteaDialogueContext* Context)
-{
-	if (DialogueParticipant == nullptr)
-	{
-		LOG_ERROR(TEXT("[InitializeDialogueWithContext] Missing DialogueParticipant. Cannot Initialize dialogue."));
-		return false;
-	}
-	auto dialogueGraph = DialogueParticipant->Execute_GetDialogueGraph(DialogueParticipant.GetObject());
-	if (dialogueGraph == nullptr)
-	{
-		LOG_ERROR(TEXT("[InitializeDialogueWithContext] Participant has no Dialogue Graph!"));
-		return false;
-	}
-	if (Context == nullptr)
-	{
-		LOG_ERROR(TEXT("[InitializeDialogueWithContext] Missing Dialogue Context. Cannot Initialize dialogue."));
-		return false;
-	}
-	if (IsContextValid(Context) == false)
-	{
-		LOG_ERROR(TEXT("[InitializeDialogueWithContext] Dialogue Context is Invalid. Cannot Initialize dialogue."));
-		return false;
-	}
-
-	const auto DialogueManager = GetDialogueManager(Initiator);
-	if (DialogueManager == nullptr)
-	{
-		LOG_ERROR(TEXT("[InitializeDialogueWithContext] Dialogue Manager is Invalid. Cannot Initialize dialogue."));
-		return false;
-	}
-
-	DialogueManager->GetDialogueInitializedEventHandle().Broadcast(Context);
-	for (const auto& Itr : dialogueGraph->GetGraphScopeDecorators())
-	{
-		if (Itr.DecoratorType != nullptr)
-			Itr.DecoratorType->ExecuteDecorator();
-	}
-
-	TArray<UMounteaDialogueGraphNode*> StartNode_Children = GetAllowedChildNodes(Context->ActiveNode);
-	SortNodes(StartNode_Children);
-	Context->UpdateAllowedChildrenNodes(StartNode_Children);
-	
-	return true;
-}
-
 bool UMounteaDialogueSystemBFC::AddParticipants(AActor* WorldContextObject, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants)
 {
 	const TScriptInterface<IMounteaDialogueManagerInterface> Manager = GetDialogueManager(WorldContextObject);
@@ -751,6 +429,44 @@ UMounteaDialogueContext* UMounteaDialogueSystemBFC::CreateDialogueContext(UObjec
 	if (!IsValid(MainParticipant.GetObject()))
 	{
 		LOG_WARNING(TEXT("[Create Dialogue Context] Invalid Main Participant for Dialogue Context!"))
+		return nullptr;
+	}
+
+	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> AllDialogueParticipants = DialogueParticipants;
+	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> UnavailableParticipants;
+	for (auto Itr : AllDialogueParticipants)
+	{
+		if (Itr.GetInterface() == nullptr && Itr.GetObject() != nullptr)
+		{
+			// When passing interfaces through array sometimes they loose the interface pointer, this might solve the issue - however its dirty af
+			Itr.SetInterface(Cast<IMounteaDialogueParticipantInterface>(Itr.GetObject()));
+		}
+		if (Itr.GetInterface() == nullptr || Itr.GetObject() == nullptr)
+		{
+			UnavailableParticipants.Add(Itr);
+			LOG_INFO(TEXT("[Create Dialogue Context] Dialogue Participant %d is invalid! Participant will be ignored."), DialogueParticipants.Find(Itr));
+			continue;
+		}
+		
+		if (!Itr->Execute_GetOwningActor(Itr.GetObject()))
+		{
+			UnavailableParticipants.Add(Itr);
+			LOG_INFO(TEXT("[Create Dialogue Context] Dialogue Participant %d has no Owning Actor. Check whether function `GetOwningActor` is implemented. Participant will be ignored."), DialogueParticipants.Find(Itr));
+			continue;
+		}
+
+		if (!Itr->Execute_CanParticipateInDialogue(Itr.GetObject()))
+		{
+			UnavailableParticipants.Add(Itr);
+			LOG_INFO(TEXT("[Create Dialogue Context] Dialogue Participant %d cannot Participate in Dialogue, so it will be ignored"), DialogueParticipants.Find(Itr))
+		}
+
+		Itr->Execute_InitializeParticipant(Itr.GetObject());	
+	}
+
+	if (UnavailableParticipants.Num() == AllDialogueParticipants.Num())
+	{
+		LOG_ERROR(TEXT("[Create Dialogue Context] None of %d Dialogue Participants can Start Dialogue!"), DialogueParticipants.Num())
 		return nullptr;
 	}
 	

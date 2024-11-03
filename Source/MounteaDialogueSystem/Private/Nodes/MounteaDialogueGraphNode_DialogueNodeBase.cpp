@@ -62,6 +62,8 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode_Implementation(c
 			}
 		}
 	}
+
+	Super::PreProcessNode_Implementation(Manager);
 }
 
 UDataTable* UMounteaDialogueGraphNode_DialogueNodeBase::GetDataTable() const

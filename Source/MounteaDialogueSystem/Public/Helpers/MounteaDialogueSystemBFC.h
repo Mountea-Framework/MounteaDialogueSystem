@@ -112,48 +112,6 @@ public:
 	 * Requests Execution for all Decorators for Graph and Context Node
 	 */
 	static bool ExecuteDecorators(const UObject* WorldContextObject, const UMounteaDialogueContext* DialogueContext);
-	
-	/**
-	 * Tries to close Dialogue.
-	 * 
-	 * ❗ Returns false if Dialogue Manager is not accessible❗
-	 * @param WorldContextObject	World Context Object
-	 * @param DialogueParticipant	Dialogue with which Participant to close
-	 */
-	static bool CloseDialogue(AActor* WorldContextObject, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant);
-
-	/**
-	 * Tries to initialize Dialogue.
-	 * ❗ Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
-	 * 
-	 * @param WorldContextObject	World Context Object
-	 * @param Initiator							Player State
-	 * @param MainParticipant			Main participant, the one who owns the Dialogue Graph
-	 * @param DialogueParticipants	Other participants, could be NPCs or other Players
-	 */
-	static bool StartDialogue(const UObject* WorldContextObject, APlayerState* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants);
-	
-	/**
-	 * Tries to initialize Dialogue.
-	 * ❗ Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
-	 * 
-	 * @param WorldContextObject	World Context Object to read World info from
-	 * @param Initiator						Usually Player State or any Actor who implement `IMounteaDialogueManagerInterface`
-	 * @param DialogueParticipant	Other person, could be NPC or other Player
-	 */
-	static bool InitializeDialogue(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& DialogueParticipant);
-	
-	/**
-	 * Tries to initialize Dialogue with given Context.
-	 * ❗ Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
-	 * ❗ Preferred way to Initialize Dialogue is to call 'InitializeDialogue' instead❗
-	 * 
-	 * @param WorldContextObject	World Context Object
-	 * @param Initiator						Usually Player State or any Actor who implement `IMounteaDialogueManagerInterface`
-	 * @param DialogueParticipant	Other person, could be NPC or other Player
-	 * @param Context					Dialogue Context which is passed to Dialogue Manager
-	 */
-	static bool InitializeDialogueWithContext(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant, UMounteaDialogueContext* Context);
 
 	/**
 	 * Adds new participants to the Dialogue Manager.

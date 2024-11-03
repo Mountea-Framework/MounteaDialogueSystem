@@ -62,6 +62,10 @@ public:
 protected:
 
 	void ProcessStateUpdated();
+	UFUNCTION()
+	void RequestBroadcastContext(UMounteaDialogueContext* Context);
+	UFUNCTION()
+	void DialogueFailed(const FString& ErrorMessage);
 	
 public:
 
@@ -85,7 +89,17 @@ public:
 	virtual void CloseDialogue_Implementation() override;
 	virtual void CleanupDialogue_Implementation() override;
 	
-	virtual void UpdateWorldDialogueUI_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, FString& Message, const FString& Command) override;
+	virtual void PrepareNode_Implementation() override;
+	virtual void NodePrepared_Implementation() override;
+	virtual void ProcessNode_Implementation() override;
+	virtual void NodeProcessed_Implementation() override;
+	virtual void NodeSelected_Implementation(const FGuid& NodeGuid) override;
+
+	virtual void ProcessDialogueRow_Implementation() override;
+	virtual void DialogueRowProcessed_Implementation() override;
+	virtual void SkipDialogueRow_Implementation() override;
+	
+	virtual void UpdateWorldDialogueUI_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command) override;
 	virtual bool AddDialogueUIObject_Implementation(UObject* NewDialogueObject) override;
 	virtual bool AddDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects) override;
 	virtual bool RemoveDialogueUIObject_Implementation(UObject* DialogueObjectToRemove) override;
@@ -105,18 +119,6 @@ public:
 	virtual int32 GetDialogueWidgetZOrder_Implementation() const override;
 	virtual void SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder) override;
 
-	
-
-	virtual void PrepareNode_Implementation() override;
-	virtual void NodePrepared_Implementation() override;
-	virtual void ProcessNode_Implementation() override;
-	virtual void NodeProcessed_Implementation() override;
-	virtual void NodeSelected_Implementation(const FGuid& NodeGuid) override;
-
-	virtual void ProcessDialogueRow_Implementation() override;
-	virtual void DialogueRowProcessed_Implementation() override;
-	virtual void SkipDialogueRow_Implementation() override;
-
 private:
 
 	UFUNCTION(Server, Reliable)
@@ -133,6 +135,11 @@ private:
 	void NotifyContextChanged(const FMounteaDialogueContextReplicatedStruct& NewContextData);
 	UFUNCTION(Server, Reliable)
 	void CleanupDialogue_Server();
+	UFUNCTION(Server, Unreliable)
+	void UpdateWorldDialogueUI_Server(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command);
+	UFUNCTION(NetMulticast, Unreliable)
+	void UpdateWorldDialogueUI_Multicast(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command);
+	
 	UFUNCTION()
 	void OnRep_ManagerState();
 

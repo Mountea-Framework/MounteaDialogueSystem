@@ -158,6 +158,14 @@ bool UMounteaDialogueGraph::CanStartDialogueGraph() const
 	return bSatisfied;
 }
 
+void UMounteaDialogueGraph::CleanupGraph() const
+{
+	for (const auto& dialogueNode : GetAllNodes())
+	{
+		if (dialogueNode) dialogueNode->CleanupNode();
+	}
+}
+
 void UMounteaDialogueGraph::CreateGraph()
 {
 #if WITH_EDITOR
