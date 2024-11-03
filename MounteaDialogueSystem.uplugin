@@ -44,5 +44,13 @@
 				"Win64"
 			]
 		}
+	],
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Plugins": [
+		{
+			"Name": "PythonScriptPlugin",
+			"Enabled": true
+		}
 	]
 }

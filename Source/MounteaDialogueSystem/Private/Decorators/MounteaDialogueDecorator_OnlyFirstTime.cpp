@@ -44,7 +44,7 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::ValidateDecorator_Implementation(U
 		ValidationMessages.Add(TempText);
 	}
 	
-	const auto* ParentGraph = OwningNode ? OwningNode->Graph : nullptr;
+	const UMounteaDialogueGraph* ParentGraph = OwningNode ? OwningNode->Graph : nullptr;
 	const UMounteaDialogueGraphNode* startNode = ParentGraph ? ParentGraph->StartNode : nullptr;
 
 	if (startNode && startNode->ChildrenNodes.IsValidIndex(0))

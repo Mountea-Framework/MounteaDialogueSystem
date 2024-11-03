@@ -51,6 +51,7 @@ void UMounteaDialogueManager::BeginPlay()
 	if (GetOwner() && GetOwner()->HasAuthority())
 	{
 		OnDialogueStartRequested.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueStartRequestReceived);
+		OnDialogueContextUpdated.AddUniqueDynamic(this, &UMounteaDialogueManager::RequestBroadcastContext);
 	}
 
 	OnDialogueFailed.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueFailed);
@@ -166,6 +167,32 @@ void UMounteaDialogueManager::RequestBroadcastContext(UMounteaDialogueContext* C
 {
 	// TODO: Here we ask server to update its Context
 	// then server multicasts the new context to all clients BUT current one
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		RequestBroadcastContext_Multicast(Context);
+	}
+	else
+		RequestBroadcastContext_Server(Context);
+}
+
+void UMounteaDialogueManager::RequestBroadcastContext_Server_Implementation(UMounteaDialogueContext* Context)
+{
+	RequestBroadcastContext_Multicast(Context);
+}
+
+void UMounteaDialogueManager::RequestBroadcastContext_Multicast_Implementation(UMounteaDialogueContext* Context)
+{
+	if (!IsValid(GetOwner()))
+		return;
+	
+	if (GetOwner()->HasAuthority())
+		return;
+
+	// Which roles I want to updated really?
+	if (GetOwner()->GetLocalRole() == ROLE_AutonomousProxy)
+		return;
+
+	LOG_ERROR(TEXT("[Request Broadcast Context] CONTEXT UPDATED"))
 }
 
 void UMounteaDialogueManager::DialogueFailed(const FString& ErrorMessage)
@@ -225,6 +252,7 @@ void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewCon
 {
 	if (NewContext == DialogueContext) return;
 
+	// Is the Context propagated from Client to Server?
 	if (GetOwner() && !GetOwner()->HasAuthority())
 		SetDialogueContext_Server(NewContext);
 
@@ -447,6 +475,11 @@ void UMounteaDialogueManager::CleanupDialogue_Implementation()
 	{
 		dialogueGraph->CleanupGraph();
 	}
+}
+
+void UMounteaDialogueManager::CleanupDialogue_Server_Implementation()
+{
+	Execute_CleanupDialogue(this);
 }
 
 void UMounteaDialogueManager::PrepareNode_Implementation()
@@ -710,9 +743,17 @@ void UMounteaDialogueManager::DialogueRowProcessed_Implementation()
 	}
 }
 
-void UMounteaDialogueManager::CleanupDialogue_Server_Implementation()
+void UMounteaDialogueManager::SkipDialogueRow_Implementation()
 {
-	Execute_CleanupDialogue(this);
+	if (!IsValid(DialogueContext))
+	{
+		OnDialogueFailed.Broadcast(TEXT("[DialogueVoiceSkipRequestEvent] Invalid Dialogue Context!"));
+		return;
+	}
+
+	DialogueContext->ActiveDialogueParticipant->Execute_SkipParticipantVoice(DialogueContext->ActiveDialogueParticipant.GetObject(), nullptr);
+
+	Execute_DialogueRowProcessed(this);
 }
 
 void UMounteaDialogueManager::UpdateWorldDialogueUI_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command)
@@ -842,6 +883,58 @@ void UMounteaDialogueManager::SetDialogueUIObjects_Implementation(const TArray<U
 void UMounteaDialogueManager::ResetDialogueUIObjects_Implementation()
 {
 	DialogueObjects.Empty();
+}
+
+bool UMounteaDialogueManager::CreateDialogueUI_Implementation(FString& Message)
+{
+	return true;
+}
+
+bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, const FString& Command)
+{
+	return true;
+}
+
+bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
+{
+	return true;
+}
+
+void UMounteaDialogueManager::ExecuteWidgetCommand_Implementation(const FString& Command)
+{
+	FString resultMessage;
+	Execute_UpdateDialogueUI(this, resultMessage, Command);
+}
+
+TSubclassOf<UUserWidget> UMounteaDialogueManager::GetDialogueWidgetClass_Implementation() const
+{
+	return DialogueWidgetClass;
+}
+
+void UMounteaDialogueManager::SetDialogueWidgetClass(const TSubclassOf<UUserWidget> NewWidgetClass)
+{
+	if (DialogueWidgetClass != NewWidgetClass)
+	{
+		DialogueWidgetClass = NewWidgetClass;
+		OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidget);
+	}
+}
+
+void UMounteaDialogueManager::SetDialogueWidget_Implementation(UUserWidget* NewDialogueWidget)
+{
+	DialogueWidget = NewDialogueWidget;
+
+	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidget);
+}
+
+UUserWidget* UMounteaDialogueManager::GetDialogueWidget_Implementation() const
+{
+	return DialogueWidget;
+}
+
+int32 UMounteaDialogueManager::GetDialogueWidgetZOrder_Implementation() const
+{
+	return DialogueWidgetZOrder;
 }
 
 void UMounteaDialogueManager::SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder)

@@ -61,17 +61,8 @@ public:
 	 * @param Target	Dialogue Manager interface.
 	 * @return The owning actor for this Dialogue Manager.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", DisplayName="Get Owning Actor", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
 	static AActor* GetOwningActor(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
-
-	/**
-	 * Returns the Dialogue Manager as Object.
-	 *
-	 * @param Target	Dialogue Manager interface.
-	 * @return The Dialogue Manager as Object.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", DisplayName="Get Manager Object", meta=(CustomTag="MounteaK2Getter"))
-	static UObject* GetManagerObject(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 
 	/**
 	 * Retrieves current Dialogue Context.
@@ -80,7 +71,7 @@ public:
 	 * @param Target	Dialogue Manager interface.
 	 * @return DialogueContext	Dialogue Context is transient data holder for current dialogue instance.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", DisplayName="Get Dialogue Context", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
 	static UMounteaDialogueContext* GetDialogueContext(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 
 	/**
@@ -90,8 +81,8 @@ public:
 	 * @param Target	Dialogue Manager interface.
 	 * @return ManagerState	Manager state value
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", DisplayName="Get Manager State", meta=(CustomTag="MounteaK2Getter"))
-	static EDialogueManagerState GetState(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
+	static EDialogueManagerState GetManagerState(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 
 	/**
 	 * Sets new Dialogue Manager State.
@@ -99,7 +90,7 @@ public:
 	 * @param Target	Dialogue Manager interface.
 	 * @param NewState	Manager State to be set as Manager State
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Set Dialogue Manager State", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
 	static void SetDialogueManagerState(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const EDialogueManagerState NewState);
 
 	/**
@@ -109,7 +100,7 @@ public:
 	 * @param Target	Dialogue Manager interface.
 	 * @return ManagerState	Default Manager state value
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", DisplayName="Get Default Dialogue Manager State", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
 	static EDialogueManagerState GetDefaultDialogueManagerState(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 	
 	/**
@@ -119,7 +110,7 @@ public:
 	 * @param NewDialogueObject The object to add.
 	 * @return True if the object was successfully added, false otherwise.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Add Dialogue UI Object", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	static bool AddDialogueUIObject(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, UObject* NewDialogueObject);
 
 	/**
@@ -129,7 +120,7 @@ public:
 	 * @param NewDialogueObjects Array of objects to add.
 	 * @return Number of objects successfully added.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Add Dialogue UI Objects", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	static bool AddDialogueUIObjects(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const TArray<UObject*>& NewDialogueObjects);
 
 	/**
@@ -139,7 +130,7 @@ public:
 	 * @param DialogueObjectToRemove The object to remove.
 	 * @return True if the object was successfully removed, false otherwise.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Remove Dialogue UI Object", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	static bool RemoveDialogueUIObject(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, UObject* DialogueObjectToRemove);
 
 	/**
@@ -149,7 +140,7 @@ public:
 	 * @param DialogueObjectsToRemove Array of objects to remove.
 	 * @return Number of objects successfully removed.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Remove Dialogue UI Objects", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	static bool RemoveDialogueUIObjects(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const TArray<UObject*>& DialogueObjectsToRemove);
 
 	/**
@@ -158,7 +149,7 @@ public:
 	 * @param Target	Dialogue Manager interface.
 	 * @param NewDialogueObjects The new array of dialogue UI objects.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Set Dialogue UI Objects", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	static void SetDialogueUIObjects(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const TArray<UObject*>& NewDialogueObjects);
 
 	/**
@@ -166,7 +157,7 @@ public:
 	 *
 	 * @param Target	Dialogue Manager interface.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Reset Dialogue UI Objects", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	static void ResetDialogueUIObjects(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 	
 	// --- Node functions ------------------------------
@@ -177,8 +168,8 @@ public:
 	 * @param Target	Dialogue Manager interface.
 	 * @param NodeGUID	The GUID of the selected node.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Call Dialogue Node Selected", meta=(Keywords="select,chosen,option"), meta=(CustomTag="MounteaK2Setter"))
-	static void CallDialogueNodeSelected(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const FGuid& NodeGUID);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="select,chosen,option"), meta=(CustomTag="MounteaK2Setter"))
+	static void NodeSelected(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const FGuid& NodeGUID);
 
 	/**
 	 * Prepares the node for execution.
@@ -187,7 +178,7 @@ public:
 	 *
 	 * @param Target	Dialogue Manager interface.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Prepare Node", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	static void PrepareNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 
 	/**
@@ -195,7 +186,7 @@ public:
 	 *
 	 * @param Target	Dialogue Manager interface.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Process Node", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	static void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 
 	// --- Dialogue functions ------------------------------
@@ -205,7 +196,7 @@ public:
 	 *
 	 * @param Target	Dialogue Manager interface.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Close Dialogue", meta=(Keywords="exit,close"), meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="exit,close"), meta=(CustomTag="MounteaK2Setter"))
 	static void CloseDialogue(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 
 	// --- Widget functions ------------------------------
@@ -217,7 +208,7 @@ public:
 	 * @param Message	InMessage to be populated with error message explaining why returns false
 	 * @return			true if UI can be added to screen, false if cannot
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Create Dialogue UI", meta=(Keywords="show,widget"), meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="show,widget"), meta=(CustomTag="MounteaK2Setter"))
 	static bool CreateDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, FString& Message);
 
 	/**
@@ -228,7 +219,7 @@ public:
 	 * @param Command	Command to be processed.
 	 * @return			true if UI can be updated, false if cannot
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Update Dialogue UI", meta=(Keywords="show,widget"), meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="show,widget"), meta=(CustomTag="MounteaK2Setter"))
 	static bool UpdateDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, FString& Message, const FString& Command);
 
 	/**
@@ -237,7 +228,7 @@ public:
 	 * @param Target	Dialogue Manager interface.
 	 * @return			true if UI can be removed from screen, false if cannot
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Close Dialogue UI", meta=(Keywords="close,exit,stop,widget"), meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="close,exit,stop,widget"), meta=(CustomTag="MounteaK2Setter"))
 	static bool CloseDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 
 	/**
@@ -246,7 +237,7 @@ public:
 	 * @param Target	Dialogue Manager interface.
 	 * @param Command	A string representing the command to be executed.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Execute Widget Command", meta=(Keywords="UI,process"), meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="UI,process"), meta=(CustomTag="MounteaK2Setter"))
 	static void ExecuteWidgetCommand(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const FString& Command);
 
 	/**
@@ -255,7 +246,7 @@ public:
 	 * @param Target	Dialogue Manager interface.
 	 * @param DialogueUIPtr	UserWidget pointer to be saved as Dialogue UI
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Set Dialogue Widget", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	static void SetDialogueWidget(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, UUserWidget* DialogueUIPtr);
 
 	/**
@@ -264,7 +255,7 @@ public:
 	 * @param Target	Dialogue Manager interface.
 	 * @return The widget used to display the current dialogue.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", DisplayName="Get Dialogue Widget", meta=(Keywords="UI"), meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(Keywords="UI"), meta=(CustomTag="MounteaK2Getter"))
 	static UUserWidget* GetDialogueWidget(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 
 	/**
@@ -273,7 +264,7 @@ public:
 	 * @param Target	Dialogue Manager interface.
 	 * @return The widget class used to display Dialogue UI.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", DisplayName="Get Dialogue Widget Class", meta=(Keywords="UI, Widget"), meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(Keywords="UI"), meta=(CustomTag="MounteaK2Getter"))
 	static TSubclassOf<UUserWidget> GetDialogueWidgetClass(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 
 	/**
@@ -282,7 +273,7 @@ public:
 	 * @param Target	Dialogue Manager interface.
 	 * @return The current Z-order value of the dialogue widget.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", DisplayName="Get Dialogue Widget ZOrder", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
 	static int32 GetDialogueWidgetZOrder(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 
 	/**
@@ -291,7 +282,7 @@ public:
 	 * @param Target	Dialogue Manager interface.
 	 * @param NewZOrder The new Z-order value to be applied to the dialogue widget.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Set Dialogue Widget ZOrder", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	static void SetDialogueWidgetZOrder(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const int32 NewZOrder);
 
 	// --- Dialogue Row functions ------------------------------
@@ -301,32 +292,23 @@ public:
 	 *
 	 * @param Target	Dialogue Manager interface.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Start Execute Dialogue Row", meta=(CustomTag="MounteaK2Setter"))
-	static void StartExecuteDialogueRow(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
+	static void ProcessDialogueRow(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 	
 	/**
 	 * Function responsible for cleanup once Dialogue Row is finished.
 	 *
 	 * @param Target	Dialogue Manager interface.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Finished Execute Dialogue Row", meta=(CustomTag="MounteaK2Setter"))
-	static void FinishedExecuteDialogueRow(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
-
-	/**
-	 * Requests next dialogue row.
-	 * Contains validation that current row must be 'ExecutionMode::AwaitInput'.
-	 *
-	 * @param Target	Dialogue Manager interface.
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Trigger Next Dialogue Row", meta=(CustomTag="MounteaK2Setter"))
-	static void TriggerNextDialogueRow(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
+	static void DialogueRowProcessed(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 
 	/**
 	 * Skips the current dialogue row.
 	 *
 	 * @param Target	Dialogue Manager interface.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", DisplayName="Skip DialogueRow", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	static void SkipDialogueRow(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 
 };

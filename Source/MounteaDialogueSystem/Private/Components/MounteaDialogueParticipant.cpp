@@ -151,16 +151,12 @@ void UMounteaDialogueParticipant::SkipParticipantVoice_Implementation(USoundBase
 
 bool UMounteaDialogueParticipant::CanStartDialogue_Implementation() const
 {
-	switch (Execute_GetParticipantState(this))
-	{
-		case EDialogueParticipantState::EDPS_Active:
-		case EDialogueParticipantState::EDPS_Disabled:
-			return false;
-		case EDialogueParticipantState::EDPS_Enabled:
-			return true;
-	}
+	return ParticipantState == EDialogueParticipantState::EDPS_Enabled && IsValid(DialogueGraph);
+}
 
-	return true;
+bool UMounteaDialogueParticipant::CanParticipateInDialogue_Implementation() const
+{
+	return ParticipantState == EDialogueParticipantState::EDPS_Enabled;
 }
 
 void UMounteaDialogueParticipant::SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode)

@@ -88,7 +88,7 @@ public:
 	 * 
 	 * @param NewState	Manager State to be set as Manager State
 	 */
-	virtual void SetManagerState(const EDialogueManagerState NewState);
+	virtual void SetManagerState(const EDialogueManagerState NewState) = 0;
 
 	/**
 	 * Retrieves current Default Dialogue Manager State.

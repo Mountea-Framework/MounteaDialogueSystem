@@ -64,6 +64,10 @@ protected:
 	void ProcessStateUpdated();
 	UFUNCTION()
 	void RequestBroadcastContext(UMounteaDialogueContext* Context);
+	UFUNCTION(Server, Reliable)
+	void RequestBroadcastContext_Server(UMounteaDialogueContext* Context);
+	UFUNCTION(NetMulticast, Unreliable)
+	void RequestBroadcastContext_Multicast(UMounteaDialogueContext* Context);
 	UFUNCTION()
 	void DialogueFailed(const FString& ErrorMessage);
 	
@@ -114,7 +118,7 @@ public:
 	virtual void ExecuteWidgetCommand_Implementation(const FString& Command) override;
 	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass_Implementation() const override;
 	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) override;
-	virtual void SetDialogueWidget_Implementation(UUserWidget* DialogueUIPtr) override;
+	virtual void SetDialogueWidget_Implementation(UUserWidget* NewDialogueWidget) override;
 	virtual UUserWidget* GetDialogueWidget_Implementation() const override;
 	virtual int32 GetDialogueWidgetZOrder_Implementation() const override;
 	virtual void SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder) override;
@@ -283,7 +287,7 @@ protected:
 	 * ❔ Transient, for actual runtime only.
 	 */
 	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
-	TObjectPtr<UUserWidget> DialogueWidgetPtr = nullptr;
+	TObjectPtr<UUserWidget> DialogueWidget = nullptr;
 
 	/**
 	 * Dialogue Context which is used to contain temporary data.

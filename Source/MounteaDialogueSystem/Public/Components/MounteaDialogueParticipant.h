@@ -209,9 +209,10 @@ protected:
 #pragma region IMounteaDialogueInterface
 	
 public:
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Validate"))
+	
 	virtual bool CanStartDialogue_Implementation() const override;
+
+	virtual bool CanParticipateInDialogue_Implementation() const override;
 
 	virtual UMounteaDialogueGraphNode* GetSavedStartingNode_Implementation() const override
 	{ return StartingNode; };
