@@ -97,7 +97,7 @@ public:
 	virtual void NodePrepared_Implementation() override;
 	virtual void ProcessNode_Implementation() override;
 	virtual void NodeProcessed_Implementation() override;
-	virtual void NodeSelected_Implementation(const FGuid& NodeGuid) override;
+	virtual void SelectNode_Implementation(const FGuid& NodeGuid) override;
 
 	virtual void ProcessDialogueRow_Implementation() override;
 	virtual void DialogueRowProcessed_Implementation() override;

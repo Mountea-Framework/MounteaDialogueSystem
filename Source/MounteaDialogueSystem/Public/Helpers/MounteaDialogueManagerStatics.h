@@ -65,16 +65,6 @@ public:
 	static AActor* GetOwningActor(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 
 	/**
-	 * Retrieves current Dialogue Context.
-	 * 
-	 * ❗ Could be null
-	 * @param Target	Dialogue Manager interface.
-	 * @return DialogueContext	Dialogue Context is transient data holder for current dialogue instance.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
-	static UMounteaDialogueContext* GetDialogueContext(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
-
-	/**
 	 * Retrieves current Dialogue Manager State.
 	 * State defines whether Manager can start/close dialogue or not.
 	 *
@@ -91,7 +81,7 @@ public:
 	 * @param NewState	Manager State to be set as Manager State
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
-	static void SetDialogueManagerState(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const EDialogueManagerState NewState);
+	static void SetManagerState(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const EDialogueManagerState NewState);
 
 	/**
 	 * Retrieves current Default Dialogue Manager State.
@@ -102,6 +92,69 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
 	static EDialogueManagerState GetDefaultDialogueManagerState(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
+	static EDialogueManagerType GetDialogueManagerType(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
+
+	// --- Dialogue functions ------------------------------
+
+	/**
+	 * Retrieves current Dialogue Context.
+	 * 
+	 * ❗ Could be null
+	 * @param Target	Dialogue Manager interface.
+	 * @return DialogueContext	Dialogue Context is transient data holder for current dialogue instance.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
+	static UMounteaDialogueContext* GetDialogueContext(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(Keywords="UI"), meta=(CustomTag="MounteaK2Validate"))
+	static bool CanStartDialogue(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
+
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
+	static void RequestStartDialogue(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
+	
+	/**
+	 * Closes the Dialogue if is active.
+	 *
+	 * @param Target	Dialogue Manager interface.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="exit,close"), meta=(CustomTag="MounteaK2Setter"))
+	static void RequestCloseDialogue(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
+	
+	// --- Node functions ------------------------------
+	
+	/**
+	 * Prepares the node for execution.
+	 * Asks Active Node to 'PreProcessNode' and then to 'ProcessNode'.
+	 * In this preparation stage, Nodes are asked to process all Decorators.
+	 *
+	 * @param Target	Dialogue Manager interface.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
+	static void PrepareNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
+	
+	/**
+	 * Calls to the Node to Process it.
+	 *
+	 * @param Target	Dialogue Manager interface.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
+	static void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
+
+	/**
+	 * Notifies the Dialogue that a node has been selected.
+	 * 
+	 * @param Target	Dialogue Manager interface.
+	 * @param NodeGUID	The GUID of the selected node.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="select,chosen,option"), meta=(CustomTag="MounteaK2Setter"))
+	static void SelectNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const FGuid& NodeGUID);
+	
+	// --- World UI functions ------------------------------
+	
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
+	static void UpdateWorldDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const FString& Command);
 	
 	/**
 	 * Adds a single dialogue UI object to the manager.
@@ -160,45 +213,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
 	static void ResetDialogueUIObjects(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
 	
-	// --- Node functions ------------------------------
-
-	/**
-	 * Notifies the Dialogue that a node has been selected.
-	 * 
-	 * @param Target	Dialogue Manager interface.
-	 * @param NodeGUID	The GUID of the selected node.
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="select,chosen,option"), meta=(CustomTag="MounteaK2Setter"))
-	static void NodeSelected(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const FGuid& NodeGUID);
-
-	/**
-	 * Prepares the node for execution.
-	 * Asks Active Node to 'PreProcessNode' and then to 'ProcessNode'.
-	 * In this preparation stage, Nodes are asked to process all Decorators.
-	 *
-	 * @param Target	Dialogue Manager interface.
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
-	static void PrepareNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
-
-	/**
-	 * Calls to the Node to Process it.
-	 *
-	 * @param Target	Dialogue Manager interface.
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
-	static void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
-
-	// --- Dialogue functions ------------------------------
-
-	/**
-	 * Closes the Dialogue if is active.
-	 *
-	 * @param Target	Dialogue Manager interface.
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="exit,close"), meta=(CustomTag="MounteaK2Setter"))
-	static void CloseDialogue(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
-
 	// --- Widget functions ------------------------------
 
 	/**

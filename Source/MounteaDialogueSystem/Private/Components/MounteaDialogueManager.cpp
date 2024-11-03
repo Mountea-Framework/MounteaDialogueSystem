@@ -585,7 +585,7 @@ void UMounteaDialogueManager::NodeProcessed_Implementation()
 	}
 }
 
-void UMounteaDialogueManager::NodeSelected_Implementation(const FGuid& NodeGuid)
+void UMounteaDialogueManager::SelectNode_Implementation(const FGuid& NodeGuid)
 {
 	if (!UMounteaDialogueSystemBFC::IsContextValid(DialogueContext))
 	{

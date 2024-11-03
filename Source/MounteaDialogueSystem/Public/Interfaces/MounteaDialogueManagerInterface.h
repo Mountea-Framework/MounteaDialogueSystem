@@ -363,8 +363,8 @@ public:
 	 * @param NodeGuid The GUID of the selected node.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
-	void NodeSelected(const FGuid& NodeGuid);
-	virtual void NodeSelected_Implementation(const FGuid& NodeGuid) = 0;
+	void SelectNode(const FGuid& NodeGuid);
+	virtual void SelectNode_Implementation(const FGuid& NodeGuid) = 0;
 	
 	// --- Node Rows Loop functions ------------------------------
 

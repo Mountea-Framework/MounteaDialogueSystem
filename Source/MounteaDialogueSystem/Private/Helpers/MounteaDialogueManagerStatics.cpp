@@ -18,7 +18,7 @@ EDialogueManagerState UMounteaDialogueManagerStatics::GetManagerState(const TScr
 	return Target.GetObject() ? Target->Execute_GetManagerState(Target.GetObject()) : EDialogueManagerState::Default;
 }
 
-void UMounteaDialogueManagerStatics::SetDialogueManagerState(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const EDialogueManagerState NewState)
+void UMounteaDialogueManagerStatics::SetManagerState(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const EDialogueManagerState NewState)
 {
 	if (Target.GetObject()) Target->SetManagerState(NewState);
 }
@@ -26,6 +26,11 @@ void UMounteaDialogueManagerStatics::SetDialogueManagerState(const TScriptInterf
 EDialogueManagerState UMounteaDialogueManagerStatics::GetDefaultDialogueManagerState(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
 {
 	return Target.GetObject() ? Target->Execute_GetDefaultManagerState(Target.GetObject()) : EDialogueManagerState::Default;
+}
+
+EDialogueManagerType UMounteaDialogueManagerStatics::GetDialogueManagerType(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
+{
+	return Target.GetObject() ? Target->GetDialogueManagerType() : EDialogueManagerType::Default;
 }
 
 bool UMounteaDialogueManagerStatics::AddDialogueUIObject(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, UObject* NewDialogueObject)
@@ -58,9 +63,14 @@ void UMounteaDialogueManagerStatics::ResetDialogueUIObjects(const TScriptInterfa
 	if (Target.GetObject()) Target->Execute_ResetDialogueUIObjects(Target.GetObject());
 }
 
-void UMounteaDialogueManagerStatics::NodeSelected(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const FGuid& NodeGUID)
+void UMounteaDialogueManagerStatics::SelectNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const FGuid& NodeGUID)
 {
-	if (Target.GetObject()) Target->Execute_NodeSelected(Target.GetObject(), NodeGUID);
+	if (Target.GetObject()) Target->Execute_SelectNode(Target.GetObject(), NodeGUID);
+}
+
+void UMounteaDialogueManagerStatics::UpdateWorldDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const FString& Command)
+{
+	if (Target.GetObject()) Target->Execute_UpdateWorldDialogueUI(Target.GetObject(), Target, Command);
 }
 
 void UMounteaDialogueManagerStatics::PrepareNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
@@ -73,9 +83,19 @@ void UMounteaDialogueManagerStatics::ProcessNode(const TScriptInterface<IMountea
 	if (Target.GetObject()) Target->Execute_ProcessNode(Target.GetObject());
 }
 
-void UMounteaDialogueManagerStatics::CloseDialogue(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
+bool UMounteaDialogueManagerStatics::CanStartDialogue(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
 {
-	if (Target.GetObject()) Target->Execute_CloseDialogue(Target.GetObject());
+	return Target.GetObject() ? Target->Execute_CanStartDialogue(Target.GetObject()) : false;
+}
+
+void UMounteaDialogueManagerStatics::RequestCloseDialogue(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
+{
+	if (Target.GetObject()) Target->Execute_RequestCloseDialogue(Target.GetObject());
+}
+
+void UMounteaDialogueManagerStatics::RequestStartDialogue(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants)
+{
+	if (Target.GetObject()) Target->Execute_RequestStartDialogue(Target.GetObject(), DialogueInitiator, InitialParticipants);
 }
 
 bool UMounteaDialogueManagerStatics::CreateDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, FString& Message)
