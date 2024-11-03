@@ -705,6 +705,88 @@ void UMounteaDialogueSystemBFC::SortNodes(TArray<UMounteaDialogueGraphNode*>& So
 	SortNodes<UMounteaDialogueGraphNode>(SortedNodes);
 }
 
+UMounteaDialogueGraphNode* UMounteaDialogueSystemBFC::GetStartingNode(const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant, const UMounteaDialogueGraph* Graph)
+{
+	if (!IsValid(Participant.GetObject())  || !IsValid(Graph))
+	{
+		LOG_WARNING(TEXT("[Get Starting Node] Dialogue Participant or Graph are invalid."))
+		return nullptr;
+	}
+	
+	UMounteaDialogueGraphNode* NodeToStart = Participant->GetSavedStartingNode();
+	if (!IsValid(NodeToStart) || NodeToStart->CanStartNode() == false)
+	{
+		NodeToStart = Graph->GetStartNode();
+	}
+	
+	if (!IsValid(NodeToStart))
+	{
+		LOG_ERROR(TEXT("[Get Starting Node] Dialogue Graph has no Nodes to start. Cannot Initialize dialogue."));
+		return nullptr;
+	}
+	
+	if (NodeToStart->GetClass()->IsChildOf(UMounteaDialogueGraphNode_StartNode::StaticClass()))
+	{
+		auto firstChildNode = GetFirstChildNode(NodeToStart);
+		if (!IsValid(firstChildNode))
+		{
+			LOG_ERROR(TEXT("[Get Starting Node] Dialogue Graph has only Start Node and no Nodes to start. Cannot Initialize dialogue."));
+			return nullptr;
+		}
+
+		NodeToStart = firstChildNode;
+	}
+
+	return NodeToStart;
+}
+
+UMounteaDialogueContext* UMounteaDialogueSystemBFC::CreateDialogueContext(UObject* NewOwner, const TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants)
+{
+	if (!IsValid(NewOwner))
+	{
+		LOG_WARNING(TEXT("[Create Dialogue Context] Invalid Owner for Dialogue Context!"))
+		return nullptr;
+	}
+	
+	if (!IsValid(MainParticipant.GetObject()))
+	{
+		LOG_WARNING(TEXT("[Create Dialogue Context] Invalid Main Participant for Dialogue Context!"))
+		return nullptr;
+	}
+	
+	UMounteaDialogueContext* newDialogueContext = NewObject<UMounteaDialogueContext>(NewOwner);
+
+	const UMounteaDialogueGraph* dialogueGraph = MainParticipant->Execute_GetDialogueGraph(MainParticipant.GetObject());
+		
+	auto newActiveNode = GetStartingNode(MainParticipant, dialogueGraph);
+	auto allowedChildNodes = GetAllowedChildNodes(newActiveNode);
+
+	auto newActiveDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(newActiveNode);
+	FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
+	newDialogueTableHandle.DataTable = newActiveDialogueNode ? newActiveDialogueNode->GetDataTable() : nullptr;
+	newDialogueTableHandle.RowName = newActiveDialogueNode ? newActiveDialogueNode->GetRowName() : NAME_None;
+
+	newDialogueContext->SetDialogueContext(MainParticipant, newActiveNode, allowedChildNodes);
+	newDialogueContext->UpdateActiveDialogueTable(newActiveDialogueNode ? newDialogueTableHandle : FDataTableRowHandle());
+	newDialogueContext->AddDialogueParticipants(DialogueParticipants);
+
+	return newDialogueContext;
+}
+
+UMounteaDialogueContext* UMounteaDialogueSystemBFC::CreateDialogueContext(UObject* NewOwner, const FMounteaDialogueContextReplicatedStruct& NewData)
+{
+	if (!IsValid(NewOwner))
+	{
+		LOG_WARNING(TEXT("[Create Dialogue Context] Invalid Owner for Dialogue Context!"))
+		return nullptr;
+	}
+
+	UMounteaDialogueContext* newDialogueContext = NewObject<UMounteaDialogueContext>(NewOwner);
+	(*newDialogueContext) += NewData;
+	
+	return newDialogueContext;
+}
+
 
 FDialogueRow UMounteaDialogueSystemBFC::GetDialogueRow(const UMounteaDialogueGraphNode* Node)
 {

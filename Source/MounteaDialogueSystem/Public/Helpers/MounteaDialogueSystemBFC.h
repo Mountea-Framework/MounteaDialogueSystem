@@ -85,8 +85,8 @@ public:
 	static UMounteaDialogueSystemSettings* GetDialogueSystemSettings()
 	{
 		return GetMutableDefault<UMounteaDialogueSystemSettings>();
-	};
-	
+	}
+		
 	/**
 	 * Tries to get default Dialogue Widget from Project Settings.
 	 * 
@@ -407,6 +407,11 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="sort,order,diaogue,child,nodes"), meta=(CustomTag="MounteaK2Getter"))
 	static void SortNodes(TArray<UMounteaDialogueGraphNode*>& SortedNodes);
 
+	static UMounteaDialogueGraphNode* GetStartingNode(const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant, const UMounteaDialogueGraph* Graph);
+
+	static UMounteaDialogueContext* CreateDialogueContext(UObject* NewOwner, const TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants);
+	static UMounteaDialogueContext* CreateDialogueContext(UObject* NewOwner, const FMounteaDialogueContextReplicatedStruct& NewData);
+	
 	template<typename T>
 	static FString GetEnumFriendlyName(const T EnumValue, const bool bShortName = false)
 	{

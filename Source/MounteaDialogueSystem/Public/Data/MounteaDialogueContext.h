@@ -109,9 +109,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Context", meta=(CustomTag="MounteaK2Validate"))
 	virtual bool IsValid() const;
 
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(CompactNodeTitle="To String"), meta=(CustomTag="MounteaK2Setter"))
-	void UpdateDialogueContext(UMounteaDialogueContext* Other);
-
 	TScriptInterface<IMounteaDialogueParticipantInterface> GetActiveDialogueParticipant() const
 	{ return ActiveDialogueParticipant; };
 	TScriptInterface<IMounteaDialogueParticipantInterface> GetDialoguePlayerParticipant() const

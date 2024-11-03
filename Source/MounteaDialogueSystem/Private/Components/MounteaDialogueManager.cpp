@@ -54,22 +54,6 @@ void UMounteaDialogueManager::BeginPlay()
 	}
 }
 
-void UMounteaDialogueManager::OnRep_ManagerState()
-{
-	switch (ManagerState)
-	{
-		case EDialogueManagerState::EDMS_Disabled:
-			Execute_CloseDialogue(this);
-			break;
-		case EDialogueManagerState::EDMS_Enabled:
-			Execute_CloseDialogue(this);
-			break;
-		case EDialogueManagerState::EDMS_Active:
-			Execute_StartDialogue(this);
-			break;
-	}
-}
-
 void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -125,9 +109,43 @@ void UMounteaDialogueManager::SetManagerState(const EDialogueManagerState NewSta
 	else
 	{
 		ManagerState = NewState; // State can only be changed on server side!
+		ProcessStateUpdated(); // Simulate OnRep for Listen server and cleanup on all servers and standalone
 	}
 
 	OnDialogueManagerStateChanged.Broadcast(NewState);
+}
+
+void UMounteaDialogueManager::NotifyContextChanged_Implementation(const FMounteaDialogueContextReplicatedStruct& NewContextData)
+{
+	if (!IsValid(DialogueContext))
+	{
+		DialogueContext = UMounteaDialogueSystemBFC::CreateDialogueContext(this, NewContextData);
+	}
+
+	// TODO: Multicast `NewContextData` (DialogueContext might not work?)
+	// in multicasted function use `*(DialogueContext) += NewContextData` and locally broadcast `OnDialogueContextUpdated.Broadcast(NewContext);`
+}
+
+void UMounteaDialogueManager::OnRep_ManagerState()
+{
+	OnDialogueManagerStateChanged.Broadcast(ManagerState);
+	ProcessStateUpdated();
+}
+
+void UMounteaDialogueManager::ProcessStateUpdated()
+{
+	switch (ManagerState)
+	{
+	case EDialogueManagerState::EDMS_Disabled:
+		Execute_CloseDialogue(this);
+		break;
+	case EDialogueManagerState::EDMS_Enabled:
+		Execute_CloseDialogue(this);
+		break;
+	case EDialogueManagerState::EDMS_Active:
+		Execute_StartDialogue(this);
+		break;
+	}
 }
 
 void UMounteaDialogueManager::SetManagerState_Server_Implementation(const EDialogueManagerState NewState)
@@ -144,7 +162,7 @@ void UMounteaDialogueManager::SetDefaultManagerState(const EDialogueManagerState
 {
 	if (NewState == DefaultManagerState)
 	{
-		LOG_INFO(TEXT("[Set Default Manager State] New State `%s` is same as current State. Update aborted."), *(UMounteaDialogueSystemBFC::GetEnumFriendlyName(NewState)))
+		LOG_WARNING(TEXT("[Set Default Manager State] New State `%s` is same as current State. Update aborted."), *(UMounteaDialogueSystemBFC::GetEnumFriendlyName(NewState)))
 		return;
 	}
 	
@@ -202,7 +220,7 @@ void UMounteaDialogueManager::UpdateDialogueContext_Implementation(UMounteaDialo
 	if (GetOwner() && !GetOwner()->HasAuthority())
 		UpdateDialogueContext_Server(NewContext);
 
-	DialogueContext->UpdateDialogueContext(NewContext);
+	(*DialogueContext) += NewContext;
 
 	OnDialogueContextUpdated.Broadcast(NewContext);
 }
@@ -246,7 +264,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 	{
 		dialogueParticipants.Add(mainParticipant);
 
-		if (!mainParticipant->Execute_CanStartDialogue(InitialParticipants.MainParticipant))
+		if (!mainParticipant->Execute_CanStartDialogue(InitialParticipants.MainParticipant)) // TODO: move Graph->CanStartDialogue to participant
 		{
 			errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "ParticipantCannotStart", "Main Participant Cannot Start Dialogue!"));
 			bSatisfied = false;
@@ -319,17 +337,21 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 	{
 		errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "OK", "OK"));
 
-		// TODO: construct DialogueContext here
+		// If dialogue request returns false we simply CloseDialogue, which will destroy this Context
+		DialogueContext = UMounteaDialogueSystemBFC::CreateDialogueContext(this, mainParticipant, dialogueParticipants);
 	}
-
-	// Request Start on Server
-	if (GetOwner() && !GetOwner()->HasAuthority())
-	{
-		RequestStartDialogue_Server(DialogueInitiator, InitialParticipants);
-	}
-
+	
 	const FText finalErrorMessage = FText::Join(FText::FromString("\n"), errorMessages);
 	OnDialogueStartRequested.Broadcast(bSatisfied, finalErrorMessage.ToString());
+
+	if (bSatisfied)
+	{
+		// Request Start on Server
+		if (GetOwner() && !GetOwner()->HasAuthority())
+		{
+			RequestStartDialogue_Server(DialogueInitiator, InitialParticipants);
+		}
+	}
 }
 
 void UMounteaDialogueManager::RequestStartDialogue_Server_Implementation(AActor* DialogueInitiator,const FDialogueParticipants& InitialParticipants)
@@ -345,7 +367,7 @@ void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 	}
 
 	// Don't wait for Server, close dialogue anyways?
-	// Execute_CloseDialogue(this);
+	Execute_CloseDialogue(this);
 }
 
 void UMounteaDialogueManager::DialogueStartRequestReceived(const bool bResult, const FString& ResultMessage)
@@ -363,10 +385,16 @@ void UMounteaDialogueManager::DialogueStartRequestReceived(const bool bResult, c
 
 void UMounteaDialogueManager::StartDialogue_Implementation()
 {
+	if (GetOwner() && !GetOwner()->HasAuthority())
+	{
+		NotifyContextChanged(FMounteaDialogueContextReplicatedStruct(DialogueContext)); // let Server know about our Context
+	}
+	
 	FString resultMessage;
 	Execute_CreateDialogueUI(this, resultMessage);
 
 	// Start Node Loop
+	Execute_PrepareNode(this);
 }
 
 void UMounteaDialogueManager::CloseDialogue_Implementation()
@@ -375,6 +403,8 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 	Execute_CloseDialogueUI(this);
 
 	// Close Node Loop
+
+	SetDialogueContext(nullptr);
 }
 
 

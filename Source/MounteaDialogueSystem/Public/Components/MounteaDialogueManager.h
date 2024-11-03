@@ -57,7 +57,11 @@ public:
 	virtual FDialogueWidgetCommand& GetDialogueWidgetCommandHandle() override
 	{ return OnDialogueWidgetCommandRequested; };
 	virtual FTimerHandle& GetDialogueRowTimerHandle() override
-	{ return TimerHandle_RowTimer; }; 
+	{ return TimerHandle_RowTimer; };
+
+protected:
+
+	void ProcessStateUpdated();
 	
 public:
 
@@ -122,6 +126,8 @@ private:
 	void UpdateDialogueContext_Server(UMounteaDialogueContext* NewContext);
 	UFUNCTION(Server, Reliable)
 	void RequestStartDialogue_Server(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
+	UFUNCTION(Server, Reliable)
+	void NotifyContextChanged(const FMounteaDialogueContextReplicatedStruct& NewContextData);
 	UFUNCTION()
 	void OnRep_ManagerState();
 
