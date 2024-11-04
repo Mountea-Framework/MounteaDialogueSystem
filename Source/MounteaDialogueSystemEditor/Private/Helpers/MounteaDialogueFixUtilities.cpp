@@ -88,23 +88,36 @@ namespace InternalBlueprintEditorLibrary
 
 bool FNodeReplacementRule::FromJson(const TSharedPtr<FJsonObject>& JsonObject)
 {
-	const TSharedPtr<FJsonObject>* OldNodeObj;
-	if (JsonObject->TryGetObjectField(TEXT("old_node"), OldNodeObj))
+	const TSharedPtr<FJsonObject>* oldNodeObj;
+	if (JsonObject->TryGetObjectField(TEXT("old_node"), oldNodeObj))
 	{
-		(*OldNodeObj)->TryGetStringField(TEXT("class_name"), OldNode.ClassName);
-		(*OldNodeObj)->TryGetStringField(TEXT("type"), OldNode.Type);
-		(*OldNodeObj)->TryGetStringField(TEXT("parent"), OldNode.Parent);
-		(*OldNodeObj)->TryGetStringField(TEXT("function"), OldNode.Function);
-		(*OldNodeObj)->TryGetBoolField(TEXT("is_interface_call"), OldNode.bIsInterfaceCall);
+		(*oldNodeObj)->TryGetStringField(TEXT("class_name"), OldNode.ClassName);
+		(*oldNodeObj)->TryGetStringField(TEXT("type"), OldNode.Type);
+		(*oldNodeObj)->TryGetStringField(TEXT("parent"), OldNode.Parent);
+		(*oldNodeObj)->TryGetStringField(TEXT("function"), OldNode.Function);
+		(*oldNodeObj)->TryGetBoolField(TEXT("is_interface_call"), OldNode.bIsInterfaceCall);
 	}
 
 	// Parse new node definition
-	const TSharedPtr<FJsonObject>* NewNodeObj;
-	if (JsonObject->TryGetObjectField(TEXT("new_node"), NewNodeObj))
+	const TSharedPtr<FJsonObject>* newNodeObj;
+	if (JsonObject->TryGetObjectField(TEXT("new_node"), newNodeObj))
 	{
-		(*NewNodeObj)->TryGetStringField(TEXT("parent"), NewNode.Parent);
-		(*NewNodeObj)->TryGetStringField(TEXT("function"), NewNode.Function);
-		(*NewNodeObj)->TryGetBoolField(TEXT("is_interface_call"), NewNode.bIsInterfaceCall);
+		(*newNodeObj)->TryGetStringField(TEXT("parent"), NewNode.Parent);
+		(*newNodeObj)->TryGetStringField(TEXT("function"), NewNode.Function);
+		(*newNodeObj)->TryGetBoolField(TEXT("is_interface_call"), NewNode.bIsInterfaceCall);
+	}
+
+	const TSharedPtr<FJsonObject>* pinMappingObj;
+	if ((*newNodeObj)->TryGetObjectField(TEXT("pin_mapping"), pinMappingObj))
+	{
+		for (const auto& Pair : (*pinMappingObj)->Values)
+		{
+			const auto mappedName = Pair.Value->AsString();
+			if (!mappedName.IsEmpty())
+			{
+				NewNode.PinMapping.Add(Pair.Key, *mappedName);
+			}
+		}
 	}
 
 	return !OldNode.ClassName.IsEmpty() && !NewNode.Parent.IsEmpty() && !NewNode.Function.IsEmpty();
@@ -309,6 +322,12 @@ void FMounteaDialogueFixUtilities::ReplaceNode(UEdGraph* Graph, UK2Node* OldNode
 						 OldToNewPinMap.Add(OldPin->PinName, NAME_None);
 						 continue;
 					}
+
+			  		if (const FString* MappedPinName = NewNodeDef.PinMapping.Find(OldPin->PinName.ToString()))
+			  		{
+			  			OldToNewPinMap.Add(OldPin->PinName, FName(**MappedPinName));
+			  			continue;
+			  		}
 
 					// First try to find exact match by name
 					if (UEdGraphPin* ExactMatch = NewNode->FindPin(OldPin->PinName))

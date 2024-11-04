@@ -20,6 +20,7 @@ struct FNodeReplacementRule
 		FString Parent;
 		FString Function;
 		bool bIsInterfaceCall;
+		TMap<FString, FString> PinMapping;
 	} NewNode;
 
 	bool FromJson(const TSharedPtr<FJsonObject>& JsonObject);

@@ -77,7 +77,13 @@
                 "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
                 "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerStatics",
                 "function": "RequestStartDialogue",
-                "is_interface_call": false
+                "is_interface_call": false,
+                "pin_mapping": {
+                    "execute": "execute",
+                    "Target": "Target",
+                    "OwningPlayerState": "DialogueInitiator",
+                    "Participants": "InitialParticipants"
+                }
             }
         }
     ]
