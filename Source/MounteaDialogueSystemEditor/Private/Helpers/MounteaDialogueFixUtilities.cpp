@@ -47,7 +47,7 @@ TArray<FNodeReplacementRule> FMounteaDialogueFixUtilities::LoadReplacementRules(
 	FString ConfigPath = FPaths::Combine(
 		PluginBaseDir,
 		TEXT("Source"),
-		TEXT("MounteaDialogueSystemDeveloper"),
+		TEXT("MounteaDialogueSystemEditor"),
 		TEXT("Config"),
 		TEXT("node_replacements.json")
 	);
@@ -122,8 +122,31 @@ void FMounteaDialogueFixUtilities::ProcessBlueprint(UBlueprint* Blueprint, const
 {
 	bool bModified = false;
 
-	for (UEdGraph* Graph : Blueprint->UbergraphPages)
+	// Process all graphs in the Blueprint
+	TArray<UEdGraph*> AllGraphs;
+    
+	// Get UbergraphPages (EventGraph)
+	AllGraphs.Append(Blueprint->UbergraphPages);
+    
+	// Get function graphs
+	AllGraphs.Append(Blueprint->FunctionGraphs);
+    
+	// Get macro graphs
+	AllGraphs.Append(Blueprint->MacroGraphs);
+    
+	// Get implemented interface graphs
+	for (const FBPInterfaceDescription& Interface : Blueprint->ImplementedInterfaces)
 	{
+		AllGraphs.Append(Interface.Graphs);
+	}
+
+	for (UEdGraph* Graph : AllGraphs)
+	{
+		if (!Graph)
+		{
+			continue;
+		}
+
 		TArray<UK2Node*> AllNodes;
 		Graph->GetNodesOfClass(AllNodes);
 
