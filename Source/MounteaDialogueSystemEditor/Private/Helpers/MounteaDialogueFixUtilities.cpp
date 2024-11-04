@@ -21,13 +21,14 @@ namespace InternalBlueprintEditorLibrary
 	* Replace the OldNode with the NewNode and reconnect it's pins. If the pins don't
 	* exist on the NewNode, then orphan the connections.
 	*
-	* @param OldNode		The old node to replace
-	* @param NewNode		The new node to put in the old node's place
+	* @param OldNode			The old node to replace
+	* @param NewNode			The new node to put in the old node's place
+	* @param CustomPinMapping	Optional predefined mapping
 	*/
-	static bool ReplaceOldNodeWithNew(UEdGraphNode* OldNode, UEdGraphNode* NewNode)
+	static bool ReplaceOldNodeWithNew(UEdGraphNode* OldNode, UEdGraphNode* NewNode, const TMap<FString, FString>* CustomPinMapping = nullptr)
 	{
 		const UEdGraphSchema_K2* Schema = GetDefault<UEdGraphSchema_K2>();
-		
+    
 		bool bSuccess = false;
 
 		if (Schema && OldNode && NewNode)
@@ -35,21 +36,28 @@ namespace InternalBlueprintEditorLibrary
 			TMap<FName, FName> OldToNewPinMap;
 			for (UEdGraphPin* Pin : OldNode->Pins)
 			{
+				if (Pin->ParentPin)
+				{
+					continue;
+				}
+            
 				if (Pin->PinName == UEdGraphSchema_K2::PN_Self)
 				{
-					// there's no analogous pin, signal that we're expecting this
 					OldToNewPinMap.Add(Pin->PinName, NAME_None);
+				}
+				else if (CustomPinMapping && CustomPinMapping->Contains(Pin->PinName.ToString()))
+				{
+					// Use custom mapping if provided and contains this pin
+					OldToNewPinMap.Add(Pin->PinName, FName(*CustomPinMapping->FindRef(Pin->PinName.ToString())));
 				}
 				else
 				{
-					// The input pins follow the same naming scheme
+					// Default behavior - use same name
 					OldToNewPinMap.Add(Pin->PinName, Pin->PinName);
 				}
 			}
-			
+        
 			bSuccess = Schema->ReplaceOldNodeWithNew(OldNode, NewNode, OldToNewPinMap);
-			// reconstructing the node will clean up any
-			// incorrect default values that may have been copied over
 			NewNode->ReconstructNode();
 		}
 
@@ -272,106 +280,46 @@ void FMounteaDialogueFixUtilities::ReplaceNode(UEdGraph* Graph, UK2Node* OldNode
 {
 	if (!Graph || !OldNode)
 	{
-		 return;
+		return;
 	}
 
 	if (UClass* Class = LoadObject<UClass>(nullptr, *NewNodeDef.Parent))
 	{
-		 if (UFunction* NewFunction = Class->FindFunctionByName(*NewNodeDef.Function))
-		 {
-			  Graph->Modify();
-		 	
-			  UK2Node_MounteaDialogueCallFunction* NewNode = NewObject<UK2Node_MounteaDialogueCallFunction>(Graph);
-			  NewNode->SetFromFunction(NewFunction);
-			  NewNode->bIsInterfaceCall = NewNodeDef.bIsInterfaceCall;
-			  
-			  if (UK2Node_CallFunction* OldFuncNode = Cast<UK2Node_CallFunction>(OldNode))
-			  {
-					NewNode->bIsPureFunc = OldFuncNode->bIsPureFunc;
-			  }
+		if (UFunction* NewFunction = Class->FindFunctionByName(*NewNodeDef.Function))
+		{
+			Graph->Modify();
+            
+			UK2Node_MounteaDialogueCallFunction* NewNode = NewObject<UK2Node_MounteaDialogueCallFunction>(Graph);
+			NewNode->SetFromFunction(NewFunction);
+			NewNode->bIsInterfaceCall = NewNodeDef.bIsInterfaceCall;
+            
+			if (UK2Node_CallFunction* OldFuncNode = Cast<UK2Node_CallFunction>(OldNode))
+			{
+				NewNode->bIsPureFunc = OldFuncNode->bIsPureFunc;
+			}
+            
+			NewNode->NodePosX = OldNode->NodePosX;
+			NewNode->NodePosY = OldNode->NodePosY;
+            
+			Graph->AddNode(NewNode, false);
+			NewNode->AllocateDefaultPins();
 
-			  NewNode->NodePosX = OldNode->NodePosX;
-			  NewNode->NodePosY = OldNode->NodePosY;
-		 	
-			  Graph->AddNode(NewNode, false);
-			  NewNode->AllocateDefaultPins();
-		 	
-			  TMap<FName, FName> OldToNewPinMap;
-		 	
-			  TMap<FString, TArray<UEdGraphPin*>> NewPinsByCategory;
-			  for (UEdGraphPin* NewPin : NewNode->Pins)
-			  {
-					if (!NewPin->ParentPin) // Skip split pins
-					{
-						 const FString CategoryKey = NewPin->PinType.PinCategory.ToString() + 
-							  InternalBlueprintEditorLibrary::GetPinDirectionStr(NewPin->Direction);
-						 NewPinsByCategory.FindOrAdd(CategoryKey).Add(NewPin);
-					}
-			  }
-		 	
-			  for (UEdGraphPin* OldPin : OldNode->Pins)
-			  {
-					if (OldPin->ParentPin)
-					{
-						 // Skip split pins - they'll be handled by parent pins
-						 continue;
-					}
-					
-					if (OldPin->PinName == UEdGraphSchema_K2::PN_Self)
-					{
-						 OldToNewPinMap.Add(OldPin->PinName, NAME_None);
-						 continue;
-					}
-
-			  		if (const FString* MappedPinName = NewNodeDef.PinMapping.Find(OldPin->PinName.ToString()))
-			  		{
-			  			OldToNewPinMap.Add(OldPin->PinName, FName(**MappedPinName));
-			  			continue;
-			  		}
-
-					// First try to find exact match by name
-					if (UEdGraphPin* ExactMatch = NewNode->FindPin(OldPin->PinName))
-					{
-						 OldToNewPinMap.Add(OldPin->PinName, ExactMatch->PinName);
-						 continue;
-					}
-
-					// If no exact match, try to find a pin of the same type and direction
-					const FString CategoryKey = OldPin->PinType.PinCategory.ToString() + 
-						 InternalBlueprintEditorLibrary::GetPinDirectionStr(OldPin->Direction);
-					
-					if (const TArray<UEdGraphPin*>* MatchingPins = NewPinsByCategory.Find(CategoryKey))
-					{
-						 if (MatchingPins->Num() > 0)
-						 {
-							  UEdGraphPin* MatchingPin = (*MatchingPins)[0];
-							  OldToNewPinMap.Add(OldPin->PinName, MatchingPin->PinName);
-						 	
-							  NewPinsByCategory.FindOrAdd(CategoryKey).Remove(MatchingPin);
-							  continue;
-						 }
-					}
-			  	
-					OldToNewPinMap.Add(OldPin->PinName, NAME_None);
-			  }
-
-			  // Let the engine handle the replacement with our custom mapping
-			  if (InternalBlueprintEditorLibrary::ReplaceOldNodeWithNew(OldNode, NewNode))
-			  {
-					NewNode->ReconstructNode();
-			  	
-					if (UBlueprint* Blueprint = Cast<UBlueprint>(Graph->GetOuter()))
-					{
-						 FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
-					}
-					
-					Graph->NotifyGraphChanged();
-			  }
-			  else
-			  {
-					Graph->RemoveNode(NewNode);
-			  }
-		 }
+			// Let the engine handle the replacement
+			if (InternalBlueprintEditorLibrary::ReplaceOldNodeWithNew(OldNode, NewNode, 
+				NewNodeDef.PinMapping.Num() > 0 ? &NewNodeDef.PinMapping : nullptr))
+			{
+				if (UBlueprint* Blueprint = Cast<UBlueprint>(Graph->GetOuter()))
+				{
+					FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
+				}
+                
+				Graph->NotifyGraphChanged();
+			}
+			else
+			{
+				Graph->RemoveNode(NewNode);
+			}
+		}
 	}
 }
 
