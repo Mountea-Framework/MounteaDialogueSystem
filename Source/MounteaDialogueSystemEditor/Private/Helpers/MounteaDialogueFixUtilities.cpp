@@ -47,7 +47,7 @@ TArray<FNodeReplacementRule> FMounteaDialogueFixUtilities::LoadReplacementRules(
 	FString ConfigPath = FPaths::Combine(
 		PluginBaseDir,
 		TEXT("Source"),
-		TEXT("MounteaDialogueSystemEditor"),
+		TEXT("MounteaDialogueSystemDeveloper"),
 		TEXT("Config"),
 		TEXT("node_replacements.json")
 	);
