@@ -12,6 +12,95 @@
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 
+///////////////////////////////////////////////////////////
+// InternalBlueprintEditorLibrary
+// Stolen from BlueprintEditorLibrary
+namespace InternalBlueprintEditorLibrary
+{
+	/**
+	* Replace the OldNode with the NewNode and reconnect it's pins. If the pins don't
+	* exist on the NewNode, then orphan the connections.
+	*
+	* @param OldNode		The old node to replace
+	* @param NewNode		The new node to put in the old node's place
+	*/
+	static bool ReplaceOldNodeWithNew(UEdGraphNode* OldNode, UEdGraphNode* NewNode)
+	{
+		const UEdGraphSchema_K2* Schema = GetDefault<UEdGraphSchema_K2>();
+		
+		bool bSuccess = false;
+
+		if (Schema && OldNode && NewNode)
+		{
+			TMap<FName, FName> OldToNewPinMap;
+			for (UEdGraphPin* Pin : OldNode->Pins)
+			{
+				if (Pin->ParentPin != nullptr)
+				{
+					// ReplaceOldNodeWithNew() will take care of mapping split pins (as long as the parents are properly mapped)
+					continue;
+				}
+				else if (Pin->PinName == UEdGraphSchema_K2::PN_Self)
+				{
+					// there's no analogous pin, signal that we're expecting this
+					OldToNewPinMap.Add(Pin->PinName, NAME_None);
+				}
+				else
+				{
+					// The input pins follow the same naming scheme
+					OldToNewPinMap.Add(Pin->PinName, Pin->PinName);
+				}
+			}
+			
+			bSuccess = Schema->ReplaceOldNodeWithNew(OldNode, NewNode, OldToNewPinMap);
+			// reconstructing the node will clean up any
+			// incorrect default values that may have been copied over
+			NewNode->ReconstructNode();			
+		}
+
+		return bSuccess;
+	}
+
+	/**
+	* Returns true if any of these nodes pins have any links. Does not check for 
+	* a default value on pins
+	*
+	* @param Node		The node to check
+	*
+	* @return bool		True if the node has any links, false otherwise.
+	*/
+	static bool NodeHasAnyConnections(const UEdGraphNode* Node)
+	{
+		if (Node)
+		{
+			for (const UEdGraphPin* Pin : Node->Pins)
+			{
+				if (Pin && Pin->LinkedTo.Num() > 0)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	* Attempt to close any open editors that may be relevant to this blueprint. This will prevent any 
+	* problems where the user could see a previously deleted node/graph.
+	*
+	* @param Blueprint		The blueprint that is being edited
+	*/
+	static void CloseOpenEditors(UBlueprint* Blueprint)
+	{
+		UAssetEditorSubsystem* AssetSubsystem = GEditor ? GEditor->GetEditorSubsystem<UAssetEditorSubsystem>() : nullptr;
+		if (AssetSubsystem && Blueprint)
+		{
+			AssetSubsystem->CloseAllEditorsForAsset(Blueprint);
+		}
+	}
+};
+
 bool FNodeReplacementRule::FromJson(const TSharedPtr<FJsonObject>& JsonObject)
 {
 	const TSharedPtr<FJsonObject>* OldNodeObj;
@@ -124,16 +213,16 @@ void FMounteaDialogueFixUtilities::ProcessBlueprint(UBlueprint* Blueprint, const
 
 	// Process all graphs in the Blueprint
 	TArray<UEdGraph*> AllGraphs;
-    
+	
 	// Get UbergraphPages (EventGraph)
 	AllGraphs.Append(Blueprint->UbergraphPages);
-    
+	
 	// Get function graphs
 	AllGraphs.Append(Blueprint->FunctionGraphs);
-    
+	
 	// Get macro graphs
 	AllGraphs.Append(Blueprint->MacroGraphs);
-    
+	
 	// Get implemented interface graphs
 	for (const FBPInterfaceDescription& Interface : Blueprint->ImplementedInterfaces)
 	{
@@ -183,54 +272,45 @@ bool FMounteaDialogueFixUtilities::ShouldReplaceNode(UK2Node* Node, const FNodeR
 
 void FMounteaDialogueFixUtilities::ReplaceNode(UEdGraph* Graph, UK2Node* OldNode, const FNodeReplacementRule::FNewNode& NewNodeDef)
 {
-    if (UClass* Class = LoadObject<UClass>(nullptr, *NewNodeDef.Parent))
-    {
-        if (UFunction* NewFunction = Class->FindFunctionByName(*NewNodeDef.Function))
-        {
-            // Store old node's connections before replacing
-            TArray<UEdGraphPin*> OldPins = OldNode->Pins;
-            
-            // Create the correct node type
-            UK2Node_MounteaDialogueCallFunction* NewNode = NewObject<UK2Node_MounteaDialogueCallFunction>(Graph);
-            NewNode->SetFromFunction(NewFunction);
-            NewNode->bIsInterfaceCall = NewNodeDef.bIsInterfaceCall;
-            
-            if (UK2Node_CallFunction* OldFuncNode = Cast<UK2Node_CallFunction>(OldNode))
-            {
-                NewNode->bIsPureFunc = OldFuncNode->bIsPureFunc;
-            }
-            
-            Graph->AddNode(NewNode, false);
-            NewNode->NodePosX = OldNode->NodePosX;
-            NewNode->NodePosY = OldNode->NodePosY;
+	if (!Graph || !OldNode)
+	{
+		return;
+	}
 
-            // Reconstruct the node to create all pins
-            NewNode->ReconstructNode();
-            
-            // Now reconnect pins after reconstruction
-            for (UEdGraphPin* OldPin : OldPins)
-            {
-                if (UEdGraphPin* NewPin = NewNode->FindPin(OldPin->GetFName()))
-                {
-                    // Copy default values if any
-                    NewPin->DefaultValue = OldPin->DefaultValue;
-                    NewPin->DefaultObject = OldPin->DefaultObject;
-                    NewPin->DefaultTextValue = OldPin->DefaultTextValue;
-                    
-                    // Reconnect links
-                    for (UEdGraphPin* LinkedPin : OldPin->LinkedTo)
-                    {
-                        NewPin->MakeLinkTo(LinkedPin);
-                    }
-                }
-            }
+	if (UClass* Class = LoadObject<UClass>(nullptr, *NewNodeDef.Parent))
+	{
+		if (UFunction* NewFunction = Class->FindFunctionByName(*NewNodeDef.Function))
+		{
+			Graph->Modify();
 
-            Graph->RemoveNode(OldNode);
+			UK2Node_MounteaDialogueCallFunction* NewNode = NewObject<UK2Node_MounteaDialogueCallFunction>(Graph);
+			NewNode->SetFromFunction(NewFunction);
+			NewNode->bIsInterfaceCall = NewNodeDef.bIsInterfaceCall;
             
-            // Notify graph that it has changed
-            Graph->NotifyGraphChanged();
-        }
-    }
+			if (UK2Node_CallFunction* OldFuncNode = Cast<UK2Node_CallFunction>(OldNode))
+			{
+				NewNode->bIsPureFunc = OldFuncNode->bIsPureFunc;
+			}
+
+			NewNode->AllocateDefaultPins();
+			
+			NewNode->NodePosX = OldNode->NodePosX;
+			NewNode->NodePosY = OldNode->NodePosY;
+			
+			Graph->AddNode(NewNode, false);
+
+			// Let the engine handle the replacement
+			if (InternalBlueprintEditorLibrary::ReplaceOldNodeWithNew(OldNode, NewNode))
+			{
+				Graph->NotifyGraphChanged();
+			}
+			else
+			{
+				// If replacement failed, clean up the new node
+				Graph->RemoveNode(NewNode);
+			}
+		}
+	}
 }
 
 void FMounteaDialogueFixUtilities::ReconnectPins(UK2Node* OldNode, UK2Node* NewNode)
