@@ -35,12 +35,7 @@ namespace InternalBlueprintEditorLibrary
 			TMap<FName, FName> OldToNewPinMap;
 			for (UEdGraphPin* Pin : OldNode->Pins)
 			{
-				if (Pin->ParentPin != nullptr)
-				{
-					// ReplaceOldNodeWithNew() will take care of mapping split pins (as long as the parents are properly mapped)
-					continue;
-				}
-				else if (Pin->PinName == UEdGraphSchema_K2::PN_Self)
+				if (Pin->PinName == UEdGraphSchema_K2::PN_Self)
 				{
 					// there's no analogous pin, signal that we're expecting this
 					OldToNewPinMap.Add(Pin->PinName, NAME_None);
@@ -55,7 +50,7 @@ namespace InternalBlueprintEditorLibrary
 			bSuccess = Schema->ReplaceOldNodeWithNew(OldNode, NewNode, OldToNewPinMap);
 			// reconstructing the node will clean up any
 			// incorrect default values that may have been copied over
-			NewNode->ReconstructNode();			
+			NewNode->ReconstructNode();
 		}
 
 		return bSuccess;
@@ -84,20 +79,10 @@ namespace InternalBlueprintEditorLibrary
 
 		return false;
 	}
-
-	/**
-	* Attempt to close any open editors that may be relevant to this blueprint. This will prevent any 
-	* problems where the user could see a previously deleted node/graph.
-	*
-	* @param Blueprint		The blueprint that is being edited
-	*/
-	static void CloseOpenEditors(UBlueprint* Blueprint)
+	
+	static FString GetPinDirectionStr(EEdGraphPinDirection Direction)
 	{
-		UAssetEditorSubsystem* AssetSubsystem = GEditor ? GEditor->GetEditorSubsystem<UAssetEditorSubsystem>() : nullptr;
-		if (AssetSubsystem && Blueprint)
-		{
-			AssetSubsystem->CloseAllEditorsForAsset(Blueprint);
-		}
+		return Direction == EGPD_Input ? TEXT("_Input") : TEXT("_Output");
 	}
 };
 
@@ -274,42 +259,100 @@ void FMounteaDialogueFixUtilities::ReplaceNode(UEdGraph* Graph, UK2Node* OldNode
 {
 	if (!Graph || !OldNode)
 	{
-		return;
+		 return;
 	}
 
 	if (UClass* Class = LoadObject<UClass>(nullptr, *NewNodeDef.Parent))
 	{
-		if (UFunction* NewFunction = Class->FindFunctionByName(*NewNodeDef.Function))
-		{
-			Graph->Modify();
+		 if (UFunction* NewFunction = Class->FindFunctionByName(*NewNodeDef.Function))
+		 {
+			  Graph->Modify();
+		 	
+			  UK2Node_MounteaDialogueCallFunction* NewNode = NewObject<UK2Node_MounteaDialogueCallFunction>(Graph);
+			  NewNode->SetFromFunction(NewFunction);
+			  NewNode->bIsInterfaceCall = NewNodeDef.bIsInterfaceCall;
+			  
+			  if (UK2Node_CallFunction* OldFuncNode = Cast<UK2Node_CallFunction>(OldNode))
+			  {
+					NewNode->bIsPureFunc = OldFuncNode->bIsPureFunc;
+			  }
 
-			UK2Node_MounteaDialogueCallFunction* NewNode = NewObject<UK2Node_MounteaDialogueCallFunction>(Graph);
-			NewNode->SetFromFunction(NewFunction);
-			NewNode->bIsInterfaceCall = NewNodeDef.bIsInterfaceCall;
-            
-			if (UK2Node_CallFunction* OldFuncNode = Cast<UK2Node_CallFunction>(OldNode))
-			{
-				NewNode->bIsPureFunc = OldFuncNode->bIsPureFunc;
-			}
+			  NewNode->NodePosX = OldNode->NodePosX;
+			  NewNode->NodePosY = OldNode->NodePosY;
+		 	
+			  Graph->AddNode(NewNode, false);
+			  NewNode->AllocateDefaultPins();
+		 	
+			  TMap<FName, FName> OldToNewPinMap;
+		 	
+			  TMap<FString, TArray<UEdGraphPin*>> NewPinsByCategory;
+			  for (UEdGraphPin* NewPin : NewNode->Pins)
+			  {
+					if (!NewPin->ParentPin) // Skip split pins
+					{
+						 const FString CategoryKey = NewPin->PinType.PinCategory.ToString() + 
+							  InternalBlueprintEditorLibrary::GetPinDirectionStr(NewPin->Direction);
+						 NewPinsByCategory.FindOrAdd(CategoryKey).Add(NewPin);
+					}
+			  }
+		 	
+			  for (UEdGraphPin* OldPin : OldNode->Pins)
+			  {
+					if (OldPin->ParentPin)
+					{
+						 // Skip split pins - they'll be handled by parent pins
+						 continue;
+					}
+					
+					if (OldPin->PinName == UEdGraphSchema_K2::PN_Self)
+					{
+						 OldToNewPinMap.Add(OldPin->PinName, NAME_None);
+						 continue;
+					}
 
-			NewNode->AllocateDefaultPins();
-			
-			NewNode->NodePosX = OldNode->NodePosX;
-			NewNode->NodePosY = OldNode->NodePosY;
-			
-			Graph->AddNode(NewNode, false);
+					// First try to find exact match by name
+					if (UEdGraphPin* ExactMatch = NewNode->FindPin(OldPin->PinName))
+					{
+						 OldToNewPinMap.Add(OldPin->PinName, ExactMatch->PinName);
+						 continue;
+					}
 
-			// Let the engine handle the replacement
-			if (InternalBlueprintEditorLibrary::ReplaceOldNodeWithNew(OldNode, NewNode))
-			{
-				Graph->NotifyGraphChanged();
-			}
-			else
-			{
-				// If replacement failed, clean up the new node
-				Graph->RemoveNode(NewNode);
-			}
-		}
+					// If no exact match, try to find a pin of the same type and direction
+					const FString CategoryKey = OldPin->PinType.PinCategory.ToString() + 
+						 InternalBlueprintEditorLibrary::GetPinDirectionStr(OldPin->Direction);
+					
+					if (const TArray<UEdGraphPin*>* MatchingPins = NewPinsByCategory.Find(CategoryKey))
+					{
+						 if (MatchingPins->Num() > 0)
+						 {
+							  UEdGraphPin* MatchingPin = (*MatchingPins)[0];
+							  OldToNewPinMap.Add(OldPin->PinName, MatchingPin->PinName);
+						 	
+							  NewPinsByCategory.FindOrAdd(CategoryKey).Remove(MatchingPin);
+							  continue;
+						 }
+					}
+			  	
+					OldToNewPinMap.Add(OldPin->PinName, NAME_None);
+			  }
+
+			  // Let the engine handle the replacement with our custom mapping
+			  if (InternalBlueprintEditorLibrary::ReplaceOldNodeWithNew(OldNode, NewNode))
+			  {
+					NewNode->ReconstructNode();
+			  	
+					if (UBlueprint* Blueprint = Cast<UBlueprint>(Graph->GetOuter()))
+					{
+						 FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
+					}
+					
+					Graph->NotifyGraphChanged();
+			  }
+			  else
+			  {
+					Graph->RemoveNode(NewNode);
+			  }
+		 }
 	}
 }
 
