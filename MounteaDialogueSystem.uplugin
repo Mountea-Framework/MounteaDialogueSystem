@@ -27,7 +27,7 @@
 		{
 			"Name": "MounteaDialogueSystemEditor",
 			"Type": "Editor",
-			"LoadingPhase": "Default",
+			"LoadingPhase": "PreDefault",
 			"PlatformAllowList": [
 				"Linux",
 				"Mac",
@@ -46,11 +46,5 @@
 		}
 	],
 	"IsBetaVersion": false,
-	"IsExperimentalVersion": false,
-	"Plugins": [
-		{
-			"Name": "PythonScriptPlugin",
-			"Enabled": true
-		}
-	]
+	"IsExperimentalVersion": false
 }

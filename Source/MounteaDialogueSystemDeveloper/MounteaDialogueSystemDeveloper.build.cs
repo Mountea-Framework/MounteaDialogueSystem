@@ -34,8 +34,6 @@ public class MounteaDialogueSystemDeveloper : ModuleRules
 				{
 					"EditorStyle",
 					"BlueprintGraph",
-					
-					"MounteaDialogueSystemEditor"
 				}
 			);
 		}

@@ -218,7 +218,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 
 		PluginCommands->MapAction(
 			FMDSCommands::Get().FixMounteaNodesAction,
-			FExecuteAction::CreateStatic(&FMounteaDialogueFixUtilities::ExecutePythonFixer),
+			FExecuteAction::CreateStatic(&FMounteaDialogueFixUtilities::ReplaceNodesInSelectedBlueprints),
 			FCanExecuteAction::CreateStatic(&FMounteaDialogueFixUtilities::CanExecute)
 		);
 		
