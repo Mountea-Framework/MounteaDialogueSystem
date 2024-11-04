@@ -151,7 +151,8 @@ void UMounteaDialogueParticipant::SkipParticipantVoice_Implementation(USoundBase
 
 bool UMounteaDialogueParticipant::CanStartDialogue_Implementation() const
 {
-	return ParticipantState == EDialogueParticipantState::EDPS_Enabled && IsValid(DialogueGraph);
+	return ParticipantState == EDialogueParticipantState::EDPS_Enabled &&
+		(IsValid(DialogueGraph) && DialogueGraph->CanStartDialogueGraph());
 }
 
 bool UMounteaDialogueParticipant::CanParticipateInDialogue_Implementation() const
@@ -216,8 +217,6 @@ void UMounteaDialogueParticipant::SetParticipantState_Implementation(const EDial
 	{
 		SetParticipantState_Server(NewState);
 	}
-	
-	LOG_WARNING(TEXT("[SetParticipantState] Setting new state value to %s"), *UMounteaDialogueSystemBFC::GetEnumFriendlyName(NewState))
 
 	ParticipantState = NewState;
 

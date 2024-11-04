@@ -49,7 +49,7 @@ FString UMounteaDialogueContext::ToString() const
 
 bool UMounteaDialogueContext::IsValid() const
 {
-	return ActiveNode != nullptr && DialogueParticipant.GetInterface() != nullptr && PlayerDialogueParticipant.GetInterface() != nullptr;
+	return ActiveNode != nullptr && DialogueParticipant.GetInterface() != nullptr; // && PlayerDialogueParticipant.GetInterface() != nullptr;
 }
 
 void UMounteaDialogueContext::SetDialogueContext(const TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant, UMounteaDialogueGraphNode* NewActiveNode, const TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes)

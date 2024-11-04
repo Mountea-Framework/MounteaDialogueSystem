@@ -147,6 +147,9 @@ private:
 	UFUNCTION()
 	void OnRep_ManagerState();
 
+public:
+	bool IsAuthority() const;
+
 protected:
 	
 	/**

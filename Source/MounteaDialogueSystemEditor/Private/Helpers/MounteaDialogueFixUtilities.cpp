@@ -47,7 +47,6 @@ namespace InternalBlueprintEditorLibrary
 				}
 				else if (CustomPinMapping && CustomPinMapping->Contains(Pin->PinName.ToString()))
 				{
-					// Use custom mapping if provided and contains this pin
 					OldToNewPinMap.Add(Pin->PinName, FName(*CustomPinMapping->FindRef(Pin->PinName.ToString())));
 				}
 				else
@@ -216,24 +215,9 @@ bool FMounteaDialogueFixUtilities::CanExecute()
 void FMounteaDialogueFixUtilities::ProcessBlueprint(UBlueprint* Blueprint, const TArray<FNodeReplacementRule>& Rules)
 {
 	bool bModified = false;
-
-	// Process all graphs in the Blueprint
+	
 	TArray<UEdGraph*> AllGraphs;
-	
-	// Get UbergraphPages (EventGraph)
-	AllGraphs.Append(Blueprint->UbergraphPages);
-	
-	// Get function graphs
-	AllGraphs.Append(Blueprint->FunctionGraphs);
-	
-	// Get macro graphs
-	AllGraphs.Append(Blueprint->MacroGraphs);
-	
-	// Get implemented interface graphs
-	for (const FBPInterfaceDescription& Interface : Blueprint->ImplementedInterfaces)
-	{
-		AllGraphs.Append(Interface.Graphs);
-	}
+	Blueprint->GetAllGraphs(AllGraphs);
 
 	for (UEdGraph* Graph : AllGraphs)
 	{

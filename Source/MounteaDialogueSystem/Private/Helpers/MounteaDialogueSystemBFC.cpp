@@ -391,7 +391,7 @@ UMounteaDialogueGraphNode* UMounteaDialogueSystemBFC::GetStartingNode(const TScr
 		return nullptr;
 	}
 	
-	UMounteaDialogueGraphNode* NodeToStart = Participant->GetSavedStartingNode();
+	UMounteaDialogueGraphNode* NodeToStart = Participant->Execute_GetSavedStartingNode(Participant.GetObject());
 	if (!IsValid(NodeToStart) || NodeToStart->CanStartNode() == false)
 	{
 		NodeToStart = Graph->GetStartNode();

@@ -48,7 +48,7 @@ void UMounteaDialogueManager::BeginPlay()
 		GetOwner()->SetReplicates(true);
 	}
 
-	if (GetOwner() && GetOwner()->HasAuthority())
+	if (IsAuthority())
 	{
 		OnDialogueStartRequested.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueStartRequestReceived);
 		OnDialogueContextUpdated.AddUniqueDynamic(this, &UMounteaDialogueManager::RequestBroadcastContext);
@@ -119,7 +119,7 @@ void UMounteaDialogueManager::SetManagerState(const EDialogueManagerState NewSta
 		return;
 	}
 	
-	if (GetOwner() && !GetOwner()->HasAuthority())
+	if (!IsAuthority())
 		SetManagerState_Server(NewState);
 	else
 	{
@@ -147,19 +147,29 @@ void UMounteaDialogueManager::OnRep_ManagerState()
 	ProcessStateUpdated();
 }
 
+bool UMounteaDialogueManager::IsAuthority() const
+{
+	return GetOwner() && GetOwner()->HasAuthority();
+}
+
 void UMounteaDialogueManager::ProcessStateUpdated()
 {
+	if (IsAuthority() && !UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
+	{
+		return;
+	}
+	
 	switch (ManagerState)
 	{
-	case EDialogueManagerState::EDMS_Disabled:
-		Execute_CloseDialogue(this);
-		break;
-	case EDialogueManagerState::EDMS_Enabled:
-		Execute_CloseDialogue(this);
-		break;
-	case EDialogueManagerState::EDMS_Active:
-		Execute_StartDialogue(this);
-		break;
+		case EDialogueManagerState::EDMS_Disabled:
+			Execute_CloseDialogue(this);
+			break;
+		case EDialogueManagerState::EDMS_Enabled:
+			Execute_CloseDialogue(this);
+			break;
+		case EDialogueManagerState::EDMS_Active:
+			Execute_StartDialogue(this);
+			break;
 	}
 }
 
@@ -167,7 +177,7 @@ void UMounteaDialogueManager::RequestBroadcastContext(UMounteaDialogueContext* C
 {
 	// TODO: Here we ask server to update its Context
 	// then server multicasts the new context to all clients BUT current one
-	if (GetOwner() && GetOwner()->HasAuthority())
+	if (IsAuthority())
 	{
 		RequestBroadcastContext_Multicast(Context);
 	}
@@ -182,10 +192,7 @@ void UMounteaDialogueManager::RequestBroadcastContext_Server_Implementation(UMou
 
 void UMounteaDialogueManager::RequestBroadcastContext_Multicast_Implementation(UMounteaDialogueContext* Context)
 {
-	if (!IsValid(GetOwner()))
-		return;
-	
-	if (GetOwner()->HasAuthority())
+	if(IsAuthority())
 		return;
 
 	// Which roles I want to updated really?
@@ -219,7 +226,7 @@ void UMounteaDialogueManager::SetDefaultManagerState(const EDialogueManagerState
 		return;
 	}
 	
-	if (GetOwner() && !GetOwner()->HasAuthority())
+	if (!IsAuthority())
 		SetManagerState_Server(NewState);
 	
 	DefaultManagerState = NewState;
@@ -253,7 +260,7 @@ void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewCon
 	if (NewContext == DialogueContext) return;
 
 	// Is the Context propagated from Client to Server?
-	if (GetOwner() && !GetOwner()->HasAuthority())
+	if (!IsAuthority())
 		SetDialogueContext_Server(NewContext);
 
 	DialogueContext = NewContext;
@@ -272,7 +279,7 @@ void UMounteaDialogueManager::UpdateDialogueContext_Implementation(UMounteaDialo
 {
 	if (NewContext == DialogueContext) return;
 	
-	if (GetOwner() && !GetOwner()->HasAuthority())
+	if (!IsAuthority())
 		UpdateDialogueContext_Server(NewContext);
 
 	(*DialogueContext) += NewContext;
@@ -319,7 +326,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 	{
 		dialogueParticipants.Add(mainParticipant);
 
-		if (!mainParticipant->Execute_CanStartDialogue(InitialParticipants.MainParticipant)) // TODO: move Graph->CanStartDialogue to participant
+		if (!mainParticipant->Execute_CanStartDialogue(mainParticipant.GetObject())) // TODO: move Graph->CanStartDialogue to participant
 		{
 			errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "ParticipantCannotStart", "Main Participant Cannot Start Dialogue!"));
 			bSatisfied = false;
@@ -402,7 +409,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 	if (bSatisfied)
 	{
 		// Request Start on Server
-		if (GetOwner() && !GetOwner()->HasAuthority())
+		if (!IsAuthority())
 		{
 			RequestStartDialogue_Server(DialogueInitiator, InitialParticipants);
 		}
@@ -416,7 +423,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Server_Implementation(AActor*
 
 void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 {
-	if (GetOwner() && !GetOwner()->HasAuthority())
+	if (!IsAuthority())
 	{
 		SetManagerState(DefaultManagerState); // Let's close Dialogue by changing state
 	}
@@ -440,7 +447,7 @@ void UMounteaDialogueManager::DialogueStartRequestReceived(const bool bResult, c
 
 void UMounteaDialogueManager::StartDialogue_Implementation()
 {
-	if (GetOwner() && !GetOwner()->HasAuthority())
+	if (!IsAuthority())
 	{
 		NotifyContextChanged(FMounteaDialogueContextReplicatedStruct(DialogueContext)); // let Server know about our Context
 	}
@@ -467,7 +474,7 @@ void UMounteaDialogueManager::CleanupDialogue_Implementation()
 	if (!UMounteaDialogueSystemBFC::IsContextValid(DialogueContext))
 		return;
 	
-	if (GetOwner() && !GetOwner()->HasAuthority())
+	if (!IsAuthority())
 		CleanupDialogue_Server();
 
 	auto dialogueGraph = DialogueContext->ActiveNode ? DialogueContext->ActiveNode->Graph : nullptr;
@@ -647,11 +654,12 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 		return;
 	}
 	
-	// TODO: For non-dialogue nodes simply skip this
-	{
-		FString resultMessage;
-		Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::ShowDialogueRow);
-	}
+	// non-dialogue nodes are handled in their own ways
+	if (!DialogueContext->ActiveNode->IsA(UMounteaDialogueGraphNode_DialogueNodeBase::StaticClass()))
+		return;
+	
+	FString resultMessage;
+	Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::ShowDialogueRow);
 
 	if (DialogueContext->GetActiveDialogueRow().DialogueRowData.Array().IsValidIndex(DialogueContext->GetActiveDialogueRowDataIndex()) == false)
 	{
@@ -758,7 +766,7 @@ void UMounteaDialogueManager::SkipDialogueRow_Implementation()
 
 void UMounteaDialogueManager::UpdateWorldDialogueUI_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command)
 {
-	if (GetOwner() && !GetOwner()->HasAuthority())
+	if (!IsAuthority())
 	{
 		UpdateWorldDialogueUI_Server(DialogueManager, Command);
 	}
