@@ -16,6 +16,6 @@ class MOUNTEADIALOGUESYSTEMDEVELOPER_API UMounteaDialogueSystemDeveloperUtilitie
 
 public:
 
-	UFUNCTION(BlueprintCallable, Category="Mountea|Developer")
+	UFUNCTION(BlueprintCallable, Category="Mountea|Developer", meta=(CustomTag="MounteaK2Getter"))
 	static void CopyToClipboard(const FString& Input);
 };

@@ -204,6 +204,22 @@
                 "is_interface_call": false,
                 "is_blueprint_function": true
             }
+        },
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/BlueprintGraph.K2Node_CallFunction",
+                "parent": "/Script/MounteaDialogueSystemDeveloper.MounteaDialogueSystemDeveloperUtilities",
+                "function": "CopyToClipboard",
+                "is_interface_call": false
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/BlueprintGraph.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystemDeveloper.MounteaDialogueSystemDeveloperUtilities",
+                "function": "CopyToClipboard",
+                "is_interface_call": false
+            }
         }
     ]
 }
