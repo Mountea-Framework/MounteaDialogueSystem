@@ -27,7 +27,7 @@
 		{
 			"Name": "MounteaDialogueSystemEditor",
 			"Type": "Editor",
-			"LoadingPhase": "PreDefault",
+			"LoadingPhase": "Default",
 			"PlatformAllowList": [
 				"Linux",
 				"Mac",
