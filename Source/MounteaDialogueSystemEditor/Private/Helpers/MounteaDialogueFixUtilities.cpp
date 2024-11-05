@@ -48,15 +48,16 @@ namespace InternalBlueprintEditorLibrary
 				continue;
 			}
 
-			if (Pin->PinName == UEdGraphSchema_K2::PN_Self)
+			// Handle pins that should be ignored by mapping them to NAME_None
+			if (IgnorePins && IgnorePins->Contains(Pin->PinName.ToString()))
 			{
 				OldToNewPinMap.Add(Pin->PinName, NAME_None);
 				continue;
 			}
 
-			// Skip pins that should be ignored
-			if (IgnorePins && IgnorePins->Contains(Pin->PinName.ToString()))
+			if (Pin->PinName == UEdGraphSchema_K2::PN_Self)
 			{
+				OldToNewPinMap.Add(Pin->PinName, NAME_None);
 				continue;
 			}
 
@@ -362,6 +363,14 @@ void FMounteaDialogueFixUtilities::ReplaceNode(UEdGraph* Graph, UK2Node* OldNode
 		UK2Node_MounteaDialogueCallFunction* NewNode = NewObject<UK2Node_MounteaDialogueCallFunction>(Graph);
 		NewNode->SetFromFunction(NewFunction);
 		NewNode->bIsInterfaceCall = NewNodeDef.bIsInterfaceCall;
+		if (OldNode->NodeGuid.IsValid())
+		{
+			NewNode->NodeGuid = OldNode->NodeGuid;
+		}
+		else
+		{
+			NewNode->NodeGuid = FGuid::NewGuid();
+		}
 			
 		if (UK2Node_CallFunction* OldFuncNode = Cast<UK2Node_CallFunction>(OldNode))
 		{

@@ -362,7 +362,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 								FMDSCommands::Get().FixMounteaNodesAction,
 								NAME_None,
 								LOCTEXT("MounteaAction", "Fix Mountea Nodes"),
-								LOCTEXT("MounteaActionTooltip", "🔧 Fix old Mountea nodes with new ones"),
+								LOCTEXT("MounteaActionTooltip", "🔧 Replace deprecated Mountea nodes with updated substitutes.\n\n🔓 Solution is using JSON-based configuration from a public GitHub repository.\n\n💪 Supports Blueprint to C++, C++ to Blueprint, and other combinations."),
 								FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Adjust")
 							);
 						}
