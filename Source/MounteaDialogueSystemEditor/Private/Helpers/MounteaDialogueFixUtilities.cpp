@@ -26,42 +26,68 @@ namespace InternalBlueprintEditorLibrary
 	* @param CustomPinMapping	Optional predefined mapping
 	*/
 	static bool ReplaceOldNodeWithNew(UEdGraphNode* OldNode, UEdGraphNode* NewNode, const TMap<FString, FString>* CustomPinMapping = nullptr)
+{
+	const UEdGraphSchema_K2* Schema = GetDefault<UEdGraphSchema_K2>();
+	
+	bool bSuccess = false;
+
+	if (Schema && OldNode && NewNode)
 	{
-		const UEdGraphSchema_K2* Schema = GetDefault<UEdGraphSchema_K2>();
-    
-		bool bSuccess = false;
+		TMap<FName, FName> OldToNewPinMap;
 
-		if (Schema && OldNode && NewNode)
+		// Special handling for interface to static function conversion
+		UK2Node_CallFunction* OldFuncNode = Cast<UK2Node_CallFunction>(OldNode);
+		UK2Node_CallFunction* NewFuncNode = Cast<UK2Node_CallFunction>(NewNode);
+		bool bIsInterfaceToStatic = OldFuncNode && NewFuncNode && 
+								   OldFuncNode->bIsInterfaceCall && !NewFuncNode->bIsInterfaceCall;
+
+		for (UEdGraphPin* Pin : OldNode->Pins)
 		{
-			TMap<FName, FName> OldToNewPinMap;
-			for (UEdGraphPin* Pin : OldNode->Pins)
+			if (Pin->ParentPin)
 			{
-				if (Pin->ParentPin)
-				{
-					continue;
-				}
-            
-				if (Pin->PinName == UEdGraphSchema_K2::PN_Self)
-				{
-					OldToNewPinMap.Add(Pin->PinName, NAME_None);
-				}
-				else if (CustomPinMapping && CustomPinMapping->Contains(Pin->PinName.ToString()))
-				{
-					OldToNewPinMap.Add(Pin->PinName, FName(*CustomPinMapping->FindRef(Pin->PinName.ToString())));
-				}
-				else
-				{
-					// Default behavior - use same name
-					OldToNewPinMap.Add(Pin->PinName, Pin->PinName);
-				}
+				continue;
 			}
-        
-			bSuccess = Schema->ReplaceOldNodeWithNew(OldNode, NewNode, OldToNewPinMap);
-			NewNode->ReconstructNode();
-		}
 
-		return bSuccess;
+			if (Pin->PinName == UEdGraphSchema_K2::PN_Self)
+			{
+				OldToNewPinMap.Add(Pin->PinName, NAME_None);
+				continue;
+			}
+
+			// Special handling for interface Target pin when converting to static
+			if (bIsInterfaceToStatic && Pin->PinName == TEXT("Target"))
+			{
+				// Map interface Target pin to the first parameter of the static function
+				for (UEdGraphPin* NewPin : NewNode->Pins)
+				{
+					if (!NewPin->ParentPin && 
+						NewPin->Direction == EGPD_Input && 
+						NewPin->PinName != TEXT("self"))
+					{
+						OldToNewPinMap.Add(Pin->PinName, NewPin->PinName);
+						break;
+					}
+				}
+				continue;
+			}
+
+			// Regular pin mapping
+			if (CustomPinMapping && CustomPinMapping->Contains(Pin->PinName.ToString()))
+			{
+				OldToNewPinMap.Add(Pin->PinName, FName(*CustomPinMapping->FindRef(Pin->PinName.ToString())));
+			}
+			else 
+			{
+				OldToNewPinMap.Add(Pin->PinName, Pin->PinName);
+			}
+		}
+		
+		bSuccess = Schema->ReplaceOldNodeWithNew(OldNode, NewNode, OldToNewPinMap);
+		NewNode->ReconstructNode();
 	}
+
+	return bSuccess;
+}
 
 	/**
 	* Returns true if any of these nodes pins have any links. Does not check for 
@@ -95,39 +121,44 @@ namespace InternalBlueprintEditorLibrary
 
 bool FNodeReplacementRule::FromJson(const TSharedPtr<FJsonObject>& JsonObject)
 {
-	const TSharedPtr<FJsonObject>* oldNodeObj;
-	if (JsonObject->TryGetObjectField(TEXT("old_node"), oldNodeObj))
+	const TSharedPtr<FJsonObject>* OldNodeObj;
+	if (JsonObject->TryGetObjectField(TEXT("old_node"), OldNodeObj))
 	{
-		(*oldNodeObj)->TryGetStringField(TEXT("class_name"), OldNode.ClassName);
-		(*oldNodeObj)->TryGetStringField(TEXT("type"), OldNode.Type);
-		(*oldNodeObj)->TryGetStringField(TEXT("parent"), OldNode.Parent);
-		(*oldNodeObj)->TryGetStringField(TEXT("function"), OldNode.Function);
-		(*oldNodeObj)->TryGetBoolField(TEXT("is_interface_call"), OldNode.bIsInterfaceCall);
+		(*OldNodeObj)->TryGetStringField(TEXT("class_name"), OldNode.ClassName);
+		(*OldNodeObj)->TryGetStringField(TEXT("type"), OldNode.Type);
+		(*OldNodeObj)->TryGetStringField(TEXT("parent"), OldNode.Parent);
+		(*OldNodeObj)->TryGetStringField(TEXT("function"), OldNode.Function);
+		(*OldNodeObj)->TryGetBoolField(TEXT("is_interface_call"), OldNode.bIsInterfaceCall);
+		(*OldNodeObj)->TryGetBoolField(TEXT("is_blueprint_function"), OldNode.bIsBlueprintFunction);
 	}
 
 	// Parse new node definition
-	const TSharedPtr<FJsonObject>* newNodeObj;
-	if (JsonObject->TryGetObjectField(TEXT("new_node"), newNodeObj))
+	const TSharedPtr<FJsonObject>* NewNodeObj;
+	if (JsonObject->TryGetObjectField(TEXT("new_node"), NewNodeObj))
 	{
-		(*newNodeObj)->TryGetStringField(TEXT("parent"), NewNode.Parent);
-		(*newNodeObj)->TryGetStringField(TEXT("function"), NewNode.Function);
-		(*newNodeObj)->TryGetBoolField(TEXT("is_interface_call"), NewNode.bIsInterfaceCall);
-	}
+		(*NewNodeObj)->TryGetStringField(TEXT("class_name"), NewNode.ClassName);
+		(*NewNodeObj)->TryGetStringField(TEXT("type"), NewNode.Type);
+		(*NewNodeObj)->TryGetStringField(TEXT("parent"), NewNode.Parent);
+		(*NewNodeObj)->TryGetStringField(TEXT("function"), NewNode.Function);
+		(*NewNodeObj)->TryGetBoolField(TEXT("is_interface_call"), NewNode.bIsInterfaceCall);
+		(*NewNodeObj)->TryGetBoolField(TEXT("is_blueprint_function"), NewNode.bIsBlueprintFunction);
 
-	const TSharedPtr<FJsonObject>* pinMappingObj;
-	if ((*newNodeObj)->TryGetObjectField(TEXT("pin_mapping"), pinMappingObj))
-	{
-		for (const auto& Pair : (*pinMappingObj)->Values)
+		const TSharedPtr<FJsonObject>* PinMappingObj;
+		if ((*NewNodeObj)->TryGetObjectField(TEXT("pin_mapping"), PinMappingObj))
 		{
-			const auto mappedName = Pair.Value->AsString();
-			if (!mappedName.IsEmpty())
+			for (const auto& Pair : (*PinMappingObj)->Values)
 			{
-				NewNode.PinMapping.Add(Pair.Key, *mappedName);
+				const FString MappedName = Pair.Value->AsString();
+				if (!MappedName.IsEmpty())
+				{
+					NewNode.PinMapping.Add(Pair.Key, *MappedName);
+				}
 			}
 		}
 	}
 
-	return !OldNode.ClassName.IsEmpty() && !NewNode.Parent.IsEmpty() && !NewNode.Function.IsEmpty();
+	return !OldNode.Function.IsEmpty() && !NewNode.Function.IsEmpty() && 
+			   !NewNode.Parent.IsEmpty();
 }
 
 TArray<FNodeReplacementRule> FMounteaDialogueFixUtilities::LoadReplacementRules()
@@ -255,6 +286,16 @@ bool FMounteaDialogueFixUtilities::ShouldReplaceNode(UK2Node* Node, const FNodeR
 	if (UK2Node_CallFunction* FuncNode = Cast<UK2Node_CallFunction>(Node))
 	{
 		const FMemberReference& FuncRef = FuncNode->FunctionReference;
+		
+		// For Blueprint functions we need to check both name and parent class
+		if (FuncRef.GetMemberGuid().IsValid())  // Is Blueprint function
+		{
+			return FuncRef.GetMemberName() == *OldNodeDef.Function &&
+				   (OldNodeDef.Parent.IsEmpty() || // If parent is empty in config, match any
+					FuncRef.GetMemberParentPackage()->GetPathName() == OldNodeDef.Parent);
+		}
+		
+		// For C++ functions
 		return FuncRef.GetMemberName() == *OldNodeDef.Function;
 	}
 	return false;
@@ -267,42 +308,68 @@ void FMounteaDialogueFixUtilities::ReplaceNode(UEdGraph* Graph, UK2Node* OldNode
 		return;
 	}
 
-	if (UClass* Class = LoadObject<UClass>(nullptr, *NewNodeDef.Parent))
+	UClass* Class = nullptr;
+	UFunction* NewFunction = nullptr;
+	
+	if (NewNodeDef.bIsBlueprintFunction)
 	{
-		if (UFunction* NewFunction = Class->FindFunctionByName(*NewNodeDef.Function))
+		// For Blueprint classes, we need to load the Class directly
+		Class = LoadObject<UClass>(nullptr, *NewNodeDef.Parent);
+		
+		if (!Class)
 		{
-			Graph->Modify();
-            
-			UK2Node_MounteaDialogueCallFunction* NewNode = NewObject<UK2Node_MounteaDialogueCallFunction>(Graph);
-			NewNode->SetFromFunction(NewFunction);
-			NewNode->bIsInterfaceCall = NewNodeDef.bIsInterfaceCall;
-            
-			if (UK2Node_CallFunction* OldFuncNode = Cast<UK2Node_CallFunction>(OldNode))
+			// If direct class load failed, try to remove the _C suffix and load as Blueprint
+			FString BPPath = NewNodeDef.Parent;
+			BPPath.RemoveFromEnd(TEXT("_C"));
+			if (UBlueprint* Blueprint = LoadObject<UBlueprint>(nullptr, *BPPath))
 			{
-				NewNode->bIsPureFunc = OldFuncNode->bIsPureFunc;
+				Class = Blueprint->GeneratedClass;
 			}
-            
-			NewNode->NodePosX = OldNode->NodePosX;
-			NewNode->NodePosY = OldNode->NodePosY;
-            
-			Graph->AddNode(NewNode, false);
-			NewNode->AllocateDefaultPins();
+		}
+	}
+	else // C++ functions
+	{
+		Class = LoadObject<UClass>(nullptr, *NewNodeDef.Parent);
+	}
 
-			// Let the engine handle the replacement
-			if (InternalBlueprintEditorLibrary::ReplaceOldNodeWithNew(OldNode, NewNode, 
-				NewNodeDef.PinMapping.Num() > 0 ? &NewNodeDef.PinMapping : nullptr))
+	if (Class)
+	{
+		NewFunction = Class->FindFunctionByName(*NewNodeDef.Function);
+	}
+
+	if (NewFunction)
+	{
+		Graph->Modify();
+			
+		UK2Node_MounteaDialogueCallFunction* NewNode = NewObject<UK2Node_MounteaDialogueCallFunction>(Graph);
+		NewNode->SetFromFunction(NewFunction);
+		NewNode->bIsInterfaceCall = NewNodeDef.bIsInterfaceCall;
+			
+		if (UK2Node_CallFunction* OldFuncNode = Cast<UK2Node_CallFunction>(OldNode))
+		{
+			NewNode->bIsPureFunc = OldFuncNode->bIsPureFunc;
+		}
+			
+		NewNode->NodePosX = OldNode->NodePosX;
+		NewNode->NodePosY = OldNode->NodePosY;
+			
+		Graph->AddNode(NewNode, false);
+		NewNode->AllocateDefaultPins();
+
+		// Let the engine handle the replacement
+		if (InternalBlueprintEditorLibrary::ReplaceOldNodeWithNew(OldNode, NewNode, 
+			NewNodeDef.PinMapping.Num() > 0 ? &NewNodeDef.PinMapping : nullptr))
+		{
+			if (UBlueprint* Blueprint = Cast<UBlueprint>(Graph->GetOuter()))
 			{
-				if (UBlueprint* Blueprint = Cast<UBlueprint>(Graph->GetOuter()))
-				{
-					FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
-				}
-                
-				Graph->NotifyGraphChanged();
+				FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
 			}
-			else
-			{
-				Graph->RemoveNode(NewNode);
-			}
+				
+			Graph->NotifyGraphChanged();
+		}
+		else
+		{
+			Graph->RemoveNode(NewNode);
 		}
 	}
 }

@@ -4,26 +4,30 @@
 
 struct FNodeReplacementRule
 {
-	// Old node definition
+    // Old node definition
 	struct FOldNode
+	{
+		FString ClassName;
+		FString Type;
+		FString Parent;  // Can be empty for broken BP nodes
+		FString Function;
+		bool bIsInterfaceCall;
+		bool bIsBlueprintFunction;
+	} OldNode;
+
+	// New node definition
+	struct FNewNode
 	{
 		FString ClassName;
 		FString Type;
 		FString Parent;
 		FString Function;
 		bool bIsInterfaceCall;
-	} OldNode;
-
-	// New node definition
-	struct FNewNode
-	{
-		FString Parent;
-		FString Function;
-		bool bIsInterfaceCall;
+		bool bIsBlueprintFunction;
 		TMap<FString, FString> PinMapping;
 	} NewNode;
 
-	bool FromJson(const TSharedPtr<FJsonObject>& JsonObject);
+    bool FromJson(const TSharedPtr<FJsonObject>& JsonObject);
 };
 
 class FMounteaDialogueFixUtilities
