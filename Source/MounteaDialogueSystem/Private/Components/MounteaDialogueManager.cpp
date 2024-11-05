@@ -195,11 +195,13 @@ void UMounteaDialogueManager::RequestBroadcastContext_Multicast_Implementation(U
 	if(IsAuthority())
 		return;
 
-	// Which roles I want to updated really?
+	// TODO:
+	// GET FROM PLAYER CONTROLLER!!!
 	if (GetOwner()->GetLocalRole() == ROLE_AutonomousProxy)
 		return;
 
-	LOG_ERROR(TEXT("[Request Broadcast Context] CONTEXT UPDATED"))
+	const auto roleName = UMounteaDialogueSystemBFC::GetEnumFriendlyName(GetOwner()->GetLocalRole());
+	LOG_ERROR(TEXT("[Request Broadcast Context] CONTEXT UPDATED for client %s"), *roleName)
 }
 
 void UMounteaDialogueManager::DialogueFailed(const FString& ErrorMessage)
@@ -326,7 +328,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 	{
 		dialogueParticipants.Add(mainParticipant);
 
-		if (!mainParticipant->Execute_CanStartDialogue(mainParticipant.GetObject())) // TODO: move Graph->CanStartDialogue to participant
+ 		if (!mainParticipant->Execute_CanStartDialogue(mainParticipant.GetObject())) // TODO: move Graph->CanStartDialogue to participant
 		{
 			errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "ParticipantCannotStart", "Main Participant Cannot Start Dialogue!"));
 			bSatisfied = false;
@@ -895,17 +897,19 @@ void UMounteaDialogueManager::ResetDialogueUIObjects_Implementation()
 
 bool UMounteaDialogueManager::CreateDialogueUI_Implementation(FString& Message)
 {
-	return true;
+	return Execute_UpdateDialogueUI(this, Message, MounteaDialogueWidgetCommands::CreateDialogueWidget);
 }
 
 bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, const FString& Command)
 {
+	LOG_WARNING(TEXT("[Update Dialogue UI] Command: %s"), *Command)
 	return true;
 }
 
 bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
 {
-	return true;
+	FString dialogueMessage;
+	return Execute_UpdateDialogueUI(this, dialogueMessage, MounteaDialogueWidgetCommands::CreateDialogueWidget);
 }
 
 void UMounteaDialogueManager::ExecuteWidgetCommand_Implementation(const FString& Command)
