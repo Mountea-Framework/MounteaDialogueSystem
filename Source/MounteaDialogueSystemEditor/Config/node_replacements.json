@@ -38,7 +38,12 @@
                 "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
                 "parent": "/Script/AnimGraphRuntime.AnimationStateMachineLibrary",
                 "function": "GetState",
-                "is_interface_call": false
+                "is_interface_call": false,
+                "ignore_pins": 
+                [
+                    "UpdateContext", 
+                    "Node"
+                ]
             },
             "new_node": {
                 "type": "function_call",

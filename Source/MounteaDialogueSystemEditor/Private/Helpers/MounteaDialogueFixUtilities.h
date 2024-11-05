@@ -13,6 +13,7 @@ struct FNodeReplacementRule
 		FString Function;
 		bool bIsInterfaceCall;
 		bool bIsBlueprintFunction;
+		TArray<FString> IgnorePins;
 	} OldNode;
 
 	// New node definition
@@ -37,7 +38,7 @@ private:
 	static TArray<FNodeReplacementRule> LoadReplacementRules();
 	static void ProcessBlueprint(UBlueprint* Blueprint, const TArray<FNodeReplacementRule>& Rules);
 	static bool ShouldReplaceNode(UK2Node* Node, const FNodeReplacementRule::FOldNode& OldNodeDef);
-	static void ReplaceNode(UEdGraph* Graph, UK2Node* OldNode, const FNodeReplacementRule::FNewNode& NewNodeDef);
+	static void ReplaceNode(UEdGraph* Graph, UK2Node* OldNode, const FNodeReplacementRule::FNewNode& NewNodeDef, const FNodeReplacementRule::FOldNode& OldNodeDef);
 	static void ReconnectPins(UK2Node* OldNode, UK2Node* NewNode);
 	static UFunction* FindFunction(const FString& ParentPath, const FString& FunctionName);
 

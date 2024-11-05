@@ -25,7 +25,7 @@ namespace InternalBlueprintEditorLibrary
 	* @param NewNode			The new node to put in the old node's place
 	* @param CustomPinMapping	Optional predefined mapping
 	*/
-	static bool ReplaceOldNodeWithNew(UEdGraphNode* OldNode, UEdGraphNode* NewNode, const TMap<FString, FString>* CustomPinMapping = nullptr)
+	static bool ReplaceOldNodeWithNew(UEdGraphNode* OldNode, UEdGraphNode* NewNode, const TMap<FString, FString>* CustomPinMapping = nullptr, const TArray<FString>* IgnorePins = nullptr)
 {
 	const UEdGraphSchema_K2* Schema = GetDefault<UEdGraphSchema_K2>();
 	
@@ -51,6 +51,12 @@ namespace InternalBlueprintEditorLibrary
 			if (Pin->PinName == UEdGraphSchema_K2::PN_Self)
 			{
 				OldToNewPinMap.Add(Pin->PinName, NAME_None);
+				continue;
+			}
+
+			// Skip pins that should be ignored
+			if (IgnorePins && IgnorePins->Contains(Pin->PinName.ToString()))
+			{
 				continue;
 			}
 
@@ -130,6 +136,18 @@ bool FNodeReplacementRule::FromJson(const TSharedPtr<FJsonObject>& JsonObject)
 		(*OldNodeObj)->TryGetStringField(TEXT("function"), OldNode.Function);
 		(*OldNodeObj)->TryGetBoolField(TEXT("is_interface_call"), OldNode.bIsInterfaceCall);
 		(*OldNodeObj)->TryGetBoolField(TEXT("is_blueprint_function"), OldNode.bIsBlueprintFunction);
+		
+		const TArray<TSharedPtr<FJsonValue>>* IgnorePinsArray;
+		if ((*OldNodeObj)->TryGetArrayField(TEXT("ignore_pins"), IgnorePinsArray))
+		{
+			for (const TSharedPtr<FJsonValue>& Value : *IgnorePinsArray)
+			{
+				if (Value->Type == EJson::String)
+				{
+					OldNode.IgnorePins.Add(Value->AsString());
+				}
+			}
+		}
 	}
 
 	// Parse new node definition
@@ -266,7 +284,7 @@ void FMounteaDialogueFixUtilities::ProcessBlueprint(UBlueprint* Blueprint, const
 			{
 				if (ShouldReplaceNode(Node, Rule.OldNode))
 				{
-					ReplaceNode(Graph, Node, Rule.NewNode);
+					ReplaceNode(Graph, Node, Rule.NewNode, Rule.OldNode);
 					bModified = true;
 					break;
 				}
@@ -301,7 +319,7 @@ bool FMounteaDialogueFixUtilities::ShouldReplaceNode(UK2Node* Node, const FNodeR
 	return false;
 }
 
-void FMounteaDialogueFixUtilities::ReplaceNode(UEdGraph* Graph, UK2Node* OldNode, const FNodeReplacementRule::FNewNode& NewNodeDef)
+void FMounteaDialogueFixUtilities::ReplaceNode(UEdGraph* Graph, UK2Node* OldNode, const FNodeReplacementRule::FNewNode& NewNodeDef, const FNodeReplacementRule::FOldNode& OldNodeDef)
 {
 	if (!Graph || !OldNode)
 	{
@@ -358,7 +376,8 @@ void FMounteaDialogueFixUtilities::ReplaceNode(UEdGraph* Graph, UK2Node* OldNode
 
 		// Let the engine handle the replacement
 		if (InternalBlueprintEditorLibrary::ReplaceOldNodeWithNew(OldNode, NewNode, 
-			NewNodeDef.PinMapping.Num() > 0 ? &NewNodeDef.PinMapping : nullptr))
+			NewNodeDef.PinMapping.Num() > 0 ? &NewNodeDef.PinMapping : nullptr,
+			OldNodeDef.IgnorePins.Num() > 0 ? &OldNodeDef.IgnorePins : nullptr))
 		{
 			if (UBlueprint* Blueprint = Cast<UBlueprint>(Graph->GetOuter()))
 			{
