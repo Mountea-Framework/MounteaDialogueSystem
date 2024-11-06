@@ -251,7 +251,7 @@ TScriptInterface<IMounteaDialogueManagerInterface> UMounteaDialogueSystemBFC::Ge
 	}
 	
 
-	LOG_WARNING(TEXT("[GetDialogueManager] Cannot find Dialogue Manager the easy way."))
+	LOG_WARNING(TEXT("[Get Dialogue Manager] Cannot find Dialogue Manager the easy way."))
 	
 	const APlayerController* PlayerController = WorldContextObject->GetWorld()->GetFirstPlayerController();
 
@@ -262,41 +262,34 @@ TScriptInterface<IMounteaDialogueManagerInterface> UMounteaDialogueSystemBFC::Ge
 		return ManagerComponent;
 	}
 		
-	LOG_ERROR(TEXT("[GetDialogueManager] Unable to find Dialogue Manager."));
+	LOG_ERROR(TEXT("[Get Dialogue Manager] Unable to find Dialogue Manager."));
 	return nullptr;
 }
 
-TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC::FindBestMatchingParticipant(const UObject* WorldContextObject, const UMounteaDialogueContext* Context)
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC::FindBestMatchingParticipant(const UMounteaDialogueContext* Context)
 {
-	if (!Context)
-	{
+	if (!IsValid(Context))
 		return nullptr;
-	}
 
-	if (!Context->ActiveNode)
+	if (IsValid(Context->ActiveNode))
 	{
-		return nullptr;
-	}
-
-	const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Context->ActiveNode);
-	if (!DialogueNode)
-	{
-		return nullptr;
-	}
-
-	for (auto const& Participant : Context->GetDialogueParticipants())
-	{
-		const FGameplayTag Tag = Participant->Execute_GetParticipantTag(Participant.GetObject());
-
-		const FDialogueRow Row = GetDialogueRow(DialogueNode);
-		if (Row.CompatibleTags.HasTagExact(Tag))
+		if (const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Context->ActiveNode))
 		{
-			return Participant;
+			const FDialogueRow Row = GetDialogueRow(DialogueNode);
+			const auto Predicate = [&Row](const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant)
+			{
+				return Row.CompatibleTags.HasTagExact(Participant->Execute_GetParticipantTag(Participant.GetObject()));
+			};
+	
+			if (const TScriptInterface<IMounteaDialogueParticipantInterface>* MatchingParticipant = Context->GetDialogueParticipants().FindByPredicate(Predicate))
+			{
+				return *MatchingParticipant;
+			}
 		}
 	}
 
-	LOG_ERROR(TEXT("[FindBestMatchingParticipant] Unable to find Dialogue Participant based on Gameplay Tags, returning first (index 0) Participant from Dilaogue Context!"))
-	return Context->DialogueParticipants[0];
+	LOG_WARNING(TEXT("[FindBestMatchingParticipant] Unable to find Dialogue Participant based on Gameplay Tags, returning first (index 0) Participant from Dialogue Context!"))
+	return Context->DialogueParticipants.Num() > 0 ? Context->DialogueParticipants[0] : nullptr;
 }
 
 UMounteaDialogueGraphNode* UMounteaDialogueSystemBFC::FindNodeByGUID(const UMounteaDialogueGraph* FromGraph, const FGuid ByGUID)
@@ -485,7 +478,7 @@ UMounteaDialogueContext* UMounteaDialogueSystemBFC::CreateDialogueContext(UObjec
 	newDialogueContext->SetDialogueContext(MainParticipant, newActiveNode, allowedChildNodes);
 	newDialogueContext->UpdateActiveDialogueTable(newActiveDialogueNode ? newDialogueTableHandle : FDataTableRowHandle());
 	newDialogueContext->AddDialogueParticipants(DialogueParticipants);
-	newDialogueContext->ActiveDialogueParticipant = DialogueParticipants[0]; //TODO: Find better way
+	newDialogueContext->ActiveDialogueParticipant = FindBestMatchingParticipant(newDialogueContext);
 
 	return newDialogueContext;
 }

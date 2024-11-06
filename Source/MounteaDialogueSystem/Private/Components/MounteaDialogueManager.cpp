@@ -49,6 +49,8 @@ void UMounteaDialogueManager::BeginPlay()
 		GetOwner()->SetReplicates(true);
 	}
 
+	TransientDialogueContext.Reset();
+
 	if (IsAuthority())
 	{
 		OnDialogueStartRequested.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueStartRequestReceived);
@@ -77,11 +79,6 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 
 	DOREPLIFETIME(UMounteaDialogueManager, ManagerState);
 	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, TransientDialogueContext, COND_SimulatedOnly);
-}
-
-bool UMounteaDialogueManager::ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags)
-{
-	return Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
 }
 
 MounteaDialogueManagerHelpers::FDialogueRowDataInfo MounteaDialogueManagerHelpers::GetDialogueRowDataInfo(const UMounteaDialogueContext* DialogueContext)
@@ -180,6 +177,7 @@ void UMounteaDialogueManager::RequestBroadcastContext(UMounteaDialogueContext* C
 	if (IsAuthority())
 	{
 		TransientDialogueContext = FMounteaDialogueContextReplicatedStruct(Context);
+		*DialogueContext += TransientDialogueContext;
 	}
 	else
 		RequestBroadcastContext_Server(FMounteaDialogueContextReplicatedStruct(Context));
@@ -253,7 +251,6 @@ UMounteaDialogueContext* UMounteaDialogueManager::GetDialogueContext_Implementat
 	return DialogueContext;
 }
 
-// TODO: Same logic as for ManagerState, replicate to all
 void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewContext)
 {
 	if (NewContext == DialogueContext) return;
@@ -270,8 +267,6 @@ void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewCon
 void UMounteaDialogueManager::SetDialogueContext_Server_Implementation(UMounteaDialogueContext* NewContext)
 {
 	SetDialogueContext(NewContext);
-
-	// TODO: multicast context with information who is the current Manager, so it won't be updated locally?
 }
 
 void UMounteaDialogueManager::UpdateDialogueContext_Implementation(UMounteaDialogueContext* NewContext)
@@ -398,9 +393,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 	if (bSatisfied)
 	{
 		errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "OK", "OK"));
-
-		// If dialogue request returns false we simply CloseDialogue, which will destroy this Context
-		DialogueContext = UMounteaDialogueSystemBFC::CreateDialogueContext(this, mainParticipant, dialogueParticipants);
+		SetDialogueContext(UMounteaDialogueSystemBFC::CreateDialogueContext(this, mainParticipant, dialogueParticipants));
 	}
 	
 	const FText finalErrorMessage = FText::Join(FText::FromString("\n"), errorMessages);
@@ -516,6 +509,11 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 	Execute_CleanupDialogue(this);
 
 	SetDialogueContext(nullptr);
+
+	if (!IsAuthority())
+	{
+		OnDialogueClosed.Broadcast(DialogueContext);
+	}
 }
 
 void UMounteaDialogueManager::CleanupDialogue_Implementation()
@@ -618,8 +616,6 @@ void UMounteaDialogueManager::NodeProcessed_Implementation()
 
 	if (newActiveNode != nullptr)
 	{
-		OnDialogueClosed.Broadcast(DialogueContext);
-
 		auto newActiveDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(newActiveNode);
 		auto allowedChildNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(newActiveNode);
 		UMounteaDialogueSystemBFC::SortNodes(allowedChildNodes);

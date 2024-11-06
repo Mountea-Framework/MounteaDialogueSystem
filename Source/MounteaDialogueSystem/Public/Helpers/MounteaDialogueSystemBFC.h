@@ -153,8 +153,8 @@ public:
 	 * @param Context The Mountea dialogue context containing the active node and participants.
 	 * @return The best matching dialogue participant, or nullptr if no match is found.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="get,find"), meta=(CustomTag="MounteaK2Getter"))
-	static TScriptInterface<IMounteaDialogueParticipantInterface> FindBestMatchingParticipant(const UObject* WorldContextObject, const UMounteaDialogueContext* Context);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="get"), meta=(CustomTag="MounteaK2Getter"))
+	static TScriptInterface<IMounteaDialogueParticipantInterface> FindBestMatchingParticipant(const UMounteaDialogueContext* Context);
 
 	/**
 	 * Searches in Graph for Node by GUID.
