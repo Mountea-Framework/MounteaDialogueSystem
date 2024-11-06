@@ -94,6 +94,14 @@ void UMounteaDialogueGraphNode::InitializeNode_Implementation(UWorld* InWorld)
 void UMounteaDialogueGraphNode::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	Execute_RegisterTick(this, Graph);
+
+	for (const auto& nodeDecorator : NodeDecorators)
+	{
+		if (!IsValid(nodeDecorator.DecoratorType))
+			continue;
+
+		nodeDecorator.DecoratorType->SetOwningManager(Manager);
+	}
 	
 	Manager->Execute_NodePrepared(Manager.GetObject());
 }

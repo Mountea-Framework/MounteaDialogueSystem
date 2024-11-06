@@ -72,6 +72,7 @@ protected:
 	void DialogueFailed(const FString& ErrorMessage);
 
 	void StartParticipants() const;
+	void StopParticipants() const;
 	
 public:
 

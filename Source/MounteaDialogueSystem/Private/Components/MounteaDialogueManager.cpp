@@ -454,6 +454,27 @@ void UMounteaDialogueManager::StartParticipants() const
 	}
 }
 
+void UMounteaDialogueManager::StopParticipants() const
+{
+	if (!IsValid(DialogueContext))
+		return;
+	
+	for (const auto& dialogueParticipant : DialogueContext->DialogueParticipants)
+	{
+		auto participantObject = dialogueParticipant.GetObject();
+		if (!IsValid(participantObject) || !dialogueParticipant.GetInterface()) continue;
+		
+		TScriptInterface<IMounteaDialogueTickableObject> tickableObject = dialogueParticipant.GetObject();
+		if (tickableObject.GetInterface() && tickableObject.GetObject())
+		{
+			// Register ticks for participants, no need to define Parent as Participants are the most paren ones
+			tickableObject->Execute_UnregisterTick(tickableObject.GetObject(), nullptr);
+		}
+
+		dialogueParticipant->Execute_SetParticipantState(participantObject, dialogueParticipant->Execute_GetDefaultParticipantState(participantObject));
+	}
+}
+
 void UMounteaDialogueManager::DialogueStartRequestReceived(const bool bResult, const FString& ResultMessage)
 {
 	if (bResult)
@@ -464,6 +485,7 @@ void UMounteaDialogueManager::DialogueStartRequestReceived(const bool bResult, c
 	else
 	{
 		SetManagerState(DefaultManagerState);
+		StopParticipants();
 		OnDialogueFailed.Broadcast(ResultMessage);
 	}
 }
@@ -472,7 +494,6 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 {
 	StartParticipants();
 	
-	LOG_INFO(TEXT("[Start Dialogue] Starting Dialogue"))
 	if (!IsAuthority())
 	{
 		RequestBroadcastContext(DialogueContext); // let Server know about our Context
@@ -489,10 +510,10 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 
 void UMounteaDialogueManager::CloseDialogue_Implementation()
 {
-	// Unbind all UI Objects
+	StopParticipants();
+	
 	Execute_CloseDialogueUI(this);
-
-	// Close Node Loop
+	
 	Execute_CleanupDialogue(this);
 
 	SetDialogueContext(nullptr);
@@ -520,7 +541,6 @@ void UMounteaDialogueManager::CleanupDialogue_Server_Implementation()
 
 void UMounteaDialogueManager::PrepareNode_Implementation()
 {
-	LOG_WARNING(TEXT("[Prepare Node] Node in Preparation"))
 	if (!UMounteaDialogueSystemBFC::IsContextValid(DialogueContext))
 	{
 		OnDialogueFailed.Broadcast(TEXT("[Prepare Node] Invalid Dialogue Context!"));
@@ -981,22 +1001,22 @@ bool UMounteaDialogueManager::CreateDialogueUI_Implementation(FString& Message)
 		return false;
 	}
 
-	DialogueWidget = CreateWidget<UUserWidget>(playerController,  GetDialogueWidgetClass());
+	auto newWidget = CreateWidget<UUserWidget>(playerController,  GetDialogueWidgetClass());
 
-	if (DialogueWidget == nullptr)
+	if (newWidget == nullptr)
 	{
 		Message = TEXT("Cannot spawn Dialogue Widget!");
 		return false;
 	}
 
-	if (DialogueWidget->Implements<UMounteaDialogueWBPInterface>() == false)
+	if (newWidget->Implements<UMounteaDialogueWBPInterface>() == false)
 	{
 		Message = TEXT("Does not implement Diaogue Widget Interface!");
 		return false;
 	}
-	
-	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidget);
-	
+
+	Execute_SetDialogueWidget(this, newWidget);
+		
 	return Execute_UpdateDialogueUI(this, Message, MounteaDialogueWidgetCommands::CreateDialogueWidget);
 }
 
@@ -1022,8 +1042,9 @@ bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
 	{
 		DialogueWidget->MarkAsGarbage();
 		DialogueWidget->RemoveFromParent();
-		DialogueWidget = nullptr;
 	}
+
+	Execute_SetDialogueWidget(this, nullptr);
 	
 	return bSatisfied;
 }
