@@ -438,6 +438,9 @@ void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 
 void UMounteaDialogueManager::StartParticipants() const
 {
+	if (!IsValid(DialogueContext))
+		return;
+	
 	for (const auto& dialogueParticipant : DialogueContext->DialogueParticipants)
 	{
 		if (!dialogueParticipant.GetObject() || !dialogueParticipant.GetInterface()) continue;
