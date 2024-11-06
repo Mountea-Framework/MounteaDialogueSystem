@@ -43,7 +43,8 @@ void UMounteaDialogueManager::BeginPlay()
 	ManagerState = Execute_GetDefaultManagerState(this);
 
 	// Force replicate Owner to avoid setup issues with less experienced users
-	if (GetOwner() && !GetOwner()->GetIsReplicated() && GetIsReplicated())
+	const auto owningActor = GetOwner();
+	if (IsValid(owningActor) && !owningActor->GetIsReplicated() && GetIsReplicated())
 	{
 		GetOwner()->SetReplicates(true);
 	}
@@ -57,6 +58,7 @@ void UMounteaDialogueManager::BeginPlay()
 	OnDialogueFailed.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueFailed);
 
 	// Binding Broadcasting Events
+	if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
 	{
 		OnDialogueStarted.AddUniqueDynamic(this, &UMounteaDialogueManager::RequestBroadcastContext);
 		OnDialogueClosed.AddUniqueDynamic(this, &UMounteaDialogueManager::RequestBroadcastContext);
@@ -74,6 +76,7 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UMounteaDialogueManager, ManagerState);
+	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, TransientDialogueContext, COND_SimulatedOnly);
 }
 
 bool UMounteaDialogueManager::ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags)
@@ -136,6 +139,18 @@ void UMounteaDialogueManager::OnRep_ManagerState()
 	ProcessStateUpdated();
 }
 
+void UMounteaDialogueManager::OnRep_DialogueContext()
+{
+	if (UMounteaDialogueSystemBFC::GetOwnerLocalRole(UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(this)) != ROLE_SimulatedProxy)
+	{
+		return;
+	}
+	
+	LOG_ERROR(TEXT("[OnRep Dialogue Context] Dialogue Context replicated to Clients. NewContext: %s"), *(DialogueContext ? DialogueContext->ToString() : FString("EMPTY")))
+	*DialogueContext += TransientDialogueContext;
+	TransientDialogueContext.Reset();
+}
+
 bool UMounteaDialogueManager::IsAuthority() const
 {
 	return GetOwner() && GetOwner()->HasAuthority();
@@ -164,7 +179,7 @@ void UMounteaDialogueManager::RequestBroadcastContext(UMounteaDialogueContext* C
 {
 	if (IsAuthority())
 	{
-		RequestBroadcastContext_Multicast(FMounteaDialogueContextReplicatedStruct(Context));
+		TransientDialogueContext = FMounteaDialogueContextReplicatedStruct(Context);
 	}
 	else
 		RequestBroadcastContext_Server(FMounteaDialogueContextReplicatedStruct(Context));
@@ -172,26 +187,7 @@ void UMounteaDialogueManager::RequestBroadcastContext(UMounteaDialogueContext* C
 
 void UMounteaDialogueManager::RequestBroadcastContext_Server_Implementation(const FMounteaDialogueContextReplicatedStruct& Context)
 {
-	if (DialogueContext)
-	{
-		*DialogueContext += Context;
-	}
-	RequestBroadcastContext_Multicast(FMounteaDialogueContextReplicatedStruct(DialogueContext));
-}
-
-void UMounteaDialogueManager::RequestBroadcastContext_Multicast_Implementation(const FMounteaDialogueContextReplicatedStruct& Context)
-{
-	if(IsAuthority())
-		return;
-
-	auto localOwner = UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(this) ;
-	auto localRole = UMounteaDialogueSystemBFC::GetOwnerLocalRole(localOwner);
-	if (localRole == ROLE_AutonomousProxy)
-		return;
-
-	*DialogueContext += Context;
-
-	OnDialogueContextUpdated.Broadcast(DialogueContext);
+	TransientDialogueContext = FMounteaDialogueContextReplicatedStruct(Context);
 }
 
 void UMounteaDialogueManager::DialogueFailed(const FString& ErrorMessage)
@@ -499,7 +495,7 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 	
 	if (!IsAuthority())
 	{
-		RequestBroadcastContext(DialogueContext); // let Server know about our Context
+		OnDialogueStarted.Broadcast(DialogueContext); // let Server know about our Context
 	}
 	
 	FString resultMessage;

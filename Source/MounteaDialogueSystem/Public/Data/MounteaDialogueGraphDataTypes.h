@@ -619,6 +619,8 @@ struct FMounteaDialogueContextReplicatedStruct
 	FMounteaDialogueContextReplicatedStruct();
 	explicit FMounteaDialogueContextReplicatedStruct(UMounteaDialogueContext* Source);
 
-	void SetData(class UMounteaDialogueContext* Source);
+	FMounteaDialogueContextReplicatedStruct operator+=(UMounteaDialogueContext* Source) ;
+
 	bool IsValid() const;
+	void Reset();
 };

@@ -107,24 +107,18 @@ FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct
 {
 }
 
-
-void FMounteaDialogueContextReplicatedStruct::SetData(UMounteaDialogueContext* Source)
+FMounteaDialogueContextReplicatedStruct FMounteaDialogueContextReplicatedStruct::operator+=(UMounteaDialogueContext* Source)
 {
-	if (!Source) return;
-
-	ActiveDialogueParticipant = Source->ActiveDialogueParticipant;
-	PlayerDialogueParticipant = Source->PlayerDialogueParticipant;
-	DialogueParticipant = Source->DialogueParticipant;
-	DialogueParticipants = Source->DialogueParticipants;
-	ActiveDialogueRowDataIndex = Source->ActiveDialogueRowDataIndex;
-	ActiveNodeGuid = Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid();
-	PreviousActiveNodeGuid = Source ? Source->PreviousActiveNode : FGuid();
-	ActiveDialogueTableHandle = Source->ActiveDialogueTableHandle;
-	AllowedChildNodes = UMounteaDialogueSystemBFC::NodesToGuids(Source->AllowedChildNodes);
-	ActiveDialogueRowDataIndex = Source->ActiveDialogueRowDataIndex;
+	*this = FMounteaDialogueContextReplicatedStruct(Source);
+	return *this;
 }
 
 bool FMounteaDialogueContextReplicatedStruct::IsValid() const
 {
 	return PlayerDialogueParticipant != nullptr && DialogueParticipant != nullptr && ActiveNodeGuid.IsValid() && DialogueParticipants.Num() != 0;
+}
+
+void FMounteaDialogueContextReplicatedStruct::Reset()
+{
+	*this = FMounteaDialogueContextReplicatedStruct();
 }

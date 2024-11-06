@@ -66,8 +66,6 @@ protected:
 	void RequestBroadcastContext(UMounteaDialogueContext* Context);
 	UFUNCTION(Server, Reliable)
 	void RequestBroadcastContext_Server(const FMounteaDialogueContextReplicatedStruct& Context);
-	UFUNCTION(NetMulticast, Unreliable)
-	void RequestBroadcastContext_Multicast(const FMounteaDialogueContextReplicatedStruct& Context);
 	UFUNCTION()
 	void DialogueFailed(const FString& ErrorMessage);
 
@@ -147,6 +145,8 @@ private:
 	
 	UFUNCTION()
 	void OnRep_ManagerState();
+	UFUNCTION()
+	void OnRep_DialogueContext();
 
 public:
 	bool IsAuthority() const;
@@ -307,6 +307,12 @@ protected:
 	 */
 	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	FTimerHandle TimerHandle_RowTimer;
+
+private:
+
+	// Replication helper to move Dialogue Context round
+	UPROPERTY(Transient, ReplicatedUsing=OnRep_DialogueContext)
+	FMounteaDialogueContextReplicatedStruct TransientDialogueContext;
 
 protected:
 	
