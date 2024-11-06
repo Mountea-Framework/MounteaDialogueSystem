@@ -591,10 +591,11 @@ void UMounteaDialogueManager::NodeProcessed_Implementation()
 		return;
 	}
 	
-	UMounteaDialogueGraphNode* newActiveNode = *allowedChildrenNodes.FindByPredicate
-	([](const UMounteaDialogueGraphNode* node) {
+	UMounteaDialogueGraphNode** foundNodePtr = allowedChildrenNodes.FindByPredicate([](const UMounteaDialogueGraphNode* node) {
 		return node->DoesAutoStart();
 	});
+
+	UMounteaDialogueGraphNode* newActiveNode = foundNodePtr ? *foundNodePtr : nullptr;
 
 	if (newActiveNode != nullptr)
 	{
@@ -618,7 +619,10 @@ void UMounteaDialogueManager::NodeProcessed_Implementation()
 	else
 	{
 		FString resultMessage;
-		Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::AddDialogueOptions);
+		if (!Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::AddDialogueOptions))
+		{
+			LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
+		}
 	}
 }
 
@@ -645,13 +649,11 @@ void UMounteaDialogueManager::SelectNode_Implementation(const FGuid& NodeGuid)
 		return;
 	}
 
-	auto selectedDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(selectedNode);
-
 	// Straight up set dialogue row from Node and index to 0
 	auto allowedChildNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(selectedNode);
 	UMounteaDialogueSystemBFC::SortNodes(allowedChildNodes);
 
-	if (selectedDialogueNode)
+	if (const auto selectedDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(selectedNode))
 	{
 		FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
 		newDialogueTableHandle.DataTable = selectedDialogueNode->GetDataTable();
@@ -661,10 +663,16 @@ void UMounteaDialogueManager::SelectNode_Implementation(const FGuid& NodeGuid)
 	}
 
 	// TODO: replace with UPDATE, make UPDATE take struct input, too
-	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, selectedNode, allowedChildNodes);	
+	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, selectedNode, allowedChildNodes);
 	DialogueContext->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode));
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 
+	FString resultMessage;
+	if (!Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::RemoveDialogueOptions))
+	{
+		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
+	}
+	
 	OnDialogueNodeSelected.Broadcast(DialogueContext);
 	
 	Execute_PrepareNode(this);
@@ -689,7 +697,10 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 		return;
 	
 	FString resultMessage;
-	Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::ShowDialogueRow);
+	if (!Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::ShowDialogueRow))
+	{
+		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
+	}
 
 	if (DialogueContext->GetActiveDialogueRow().DialogueRowData.Array().IsValidIndex(DialogueContext->GetActiveDialogueRowDataIndex()) == false)
 	{
@@ -720,7 +731,7 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 	
 	DialogueContext->ActiveDialogueParticipant->Execute_PlayParticipantVoice(DialogueContext->ActiveDialogueParticipant.GetObject(), RowData.RowSound);
 
-	if (bValidRowData && RowData.RowDurationMode != ERowDurationMode::ERDM_Manual)
+	if (bValidRowData)
 	{
 		FTimerDelegate Delegate;
 		Delegate.BindUObject(this, &UMounteaDialogueManager::DialogueRowProcessed_Implementation);
@@ -737,6 +748,12 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 
 void UMounteaDialogueManager::DialogueRowProcessed_Implementation()
 {
+	FString resultMessage;
+	if (!Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::HideDialogueRow))
+	{
+		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
+	}
+	
 	if (!IsValid(GetWorld()))
 	{
 		OnDialogueFailed.Broadcast(TEXT("[Process Dialogue Row] World is not Valid!"));
@@ -977,15 +994,6 @@ bool UMounteaDialogueManager::CreateDialogueUI_Implementation(FString& Message)
 		Message = TEXT("Does not implement Diaogue Widget Interface!");
 		return false;
 	}
-
-	/*
-	const int32 dialogueWidgetZOrder = Execute_GetDialogueWidgetZOrder(this);
-	if (DialogueWidget->AddToPlayerScreen(dialogueWidgetZOrder) == false)
-	{
-		Message = TEXT("Cannot display Dialogue Widget!");
-		return false;
-	}
-	*/
 	
 	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidget);
 	
@@ -1008,13 +1016,25 @@ bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, 
 bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
 {
 	FString dialogueMessage;
-	return Execute_UpdateDialogueUI(this, dialogueMessage, MounteaDialogueWidgetCommands::CloseDialogueWidget);
+	const bool bSatisfied = Execute_UpdateDialogueUI(this, dialogueMessage, MounteaDialogueWidgetCommands::CloseDialogueWidget);
+
+	if (IsValid((DialogueWidget)))
+	{
+		DialogueWidget->MarkAsGarbage();
+		DialogueWidget->RemoveFromParent();
+		DialogueWidget = nullptr;
+	}
+	
+	return bSatisfied;
 }
 
 void UMounteaDialogueManager::ExecuteWidgetCommand_Implementation(const FString& Command)
 {
 	FString resultMessage;
-	Execute_UpdateDialogueUI(this, resultMessage, Command);
+	if (!Execute_UpdateDialogueUI(this, resultMessage, Command))
+	{
+		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
+	}
 }
 
 TSubclassOf<UUserWidget> UMounteaDialogueManager::GetDialogueWidgetClass() const
