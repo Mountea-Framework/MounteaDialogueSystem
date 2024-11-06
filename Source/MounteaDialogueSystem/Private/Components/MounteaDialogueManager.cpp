@@ -480,7 +480,10 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 	}
 	
 	FString resultMessage;
-	Execute_CreateDialogueUI(this, resultMessage);
+	if (!Execute_CreateDialogueUI(this, resultMessage))
+	{
+		LOG_WARNING(TEXT("[Create Dialogue UI] %s"), *(resultMessage))
+	}
 	
 	Execute_PrepareNode(this);
 }
@@ -795,6 +798,14 @@ void UMounteaDialogueManager::UpdateWorldDialogueUI_Implementation(const TScript
 {
 	if (!IsAuthority())
 	{
+		for (const auto& dialogueObject : DialogueObjects)
+		{
+			if (dialogueObject)
+			{
+				IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, DialogueManager, Command);
+			}
+		}
+		
 		UpdateWorldDialogueUI_Server(DialogueManager, Command);
 	}
 	else
@@ -811,6 +822,14 @@ void UMounteaDialogueManager::UpdateWorldDialogueUI_Server_Implementation(const 
 void UMounteaDialogueManager::UpdateWorldDialogueUI_Multicast_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command)
 {
 	if (!UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
+		return;
+
+	if(IsAuthority())
+		return;
+
+	auto localOwner = UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(this) ;
+	auto localRole = UMounteaDialogueSystemBFC::GetOwnerLocalRole(localOwner);
+	if (localRole == ROLE_AutonomousProxy)
 		return;
 	
 	for (const auto& dialogueObject : DialogueObjects)
@@ -922,19 +941,6 @@ void UMounteaDialogueManager::ResetDialogueUIObjects_Implementation()
 
 bool UMounteaDialogueManager::CreateDialogueUI_Implementation(FString& Message)
 {
-	const bool bSatisfied = Execute_UpdateDialogueUI(this, Message, MounteaDialogueWidgetCommands::CreateDialogueWidget);
-	if (!bSatisfied)
-	{
-		LOG_WARNING(TEXT("[Create Dialogue UI] %s"), *(Message))
-	}
-	return bSatisfied;
-}
-
-bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, const FString& Command)
-{
-	LOG_INFO(TEXT("[Update Dialogue UI] Command: %s"), *Command)
-	Execute_UpdateWorldDialogueUI(this, this, Command);
-	
 	if (GetDialogueWidgetClass() == nullptr)
 	{
 		Message = TEXT("Invalid Widget Class! Setup Widget class at least in Project settings!");
@@ -986,6 +992,19 @@ bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, 
 	return Execute_UpdateDialogueUI(this, Message, MounteaDialogueWidgetCommands::CreateDialogueWidget);
 }
 
+bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, const FString& Command)
+{
+	LOG_INFO(TEXT("[Update Dialogue UI] Command: %s"), *Command)
+	Execute_UpdateWorldDialogueUI(this, this, Command);
+
+	if (DialogueWidget)
+	{
+		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidget, this, Command);
+		return true;
+	}
+	return false;
+}
+
 bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
 {
 	FString dialogueMessage;
@@ -998,7 +1017,7 @@ void UMounteaDialogueManager::ExecuteWidgetCommand_Implementation(const FString&
 	Execute_UpdateDialogueUI(this, resultMessage, Command);
 }
 
-TSubclassOf<UUserWidget> UMounteaDialogueManager::GetDialogueWidgetClass_Implementation() const
+TSubclassOf<UUserWidget> UMounteaDialogueManager::GetDialogueWidgetClass() const
 {
 	return DialogueWidgetClass != nullptr ? DialogueWidgetClass : UMounteaDialogueSystemBFC::GetDefaultDialogueWidget();
 }

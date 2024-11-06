@@ -273,9 +273,7 @@ public:
 	 * 
 	 * @return The widget class used to display Dialogue UI.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
-	TSubclassOf<UUserWidget> GetDialogueWidgetClass() const;
-	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass_Implementation() const = 0;
+	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const = 0;
 	
 	/**
 	 * Sets the widget class for the Dialogue UI.

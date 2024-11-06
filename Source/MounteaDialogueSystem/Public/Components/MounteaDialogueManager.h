@@ -118,7 +118,7 @@ public:
 	virtual bool CloseDialogueUI_Implementation() override;
 
 	virtual void ExecuteWidgetCommand_Implementation(const FString& Command) override;
-	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass_Implementation() const override;
+	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const override;
 	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) override;
 	virtual void SetDialogueWidget_Implementation(UUserWidget* NewDialogueWidget) override;
 	virtual UUserWidget* GetDialogueWidget_Implementation() const override;

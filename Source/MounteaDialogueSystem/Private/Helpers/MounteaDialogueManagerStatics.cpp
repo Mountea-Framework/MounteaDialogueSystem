@@ -130,7 +130,7 @@ UUserWidget* UMounteaDialogueManagerStatics::GetDialogueWidget(const TScriptInte
 
 TSubclassOf<UUserWidget> UMounteaDialogueManagerStatics::GetDialogueWidgetClass(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
 {
-	return Target.GetObject() ? Target->Execute_GetDialogueWidgetClass(Target.GetObject()) : nullptr;
+	return Target.GetObject() ? Target->GetDialogueWidgetClass() : nullptr;
 }
 
 int32 UMounteaDialogueManagerStatics::GetDialogueWidgetZOrder(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
