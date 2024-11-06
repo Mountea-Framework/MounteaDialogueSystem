@@ -485,6 +485,7 @@ UMounteaDialogueContext* UMounteaDialogueSystemBFC::CreateDialogueContext(UObjec
 	newDialogueContext->SetDialogueContext(MainParticipant, newActiveNode, allowedChildNodes);
 	newDialogueContext->UpdateActiveDialogueTable(newActiveDialogueNode ? newDialogueTableHandle : FDataTableRowHandle());
 	newDialogueContext->AddDialogueParticipants(DialogueParticipants);
+	newDialogueContext->ActiveDialogueParticipant = DialogueParticipants[0]; //TODO: Find better way
 
 	return newDialogueContext;
 }
@@ -501,6 +502,35 @@ UMounteaDialogueContext* UMounteaDialogueSystemBFC::CreateDialogueContext(UObjec
 	(*newDialogueContext) += NewData;
 	
 	return newDialogueContext;
+}
+
+AActor* UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+{
+	if (!IsValid(Manager.GetObject()))
+		return nullptr;
+
+	const APlayerState* playerState = Cast<APlayerState>(Manager->Execute_GetOwningActor(Manager.GetObject()));
+	if (IsValid(playerState))
+	{
+		if (IsValid(playerState->GetPlayerController()))
+			return playerState->GetPlayerController();
+		return  playerState->GetPawn();
+	}
+
+	// TODO: Make sure this is local run only, so we can get the first Player
+	auto worldContext = Manager.GetObject()->GetWorld();
+	if (!IsValid(worldContext))
+		return nullptr;
+
+	return worldContext->GetFirstPlayerController();
+}
+
+ENetRole UMounteaDialogueSystemBFC::GetOwnerLocalRole(const AActor* ForActor)
+{
+	if (!IsValid(ForActor))
+		return ROLE_None;
+
+	else return ForActor->GetLocalRole();
 }
 
 

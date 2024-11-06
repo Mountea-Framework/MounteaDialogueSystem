@@ -347,16 +347,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta = (ClassFilter = "Interface"), meta=(DeterminesOutputType = "InterfaceFilter"), meta=(CustomTag="MounteaK2Getter"))
 	static UActorComponent* GetSingleComponentByInterface(const AActor* Target, TSubclassOf<UInterface> InterfaceFilter, bool& bResult);
-
-	template <typename NodeType>
-	static void SortNodes(TArray<NodeType*>& SortedNodes)
-	{
-		SortedNodes.Sort([](const NodeType& A, const NodeType& B)
-		{
-			return A.ExecutionOrder < B.ExecutionOrder;
-		});
-	}
-
+	
 	/**
 	 * Sorts given array of Dialogue Nodes based on their Execution Order.
 	 * 
@@ -369,6 +360,20 @@ public:
 
 	static UMounteaDialogueContext* CreateDialogueContext(UObject* NewOwner, const TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants);
 	static UMounteaDialogueContext* CreateDialogueContext(UObject* NewOwner, const FMounteaDialogueContextReplicatedStruct& NewData);
+
+	static AActor* GetDialogueManagerLocalOwner(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
+	static ENetRole GetOwnerLocalRole(const AActor* ForActor);
+
+	// --- Template functions ------------------------------
+	
+	template <typename NodeType>
+	static void SortNodes(TArray<NodeType*>& SortedNodes)
+	{
+		SortedNodes.Sort([](const NodeType& A, const NodeType& B)
+		{
+			return A.ExecutionOrder < B.ExecutionOrder;
+		});
+	}
 	
 	template<typename T>
 	static FString GetEnumFriendlyName(const T EnumValue, const bool bShortName = false)

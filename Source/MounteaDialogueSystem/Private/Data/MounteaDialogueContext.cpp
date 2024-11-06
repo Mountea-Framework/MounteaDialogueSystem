@@ -307,6 +307,17 @@ bool UMounteaDialogueContext::RemoveDialogueParticipantsBP(const TArray<TScriptI
 void UMounteaDialogueContext::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    
+	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueParticipant);
+	DOREPLIFETIME(UMounteaDialogueContext, PlayerDialogueParticipant);
+	DOREPLIFETIME(UMounteaDialogueContext, DialogueParticipant);
+	DOREPLIFETIME(UMounteaDialogueContext, DialogueParticipants);
+	DOREPLIFETIME(UMounteaDialogueContext, ActiveNode);
+	DOREPLIFETIME(UMounteaDialogueContext, PreviousActiveNode);
+	DOREPLIFETIME(UMounteaDialogueContext, AllowedChildNodes);
+	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueTableHandle);
+	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueRow);
+	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueRowDataIndex);
 }
 
 UMounteaDialogueContext* UMounteaDialogueContext::operator += (const UMounteaDialogueContext* Other)

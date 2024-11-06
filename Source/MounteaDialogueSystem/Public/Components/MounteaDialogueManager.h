@@ -65,11 +65,13 @@ protected:
 	UFUNCTION()
 	void RequestBroadcastContext(UMounteaDialogueContext* Context);
 	UFUNCTION(Server, Reliable)
-	void RequestBroadcastContext_Server(UMounteaDialogueContext* Context);
+	void RequestBroadcastContext_Server(const FMounteaDialogueContextReplicatedStruct& Context);
 	UFUNCTION(NetMulticast, Unreliable)
-	void RequestBroadcastContext_Multicast(UMounteaDialogueContext* Context);
+	void RequestBroadcastContext_Multicast(const FMounteaDialogueContextReplicatedStruct& Context);
 	UFUNCTION()
 	void DialogueFailed(const FString& ErrorMessage);
+
+	void StartParticipants() const;
 	
 public:
 
@@ -135,8 +137,6 @@ private:
 	void UpdateDialogueContext_Server(UMounteaDialogueContext* NewContext);
 	UFUNCTION(Server, Reliable)
 	void RequestStartDialogue_Server(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
-	UFUNCTION(Server, Reliable)
-	void NotifyContextChanged(const FMounteaDialogueContextReplicatedStruct& NewContextData);
 	UFUNCTION(Server, Reliable)
 	void CleanupDialogue_Server();
 	UFUNCTION(Server, Unreliable)

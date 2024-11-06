@@ -73,7 +73,7 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, ManagerState, COND_InitialOrOwner);
+	DOREPLIFETIME(UMounteaDialogueManager, ManagerState);
 }
 
 bool UMounteaDialogueManager::ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags)
@@ -124,21 +124,10 @@ void UMounteaDialogueManager::SetManagerState(const EDialogueManagerState NewSta
 	else
 	{
 		ManagerState = NewState; // State can only be changed on server side!
-		ProcessStateUpdated(); // Simulate OnRep for Listen server and cleanup on all servers and standalone
+		ProcessStateUpdated(); // Simulate OnRep for Listen server and cleanup on all servers and standalone	
 	}
 
 	OnDialogueManagerStateChanged.Broadcast(NewState);
-}
-
-void UMounteaDialogueManager::NotifyContextChanged_Implementation(const FMounteaDialogueContextReplicatedStruct& NewContextData)
-{
-	if (!UMounteaDialogueSystemBFC::IsContextValid(DialogueContext))
-	{
-		DialogueContext = UMounteaDialogueSystemBFC::CreateDialogueContext(this, NewContextData);
-	}
-
-	// TODO: Multicast `NewContextData` (DialogueContext might not work?)
-	// in multicasted function use `*(DialogueContext) += NewContextData` and locally broadcast `OnDialogueContextUpdated.Broadcast(NewContext);`
 }
 
 void UMounteaDialogueManager::OnRep_ManagerState()
@@ -175,33 +164,36 @@ void UMounteaDialogueManager::ProcessStateUpdated()
 
 void UMounteaDialogueManager::RequestBroadcastContext(UMounteaDialogueContext* Context)
 {
-	// TODO: Here we ask server to update its Context
-	// then server multicasts the new context to all clients BUT current one
 	if (IsAuthority())
 	{
-		RequestBroadcastContext_Multicast(Context);
+		RequestBroadcastContext_Multicast(FMounteaDialogueContextReplicatedStruct(Context));
 	}
 	else
-		RequestBroadcastContext_Server(Context);
+		RequestBroadcastContext_Server(FMounteaDialogueContextReplicatedStruct(Context));
 }
 
-void UMounteaDialogueManager::RequestBroadcastContext_Server_Implementation(UMounteaDialogueContext* Context)
+void UMounteaDialogueManager::RequestBroadcastContext_Server_Implementation(const FMounteaDialogueContextReplicatedStruct& Context)
 {
-	RequestBroadcastContext_Multicast(Context);
+	if (DialogueContext)
+	{
+		*DialogueContext += Context;
+	}
+	RequestBroadcastContext_Multicast(FMounteaDialogueContextReplicatedStruct(DialogueContext));
 }
 
-void UMounteaDialogueManager::RequestBroadcastContext_Multicast_Implementation(UMounteaDialogueContext* Context)
+void UMounteaDialogueManager::RequestBroadcastContext_Multicast_Implementation(const FMounteaDialogueContextReplicatedStruct& Context)
 {
 	if(IsAuthority())
 		return;
 
-	// TODO:
-	// GET FROM PLAYER CONTROLLER!!!
-	if (GetOwner()->GetLocalRole() == ROLE_AutonomousProxy)
+	auto localOwner = UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(this) ;
+	auto localRole = UMounteaDialogueSystemBFC::GetOwnerLocalRole(localOwner);
+	if (localRole == ROLE_AutonomousProxy)
 		return;
 
-	const auto roleName = UMounteaDialogueSystemBFC::GetEnumFriendlyName(GetOwner()->GetLocalRole());
-	LOG_ERROR(TEXT("[Request Broadcast Context] CONTEXT UPDATED for client %s"), *roleName)
+	*DialogueContext += Context;
+
+	OnDialogueContextUpdated.Broadcast(DialogueContext);
 }
 
 void UMounteaDialogueManager::DialogueFailed(const FString& ErrorMessage)
@@ -236,9 +228,20 @@ void UMounteaDialogueManager::SetDefaultManagerState(const EDialogueManagerState
 
 EDialogueManagerType UMounteaDialogueManager::GetDialogueManagerType() const
 {
-	return (GetOwner() && GetOwner()->StaticClass()->IsChildOf(APlayerState::StaticClass()))
-	? EDialogueManagerType::EDMT_PlayerDialogue
-	: EDialogueManagerType::EDMT_EnvironmentDialogue;
+	auto ownerActor = GetOwner();
+	if (!IsValid(ownerActor))
+		return EDialogueManagerType::Default;
+
+	auto ownerClass = ownerActor->GetClass();
+	
+	if (ownerClass->IsChildOf(APawn::StaticClass()) || 
+		ownerClass->IsChildOf(APlayerState::StaticClass()) || 
+		ownerClass->IsChildOf(APlayerController::StaticClass()))
+	{
+		return EDialogueManagerType::EDMT_PlayerDialogue;
+	}
+
+	return EDialogueManagerType::EDMT_EnvironmentDialogue;
 }
 
 void UMounteaDialogueManager::SetDefaultManagerState_Server_Implementation(const EDialogueManagerState NewState)
@@ -341,6 +344,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 		bSatisfied = false;
 	}
 
+	LOG_INFO(TEXT("[Request Start Dialogue] Dialogue Type is %s"), *UMounteaDialogueSystemBFC::GetEnumFriendlyName(GetDialogueManagerType()))
 	switch (GetDialogueManagerType()) {
 		case EDialogueManagerType::EDMT_PlayerDialogue:
 		{
@@ -434,11 +438,29 @@ void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 	Execute_CloseDialogue(this);
 }
 
+void UMounteaDialogueManager::StartParticipants() const
+{
+	for (const auto& dialogueParticipant : DialogueContext->DialogueParticipants)
+	{
+		if (!dialogueParticipant.GetObject() || !dialogueParticipant.GetInterface()) continue;
+
+		TScriptInterface<IMounteaDialogueTickableObject> tickableObject = dialogueParticipant.GetObject();
+		if (tickableObject.GetInterface() && tickableObject.GetObject())
+		{
+			// Register ticks for participants, no need to define Parent as Participants are the most paren ones
+			tickableObject->Execute_RegisterTick(tickableObject.GetObject(), nullptr);
+		}
+
+		dialogueParticipant->Execute_SetParticipantState(dialogueParticipant.GetObject(), EDialogueParticipantState::EDPS_Active);
+	}
+}
+
 void UMounteaDialogueManager::DialogueStartRequestReceived(const bool bResult, const FString& ResultMessage)
 {
 	if (bResult)
 	{
 		SetManagerState(EDialogueManagerState::EDMS_Active);
+		StartParticipants();
 	}
 	else
 	{
@@ -449,9 +471,12 @@ void UMounteaDialogueManager::DialogueStartRequestReceived(const bool bResult, c
 
 void UMounteaDialogueManager::StartDialogue_Implementation()
 {
+	StartParticipants();
+	
+	LOG_INFO(TEXT("[Start Dialogue] Starting Dialogue"))
 	if (!IsAuthority())
 	{
-		NotifyContextChanged(FMounteaDialogueContextReplicatedStruct(DialogueContext)); // let Server know about our Context
+		RequestBroadcastContext(DialogueContext); // let Server know about our Context
 	}
 	
 	FString resultMessage;
@@ -897,19 +922,74 @@ void UMounteaDialogueManager::ResetDialogueUIObjects_Implementation()
 
 bool UMounteaDialogueManager::CreateDialogueUI_Implementation(FString& Message)
 {
-	return Execute_UpdateDialogueUI(this, Message, MounteaDialogueWidgetCommands::CreateDialogueWidget);
+	const bool bSatisfied = Execute_UpdateDialogueUI(this, Message, MounteaDialogueWidgetCommands::CreateDialogueWidget);
+	if (!bSatisfied)
+	{
+		LOG_WARNING(TEXT("[Create Dialogue UI] %s"), *(Message))
+	}
+	return bSatisfied;
 }
 
 bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, const FString& Command)
 {
-	LOG_WARNING(TEXT("[Update Dialogue UI] Command: %s"), *Command)
-	return true;
+	LOG_INFO(TEXT("[Update Dialogue UI] Command: %s"), *Command)
+	Execute_UpdateWorldDialogueUI(this, this, Command);
+	
+	if (GetDialogueWidgetClass() == nullptr)
+	{
+		Message = TEXT("Invalid Widget Class! Setup Widget class at least in Project settings!");
+		return false;
+	}
+	if (!GetWorld())
+	{
+		Message = TEXT("Invalid World!");
+		return false;
+	}
+	int seachDepth = 0;
+	APlayerController* playerController = UMounteaDialogueSystemBFC::FindPlayerController(GetOwner(), seachDepth);
+	if (playerController == nullptr)
+	{
+		Message = TEXT("Invalid Player Controller!");
+		return false;
+	}
+	if (!playerController->IsLocalController())
+	{
+		Message = TEXT("UI can be shown only to Local Players!");
+		return false;
+	}
+
+	DialogueWidget = CreateWidget<UUserWidget>(playerController,  GetDialogueWidgetClass());
+
+	if (DialogueWidget == nullptr)
+	{
+		Message = TEXT("Cannot spawn Dialogue Widget!");
+		return false;
+	}
+
+	if (DialogueWidget->Implements<UMounteaDialogueWBPInterface>() == false)
+	{
+		Message = TEXT("Does not implement Diaogue Widget Interface!");
+		return false;
+	}
+
+	/*
+	const int32 dialogueWidgetZOrder = Execute_GetDialogueWidgetZOrder(this);
+	if (DialogueWidget->AddToPlayerScreen(dialogueWidgetZOrder) == false)
+	{
+		Message = TEXT("Cannot display Dialogue Widget!");
+		return false;
+	}
+	*/
+	
+	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidget);
+	
+	return Execute_UpdateDialogueUI(this, Message, MounteaDialogueWidgetCommands::CreateDialogueWidget);
 }
 
 bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
 {
 	FString dialogueMessage;
-	return Execute_UpdateDialogueUI(this, dialogueMessage, MounteaDialogueWidgetCommands::CreateDialogueWidget);
+	return Execute_UpdateDialogueUI(this, dialogueMessage, MounteaDialogueWidgetCommands::CloseDialogueWidget);
 }
 
 void UMounteaDialogueManager::ExecuteWidgetCommand_Implementation(const FString& Command)
@@ -920,7 +1000,7 @@ void UMounteaDialogueManager::ExecuteWidgetCommand_Implementation(const FString&
 
 TSubclassOf<UUserWidget> UMounteaDialogueManager::GetDialogueWidgetClass_Implementation() const
 {
-	return DialogueWidgetClass;
+	return DialogueWidgetClass != nullptr ? DialogueWidgetClass : UMounteaDialogueSystemBFC::GetDefaultDialogueWidget();
 }
 
 void UMounteaDialogueManager::SetDialogueWidgetClass(const TSubclassOf<UUserWidget> NewWidgetClass)
