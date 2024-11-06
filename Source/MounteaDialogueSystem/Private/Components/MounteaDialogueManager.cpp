@@ -124,7 +124,7 @@ void UMounteaDialogueManager::SetManagerState(const EDialogueManagerState NewSta
 	else
 	{
 		ManagerState = NewState; // State can only be changed on server side!
-		ProcessStateUpdated(); // Simulate OnRep for Listen server and cleanup on all servers and standalone	
+		ProcessStateUpdated();
 	}
 
 	OnDialogueManagerStateChanged.Broadcast(NewState);
@@ -151,8 +151,6 @@ void UMounteaDialogueManager::ProcessStateUpdated()
 	switch (ManagerState)
 	{
 		case EDialogueManagerState::EDMS_Disabled:
-			Execute_CloseDialogue(this);
-			break;
 		case EDialogueManagerState::EDMS_Enabled:
 			Execute_CloseDialogue(this);
 			break;
@@ -452,6 +450,7 @@ void UMounteaDialogueManager::StartParticipants() const
 		}
 
 		dialogueParticipant->Execute_SetParticipantState(dialogueParticipant.GetObject(), EDialogueParticipantState::EDPS_Active);
+		dialogueParticipant->Execute_InitializeParticipant(dialogueParticipant.GetObject());
 	}
 }
 
@@ -521,6 +520,7 @@ void UMounteaDialogueManager::CleanupDialogue_Server_Implementation()
 
 void UMounteaDialogueManager::PrepareNode_Implementation()
 {
+	LOG_WARNING(TEXT("[Prepare Node] Node in Preparation"))
 	if (!UMounteaDialogueSystemBFC::IsContextValid(DialogueContext))
 	{
 		OnDialogueFailed.Broadcast(TEXT("[Prepare Node] Invalid Dialogue Context!"));
@@ -1090,11 +1090,3 @@ void UMounteaDialogueManager::SetDialogueWidgetZOrder_Implementation(const int32
 		}
 	}
 }
-
-
-
-
-
-
-
-

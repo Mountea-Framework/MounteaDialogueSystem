@@ -641,7 +641,7 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueSystemBFC::GetAllDialogueDecor
 
 	if (FromGraph == nullptr) return Decorators;
 		
-	Decorators.Append(FromGraph->GetGraphDecorators());
+	Decorators.Append(FromGraph->GetAllDecorators());
 
 	for (const auto& Itr : FromGraph->GetAllNodes())
 	{

@@ -40,9 +40,10 @@ void UMounteaDialogueParticipant::BeginPlay()
 	Execute_InitializeParticipant(this);
 
 	// Force replicate Owner to avoid setup issues with less experienced users
-	if (GetOwner() && !GetOwner()->GetIsReplicated() && GetIsReplicated())
+	auto participantOwner = GetOwner();
+	if (IsValid(participantOwner) && !participantOwner->GetIsReplicated() && GetIsReplicated())
 	{
-		GetOwner()->SetReplicates(GetIsReplicated());
+		participantOwner->SetReplicates(GetIsReplicated());
 	}
 }
 
