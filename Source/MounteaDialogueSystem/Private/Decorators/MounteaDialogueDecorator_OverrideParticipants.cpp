@@ -88,7 +88,7 @@ void UMounteaDialogueDecorator_OverrideParticipants::ExecuteDecorator_Implementa
 	
 	if (bOverrideActiveParticipant)
 	{
-		UMounteaDialogueSystemBFC::SetActiveDialogueParticipant(Context, Override_ActiveParticipantInterface);
+		UMounteaDialogueSystemBFC::GetMatchingDialogueParticipant(Context, Override_ActiveParticipantInterface);
 	}
 }
 

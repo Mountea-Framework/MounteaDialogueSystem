@@ -551,7 +551,7 @@ void UMounteaDialogueManager::PrepareNode_Implementation()
 	}
 
 	const auto newActiveParticipant = UMounteaDialogueSystemBFC::SwitchActiveParticipant(DialogueContext);
-	UMounteaDialogueSystemBFC::SetActiveDialogueParticipant(DialogueContext, newActiveParticipant);
+	UMounteaDialogueSystemBFC::GetMatchingDialogueParticipant(DialogueContext, newActiveParticipant);
 	DialogueContext->ActiveNode->PreProcessNode(this);
 }
 

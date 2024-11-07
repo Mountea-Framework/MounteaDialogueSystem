@@ -38,7 +38,7 @@ void UMounteaDialogueGraphNode_AnswerNode::PreProcessNode_Implementation(const T
 		{
 			if (const auto TempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
 			{
-				UMounteaDialogueSystemBFC::SetActiveDialogueParticipant(TempContext, TempContext->GetDialoguePlayerParticipant());
+				UMounteaDialogueSystemBFC::GetMatchingDialogueParticipant(TempContext, TempContext->GetDialoguePlayerParticipant());
 			}
 		}
 	}

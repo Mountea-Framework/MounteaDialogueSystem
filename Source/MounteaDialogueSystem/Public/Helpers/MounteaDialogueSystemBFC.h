@@ -366,7 +366,7 @@ public:
 
 	static TScriptInterface<IMounteaDialogueParticipantInterface> SwitchActiveParticipant(const UMounteaDialogueContext* DialogueContext);
 
-	static bool SetActiveDialogueParticipant(UMounteaDialogueContext* Context, const TScriptInterface<IMounteaDialogueParticipantInterface>& NewActiveParticipant);
+	static bool GetMatchingDialogueParticipant(UMounteaDialogueContext* Context, const TScriptInterface<IMounteaDialogueParticipantInterface>& NewActiveParticipant);
 
 	// --- Template functions ------------------------------
 	

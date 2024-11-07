@@ -478,7 +478,7 @@ UMounteaDialogueContext* UMounteaDialogueSystemBFC::CreateDialogueContext(UObjec
 	newDialogueContext->SetDialogueContext(MainParticipant, newActiveNode, allowedChildNodes);
 	newDialogueContext->UpdateActiveDialogueTable(newActiveDialogueNode ? newDialogueTableHandle : FDataTableRowHandle());
 	newDialogueContext->AddDialogueParticipants(DialogueParticipants);
-	SetActiveDialogueParticipant(newDialogueContext, newDialogueContext);
+	GetMatchingDialogueParticipant(newDialogueContext, SwitchActiveParticipant(newDialogueContext));
 
 	return newDialogueContext;
 }
@@ -558,7 +558,7 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC
 	return (foundParticipant && *foundParticipant != DialogueContext->ActiveDialogueParticipant) ? *foundParticipant : DialogueContext->ActiveDialogueParticipant;
 }
 
-bool UMounteaDialogueSystemBFC::SetActiveDialogueParticipant(UMounteaDialogueContext* Context, const TScriptInterface<IMounteaDialogueParticipantInterface>& NewActiveParticipant)
+bool UMounteaDialogueSystemBFC::GetMatchingDialogueParticipant(UMounteaDialogueContext* Context, const TScriptInterface<IMounteaDialogueParticipantInterface>& NewActiveParticipant)
 {
 	if (!IsValid(Context))
 		return false;
