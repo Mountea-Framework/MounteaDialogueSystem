@@ -49,7 +49,6 @@ void UMounteaDialogueManager::BeginPlay()
 		GetOwner()->SetReplicates(true);
 	}
 
-	TransientDialogueContext.Reset();
 
 	if (IsAuthority())
 	{
@@ -136,57 +135,17 @@ void UMounteaDialogueManager::OnRep_ManagerState()
 	ProcessStateUpdated();
 }
 
-void UMounteaDialogueManager::OnRep_DialogueContext()
-{
-	//auto dialogueParticipants = TransientDialogueContext.DialogueParticipants;
-
-	*DialogueContext += TransientDialogueContext;
-	TransientDialogueContext.Reset();
-
-	//NotifyParticipants(dialogueParticipants);
-
-	LOG_ERROR(TEXT("[OnRep Context] New Context %s"), *(DialogueContext ? DialogueContext->ToString() : FString("EMPTY")))
-}
-
-void UMounteaDialogueManager::RequestBroadcastContext(UMounteaDialogueContext* Context)
-{
-	if (!IsAuthority())
-	{
-		RequestBroadcastContext_Server(FMounteaDialogueContextReplicatedStruct(Context));
-	}
-}
-
-void UMounteaDialogueManager::RequestBroadcastContext_Server_Implementation(const FMounteaDialogueContextReplicatedStruct& Context)
-{
-	TransientDialogueContext = Context;
-	*DialogueContext += TransientDialogueContext;
-	
-	MARK_PROPERTY_DIRTY_FROM_NAME(UMounteaDialogueManager, TransientDialogueContext, this);
-	
-	NotifyParticipants(TransientDialogueContext.DialogueParticipants);
-}
-
-void UMounteaDialogueManager::NotifyParticipants(const TArray<TWeakObjectPtr<UObject>>& Participants)
-{
-	for (const auto& Participant : Participants)
-	{
-		if (Participant.Get())
-		{
-			TScriptInterface<IMounteaDialogueParticipantInterface> dialogueParticipant = TScriptInterface<IMounteaDialogueParticipantInterface>(Participant.Get());
-			dialogueParticipant->GetDialogueUpdatedEventHandle().Broadcast(this);
-		}
-	}
-}
-
-bool UMounteaDialogueManager::IsAuthority() const
-{
-	return GetOwner() && GetOwner()->HasAuthority();
-}
-
 void UMounteaDialogueManager::ProcessStateUpdated()
 {
 	if (IsAuthority() && !UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
 	{
+		return;
+	}
+
+	// Await the Context
+	if (ManagerState == EDialogueManagerState::EDMS_Active && (!IsValid(DialogueContext)))
+	{
+		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &UMounteaDialogueManager::ProcessStateUpdated);
 		return;
 	}
 	
@@ -200,6 +159,68 @@ void UMounteaDialogueManager::ProcessStateUpdated()
 			Execute_StartDialogue(this);
 			break;
 	}
+}
+
+void UMounteaDialogueManager::OnRep_DialogueContext()
+{
+	if (!IsValid(DialogueContext))
+	{
+		DialogueContext = NewObject<UMounteaDialogueContext>(this);
+	}
+		
+	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> participants = 
+		TransientDialogueContext.DialogueParticipants;
+
+	*DialogueContext += TransientDialogueContext;
+
+	NotifyParticipants(participants);
+    
+	// Reset after ensuring replication completed
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+	{
+		TransientDialogueContext.Reset();
+	}, 0.2f, false);
+}
+
+void UMounteaDialogueManager::RequestBroadcastContext(UMounteaDialogueContext* Context)
+{
+	if (!IsAuthority())
+	{
+		RequestBroadcastContext_Server(FMounteaDialogueContextReplicatedStruct(Context));
+	}
+}
+
+void UMounteaDialogueManager::RequestBroadcastContext_Server_Implementation(const FMounteaDialogueContextReplicatedStruct& Context)
+{
+	TransientDialogueContext = Context;
+	
+	*DialogueContext += TransientDialogueContext;
+	
+	MARK_PROPERTY_DIRTY_FROM_NAME(UMounteaDialogueManager, TransientDialogueContext, this);
+	
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+	{
+		NotifyParticipants(TransientDialogueContext.DialogueParticipants);
+	}, 0.2f, false);
+}
+
+void UMounteaDialogueManager::NotifyParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants)
+{
+	for (const auto& Participant : Participants)
+	{
+		if (auto participantObject = Participant.GetObject())
+		{
+			TScriptInterface<IMounteaDialogueParticipantInterface> dialogueParticipant = TScriptInterface<IMounteaDialogueParticipantInterface>(participantObject);
+			dialogueParticipant->GetDialogueUpdatedEventHandle().Broadcast(this);
+		}
+	}
+}
+
+bool UMounteaDialogueManager::IsAuthority() const
+{
+	return GetOwner() && GetOwner()->HasAuthority();
 }
 
 void UMounteaDialogueManager::DialogueFailed(const FString& ErrorMessage)
@@ -274,6 +295,8 @@ void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewCon
 		SetDialogueContext_Server(NewContext);
 
 	DialogueContext = NewContext;
+
+	TransientDialogueContext = FMounteaDialogueContextReplicatedStruct(DialogueContext);
 
 	OnDialogueContextUpdated.Broadcast(NewContext);
 }
@@ -406,8 +429,11 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 
 	if (bSatisfied)
 	{
+		if (IsAuthority())
+		{
+			SetDialogueContext(UMounteaDialogueSystemBFC::CreateDialogueContext(this, mainParticipant, dialogueParticipants));
+		}
 		errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "OK", "OK"));
-		SetDialogueContext(UMounteaDialogueSystemBFC::CreateDialogueContext(this, mainParticipant, dialogueParticipants));
 	}
 	
 	const FText finalErrorMessage = FText::Join(FText::FromString("\n"), errorMessages);
@@ -805,6 +831,7 @@ void UMounteaDialogueManager::DialogueRowProcessed_Implementation()
 
 	OnDialogueRowFinished.Broadcast(DialogueContext);
 
+	// TODO: Let's pass a uint8 param that defines whether we should respect this or brute force it through
 	// This row has finished and next will execute only using 'TriggerNextDialogueRow'.
 	if (processInfo.ActiveRowExecutionMode == ERowExecutionMode::EREM_AwaitInput)
 	{

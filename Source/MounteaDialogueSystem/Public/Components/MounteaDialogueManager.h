@@ -71,7 +71,7 @@ protected:
 
 	void StartParticipants() const;
 	void StopParticipants() const;
-	void NotifyParticipants(const TArray<TWeakObjectPtr<UObject>>& Participants);
+	void NotifyParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
 	
 public:
 

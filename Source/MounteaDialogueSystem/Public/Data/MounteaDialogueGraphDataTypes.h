@@ -550,7 +550,6 @@ public:
 	}
 };
 
-
 #undef LOCTEXT_NAMESPACE
 
 /**
@@ -596,15 +595,19 @@ USTRUCT()
 struct FMounteaDialogueContextReplicatedStruct
 {
 	GENERATED_BODY()
-
+	
 	UPROPERTY()
-	TWeakObjectPtr<UObject> ActiveDialogueParticipant;
+	AActor* ParticipantOwner = nullptr;
+	
 	UPROPERTY()
-	TWeakObjectPtr<UObject> PlayerDialogueParticipant;
+	TScriptInterface<IMounteaDialogueParticipantInterface> ActiveDialogueParticipant;
 	UPROPERTY()
-	TWeakObjectPtr<UObject> DialogueParticipant;
+	TScriptInterface<IMounteaDialogueParticipantInterface> PlayerDialogueParticipant;
 	UPROPERTY()
-	TArray<TWeakObjectPtr<UObject>> DialogueParticipants;
+	TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant;
+	UPROPERTY()
+	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipants;
+	
 	UPROPERTY()
 	FGuid ActiveNodeGuid;
 	UPROPERTY()
@@ -634,6 +637,18 @@ struct FMounteaDialogueContextReplicatedStruct
 		return !(*this == Other);
 	}
 
+	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess);
+
+	FString ToString() const;
 	bool IsValid() const;
 	void Reset();
+};
+
+template<>
+struct TStructOpsTypeTraits<FMounteaDialogueContextReplicatedStruct> : public TStructOpsTypeTraitsBase2<FMounteaDialogueContextReplicatedStruct>
+{
+	enum 
+	{
+		WithNetSerializer = true
+	};
 };

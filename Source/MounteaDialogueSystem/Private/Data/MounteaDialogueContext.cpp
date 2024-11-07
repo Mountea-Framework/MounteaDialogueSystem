@@ -365,21 +365,14 @@ UMounteaDialogueContext* UMounteaDialogueContext::operator += (const FMounteaDia
 {
 	if (Other.IsValid())
 	{
-		ActiveDialogueParticipant = TScriptInterface<IMounteaDialogueParticipantInterface>(Other.ActiveDialogueParticipant.Get());
-		PlayerDialogueParticipant = TScriptInterface<IMounteaDialogueParticipantInterface>(Other.PlayerDialogueParticipant.Get());
-		DialogueParticipant = TScriptInterface<IMounteaDialogueParticipantInterface>(Other.DialogueParticipant.Get());
+		ActiveDialogueParticipant = Other.ActiveDialogueParticipant;
+		PlayerDialogueParticipant = Other.PlayerDialogueParticipant;
+		DialogueParticipant = Other.DialogueParticipant;
+		DialogueParticipants = Other.DialogueParticipants;
+		
 		ActiveDialogueRowDataIndex = Other.ActiveDialogueRowDataIndex;
 		ActiveDialogueTableHandle = Other.ActiveDialogueTableHandle;
-
-		DialogueParticipants.Empty();
-		for (const auto& ParticipantObj : Other.DialogueParticipants)
-		{
-			if (ParticipantObj.Get())
-			{
-				DialogueParticipants.Add(TScriptInterface<IMounteaDialogueParticipantInterface>(ParticipantObj.Get()));
-			}
-		}
-
+		
 		UMounteaDialogueGraph* activeGraph = DialogueParticipant->Execute_GetDialogueGraph(DialogueParticipant.GetObject());
 
 		ActiveNode = UMounteaDialogueSystemBFC::FindNodeByGUID(activeGraph, Other.ActiveNodeGuid);
