@@ -478,7 +478,7 @@ UMounteaDialogueContext* UMounteaDialogueSystemBFC::CreateDialogueContext(UObjec
 	newDialogueContext->SetDialogueContext(MainParticipant, newActiveNode, allowedChildNodes);
 	newDialogueContext->UpdateActiveDialogueTable(newActiveDialogueNode ? newDialogueTableHandle : FDataTableRowHandle());
 	newDialogueContext->AddDialogueParticipants(DialogueParticipants);
-	newDialogueContext->ActiveDialogueParticipant = FindBestMatchingParticipant(newDialogueContext);
+	SetActiveDialogueParticipant(newDialogueContext, newDialogueContext);
 
 	return newDialogueContext;
 }
@@ -522,8 +522,53 @@ ENetRole UMounteaDialogueSystemBFC::GetOwnerLocalRole(const AActor* ForActor)
 {
 	if (!IsValid(ForActor))
 		return ROLE_None;
+	return ForActor->GetLocalRole();
+}
 
-	else return ForActor->GetLocalRole();
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC::SwitchActiveParticipant(const UMounteaDialogueContext* DialogueContext)
+{
+	if (!IsValid(DialogueContext) || !IsValid(DialogueContext->ActiveNode))
+	{
+		return nullptr;
+	}
+
+	const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& dialogueParticipants = DialogueContext->DialogueParticipants;
+	if (dialogueParticipants.Num() == 0)
+	{
+		return DialogueContext->ActiveDialogueParticipant;
+	}
+
+	FGameplayTagContainer activeTags;
+	if (DialogueContext->ActiveNode->IsA<UMounteaDialogueGraphNode_DialogueNodeBase>())
+	{
+		activeTags.AppendTags(DialogueContext->ActiveDialogueRow.CompatibleTags);
+	}	
+	activeTags.AppendTags(DialogueContext->ActiveNode->NodeGameplayTags);
+	
+	if (activeTags.Num() == 0)
+	{
+		return IsValid(DialogueContext->ActiveDialogueParticipant.GetObject()) ? DialogueContext->ActiveDialogueParticipant : dialogueParticipants[0];
+	}
+	
+	auto* foundParticipant = dialogueParticipants.FindByPredicate([&](const TScriptInterface<IMounteaDialogueParticipantInterface>& dialogueParticipant)
+	{
+		return dialogueParticipant.GetObject() && activeTags.HasTagExact(dialogueParticipant->Execute_GetParticipantTag(dialogueParticipant.GetObject()));
+	});
+
+	return (foundParticipant && *foundParticipant != DialogueContext->ActiveDialogueParticipant) ? *foundParticipant : DialogueContext->ActiveDialogueParticipant;
+}
+
+bool UMounteaDialogueSystemBFC::SetActiveDialogueParticipant(UMounteaDialogueContext* Context, const TScriptInterface<IMounteaDialogueParticipantInterface>& NewActiveParticipant)
+{
+	if (!IsValid(Context))
+		return false;
+
+	if (Context->ActiveDialogueParticipant == NewActiveParticipant)
+		return false;
+
+	Context->ActiveDialogueParticipant = NewActiveParticipant;
+	Context->OnDialogueContextUpdated.Broadcast();
+	return true;
 }
 
 
@@ -575,7 +620,6 @@ FDialogueRow UMounteaDialogueSystemBFC::GetDialogueRow(const UDataTable* SourceT
 	const FDialogueRow* FoundRow = SourceTable->FindRow<FDialogueRow>(SourceName, TEXT(""));
 	return FoundRow ? *FoundRow : FDialogueRow::Invalid();
 }
-
 
 float UMounteaDialogueSystemBFC::GetRowDuration(const FDialogueRowData& Row)
 {

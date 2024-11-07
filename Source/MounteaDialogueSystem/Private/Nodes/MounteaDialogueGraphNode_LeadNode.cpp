@@ -38,7 +38,7 @@ void UMounteaDialogueGraphNode_LeadNode::PreProcessNode_Implementation(const TSc
 		{
 			if (const auto TempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
 			{
-				TempContext->UpdateActiveDialogueParticipant(TempContext->GetDialogueParticipant());
+				TempContext->SetActiveDialogueParticipant(TempContext->GetDialogueParticipant());
 			}
 		}
 	}

@@ -549,7 +549,9 @@ void UMounteaDialogueManager::PrepareNode_Implementation()
 		OnDialogueFailed.Broadcast(TEXT("[Prepare Node] No Active Node!"));
 		return;
 	}
-	
+
+	const auto newActiveParticipant = UMounteaDialogueSystemBFC::SwitchActiveParticipant(DialogueContext);
+	UMounteaDialogueSystemBFC::SetActiveDialogueParticipant(DialogueContext, newActiveParticipant);
 	DialogueContext->ActiveNode->PreProcessNode(this);
 }
 

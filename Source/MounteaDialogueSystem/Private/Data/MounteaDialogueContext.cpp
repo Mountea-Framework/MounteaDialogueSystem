@@ -49,7 +49,7 @@ FString UMounteaDialogueContext::ToString() const
 
 bool UMounteaDialogueContext::IsValid() const
 {
-	return ActiveNode != nullptr && DialogueParticipant.GetInterface() != nullptr; // && PlayerDialogueParticipant.GetInterface() != nullptr;
+	return ActiveNode != nullptr && DialogueParticipants.Num() > 0; // && PlayerDialogueParticipant.GetInterface() != nullptr;
 }
 
 void UMounteaDialogueContext::SetDialogueContext(const TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant, UMounteaDialogueGraphNode* NewActiveNode, const TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes)
@@ -85,6 +85,8 @@ void UMounteaDialogueContext::UpdateActiveDialogueNode(UMounteaDialogueGraphNode
 	}
 	
 	ActiveNode = NewActiveNode;
+
+	OnDialogueContextUpdated.Broadcast();
 }
 
 void UMounteaDialogueContext::UpdateAllowedChildrenNodes(const TArray<UMounteaDialogueGraphNode*>& NewNodes)
@@ -107,22 +109,21 @@ void UMounteaDialogueContext::UpdateActiveDialogueRowDataIndex(const int32 NewIn
 	ActiveDialogueRowDataIndex = NewIndex;
 }
 
-void UMounteaDialogueContext::UpdateDialoguePlayerParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant)
+void UMounteaDialogueContext::UpdateDialoguePlayerParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant)
 {
 	PlayerDialogueParticipant = NewParticipant;
 	
 	AddDialogueParticipant(NewParticipant);
 }
 
-void UMounteaDialogueContext::UpdateActiveDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant)
+void UMounteaDialogueContext::SetActiveDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant)
 {
-	if (NewParticipant != PlayerDialogueParticipant && NewParticipant != DialogueParticipant)
-	{
-		//TODO: Properly log this
+	if (NewParticipant != ActiveDialogueParticipant)
 		return;
-	}
 
 	ActiveDialogueParticipant = NewParticipant;
+
+	OnDialogueContextUpdated.Broadcast();
 }
 
 void UMounteaDialogueContext::AddTraversedNode(const UMounteaDialogueGraphNode* TraversedNode)
@@ -255,7 +256,7 @@ void UMounteaDialogueContext::UpdateDialoguePlayerParticipantBP(const TScriptInt
 
 void UMounteaDialogueContext::UpdateActiveDialogueParticipantBP(const TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant)
 {
-	UpdateActiveDialogueParticipant(NewParticipant);
+	SetActiveDialogueParticipant(NewParticipant);
 
 	DialogueContextUpdatedFromBlueprint.Broadcast(this);
 }

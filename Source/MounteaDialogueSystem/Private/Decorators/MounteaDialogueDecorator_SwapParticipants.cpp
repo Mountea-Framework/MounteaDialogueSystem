@@ -37,7 +37,7 @@ void UMounteaDialogueDecorator_SwapParticipants::ExecuteDecorator_Implementation
 		Context->GetDialogueParticipant() :
 		Context->GetDialoguePlayerParticipant();
 
-	Context->UpdateActiveDialogueParticipant(NewActiveParticipant);
+	UMounteaDialogueSystemBFC::SetActiveDialogueParticipant(Context, NewActiveParticipant);
 }
 
 #undef LOCTEXT_NAMESPACE

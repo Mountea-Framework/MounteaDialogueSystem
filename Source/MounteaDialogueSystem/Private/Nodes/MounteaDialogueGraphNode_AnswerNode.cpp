@@ -3,6 +3,7 @@
 #include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
 
 #include "Data/MounteaDialogueContext.h"
+#include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/MounteaDialogueManagerInterface.h"
 #include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
@@ -33,12 +34,11 @@ void UMounteaDialogueGraphNode_AnswerNode::PreProcessNode_Implementation(const T
 {
 	if (!bUseGameplayTags)
 	{
-		// Switch Active Participant to Player
 		if (Manager.GetInterface())
 		{
 			if (const auto TempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
 			{
-				TempContext->UpdateActiveDialogueParticipant(TempContext->GetDialoguePlayerParticipant());
+				UMounteaDialogueSystemBFC::SetActiveDialogueParticipant(TempContext, TempContext->GetDialoguePlayerParticipant());
 			}
 		}
 	}

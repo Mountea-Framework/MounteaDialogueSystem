@@ -12,6 +12,8 @@ struct FDialogueTraversePath;
 class IMounteaDialogueParticipantInterface;
 class UMounteaDialogueGraphNode;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDialogueContextUpdated);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueContextUpdatedFromBlueprint, UMounteaDialogueContext*, Context);
 
 /**
@@ -103,6 +105,11 @@ public:
 
 public:
 
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Context")
+	FOnDialogueContextUpdated OnDialogueContextUpdated;
+
+public:
+
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(CompactNodeTitle="To String"), meta=(CustomTag="MounteaK2Setter"))
 	virtual FString ToString() const;
 
@@ -171,9 +178,9 @@ public:
 	virtual void UpdateActiveDialogueTable(const FDataTableRowHandle& NewHandle);
 	virtual void UpdateActiveDialogueRow(const FDialogueRow& NewActiveRow);
 	virtual void UpdateActiveDialogueRowDataIndex(int32 NewIndex);
-	void UpdateDialoguePlayerParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
-	void UpdateActiveDialogueParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
-	void AddTraversedNode(const UMounteaDialogueGraphNode* TraversedNode);
+	virtual void UpdateDialoguePlayerParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant);
+	virtual void SetActiveDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant);
+	virtual void AddTraversedNode(const UMounteaDialogueGraphNode* TraversedNode);
 
 	virtual bool AddDialogueParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 	virtual bool AddDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant);

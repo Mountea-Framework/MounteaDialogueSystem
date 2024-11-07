@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "Interfaces/MounteaDialogueTickableObject.h"
 #include "MounteaDialogueGraphNode.generated.h"
@@ -18,7 +19,7 @@ class UMounteaDialogueGraphEdge;
  * Does come with ability to define Colours, Name, Description and Title.
  * Contains information about Parent and Children Nodes.
  */
-UCLASS(Abstract, BlueprintType, Blueprintable, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"))
+UCLASS(Abstract, BlueprintType, Blueprintable, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue","Mountea|Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()
@@ -97,6 +98,13 @@ private:
 
 #pragma region Editable
 public:
+	
+	/**
+	 * Every Node has its own Tags. Those Tags can be used to Match Participants
+	 * or to find specific Nodes.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mountea|Dialogue")
+	FGameplayTagContainer NodeGameplayTags;
 	
 	/**
 	 * The array of allowed input classes for this Dialogue Node.

@@ -56,9 +56,8 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode_Implementation(c
 		{
 			if (const auto TempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
 			{
-				const TScriptInterface<IMounteaDialogueParticipantInterface> BestMatchingParticipant = UMounteaDialogueSystemBFC::FindBestMatchingParticipant(TempContext);
-				
-				TempContext->UpdateActiveDialogueParticipant(BestMatchingParticipant);
+				const TScriptInterface<IMounteaDialogueParticipantInterface> BestMatchingParticipant = UMounteaDialogueSystemBFC::SwitchActiveParticipant(TempContext);
+				UMounteaDialogueSystemBFC::SetActiveDialogueParticipant(TempContext, BestMatchingParticipant);
 			}
 		}
 	}

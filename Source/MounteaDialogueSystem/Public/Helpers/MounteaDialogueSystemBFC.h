@@ -364,6 +364,10 @@ public:
 	static AActor* GetDialogueManagerLocalOwner(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	static ENetRole GetOwnerLocalRole(const AActor* ForActor);
 
+	static TScriptInterface<IMounteaDialogueParticipantInterface> SwitchActiveParticipant(const UMounteaDialogueContext* DialogueContext);
+
+	static bool SetActiveDialogueParticipant(UMounteaDialogueContext* Context, const TScriptInterface<IMounteaDialogueParticipantInterface>& NewActiveParticipant);
+
 	// --- Template functions ------------------------------
 	
 	template <typename NodeType>
