@@ -54,7 +54,7 @@ void UMounteaDialogueManager::BeginPlay()
 	if (IsAuthority())
 	{
 		OnDialogueStartRequested.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueStartRequestReceived);
-		OnDialogueContextUpdated.AddUniqueDynamic(this, &UMounteaDialogueManager::RequestBroadcastContext);
+		//OnDialogueContextUpdated.AddUniqueDynamic(this, &UMounteaDialogueManager::RequestBroadcastContext);
 	}
 
 	OnDialogueFailed.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueFailed);
@@ -78,7 +78,7 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UMounteaDialogueManager, ManagerState);
-	DOREPLIFETIME_CONDITION(UMounteaDialogueManager, TransientDialogueContext, COND_SimulatedOnly);
+	DOREPLIFETIME(UMounteaDialogueManager, TransientDialogueContext);
 }
 
 MounteaDialogueManagerHelpers::FDialogueRowDataInfo MounteaDialogueManagerHelpers::GetDialogueRowDataInfo(const UMounteaDialogueContext* DialogueContext)
@@ -138,14 +138,44 @@ void UMounteaDialogueManager::OnRep_ManagerState()
 
 void UMounteaDialogueManager::OnRep_DialogueContext()
 {
-	if (UMounteaDialogueSystemBFC::GetOwnerLocalRole(UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(this)) != ROLE_SimulatedProxy)
-	{
-		return;
-	}
-	
-	LOG_ERROR(TEXT("[OnRep Dialogue Context] Dialogue Context replicated to Clients. NewContext: %s"), *(DialogueContext ? DialogueContext->ToString() : FString("EMPTY")))
+	//auto dialogueParticipants = TransientDialogueContext.DialogueParticipants;
+
 	*DialogueContext += TransientDialogueContext;
 	TransientDialogueContext.Reset();
+
+	//NotifyParticipants(dialogueParticipants);
+
+	LOG_ERROR(TEXT("[OnRep Context] New Context %s"), *(DialogueContext ? DialogueContext->ToString() : FString("EMPTY")))
+}
+
+void UMounteaDialogueManager::RequestBroadcastContext(UMounteaDialogueContext* Context)
+{
+	if (!IsAuthority())
+	{
+		RequestBroadcastContext_Server(FMounteaDialogueContextReplicatedStruct(Context));
+	}
+}
+
+void UMounteaDialogueManager::RequestBroadcastContext_Server_Implementation(const FMounteaDialogueContextReplicatedStruct& Context)
+{
+	TransientDialogueContext = Context;
+	*DialogueContext += TransientDialogueContext;
+	
+	MARK_PROPERTY_DIRTY_FROM_NAME(UMounteaDialogueManager, TransientDialogueContext, this);
+	
+	NotifyParticipants(TransientDialogueContext.DialogueParticipants);
+}
+
+void UMounteaDialogueManager::NotifyParticipants(const TArray<TWeakObjectPtr<UObject>>& Participants)
+{
+	for (const auto& Participant : Participants)
+	{
+		if (Participant.Get())
+		{
+			TScriptInterface<IMounteaDialogueParticipantInterface> dialogueParticipant = TScriptInterface<IMounteaDialogueParticipantInterface>(Participant.Get());
+			dialogueParticipant->GetDialogueUpdatedEventHandle().Broadcast(this);
+		}
+	}
 }
 
 bool UMounteaDialogueManager::IsAuthority() const
@@ -170,22 +200,6 @@ void UMounteaDialogueManager::ProcessStateUpdated()
 			Execute_StartDialogue(this);
 			break;
 	}
-}
-
-void UMounteaDialogueManager::RequestBroadcastContext(UMounteaDialogueContext* Context)
-{
-	if (IsAuthority())
-	{
-		TransientDialogueContext = FMounteaDialogueContextReplicatedStruct(Context);
-		*DialogueContext += TransientDialogueContext;
-	}
-	else
-		RequestBroadcastContext_Server(FMounteaDialogueContextReplicatedStruct(Context));
-}
-
-void UMounteaDialogueManager::RequestBroadcastContext_Server_Implementation(const FMounteaDialogueContextReplicatedStruct& Context)
-{
-	TransientDialogueContext = FMounteaDialogueContextReplicatedStruct(Context);
 }
 
 void UMounteaDialogueManager::DialogueFailed(const FString& ErrorMessage)
@@ -597,9 +611,8 @@ void UMounteaDialogueManager::NodeProcessed_Implementation()
 	}
 
 	DialogueContext->ActiveNode->Execute_UnregisterTick(DialogueContext->ActiveNode, DialogueContext->ActiveNode->Graph);
-	
-	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 
+	// TODO: This is extremely similar to NodeSelected!
 	TArray<UMounteaDialogueGraphNode*> allowedChildrenNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(DialogueContext->ActiveNode);
 	UMounteaDialogueSystemBFC::SortNodes(allowedChildrenNodes);
 	
@@ -615,19 +628,27 @@ void UMounteaDialogueManager::NodeProcessed_Implementation()
 	});
 
 	UMounteaDialogueGraphNode* newActiveNode = foundNodePtr ? *foundNodePtr : nullptr;
-
+	
 	if (newActiveNode != nullptr)
 	{
 		auto newActiveDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(newActiveNode);
 		auto allowedChildNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(newActiveNode);
 		UMounteaDialogueSystemBFC::SortNodes(allowedChildNodes);
-
-		FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
-		newDialogueTableHandle.DataTable = newActiveDialogueNode->GetDataTable();
-		newDialogueTableHandle.RowName = newActiveDialogueNode->GetRowName();
 		
+		if (const auto selectedDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(newActiveNode))
+		{
+			FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
+			newDialogueTableHandle.DataTable = selectedDialogueNode->GetDataTable();
+			newDialogueTableHandle.RowName = selectedDialogueNode->GetRowName();
+		
+			DialogueContext->UpdateActiveDialogueTable(newActiveNode ? newDialogueTableHandle : FDataTableRowHandle());
+		}
+	
 		DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, newActiveNode, allowedChildNodes);
-		DialogueContext->UpdateActiveDialogueTable(newActiveDialogueNode ? newDialogueTableHandle : FDataTableRowHandle());
+		DialogueContext->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode));
+		DialogueContext->UpdateActiveDialogueRowDataIndex(0);
+		const auto newActiveParticipant = UMounteaDialogueSystemBFC::SwitchActiveParticipant(DialogueContext);
+		UMounteaDialogueSystemBFC::GetMatchingDialogueParticipant(DialogueContext, newActiveParticipant);
 		
 		OnDialogueNodeSelected.Broadcast(DialogueContext);
 
@@ -678,11 +699,12 @@ void UMounteaDialogueManager::SelectNode_Implementation(const FGuid& NodeGuid)
 		
 		DialogueContext->UpdateActiveDialogueTable(selectedNode ? newDialogueTableHandle : FDataTableRowHandle());
 	}
-
-	// TODO: replace with UPDATE, make UPDATE take struct input, too
+	
 	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, selectedNode, allowedChildNodes);
 	DialogueContext->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode));
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
+	const auto newActiveParticipant = UMounteaDialogueSystemBFC::SwitchActiveParticipant(DialogueContext);
+	UMounteaDialogueSystemBFC::GetMatchingDialogueParticipant(DialogueContext, newActiveParticipant);
 
 	FString resultMessage;
 	if (!Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::RemoveDialogueOptions))

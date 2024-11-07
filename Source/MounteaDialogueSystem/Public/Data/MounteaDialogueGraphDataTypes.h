@@ -598,13 +598,13 @@ struct FMounteaDialogueContextReplicatedStruct
 	GENERATED_BODY()
 
 	UPROPERTY()
-	TScriptInterface<IMounteaDialogueParticipantInterface> ActiveDialogueParticipant;
+	TWeakObjectPtr<UObject> ActiveDialogueParticipant;
 	UPROPERTY()
-	TScriptInterface<IMounteaDialogueParticipantInterface> PlayerDialogueParticipant;
+	TWeakObjectPtr<UObject> PlayerDialogueParticipant;
 	UPROPERTY()
-	TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant;
+	TWeakObjectPtr<UObject> DialogueParticipant;
 	UPROPERTY()
-	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipants;
+	TArray<TWeakObjectPtr<UObject>> DialogueParticipants;
 	UPROPERTY()
 	FGuid ActiveNodeGuid;
 	UPROPERTY()
@@ -619,7 +619,20 @@ struct FMounteaDialogueContextReplicatedStruct
 	FMounteaDialogueContextReplicatedStruct();
 	explicit FMounteaDialogueContextReplicatedStruct(UMounteaDialogueContext* Source);
 
-	FMounteaDialogueContextReplicatedStruct operator+=(UMounteaDialogueContext* Source) ;
+	FMounteaDialogueContextReplicatedStruct operator+=(UMounteaDialogueContext* Source);
+	bool operator==(const FMounteaDialogueContextReplicatedStruct& Other) const
+	{
+		return ActiveDialogueParticipant == Other.ActiveDialogueParticipant
+		&& DialogueParticipants == Other.DialogueParticipants
+		&& ActiveNodeGuid == Other.ActiveNodeGuid
+		&& AllowedChildNodes == Other.AllowedChildNodes
+		&& ActiveDialogueTableHandle == Other.ActiveDialogueTableHandle
+		&& ActiveDialogueRowDataIndex == Other.ActiveDialogueRowDataIndex;
+	}
+	bool operator!=(const FMounteaDialogueContextReplicatedStruct& Other) const
+	{
+		return !(*this == Other);
+	}
 
 	bool IsValid() const;
 	void Reset();

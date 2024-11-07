@@ -95,16 +95,26 @@ FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct
 {}
 
 FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct(UMounteaDialogueContext* Source)
-	: ActiveDialogueParticipant(Source ? Source->ActiveDialogueParticipant : nullptr)
-	, PlayerDialogueParticipant(Source ? Source->PlayerDialogueParticipant : nullptr)
-	, DialogueParticipant(Source ? Source->DialogueParticipant : nullptr)
-	, DialogueParticipants(Source ? Source->DialogueParticipants : TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>())
+	: ActiveDialogueParticipant(Source ? Source->ActiveDialogueParticipant.GetObject() : nullptr)
+	, PlayerDialogueParticipant(Source ? Source->PlayerDialogueParticipant.GetObject() : nullptr)
+	, DialogueParticipant(Source ? Source->DialogueParticipant.GetObject() : nullptr)
 	, ActiveNodeGuid(Source ? ( Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid() ) : FGuid())
 	, PreviousActiveNodeGuid( Source ? Source->PreviousActiveNode : FGuid() )
 	, AllowedChildNodes(Source ? UMounteaDialogueSystemBFC::NodesToGuids(Source->AllowedChildNodes) : TArray<FGuid>())
 	, ActiveDialogueTableHandle(Source ? Source->ActiveDialogueTableHandle : FDataTableRowHandle())
 	, ActiveDialogueRowDataIndex(Source ? Source->ActiveDialogueRowDataIndex : 0)
 {
+	DialogueParticipants.Empty();
+	if (Source)
+	{
+		for (const auto& Participant : Source->DialogueParticipants)
+		{
+			if (Participant.GetObject())
+			{
+				DialogueParticipants.Add(Participant.GetObject());
+			}
+		}
+	}
 }
 
 FMounteaDialogueContextReplicatedStruct FMounteaDialogueContextReplicatedStruct::operator+=(UMounteaDialogueContext* Source)
@@ -115,7 +125,7 @@ FMounteaDialogueContextReplicatedStruct FMounteaDialogueContextReplicatedStruct:
 
 bool FMounteaDialogueContextReplicatedStruct::IsValid() const
 {
-	return PlayerDialogueParticipant != nullptr && DialogueParticipant != nullptr && ActiveNodeGuid.IsValid() && DialogueParticipants.Num() != 0;
+	return ActiveDialogueParticipant != nullptr && ActiveNodeGuid.IsValid() && DialogueParticipants.Num() != 0;
 }
 
 void FMounteaDialogueContextReplicatedStruct::Reset()
