@@ -9,7 +9,6 @@
 
 #include "Data/MounteaDialogueContext.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
-#include "Engine/ActorChannel.h"
 #include "GameFramework/PlayerState.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
@@ -186,6 +185,18 @@ void UMounteaDialogueManager::RequestBroadcastContext(UMounteaDialogueContext* C
 	if (!IsAuthority())
 	{
 		RequestBroadcastContext_Server(FMounteaDialogueContextReplicatedStruct(Context));
+	}
+	else
+	{
+		TransientDialogueContext = FMounteaDialogueContextReplicatedStruct(Context);
+		MARK_PROPERTY_DIRTY_FROM_NAME(UMounteaDialogueManager, TransientDialogueContext, this);
+		*DialogueContext += TransientDialogueContext;
+
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+		{
+			NotifyParticipants(TransientDialogueContext.DialogueParticipants);
+		}, 0.2f, false);
 	}
 }
 
