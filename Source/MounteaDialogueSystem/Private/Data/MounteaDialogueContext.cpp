@@ -326,35 +326,21 @@ UMounteaDialogueContext* UMounteaDialogueContext::operator += (const UMounteaDia
 	if (!Other) return this;
 	
 	if (Other->DialogueParticipants != DialogueParticipants)
-	{
-		DialogueParticipants.Empty();
-		DialogueParticipants = Other->DialogueParticipants;
-	}
-	
+		DialogueParticipants = Other->DialogueParticipants;	
 	if (Other->AllowedChildNodes != AllowedChildNodes)
-	{
-		AllowedChildNodes.Empty();
 		AllowedChildNodes = Other->AllowedChildNodes;
-	}
-	
 	if (Other->ActiveNode != ActiveNode)
 		ActiveNode = Other->ActiveNode;
-	
 	if (Other->ActiveDialogueParticipant != ActiveDialogueParticipant)
 		ActiveDialogueParticipant = Other->ActiveDialogueParticipant;
-	
 	if (Other->PlayerDialogueParticipant != PlayerDialogueParticipant)
 		PlayerDialogueParticipant = Other->PlayerDialogueParticipant;
-	
 	if (Other->DialogueParticipant != DialogueParticipant)
 		DialogueParticipant = Other->DialogueParticipant;
-	
 	if (Other->ActiveDialogueTableHandle != ActiveDialogueTableHandle)
 		ActiveDialogueTableHandle = Other->ActiveDialogueTableHandle;
-
 	if (Other->ActiveDialogueRow != ActiveDialogueRow)
 		ActiveDialogueRow = Other->ActiveDialogueRow;
-
 	if (Other->ActiveDialogueRowDataIndex != ActiveDialogueRowDataIndex)
 		ActiveDialogueRowDataIndex = Other->ActiveDialogueRowDataIndex;
 	
@@ -365,20 +351,28 @@ UMounteaDialogueContext* UMounteaDialogueContext::operator += (const FMounteaDia
 {
 	if (Other.IsValid())
 	{
-		ActiveDialogueParticipant = Other.ActiveDialogueParticipant;
-		PlayerDialogueParticipant = Other.PlayerDialogueParticipant;
-		DialogueParticipant = Other.DialogueParticipant;
-		DialogueParticipants = Other.DialogueParticipants;
-		
-		ActiveDialogueRowDataIndex = Other.ActiveDialogueRowDataIndex;
-		ActiveDialogueTableHandle = Other.ActiveDialogueTableHandle;
+		if (ActiveDialogueParticipant != Other.ActiveDialogueParticipant)
+			ActiveDialogueParticipant = Other.ActiveDialogueParticipant;
+		if (PlayerDialogueParticipant != Other.PlayerDialogueParticipant)
+			PlayerDialogueParticipant = Other.PlayerDialogueParticipant;
+		if (DialogueParticipant != Other.DialogueParticipant)
+			DialogueParticipant = Other.DialogueParticipant;
+		if (DialogueParticipants != Other.DialogueParticipants)
+			DialogueParticipants = Other.DialogueParticipants;
+
+		if (ActiveDialogueRowDataIndex != Other.ActiveDialogueRowDataIndex)
+			ActiveDialogueRowDataIndex = Other.ActiveDialogueRowDataIndex;
+		if (ActiveDialogueTableHandle != Other.ActiveDialogueTableHandle)
+			ActiveDialogueTableHandle = Other.ActiveDialogueTableHandle;
 		
 		UMounteaDialogueGraph* activeGraph = DialogueParticipant->Execute_GetDialogueGraph(DialogueParticipant.GetObject());
 
-		ActiveNode = UMounteaDialogueSystemBFC::FindNodeByGUID(activeGraph, Other.ActiveNodeGuid);
+		if (!ActiveNode || (ActiveNode && ActiveNode->GetNodeGUID() != Other.ActiveNodeGuid))
+			ActiveNode = UMounteaDialogueSystemBFC::FindNodeByGUID(activeGraph, Other.ActiveNodeGuid);
+		if (PreviousActiveNode != Other.PreviousActiveNodeGuid)
+			PreviousActiveNode = Other.PreviousActiveNodeGuid;
 		
 		AllowedChildNodes = UMounteaDialogueSystemBFC::FindNodesByGUID(activeGraph, Other.AllowedChildNodes);
-		PreviousActiveNode = Other.PreviousActiveNodeGuid;
 		
 		UMounteaDialogueGraphNode_DialogueNodeBase* dialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(ActiveNode);
 

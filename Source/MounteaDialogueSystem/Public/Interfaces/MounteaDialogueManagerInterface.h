@@ -382,8 +382,8 @@ public:
 	 * ❔ Once all Dialogue Data Rows are finished, Dialogue Data is finished as well.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
-	void DialogueRowProcessed();
-	virtual void DialogueRowProcessed_Implementation() = 0;
+	void DialogueRowProcessed(const bool bForceFinish = false);
+	virtual void DialogueRowProcessed_Implementation(const bool bForceFinish = false) = 0;
 
 	/**
 	 * Skips the current dialogue row.

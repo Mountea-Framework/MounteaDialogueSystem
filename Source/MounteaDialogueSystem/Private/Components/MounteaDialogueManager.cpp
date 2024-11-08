@@ -48,12 +48,10 @@ void UMounteaDialogueManager::BeginPlay()
 	{
 		GetOwner()->SetReplicates(true);
 	}
-
-
+	
 	if (IsAuthority())
 	{
 		OnDialogueStartRequested.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueStartRequestReceived);
-		//OnDialogueContextUpdated.AddUniqueDynamic(this, &UMounteaDialogueManager::RequestBroadcastContext);
 	}
 
 	OnDialogueFailed.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueFailed);
@@ -125,8 +123,6 @@ void UMounteaDialogueManager::SetManagerState(const EDialogueManagerState NewSta
 		ManagerState = NewState; // State can only be changed on server side!
 		ProcessStateUpdated();
 	}
-
-	OnDialogueManagerStateChanged.Broadcast(NewState);
 }
 
 void UMounteaDialogueManager::OnRep_ManagerState()
@@ -148,6 +144,8 @@ void UMounteaDialogueManager::ProcessStateUpdated()
 		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &UMounteaDialogueManager::ProcessStateUpdated);
 		return;
 	}
+	
+	OnDialogueManagerStateChanged.Broadcast(ManagerState);
 	
 	switch (ManagerState)
 	{
@@ -289,8 +287,7 @@ UMounteaDialogueContext* UMounteaDialogueManager::GetDialogueContext_Implementat
 void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewContext)
 {
 	if (NewContext == DialogueContext) return;
-
-	// Is the Context propagated from Client to Server?
+	
 	if (!IsAuthority())
 		SetDialogueContext_Server(NewContext);
 
@@ -321,8 +318,6 @@ void UMounteaDialogueManager::UpdateDialogueContext_Implementation(UMounteaDialo
 void UMounteaDialogueManager::UpdateDialogueContext_Server_Implementation(UMounteaDialogueContext* NewContext)
 {
 	Execute_UpdateDialogueContext(this, NewContext);
-
-	// TODO: multicast context with information who is the current Manager, so it won't be updated locally?
 }
 
 // TODO: let's find a middle-point between Server authority and reducing double-runs at some point (what steps should be done on Server only?)
@@ -780,7 +775,7 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 	if (!bValidRowData)
 	{
 		LOG_WARNING(TEXT("[Process Dialogue Row] Invalid Dialogue Row Data at index %d! Skipping Row. Next Row will be processed instead."), activeIndex)
-		Execute_DialogueRowProcessed(this);
+		Execute_DialogueRowProcessed(this, false);
 		return;
 	}
 	
@@ -790,7 +785,7 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 	if (!bValidRowData)
 	{
 		LOG_WARNING(TEXT("[Process Dialogue Row] Invalid Dialogue Row Data! Skipping Row. Next Row will be processed instead."))
-		Execute_DialogueRowProcessed(this);
+		Execute_DialogueRowProcessed(this, false);
 		return;
 	}
 	
@@ -799,7 +794,7 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 	if (bValidRowData)
 	{
 		FTimerDelegate Delegate;
-		Delegate.BindUObject(this, &UMounteaDialogueManager::DialogueRowProcessed_Implementation);
+		Delegate.BindUObject(this, &UMounteaDialogueManager::DialogueRowProcessed_Implementation, false);
 		
 		GetWorld()->GetTimerManager().SetTimer
 		(
@@ -811,7 +806,7 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 	}
 }
 
-void UMounteaDialogueManager::DialogueRowProcessed_Implementation()
+void UMounteaDialogueManager::DialogueRowProcessed_Implementation(const bool bForceFinish)
 {
 	FString resultMessage;
 	if (!Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::HideDialogueRow))
@@ -830,10 +825,8 @@ void UMounteaDialogueManager::DialogueRowProcessed_Implementation()
 	const auto processInfo = MounteaDialogueManagerHelpers::GetDialogueRowDataInfo(DialogueContext);
 
 	OnDialogueRowFinished.Broadcast(DialogueContext);
-
-	// TODO: Let's pass a uint8 param that defines whether we should respect this or brute force it through
-	// This row has finished and next will execute only using 'TriggerNextDialogueRow'.
-	if (processInfo.ActiveRowExecutionMode == ERowExecutionMode::EREM_AwaitInput)
+	
+	if (processInfo.ActiveRowExecutionMode == ERowExecutionMode::EREM_AwaitInput && !bForceFinish)
 	{
 		return;
 	}
@@ -842,20 +835,19 @@ void UMounteaDialogueManager::DialogueRowProcessed_Implementation()
 	{
 		switch (processInfo.NextRowExecutionMode)
 		{
-		case ERowExecutionMode::EREM_Automatic:
-			{
-				DialogueContext->UpdateActiveDialogueRowDataIndex(processInfo.IncreasedIndex);
-				OnDialogueContextUpdated.Broadcast(DialogueContext);
-				Execute_ProcessDialogueRow(this); // Continue in the loop, just with another row
-			}
-			break;
-		case ERowExecutionMode::EREM_AwaitInput:
-			break;
-		case ERowExecutionMode::EREM_Stopping:
-			OnDialogueNodeFinished.Broadcast(DialogueContext);
-			break;
-		case ERowExecutionMode::Default:
-			break;
+			case ERowExecutionMode::EREM_Automatic:
+			case ERowExecutionMode::EREM_AwaitInput:
+				{
+					DialogueContext->UpdateActiveDialogueRowDataIndex(processInfo.IncreasedIndex);
+					OnDialogueContextUpdated.Broadcast(DialogueContext);
+					Execute_ProcessDialogueRow(this); // Continue in the loop, just with another row
+				}
+				break;
+			case ERowExecutionMode::EREM_Stopping:
+				OnDialogueNodeFinished.Broadcast(DialogueContext);
+				break;
+			case ERowExecutionMode::Default:
+				break;
 		}
 	}
 	else
@@ -868,13 +860,21 @@ void UMounteaDialogueManager::SkipDialogueRow_Implementation()
 {
 	if (!IsValid(DialogueContext))
 	{
-		OnDialogueFailed.Broadcast(TEXT("[DialogueVoiceSkipRequestEvent] Invalid Dialogue Context!"));
+		OnDialogueFailed.Broadcast(TEXT("[Skip Dialogue Row] Invalid Dialogue Context!"));
 		return;
 	}
+	
+	if (!IsValid(GetWorld()))
+	{
+		OnDialogueFailed.Broadcast(TEXT("[Skip Dialogue Row] World is not Valid!"));
+		return;
+	}
+	
+	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 
 	DialogueContext->ActiveDialogueParticipant->Execute_SkipParticipantVoice(DialogueContext->ActiveDialogueParticipant.GetObject(), nullptr);
 
-	Execute_DialogueRowProcessed(this);
+	Execute_DialogueRowProcessed(this, true);
 }
 
 void UMounteaDialogueManager::UpdateWorldDialogueUI_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command)

@@ -102,7 +102,7 @@ public:
 	virtual void SelectNode_Implementation(const FGuid& NodeGuid) override;
 
 	virtual void ProcessDialogueRow_Implementation() override;
-	virtual void DialogueRowProcessed_Implementation() override;
+	virtual void DialogueRowProcessed_Implementation(const bool bForceFinish = false) override;
 	virtual void SkipDialogueRow_Implementation() override;
 	
 	virtual void UpdateWorldDialogueUI_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command) override;

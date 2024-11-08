@@ -150,7 +150,7 @@ void UMounteaDialogueManagerStatics::ProcessDialogueRow(const TScriptInterface<I
 
 void UMounteaDialogueManagerStatics::DialogueRowProcessed(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
 {
-	if (Target.GetObject()) Target->Execute_DialogueRowProcessed(Target.GetObject());
+	if (Target.GetObject()) Target->Execute_DialogueRowProcessed(Target.GetObject(), false);
 }
 
 void UMounteaDialogueManagerStatics:: SkipDialogueRow(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
