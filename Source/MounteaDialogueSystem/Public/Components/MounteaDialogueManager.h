@@ -62,6 +62,7 @@ public:
 protected:
 
 	void ProcessStateUpdated();
+	void ProcessContextUpdated(const FMounteaDialogueContextReplicatedStruct& Context);
 	UFUNCTION()
 	void RequestBroadcastContext(UMounteaDialogueContext* Context);
 	UFUNCTION(Server, Reliable)
@@ -173,7 +174,7 @@ protected:
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueEvent OnDialogueClosed;
 	
-	
+
 	/**
 	 * Event called when Dialogue Context is updated.
 	 * ❗ Could be Null

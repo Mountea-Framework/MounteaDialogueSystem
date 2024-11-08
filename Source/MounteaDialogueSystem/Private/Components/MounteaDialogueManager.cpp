@@ -161,12 +161,9 @@ void UMounteaDialogueManager::ProcessStateUpdated()
 void UMounteaDialogueManager::OnRep_DialogueContext()
 {
 	if (!IsValid(DialogueContext))
-	{
 		DialogueContext = NewObject<UMounteaDialogueContext>(this);
-	}
 		
-	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> participants = 
-		TransientDialogueContext.DialogueParticipants;
+	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> participants = TransientDialogueContext.DialogueParticipants;
 
 	*DialogueContext += TransientDialogueContext;
 
@@ -183,36 +180,27 @@ void UMounteaDialogueManager::OnRep_DialogueContext()
 void UMounteaDialogueManager::RequestBroadcastContext(UMounteaDialogueContext* Context)
 {
 	if (!IsAuthority())
-	{
 		RequestBroadcastContext_Server(FMounteaDialogueContextReplicatedStruct(Context));
-	}
 	else
-	{
-		TransientDialogueContext = FMounteaDialogueContextReplicatedStruct(Context);
-		MARK_PROPERTY_DIRTY_FROM_NAME(UMounteaDialogueManager, TransientDialogueContext, this);
-		*DialogueContext += TransientDialogueContext;
-
-		FTimerHandle TimerHandle;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
-		{
-			NotifyParticipants(TransientDialogueContext.DialogueParticipants);
-		}, 0.2f, false);
-	}
+		ProcessContextUpdated(FMounteaDialogueContextReplicatedStruct(Context));
 }
 
 void UMounteaDialogueManager::RequestBroadcastContext_Server_Implementation(const FMounteaDialogueContextReplicatedStruct& Context)
 {
-	TransientDialogueContext = Context;
-	
-	*DialogueContext += TransientDialogueContext;
-	
+	ProcessContextUpdated(Context);
+}
+
+void UMounteaDialogueManager::ProcessContextUpdated(const FMounteaDialogueContextReplicatedStruct& Context)
+{
+	TransientDialogueContext = FMounteaDialogueContextReplicatedStruct(Context);
 	MARK_PROPERTY_DIRTY_FROM_NAME(UMounteaDialogueManager, TransientDialogueContext, this);
-	
+	*DialogueContext += TransientDialogueContext;
+
 	FTimerHandle TimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
 	{
 		NotifyParticipants(TransientDialogueContext.DialogueParticipants);
-	}, 0.2f, false);
+	}, 0.1f, false);
 }
 
 void UMounteaDialogueManager::NotifyParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants)
@@ -436,9 +424,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 	if (bSatisfied)
 	{
 		if (IsAuthority())
-		{
 			SetDialogueContext(UMounteaDialogueSystemBFC::CreateDialogueContext(this, mainParticipant, dialogueParticipants));
-		}
 		errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "OK", "OK"));
 	}
 	
@@ -449,9 +435,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 	{
 		// Request Start on Server
 		if (!IsAuthority())
-		{
 			RequestStartDialogue_Server(DialogueInitiator, InitialParticipants);
-		}
 	}
 }
 
@@ -463,11 +447,8 @@ void UMounteaDialogueManager::RequestStartDialogue_Server_Implementation(AActor*
 void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 {
 	if (!IsAuthority())
-	{
 		SetManagerState(DefaultManagerState); // Let's close Dialogue by changing state
-	}
-
-	// Don't wait for Server, close dialogue anyways?
+	
 	Execute_CloseDialogue(this);
 }
 
@@ -533,15 +514,11 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 	StartParticipants();
 	
 	if (!IsAuthority())
-	{
 		OnDialogueStarted.Broadcast(DialogueContext); // let Server know about our Context
-	}
 	
 	FString resultMessage;
 	if (!Execute_CreateDialogueUI(this, resultMessage))
-	{
 		LOG_WARNING(TEXT("[Create Dialogue UI] %s"), *(resultMessage))
-	}
 	
 	Execute_PrepareNode(this);
 }
@@ -572,9 +549,7 @@ void UMounteaDialogueManager::CleanupDialogue_Implementation()
 
 	auto dialogueGraph = DialogueContext->ActiveNode ? DialogueContext->ActiveNode->Graph : nullptr;
 	if (IsValid(dialogueGraph))
-	{
 		dialogueGraph->CleanupGraph();
-	}
 }
 
 void UMounteaDialogueManager::CleanupDialogue_Server_Implementation()
@@ -690,9 +665,7 @@ void UMounteaDialogueManager::NodeProcessed_Implementation()
 	{
 		FString resultMessage;
 		if (!Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::AddDialogueOptions))
-		{
 			LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
-		}
 	}
 }
 
@@ -740,9 +713,7 @@ void UMounteaDialogueManager::SelectNode_Implementation(const FGuid& NodeGuid)
 
 	FString resultMessage;
 	if (!Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::RemoveDialogueOptions))
-	{
 		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
-	}
 	
 	OnDialogueNodeSelected.Broadcast(DialogueContext);
 	
@@ -769,9 +740,7 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 	
 	FString resultMessage;
 	if (!Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::ShowDialogueRow))
-	{
 		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
-	}
 
 	if (DialogueContext->GetActiveDialogueRow().DialogueRowData.Array().IsValidIndex(DialogueContext->GetActiveDialogueRowDataIndex()) == false)
 	{
@@ -821,9 +790,7 @@ void UMounteaDialogueManager::DialogueRowProcessed_Implementation(const bool bFo
 {
 	FString resultMessage;
 	if (!Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::HideDialogueRow))
-	{
 		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
-	}
 	
 	if (!IsValid(GetWorld()))
 	{
@@ -972,9 +939,7 @@ bool UMounteaDialogueManager::AddDialogueUIObjects_Implementation(const TArray<U
 	for (UObject* Object : NewDialogueObjects)
 	{
 		if (!AddDialogueUIObject_Implementation(Object))
-		{
 			bAllAdded = false;
-		}
 	}
 
 	return bAllAdded;
@@ -1010,9 +975,7 @@ bool UMounteaDialogueManager::RemoveDialogueUIObjects_Implementation(const TArra
 	for (UObject* Object : DialogueObjectsToRemove)
 	{
 		if (!RemoveDialogueUIObject_Implementation(Object))
-		{
 			bAllRemoved = false;
-		}
 	}
 
 	return bAllRemoved;
@@ -1110,9 +1073,7 @@ void UMounteaDialogueManager::ExecuteWidgetCommand_Implementation(const FString&
 {
 	FString resultMessage;
 	if (!Execute_UpdateDialogueUI(this, resultMessage, Command))
-	{
 		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
-	}
 }
 
 TSubclassOf<UUserWidget> UMounteaDialogueManager::GetDialogueWidgetClass() const
