@@ -508,36 +508,6 @@ public:
 
 		return false;
 	}
-	
-	virtual void OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName) override
-	{
-		FTableRowBase::OnDataTableChanged(InDataTable, InRowName);
-
-		if (!InDataTable)
-		{
-			return;
-		}
-
-		const FName* FoundRowName = nullptr;
-	
-		for (const auto& Pair : InDataTable->GetRowMap())
-		{
-			const FDialogueRow* RowPtr = reinterpret_cast<const FDialogueRow*>(Pair.Value);
-			if (RowPtr == this)
-			{
-				FoundRowName = &Pair.Key;
-				break;
-			}
-		}
-
-		if (FoundRowName)
-		{
-			if (*FoundRowName != InRowName)
-			{
-				//RowGUID = FGuid::NewGuid();
-			}
-		}
-	}
 
 	FString ToString() const;
 	
@@ -563,8 +533,7 @@ struct FUIRowID
 	/**
 	 * 
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
-		meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true))
 	int32 UIRowID = 0;
 	/**
 	 * 
@@ -595,9 +564,6 @@ USTRUCT()
 struct FMounteaDialogueContextReplicatedStruct
 {
 	GENERATED_BODY()
-	
-	UPROPERTY()
-	AActor* ParticipantOwner = nullptr;
 	
 	UPROPERTY()
 	TScriptInterface<IMounteaDialogueParticipantInterface> ActiveDialogueParticipant;
