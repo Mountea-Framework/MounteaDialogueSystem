@@ -50,6 +50,7 @@ public:
 
 public:
 
+	void UpdateFocusedInstance(const int32 InstanceId);
 	void AssignExecutionOrder();
 
 protected:

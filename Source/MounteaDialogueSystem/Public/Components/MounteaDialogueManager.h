@@ -70,7 +70,7 @@ protected:
 	UFUNCTION()
 	void DialogueFailed(const FString& ErrorMessage);
 
-	void StartParticipants() const;
+	void StartParticipants();
 	void StopParticipants() const;
 	void NotifyParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
 	

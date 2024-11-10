@@ -35,7 +35,7 @@ protected:
 
 public:
 	
-	virtual void InitializeParticipant_Implementation() override;
+	virtual void InitializeParticipant_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 
 	/**
 	 * Finds an audio component using FindAudioComponentByName or FindAudioComponentByTag.
@@ -147,6 +147,11 @@ protected:
 	 */
 	UPROPERTY(Replicated, SaveGame, EditAnywhere, Category="Mountea|Dialogue|Participant", meta=(NoResetToDefault))
 	FGameplayTag ParticipantTag;
+
+private:
+
+	UPROPERTY()
+	TScriptInterface<IMounteaDialogueManagerInterface> DialogueManager;
 
 #pragma endregion
 
@@ -302,6 +307,11 @@ protected:
 	void SetAudioComponent_Server(UAudioComponent* NewAudioComponent);
 	UFUNCTION(Server, Reliable)
 	void SetDialogueGraph_Server(UMounteaDialogueGraph* NewGraph);
+
+public:
+
+	TScriptInterface<IMounteaDialogueManagerInterface> GetManager() const
+	{ return DialogueManager; };
 
 #pragma endregion
 

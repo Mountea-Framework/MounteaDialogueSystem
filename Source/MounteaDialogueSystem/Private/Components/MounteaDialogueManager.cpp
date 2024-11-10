@@ -452,7 +452,7 @@ void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 	Execute_CloseDialogue(this);
 }
 
-void UMounteaDialogueManager::StartParticipants() const
+void UMounteaDialogueManager::StartParticipants()
 {
 	if (!IsValid(DialogueContext))
 		return;
@@ -469,7 +469,7 @@ void UMounteaDialogueManager::StartParticipants() const
 		}
 
 		dialogueParticipant->Execute_SetParticipantState(dialogueParticipant.GetObject(), EDialogueParticipantState::EDPS_Active);
-		dialogueParticipant->Execute_InitializeParticipant(dialogueParticipant.GetObject());
+		dialogueParticipant->Execute_InitializeParticipant(dialogueParticipant.GetObject(), this);
 	}
 }
 

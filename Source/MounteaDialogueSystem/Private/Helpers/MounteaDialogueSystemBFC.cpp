@@ -454,7 +454,8 @@ UMounteaDialogueContext* UMounteaDialogueSystemBFC::CreateDialogueContext(UObjec
 			LOG_INFO(TEXT("[Create Dialogue Context] Dialogue Participant %d cannot Participate in Dialogue, so it will be ignored"), DialogueParticipants.Find(Itr))
 		}
 
-		Itr->Execute_InitializeParticipant(Itr.GetObject());	
+		TScriptInterface<IMounteaDialogueManagerInterface> dialogueManager = NewOwner;
+		Itr->Execute_InitializeParticipant(Itr.GetObject(), dialogueManager);
 	}
 
 	if (UnavailableParticipants.Num() == AllDialogueParticipants.Num())

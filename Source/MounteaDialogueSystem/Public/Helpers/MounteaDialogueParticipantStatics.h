@@ -116,7 +116,7 @@ public:
 	 * @param Target	Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
-	static void InitializeParticipant(UObject* Target);
+	static void InitializeParticipant(UObject* Target, const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 
 	/**
 	 * Initializes the Dialogue Participant.
@@ -124,7 +124,7 @@ public:
 	 * @param Target	Dialogue Participant interface.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", DisplayName="Initialize Participant (Interface)", meta=(CustomTag="MounteaK2Setter"))
-	static void InitializeParticipantV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
+	static void InitializeParticipantV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 
 	/**
 	 * Gets the current state of the Dialogue Participant.

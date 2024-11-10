@@ -8,7 +8,6 @@
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 
@@ -37,7 +36,7 @@ void UMounteaDialogueParticipant::BeginPlay()
 
 	Execute_SetAudioComponent(this,FindAudioComponent());
 
-	Execute_InitializeParticipant(this);
+	Execute_InitializeParticipant(this, DialogueManager);
 
 	// Force replicate Owner to avoid setup issues with less experienced users
 	auto participantOwner = GetOwner();
@@ -55,9 +54,12 @@ void UMounteaDialogueParticipant::TickComponent(float DeltaTime, ELevelTick Tick
 		Execute_TickMounteaEvent(this, this, nullptr, DeltaTime);
 }
 
-void UMounteaDialogueParticipant::InitializeParticipant_Implementation()
+void UMounteaDialogueParticipant::InitializeParticipant_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	if (DialogueGraph == nullptr) return;
+
+	if (DialogueManager != Manager)
+		DialogueManager = Manager;
 	
 	for (const auto& Itr : DialogueGraph->GetAllNodes())
 	{
@@ -195,7 +197,7 @@ void UMounteaDialogueParticipant::SetDialogueGraph_Implementation(UMounteaDialog
 #endif
 	}
 
-	Execute_InitializeParticipant(this);
+	Execute_InitializeParticipant(this, DialogueManager);
 		
 	OnDialogueGraphChanged.Broadcast(NewDialogueGraph);
 	
@@ -240,6 +242,7 @@ void UMounteaDialogueParticipant::SetParticipantState_Implementation(const EDial
 #if WITH_EDITORONLY_DATA
 				UnregisterFromPIEInstance();
 #endif
+				DialogueManager = nullptr;
 				break;
 			case EDialogueParticipantState::EDPS_Active:
 				if (DialogueGraph)
@@ -347,7 +350,7 @@ void UMounteaDialogueParticipant::TickMounteaEvent_Implementation(UObject* SelfR
 
 void UMounteaDialogueParticipant::OnRep_DialogueGraph()
 {
-	Execute_InitializeParticipant(this);
+	Execute_InitializeParticipant(this, DialogueManager);
 }
 
 void UMounteaDialogueParticipant::UpdateParticipantTick()

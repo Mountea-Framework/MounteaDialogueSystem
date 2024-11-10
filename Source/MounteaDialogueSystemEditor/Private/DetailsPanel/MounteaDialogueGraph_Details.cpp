@@ -6,6 +6,7 @@
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "IDetailGroup.h"
+#include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Interfaces/MounteaDialogueParticipantInterface.h"
@@ -16,9 +17,7 @@
 FString FPIEInstanceData::GetParticipantsDescription() const
 {
 	if (Participants.IsEmpty())
-	{
 		return TEXT("No Active Participants");
-	}
 
 	FString Result;
 	for (int32 i = 0; i < Participants.Num(); ++i)
@@ -33,13 +32,9 @@ FString FPIEInstanceData::GetParticipantsDescription() const
 			
 			if (i > 0) Result.Append(TEXT(", "));
 			if (AActor* Owner = Participant->Execute_GetOwningActor(Participant->_getUObject()))
-			{
 				Result.Append(Owner->GetActorLabel());
-			}
 			else
-			{
 				Result.Append(TEXT("Unknown Participant"));
-			}
 		}
 	}
 	return Result;
@@ -65,26 +60,22 @@ FMounteaDialogueGraph_Details::FMounteaDialogueGraph_Details()
 FMounteaDialogueGraph_Details::~FMounteaDialogueGraph_Details()
 {
 	if (BeginPIEHandle.IsValid())
-	{
 		FEditorDelegates::BeginPIE.Remove(BeginPIEHandle);
-	}
 	if (EndPIEHandle.IsValid())
-	{
 		FEditorDelegates::EndPIE.Remove(EndPIEHandle);
-	}
 
 	CustomizedGraph = nullptr;
 }
 
 void FMounteaDialogueGraph_Details::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
-	TArray<TWeakObjectPtr<UObject>> Objects;
-	DetailBuilder.GetObjectsBeingCustomized(Objects);
+	TArray<TWeakObjectPtr<UObject>> modifiedObjects;
+	DetailBuilder.GetObjectsBeingCustomized(modifiedObjects);
 	
-	if (Objects.Num() > 0)
+	if (modifiedObjects.Num() > 0)
 	{
-		CustomizedObject = Objects[0];
-		if (UMounteaDialogueGraph* Graph = Cast<UMounteaDialogueGraph>(Objects[0]))
+		CustomizedObject = modifiedObjects[0];
+		if (UMounteaDialogueGraph* Graph = Cast<UMounteaDialogueGraph>(modifiedObjects[0]))
 		{
 			CustomizedGraph = Graph;
 			CustomizedGraph->OnGraphInitialized.BindRaw(this, &FMounteaDialogueGraph_Details::HandleParticipantRegistration);
@@ -93,8 +84,8 @@ void FMounteaDialogueGraph_Details::CustomizeDetails(IDetailLayoutBuilder& Detai
 
 	if (!IsValid(CustomizedGraph)) return;
 	
-	IDetailCategoryBuilder& CategoryBuilder = DetailBuilder.EditCategory("Mountea");
-	IDetailGroup& PIEGroup = CategoryBuilder.AddGroup("PIE Instance", LOCTEXT("MounteaDialogueGraph_DetailsPIE", "PIE Instance Details"));
+	IDetailCategoryBuilder& categoryBuilder = DetailBuilder.EditCategory("Mountea");
+	IDetailGroup& PIEGroup = categoryBuilder.AddGroup("PIE Instance", LOCTEXT("MounteaDialogueGraph_DetailsPIE", "PIE Instance Details"));
 	
 	PIEGroup.AddWidgetRow()
 	.Visibility(TAttribute<EVisibility>::Create(TAttribute<EVisibility>::FGetter::CreateLambda([this]()
@@ -146,12 +137,10 @@ bool FMounteaDialogueGraph_Details::HasActivePIE()
 {
 	if (!GEditor) return false;
 	
-	for (const FWorldContext& Context : GEngine->GetWorldContexts())
+	for (const FWorldContext& worldContext : GEngine->GetWorldContexts())
 	{
-		if (Context.WorldType == EWorldType::PIE)
-		{
+		if (worldContext.WorldType == EWorldType::PIE)
 			return true;
-		}
 	}
 	return false;
 }
@@ -163,33 +152,25 @@ void FMounteaDialogueGraph_Details::InitializePIEInstances()
 	
 	if (!GEditor) return;
 	
-	for (const FWorldContext& Context : GEngine->GetWorldContexts())
+	for (const FWorldContext& worldContext : GEngine->GetWorldContexts())
 	{
-		if (Context.WorldType == EWorldType::PIE)
+		if (worldContext.WorldType == EWorldType::PIE)
 		{
-			FString InstanceType;
-			if (Context.RunAsDedicated)
-			{
-				InstanceType = TEXT("Server");
-			}
+			FString instanceData;
+			if (worldContext.RunAsDedicated)
+				instanceData = TEXT("Server");
 			else
 			{
-				if (Context.PIEInstance == 2)
-				{
-					InstanceType = TEXT("Client 1");
-				}
-				else if (Context.PIEInstance > 2)
-				{
-					InstanceType = FString::Printf(TEXT("Client %d"), Context.PIEInstance - 2);
-				}
+				if (worldContext.PIEInstance == 1)
+					instanceData = TEXT("Client 1");
+				else if (worldContext.PIEInstance > 1)
+					instanceData = FString::Printf(TEXT("Client %d"), worldContext.PIEInstance - 2);
 				else
-				{
-					InstanceType = TEXT("Local");
-				}
+					instanceData = TEXT("Local");
 			}
 
-			FString Key = FString::Printf(TEXT("PIE Instance %d (%s)"), Context.PIEInstance, *InstanceType);
-			PIEInstancesMap.Add(Key, FPIEInstanceData(Context.PIEInstance, InstanceType, &Context));
+			FString instanceKey = FString::Printf(TEXT("PIE Instance %d (%s)"), worldContext.PIEInstance, *instanceData);
+			PIEInstancesMap.Add(instanceKey, FPIEInstanceData(worldContext.PIEInstance, instanceData, &worldContext));
 		}
 	}
 
@@ -205,16 +186,16 @@ void FMounteaDialogueGraph_Details::HandleParticipantRegistration(IMounteaDialog
 {
 	if (!Participant || Graph != CustomizedGraph) return;
 
-	auto* InstanceData = PIEInstancesMap.Find(GetInstanceKeyForPIE(PIEInstance));
-	if (!InstanceData) return;
+	auto* instanceData = PIEInstancesMap.Find(GetInstanceKeyForPIE(PIEInstance));
+	if (!instanceData) return;
 
 	if (bIsRegistering)
 	{
-		InstanceData->Participants.AddUnique(Participant);
+		instanceData->Participants.AddUnique(Participant);
 	}
 	else
 	{
-		InstanceData->Participants.Remove(Participant);
+		instanceData->Participants.Remove(Participant);
 	}
 
 	UpdateInstanceDisplay(PIEInstance);
@@ -222,31 +203,31 @@ void FMounteaDialogueGraph_Details::HandleParticipantRegistration(IMounteaDialog
 
 void FMounteaDialogueGraph_Details::UpdateInstanceDisplay(int32 PIEInstance)
 {
-	FString OldKey = GetInstanceKeyForPIE(PIEInstance);
-	auto* InstanceData = PIEInstancesMap.Find(OldKey);
-	if (!InstanceData) return;
+	FString oldKey = GetInstanceKeyForPIE(PIEInstance);
+	auto* instanceData = PIEInstancesMap.Find(oldKey);
+	if (!instanceData) return;
 	
-	FString NewKey = FString::Printf(TEXT("PIE Instance %d (%s) - %s"), 
+	FString newKey = FString::Printf(TEXT("PIE Instance %d (%s) - %s"), 
 		PIEInstance, 
-		*InstanceData->InstanceType,
-		*InstanceData->GetParticipantsDescription());
+		*instanceData->InstanceType,
+		*instanceData->GetParticipantsDescription());
 	
-	if (OldKey != NewKey)
+	if (oldKey != newKey)
 	{
-		FPIEInstanceData Data = MoveTemp(*InstanceData);
-		PIEInstancesMap.Remove(OldKey);
-		PIEInstancesMap.Add(NewKey, MoveTemp(Data));
+		FPIEInstanceData newData = MoveTemp(*instanceData);
+		PIEInstancesMap.Remove(oldKey);
+		PIEInstancesMap.Add(newKey, MoveTemp(newData));
 		InitializePIEInstances();
 	}
 }
 
 FString FMounteaDialogueGraph_Details::GetInstanceKeyForPIE(int32 PIEInstance) const
 {
-	for (const auto& Entry : PIEInstancesMap)
+	for (const auto& newEntry : PIEInstancesMap)
 	{
-		if (Entry.Value.InstanceId == PIEInstance)
+		if (newEntry.Value.InstanceId == PIEInstance)
 		{
-			return Entry.Key;
+			return newEntry.Key;
 		}
 	}
 	return TEXT("None");
@@ -259,13 +240,16 @@ const FPIEInstanceData* FMounteaDialogueGraph_Details::GetInstanceData(const FSt
 
 void FMounteaDialogueGraph_Details::OnPIEInstanceSelected(TSharedPtr<FString> NewValue, ESelectInfo::Type SelectInfo)
 {
-	if (!NewValue.IsValid() || !CustomizedObject.IsValid())
+	if (!NewValue.IsValid() || !CustomizedObject.IsValid() || !IsValid(CustomizedGraph))
 		return;
-	
-	if (const FPIEInstanceData* InstanceData = GetInstanceData(*NewValue.Get()))
-	{
-		// TODO: Implement visual updates based on instance selection
-	}
+
+	UEdGraph_MounteaDialogueGraph* graphEditor = Cast<UEdGraph_MounteaDialogueGraph>(CustomizedGraph->EdGraph);
+	if (!graphEditor)
+		return;
+
+	const auto instanceData = GetInstanceData(*NewValue.Get());
+	if (instanceData)
+		graphEditor->UpdateFocusedInstance(instanceData->InstanceId);
 }
 
 #undef LOCTEXT_NAMESPACE

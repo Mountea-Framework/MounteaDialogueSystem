@@ -161,8 +161,8 @@ public:
 	 * ❔ Is being called in BeginPlay.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
-	void InitializeParticipant();
-	virtual void InitializeParticipant_Implementation() = 0;
+	void InitializeParticipant(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
+	virtual void InitializeParticipant_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) = 0;
 
 	/**
 	 * Plays the given participant voice sound.

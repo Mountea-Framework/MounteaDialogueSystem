@@ -33,14 +33,14 @@ FGameplayTag UMounteaDialogueParticipantStatics::GetParticipantTagV2(const TScri
 	return Target.GetObject() ? Target->Execute_GetParticipantTag(Target.GetObject()) : FGameplayTag::EmptyTag;
 }
 
-void UMounteaDialogueParticipantStatics::InitializeParticipant(UObject* Target)
+void UMounteaDialogueParticipantStatics::InitializeParticipant(UObject* Target, const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	ExecuteIfImplements<void>(Target, TEXT("InitializeParticipant"), &IMounteaDialogueParticipantInterface::Execute_InitializeParticipant);
+	ExecuteIfImplements<void>(Target, TEXT("InitializeParticipant"), &IMounteaDialogueParticipantInterface::Execute_InitializeParticipant, Manager);
 }
 
-void UMounteaDialogueParticipantStatics::InitializeParticipantV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
+void UMounteaDialogueParticipantStatics::InitializeParticipantV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	if (Target.GetObject()) Target->Execute_InitializeParticipant(Target.GetObject());
+	if (Target.GetObject()) Target->Execute_InitializeParticipant(Target.GetObject(), Manager);
 }
 
 // Participant State functions
