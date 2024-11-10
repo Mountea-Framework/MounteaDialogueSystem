@@ -1,6 +1,5 @@
 ﻿// All rights reserved Dominik Morse (Pavlicek) 2024
 
-
 #include "Helpers/MounteaDialogueManagerStatics.h"
 
 AActor* UMounteaDialogueManagerStatics::GetOwningActor(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)

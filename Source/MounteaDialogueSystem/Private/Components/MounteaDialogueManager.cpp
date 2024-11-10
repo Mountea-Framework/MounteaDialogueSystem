@@ -351,7 +351,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 	{
 		dialogueParticipants.Add(mainParticipant);
 
- 		if (!mainParticipant->Execute_CanStartDialogue(mainParticipant.GetObject())) // TODO: move Graph->CanStartDialogue to participant
+ 		if (!mainParticipant->Execute_CanStartDialogue(mainParticipant.GetObject()))
 		{
 			errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "ParticipantCannotStart", "Main Participant Cannot Start Dialogue!"));
 			bSatisfied = false;
@@ -514,7 +514,7 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 	StartParticipants();
 	
 	if (!IsAuthority())
-		OnDialogueStarted.Broadcast(DialogueContext); // let Server know about our Context
+		OnDialogueStarted.Broadcast(DialogueContext);
 	
 	FString resultMessage;
 	if (!Execute_CreateDialogueUI(this, resultMessage))
@@ -862,17 +862,13 @@ void UMounteaDialogueManager::UpdateWorldDialogueUI_Implementation(const TScript
 		for (const auto& dialogueObject : DialogueObjects)
 		{
 			if (dialogueObject)
-			{
 				IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, DialogueManager, Command);
-			}
 		}
 		
 		UpdateWorldDialogueUI_Server(DialogueManager, Command);
 	}
 	else
-	{
 		UpdateWorldDialogueUI_Multicast(DialogueManager, Command);
-	}
 }
 
 void UMounteaDialogueManager::UpdateWorldDialogueUI_Server_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command)
@@ -896,9 +892,7 @@ void UMounteaDialogueManager::UpdateWorldDialogueUI_Multicast_Implementation(con
 	for (const auto& dialogueObject : DialogueObjects)
 	{
 		if (dialogueObject)
-		{
 			IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, DialogueManager, Command);
-		}
 	}
 }
 
