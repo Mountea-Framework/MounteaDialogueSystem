@@ -12,6 +12,8 @@ class IMounteaDialogueManagerInterface;
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphEdge;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNodeStateChanged, const UMounteaDialogueGraphNode*, Node);
+
 /**
  * Mountea Dialogue Graph Node abstract Base class.
  * 
@@ -432,6 +434,13 @@ public:
 	FText NodeTitle;
 	
 	FIntPoint NodePosition;
+
+public:
+
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Node")
+	FOnNodeStateChanged OnNodeStateChanged;
+
+public:
 	
 #if WITH_EDITOR
 

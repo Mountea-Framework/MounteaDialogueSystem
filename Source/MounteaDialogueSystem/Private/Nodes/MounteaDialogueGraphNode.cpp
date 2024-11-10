@@ -53,6 +53,8 @@ FGuid UMounteaDialogueGraphNode::GetGraphGUID() const
 void UMounteaDialogueGraphNode::CleanupNode_Implementation()
 {
 	OwningWorld = nullptr;
+
+	OnNodeStateChanged.Clear();
 }
 
 void UMounteaDialogueGraphNode::SetNewWorld(UWorld* NewWorld)
@@ -89,6 +91,8 @@ void UMounteaDialogueGraphNode::InitializeNode_Implementation(UWorld* InWorld)
 	SetNewWorld(InWorld);
 
 	if (Graph) SetNodeIndex(Graph->AllNodes.Find(this));
+	
+	OnNodeStateChanged.Broadcast(this);
 }
 
 void UMounteaDialogueGraphNode::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)

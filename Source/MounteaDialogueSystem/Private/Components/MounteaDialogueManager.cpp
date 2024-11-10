@@ -549,7 +549,9 @@ void UMounteaDialogueManager::CleanupDialogue_Implementation()
 
 	auto dialogueGraph = DialogueContext->ActiveNode ? DialogueContext->ActiveNode->Graph : nullptr;
 	if (IsValid(dialogueGraph))
-		dialogueGraph->CleanupGraph();
+	{
+		dialogueGraph->ShutdownGraph();
+	}
 }
 
 void UMounteaDialogueManager::CleanupDialogue_Server_Implementation()

@@ -52,30 +52,24 @@ void UMounteaDialogueParticipant::TickComponent(float DeltaTime, ELevelTick Tick
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	if (ParticipantState == EDialogueParticipantState::EDPS_Active)
-	{
 		Execute_TickMounteaEvent(this, this, nullptr, DeltaTime);
-	}
 }
 
 void UMounteaDialogueParticipant::InitializeParticipant_Implementation()
 {
 	if (DialogueGraph == nullptr) return;
-
+	
 	for (const auto& Itr : DialogueGraph->GetAllNodes())
 	{
 		if (Itr)
-		{
 			Itr->InitializeNode(GetWorld());
-		}
 	}
 	
 	TArray<FMounteaDialogueDecorator> Decorators = UMounteaDialogueSystemBFC::GetAllDialogueDecorators(DialogueGraph);
 	for (const auto& Itr : Decorators)
 	{
 		if (Itr.DecoratorType)
-		{
 			Itr.DecoratorType->InitializeDecorator(GetWorld(), this, nullptr);
-		}
 	}
 }
 
@@ -182,16 +176,30 @@ void UMounteaDialogueParticipant::SetDialogueGraph_Implementation(UMounteaDialog
 		LOG_ERROR(TEXT("[SetParticipantState] Component has no Owner!"))
 		return;
 	}
-	
-	if (GetOwner()->HasAuthority())
-	{
-		DialogueGraph = NewDialogueGraph;
 
-		Execute_InitializeParticipant(this);
-		
-		OnDialogueGraphChanged.Broadcast(NewDialogueGraph);
+	if (DialogueGraph)
+	{
+#if WITH_EDITORONLY_DATA
+		UnregisterFromPIEInstance();
+#endif
+		DialogueGraph->ShutdownGraph();
 	}
-	else
+		
+	DialogueGraph = NewDialogueGraph;
+	
+	if (DialogueGraph)
+	{
+		DialogueGraph->InitializeGraph();
+#if WITH_EDITORONLY_DATA
+		RegisterWithPIEInstance();
+#endif
+	}
+
+	Execute_InitializeParticipant(this);
+		
+	OnDialogueGraphChanged.Broadcast(NewDialogueGraph);
+	
+	if (!GetOwner()->HasAuthority())
 	{
 		SetDialogueGraph_Server(NewDialogueGraph);
 	}
@@ -218,12 +226,32 @@ void UMounteaDialogueParticipant::SetParticipantState_Implementation(const EDial
 	{
 		SetParticipantState_Server(NewState);
 	}
+	else
+	{
+		ParticipantState = NewState;
+		UpdateParticipantTick();
+		OnDialogueParticipantStateChanged.Broadcast(NewState);
 
-	ParticipantState = NewState;
-
-	UpdateParticipantTick();
-	
-	OnDialogueParticipantStateChanged.Broadcast(NewState);
+		switch (ParticipantState)
+		{
+			case EDialogueParticipantState::EDPS_Disabled:
+			case EDialogueParticipantState::Default:
+			case EDialogueParticipantState::EDPS_Enabled:
+#if WITH_EDITORONLY_DATA
+				UnregisterFromPIEInstance();
+#endif
+				break;
+			case EDialogueParticipantState::EDPS_Active:
+				if (DialogueGraph)
+				{
+					DialogueGraph->InitializeGraph();
+#if WITH_EDITORONLY_DATA
+					RegisterWithPIEInstance();
+#endif
+				}
+				break;
+		}
+	}
 }
 
 void UMounteaDialogueParticipant::SetDefaultParticipantState_Implementation(const EDialogueParticipantState NewState)
@@ -338,10 +366,33 @@ void UMounteaDialogueParticipant::UpdateParticipantTick()
 	}
 }
 
-void UMounteaDialogueParticipant::OnResp_ParticipantState()
+void UMounteaDialogueParticipant::OnRep_ParticipantState()
 {
+	OnDialogueParticipantStateChanged.Broadcast(ParticipantState);
+
+	switch (ParticipantState)
+	{
+		case EDialogueParticipantState::EDPS_Disabled:
+		case EDialogueParticipantState::Default:
+		case EDialogueParticipantState::EDPS_Enabled:
+#if WITH_EDITORONLY_DATA
+		UnregisterFromPIEInstance();
+#endif
+			break;
+		case EDialogueParticipantState::EDPS_Active:
+			if (DialogueGraph)
+			{
+				DialogueGraph->InitializeGraph();
+#if WITH_EDITORONLY_DATA
+				RegisterWithPIEInstance();
+#endif
+			}
+			break;
+	}
+	
 	UpdateParticipantTick();
 }
+
 
 void UMounteaDialogueParticipant::SetDialogueGraph_Server_Implementation(UMounteaDialogueGraph* NewGraph)
 {
@@ -375,3 +426,38 @@ void UMounteaDialogueParticipant::GetLifetimeReplicatedProps(TArray<FLifetimePro
 	DOREPLIFETIME(UMounteaDialogueParticipant, ParticipantState);
 	DOREPLIFETIME(UMounteaDialogueParticipant, ParticipantTag);
 }
+
+#if WITH_EDITORONLY_DATA
+
+void UMounteaDialogueParticipant::RegisterWithPIEInstance()
+{
+	if (DialogueGraph)
+	{
+		const int32 PIEInstanceID = GetCurrentPIEInstanceID();
+		DialogueGraph->InitializePIEInstance(this, PIEInstanceID, true);
+	}
+}
+
+void UMounteaDialogueParticipant::UnregisterFromPIEInstance()
+{
+	if (DialogueGraph)
+	{
+		const int32 PIEInstanceID = GetCurrentPIEInstanceID();
+		DialogueGraph->InitializePIEInstance(this, PIEInstanceID, false);
+	}
+}
+
+int32 UMounteaDialogueParticipant::GetCurrentPIEInstanceID() const
+{
+	if (const UWorld* World = GetWorld())
+	{
+		for (const FWorldContext& Context : GEngine->GetWorldContexts())
+		{
+			if (Context.World() == World && Context.WorldType == EWorldType::PIE)
+				return Context.PIEInstance;
+		}
+	}
+	return -1;
+}
+
+#endif

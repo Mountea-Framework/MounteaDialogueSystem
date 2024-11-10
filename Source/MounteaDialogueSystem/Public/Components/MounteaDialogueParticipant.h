@@ -101,7 +101,7 @@ protected:
 	* ❗ In order to start Dialogue, this value must not be Disabled.
 	* ❔ Can be updated using SetDialogueParticipantState function.
 	*/
-	UPROPERTY(ReplicatedUsing=OnResp_ParticipantState, Transient, VisibleAnywhere,  Category="Mountea|Dialogue|Participant",  meta=(NoResetToDefault))
+	UPROPERTY(ReplicatedUsing=OnRep_ParticipantState, Transient, VisibleAnywhere,  Category="Mountea|Dialogue|Participant",  meta=(NoResetToDefault))
 	EDialogueParticipantState ParticipantState;
 
 	/**
@@ -293,7 +293,7 @@ protected:
 	UFUNCTION()
 	void OnRep_DialogueGraph();
 	UFUNCTION()
-	void OnResp_ParticipantState();
+	void OnRep_ParticipantState();
 	UFUNCTION(Server, Reliable)
 	void SetParticipantState_Server(const EDialogueParticipantState NewState);
 	UFUNCTION(Server, Reliable)
@@ -304,4 +304,13 @@ protected:
 	void SetDialogueGraph_Server(UMounteaDialogueGraph* NewGraph);
 
 #pragma endregion
+
+#if WITH_EDITORONLY_DATA
+
+	virtual void RegisterWithPIEInstance();
+	virtual void UnregisterFromPIEInstance();
+	virtual int32 GetCurrentPIEInstanceID() const;
+	
+#endif
+	
 };
