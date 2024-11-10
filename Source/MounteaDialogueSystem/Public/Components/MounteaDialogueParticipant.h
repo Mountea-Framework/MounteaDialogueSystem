@@ -85,7 +85,7 @@ protected:
 	 *
 	 * Set Graph is allowed only outside active Dialogue.
 	 */
-	UPROPERTY(ReplicatedUsing=OnRep_DialogueGraph, SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(ReplicatedUsing=OnRep_DialogueGraph, SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(NoResetToDefault))
 	TObjectPtr<UMounteaDialogueGraph> DialogueGraph = nullptr;
 
 	/**
