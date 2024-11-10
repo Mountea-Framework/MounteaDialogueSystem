@@ -79,6 +79,8 @@ void FMounteaDialogueGraph_Details::CustomizeDetails(IDetailLayoutBuilder& Detai
 		{
 			CustomizedGraph = Graph;
 			CustomizedGraph->OnGraphInitialized.BindRaw(this, &FMounteaDialogueGraph_Details::HandleParticipantRegistration);
+
+			InitializePIEInstances();
 		}
 	}
 
@@ -129,8 +131,6 @@ void FMounteaDialogueGraph_Details::CustomizeDetails(IDetailLayoutBuilder& Detai
 			.ToolTipText(TAttribute<FText>(LOCTEXT("MounteaDialogueGraph_DetailsPIE_Invalid", "Start Game in editor create PIE Instance.\nOnce PIE exists you can select the instance and see what Node is currently Active (if Graph matches).")))
 		]
 	];
-
-	InitializePIEInstances();
 }
 
 bool FMounteaDialogueGraph_Details::HasActivePIE()
@@ -147,8 +147,18 @@ bool FMounteaDialogueGraph_Details::HasActivePIE()
 
 void FMounteaDialogueGraph_Details::InitializePIEInstances()
 {
+	TMap<int32, TArray<TWeakInterfacePtr<IMounteaDialogueParticipantInterface>>> OldParticipants;
+	for (const auto& Entry : PIEInstancesMap)
+	{
+		if (Entry.Value.Participants.Num() > 0)
+		{
+			OldParticipants.Add(Entry.Value.InstanceId, Entry.Value.Participants);
+		}
+	}
+	
 	PIEInstancesMap.Empty();
-	PIEInstancesMap.Add(TEXT("None"), FPIEInstanceData());
+	PIEInstancesMap.Add(TEXT("PIE_None"), FPIEInstanceData());
+	PIEInstancesMap[TEXT("PIE_None")].NameOverride = TEXT("None");
 	
 	if (!GEditor) return;
 	
@@ -156,86 +166,148 @@ void FMounteaDialogueGraph_Details::InitializePIEInstances()
 	{
 		if (worldContext.WorldType == EWorldType::PIE)
 		{
-			FString instanceData;
+			FString instanceType;
 			if (worldContext.RunAsDedicated)
-				instanceData = TEXT("Server");
+				instanceType = TEXT("Server");
 			else
 			{
-				if (worldContext.PIEInstance == 1)
-					instanceData = TEXT("Client 1");
-				else if (worldContext.PIEInstance > 1)
-					instanceData = FString::Printf(TEXT("Client %d"), worldContext.PIEInstance - 2);
+				if (worldContext.PIEInstance == 2)
+					instanceType = TEXT("Client 1");
+				else if (worldContext.PIEInstance > 2)
+					instanceType = FString::Printf(TEXT("Client %d"), worldContext.PIEInstance - 2);
 				else
-					instanceData = TEXT("Local");
+					instanceType = TEXT("Local");
 			}
 
-			FString instanceKey = FString::Printf(TEXT("PIE Instance %d (%s)"), worldContext.PIEInstance, *instanceData);
-			PIEInstancesMap.Add(instanceKey, FPIEInstanceData(worldContext.PIEInstance, instanceData, &worldContext));
+			const FString stableKey = FString::Printf(TEXT("PIE_%d"), worldContext.PIEInstance);
+			FPIEInstanceData NewInstanceData(worldContext.PIEInstance, instanceType, &worldContext);
+			
+			// Always set base display name
+			NewInstanceData.NameOverride = FString::Printf(TEXT("PIE Instance %d (%s)"), 
+				worldContext.PIEInstance, 
+				*instanceType);
+			
+			if (const auto* ExistingParticipants = OldParticipants.Find(worldContext.PIEInstance))
+			{
+				NewInstanceData.Participants = *ExistingParticipants;
+				NewInstanceData.Participants.RemoveAll([](const TWeakInterfacePtr<IMounteaDialogueParticipantInterface>& Participant)
+				{
+					return !Participant.IsValid();
+				});
+				
+				if (NewInstanceData.Participants.Num() > 0)
+				{
+					NewInstanceData.NameOverride = FString::Printf(TEXT("%s - %s"),
+						*NewInstanceData.NameOverride,
+						*NewInstanceData.GetParticipantsDescription());
+				}
+			}
+
+			// Always add the instance, but only show in options if it has participants
+			PIEInstancesMap.Add(stableKey, MoveTemp(NewInstanceData));
 		}
 	}
-
-	// Update cached options
+	
 	CachedOptions.Reset();
+	CachedOptions.Add(MakeShared<FString>(PIEInstancesMap[TEXT("PIE_None")].NameOverride));
+	
+	// Add only instances with participants
 	for (const auto& Entry : PIEInstancesMap)
 	{
-		CachedOptions.Add(MakeShared<FString>(Entry.Key));
+		if (Entry.Key != TEXT("PIE_None") && Entry.Value.Participants.Num() > 0)
+		{
+			CachedOptions.Add(MakeShared<FString>(Entry.Value.NameOverride));
+		}
 	}
 }
 
 void FMounteaDialogueGraph_Details::HandleParticipantRegistration(IMounteaDialogueParticipantInterface* Participant, const UMounteaDialogueGraph* Graph, int32 PIEInstance, bool bIsRegistering)
 {
-	if (!Participant || Graph != CustomizedGraph) return;
+	if (!Participant || Graph != CustomizedGraph) 
+		return;
 
+	InitializePIEInstances();
+
+	const FString instanceKey = GetInstanceKeyForPIE(PIEInstance);
+	if (instanceKey.IsEmpty())
+		return;
+    
 	auto* instanceData = PIEInstancesMap.Find(GetInstanceKeyForPIE(PIEInstance));
-	if (!instanceData) return;
+	if (!instanceData)
+	{
+		EditorLOG_WARNING(TEXT("Could not find PIE instance data for instance %d"), PIEInstance);
+		return;
+	}
 
 	if (bIsRegistering)
 	{
 		instanceData->Participants.AddUnique(Participant);
+		UpdateInstanceDisplay(PIEInstance);
 	}
 	else
 	{
+		EditorLOG_INFO(TEXT("Unregistering participant from PIE instance %d"), PIEInstance);
 		instanceData->Participants.Remove(Participant);
-	}
 
-	UpdateInstanceDisplay(PIEInstance);
+		// If this was the last participant, update the UI to remove this instance
+		if (instanceData->Participants.Num() == 0 && instanceKey != TEXT("PIE_None"))
+		{
+			PIEInstancesMap.Remove(instanceKey);
+			
+			CachedOptions.Reset();
+			CachedOptions.Add(MakeShared<FString>(PIEInstancesMap[TEXT("PIE_None")].NameOverride));
+			
+			for (const auto& Entry : PIEInstancesMap)
+			{
+				if (Entry.Key != TEXT("PIE_None") && Entry.Value.Participants.Num() > 0)
+				{
+					CachedOptions.Add(MakeShared<FString>(Entry.Value.NameOverride));
+				}
+			}
+		}
+		else
+		{
+			// If there are still participants, just update the display
+			UpdateInstanceDisplay(PIEInstance);
+		}
+	}
 }
 
 void FMounteaDialogueGraph_Details::UpdateInstanceDisplay(int32 PIEInstance)
 {
-	FString oldKey = GetInstanceKeyForPIE(PIEInstance);
-	auto* instanceData = PIEInstancesMap.Find(oldKey);
+	const FString stableKey = FString::Printf(TEXT("PIE_%d"), PIEInstance);
+	auto* instanceData = PIEInstancesMap.Find(stableKey);
 	if (!instanceData) return;
 	
-	FString newKey = FString::Printf(TEXT("PIE Instance %d (%s) - %s"), 
+	// Update only the display name
+	instanceData->NameOverride = FString::Printf(TEXT("PIE Instance %d (%s) - %s"), 
 		PIEInstance, 
 		*instanceData->InstanceType,
 		*instanceData->GetParticipantsDescription());
 	
-	if (oldKey != newKey)
+	// Refresh the combo box options
+	CachedOptions.Reset();
+	for (const auto& Entry : PIEInstancesMap)
 	{
-		FPIEInstanceData newData = MoveTemp(*instanceData);
-		PIEInstancesMap.Remove(oldKey);
-		PIEInstancesMap.Add(newKey, MoveTemp(newData));
-		InitializePIEInstances();
+		CachedOptions.Add(MakeShared<FString>(Entry.Value.NameOverride));
 	}
 }
 
 FString FMounteaDialogueGraph_Details::GetInstanceKeyForPIE(int32 PIEInstance) const
 {
-	for (const auto& newEntry : PIEInstancesMap)
-	{
-		if (newEntry.Value.InstanceId == PIEInstance)
-		{
-			return newEntry.Key;
-		}
-	}
-	return TEXT("None");
+	return FString::Printf(TEXT("PIE_%d"), PIEInstance);
 }
 
-const FPIEInstanceData* FMounteaDialogueGraph_Details::GetInstanceData(const FString& InstanceString) const
+const FPIEInstanceData* FMounteaDialogueGraph_Details::GetInstanceData(const FString& DisplayName) const
 {
-	return PIEInstancesMap.Find(InstanceString);
+	for (const auto& Entry : PIEInstancesMap)
+	{
+		if (Entry.Value.NameOverride == DisplayName)
+		{
+			return &Entry.Value;
+		}
+	}
+	return nullptr;
 }
 
 void FMounteaDialogueGraph_Details::OnPIEInstanceSelected(TSharedPtr<FString> NewValue, ESelectInfo::Type SelectInfo)

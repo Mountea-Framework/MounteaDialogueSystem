@@ -71,7 +71,11 @@ protected:
 	void DialogueFailed(const FString& ErrorMessage);
 
 	void StartParticipants();
+	UFUNCTION(Server, Reliable)
+	void StartParticipants_Server();
 	void StopParticipants() const;
+	UFUNCTION(Server, Reliable)
+	void StopParticipants_Server() const;
 	void NotifyParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
 	
 public:

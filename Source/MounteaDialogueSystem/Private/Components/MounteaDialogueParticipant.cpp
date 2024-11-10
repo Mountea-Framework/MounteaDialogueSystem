@@ -239,12 +239,15 @@ void UMounteaDialogueParticipant::SetParticipantState_Implementation(const EDial
 			case EDialogueParticipantState::EDPS_Disabled:
 			case EDialogueParticipantState::Default:
 			case EDialogueParticipantState::EDPS_Enabled:
+			{
 #if WITH_EDITORONLY_DATA
 				UnregisterFromPIEInstance();
 #endif
 				DialogueManager = nullptr;
 				break;
+			}
 			case EDialogueParticipantState::EDPS_Active:
+			{
 				if (DialogueGraph)
 				{
 					DialogueGraph->InitializeGraph();
@@ -253,6 +256,7 @@ void UMounteaDialogueParticipant::SetParticipantState_Implementation(const EDial
 #endif
 				}
 				break;
+			}
 		}
 	}
 }
@@ -357,15 +361,13 @@ void UMounteaDialogueParticipant::UpdateParticipantTick()
 {
 	switch (ParticipantState)
 	{
-	case EDialogueParticipantState::EDPS_Disabled:
-		Execute_UnregisterTick(this, nullptr);
-		break;
-	case EDialogueParticipantState::EDPS_Enabled:
-		Execute_UnregisterTick(this, nullptr);
-		break;
-	case EDialogueParticipantState::EDPS_Active:
-		Execute_RegisterTick(this, nullptr);
-		break;
+		case EDialogueParticipantState::EDPS_Disabled:
+		case EDialogueParticipantState::EDPS_Enabled:
+			Execute_UnregisterTick(this, nullptr);
+			break;
+		case EDialogueParticipantState::EDPS_Active:
+			Execute_RegisterTick(this, nullptr);
+			break;
 	}
 }
 
@@ -378,11 +380,14 @@ void UMounteaDialogueParticipant::OnRep_ParticipantState()
 		case EDialogueParticipantState::EDPS_Disabled:
 		case EDialogueParticipantState::Default:
 		case EDialogueParticipantState::EDPS_Enabled:
+		{
 #if WITH_EDITORONLY_DATA
-		UnregisterFromPIEInstance();
+			UnregisterFromPIEInstance();
 #endif
 			break;
+		}
 		case EDialogueParticipantState::EDPS_Active:
+		{
 			if (DialogueGraph)
 			{
 				DialogueGraph->InitializeGraph();
@@ -391,6 +396,7 @@ void UMounteaDialogueParticipant::OnRep_ParticipantState()
 #endif
 			}
 			break;
+		}
 	}
 	
 	UpdateParticipantTick();

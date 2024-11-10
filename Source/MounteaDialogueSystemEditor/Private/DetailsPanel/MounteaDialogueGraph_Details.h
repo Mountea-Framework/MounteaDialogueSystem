@@ -10,8 +10,9 @@ class UMounteaDialogueGraph;
 
 struct FPIEInstanceData
 {
-	int32 InstanceId = 0;
+	int32 InstanceId = -1;
 	FString InstanceType;
+	FString NameOverride;
 	const FWorldContext* Context = nullptr;
 	TArray<TWeakInterfacePtr<IMounteaDialogueParticipantInterface>> Participants;
 
@@ -44,7 +45,7 @@ private:
 	void HandleParticipantRegistration(IMounteaDialogueParticipantInterface* Participant, const UMounteaDialogueGraph* Graph, int32 PIEInstance, bool bIsRegistering);
 	void UpdateInstanceDisplay(int32 PIEInstance);
 	FString GetInstanceKeyForPIE(int32 PIEInstance) const;
-	const FPIEInstanceData* GetInstanceData(const FString& InstanceString) const;
+	const FPIEInstanceData* GetInstanceData(const FString& DisplayName) const;
     
 	// UI Data
 	TArray<TSharedPtr<FString>> CachedOptions;

@@ -150,7 +150,7 @@ protected:
 
 private:
 
-	UPROPERTY()
+	UPROPERTY(Transient, BlueprintReadOnly, Category="Mountea|Dialogue|Participant", meta=(AllowPrivateAccess))
 	TScriptInterface<IMounteaDialogueManagerInterface> DialogueManager;
 
 #pragma endregion
@@ -284,7 +284,7 @@ public:
 	virtual void TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime) override;
 	virtual FMounteaDialogueTick& GetMounteaDialogueTickHandle() override {return ParticipantTickEvent; };
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|Participant")
+	UPROPERTY(BlueprintAssignable, BlueprintReadOnly, Category="Mountea|Dialogue|Participant")
 	FMounteaDialogueTick ParticipantTickEvent;
 	
 #pragma endregion

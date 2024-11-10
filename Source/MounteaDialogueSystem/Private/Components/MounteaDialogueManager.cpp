@@ -473,10 +473,18 @@ void UMounteaDialogueManager::StartParticipants()
 	}
 }
 
+void UMounteaDialogueManager::StartParticipants_Server_Implementation()
+{
+	StartParticipants();
+}
+
 void UMounteaDialogueManager::StopParticipants() const
 {
 	if (!IsValid(DialogueContext))
 		return;
+
+	if (!IsAuthority())
+		StopParticipants_Server();
 	
 	for (const auto& dialogueParticipant : DialogueContext->DialogueParticipants)
 	{
@@ -489,9 +497,14 @@ void UMounteaDialogueManager::StopParticipants() const
 			// Register ticks for participants, no need to define Parent as Participants are the most paren ones
 			tickableObject->Execute_UnregisterTick(tickableObject.GetObject(), nullptr);
 		}
-
+		
 		dialogueParticipant->Execute_SetParticipantState(participantObject, dialogueParticipant->Execute_GetDefaultParticipantState(participantObject));
 	}
+}
+
+void UMounteaDialogueManager::StopParticipants_Server_Implementation() const
+{
+	StopParticipants();
 }
 
 void UMounteaDialogueManager::DialogueStartRequestReceived(const bool bResult, const FString& ResultMessage)
