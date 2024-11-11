@@ -73,6 +73,12 @@ To save precious time, Dialogue Previews show the raw context of the Dialogue Da
     <img width="65%" src="https://user-images.githubusercontent.com/37410226/233844783-95be9ace-f612-4448-8a4a-715969237fc1.png">
 </p>
 
+#### Dialogue Graph Preview (Runtime)
+Inspect Graph progress in runtime per-participant per-PIE instance.
+<p align="center" width="100%">
+    <img width="65%" src="https://github.com/user-attachments/assets/79c316a0-08c5-4d0d-87cc-858e9580fa8a">
+</p>
+
 #### Dialogue Decorators
 Introducing *Decorators*, a powerful yet versatile tool of Blueprint-based events that could be triggered per Dialogue Node! This provides a simple way to trigger cutscenes, switch cameras, end dialogues when being attacked or anything you like!
 <p align="center" width="100%">
