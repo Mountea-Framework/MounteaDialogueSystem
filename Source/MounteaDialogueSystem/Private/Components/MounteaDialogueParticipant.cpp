@@ -34,7 +34,11 @@ void UMounteaDialogueParticipant::BeginPlay()
 
 	Execute_SetParticipantState(this, Execute_GetDefaultParticipantState(this));
 
-	Execute_SetAudioComponent(this,FindAudioComponent());
+	auto audioComponent = FindAudioComponent();
+	if (IsValid(audioComponent))
+		Execute_SetAudioComponent(this, audioComponent);
+	else
+		CreateDialogueAudioComponent();
 
 	Execute_InitializeParticipant(this, DialogueManager);
 
@@ -77,7 +81,7 @@ void UMounteaDialogueParticipant::InitializeParticipant_Implementation(const TSc
 
 UAudioComponent* UMounteaDialogueParticipant::FindAudioComponent() const
 {
-	if (AudioComponent != nullptr) return nullptr;
+	if (AudioComponent != nullptr) return AudioComponent;
 	
 	if (const auto Return = FindAudioComponentByName(AudioComponentIdentification))
 	{
@@ -97,6 +101,19 @@ UAudioComponent* UMounteaDialogueParticipant::FindAudioComponent() const
 	return firstFoundAudioComp;
 }
 
+void UMounteaDialogueParticipant::CreateDialogueAudioComponent()
+{
+	FAttachmentTransformRules attachmentRules = FAttachmentTransformRules::KeepRelativeTransform;
+	auto newAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("DialogueAudioComponent"));
+	ensure(IsValid(newAudioComponent));
+	
+	newAudioComponent->AttachToComponent(GetOwner()->GetRootComponent(), attachmentRules);
+	const TArray<FName> newAudioTags = {TEXT("Mountea"), TEXT("Dialogue"), TEXT("Audio")};
+	newAudioComponent->ComponentTags.Append(newAudioTags);
+	
+	Execute_SetAudioComponent(this, newAudioComponent);
+}
+
 UAudioComponent* UMounteaDialogueParticipant::FindAudioComponentByName(const FName& Arg) const
 {
 	if (GetOwner() == nullptr) return nullptr;
@@ -113,21 +130,16 @@ UAudioComponent* UMounteaDialogueParticipant::FindAudioComponentByTag(const FNam
 
 void UMounteaDialogueParticipant::PlayParticipantVoice_Implementation(USoundBase* ParticipantVoice)
 {
-	// Audio is cosmetic -> Do not play on Dedicated server!
 	if(!UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
 	{
 		LOG_INFO(TEXT("[PlayParticipantVoice] Voice cannot be played at Dedicated Server!"))
 		return;
 	}
 	
-	if (AudioComponent)
+	if (IsValid(AudioComponent))
 	{
 		AudioComponent->SetSound(ParticipantVoice);
 		AudioComponent->Play();
-	}
-	else
-	{
-		UGameplayStatics::PlaySoundAtLocation(GetOwner(), ParticipantVoice, GetOwner()->GetActorLocation(), GetOwner()->GetActorRotation());
 	}
 }
 
@@ -139,7 +151,7 @@ void UMounteaDialogueParticipant::SkipParticipantVoice_Implementation(USoundBase
 		return;
 	}
 	
-	if (AudioComponent)
+	if (IsValid(AudioComponent))
 	{
 		AudioComponent->StopDelayed(UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->GetSkipFadeDuration());
 		AudioComponent->SetSound(nullptr);
@@ -202,9 +214,7 @@ void UMounteaDialogueParticipant::SetDialogueGraph_Implementation(UMounteaDialog
 	OnDialogueGraphChanged.Broadcast(NewDialogueGraph);
 	
 	if (!GetOwner()->HasAuthority())
-	{
 		SetDialogueGraph_Server(NewDialogueGraph);
-	}
 }
 
 EDialogueParticipantState UMounteaDialogueParticipant::GetParticipantState_Implementation() const
@@ -269,13 +279,9 @@ void UMounteaDialogueParticipant::SetDefaultParticipantState_Implementation(cons
 		return;
 	}
 	if (GetOwner()->HasAuthority())
-	{
 		DefaultParticipantState = NewState;
-	}
 	else
-	{
 		SetDefaultParticipantState_Server(NewState);
-	}
 }
 
 void UMounteaDialogueParticipant::SetAudioComponent_Implementation(UAudioComponent* NewAudioComponent)
@@ -332,9 +338,7 @@ void UMounteaDialogueParticipant::RegisterTick_Implementation(const TScriptInter
 	SetComponentTickEnabled(true);
 
 	if (auto dialogueGraph = Execute_GetDialogueGraph(this))
-	{
 		dialogueGraph->Execute_RegisterTick(dialogueGraph, this);
-	}
 }
 
 void UMounteaDialogueParticipant::UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
@@ -342,9 +346,7 @@ void UMounteaDialogueParticipant::UnregisterTick_Implementation(const TScriptInt
 	SetComponentTickEnabled(false);
 	
 	if (auto parentGraph = Execute_GetDialogueGraph(this))
-	{
 		parentGraph->Execute_UnregisterTick(parentGraph, this);
-	}
 }
 
 void UMounteaDialogueParticipant::TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick,float DeltaTime)
