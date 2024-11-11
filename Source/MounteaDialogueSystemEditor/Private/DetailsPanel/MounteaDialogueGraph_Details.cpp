@@ -144,15 +144,10 @@ void FMounteaDialogueGraph_Details::InitializePIEInstances()
 			FString instanceType;
 			if (worldContext.RunAsDedicated)
 				instanceType = TEXT("Server");
+			else if (!worldContext.LastURL.Host.IsEmpty() || worldContext.PIEInstance > 1)
+				instanceType = FString::Printf(TEXT("Client %d"), worldContext.PIEInstance - 1);
 			else
-			{
-				if (worldContext.PIEInstance == 2)
-					instanceType = TEXT("Client 1");
-				else if (worldContext.PIEInstance > 2)
-					instanceType = FString::Printf(TEXT("Client %d"), worldContext.PIEInstance - 2);
-				else
-					instanceType = TEXT("Local");
-			}
+				instanceType = worldContext.RunAsDedicated ? TEXT("Listen Server") : TEXT("Local");
 
 			const FString stableKey = FString::Printf(TEXT("PIE_%d"), worldContext.PIEInstance);
 			FPIEInstanceData NewInstanceData(worldContext.PIEInstance, instanceType, &worldContext);
