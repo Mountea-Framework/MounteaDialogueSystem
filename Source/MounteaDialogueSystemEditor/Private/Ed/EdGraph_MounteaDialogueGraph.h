@@ -6,6 +6,7 @@
 #include "EdGraph/EdGraph.h"
 #include "EdGraph_MounteaDialogueGraph.generated.h"
 
+struct FPIEInstanceData;
 class UMounteaDialogueGraphNode;
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphEdge;
@@ -50,7 +51,7 @@ public:
 
 public:
 
-	void UpdateFocusedInstance(const int32 InstanceId);
+	void UpdateFocusedInstance(const FPIEInstanceData& InstanceId);
 	void AssignExecutionOrder();
 
 protected:

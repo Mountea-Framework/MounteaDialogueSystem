@@ -8,6 +8,7 @@
 #include "Graph/MounteaDialogueGraph.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
+#include "Helpers/MounteaDialogueEditorDetailsTypes.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Helpers/MounteaDialogueGraphEditorUtilities.h"
 #include "Helpers/MounteaDialogueSystemEditorBFC.h"
@@ -252,10 +253,9 @@ UMounteaDialogueGraphNode* UEdGraph_MounteaDialogueGraph::GetParentNode(const UM
 	return nullptr;
 }
 
-void UEdGraph_MounteaDialogueGraph::UpdateFocusedInstance(const int32 InstanceId)
+void UEdGraph_MounteaDialogueGraph::UpdateFocusedInstance(const FPIEInstanceData& InstanceId)
 {
-	// TODO: graph editor should set a flag
-	EditorLOG_WARNING(TEXT("[Update Focused Instance] PIE %d in focus"), InstanceId)
+	EditorLOG_WARNING(TEXT("[Update Focused Instance] PIE %s in focus"), *InstanceId.NameOverride)
 }
 
 void UEdGraph_MounteaDialogueGraph::AssignExecutionOrder()

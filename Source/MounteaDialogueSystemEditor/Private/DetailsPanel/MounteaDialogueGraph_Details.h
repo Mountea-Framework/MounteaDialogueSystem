@@ -3,28 +3,11 @@
 #pragma once
 
 #include "IDetailCustomization.h"
+#include "Helpers/MounteaDialogueEditorDetailsTypes.h"
 
 class IMounteaDialogueParticipantInterface;
 class STextComboBox;
 class UMounteaDialogueGraph;
-
-struct FPIEInstanceData
-{
-	int32 InstanceId = -1;
-	FString InstanceType;
-	FString NameOverride;
-	const FWorldContext* Context = nullptr;
-	TArray<TWeakInterfacePtr<IMounteaDialogueParticipantInterface>> Participants;
-
-	FPIEInstanceData() = default;
-	FPIEInstanceData(int32 InId, const FString& InType, const FWorldContext* InContext)
-		: InstanceId(InId)
-		, InstanceType(InType)
-		, Context(InContext)
-	{}
-
-	FString GetParticipantsDescription() const;
-};
 
 class FMounteaDialogueGraph_Details : public IDetailCustomization
 {

@@ -8,37 +8,12 @@
 #include "IDetailGroup.h"
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Graph/MounteaDialogueGraph.h"
+#include "Helpers/MounteaDialogueEditorDetailsTypes.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Interfaces/MounteaDialogueParticipantInterface.h"
 #include "Widgets/Input/STextComboBox.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraph_Details"
-
-FString FPIEInstanceData::GetParticipantsDescription() const
-{
-	if (Participants.IsEmpty())
-		return TEXT("No Active Participants");
-
-	FString Result;
-	for (int32 i = 0; i < Participants.Num(); ++i)
-	{
-		if (const auto Participant = Participants[i].Get())
-		{
-			if (Participant == nullptr)
-			{
-				Result.Append(TEXT("Invalid Participant"));
-				continue;
-			}
-			
-			if (i > 0) Result.Append(TEXT(", "));
-			if (AActor* Owner = Participant->Execute_GetOwningActor(Participant->_getUObject()))
-				Result.Append(Owner->GetActorLabel());
-			else
-				Result.Append(TEXT("Unknown Participant"));
-		}
-	}
-	return Result;
-}
 
 FMounteaDialogueGraph_Details::FMounteaDialogueGraph_Details()
 {
@@ -319,9 +294,8 @@ void FMounteaDialogueGraph_Details::OnPIEInstanceSelected(TSharedPtr<FString> Ne
 	if (!graphEditor)
 		return;
 
-	const auto instanceData = GetInstanceData(*NewValue.Get());
-	if (instanceData)
-		graphEditor->UpdateFocusedInstance(instanceData->InstanceId);
+	if (const FPIEInstanceData* instanceData = GetInstanceData(*NewValue.Get()))
+		graphEditor->UpdateFocusedInstance(*instanceData);
 }
 
 #undef LOCTEXT_NAMESPACE
