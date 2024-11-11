@@ -32,6 +32,7 @@ public:
 	
 	virtual const FSlateBrush* GetNodeTypeBrush () const;
 	virtual const FSlateBrush* GetTextNodeTypeBrush () const;
+	virtual FSlateColor GetFontColor() const;
 	virtual FSlateColor GetBorderBackgroundColor() const;
 	virtual FSlateColor GetBorderFrontColor() const;
 	virtual FSlateColor GetNodeTitleBackgroundColor() const;
@@ -82,6 +83,7 @@ public:
 
 	TSharedRef<SWidget> CreateNameSlotWidget();
 
+	bool ShouldUpdate() const;
 	bool IsNodeActive() const;
 
 protected:

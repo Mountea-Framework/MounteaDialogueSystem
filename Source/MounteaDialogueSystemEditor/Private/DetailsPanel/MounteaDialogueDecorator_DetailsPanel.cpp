@@ -2,7 +2,6 @@
 
 #include "MounteaDialogueDecorator_DetailsPanel.h"
 
-#include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "IDetailChildrenBuilder.h"
 
