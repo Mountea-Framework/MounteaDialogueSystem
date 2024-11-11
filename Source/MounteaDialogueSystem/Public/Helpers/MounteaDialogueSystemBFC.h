@@ -365,8 +365,9 @@ public:
 	static ENetRole GetOwnerLocalRole(const AActor* ForActor);
 
 	static TScriptInterface<IMounteaDialogueParticipantInterface> SwitchActiveParticipant(const UMounteaDialogueContext* DialogueContext);
+	static TScriptInterface<IMounteaDialogueParticipantInterface> FindParticipantByTag(const UMounteaDialogueContext* DialogueContext, const FGameplayTag& SearchTag);
 
-	static bool GetMatchingDialogueParticipant(UMounteaDialogueContext* Context, const TScriptInterface<IMounteaDialogueParticipantInterface>& NewActiveParticipant);
+	static bool UpdateMatchingDialogueParticipant(UMounteaDialogueContext* Context, const TScriptInterface<IMounteaDialogueParticipantInterface>& NewActiveParticipant);
 
 	// --- Template functions ------------------------------
 	

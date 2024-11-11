@@ -587,7 +587,7 @@ void UMounteaDialogueManager::PrepareNode_Implementation()
 	}
 
 	const auto newActiveParticipant = UMounteaDialogueSystemBFC::SwitchActiveParticipant(DialogueContext);
-	UMounteaDialogueSystemBFC::GetMatchingDialogueParticipant(DialogueContext, newActiveParticipant);
+	UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(DialogueContext, newActiveParticipant);
 	DialogueContext->ActiveNode->PreProcessNode(this);
 }
 
@@ -670,7 +670,7 @@ void UMounteaDialogueManager::NodeProcessed_Implementation()
 		DialogueContext->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode));
 		DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 		const auto newActiveParticipant = UMounteaDialogueSystemBFC::SwitchActiveParticipant(DialogueContext);
-		UMounteaDialogueSystemBFC::GetMatchingDialogueParticipant(DialogueContext, newActiveParticipant);
+		UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(DialogueContext, newActiveParticipant);
 		
 		OnDialogueNodeSelected.Broadcast(DialogueContext);
 
@@ -724,7 +724,7 @@ void UMounteaDialogueManager::SelectNode_Implementation(const FGuid& NodeGuid)
 	DialogueContext->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode));
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 	const auto newActiveParticipant = UMounteaDialogueSystemBFC::SwitchActiveParticipant(DialogueContext);
-	UMounteaDialogueSystemBFC::GetMatchingDialogueParticipant(DialogueContext, newActiveParticipant);
+	UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(DialogueContext, newActiveParticipant);
 
 	FString resultMessage;
 	if (!Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::RemoveDialogueOptions))
@@ -1118,23 +1118,21 @@ int32 UMounteaDialogueManager::GetDialogueWidgetZOrder_Implementation() const
 
 void UMounteaDialogueManager::SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder)
 {
-	if (NewZOrder != DialogueWidgetZOrder)
-	{
-		DialogueWidgetZOrder = NewZOrder;
-		auto dialogueWidget = Execute_GetDialogueWidget(this);
-		if (dialogueWidget)
-		{
-			ULocalPlayer* localPlayer = dialogueWidget->GetOwningLocalPlayer();
-			if (localPlayer)
-			{
-				if (UGameViewportSubsystem* viewportSubsystem = UGameViewportSubsystem::Get(GetWorld()))
-				{
-					FGameViewportWidgetSlot widgetSlot = viewportSubsystem->GetWidgetSlot(dialogueWidget);
-					widgetSlot.ZOrder = NewZOrder;
+	if (NewZOrder == DialogueWidgetZOrder) return;
 
-					viewportSubsystem->AddWidgetForPlayer(dialogueWidget, localPlayer, widgetSlot);
-				}
-			}
-		}
-	}
+	DialogueWidgetZOrder = NewZOrder;
+	
+	auto dialogueWidget = Execute_GetDialogueWidget(this);
+	if (!dialogueWidget) return;
+
+	ULocalPlayer* localPlayer = dialogueWidget->GetOwningLocalPlayer();
+	if (!localPlayer) return;
+
+	UGameViewportSubsystem* viewportSubsystem = UGameViewportSubsystem::Get(GetWorld());
+	if (!viewportSubsystem) return;
+
+	FGameViewportWidgetSlot widgetSlot = viewportSubsystem->GetWidgetSlot(dialogueWidget);
+	widgetSlot.ZOrder = NewZOrder;
+
+	viewportSubsystem->AddWidgetForPlayer(dialogueWidget, localPlayer, widgetSlot);
 }

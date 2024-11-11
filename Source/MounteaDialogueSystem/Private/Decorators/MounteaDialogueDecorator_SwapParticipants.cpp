@@ -20,24 +20,17 @@ void UMounteaDialogueDecorator_SwapParticipants::ExecuteDecorator_Implementation
 	Super::ExecuteDecorator_Implementation();
 
 	if (!OwningManager) return;
-
-	if (!Context)
-	{
-		// Let's return BP Updatable Context rather than Raw
-		Context = OwningManager->Execute_GetDialogueContext(OwningManager.GetObject());
-	}
+	
+	Context = OwningManager->Execute_GetDialogueContext(OwningManager.GetObject());
 
 	if (!Context) return;
 
-	const bool bIsPlayerActive = Context->GetActiveDialogueParticipant() == Context->GetDialoguePlayerParticipant();
-	
-	const TScriptInterface<IMounteaDialogueParticipantInterface> NewActiveParticipant =
-		bIsPlayerActive
-		?
-		Context->GetDialogueParticipant() :
-		Context->GetDialoguePlayerParticipant();
+	auto newParticipant = UMounteaDialogueSystemBFC::FindParticipantByTag(Context, NewParticipantTag);
+	if (newParticipant != Context->ActiveDialogueParticipant)
+		return;
 
-	UMounteaDialogueSystemBFC::GetMatchingDialogueParticipant(Context, NewActiveParticipant);
+	UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(Context, newParticipant);
+	OwningManager->GetDialogueContextUpdatedEventHande().Broadcast(Context);
 }
 
 #undef LOCTEXT_NAMESPACE

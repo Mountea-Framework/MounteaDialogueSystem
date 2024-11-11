@@ -479,7 +479,7 @@ UMounteaDialogueContext* UMounteaDialogueSystemBFC::CreateDialogueContext(UObjec
 	newDialogueContext->SetDialogueContext(MainParticipant, newActiveNode, allowedChildNodes);
 	newDialogueContext->UpdateActiveDialogueTable(newActiveDialogueNode ? newDialogueTableHandle : FDataTableRowHandle());
 	newDialogueContext->AddDialogueParticipants(DialogueParticipants);
-	GetMatchingDialogueParticipant(newDialogueContext, SwitchActiveParticipant(newDialogueContext));
+	UpdateMatchingDialogueParticipant(newDialogueContext, SwitchActiveParticipant(newDialogueContext));
 
 	return newDialogueContext;
 }
@@ -535,9 +535,7 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC
 
 	const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& dialogueParticipants = DialogueContext->DialogueParticipants;
 	if (dialogueParticipants.Num() == 0)
-	{
 		return DialogueContext->ActiveDialogueParticipant;
-	}
 
 	FGameplayTagContainer activeTags;
 	if (DialogueContext->ActiveNode->IsA<UMounteaDialogueGraphNode_DialogueNodeBase>())
@@ -559,7 +557,28 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC
 	return (foundParticipant && *foundParticipant != DialogueContext->ActiveDialogueParticipant) ? *foundParticipant : DialogueContext->ActiveDialogueParticipant;
 }
 
-bool UMounteaDialogueSystemBFC::GetMatchingDialogueParticipant(UMounteaDialogueContext* Context, const TScriptInterface<IMounteaDialogueParticipantInterface>& NewActiveParticipant)
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC::FindParticipantByTag(const UMounteaDialogueContext* DialogueContext, const FGameplayTag& SearchTag)
+{
+	if (!IsValid(DialogueContext))
+		return nullptr;
+
+	const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& dialogueParticipants = DialogueContext->DialogueParticipants;
+	if (dialogueParticipants.Num() == 0)
+		return DialogueContext->ActiveDialogueParticipant;
+
+	for (const auto& dialogueParticipant : dialogueParticipants)
+	{
+		if (!IsValid(dialogueParticipant.GetObject()))
+			continue;
+
+		if (dialogueParticipant->Execute_GetParticipantTag(dialogueParticipant.GetObject()).MatchesTag(SearchTag))
+			return dialogueParticipant;
+	}
+
+	return DialogueContext->ActiveDialogueParticipant;
+}
+
+bool UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(UMounteaDialogueContext* Context, const TScriptInterface<IMounteaDialogueParticipantInterface>& NewActiveParticipant)
 {
 	if (!IsValid(Context))
 		return false;
