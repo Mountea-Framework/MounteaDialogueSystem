@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraph.h"
+#include "Helpers/MounteaDialogueEditorDetailsTypes.h"
 #include "EdGraph_MounteaDialogueGraph.generated.h"
 
-struct FPIEInstanceData;
 class UMounteaDialogueGraphNode;
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphEdge;
@@ -70,4 +70,8 @@ private:
 
 	/** Pointer back to the Dialogue editor that owns us */
 	TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr;
+
+public:
+	
+	FPIEInstanceData FocusedInstance;
 };

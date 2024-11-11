@@ -257,6 +257,9 @@ public:
 	
 	virtual void ProcessDialogueCommand_Implementation(const FString& Command, UObject* Payload) override
 	{ ParticipantCommandRequested.Broadcast(Command, Payload); };
+
+	virtual TScriptInterface<IMounteaDialogueManagerInterface> GetDialogueManager() const override
+	{ return DialogueManager; };
 	
 #pragma region EventHandleGetters
 	
@@ -308,11 +311,6 @@ protected:
 	void SetAudioComponent_Server(UAudioComponent* NewAudioComponent);
 	UFUNCTION(Server, Reliable)
 	void SetDialogueGraph_Server(UMounteaDialogueGraph* NewGraph);
-
-public:
-
-	TScriptInterface<IMounteaDialogueManagerInterface> GetManager() const
-	{ return DialogueManager; };
 
 #pragma endregion
 

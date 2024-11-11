@@ -2,6 +2,7 @@
 
 #include "SEdNode_MounteaDialogueGraphNode.h"
 
+#include "EdGraph_MounteaDialogueGraph.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Helpers/MounteaDialogueGraphColors.h"
 #include "Ed/SEdNode_MounteaDialogueGraphNodeIndex.h"
@@ -15,9 +16,11 @@
 #include "GraphEditorSettings.h"
 #include "UnrealEdGlobals.h"
 #include "Blueprint/UserWidget.h"
+#include "Data/MounteaDialogueContext.h"
 #include "Editor/UnrealEdEngine.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Graph/MounteaDialogueGraph.h"
+#include "Interfaces/MounteaDialogueManagerInterface.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
 #include "Widgets/Layout/SGridPanel.h"
 #include "Widgets/Layout/SScaleBox.h"
@@ -1064,23 +1067,72 @@ const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetTextNodeTypeBrush() cons
 FSlateColor SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor() const
 {
 	UEdNode_MounteaDialogueGraphNode* MyNode = CastChecked<UEdNode_MounteaDialogueGraphNode>(GraphNode);
-	return MyNode ? MyNode->GetBackgroundColor() : MounteaDialogueGraphColors::NodeBorder::HighlightAbortRange0;
+	const auto dialogueGraphEditor = MyNode->GetDialogueGraphEdGraph();
+	auto nodeBackgroundColor = MyNode ? MyNode->GetBackgroundColor() : MounteaDialogueGraphColors::NodeBorder::HighlightAbortRange0;
+	if (!dialogueGraphEditor)
+		return nodeBackgroundColor;
+
+	auto focusedInstance = dialogueGraphEditor->FocusedInstance;
+	if (focusedInstance.InstanceId == INDEX_NONE)
+		return nodeBackgroundColor;
+
+	if (focusedInstance.Participant.GetObject() == nullptr)
+		return nodeBackgroundColor;
+
+	auto dialogueManager = focusedInstance.Participant->GetDialogueManager();
+	if (!dialogueManager.GetObject())
+		return nodeBackgroundColor;
+
+	auto dialogueContext = dialogueManager->Execute_GetDialogueContext(dialogueManager.GetObject());
+	if (!dialogueContext)
+		return nodeBackgroundColor;
+
+	if (dialogueContext->GetActiveNode() == MyNode->DialogueGraphNode)
+		return nodeBackgroundColor;
+
+	return nodeBackgroundColor * MounteaDialogueGraphColors::NodeBorder::InactiveBorder;
 }
 
 FSlateColor SEdNode_MounteaDialogueGraphNode::GetBorderFrontColor() const
 {
+	auto selectedTheme = MounteaDialogueGraphColors::Overlay::DarkTheme;
 	if (GraphEditorSettings)
 	{
 		switch (GraphEditorSettings->GetNodeTheme())
 		{
 			case ENodeTheme::ENT_DarkTheme:
-				return  MounteaDialogueGraphColors::Overlay::DarkTheme;
+				selectedTheme = MounteaDialogueGraphColors::Overlay::DarkTheme;
+				break;
 			case ENodeTheme::ENT_LightTheme:
-				return MounteaDialogueGraphColors::Overlay::LightTheme;
+				selectedTheme = MounteaDialogueGraphColors::Overlay::LightTheme;
+				break;
 		} 
 	}
+	
+	UEdNode_MounteaDialogueGraphNode* MyNode = CastChecked<UEdNode_MounteaDialogueGraphNode>(GraphNode);
+	const auto dialogueGraphEditor = MyNode->GetDialogueGraphEdGraph();
+	if (!dialogueGraphEditor)
+		return selectedTheme;
+	
+	auto focusedInstance = dialogueGraphEditor->FocusedInstance;
+	if (focusedInstance.InstanceId == INDEX_NONE)
+		return selectedTheme;
 
-	return MounteaDialogueGraphColors::Overlay::DarkTheme;
+	if (focusedInstance.Participant.GetObject() == nullptr)
+		return selectedTheme;
+
+	auto dialogueManager = focusedInstance.Participant->GetDialogueManager();
+	if (!dialogueManager.GetObject())
+		return selectedTheme;
+
+	auto dialogueContext = dialogueManager->Execute_GetDialogueContext(dialogueManager.GetObject());
+	if (!dialogueContext)
+		return selectedTheme;
+
+	if (dialogueContext->GetActiveNode() == MyNode->DialogueGraphNode)
+		return selectedTheme;
+
+	return selectedTheme * MounteaDialogueGraphColors::NodeBorder::InactiveBorder;
 }
 
 FSlateColor SEdNode_MounteaDialogueGraphNode::GetNodeTitleBackgroundColor() const

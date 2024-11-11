@@ -6,11 +6,11 @@
 
 struct FPIEInstanceData
 {
-	int32 InstanceId = -1;
+	int32 InstanceId = INDEX_NONE;
 	FString InstanceType;
 	FString NameOverride;
 	const FWorldContext* Context = nullptr;
-	TArray<TWeakInterfacePtr<IMounteaDialogueParticipantInterface>> Participants;
+	TWeakInterfacePtr<IMounteaDialogueParticipantInterface> Participant;
 
 	FPIEInstanceData() = default;
 	FPIEInstanceData(int32 InId, const FString& InType, const FWorldContext* InContext)
@@ -19,29 +19,17 @@ struct FPIEInstanceData
 		, Context(InContext)
 	{}
 
-	FString GetParticipantsDescription() const
+	FString GetParticipantDescription() const
 	{
-		if (Participants.IsEmpty())
-			return TEXT("No Active Participants");
+		if (!Participant.IsValid())
+			return TEXT("No Participant");
 
-		FString Result;
-		for (int32 i = 0; i < Participants.Num(); ++i)
+		if (const auto ParticipantPtr = Participant.Get())
 		{
-			if (const auto Participant = Participants[i].Get())
-			{
-				if (Participant == nullptr)
-				{
-					Result.Append(TEXT("Invalid Participant"));
-					continue;
-				}
-			
-				if (i > 0) Result.Append(TEXT(", "));
-				if (AActor* Owner = Participant->Execute_GetOwningActor(Participant->_getUObject()))
-					Result.Append(Owner->GetActorLabel());
-				else
-					Result.Append(TEXT("Unknown Participant"));
-			}
+			if (AActor* Owner = ParticipantPtr->Execute_GetOwningActor(ParticipantPtr->_getUObject()))
+				return Owner->GetActorLabel();
 		}
-		return Result;
-	};
+        
+		return TEXT("Unknown Participant");
+	}
 };

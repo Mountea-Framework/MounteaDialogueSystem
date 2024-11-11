@@ -280,6 +280,8 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	void ProcessDialogueCommand(const FString& Command, UObject* Payload);
 	virtual void ProcessDialogueCommand_Implementation(const FString& Command, UObject* Payload) = 0;
+
+	virtual TScriptInterface<IMounteaDialogueManagerInterface> GetDialogueManager() const = 0;
 	
 #pragma endregion
 

@@ -255,7 +255,7 @@ UMounteaDialogueGraphNode* UEdGraph_MounteaDialogueGraph::GetParentNode(const UM
 
 void UEdGraph_MounteaDialogueGraph::UpdateFocusedInstance(const FPIEInstanceData& InstanceId)
 {
-	EditorLOG_WARNING(TEXT("[Update Focused Instance] PIE %s in focus"), *InstanceId.NameOverride)
+	FocusedInstance = InstanceId;
 }
 
 void UEdGraph_MounteaDialogueGraph::AssignExecutionOrder()

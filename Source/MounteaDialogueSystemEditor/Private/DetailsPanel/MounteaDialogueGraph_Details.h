@@ -22,13 +22,17 @@ public:
 
 private:
 	static bool HasActivePIE();
+	void ResetPIEInstances();
 	void InitializePIEInstances();
 	void OnPIEInstanceSelected(TSharedPtr<FString> NewValue, ESelectInfo::Type SelectInfo);
     
 	void HandleParticipantRegistration(IMounteaDialogueParticipantInterface* Participant, const UMounteaDialogueGraph* Graph, int32 PIEInstance, bool bIsRegistering);
 	void UpdateInstanceDisplay(int32 PIEInstance);
+	const FWorldContext* GetWorldContextForPIE(int32 PIEInstance) const;
 	FString GetInstanceKeyForPIE(int32 PIEInstance) const;
 	const FPIEInstanceData* GetInstanceData(const FString& DisplayName) const;
+
+	void UpdateEditorFocusedInstance(TSharedPtr<FString> NewValue);
     
 	// UI Data
 	TArray<TSharedPtr<FString>> CachedOptions;
