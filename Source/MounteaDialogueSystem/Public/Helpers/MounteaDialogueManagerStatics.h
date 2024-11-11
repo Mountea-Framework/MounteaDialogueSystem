@@ -12,7 +12,7 @@
 enum class EDialogueManagerState : uint8;
 
 /**
- * This library contains implementations of Dialogue Manager Function.
+ * This library contains implementations of Dialogue Manager Functions.
  * Dialogue Manager Interface does not have any BlueprintCallable functions.
  */
 UCLASS()

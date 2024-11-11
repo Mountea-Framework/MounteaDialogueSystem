@@ -3,197 +3,102 @@
 
 #include "Helpers/MounteaDialogueParticipantStatics.h"
 
-bool UMounteaDialogueParticipantStatics::CanStartDialogue(UObject* Target)
-{
-	return ExecuteIfImplements<bool>(Target, TEXT("CanStartDialogue"), &IMounteaDialogueParticipantInterface::Execute_CanStartDialogue);
-}
-
-bool UMounteaDialogueParticipantStatics::CanStartDialogueV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
+bool UMounteaDialogueParticipantStatics::CanStartDialogue(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
 {
 	return Target.GetObject() ? Target->Execute_CanStartDialogue(Target.GetObject()) : false;
 }
 
-AActor* UMounteaDialogueParticipantStatics::GetOwningActor(UObject* Target)
-{
-	return ExecuteIfImplements<AActor*>(Target, TEXT("GetOwningActor"), &IMounteaDialogueParticipantInterface::Execute_GetOwningActor);
-}
-
-AActor* UMounteaDialogueParticipantStatics::GetOwningActorV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
+AActor* UMounteaDialogueParticipantStatics::GetOwningActor(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
 {
 	return Target.GetObject() ? Target->Execute_GetOwningActor(Target.GetObject()) : nullptr;
 }
 
-FGameplayTag UMounteaDialogueParticipantStatics::GetParticipantTag(UObject* Target)
-{
-	return ExecuteIfImplements<FGameplayTag>(Target, TEXT("GetParticipantTag"), &IMounteaDialogueParticipantInterface::Execute_GetParticipantTag);
-}
-
-FGameplayTag UMounteaDialogueParticipantStatics::GetParticipantTagV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
+FGameplayTag UMounteaDialogueParticipantStatics::GetParticipantTag(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
 {
 	return Target.GetObject() ? Target->Execute_GetParticipantTag(Target.GetObject()) : FGameplayTag::EmptyTag;
 }
 
-void UMounteaDialogueParticipantStatics::InitializeParticipant(UObject* Target, const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
-{
-	ExecuteIfImplements<void>(Target, TEXT("InitializeParticipant"), &IMounteaDialogueParticipantInterface::Execute_InitializeParticipant, Manager);
-}
-
-void UMounteaDialogueParticipantStatics::InitializeParticipantV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueParticipantStatics::InitializeParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	if (Target.GetObject()) Target->Execute_InitializeParticipant(Target.GetObject(), Manager);
 }
 
 // Participant State functions
-EDialogueParticipantState UMounteaDialogueParticipantStatics::GetParticipantState(UObject* Target)
-{
-	return ExecuteIfImplements<EDialogueParticipantState>(Target, TEXT("GetParticipantState"), &IMounteaDialogueParticipantInterface::Execute_GetParticipantState);
-}
-
-EDialogueParticipantState UMounteaDialogueParticipantStatics::GetParticipantStateV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
+EDialogueParticipantState UMounteaDialogueParticipantStatics::GetParticipantState(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
 {
 	return Target.GetObject() ? Target->Execute_GetParticipantState(Target.GetObject()) : EDialogueParticipantState{};
 }
 
-void UMounteaDialogueParticipantStatics::SetParticipantState(UObject* Target, const EDialogueParticipantState NewState)
-{
-	ExecuteIfImplements<void>(Target, TEXT("SetParticipantState"), &IMounteaDialogueParticipantInterface::Execute_SetParticipantState, NewState);
-}
-
-void UMounteaDialogueParticipantStatics::SetParticipantStateV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const EDialogueParticipantState NewState)
+void UMounteaDialogueParticipantStatics::SetParticipantState(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const EDialogueParticipantState NewState)
 {
 	if (Target.GetObject()) Target->Execute_SetParticipantState(Target.GetObject(), NewState);
 }
 
-EDialogueParticipantState UMounteaDialogueParticipantStatics::GetDefaultParticipantState(UObject* Target)
-{
-	return ExecuteIfImplements<EDialogueParticipantState>(Target, TEXT("GetDefaultParticipantState"), &IMounteaDialogueParticipantInterface::Execute_GetDefaultParticipantState);
-}
-
-EDialogueParticipantState UMounteaDialogueParticipantStatics::GetDefaultParticipantStateV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
+EDialogueParticipantState UMounteaDialogueParticipantStatics::GetDefaultParticipantState(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
 {
 	return Target.GetObject() ? Target->Execute_GetDefaultParticipantState(Target.GetObject()) : EDialogueParticipantState{};
 }
 
-void UMounteaDialogueParticipantStatics::SetDefaultParticipantState(UObject* Target, const EDialogueParticipantState NewState)
-{
-	ExecuteIfImplements<void>(Target, TEXT("SetDefaultParticipantState"), &IMounteaDialogueParticipantInterface::Execute_SetDefaultParticipantState, NewState);
-}
-
-void UMounteaDialogueParticipantStatics::SetDefaultParticipantStateV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const EDialogueParticipantState NewState)
+void UMounteaDialogueParticipantStatics::SetDefaultParticipantState(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const EDialogueParticipantState NewState)
 {
 	if (Target.GetObject()) Target->Execute_SetDefaultParticipantState(Target.GetObject(), NewState);
 }
 
 // Node functions
-void UMounteaDialogueParticipantStatics::SaveStartingNode(UObject* Target, UMounteaDialogueGraphNode* NewStartingNode)
-{
-	ExecuteIfImplements<void>(Target, TEXT("SaveStartingNode"), &IMounteaDialogueParticipantInterface::Execute_SaveStartingNode, NewStartingNode);
-}
-
-void UMounteaDialogueParticipantStatics::SaveStartingNodeV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, UMounteaDialogueGraphNode* NewStartingNode)
+void UMounteaDialogueParticipantStatics::SaveStartingNode(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, UMounteaDialogueGraphNode* NewStartingNode)
 {
 	if (Target.GetObject()) Target->Execute_SaveStartingNode(Target.GetObject(), NewStartingNode);
 }
 
-void UMounteaDialogueParticipantStatics::SaveTraversedPath(UObject* Target, TArray<FDialogueTraversePath>& InPath)
-{
-	ExecuteIfImplements<void>(Target, TEXT("SaveTraversedPath"), &IMounteaDialogueParticipantInterface::Execute_SaveTraversedPath, InPath);
-}
-
-void UMounteaDialogueParticipantStatics::SaveTraversedPathV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, TArray<FDialogueTraversePath>& InPath)
+void UMounteaDialogueParticipantStatics::SaveTraversedPath(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, TArray<FDialogueTraversePath>& InPath)
 {
 	if (Target.GetObject()) Target->Execute_SaveTraversedPath(Target.GetObject(), InPath);
 }
 
-UMounteaDialogueGraphNode* UMounteaDialogueParticipantStatics::GetSavedStartingNode(UObject* Target)
-{
-	return ExecuteIfImplements<UMounteaDialogueGraphNode*>(Target, TEXT("GetSavedStartingNode"), &IMounteaDialogueParticipantInterface::Execute_GetSavedStartingNode);
-}
-
-UMounteaDialogueGraphNode* UMounteaDialogueParticipantStatics::GetSavedStartingNodeV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
+UMounteaDialogueGraphNode* UMounteaDialogueParticipantStatics::GetSavedStartingNode(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
 {
 	return Target.GetObject() ? Target->Execute_GetSavedStartingNode(Target.GetObject()) : nullptr;
 }
 
 // Audio functions
-void UMounteaDialogueParticipantStatics::PlayParticipantVoice(UObject* Target, USoundBase* ParticipantVoice)
-{
-	ExecuteIfImplements<void>(Target, TEXT("PlayParticipantVoice"), &IMounteaDialogueParticipantInterface::Execute_PlayParticipantVoice, ParticipantVoice);
-}
-
-void UMounteaDialogueParticipantStatics::PlayParticipantVoiceV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, USoundBase* ParticipantVoice)
+void UMounteaDialogueParticipantStatics::PlayParticipantVoice(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, USoundBase* ParticipantVoice)
 {
 	if (Target.GetObject()) Target->Execute_PlayParticipantVoice(Target.GetObject(), ParticipantVoice);
 }
 
-void UMounteaDialogueParticipantStatics::SkipParticipantVoice(UObject* Target, USoundBase* ParticipantVoice)
-{
-	ExecuteIfImplements<void>(Target, TEXT("SkipParticipantVoice"), &IMounteaDialogueParticipantInterface::Execute_SkipParticipantVoice, ParticipantVoice);
-}
-
-void UMounteaDialogueParticipantStatics::SkipParticipantVoiceV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, USoundBase* ParticipantVoice)
+void UMounteaDialogueParticipantStatics::SkipParticipantVoice(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, USoundBase* ParticipantVoice)
 {
 	if (Target.GetObject()) Target->Execute_SkipParticipantVoice(Target.GetObject(), ParticipantVoice);
 }
 
-UAudioComponent* UMounteaDialogueParticipantStatics::GetAudioComponent(UObject* Target)
-{
-	return ExecuteIfImplements<UAudioComponent*>(Target, TEXT("GetAudioComponent"), &IMounteaDialogueParticipantInterface::Execute_GetAudioComponent);
-}
-
-UAudioComponent* UMounteaDialogueParticipantStatics::GetAudioComponentV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
+UAudioComponent* UMounteaDialogueParticipantStatics::GetAudioComponent(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
 {
 	return Target.GetObject() ? Target->Execute_GetAudioComponent(Target.GetObject()) : nullptr;
 }
 
-void UMounteaDialogueParticipantStatics::SetAudioComponent(UObject* Target, UAudioComponent* NewAudioComponent)
-{
-	ExecuteIfImplements<void>(Target, TEXT("SetAudioComponent"), &IMounteaDialogueParticipantInterface::Execute_SetAudioComponent, NewAudioComponent);
-}
-
-void UMounteaDialogueParticipantStatics::SetAudioComponentV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, UAudioComponent* NewAudioComponent)
+void UMounteaDialogueParticipantStatics::SetAudioComponent(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, UAudioComponent* NewAudioComponent)
 {
 	if (Target.GetObject()) Target->Execute_SetAudioComponent(Target.GetObject(), NewAudioComponent);
 }
 
 // Graph functions
-UMounteaDialogueGraph* UMounteaDialogueParticipantStatics::GetDialogueGraph(UObject* Target)
-{
-	return ExecuteIfImplements<UMounteaDialogueGraph*>(Target, TEXT("GetDialogueGraph"), &IMounteaDialogueParticipantInterface::Execute_GetDialogueGraph);
-}
-
-UMounteaDialogueGraph* UMounteaDialogueParticipantStatics::GetDialogueGraphV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
+UMounteaDialogueGraph* UMounteaDialogueParticipantStatics::GetDialogueGraph(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
 {
 	return Target.GetObject() ? Target->Execute_GetDialogueGraph(Target.GetObject()) : nullptr;
 }
 
-void UMounteaDialogueParticipantStatics::SetDialogueGraph(UObject* Target, UMounteaDialogueGraph* NewDialogueGraph)
-{
-	ExecuteIfImplements<void>(Target, TEXT("SetDialogueGraph"), &IMounteaDialogueParticipantInterface::Execute_SetDialogueGraph, NewDialogueGraph);
-}
-
-void UMounteaDialogueParticipantStatics::SetDialogueGraphV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, UMounteaDialogueGraph* NewDialogueGraph)
+void UMounteaDialogueParticipantStatics::SetDialogueGraph(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, UMounteaDialogueGraph* NewDialogueGraph)
 {
 	if (Target.GetObject()) Target->Execute_SetDialogueGraph(Target.GetObject(), NewDialogueGraph);
 }
 
-TArray<FDialogueTraversePath> UMounteaDialogueParticipantStatics::GetTraversedPath(UObject* Target)
-{
-	return ExecuteIfImplements<TArray<FDialogueTraversePath>>(Target, TEXT("GetTraversedPath"), &IMounteaDialogueParticipantInterface::Execute_GetTraversedPath);
-}
-
-TArray<FDialogueTraversePath> UMounteaDialogueParticipantStatics::GetTraversedPathV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
+TArray<FDialogueTraversePath> UMounteaDialogueParticipantStatics::GetTraversedPath(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
 {
 	return Target.GetObject() ? Target->Execute_GetTraversedPath(Target.GetObject()) : TArray<FDialogueTraversePath>{};
 }
 
 // Command functions
-void UMounteaDialogueParticipantStatics::ProcessDialogueCommand(UObject* Target, const FString& Command, UObject* Payload)
-{
-	ExecuteIfImplements<void>(Target, TEXT("ProcessDialogueCommand"), &IMounteaDialogueParticipantInterface::Execute_ProcessDialogueCommand, Command, Payload);
-}
-
-void UMounteaDialogueParticipantStatics::ProcessDialogueCommandV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const FString& Command, UObject* Payload)
+void UMounteaDialogueParticipantStatics::ProcessDialogueCommand(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const FString& Command, UObject* Payload)
 {
 	if (Target.GetObject()) Target->Execute_ProcessDialogueCommand(Target.GetObject(), Command, Payload);
 }
