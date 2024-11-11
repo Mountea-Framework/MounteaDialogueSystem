@@ -82,6 +82,8 @@ public:
 
 	TSharedRef<SWidget> CreateNameSlotWidget();
 
+	bool IsNodeActive() const;
+
 protected:
 	TSharedPtr<SBorder> NodeBody;
 	TSharedPtr<SHorizontalBox> OutputPinBox;

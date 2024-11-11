@@ -168,7 +168,6 @@ TSharedRef<SWidget> SEdNode_MounteaDialogueGraphNode::CreateNameSlotWidget()
 	.Visibility(EVisibility::Visible);
 }
 
-
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
@@ -408,11 +407,11 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 													// POPUP ERROR MESSAGE
 													SAssignNew(ErrorText, SErrorText)
 													.BackgroundColor(
-					                                 this,
-					                                 &SEdNode_MounteaDialogueGraphNode::GetErrorColor)
+													 this,
+													 &SEdNode_MounteaDialogueGraphNode::GetErrorColor)
 													.ToolTipText(
-					                                 this,
-					                                 &SEdNode_MounteaDialogueGraphNode::GetErrorMsgToolTip)
+													 this,
+													 &SEdNode_MounteaDialogueGraphNode::GetErrorMsgToolTip)
 												]
 												+ SHorizontalBox::Slot()
 												  .AutoWidth()
@@ -1064,33 +1063,37 @@ const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetTextNodeTypeBrush() cons
 	return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges");
 }
 
-FSlateColor SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor() const
+bool SEdNode_MounteaDialogueGraphNode::IsNodeActive() const
 {
 	UEdNode_MounteaDialogueGraphNode* MyNode = CastChecked<UEdNode_MounteaDialogueGraphNode>(GraphNode);
 	const auto dialogueGraphEditor = MyNode->GetDialogueGraphEdGraph();
-	auto nodeBackgroundColor = MyNode ? MyNode->GetBackgroundColor() : MounteaDialogueGraphColors::NodeBorder::HighlightAbortRange0;
 	if (!dialogueGraphEditor)
-		return nodeBackgroundColor;
+		return false;
 
 	auto focusedInstance = dialogueGraphEditor->FocusedInstance;
 	if (focusedInstance.InstanceId == INDEX_NONE)
-		return nodeBackgroundColor;
+		return false;
 
 	if (focusedInstance.Participant.GetObject() == nullptr)
-		return nodeBackgroundColor;
+		return false;
 
 	auto dialogueManager = focusedInstance.Participant->GetDialogueManager();
 	if (!dialogueManager.GetObject())
-		return nodeBackgroundColor;
+		return false;
 
 	auto dialogueContext = dialogueManager->Execute_GetDialogueContext(dialogueManager.GetObject());
 	if (!dialogueContext)
-		return nodeBackgroundColor;
+		return false;
 
-	if (dialogueContext->GetActiveNode() == MyNode->DialogueGraphNode)
-		return nodeBackgroundColor;
+	return dialogueContext->GetActiveNode() == MyNode->DialogueGraphNode;
+}
 
-	return nodeBackgroundColor * MounteaDialogueGraphColors::NodeBorder::InactiveBorder;
+FSlateColor SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor() const
+{
+	UEdNode_MounteaDialogueGraphNode* MyNode = CastChecked<UEdNode_MounteaDialogueGraphNode>(GraphNode);
+	auto nodeBackgroundColor = MyNode ? MyNode->GetBackgroundColor() : MounteaDialogueGraphColors::NodeBorder::HighlightAbortRange0;
+	
+	return IsNodeActive() ? nodeBackgroundColor : nodeBackgroundColor * MounteaDialogueGraphColors::NodeBorder::InactiveBorder;
 }
 
 FSlateColor SEdNode_MounteaDialogueGraphNode::GetBorderFrontColor() const
@@ -1109,30 +1112,7 @@ FSlateColor SEdNode_MounteaDialogueGraphNode::GetBorderFrontColor() const
 		} 
 	}
 	
-	UEdNode_MounteaDialogueGraphNode* MyNode = CastChecked<UEdNode_MounteaDialogueGraphNode>(GraphNode);
-	const auto dialogueGraphEditor = MyNode->GetDialogueGraphEdGraph();
-	if (!dialogueGraphEditor)
-		return selectedTheme;
-	
-	auto focusedInstance = dialogueGraphEditor->FocusedInstance;
-	if (focusedInstance.InstanceId == INDEX_NONE)
-		return selectedTheme;
-
-	if (focusedInstance.Participant.GetObject() == nullptr)
-		return selectedTheme;
-
-	auto dialogueManager = focusedInstance.Participant->GetDialogueManager();
-	if (!dialogueManager.GetObject())
-		return selectedTheme;
-
-	auto dialogueContext = dialogueManager->Execute_GetDialogueContext(dialogueManager.GetObject());
-	if (!dialogueContext)
-		return selectedTheme;
-
-	if (dialogueContext->GetActiveNode() == MyNode->DialogueGraphNode)
-		return selectedTheme;
-
-	return selectedTheme * MounteaDialogueGraphColors::NodeBorder::InactiveBorder;
+	return IsNodeActive() ? selectedTheme : selectedTheme * MounteaDialogueGraphColors::NodeBorder::InactiveBorder;
 }
 
 FSlateColor SEdNode_MounteaDialogueGraphNode::GetNodeTitleBackgroundColor() const
