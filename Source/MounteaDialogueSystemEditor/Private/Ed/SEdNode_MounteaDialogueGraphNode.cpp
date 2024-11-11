@@ -519,6 +519,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 																		[
 																			SNew(SImage)
 																			.Image(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointImageBrush)
+																			.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor_Inherits)
 																		]
 																	]
 																]
@@ -626,7 +627,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 																		[
 																			SNew(SImage)
 																			.Image(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointImageBrush)
-																			.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor)
+																			.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor_Implements)
 																		]
 																	]
 																]
@@ -743,6 +744,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 																		[
 																			SNew(SImage)
 																			.Image(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointImageBrush)
+																			.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor_Inherits)
 																		]
 																	]
 																]
@@ -818,7 +820,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 																		[
 																			SNew(SImage)
 																			.Image(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointImageBrush)
-																			.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor)
+																			.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor_Implements)
 																		]
 																	]
 																]
@@ -1197,14 +1199,17 @@ FSlateColor SEdNode_MounteaDialogueGraphNode::GetInheritsImageTint() const
 {
 	bool bHasDecorators = false;
 	if (const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
-	{
 		if (EdParentNode->DialogueGraphNode)
-		{
-			bHasDecorators =  EdParentNode->DialogueGraphNode->DoesInheritDecorators() ;
-		}
-	}
+			bHasDecorators = EdParentNode->DialogueGraphNode->DoesInheritDecorators();
 	
-	return bHasDecorators ? FSlateColor(FLinearColor::Green) : FSlateColor(FLinearColor::Red);
+	const FSlateColor BaseColor = bHasDecorators ? 
+		FSlateColor(FLinearColor::Green) : 
+		FSlateColor(FLinearColor::Red);
+	
+	if (!ShouldUpdate())
+		return BaseColor;
+	
+	return IsNodeActive() ? BaseColor : MounteaDialogueGraphColors::TextColors::Disabled;
 }
 
 const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetBulletPointImageBrush() const
@@ -1435,36 +1440,47 @@ EVisibility SEdNode_MounteaDialogueGraphNode::ShowDecoratorsBottomPadding() cons
 
 FSlateColor SEdNode_MounteaDialogueGraphNode::GetImplementsRowColor() const
 {
-	if (const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
-	{
-		if (EdParentNode->DialogueGraphNode)
-		{
-			if (EdParentNode->DialogueGraphNode->GetNodeDecorators().Num() > 0)
-			{
-				return MounteaDialogueGraphColors::TextColors::Normal;
-			}
-			
-			return MounteaDialogueGraphColors::TextColors::Disabled;
-		}
-	}
-	return GetFontColor();
+	const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode);
+	if (!EdParentNode || !EdParentNode->DialogueGraphNode)
+		return GetFontColor();
+
+	return EdParentNode->DialogueGraphNode->GetNodeDecorators().Num() == 0 
+		? MounteaDialogueGraphColors::TextColors::Disabled 
+		: GetFontColor();
 }
 
-FSlateColor SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor() const
+FSlateColor SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor_Implements() const
 {
-	if (const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
-	{
-		if (EdParentNode->DialogueGraphNode)
-		{
-			if (EdParentNode->DialogueGraphNode->GetNodeDecorators().Num() > 0)
-			{
-				return MounteaDialogueGraphColors::BulletPointsColors::Normal;
-			}
-			
-			return MounteaDialogueGraphColors::BulletPointsColors::Disabled;
-		}
-	}
-	return MounteaDialogueGraphColors::BulletPointsColors::Normal;
+	const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode);
+	if (!EdParentNode || !EdParentNode->DialogueGraphNode)
+		return MounteaDialogueGraphColors::BulletPointsColors::Normal;
+
+	const bool bImplements = EdParentNode->DialogueGraphNode->GetNodeDecorators().Num() > 0;
+
+	if (!ShouldUpdate())
+		return bImplements
+		? MounteaDialogueGraphColors::BulletPointsColors::Normal
+		: MounteaDialogueGraphColors::BulletPointsColors::Disabled;
+
+	return IsNodeActive() ? bImplements ? MounteaDialogueGraphColors::BulletPointsColors::Normal
+		: MounteaDialogueGraphColors::BulletPointsColors::Disabled : MounteaDialogueGraphColors::BulletPointsColors::Disabled;
+}
+
+FSlateColor SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor_Inherits() const
+{
+	const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode);
+	if (!EdParentNode || !EdParentNode->DialogueGraphNode)
+		return MounteaDialogueGraphColors::BulletPointsColors::Normal;
+
+	const bool bInherits = EdParentNode->DialogueGraphNode->DoesInheritDecorators();
+
+	if (!ShouldUpdate())
+		return bInherits
+		? MounteaDialogueGraphColors::BulletPointsColors::Normal
+		: MounteaDialogueGraphColors::BulletPointsColors::Disabled;
+
+	return IsNodeActive() ? bInherits ? MounteaDialogueGraphColors::BulletPointsColors::Normal
+		: MounteaDialogueGraphColors::BulletPointsColors::Disabled : MounteaDialogueGraphColors::BulletPointsColors::Disabled;
 }
 
 FText SEdNode_MounteaDialogueGraphNode::GetDecoratorsInheritanceText() const

@@ -73,7 +73,8 @@ public:
 	EVisibility ShowDecoratorsBottomPadding() const;
 
 	FSlateColor GetImplementsRowColor() const;
-	FSlateColor GetBulletPointsImagePointColor() const;
+	FSlateColor GetBulletPointsImagePointColor_Implements() const;
+	FSlateColor GetBulletPointsImagePointColor_Inherits() const;
 	
 	virtual EDecoratorsInfoStyle GetDecoratorsStyle() const;
 	EVisibility GetStackVisibility() const;
