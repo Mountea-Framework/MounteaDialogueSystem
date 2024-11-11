@@ -361,13 +361,17 @@ public:
 	static UMounteaDialogueContext* CreateDialogueContext(UObject* NewOwner, const TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants);
 	static UMounteaDialogueContext* CreateDialogueContext(UObject* NewOwner, const FMounteaDialogueContextReplicatedStruct& NewData);
 
-	static AActor* GetDialogueManagerLocalOwner(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
+	static AActor* GetDialogueManagerLocalOwner(const UObject* Manager);
+	static AActor* GetDialogueManagerLocalOwner(const TScriptInterface<const IMounteaDialogueManagerInterface>& Manager);
 	static ENetRole GetOwnerLocalRole(const AActor* ForActor);
 
 	static TScriptInterface<IMounteaDialogueParticipantInterface> SwitchActiveParticipant(const UMounteaDialogueContext* DialogueContext);
 	static TScriptInterface<IMounteaDialogueParticipantInterface> FindParticipantByTag(const UMounteaDialogueContext* DialogueContext, const FGameplayTag& SearchTag);
 
 	static bool UpdateMatchingDialogueParticipant(UMounteaDialogueContext* Context, const TScriptInterface<IMounteaDialogueParticipantInterface>& NewActiveParticipant);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(CustomTag="MounteaK2Getter"))
+	static FDialogueRowData GetActiveDialogueData(const UMounteaDialogueContext* Context, bool& bResult);
 
 	// --- Template functions ------------------------------
 	

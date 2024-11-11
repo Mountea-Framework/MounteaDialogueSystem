@@ -44,6 +44,11 @@ void UMounteaDialogueParticipantStatics::SetDefaultParticipantState(const TScrip
 	if (Target.GetObject()) Target->Execute_SetDefaultParticipantState(Target.GetObject(), NewState);
 }
 
+TScriptInterface<IMounteaDialogueManagerInterface> UMounteaDialogueParticipantStatics::GetDialogueManager(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
+{
+	return Target.GetObject() ? Target->GetDialogueManager() : nullptr;
+}
+
 // Node functions
 void UMounteaDialogueParticipantStatics::SaveStartingNode(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, UMounteaDialogueGraphNode* NewStartingNode)
 {

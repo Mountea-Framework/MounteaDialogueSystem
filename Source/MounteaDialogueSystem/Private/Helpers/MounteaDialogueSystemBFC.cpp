@@ -498,7 +498,27 @@ UMounteaDialogueContext* UMounteaDialogueSystemBFC::CreateDialogueContext(UObjec
 	return newDialogueContext;
 }
 
-AActor* UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+AActor* UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(const UObject* Manager)
+{
+	if (!IsValid(Manager))
+		return nullptr;
+
+	const APlayerState* playerState = Cast<APlayerState>(Manager);
+	if (IsValid(playerState))
+	{
+		if (IsValid(playerState->GetPlayerController()))
+			return playerState->GetPlayerController();
+		return  playerState->GetPawn();
+	}
+
+	auto worldContext = Manager->GetWorld();
+	if (!IsValid(worldContext))
+		return nullptr;
+
+	return worldContext->GetFirstPlayerController();
+}
+
+AActor* UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(const TScriptInterface<const IMounteaDialogueManagerInterface>& Manager)
 {
 	if (!IsValid(Manager.GetObject()))
 		return nullptr;
@@ -591,6 +611,23 @@ bool UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(UMounteaDialog
 	return true;
 }
 
+FDialogueRowData UMounteaDialogueSystemBFC::GetActiveDialogueData(const UMounteaDialogueContext* Context, bool& bResult)
+{
+	if (!IsValid(Context))
+	{ bResult = false; return FDialogueRowData(); }
+
+	const int32 activeIndex = Context->GetActiveDialogueRowDataIndex();
+	const auto Row = Context->GetActiveDialogueRow();
+	bResult = Row.DialogueRowData.Array().IsValidIndex(activeIndex);
+
+	if (!bResult)
+		return FDialogueRowData();
+	
+	const FDialogueRowData rowData = Row.DialogueRowData.Array()[activeIndex];
+	bResult = IsDialogueRowDataValid(rowData);
+
+	return bResult ? rowData : FDialogueRowData();
+}
 
 FDialogueRow UMounteaDialogueSystemBFC::GetDialogueRow(const UMounteaDialogueGraphNode* Node)
 {
