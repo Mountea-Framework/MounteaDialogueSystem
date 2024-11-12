@@ -23,7 +23,7 @@ public class MounteaDialogueSystemDeveloper : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore", 
-				"MounteaDialogueSystem"
+				"MounteaDialogueSystem", 
 			}
 		);
 
@@ -34,7 +34,7 @@ public class MounteaDialogueSystemDeveloper : ModuleRules
 				{
 					"EditorStyle",
 					"BlueprintGraph",
-					"MounteaDialogueSystemEditor"
+					"ApplicationCore",
 				}
 			);
 		}

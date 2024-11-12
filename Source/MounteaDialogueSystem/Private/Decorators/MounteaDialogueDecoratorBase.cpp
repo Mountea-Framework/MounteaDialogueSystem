@@ -167,7 +167,7 @@ FText UMounteaDialogueDecoratorBase::GetDecoratorName_Implementation() const
 UMounteaDialogueContext* UMounteaDialogueDecoratorBase::GetContext() const
 {
 	if (OwningManager)
-		return OwningManager->Execute_GetDialogueContextEvent(OwningManager.GetObject());
+		return OwningManager->Execute_GetDialogueContext(OwningManager.GetObject());
 
 	return nullptr;
 }

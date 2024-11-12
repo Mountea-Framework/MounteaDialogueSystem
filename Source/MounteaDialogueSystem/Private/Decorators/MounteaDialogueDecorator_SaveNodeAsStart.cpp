@@ -64,7 +64,7 @@ void UMounteaDialogueDecorator_SaveNodeAsStart::ExecuteDecorator_Implementation(
 	if (!OwningManager) return;
 
 	// Let's return BP Updatable Context rather than Raw
-	Context = OwningManager->GetDialogueContext();
+	Context = OwningManager->Execute_GetDialogueContext(OwningManager.GetObject());
 
 	if (Context)
 	{

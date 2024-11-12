@@ -32,6 +32,7 @@ public:
 	
 	virtual const FSlateBrush* GetNodeTypeBrush () const;
 	virtual const FSlateBrush* GetTextNodeTypeBrush () const;
+	virtual FSlateColor GetFontColor() const;
 	virtual FSlateColor GetBorderBackgroundColor() const;
 	virtual FSlateColor GetBorderFrontColor() const;
 	virtual FSlateColor GetNodeTitleBackgroundColor() const;
@@ -72,7 +73,8 @@ public:
 	EVisibility ShowDecoratorsBottomPadding() const;
 
 	FSlateColor GetImplementsRowColor() const;
-	FSlateColor GetBulletPointsImagePointColor() const;
+	FSlateColor GetBulletPointsImagePointColor_Implements() const;
+	FSlateColor GetBulletPointsImagePointColor_Inherits() const;
 	
 	virtual EDecoratorsInfoStyle GetDecoratorsStyle() const;
 	EVisibility GetStackVisibility() const;
@@ -81,6 +83,9 @@ public:
 	FText GetTooltipText() const;
 
 	TSharedRef<SWidget> CreateNameSlotWidget();
+
+	bool ShouldUpdate() const;
+	bool IsNodeActive() const;
 
 protected:
 	TSharedPtr<SBorder> NodeBody;
