@@ -8,6 +8,11 @@ bool UMounteaDialogueParticipantStatics::CanStartDialogue(const TScriptInterface
 	return Target.GetObject() ? Target->Execute_CanStartDialogue(Target.GetObject()) : false;
 }
 
+bool UMounteaDialogueParticipantStatics::CanParticipateInDialogue(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
+{
+	return Target.GetObject() ? Target->Execute_CanParticipateInDialogue(Target.GetObject()) : false;
+}
+
 AActor* UMounteaDialogueParticipantStatics::GetOwningActor(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
 {
 	return Target.GetObject() ? Target->Execute_GetOwningActor(Target.GetObject()) : nullptr;

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Interfaces/MounteaDialogueUIBaseInterface.h"
+#include "Interfaces/HUD/MounteaDialogueUIBaseInterface.h"
 #include "Interfaces/UMG/MounteaDialogueRowInterface.h"
 #include "MounteaDialogueRow.generated.h"
 

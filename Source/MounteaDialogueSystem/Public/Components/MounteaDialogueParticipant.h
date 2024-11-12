@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Interfaces/MounteaDialogueParticipantInterface.h"
-#include "Interfaces/MounteaDialogueTickableObject.h"
+#include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
+#include "Interfaces/Core/MounteaDialogueTickableObject.h"
 #include "MounteaDialogueParticipant.generated.h"
 
 class UMounteaDialogueGraphNode_CompleteNode;

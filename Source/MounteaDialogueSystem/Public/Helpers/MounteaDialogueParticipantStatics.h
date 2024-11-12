@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MounteaDialogueGraphHelpers.h"
-#include "Interfaces/MounteaDialogueParticipantInterface.h"
+#include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "MounteaDialogueParticipantStatics.generated.h"
 
@@ -64,8 +64,11 @@ public:
 	 * @param Target	Dialogue Participant interface.
 	 * @return True if dialogue can start, false otherwise
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Validate"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Validate"))
 	static bool CanStartDialogue(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Validate"))
+	static bool CanParticipateInDialogue(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
 
 	/**
 	 * Returns the owning actor for the Dialogue Participant.

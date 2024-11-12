@@ -5,7 +5,7 @@
 
 #include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
-#include "Interfaces/MounteaDialogueManagerInterface.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "TimerManager.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 

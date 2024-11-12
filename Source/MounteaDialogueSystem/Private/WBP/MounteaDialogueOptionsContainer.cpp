@@ -6,7 +6,7 @@
 #include "Data/MounteaDialogueGraphDataTypes.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueUIBFL.h"
-#include "Interfaces/MounteaDialogueWBPInterface.h"
+#include "Interfaces/HUD/MounteaDialogueWBPInterface.h"
 #include "Interfaces/UMG/MounteaDialogueOptionInterface.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 

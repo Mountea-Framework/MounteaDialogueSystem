@@ -7,8 +7,8 @@
 
 #include "Data/MounteaDialogueGraphDataTypes.h"
 
-#include "Interfaces/MounteaDialogueManagerInterface.h"
-#include "Interfaces/MounteaDialogueParticipantInterface.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
+#include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Blueprint/UserWidget.h"

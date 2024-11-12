@@ -11,7 +11,7 @@
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueEditorDetailsTypes.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
-#include "Interfaces/MounteaDialogueParticipantInterface.h"
+#include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 #include "Widgets/Input/STextComboBox.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraph_Details"
