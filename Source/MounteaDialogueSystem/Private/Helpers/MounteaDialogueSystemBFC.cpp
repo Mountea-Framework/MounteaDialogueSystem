@@ -20,9 +20,9 @@ bool UMounteaDialogueSystemBFC::IsEditor()
 {
 #if WITH_EDITOR
 	return true;
-#endif
-
+#else
 	return false;
+#endif
 }
 
 void UMounteaDialogueSystemBFC::CleanupGraph(const UObject* WorldContextObject, const UMounteaDialogueGraph* GraphToClean)

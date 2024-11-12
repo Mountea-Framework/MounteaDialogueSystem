@@ -28,7 +28,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FParticipantStartingNodeSaved, const
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FParticipantCommandRequested, const FString&, Command, UObject*, OptionalPayload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueUpdated, const TScriptInterface<IMounteaDialogueManagerInterface>&, OwningManager);
 
-
 /**
  * Mountea Dialogue Participant Interface.
  * Interface connecting Mountea Dialogue Graph with Mountea Dialogue Manager Component.
