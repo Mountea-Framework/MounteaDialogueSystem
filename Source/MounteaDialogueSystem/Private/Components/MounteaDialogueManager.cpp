@@ -15,6 +15,7 @@
 #include "Interfaces/MounteaDialogueWBPInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "Net/Core/PushModel/PushModel.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 
 
