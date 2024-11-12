@@ -195,7 +195,7 @@ void FAssetEditor_MounteaDialogueGraph::UnregisterTabSpawners(const TSharedRef<F
 
 bool FAssetEditor_MounteaDialogueGraph::CloseWindow()
 {
-	const bool bSatisfied = FAssetEditorToolkit::CloseWindow(EAssetEditorCloseReason::AssetEditorHostClosed);
+	const bool bSatisfied = FAssetEditorToolkit::CloseWindow();
 
 	if (EditingGraph)
 	{
