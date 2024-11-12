@@ -8,12 +8,21 @@
 
 #include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "Interfaces/MounteaDialogueTickableObject.h"
+#include "Nodes/MounteaDialogueGraphNode.h"
 
 #if WITH_EDITORONLY_DATA
 #include "Data/MounteaDialogueGraphExtraDataTypes.h"
 #endif
 
 #include "MounteaDialogueGraph.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGraphStateChanged, const UMounteaDialogueGraph*, Graph);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGraphNodeStateChanged, const UMounteaDialogueGraphNode*, Node);
+
+#if WITH_EDITORONLY_DATA
+DECLARE_DELEGATE_OneParam( FSimpleGraphStateDelegate, const UMounteaDialogueGraph* );
+DECLARE_DELEGATE_FourParams(FOnParticipantRegistered, IMounteaDialogueParticipantInterface*, const UMounteaDialogueGraph*, int32, bool);
+#endif
 
 class UMounteaDialogueGraphNode;
 class UMounteaDialogueGraphEdge;
@@ -33,6 +42,7 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraph : public UObject, public I
 	GENERATED_BODY()
 
 public:
+	
 	UMounteaDialogueGraph();
 
 #pragma region Variables
@@ -105,6 +115,17 @@ public:
 	// Flag indicating whether an edge is enabled
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
 	bool bEdgeEnabled;
+
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Graph")
+	FOnGraphStateChanged OnGraphStateChanged;
+
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Graph")
+	FOnGraphNodeStateChanged OnGraphNodeStateChanged;
+
+private:
+
+	UPROPERTY()
+	bool bIsGraphActive;
 
 #pragma endregion
 
@@ -182,6 +203,20 @@ public:
 	 */
 	bool CanStartDialogueGraph() const;
 
+	void InitializeGraph();
+	void ShutdownGraph();
+
+	// True is for Active Graph, False is for Inactive Graph
+	void SetGraphState(const bool bIsActive);
+
+	void CleanupGraph() const;
+
+private:
+
+	UFUNCTION()
+	void ProcessNodeStateChanged(const UMounteaDialogueGraphNode* Node)
+	{ OnGraphNodeStateChanged.Broadcast(Node); };
+
 public:
 	void CreateGraph();
 	void ClearGraph();
@@ -189,8 +224,8 @@ public:
 	FORCEINLINE bool IsEdgeEnabled() const
 	{
 		return bEdgeEnabled;
-	};
-
+	}
+	
 	virtual void PostInitProperties() override;
 
 #pragma endregion
@@ -227,15 +262,13 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Mountea|Import", meta=(TitleProperty="Json file: {JsonFile}", NoResetToDefault, ShowOnlyInnerProperties))
 	TArray<FDialogueImportData> SourceData;
 
-	/** The file this Dialogue was imported from, may be empty */
-	/*
-	UPROPERTY(VisibleAnywhere, Instanced, Category="Mountea|Import")
-	TObjectPtr<class UAssetImportData> AssetImportData;
-	*/
-
-	// 
 	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
 	bool bCanRenameNode;
+
+	void InitializePIEInstance(const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant, const int32 PIEInstance, const bool bIsRegistered);
+	
+	FSimpleGraphStateDelegate GraphStateUpdated;
+	FOnParticipantRegistered OnGraphInitialized;
 
 #endif
 

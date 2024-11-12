@@ -5,59 +5,7 @@
 
 #include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
-
-/* Serialization is not needed, data can be found locally for Clients -> saving bandwith as well
-void FDialogueRow::SerializeDialogueRowData()
-{
-	ReplicatedDialogueRowData.Reset();
-	for (const FDialogueRowData& RowData : DialogueRowData)
-	{
-		ReplicatedDialogueRowData.Add(RowData);
-	}
-}
-
-void FDialogueRow::DeserializeDialogueRowData()
-{
-	DialogueRowData.Reset();
-	for (const FDialogueRowData& RowData : ReplicatedDialogueRowData)
-	{
-		DialogueRowData.Add(RowData);
-	}
-}
-*/
-
-/*
-void FDialogueRow::OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName)
-{
-	FTableRowBase::OnDataTableChanged(InDataTable, InRowName);
-
-	if (!InDataTable)
-	{
-		return;
-	}
-
-	const FName* FoundRowName = nullptr;
-	
-	for (const auto& Pair : InDataTable->GetRowMap())
-	{
-		const FDialogueRow* RowPtr = reinterpret_cast<const FDialogueRow*>(Pair.Value);
-		if (RowPtr == this)
-		{
-			FoundRowName = &Pair.Key;
-			break;
-		}
-	}
-
-	if (FoundRowName)
-	{
-		if (*FoundRowName != InRowName)
-		{
-			RowGUID = FGuid::NewGuid();
-			UE_LOG(LogTemp, Warning, TEXT("Updated GUID"))
-		}
-	}
-}
-*/
+#include "Interfaces/MounteaDialogueParticipantInterface.h"
 
 FString FDialogueRow::ToString() const
 {
@@ -92,39 +40,155 @@ FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct
 	, AllowedChildNodes(TArray<FGuid>())
 	, ActiveDialogueTableHandle(FDataTableRowHandle())
 	, ActiveDialogueRowDataIndex(0)
+	, LastWidgetCommand(FString())
 {}
 
 FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct(UMounteaDialogueContext* Source)
 	: ActiveDialogueParticipant(Source ? Source->ActiveDialogueParticipant : nullptr)
 	, PlayerDialogueParticipant(Source ? Source->PlayerDialogueParticipant : nullptr)
 	, DialogueParticipant(Source ? Source->DialogueParticipant : nullptr)
-	, DialogueParticipants(Source ? Source->DialogueParticipants : TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>())
 	, ActiveNodeGuid(Source ? ( Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid() ) : FGuid())
 	, PreviousActiveNodeGuid( Source ? Source->PreviousActiveNode : FGuid() )
 	, AllowedChildNodes(Source ? UMounteaDialogueSystemBFC::NodesToGuids(Source->AllowedChildNodes) : TArray<FGuid>())
 	, ActiveDialogueTableHandle(Source ? Source->ActiveDialogueTableHandle : FDataTableRowHandle())
 	, ActiveDialogueRowDataIndex(Source ? Source->ActiveDialogueRowDataIndex : 0)
+	, LastWidgetCommand(Source ? Source->LastWidgetCommand : FString())
 {
+	DialogueParticipants.Empty();
+	if (Source)
+	{
+		for (const auto& Participant : Source->DialogueParticipants)
+		{
+			if (Participant.GetObject())
+				DialogueParticipants.Add(Participant);
+		}
+	}
 }
 
-
-void FMounteaDialogueContextReplicatedStruct::SetData(UMounteaDialogueContext* Source)
+FMounteaDialogueContextReplicatedStruct FMounteaDialogueContextReplicatedStruct::operator+=(UMounteaDialogueContext* Source)
 {
-	if (!Source) return;
+	*this = FMounteaDialogueContextReplicatedStruct(Source);
+	return *this;
+}
 
-	ActiveDialogueParticipant = Source->ActiveDialogueParticipant;
-	PlayerDialogueParticipant = Source->PlayerDialogueParticipant;
-	DialogueParticipant = Source->DialogueParticipant;
-	DialogueParticipants = Source->DialogueParticipants;
-	ActiveDialogueRowDataIndex = Source->ActiveDialogueRowDataIndex;
-	ActiveNodeGuid = Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid();
-	PreviousActiveNodeGuid = Source ? Source->PreviousActiveNode : FGuid();
-	ActiveDialogueTableHandle = Source->ActiveDialogueTableHandle;
-	AllowedChildNodes = UMounteaDialogueSystemBFC::NodesToGuids(Source->AllowedChildNodes);
-	ActiveDialogueRowDataIndex = Source->ActiveDialogueRowDataIndex;
+bool FMounteaDialogueContextReplicatedStruct::NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess)
+{
+	Ar << ActiveNodeGuid;
+	Ar << PreviousActiveNodeGuid;
+	
+	auto DataTable = ActiveDialogueTableHandle.DataTable;
+	FName RowName = ActiveDialogueTableHandle.RowName;
+	
+	Ar << DataTable;
+	Ar << RowName;
+
+	Ar << LastWidgetCommand;
+	
+	if (Ar.IsLoading())
+	{
+		ActiveDialogueTableHandle.DataTable = DataTable;
+		ActiveDialogueTableHandle.RowName = RowName;
+	}
+
+	Ar << ActiveDialogueRowDataIndex;
+
+	// For TScriptInterface properties, we need to serialize the raw UObject* pointers
+	UObject* ActiveParticipantObj = nullptr;
+	UObject* PlayerParticipantObj = nullptr;
+	UObject* DialogueParticipantObj = nullptr;
+
+	if (Ar.IsSaving())
+	{
+		ActiveParticipantObj = ActiveDialogueParticipant.GetObject();
+		PlayerParticipantObj = PlayerDialogueParticipant.GetObject();
+		DialogueParticipantObj = DialogueParticipant.GetObject();
+	}
+	
+	Ar << ActiveParticipantObj;
+	Ar << PlayerParticipantObj;
+	Ar << DialogueParticipantObj;
+
+	if (Ar.IsLoading())
+	{
+		// Reconstruct the TScriptInterfaces from the loaded objects
+		ActiveDialogueParticipant = TScriptInterface<IMounteaDialogueParticipantInterface>(ActiveParticipantObj);
+		PlayerDialogueParticipant = TScriptInterface<IMounteaDialogueParticipantInterface>(PlayerParticipantObj);
+		DialogueParticipant = TScriptInterface<IMounteaDialogueParticipantInterface>(DialogueParticipantObj);
+	}
+
+	if (Ar.IsSaving())
+	{
+		int32 NumParticipants = DialogueParticipants.Num();
+		Ar << NumParticipants;
+
+		for (const auto& Participant : DialogueParticipants)
+		{
+			UObject* ParticipantObj = Participant.GetObject();
+			Ar << ParticipantObj;
+		}
+	}
+	else if (Ar.IsLoading())
+	{
+		int32 NumParticipants;
+		Ar << NumParticipants;
+		
+		DialogueParticipants.Empty(NumParticipants);
+		
+		for (int32 i = 0; i < NumParticipants; ++i)
+		{
+			UObject* ParticipantObj = nullptr;
+			Ar << ParticipantObj;
+			
+			if (ParticipantObj)
+			{
+				DialogueParticipants.Add(TScriptInterface<IMounteaDialogueParticipantInterface>(ParticipantObj));
+			}
+		}
+	}
+
+	Ar << AllowedChildNodes;
+	
+	bOutSuccess = true;
+	return true;
+}
+
+FString FMounteaDialogueContextReplicatedStruct::ToString() const
+{
+	FString returnValue;
+
+	FString activeDialoguePart = FString("Active Dialogue Participant: ");
+	activeDialoguePart.Append(ActiveDialogueParticipant.GetObject() ? ActiveDialogueParticipant->Execute_GetParticipantTag(ActiveDialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
+
+	FString playerDialoguePart = FString("Player Dialogue Participant: ");
+	playerDialoguePart.Append(PlayerDialogueParticipant.GetObject() ? PlayerDialogueParticipant->Execute_GetParticipantTag(PlayerDialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
+
+	FString otherDialoguePart = FString("Other Dialogue Participant: ");
+	otherDialoguePart.Append(DialogueParticipant.GetObject() ? DialogueParticipant->Execute_GetParticipantTag(DialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
+
+	FString allDialogueParts = FString("Dialogue Participants: ");
+	allDialogueParts.Append(FString::Printf(TEXT("%d"), DialogueParticipants.Num()));
+
+	FString activeNode = FString("Active Node ID: ");
+	activeNode.Append(ActiveNodeGuid.IsValid() ? ActiveNodeGuid.ToString() : TEXT("invalid"));
+
+	returnValue
+		.Append(activeDialoguePart).Append(TEXT("\n"))
+		.Append(playerDialoguePart).Append(TEXT("\n"))
+		.Append(otherDialoguePart).Append(TEXT("\n"))
+		.Append(allDialogueParts).Append(TEXT("\n"))
+		.Append(activeNode).Append(TEXT("\n"));
+
+	return returnValue;
 }
 
 bool FMounteaDialogueContextReplicatedStruct::IsValid() const
 {
-	return PlayerDialogueParticipant != nullptr && DialogueParticipant != nullptr && ActiveNodeGuid.IsValid() && DialogueParticipants.Num() != 0;
+	return ActiveDialogueParticipant.GetObject()
+			&& ActiveNodeGuid.IsValid()
+			&& DialogueParticipants.Num() > 0;
+}
+
+void FMounteaDialogueContextReplicatedStruct::Reset()
+{
+	*this = FMounteaDialogueContextReplicatedStruct();
 }

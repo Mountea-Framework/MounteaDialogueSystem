@@ -23,10 +23,9 @@ public:
 	TObjectPtr<AActor> MainParticipant = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Manager")
-	TArray<TObjectPtr<AActor>> OtherParticipants;
+	TArray<TObjectPtr<UObject>> OtherParticipants;
 };
 
-// This class does not need to be modified.
 UINTERFACE(MinimalAPI, BlueprintType, Blueprintable)
 class UMounteaDialogueManagerInterface : public UInterface
 {
@@ -35,9 +34,9 @@ class UMounteaDialogueManagerInterface : public UInterface
 
 class UMounteaDialogueContext;
 
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueInitialized, UMounteaDialogueContext*, Context);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueEvent, UMounteaDialogueContext*, Context);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDialogueStartRequestedResult, const bool, Result, const FString&, ResultMessage);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueContextUpdated, UMounteaDialogueContext*, Context);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDialogueUserInterfaceChanged, TSubclassOf<UUserWidget>, DialogueWidgetClass, UUserWidget*, DialogueWidget);
@@ -48,8 +47,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueRowEvent, UMounteaDialogueC
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueFailed, const FString&, ErrorMessage);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueManagerStateChanged, const EDialogueManagerState&, NewState);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueVoiceEvent, class USoundBase*, NewDialogueVoice);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDialogueWidgetCommand, const TScriptInterface<IMounteaDialogueManagerInterface>&, DialogueManager, const FString&, WidgetCommand);
 
@@ -65,39 +62,174 @@ class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueManagerInterface
 
 public:
 
+	// --- Actor functions ------------------------------
+
 	/**
-	 * Notifies the Dialogue  that a node has been selected.
+	 * Returns the owning actor for this Dialogue Manager Component.
 	 *
-	 * @param NodeGUID The GUID of the selected node.
+	 * @return The owning actor for this Dialogue Manager Component.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="select, chosen, option"), meta=(CustomTag="MounteaK2Setter"))
-	void CallDialogueNodeSelected(const FGuid& NodeGUID);
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	AActor* GetOwningActor() const;
+	virtual AActor* GetOwningActor_Implementation() const = 0;
+
+	/**
+	 * Retrieves current Dialogue Manager State.
+	 * State defines whether Manager can start/close dialogue or not.
+	 * 
+	 * @return ManagerState	Manager state value
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	EDialogueManagerState GetManagerState() const;
+	virtual EDialogueManagerState GetManagerState_Implementation() const = 0;
 	
 	/**
-	 * Starts the Dialogue if possible.
+	 * Sets new Dialogue Manager State.
+	 * 
+	 * @param NewState	Manager State to be set as Manager State
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="start"), meta=(CustomTag="MounteaK2Setter"))
+	virtual void SetManagerState(const EDialogueManagerState NewState) = 0;
+
+	/**
+	 * Retrieves current Default Dialogue Manager State.
+	 * Default Dialogue Manager State sets Dialogue Manager state upon BeginPlay and is used as fallback once Dialogue ends.
+	 * 
+	 * @return ManagerState	Default Manager state value
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	EDialogueManagerState GetDefaultManagerState() const;
+	virtual EDialogueManagerState GetDefaultManagerState_Implementation() const = 0;
+
+	/**
+	 * Sets new Default Dialogue Manager State.
+	 * 
+	 * @param NewState	Manager State to be set as Default Manager State
+	 */
+	virtual void SetDefaultManagerState(const EDialogueManagerState NewState) = 0;
+
+	virtual EDialogueManagerType GetDialogueManagerType() const = 0;
+
+	// --- Context functions ------------------------------
+	
+	/**
+	 * Retrieves current Dialogue Context.
+	 * 
+	 * ❗ Could be null
+	 * @return DialogueContext	Dialogue Context is transient data holder for current dialogue instance.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UMounteaDialogueContext* GetDialogueContext() const;
+	virtual UMounteaDialogueContext* GetDialogueContext_Implementation() const = 0;
+
+	/**
+	 * Sets new Dialogue Context.
+	 * 
+	 * ❔ Null value clears saved data
+	 * @param NewContext	Dialogue Context to be set as Dialogue Context
+	 */
+	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) = 0;
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void UpdateDialogueContext(UMounteaDialogueContext* NewContext);
+	virtual void UpdateDialogueContext_Implementation(UMounteaDialogueContext* NewContext) = 0;
+
+	// --- Dialogue Lifecycle functions ------------------------------
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	bool CanStartDialogue() const;
+	virtual bool CanStartDialogue_Implementation() const = 0;
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void RequestStartDialogue(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
+	virtual void RequestStartDialogue_Implementation(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants) = 0;
+
+	virtual void DialogueStartRequestReceived(const bool bResult, const FString& ResultMessage) = 0;
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	void StartDialogue();
 	virtual void StartDialogue_Implementation() = 0;
-	
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void RequestCloseDialogue();
+	virtual void RequestCloseDialogue_Implementation() = 0;
+
 	/**
 	 * Closes the Dialogue if is active.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="exit, close"), meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(Keywords="exit,close"))
 	void CloseDialogue();
 	virtual void CloseDialogue_Implementation() = 0;
 
+	// --- World UI functions ------------------------------
+	
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void UpdateWorldDialogueUI(const FString& Command);
+	virtual void UpdateWorldDialogueUI_Implementation(const FString& Command) = 0;
+
 	/**
-	 * Tries to Invoke Dialogue UI.
+	 * Adds a single dialogue UI object to the manager.
+	 * @param NewDialogueObject The object to add.
+	 * @return True if the object was successfully added, false otherwise.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	bool AddDialogueUIObject(UObject* NewDialogueObject);
+	virtual bool AddDialogueUIObject_Implementation(UObject* NewDialogueObject) = 0;
+
+	/**
+	 * Adds an array of dialogue UI objects to the manager.
+	 * @param NewDialogueObjects Array of objects to add.
+	 * @return Number of objects successfully added.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	bool AddDialogueUIObjects(const TArray<UObject* >& NewDialogueObjects);
+	virtual bool AddDialogueUIObjects_Implementation(const TArray<UObject* >& NewDialogueObjects) = 0;
+
+	/**
+	 * Removes a single dialogue UI object from the manager.
+	 * @param DialogueObjectToRemove The object to remove.
+	 * @return True if the object was successfully removed, false otherwise.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	bool RemoveDialogueUIObject(UObject* DialogueObjectToRemove);
+	virtual bool RemoveDialogueUIObject_Implementation(UObject* DialogueObjectToRemove) = 0;
+
+	/**
+	 * Removes multiple dialogue UI objects from the manager.
+	 * @param DialogueObjectsToRemove Array of objects to remove.
+	 * @return Number of objects successfully removed.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	bool RemoveDialogueUIObjects(const TArray<UObject* >& DialogueObjectsToRemove);
+	virtual bool RemoveDialogueUIObjects_Implementation(const TArray<UObject* >& DialogueObjectsToRemove) = 0;
+
+	/**
+	 * Sets the entire array of dialogue UI objects, replacing any existing objects.
+	 * @param NewDialogueObjects The new array of dialogue UI objects.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void SetDialogueUIObjects(const TArray<UObject* >& NewDialogueObjects);
+	virtual void SetDialogueUIObjects_Implementation(const TArray<UObject* >& NewDialogueObjects) = 0;
+
+	/**
+	 * Resets the dialogue manager, removing all dialogue UI objects.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void ResetDialogueUIObjects();
+	virtual void ResetDialogueUIObjects_Implementation() = 0;
+	
+	// --- Screen UI functions ------------------------------
+
+	/**
+	 * Tries to Create Dialogue UI.
 	 * This function servers a purpose to try showing Dialogue UI to player.
 	 * ❔ If this function fails, Message will be populated with error message explaining what went wrong.
 	 * 
 	 * @param Message InMessage to be populated with error message explaining why returns false
 	 * @return true if UI can be added to screen, false if cannot
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="show, widget"), meta=(CustomTag="MounteaK2Setter"))
-	bool InvokeDialogueUI(FString& Message);
-	virtual bool InvokeDialogueUI_Implementation(FString& Message) = 0;
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	bool CreateDialogueUI(FString& Message);
+	virtual bool CreateDialogueUI_Implementation(FString& Message) = 0;
 
 	/**
 	 * Tries to Update Dialogue UI.
@@ -108,7 +240,7 @@ public:
 	 * @param Command				Command to be processed.
 	 * @return								true if UI can be update, false if cannot
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="show, widget"), meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	bool UpdateDialogueUI(FString& Message, const FString& Command);
 	virtual bool UpdateDialogueUI_Implementation(FString& Message, const FString& Command) = 0;
 
@@ -118,18 +250,24 @@ public:
 	 * 
 	 * @return true if UI can be removed from screen, false if cannot
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="close, exit, stop, widget"), meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	bool CloseDialogueUI();
 	virtual bool CloseDialogueUI_Implementation() = 0;
 
+	// --- General UI functions ------------------------------
+
 	/**
+	 * Executes a specified command on a dialogue UI widget within the target object, if it supports the required interface.
 	 * 
-	 * @param Command	
+	 * This function allows developers to send specific commands to a dialogue widget, enabling customization or control over UI
+	 * elements, provided the target implements the MounteaDialogueManagerInterface.
+	 *
+	 * @param Command	A string representing the command to be executed on the target widget (e.g., "Open", "Close", "Refresh").
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="UI, widget, process"), meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	void ExecuteWidgetCommand(const FString& Command);
 	virtual void ExecuteWidgetCommand_Implementation(const FString& Command) = 0;
-	
+
 	/**
 	 * Gets the widget class used to display Dialogue UI.
 	 * 
@@ -151,212 +289,18 @@ public:
 	 * ❔ Using null value resets saved value
 	 * @param DialogueUIPtr	UserWidget pointer to be saved as Dialogue UI
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	void SetDialogueWidget(UUserWidget* DialogueUIPtr);
 	virtual void SetDialogueWidget_Implementation(UUserWidget* DialogueUIPtr) = 0;
 
-	/**
-	 * Starts Dialogue Row execution.
-	 * ❔ Dialogue Data contain Dialogue Data Rows, which are individual dialogue lines, which can be skipped.
-	 * ❔ Once all Dialogue Data Rows are finished, Dialogue Data is finished as well.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
-	void StartExecuteDialogueRow();
-	virtual void StartExecuteDialogueRow_Implementation() = 0;
-	
-	/**
-	 * Function responsible for cleanup once Dialogue Row is finished.
-	 * ❔ Dialogue Data contain Dialogue Data Rows, which are individual dialogue lines, which can be skipped.
-	 * ❔ Once all Dialogue Data Rows are finished, Dialogue Data is finished as well.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
-	void FinishedExecuteDialogueRow();
-	virtual void FinishedExecuteDialogueRow_Implementation() = 0;
-
-	/**
-	 * Requests next dialogue row.
-	 * Contains validation that current row must be 'ExecutionMode::AwaitInput'.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
-	void TriggerNextDialogueRow();
-	virtual void TriggerNextDialogueRow_Implementation() = 0;
-
-	/**
-	 * Retrieves the current dialogue context associated with this dialogue instance.
-	 *
-	 * @return The dialogue context object for this instance.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", DisplayName="GetDialogueContext", meta=(CustomTag="MounteaK2Getter"))
-	UMounteaDialogueContext* GetDialogueContextEvent() const;
-	UMounteaDialogueContext* GetDialogueContextEvent_Implementation() const
-	{
-		return GetDialogueContext();
-	}
-	
 	/**
 	 * Returns the widget used to display the current dialogue.
 	 *
 	 * @return The widget used to display the current dialogue.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="UI, Widget"), meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	UUserWidget* GetDialogueWidget() const;
 	virtual UUserWidget* GetDialogueWidget_Implementation() const = 0;
-
-	/**
-	 * Returns the owning actor for this Dialogue Manager Component.
-	 *
-	 * @return The owning actor for this Dialogue Manager Component.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
-	AActor* GetOwningActor() const;
-	virtual AActor* GetOwningActor_Implementation() const
-	{
-		return nullptr;
-	};
-
-	/**
-	 * Prepares the node for execution.
-	 * Asks Active Node to 'PreProcessNode' and then to 'ProcessNode'.
-	 * In this preparation stage, Nodes are asked to process all Decorators.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
-	void PrepareNode();
-	virtual void PrepareNode_Implementation() {};
-
-	/**
-	 * Calls to the Node to Process it.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
-	void ProcessNode();
-	virtual void ProcessNode_Implementation() = 0;
-	
-	/**
-	 * Retrieves current Dialogue Context.
-	 * 
-	 * ❗ Could be null
-	 * @return DialogueContext	Dialogue Context is transient data holder for current dialogue instance.
-	 */
-	virtual UMounteaDialogueContext* GetDialogueContext() const = 0;
-
-	/**
-	 * Sets new Dialogue Context.
-	 * 
-	 * ❔ Null value clears saved data
-	 * @param NewContext	Dialogue Context to be set as Dialogue Context
-	 */
-	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) = 0;
-
-	/**
-	 * Interface call.
-	 * Retrieves current Dialogue Manager State.
-	 * State defines whether Manager can start/close dialogue or not.
-	 * 
-	 * @return ManagerState	Manager state value
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
-	EDialogueManagerState GetState() const;
-	EDialogueManagerState GetState_Implementation() const
-	{ return GetDialogueManagerState(); };
-
-	/**
-	 * Retrieves current Dialogue Manager State.
-	 * State defines whether Manager can start/close dialogue or not.
-	 * 
-	 * @return ManagerState	Manager state value
-	 */
-	virtual EDialogueManagerState GetDialogueManagerState() const = 0;
-
-	/**
-	 * Sets new Dialogue Manager State.
-	 * 
-	 * @param NewState	Manager State to be set as Manager State
-	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="state, status"), meta=(CustomTag="MounteaK2Setter"))
-	void SetDialogueManagerState(const EDialogueManagerState NewState);
-	virtual void SetDialogueManagerState_Implementation(const EDialogueManagerState NewState) = 0;
-
-	/**
-	 * Retrieves current Default Dialogue Manager State.
-	 * Default Dialogue Manager State sets Dialogue Manager state upon BeginPlay and is used as fallback once Dialogue ends.
-	 * 
-	 * @return ManagerState	Default Manager state value
-	 */
-	virtual EDialogueManagerState GetDefaultDialogueManagerState() const = 0;
-
-	/**
-	 * Sets new Default Dialogue Manager State.
-	 * 
-	 * @param NewState	Manager State to be set as Default Manager State
-	 */
-	virtual void SetDefaultDialogueManagerState(const EDialogueManagerState NewState) = 0;
-
-	/**
-	 * Initializes the dialogue with the provided player state and participants. Provides the Manager and World to Nodes and Dialogue Graph.
-	 *
-	 * @param OwningPlayerState		The player state that owns this dialogue instance.
-	 * @param Participants					A structure containing all the participants involved in the dialogue.
-	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="start,begin,initialize,initiate"), meta=(CustomTag="MounteaK2Setter"))
-	void InitializeDialogue(APlayerState* OwningPlayerState, const FDialogueParticipants& Participants);
-	virtual void InitializeDialogue_Implementation(APlayerState* OwningPlayerState, const FDialogueParticipants& Participants) = 0;
-
-	/**
-	 * Skips the current dialogue row.
-	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(Keywords="UI, Widget"), meta=(CustomTag="MounteaK2Setter"))
-	void SkipDialogueRow();
-	virtual void SkipDialogueRow_Implementation() = 0;
-
-	/**
-	 * Adds a single dialogue UI object to the manager.
-	 * @param NewDialogueObject The object to add.
-	 * @return True if the object was successfully added, false otherwise.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
-	bool AddDialogueUIObject(UObject* NewDialogueObject);
-	virtual bool AddDialogueUIObject_Implementation(UObject* NewDialogueObject) = 0;
-
-	/**
-	 * Adds an array of dialogue UI objects to the manager.
-	 * @param NewDialogueObjects Array of objects to add.
-	 * @return Number of objects successfully added.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
-	bool AddDialogueUIObjects(const TArray<UObject* >& NewDialogueObjects);
-	virtual bool AddDialogueUIObjects_Implementation(const TArray<UObject* >& NewDialogueObjects) = 0;
-
-	/**
-	 * Removes a single dialogue UI object from the manager.
-	 * @param DialogueObjectToRemove The object to remove.
-	 * @return True if the object was successfully removed, false otherwise.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
-	bool RemoveDialogueUIObject(UObject* DialogueObjectToRemove);
-	virtual bool RemoveDialogueUIObject_Implementation(UObject* DialogueObjectToRemove) = 0;
-
-	/**
-	 * Removes multiple dialogue UI objects from the manager.
-	 * @param DialogueObjectsToRemove Array of objects to remove.
-	 * @return Number of objects successfully removed.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
-	bool RemoveDialogueUIObjects(const TArray<UObject* >& DialogueObjectsToRemove);
-	virtual bool RemoveDialogueUIObjects_Implementation(const TArray<UObject* >& DialogueObjectsToRemove) = 0;
-
-	/**
-	 * Sets the entire array of dialogue UI objects, replacing any existing objects.
-	 * @param NewDialogueObjects The new array of dialogue UI objects.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
-	void SetDialogueUIObjects(const TArray<UObject* >& NewDialogueObjects);
-	virtual void SetDialogueUIObjects_Implementation(const TArray<UObject* >& NewDialogueObjects) = 0;
-
-	/**
-	 * Resets the dialogue manager, removing all dialogue UI objects.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
-	void ResetDialogueUIObjects();
-	virtual void ResetDialogueUIObjects_Implementation() = 0;
 
 	/**
 	 * Retrieves the Z-order of the dialogue widget.
@@ -364,7 +308,7 @@ public:
 	 *
 	 * @return The current Z-order value of the dialogue widget.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	int32 GetDialogueWidgetZOrder() const;
 	virtual int32 GetDialogueWidgetZOrder_Implementation() const = 0;
 
@@ -375,11 +319,82 @@ public:
 	 *
 	 * @param NewZOrder The new Z-order value to be applied to the dialogue widget.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	void SetDialogueWidgetZOrder(const int32 NewZOrder);
 	virtual void SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder) = 0;
+
+	// --- Dialogue Loop functions ------------------------------
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void CleanupDialogue();
+	virtual void CleanupDialogue_Implementation() = 0;
+
+	// --- Node Loop functions ------------------------------
+
+	/**
+	 * Prepares the node for execution.
+	 * Asks Active Node to 'PreProcessNode' and then to 'ProcessNode'.
+	 * In this preparation stage, Nodes are asked to process all Decorators.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void PrepareNode();
+	virtual void PrepareNode_Implementation() = 0;
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void NodePrepared();
+	virtual void NodePrepared_Implementation() = 0;
+
+	/**
+	 * Calls to the Node to Process it.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void ProcessNode();
+	virtual void ProcessNode_Implementation() = 0;
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void NodeProcessed();
+	virtual void NodeProcessed_Implementation() = 0;
+
+	/**
+	 * Notifies the Dialogue  that a node has been selected.
+	 *
+	 * @param NodeGuid The GUID of the selected node.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void SelectNode(const FGuid& NodeGuid);
+	virtual void SelectNode_Implementation(const FGuid& NodeGuid) = 0;
 	
-	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() = 0;
+	// --- Node Rows Loop functions ------------------------------
+
+	/**
+	 * Starts Dialogue Row execution.
+	 * 
+	 * ❔ Once all Dialogue Data Rows are finished, Dialogue Data is finished as well.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void ProcessDialogueRow();
+	virtual void ProcessDialogueRow_Implementation() = 0;
+
+	/**
+	 * Function responsible for cleanup once Dialogue Row is finished.
+	 * 
+	 * ❔ Dialogue Data contain Dialogue Data Rows, which are individual dialogue lines, which can be skipped.
+	 * ❔ Once all Dialogue Data Rows are finished, Dialogue Data is finished as well.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void DialogueRowProcessed(const bool bForceFinish = false);
+	virtual void DialogueRowProcessed_Implementation(const bool bForceFinish = false) = 0;
+
+	/**
+	 * Skips the current dialogue row.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	void SkipDialogueRow();
+	virtual void SkipDialogueRow_Implementation() = 0;
+
+public:
+	
+	virtual FDialogueStartRequestedResult& GetDialogueStartRequestedResultEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueClosedEventHandle() = 0;
 	
@@ -396,9 +411,6 @@ public:
 	virtual FDialogueFailed& GetDialogueFailedEventHandle() = 0;
 
 	virtual FDialogueManagerStateChanged& GetDialogueManagerStateChangedEventHandle() = 0;
-
-	virtual FDialogueVoiceEvent& GetDialogueVoiceStartRequestEventHandle() = 0;
-	virtual FDialogueVoiceEvent& GetDialogueVoiceSkipRequestEventHandle() = 0;
 
 	virtual FDialogueWidgetCommand& GetDialogueWidgetCommandHandle() = 0;
 
