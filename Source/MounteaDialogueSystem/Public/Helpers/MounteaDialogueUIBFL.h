@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Widgets/Layout/Anchors.h"
-#include "SlateCore/Public/Layout/Margin.h"
+#include "Layout/Margin.h"
 #include "MounteaDialogueUIBFL.generated.h"
 
 class UMounteaDialogueGraphNode;

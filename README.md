@@ -8,10 +8,12 @@ Mountea Dialogue System is an Open-source Mountea Framework Unreal Engine tool f
 [![Discord](https://badgen.net/discord/members/2vXWEEN?label=Discord&logo=discord&logoColor=ffffff&color=7389D8)](https://discord.com/invite/2vXWEEN)
 
 ## Discord Channel
-
-[![Discord LINK](https://static.wikia.nocookie.net/siivagunner/images/9/9f/Discord_icon.svg/revision/latest?cb=20210814160101)](https://discord.gg/2vXWEEN)
+<a href="https://discord.gg/2vXWEEN"><img src="https://static.wikia.nocookie.net/siivagunner/images/9/9f/Discord_icon.svg/revision/latest?cb=20210814160101" alt="Discord LINK" width="100" height="100"></a>
 
 Join support and community Discord!
+
+## Tutorial videos
+<a href="https://www.youtube.com/playlist?list=PLIU53wA8zZmg5eBKEcpZr7G8JBBZ4QPKq"><img src="https://img.talkandroid.com/uploads/2016/06/youtube-logo-450x450.png" alt="TUTORIAL playlist" width="100" height="100"></a>
 
 ## Compatible Engine Version
 
@@ -26,42 +28,45 @@ Colour | Explanation
 ### Suport Table
 Engine Version | Plugin Version | Support
 -------------- | -------------- | ----
-UE 4.26 | 0.0.0.1 | 🟩
-UE 4.27 | - | 🟨
-UE 5.00 | - | 🟨
-UE 5.1 | - | 🟨
+UE 4.26 | [1.0.0.426](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.426) | 🟥
+UE 4.27 | [1.0.0.427](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.427) | 🟥
+UE 5.00 | [1.0.0.50](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.50) | 🟩
+UE 5.1 | [1.0.0.51](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.51) | 🟩
+UE 5.2 | [1.0.0.52](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.52) | 🟩
 
 ## Features
 ### Graph Editor
 This plugin comes with its own Graph Editor! This way you can easily connect nodes and visualise the Dialogue flow even for the most complex graphs you can imagine.
 <p align="center" width="100%">
-    <img width="65%" src="https://user-images.githubusercontent.com/37410226/222853211-57874166-bf4c-4b46-9b5e-c10e513ab035.png">
+    <img width="65%" src="https://user-images.githubusercontent.com/37410226/233844580-a8947def-a4b6-4866-a0ac-d013b1b9d89a.png">
 </p>
-
 
 #### Graph Editor Validations
-We are just humans and we tend to do mistakes. This feature will try its best to track down all issues that might resolve in broken Dialogue Trees and inform you which node has what issues!
-**Bonus:** Graph Validation reflects Themes! You can have Light or Dark one.
+We are just humans and we tend to make mistakes. Graph Validator tries its best to track down all issues in the Editor before the project is packed, therefore saving a bunch of debugging hours for all parties included.
+**Bonus:** Graph Validator reflects Graph Themes!
 <p align="center" width="100%">
-    <img width="65%" src="https://user-images.githubusercontent.com/37410226/219807417-a2fa5d61-70be-449d-bbab-d9a8e9ae4793.png">
+    <img width="65%" src="https://user-images.githubusercontent.com/37410226/233845041-81b0f873-5aaa-4881-8e50-f80b4e66c45a.png">
 </p>
 
+#### Graph Themes Settings
+Dialogue Graph Editor settings contain a lot of settings that might help developers tweak the Dialogue Graph Editor to their liking.
+
 #### Dialogue Previews
-Select any node and see what is inside. No need to search where all the texts are, just click and see.
+To save precious time, Dialogue Previews show the raw context of the Dialogue Data. What is this helpful for? Well, changing Dialogue Data automatically updates the Previews, showing what data will be played for this Node.
 <p align="center" width="100%">
-    <img width="65%" src="https://user-images.githubusercontent.com/37410226/219806723-bd0d407d-77ce-451a-a315-a01dd8f6409e.png">
+    <img width="65%" src="https://user-images.githubusercontent.com/37410226/233844783-95be9ace-f612-4448-8a4a-715969237fc1.png">
 </p>
 
 #### Dialogue Decorators
 Introducing *Decorators*, a powerful yet versitale tool of Blueprint based events that could be triggered per Dialogue Node! This provides a simple way to trigger cutscenes, switch cameras, end dialogues when being attacked or anything you like!
 <p align="center" width="100%">
-    <img width="65%" src="https://user-images.githubusercontent.com/37410226/222269825-c1e92517-7f13-4754-ad15-97d938b9c841.png">
+    <img width="65%" src="https://user-images.githubusercontent.com/37410226/233844834-a3e7522f-b38c-49b7-9dcb-e3725f3a5208.png">
 </p>
 
 #### Dialogue Node Details
 A new feature droped in, and that is Node Style now supporting indications how many Decorators each Node implements and whether it inherits Decorators from Graph or not. This will come handy for debugging dialogues, showing that some nodes might not implement required Decorators!
 <p align="center" width="100%">
-    <img width="65%" src="https://user-images.githubusercontent.com/37410226/222851076-58c74403-2818-4048-9fd6-a374487aaad6.png">
+    <img width="65%" src="https://user-images.githubusercontent.com/37410226/233844886-4414e2f6-788d-48da-a643-8b275c083f09.png">
 </p>
 
 ## Installation
@@ -77,7 +82,7 @@ Download the plugin (either from Releases or from Marketplace). For more detaile
 * Version Branch: A stable branch for specified Engine version.
 * Version Brach_Dev: A development branch for specified Engine version.
 
-## Additional Documentation and Acknowledgments
+## Star History
 
-* Roadmap: -
-* Documentation: -
+[![Star History Chart](https://api.star-history.com/svg?repos=Mountea-Framework/MounteaDialogueSystem&type=Date)](https://star-history.com/#Mountea-Framework/MounteaDialogueSystem&Date)
+

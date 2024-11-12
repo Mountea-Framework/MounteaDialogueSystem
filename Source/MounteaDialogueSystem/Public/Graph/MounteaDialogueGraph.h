@@ -16,8 +16,8 @@
 
 #include "MounteaDialogueGraph.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGraphStateChanged, const UMounteaDialogueGraph*, Graph);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGraphNodeStateChanged, const UMounteaDialogueGraphNode*, Node);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDialogueGraphStateChanged, const UMounteaDialogueGraph*, Graph);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDialogueGraphNodeStateChanged, const UMounteaDialogueGraphNode*, Node);
 
 #if WITH_EDITORONLY_DATA
 DECLARE_DELEGATE_OneParam( FSimpleGraphStateDelegate, const UMounteaDialogueGraph* );
@@ -117,10 +117,10 @@ public:
 	bool bEdgeEnabled;
 
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Graph")
-	FOnGraphStateChanged OnGraphStateChanged;
+	FOnDialogueGraphStateChanged OnGraphStateChanged;
 
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Graph")
-	FOnGraphNodeStateChanged OnGraphNodeStateChanged;
+	FOnDialogueGraphNodeStateChanged OnGraphNodeStateChanged;
 
 private:
 

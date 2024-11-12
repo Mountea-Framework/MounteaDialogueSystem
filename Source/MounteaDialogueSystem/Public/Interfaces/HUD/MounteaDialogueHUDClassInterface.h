@@ -7,6 +7,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Widgets/Layout/Anchors.h"
 #include "Layout/Margin.h"
+#include "Blueprint/UserWidget.h" // WTF why?
 #include "MounteaDialogueHUDClassInterface.generated.h"
 
 
@@ -48,7 +49,7 @@ public:
 	 * @return                   The UUserWidget representing the viewport, or nullptr if the viewport manager does not implement the interface or an error occurs.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|HUD|Viewport")
-	class UUserWidget* GetViewportWidget() const;
+	UUserWidget* GetViewportWidget() const;
 	virtual UUserWidget* GetViewportWidget_Implementation() const = 0;
 
 	/**
