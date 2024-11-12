@@ -145,14 +145,14 @@ private:
 	UFUNCTION(Server, Reliable)
 	void CleanupDialogue_Server();
 	UFUNCTION(Server, Unreliable)
-	void UpdateWorldDialogueUI_Server(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command);
-	UFUNCTION(NetMulticast, Unreliable)
-	void UpdateWorldDialogueUI_Multicast(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command);
+	void UpdateWorldDialogueUI_Server(const FString& Command);
 	
 	UFUNCTION()
 	void OnRep_ManagerState();
 	UFUNCTION()
 	void OnRep_DialogueContext();
+	UFUNCTION()
+	void OnRep_WidgetCommand();
 
 public:
 	bool IsAuthority() const;
@@ -313,6 +313,10 @@ protected:
 	 */
 	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	FTimerHandle TimerHandle_RowTimer;
+
+	UPROPERTY(Transient, ReplicatedUsing=OnRep_WidgetCommand)
+	FString DialogueCommand;
+	FString LastDialogueCommand;
 
 private:
 

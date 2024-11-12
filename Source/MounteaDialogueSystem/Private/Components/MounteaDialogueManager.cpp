@@ -75,6 +75,7 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 
 	DOREPLIFETIME(UMounteaDialogueManager, ManagerState);
 	DOREPLIFETIME(UMounteaDialogueManager, TransientDialogueContext);
+	DOREPLIFETIME(UMounteaDialogueManager, DialogueCommand);
 }
 
 MounteaDialogueManagerHelpers::FDialogueRowDataInfo MounteaDialogueManagerHelpers::GetDialogueRowDataInfo(const UMounteaDialogueContext* DialogueContext)
@@ -217,7 +218,9 @@ void UMounteaDialogueManager::NotifyParticipants(const TArray<TScriptInterface<I
 
 bool UMounteaDialogueManager::IsAuthority() const
 {
-	return GetOwner() && GetOwner()->HasAuthority();
+	auto localOwner = UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(this);
+	auto localOwnerRole = UMounteaDialogueSystemBFC::GetOwnerLocalRole(localOwner);
+	return GetOwner() && GetOwner()->HasAuthority() && (localOwnerRole == ROLE_AutonomousProxy || localOwnerRole == ROLE_Authority);
 }
 
 void UMounteaDialogueManager::DialogueFailed(const FString& ErrorMessage)
@@ -874,40 +877,53 @@ void UMounteaDialogueManager::UpdateWorldDialogueUI_Implementation(const TScript
 {
 	if (!IsAuthority())
 	{
+		DialogueCommand = Command;
+		LastDialogueCommand = Command;
 		for (const auto& dialogueObject : DialogueObjects)
 		{
 			if (dialogueObject)
 				IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, DialogueManager, Command);
 		}
-		
-		UpdateWorldDialogueUI_Server(DialogueManager, Command);
+
+		auto localOwner = UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(this);
+		auto localOwnerRole = UMounteaDialogueSystemBFC::GetOwnerLocalRole(localOwner);
+		if (localOwnerRole == ROLE_AutonomousProxy)
+			UpdateWorldDialogueUI_Server(Command);
 	}
 	else
-		UpdateWorldDialogueUI_Multicast(DialogueManager, Command);
-}
-
-void UMounteaDialogueManager::UpdateWorldDialogueUI_Server_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command)
-{
-	UpdateWorldDialogueUI_Multicast(DialogueManager, Command);
-}
-
-void UMounteaDialogueManager::UpdateWorldDialogueUI_Multicast_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command)
-{
-	if (!UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
-		return;
-
-	if(IsAuthority())
-		return;
-
-	auto localOwner = UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(this) ;
-	auto localRole = UMounteaDialogueSystemBFC::GetOwnerLocalRole(localOwner);
-	if (localRole == ROLE_AutonomousProxy)
-		return;
-	
-	for (const auto& dialogueObject : DialogueObjects)
 	{
-		if (dialogueObject)
-			IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, DialogueManager, Command);
+		if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
+		{
+			for (const auto& dialogueObject : DialogueObjects)
+			{
+				if (dialogueObject)
+					IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, DialogueManager, Command);
+			}
+		}
+		
+		UpdateWorldDialogueUI_Server(Command);
+	}
+}
+
+void UMounteaDialogueManager::UpdateWorldDialogueUI_Server_Implementation(const FString& Command)
+{
+	DialogueCommand = Command;
+}
+
+void UMounteaDialogueManager::OnRep_WidgetCommand()
+{
+	if (!IsAuthority())
+	{
+		if (LastDialogueCommand == DialogueCommand)
+			return;
+		
+		for (const auto& dialogueObject : DialogueObjects)
+		{
+			if (dialogueObject)
+				IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, this, DialogueCommand);
+		}
+
+		LastDialogueCommand = DialogueCommand;
 	}
 }
 
