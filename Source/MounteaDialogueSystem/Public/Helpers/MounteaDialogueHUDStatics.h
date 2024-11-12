@@ -6,8 +6,9 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Widgets/Layout/Anchors.h"
 #include "Layout/Margin.h"
-#include "MounteaDialogueUIBFL.generated.h"
+#include "MounteaDialogueHUDStatics.generated.h"
 
+class IMounteaDialogueManagerInterface;
 class UMounteaDialogueGraphNode;
 class UMounteaDialogueGraphNode_DialogueNodeBase;
 
@@ -46,8 +47,8 @@ struct FWidgetAdditionParams
 /**
  * 
  */
-UCLASS(DisplayName="Mountea Dialogue UI Function Library")
-class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueUIBFL : public UBlueprintFunctionLibrary
+UCLASS(DisplayName="Mountea Dialogue HUD Function Library")
+class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueHUDStatics : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
@@ -79,7 +80,7 @@ public:
 	 * @param FromNode The dialogue node from which to retrieve the GUID.
 	 * @return The GUID associated with the specified node.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|UI", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers|UI", meta=(CustomTag="MounteaK2Getter"))
 	static FGuid GetDialogueNodeGuid(UMounteaDialogueGraphNode_DialogueNodeBase* FromNode);
 
 	/**
@@ -88,7 +89,7 @@ public:
 	 * @param FromNode The dialogue node from which to retrieve the row.
 	 * @return The dialogue row associated with the specified node.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|UI", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers|UI", meta=(CustomTag="MounteaK2Getter"))
 	static FDialogueRow GetDialogueNodeRow(UMounteaDialogueGraphNode_DialogueNodeBase* FromNode);
 
 	/**
@@ -97,7 +98,7 @@ public:
 	 * @param RawNodes The array of raw dialogue nodes to be filtered.
 	 * @return An array of nodes that are classified as dialogue-friendly.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|UI", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers|UI", meta=(CustomTag="MounteaK2Getter"))
 	static TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> FilterDialogueFriendlyNodes(const TArray<UMounteaDialogueGraphNode*>& RawNodes);
 
 	/**
@@ -121,13 +122,15 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers|UI", meta=(CustomTag="MounteaK2Getter"))
 	static int32 GetWidgetZOrder(class UUserWidget* Widget, UObject* WorldContext);
 
+	// --- HUD Interface functions ------------------------------
+
 	/**
 	 * Retrieves the base widget class used for the viewport from the specified viewport manager that implements MounteaDialogueHUDClassInterface.
 	 *
 	 * @param ViewportManager    The viewport manager, an actor that implements the MounteaDialogueHUDClassInterface.
 	 * @return                   The subclass of UUserWidget used as the base class for the viewport, or nullptr if an error occurs.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Getter", HideSelfPin="true"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Getter", HideSelfPin="true"))
 	static TSubclassOf<UUserWidget> GetViewportBaseClass(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueHUDClassInterface")) AActor* ViewportManager);
 	
 	/**
@@ -144,7 +147,7 @@ public:
 	 * @param ViewportManager    The viewport manager, an actor that implements the MounteaDialogueHUDClassInterface.
 	 * @return                   The UUserWidget representing the viewport, or nullptr if the viewport manager does not implement the interface or an error occurs.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Setter", HideSelfPin="true"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Getter", HideSelfPin="true"))
 	static UUserWidget* GetViewportWidget(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueHUDClassInterface")) AActor* ViewportManager);
 	
 	/**
@@ -165,6 +168,8 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Setter", HideSelfPin="true"))
 	static void RemoveChildWidgetFromViewport(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueHUDClassInterface")) AActor* ViewportManager, UUserWidget* ChildWidget);
+
+	// --- Viewport Widget Interface functions ------------------------------
 	
 	/**
 	 * Adds a child widget to the specified parent widget that implements the MounteaDialogueViewportWidgetInterface.
@@ -185,11 +190,72 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Setter", HideSelfPin="true"))
 	static void RemoveChildWidget(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueViewportWidgetInterface")) UUserWidget* ParentWidget, UUserWidget* ChildWidget);
 
+	// --- Options Container Interface functions ------------------------------
+	
 	/**
 	 * Returns all Dialogue Options from the specified Dialogue Options Container parent widget that implements the MounteaDialogueOptionsContainerInterface.
 	 *
 	 * @param ParentWidget    The parent widget that should implement the MounteaDialogueOptionsContainerInterface.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Setter", HideSelfPin="true"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Getter", HideSelfPin="true"))
 	static TArray<UUserWidget*> GetDialogueOptions(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueOptionsContainerInterface")) UUserWidget* ParentWidget);
+
+	// --- Dialogue Base UI Interface functions ------------------------------
+
+	/**
+	 * Generic helper function to provide a global way to bind UI events.
+	 * 
+	 * @param Target    The widget that should implement the MounteaDialogueUIBaseInterface.
+	 * @return Binding result.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface", meta=(CustomTag="MounteaK2Setter"))
+	static bool BindEvents(UUserWidget* Target);
+
+	/**
+	 * Generic helper function to provide a global way to unbind UI events.
+	 * 
+	 * @param Target    The widget that should implement the MounteaDialogueUIBaseInterface.
+	 * @return Binding result.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface", meta=(CustomTag="MounteaK2Setter"))
+	static bool UnbindEvents(UUserWidget* Target);
+
+	/**
+	 * Generic helper function to provide easy way of sending commands around without need of binding.
+	 * 
+	 * @param Target    The widget that should implement the MounteaDialogueUIBaseInterface.
+	 * @param Command				Required string command to drive inner logic.
+	 * @param OptionalPayload	Optional payload which can contain data for command.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface", meta=(CustomTag="MounteaK2Setter"))
+	static void ProcessStringCommand(UUserWidget* Target, const FString& Command, UObject* OptionalPayload = nullptr);
+
+	/**
+	 * Helper function to provide easy way to request Theme update.
+	 * Theme logic not provided to abstract the idea from any code.
+	 *
+	 * @param Target    The widget that should implement the MounteaDialogueUIBaseInterface.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface", meta=(CustomTag="MounteaK2Setter"))
+	static void ApplyTheme(UUserWidget* Target);
+
+	// --- Dialogue Widget Interface functions ------------------------------
+	/**
+	 * This event should be called when you want to refresh UI data.
+	 *
+	 * @param Target    The widget that should implement the MounteaDialogueWBPInterface. Usually Widget Blueprint.
+	 * @param DialogueManager	Dialogue Manager Interface reference. Request 'GetDialogueContext' to retrieve data to display.
+	 * @param Command			String command. All commands are defined in ProjectSettings/MounteaFramework/MounteaDialogueSystem.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|Dialogue", meta=(CustomTag="MounteaK2Setter"))
+	static void RefreshDialogueWidget(UObject* Target, const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command);
+
+	/**
+	 * Called when an option has been selected.
+	 *
+	 * @param Target    The widget that should implement the MounteaDialogueWBPInterface. Usually Widget Blueprint.
+	 * @param SelectionGUID The GUID of the selected option.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|Dialogue")
+	static void OnOptionSelected(UObject* Target, const FGuid& SelectionGUID);
 };

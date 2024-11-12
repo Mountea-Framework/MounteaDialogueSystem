@@ -5,7 +5,7 @@
 
 #include "Data/MounteaDialogueGraphDataTypes.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
-#include "Helpers/MounteaDialogueUIBFL.h"
+#include "Helpers/MounteaDialogueHUDStatics.h"
 #include "Interfaces/HUD/MounteaDialogueWBPInterface.h"
 #include "Interfaces/UMG/MounteaDialogueOptionInterface.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
@@ -54,7 +54,7 @@ void UMounteaDialogueOptionsContainer::AddNewDialogueOption_Implementation(UMoun
 		if (dialogueOption.GetObject() && dialogueOption.GetInterface())
 		{
 			dialogueOption->GetDialogueOptionSelectedHandle().AddUniqueDynamic(this, &UMounteaDialogueOptionsContainer::ProcessOptionSelected);
-			dialogueOption->Execute_SetNewDialogueOptionData(dialogueOptionWidget, FDialogueOptionData( UMounteaDialogueUIBFL::GetDialogueNodeGuid(NewDialogueOption),  UMounteaDialogueUIBFL::GetDialogueNodeRow(NewDialogueOption)));
+			dialogueOption->Execute_SetNewDialogueOptionData(dialogueOptionWidget, FDialogueOptionData( UMounteaDialogueHUDStatics::GetDialogueNodeGuid(NewDialogueOption),  UMounteaDialogueHUDStatics::GetDialogueNodeRow(NewDialogueOption)));
 		}
 	}
 	else
@@ -63,7 +63,7 @@ void UMounteaDialogueOptionsContainer::AddNewDialogueOption_Implementation(UMoun
 		return;
 	}
 	
-	DialogueOptions.Add(UMounteaDialogueUIBFL::GetDialogueNodeGuid(NewDialogueOption), dialogueOptionWidget);
+	DialogueOptions.Add(UMounteaDialogueHUDStatics::GetDialogueNodeGuid(NewDialogueOption), dialogueOptionWidget);
 }
 
 void UMounteaDialogueOptionsContainer::AddNewDialogueOptions_Implementation(const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& NewDialogueOptions)
@@ -78,7 +78,7 @@ void UMounteaDialogueOptionsContainer::RemoveDialogueOption_Implementation(UMoun
 {
 	if (DirtyDialogueOption)
 	{
-		if (TObjectPtr<UUserWidget> dirtyOptionWidget = DialogueOptions.FindRef(UMounteaDialogueUIBFL::GetDialogueNodeGuid(DirtyDialogueOption)))
+		if (TObjectPtr<UUserWidget> dirtyOptionWidget = DialogueOptions.FindRef(UMounteaDialogueHUDStatics::GetDialogueNodeGuid(DirtyDialogueOption)))
 		{
 			TScriptInterface<IMounteaDialogueOptionInterface> dialogueOption = dirtyOptionWidget;
 			if (dialogueOption.GetObject() && dialogueOption.GetInterface())
@@ -89,7 +89,7 @@ void UMounteaDialogueOptionsContainer::RemoveDialogueOption_Implementation(UMoun
 		}
 		
 	}
-	DialogueOptions.Remove(UMounteaDialogueUIBFL::GetDialogueNodeGuid(DirtyDialogueOption));
+	DialogueOptions.Remove(UMounteaDialogueHUDStatics::GetDialogueNodeGuid(DirtyDialogueOption));
 }
 
 void UMounteaDialogueOptionsContainer::RemoveDialogueOptions_Implementation(const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& DirtyDialogueOptions)

@@ -1,11 +1,13 @@
 ﻿// All rights reserved Dominik Morse (Pavlicek) 2024.
 
 
-#include "Helpers/MounteaDialogueUIBFL.h"
+#include "Helpers/MounteaDialogueHUDStatics.h"
 
 #include "Blueprint/GameViewportSubsystem.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/HUD/MounteaDialogueHUDClassInterface.h"
+#include "Interfaces/HUD/MounteaDialogueUIBaseInterface.h"
+#include "Interfaces/HUD/MounteaDialogueWBPInterface.h"
 #include "Interfaces/UMG/MounteaDialogueOptionInterface.h"
 #include "Interfaces/UMG/MounteaDialogueRowInterface.h"
 #include "Interfaces/UMG/MounteaDialogueViewportWidgetInterface.h"
@@ -13,22 +15,22 @@
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 #include "WBP/MounteaDialogueOptionsContainer.h"
 
-FDialogueOptionData UMounteaDialogueUIBFL::NewDialogueOptionData(const FGuid& Node, const FDialogueRow& DialogueRow)
+FDialogueOptionData UMounteaDialogueHUDStatics::NewDialogueOptionData(const FGuid& Node, const FDialogueRow& DialogueRow)
 {
 	return FDialogueOptionData(Node, DialogueRow);
 }
 
-FWidgetDialogueRow UMounteaDialogueUIBFL::NewDialogueWidgetRowData(const FDialogueRow& SourceRow, const FDialogueRowData& SourceRowData)
+FWidgetDialogueRow UMounteaDialogueHUDStatics::NewDialogueWidgetRowData(const FDialogueRow& SourceRow, const FDialogueRowData& SourceRowData)
 {
 	return FWidgetDialogueRow(SourceRow, SourceRowData);
 }
 
-FGuid UMounteaDialogueUIBFL::GetDialogueNodeGuid(UMounteaDialogueGraphNode_DialogueNodeBase* FromNode)
+FGuid UMounteaDialogueHUDStatics::GetDialogueNodeGuid(UMounteaDialogueGraphNode_DialogueNodeBase* FromNode)
 {
 	return FromNode ? FromNode->GetNodeGUID() : FGuid();
 }
 
-FDialogueRow UMounteaDialogueUIBFL::GetDialogueNodeRow(UMounteaDialogueGraphNode_DialogueNodeBase* FromNode)
+FDialogueRow UMounteaDialogueHUDStatics::GetDialogueNodeRow(UMounteaDialogueGraphNode_DialogueNodeBase* FromNode)
 {
 	if (TObjectPtr<UMounteaDialogueGraphNode_DialogueNodeBase> dialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(FromNode) )
 	{
@@ -38,7 +40,7 @@ FDialogueRow UMounteaDialogueUIBFL::GetDialogueNodeRow(UMounteaDialogueGraphNode
 	return FDialogueRow::Invalid();
 }
 
-TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> UMounteaDialogueUIBFL::FilterDialogueFriendlyNodes(const TArray<UMounteaDialogueGraphNode*>& RawNodes)
+TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> UMounteaDialogueHUDStatics::FilterDialogueFriendlyNodes(const TArray<UMounteaDialogueGraphNode*>& RawNodes)
 {
 	TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> returnArray;
 	
@@ -56,7 +58,7 @@ TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> UMounteaDialogueUIBFL::Filte
 	return returnArray;
 }
 
-FText UMounteaDialogueUIBFL::ReplaceRegexInText(const FString& Regex, const FText& Replacement, const FText& SourceText)
+FText UMounteaDialogueHUDStatics::ReplaceRegexInText(const FString& Regex, const FText& Replacement, const FText& SourceText)
 {
 	FString					sourceString = SourceText.ToString();
 	FRegexPattern	regexPattern(Regex);
@@ -79,7 +81,7 @@ FText UMounteaDialogueUIBFL::ReplaceRegexInText(const FString& Regex, const FTex
 	return FText::FromString(formattedString);
 }
 
-int32 UMounteaDialogueUIBFL::GetWidgetZOrder(UUserWidget* Widget, UObject* WorldContext)
+int32 UMounteaDialogueHUDStatics::GetWidgetZOrder(UUserWidget* Widget, UObject* WorldContext)
 {
 	if (!Widget || !WorldContext)
 		return -1;
@@ -98,7 +100,7 @@ int32 UMounteaDialogueUIBFL::GetWidgetZOrder(UUserWidget* Widget, UObject* World
 	return -1;
 }
 
-TSubclassOf<UUserWidget> UMounteaDialogueUIBFL::GetViewportBaseClass(AActor* ViewportManager)
+TSubclassOf<UUserWidget> UMounteaDialogueHUDStatics::GetViewportBaseClass(AActor* ViewportManager)
 {
 	if (!IsValid(ViewportManager))
 	{
@@ -115,7 +117,7 @@ TSubclassOf<UUserWidget> UMounteaDialogueUIBFL::GetViewportBaseClass(AActor* Vie
 	return nullptr;
 }
 
-void UMounteaDialogueUIBFL::InitializeViewportWidget(AActor* ViewportManager)
+void UMounteaDialogueHUDStatics::InitializeViewportWidget(AActor* ViewportManager)
 {
 	if (!IsValid(ViewportManager))
 	{
@@ -131,7 +133,7 @@ void UMounteaDialogueUIBFL::InitializeViewportWidget(AActor* ViewportManager)
 	LOG_ERROR(TEXT("[InitializeViewportWidget] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
 }
 
-UUserWidget* UMounteaDialogueUIBFL::GetViewportWidget(AActor* ViewportManager)
+UUserWidget* UMounteaDialogueHUDStatics::GetViewportWidget(AActor* ViewportManager)
 {
 	if (!IsValid(ViewportManager))
 	{
@@ -148,7 +150,7 @@ UUserWidget* UMounteaDialogueUIBFL::GetViewportWidget(AActor* ViewportManager)
 	return nullptr;
 }
 
-void UMounteaDialogueUIBFL::AddChildWidgetToViewport(AActor* ViewportManager, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams)
+void UMounteaDialogueHUDStatics::AddChildWidgetToViewport(AActor* ViewportManager, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams)
 {
 	if (!IsValid(ViewportManager))
 	{
@@ -164,7 +166,7 @@ void UMounteaDialogueUIBFL::AddChildWidgetToViewport(AActor* ViewportManager, UU
 	LOG_ERROR(TEXT("[AddChildWidgetToViewport] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
 }
 
-void UMounteaDialogueUIBFL::RemoveChildWidgetFromViewport(AActor* ViewportManager, UUserWidget* ChildWidget)
+void UMounteaDialogueHUDStatics::RemoveChildWidgetFromViewport(AActor* ViewportManager, UUserWidget* ChildWidget)
 {
 	if (!IsValid(ViewportManager))
 	{
@@ -180,7 +182,7 @@ void UMounteaDialogueUIBFL::RemoveChildWidgetFromViewport(AActor* ViewportManage
 	LOG_ERROR(TEXT("[RemoveChildWidgetFromViewport] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
 }
 
-void UMounteaDialogueUIBFL::AddChildWidget(UUserWidget* ParentWidget, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams)
+void UMounteaDialogueHUDStatics::AddChildWidget(UUserWidget* ParentWidget, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams)
 {
 	if (!IsValid(ParentWidget))
 	{
@@ -196,7 +198,7 @@ void UMounteaDialogueUIBFL::AddChildWidget(UUserWidget* ParentWidget, UUserWidge
 	LOG_ERROR(TEXT("[AddChildWidget] ParentWidget does not implement `MounteaDialogueViewportWidgetInterface`!"));
 }
 
-void UMounteaDialogueUIBFL::RemoveChildWidget(UUserWidget* ParentWidget, UUserWidget* ChildWidget)
+void UMounteaDialogueHUDStatics::RemoveChildWidget(UUserWidget* ParentWidget, UUserWidget* ChildWidget)
 {
 	if (!IsValid(ParentWidget))
 	{
@@ -212,7 +214,7 @@ void UMounteaDialogueUIBFL::RemoveChildWidget(UUserWidget* ParentWidget, UUserWi
 	LOG_ERROR(TEXT("[RemoveChildWidget] ParentWidget does not implement `MounteaDialogueViewportWidgetInterface`!"));
 }
 
-TArray<UUserWidget*> UMounteaDialogueUIBFL::GetDialogueOptions(UUserWidget* ParentWidget)
+TArray<UUserWidget*> UMounteaDialogueHUDStatics::GetDialogueOptions(UUserWidget* ParentWidget)
 {
 	TArray<UUserWidget*> dialogueOptions;
 	if (!IsValid(ParentWidget))
@@ -228,4 +230,62 @@ TArray<UUserWidget*> UMounteaDialogueUIBFL::GetDialogueOptions(UUserWidget* Pare
 
 	LOG_ERROR(TEXT("[GetDialogueOptions] ParentWidget does not implement `MounteaDialogueOptionsContainerInterface`!"));
 	return dialogueOptions;
+}
+
+bool UMounteaDialogueHUDStatics::BindEvents(UUserWidget* Target)
+{
+	if (!IsValid(Target))
+		return false;
+
+	if (Target->Implements<UMounteaDialogueUIBaseInterface>())
+		return IMounteaDialogueUIBaseInterface::Execute_BindEvents(Target);
+
+	return false;
+}
+
+bool UMounteaDialogueHUDStatics::UnbindEvents(UUserWidget* Target)
+{
+	if (!IsValid(Target))
+		return false;
+
+	if (Target->Implements<UMounteaDialogueUIBaseInterface>())
+		return IMounteaDialogueUIBaseInterface::Execute_UnbindEvents(Target);
+
+	return false;
+}
+
+void UMounteaDialogueHUDStatics::ProcessStringCommand(UUserWidget* Target, const FString& Command, UObject* OptionalPayload)
+{
+	if (!IsValid(Target))
+		return;
+
+	if (Target->Implements<UMounteaDialogueUIBaseInterface>())
+		return IMounteaDialogueUIBaseInterface::Execute_ProcessStringCommand(Target, Command, OptionalPayload);
+}
+
+void UMounteaDialogueHUDStatics::ApplyTheme(UUserWidget* Target)
+{
+	if (!IsValid(Target))
+		return;
+
+	if (Target->Implements<UMounteaDialogueUIBaseInterface>())
+		return IMounteaDialogueUIBaseInterface::Execute_ApplyTheme(Target);
+}
+
+void UMounteaDialogueHUDStatics::RefreshDialogueWidget(UObject* Target, const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command)
+{
+	if (!IsValid(Target))
+		return;
+
+	if (Target->Implements<UMounteaDialogueWBPInterface>())
+		return IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(Target, DialogueManager, Command);
+}
+
+void UMounteaDialogueHUDStatics::OnOptionSelected(UObject* Target, const FGuid& SelectionGUID)
+{
+	if (!IsValid(Target))
+		return;
+
+	if (Target->Implements<UMounteaDialogueWBPInterface>())
+		return IMounteaDialogueWBPInterface::Execute_OnOptionSelected(Target, SelectionGUID);
 }
