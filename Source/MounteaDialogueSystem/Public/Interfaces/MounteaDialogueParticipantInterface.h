@@ -106,6 +106,10 @@ class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueParticipantInterface
 public:
 
 #pragma region Functions
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
+	bool CanParticipateInDialogue() const;
+	virtual bool CanParticipateInDialogue_Implementation() const = 0;
 	
 	/*
 	 * A way to determine whether the Dialogue can even start.
@@ -157,8 +161,8 @@ public:
 	 * ❔ Is being called in BeginPlay.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
-	void InitializeParticipant();
-	virtual void InitializeParticipant_Implementation() = 0;
+	void InitializeParticipant(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
+	virtual void InitializeParticipant_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) = 0;
 
 	/**
 	 * Plays the given participant voice sound.
@@ -276,6 +280,8 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	void ProcessDialogueCommand(const FString& Command, UObject* Payload);
 	virtual void ProcessDialogueCommand_Implementation(const FString& Command, UObject* Payload) = 0;
+
+	virtual TScriptInterface<IMounteaDialogueManagerInterface> GetDialogueManager() const = 0;
 	
 #pragma endregion
 

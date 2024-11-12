@@ -2,6 +2,7 @@
 
 #include "FMounteaDialogueGraphEditorStyle.h"
 
+#include "Helpers/MounteaDialogueGraphColors.h"
 #include "Interfaces/IPluginManager.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Misc/Paths.h"
@@ -169,12 +170,12 @@ void FMounteaDialogueGraphEditorStyle::Create()
 			.SetColorAndOpacity(FSlateColor::UseForeground())
 			.SetShadowOffset(FVector2D::ZeroVector)
 			.SetShadowColorAndOpacity(FLinearColor::Black)
-			.SetHighlightColor( FLinearColor( 0.02f, 0.3f, 0.0f ) )
+			.SetHighlightColor( MounteaDialogueGraphColors::TextColors::Normal )
 			.SetHighlightShape( BOX_BRUSH( "TextBlockHighlightShape", FMargin(3.f/8.f) ) );
 		
 		FTextBlockStyle NodeTitle = FTextBlockStyle(NormalText)
 			.SetFont( DEFAULT_FONT( "Bold", 14 ) )
-			.SetColorAndOpacity( FLinearColor(230.0f/255.0f,230.0f/255.0f,230.0f/255.0f) )
+			.SetColorAndOpacity( MounteaDialogueGraphColors::TextColors::Normal )
 			.SetShadowOffset( FVector2D( 2,2 ) )
 			.SetShadowColorAndOpacity( FLinearColor(0.f,0.f,0.f, 0.7f) );
 		StyleSet->Set( "MDSStyleSet.NodeTitle", NodeTitle );

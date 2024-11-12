@@ -51,6 +51,13 @@ FGuid UMounteaDialogueGraphNode::GetGraphGUID() const
 	return Graph ? Graph->GetGraphGUID() : FGuid();
 }
 
+void UMounteaDialogueGraphNode::CleanupNode_Implementation()
+{
+	OwningWorld = nullptr;
+
+	OnNodeStateChanged.Clear();
+}
+
 void UMounteaDialogueGraphNode::SetNewWorld(UWorld* NewWorld)
 {
 	if (!NewWorld) return;
@@ -85,11 +92,23 @@ void UMounteaDialogueGraphNode::InitializeNode_Implementation(UWorld* InWorld)
 	SetNewWorld(InWorld);
 
 	if (Graph) SetNodeIndex(Graph->AllNodes.Find(this));
+	
+	OnNodeStateChanged.Broadcast(this);
 }
 
 void UMounteaDialogueGraphNode::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	// Child Classes Implementations
+	Execute_RegisterTick(this, Graph);
+
+	for (const auto& nodeDecorator : NodeDecorators)
+	{
+		if (!IsValid(nodeDecorator.DecoratorType))
+			continue;
+
+		nodeDecorator.DecoratorType->SetOwningManager(Manager);
+	}
+	
+	Manager->Execute_NodePrepared(Manager.GetObject());
 }
 
 void UMounteaDialogueGraphNode::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
@@ -116,8 +135,6 @@ void UMounteaDialogueGraphNode::ProcessNode_Implementation(const TScriptInterfac
 	}
 	
 	UMounteaDialogueSystemBFC::ExecuteDecorators(this, Context);
-	
-	Manager->GetDialogueNodeStartedEventHandle().Broadcast(Context);
 }
 
 TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators() const
@@ -131,15 +148,7 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators()
 		{
 			TempReturn.AddUnique(Itr);
 		}
-	}
-
-	/* TODO: Cleanup duplicates
-	for (auto Itr : TempReturn)
-	{
-		
-	}
-	*/
-	
+	}	
 	Return = TempReturn;
 	return Return;
 }

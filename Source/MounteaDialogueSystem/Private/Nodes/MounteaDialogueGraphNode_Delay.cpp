@@ -68,11 +68,11 @@ void UMounteaDialogueGraphNode_Delay::OnDelayDurationExpired(const TScriptInterf
 	}
 	
 	TimerHandle_NodeDelay.Invalidate();
-	
-	if (const auto Context = MounteaDialogueManagerInterface->Execute_GetDialogueContext(MounteaDialogueManagerInterface.GetObject()))
+
+	auto managerObject = MounteaDialogueManagerInterface.GetObject();
+	if (const auto Context = MounteaDialogueManagerInterface->Execute_GetDialogueContext(managerObject))
 	{
-		MounteaDialogueManagerInterface->GetDialogueNodeFinishedEventHandle().Broadcast(Context);
-		
+		/*
 		auto dialogueNodeToStart = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(ChildrenNodes[0]);
 			
 		Context->SetDialogueContext(Context->DialogueParticipant, dialogueNodeToStart, UMounteaDialogueSystemBFC::GetAllowedChildNodes(dialogueNodeToStart));
@@ -82,8 +82,9 @@ void UMounteaDialogueGraphNode_Delay::OnDelayDurationExpired(const TScriptInterf
 		newDialogueTableHandle.DataTable = dialogueNodeToStart->GetDataTable();
 		newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();
 		Context->UpdateActiveDialogueTable(dialogueNodeToStart ? newDialogueTableHandle : FDataTableRowHandle());
+		*/
 		
-		MounteaDialogueManagerInterface->GetDialogueNodeSelectedEventHandle().Broadcast(Context);
+		MounteaDialogueManagerInterface->Execute_NodeProcessed(managerObject);
 	}
 }
 

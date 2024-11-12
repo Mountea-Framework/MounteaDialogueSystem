@@ -12,6 +12,8 @@ struct FDialogueTraversePath;
 class IMounteaDialogueParticipantInterface;
 class UMounteaDialogueGraphNode;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDialogueContextUpdated);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueContextUpdatedFromBlueprint, UMounteaDialogueContext*, Context);
 
 /**
@@ -37,7 +39,7 @@ public:
 	 * ❔ Answer Node sets this value to Player Participant.
 	 * ❗ Might be invalid
 	 */
-	UPROPERTY(/*Replicated, */VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TScriptInterface<IMounteaDialogueParticipantInterface> ActiveDialogueParticipant;
 	
 	/**
@@ -46,26 +48,26 @@ public:
 	 * This is the Participant who represent the Player.
 	 * ❗ Might be invalid
 	 */
-	UPROPERTY(/*Replicated, */VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TScriptInterface<IMounteaDialogueParticipantInterface> PlayerDialogueParticipant;
 
-	UPROPERTY(/*Replicated, */VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant;
 
-	UPROPERTY(/*Replicated, */VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipants;
 	
 	/**
 	 * Pointer to the Node which is currently active.
 	 * ❗ Might be null
 	 */
-	UPROPERTY(/*Replicated, */VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TObjectPtr<UMounteaDialogueGraphNode> ActiveNode = nullptr;
 
 	/**
 	 * Keeps info about the Previous Active Node.
 	 */
-	UPROPERTY(/*Replicated, */VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	FGuid PreviousActiveNode = FGuid::NewGuid();
 	
 	/**
@@ -75,22 +77,22 @@ public:
 	 * ❔ Filter is done by 'CanStartNode', which can have its own logic and can be driven by Decorators as well.
 	 * ❗ Might be empty
 	 */
-	UPROPERTY(/*Replicated, */VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TArray<TObjectPtr<UMounteaDialogueGraphNode>> AllowedChildNodes;
 
-	UPROPERTY(/*Replicated, */VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	FDataTableRowHandle ActiveDialogueTableHandle;
 	
 	/**
 	 * Active Dialogue Row from Active Node. 
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	FDialogueRow ActiveDialogueRow;
 	
 	/**
 	 * Index of currently used Dialogue Row Data row.
 	 */
-	UPROPERTY(/*Replicated, */VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	int32 ActiveDialogueRowDataIndex = 0;
 	
 	/**
@@ -98,8 +100,17 @@ public:
 	 * Each time Dialogue is updated, like node is selected or starts itself, this Path is updated.
 	 * Updates Participant once Dialogue is done.
 	 */
-	UPROPERTY(/*Replicated, */VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue", meta=(NoResetToDefault))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue", meta=(NoResetToDefault))
 	TArray<FDialogueTraversePath> TraversedPath;
+
+	// Should be the last command provided on auth. side. Could be outdated on clients! Use with caution!
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	FString LastWidgetCommand;
+
+public:
+
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Context")
+	FOnDialogueContextUpdated OnDialogueContextUpdated;
 
 public:
 
@@ -171,9 +182,9 @@ public:
 	virtual void UpdateActiveDialogueTable(const FDataTableRowHandle& NewHandle);
 	virtual void UpdateActiveDialogueRow(const FDialogueRow& NewActiveRow);
 	virtual void UpdateActiveDialogueRowDataIndex(int32 NewIndex);
-	void UpdateDialoguePlayerParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
-	void UpdateActiveDialogueParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
-	void AddTraversedNode(const UMounteaDialogueGraphNode* TraversedNode);
+	virtual void UpdateDialoguePlayerParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant);
+	virtual void SetActiveDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant);
+	virtual void AddTraversedNode(const UMounteaDialogueGraphNode* TraversedNode);
 
 	virtual bool AddDialogueParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 	virtual bool AddDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant);
@@ -264,5 +275,14 @@ private:
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool IsSupportedForNetworking() const override {return true;};
-	
+
+public:
+
+	UMounteaDialogueContext* operator += (const UMounteaDialogueContext* Other);
+	UMounteaDialogueContext* operator+=(const TObjectPtr<UMounteaDialogueContext>& Other)
+	{
+		if (!Other) return this;
+		return (*this) += Other.Get();
+	}
+	UMounteaDialogueContext* operator += (const FMounteaDialogueContextReplicatedStruct& Other);
 };

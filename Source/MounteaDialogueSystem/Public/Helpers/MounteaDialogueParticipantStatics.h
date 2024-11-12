@@ -14,7 +14,8 @@ class UAudioComponent;
 enum class EDialogueParticipantState : uint8;
 
 /**
- * 
+ * This library contains implementations of Dialogue Participant Functions.
+ * Dialogue Participant Interface does not have any BlueprintCallable functions.
  */
 UCLASS()
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueParticipantStatics : public UBlueprintFunctionLibrary
@@ -56,32 +57,15 @@ public:
 
 	// --- Actor functions ------------------------------
 
+
 	/**
 	 * A way to determine whether the Dialogue can even start.
 	 *
-	 * @param Target	Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
+	 * @param Target	Dialogue Participant interface.
 	 * @return True if dialogue can start, false otherwise
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Validate"))
-	static bool CanStartDialogue(UObject* Target);
-
-	/**
-	 * A way to determine whether the Dialogue can even start.
-	 *
-	 * @param Target	Dialogue Participant interface.
-	 * @return True if dialogue can start, false otherwise
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", DisplayName="Can Start Dialogue (Interface)", meta=(CustomTag="MounteaK2Validate"))
-	static bool CanStartDialogueV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
-
-	/**
-	 * Returns the owning actor for the Dialogue Participant.
-	 *
-	 * @param Target	Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
-	 * @return The owning actor for this Dialogue Participant
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
-	static AActor* GetOwningActor(UObject* Target);
+	static bool CanStartDialogue(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
 
 	/**
 	 * Returns the owning actor for the Dialogue Participant.
@@ -89,17 +73,8 @@ public:
 	 * @param Target	Dialogue Participant interface.
 	 * @return The owning actor for this Dialogue Participant
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", DisplayName="Get Owning Actor (Interface)", meta=(CustomTag="MounteaK2Getter"))
-	static AActor* GetOwningActorV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
-
-	/**
-	 * Gets the participant's gameplay tag.
-	 *
-	 * @param Target	Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
-	 * @return The participant's gameplay tag
-	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
-	static FGameplayTag GetParticipantTag(UObject* Target);
+	static AActor* GetOwningActor(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
 
 	/**
 	 * Gets the participant's gameplay tag.
@@ -107,33 +82,17 @@ public:
 	 * @param Target	Dialogue Participant interface.
 	 * @return The participant's gameplay tag
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", DisplayName="Get Participant Tag (Interface)", meta=(CustomTag="MounteaK2Getter"))
-	static FGameplayTag GetParticipantTagV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
-
-	/**
-	 * Initializes the Dialogue Participant.
-	 *
-	 * @param Target	Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
-	static void InitializeParticipant(UObject* Target);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant",  meta=(CustomTag="MounteaK2Getter"))
+	static FGameplayTag GetParticipantTag(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
 
 	/**
 	 * Initializes the Dialogue Participant.
 	 *
 	 * @param Target	Dialogue Participant interface.
+	 * @param Manager	Dialogue Manager who owns this Initialization process.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", DisplayName="Initialize Participant (Interface)", meta=(CustomTag="MounteaK2Setter"))
-	static void InitializeParticipantV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
-
-	/**
-	 * Gets the current state of the Dialogue Participant.
-	 *
-	 * @param Target	Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
-	 * @return The current participant state
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
-	static EDialogueParticipantState GetParticipantState(UObject* Target);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	static void InitializeParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 
 	/**
 	 * Gets the current state of the Dialogue Participant.
@@ -141,17 +100,8 @@ public:
 	 * @param Target	Dialogue Participant interface.
 	 * @return The current participant state
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", DisplayName="Get Participant State (Interface)", meta=(CustomTag="MounteaK2Getter"))
-	static EDialogueParticipantState GetParticipantStateV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
-
-	/**
-	 * Sets the state of the Dialogue Participant.
-	 *
-	 * @param Target	Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
-	 * @param NewState  The state to set
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
-	static void SetParticipantState(UObject* Target, const EDialogueParticipantState NewState);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	static EDialogueParticipantState GetParticipantState(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
 
 	/**
 	 * Sets the state of the Dialogue Participant.
@@ -159,17 +109,8 @@ public:
 	 * @param Target	Dialogue Participant interface.
 	 * @param NewState  The state to set
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", DisplayName="Set Participant State (Interface)", meta=(CustomTag="MounteaK2Setter"))
-	static void SetParticipantStateV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const EDialogueParticipantState NewState);
-
-	/**
-	 * Gets the default state of the Dialogue Participant.
-	 *
-	 * @param Target	Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
-	 * @return The default participant state
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
-	static EDialogueParticipantState GetDefaultParticipantState(UObject* Target);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	static void SetParticipantState(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const EDialogueParticipantState NewState);
 
 	/**
 	* Gets the default state of the Dialogue Participant.
@@ -177,17 +118,8 @@ public:
 	* @param Target	Dialogue Participant interface.
 	* @return The default participant state
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", DisplayName="Get Default Participant State (Interface)", meta=(CustomTag="MounteaK2Getter"))
-	static EDialogueParticipantState GetDefaultParticipantStateV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
-
-	/**
-	 * Sets the default state of the Dialogue Participant.
-	 *
-	 * @param Target	Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
-	 * @param NewState  The default state to set
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
-	static void SetDefaultParticipantState(UObject* Target, const EDialogueParticipantState NewState);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	static EDialogueParticipantState GetDefaultParticipantState(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
 
 	/**
 	 * Sets the default state of the Dialogue Participant.
@@ -195,19 +127,18 @@ public:
 	 * @param Target	Dialogue Participant interface.
 	 * @param NewState  The default state to set
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", DisplayName="Set Default Participant State (Interface)", meta=(CustomTag="MounteaK2Setter"))
-	static void SetDefaultParticipantStateV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const EDialogueParticipantState NewState);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	static void SetDefaultParticipantState(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const EDialogueParticipantState NewState);
+
+	/**
+	 * Gets the Dialogue Manager who updated this Dialogue Participant..
+	 *
+	 * @param Target	Dialogue Participant interface.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	static TScriptInterface<IMounteaDialogueManagerInterface> GetDialogueManager(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
 	
 	// --- Node functions ------------------------------
-	
-	/**
-	 * Saves the starting node for the Dialogue Participant.
-	 *
-	 * @param Target			Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
-	 * @param NewStartingNode   The node to set as the starting node
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
-	static void SaveStartingNode(UObject* Target, UMounteaDialogueGraphNode* NewStartingNode);
 
 	/**
 	 * Saves the starting node for the Dialogue Participant.
@@ -215,55 +146,28 @@ public:
 	 * @param Target			Dialogue Participant interface.
 	 * @param NewStartingNode   The node to set as the starting node
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", DisplayName="Save Starting Node (Interface)", meta=(CustomTag="MounteaK2Setter"))
-	static void SaveStartingNodeV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, UMounteaDialogueGraphNode* NewStartingNode);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	static void SaveStartingNode(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, UMounteaDialogueGraphNode* NewStartingNode);
 
 	/**
 	 * Saves the traversed path for the Dialogue Participant.
 	 *
-	 * @param Target	Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
+	 * @param Target	Dialogue Participant interface.
 	 * @param InPath	The traversed path to save
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
-	static void SaveTraversedPath(UObject* Target, UPARAM(ref) TArray<FDialogueTraversePath>& InPath);
-
-	/**
-	 * Saves the traversed path for the Dialogue Participant.
-	 *
-	 * @param Target	Dialogue Participant interface.
-	 * @param InPath	The traversed path to save
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", DisplayName="Save Traversed Path (Interface)", meta=(CustomTag="MounteaK2Setter"))
-	static void SaveTraversedPathV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, UPARAM(ref) TArray<FDialogueTraversePath>& InPath);
+	static void SaveTraversedPath(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, UPARAM(ref) TArray<FDialogueTraversePath>& InPath);
 
 	/**
 	 * Gets the saved starting node for the Dialogue Participant.
 	 *
-	 * @param Target	Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
+	 * @param Target	Dialogue Participant interface.
 	 * @return The saved starting node
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
-	static UMounteaDialogueGraphNode* GetSavedStartingNode(UObject* Target);
-
-	/**
-	 * Gets the saved starting node for the Dialogue Participant.
-	 *
-	 * @param Target	Dialogue Participant interface.
-	 * @return The saved starting node
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", DisplayName="Get Saved Starting Node (Interface)", meta=(CustomTag="MounteaK2Getter"))
-	static UMounteaDialogueGraphNode* GetSavedStartingNodeV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
+	static UMounteaDialogueGraphNode* GetSavedStartingNode(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
 
 	// --- Audio functions ------------------------------
-	
-	/**
-	 * Plays voice sound for the Dialogue Participant.
-	 *
-	 * @param Target			Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
-	 * @param ParticipantVoice  The sound to play
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
-	static void PlayParticipantVoice(UObject* Target, USoundBase* ParticipantVoice);
 
 	/**
 	 * Plays voice sound for the Dialogue Participant.
@@ -271,17 +175,8 @@ public:
 	 * @param Target			Dialogue Participant interface.
 	 * @param ParticipantVoice  The sound to play
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", DisplayName="Play Participant Voice (Interface)", meta=(CustomTag="MounteaK2Setter"))
-	static void PlayParticipantVoiceV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, USoundBase* ParticipantVoice);
-
-	/**
-	 * Skips the current voice sound for the Dialogue Participant.
-	 *
-	 * @param Target			Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
-	 * @param ParticipantVoice  The sound to skip
-	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
-	static void SkipParticipantVoice(UObject* Target, USoundBase* ParticipantVoice);
+	static void PlayParticipantVoice(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, USoundBase* ParticipantVoice);
 
 	/**
 	 * Skips the current voice sound for the Dialogue Participant.
@@ -289,17 +184,8 @@ public:
 	 * @param Target			Dialogue Participant interface.
 	 * @param ParticipantVoice  The sound to skip
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", DisplayName="Skip Participant Voice (Interface)", meta=(CustomTag="MounteaK2Setter"))
-	static void SkipParticipantVoiceV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, USoundBase* ParticipantVoice);
-
-	/**
-	 * Gets the audio component of the Dialogue Participant.
-	 *
-	 * @param Target	Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
-	 * @return The audio component used for dialogue
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
-	static UAudioComponent* GetAudioComponent(UObject* Target);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	static void SkipParticipantVoice(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, USoundBase* ParticipantVoice);
 
 	/**
 	 * Gets the audio component of the Dialogue Participant.
@@ -307,17 +193,8 @@ public:
 	 * @param Target	Dialogue Participant interface.
 	 * @return The audio component used for dialogue
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", DisplayName="Get Audio Component (Interface)", meta=(CustomTag="MounteaK2Getter"))
-	static UAudioComponent* GetAudioComponentV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
-
-	/**
-	 * Sets the audio component for the Dialogue Participant.
-	 *
-	 * @param Target			Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
-	 * @param NewAudioComponent The audio component to set
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
-	static void SetAudioComponent(UObject* Target, UAudioComponent* NewAudioComponent);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	static UAudioComponent* GetAudioComponent(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
 
 	/**
 	 * Sets the audio component for the Dialogue Participant.
@@ -325,19 +202,10 @@ public:
 	 * @param Target			Dialogue Participant interface.
 	 * @param NewAudioComponent The audio component to set
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", DisplayName="Set Audio Component (Interface)", meta=(CustomTag="MounteaK2Setter"))
-	static void SetAudioComponentV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, UAudioComponent* NewAudioComponent);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	static void SetAudioComponent(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, UAudioComponent* NewAudioComponent);
 
 	// --- Graph functions ------------------------------
-	
-	/**
-	 * Gets the dialogue graph for the Dialogue Participant.
-	 *
-	 * @param Target	Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
-	 * @return The dialogue graph
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
-	static UMounteaDialogueGraph* GetDialogueGraph(UObject* Target);
 
 	/**
 	 * Gets the dialogue graph for the Dialogue Participant.
@@ -345,17 +213,8 @@ public:
 	 * @param Target	Dialogue Participant interface.
 	 * @return The dialogue graph
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", DisplayName="Get Dialogue Graph (Interface)", meta=(CustomTag="MounteaK2Getter"))
-	static UMounteaDialogueGraph* GetDialogueGraphV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
-
-	/**
-	 * Sets the dialogue graph for the Dialogue Participant.
-	 *
-	 * @param Target			Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
-	 * @param NewDialogueGraph  The dialogue graph to set
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
-	static void SetDialogueGraph(UObject* Target, UMounteaDialogueGraph* NewDialogueGraph);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	static UMounteaDialogueGraph* GetDialogueGraph(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
 
 	/**
 	 * Sets the dialogue graph for the Dialogue Participant.
@@ -363,17 +222,8 @@ public:
 	 * @param Target			Dialogue Participant interface.
 	 * @param NewDialogueGraph  The dialogue graph to set
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", DisplayName="Set Dialogue Graph (Interface)", meta=(CustomTag="MounteaK2Setter"))
-	static void SetDialogueGraphV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, UMounteaDialogueGraph* NewDialogueGraph);
-	
-	/**
-	 * Gets the traversed path of the Dialogue Participant.
-	 *
-	 * @param Target	Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
-	 * @return Array of traversed dialogue paths
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
-	static TArray<FDialogueTraversePath> GetTraversedPath(UObject* Target);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
+	static void SetDialogueGraph(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, UMounteaDialogueGraph* NewDialogueGraph);
 
 	/**
 	 * Gets the traversed path of the Dialogue Participant.
@@ -381,28 +231,18 @@ public:
 	 * @param Target	Dialogue Participant interface.
 	 * @return Array of traversed dialogue paths
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", DisplayName="Get Traversed Path (Interface)", meta=(CustomTag="MounteaK2Getter"))
-	static TArray<FDialogueTraversePath> GetTraversedPathV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	static TArray<FDialogueTraversePath> GetTraversedPath(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target);
 
 	// --- Commands functions ------------------------------
-	
+
 	/**
 	 * Processes a dialogue command for the Dialogue Participant.
 	 *
-	 * @param Target	Dialogue Participant object. Must implement `IMounteaDialogueParticipant` interface.
+	 * @param Target	Dialogue Participant interface.
 	 * @param Command   The command to process
 	 * @param Payload   Optional payload object for the command
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
-	static void ProcessDialogueCommand(UObject* Target, const FString& Command, UObject* Payload);
-
-	/**
-	 * Processes a dialogue command for the Dialogue Participant.
-	 *
-	 * @param Target	Dialogue Participant interface.
-	 * @param Command   The command to process
-	 * @param Payload   Optional payload object for the command
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", DisplayName="Process Dialogue Command (Interface)", meta=(CustomTag="MounteaK2Setter"))
-	static void ProcessDialogueCommandV2(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const FString& Command, UObject* Payload);
+	static void ProcessDialogueCommand(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const FString& Command, UObject* Payload);
 };

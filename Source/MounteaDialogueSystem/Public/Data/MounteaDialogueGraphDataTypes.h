@@ -35,6 +35,15 @@ enum class EMounteaDialogueLoggingVerbosity : uint8
 ENUM_CLASS_FLAGS(EMounteaDialogueLoggingVerbosity)
 
 
+UENUM(BlueprintType)
+enum class EDialogueManagerType : uint8
+{
+	EDMT_PlayerDialogue UMETA(DisplayName="Player (Active) Dialogue"),
+	EDMT_EnvironmentDialogue UMETA(DisplayName="Environment (Passive) Dialogue"),
+
+	Default UMETA(hidden)
+};
+
 /**
  * Dialogue Manager State
  * 
@@ -499,36 +508,6 @@ public:
 
 		return false;
 	}
-	
-	virtual void OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName) override
-	{
-		FTableRowBase::OnDataTableChanged(InDataTable, InRowName);
-
-		if (!InDataTable)
-		{
-			return;
-		}
-
-		const FName* FoundRowName = nullptr;
-	
-		for (const auto& Pair : InDataTable->GetRowMap())
-		{
-			const FDialogueRow* RowPtr = reinterpret_cast<const FDialogueRow*>(Pair.Value);
-			if (RowPtr == this)
-			{
-				FoundRowName = &Pair.Key;
-				break;
-			}
-		}
-
-		if (FoundRowName)
-		{
-			if (*FoundRowName != InRowName)
-			{
-				//RowGUID = FGuid::NewGuid();
-			}
-		}
-	}
 
 	FString ToString() const;
 	
@@ -540,7 +519,6 @@ public:
 		return Row;
 	}
 };
-
 
 #undef LOCTEXT_NAMESPACE
 
@@ -555,8 +533,7 @@ struct FUIRowID
 	/**
 	 * 
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
-		meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true))
 	int32 UIRowID = 0;
 	/**
 	 * 
@@ -587,7 +564,7 @@ USTRUCT()
 struct FMounteaDialogueContextReplicatedStruct
 {
 	GENERATED_BODY()
-
+	
 	UPROPERTY()
 	TScriptInterface<IMounteaDialogueParticipantInterface> ActiveDialogueParticipant;
 	UPROPERTY()
@@ -596,6 +573,7 @@ struct FMounteaDialogueContextReplicatedStruct
 	TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant;
 	UPROPERTY()
 	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipants;
+	
 	UPROPERTY()
 	FGuid ActiveNodeGuid;
 	UPROPERTY()
@@ -606,10 +584,39 @@ struct FMounteaDialogueContextReplicatedStruct
 	FDataTableRowHandle ActiveDialogueTableHandle;
 	UPROPERTY()
 	int32 ActiveDialogueRowDataIndex = 0;
+	UPROPERTY()
+	FString LastWidgetCommand;
 
 	FMounteaDialogueContextReplicatedStruct();
 	explicit FMounteaDialogueContextReplicatedStruct(UMounteaDialogueContext* Source);
 
-	void SetData(class UMounteaDialogueContext* Source);
+	FMounteaDialogueContextReplicatedStruct operator+=(UMounteaDialogueContext* Source);
+	bool operator==(const FMounteaDialogueContextReplicatedStruct& Other) const
+	{
+		return ActiveDialogueParticipant == Other.ActiveDialogueParticipant
+		&& DialogueParticipants == Other.DialogueParticipants
+		&& ActiveNodeGuid == Other.ActiveNodeGuid
+		&& AllowedChildNodes == Other.AllowedChildNodes
+		&& ActiveDialogueTableHandle == Other.ActiveDialogueTableHandle
+		&& ActiveDialogueRowDataIndex == Other.ActiveDialogueRowDataIndex;
+	}
+	bool operator!=(const FMounteaDialogueContextReplicatedStruct& Other) const
+	{
+		return !(*this == Other);
+	}
+
+	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess);
+
+	FString ToString() const;
 	bool IsValid() const;
+	void Reset();
+};
+
+template<>
+struct TStructOpsTypeTraits<FMounteaDialogueContextReplicatedStruct> : public TStructOpsTypeTraitsBase2<FMounteaDialogueContextReplicatedStruct>
+{
+	enum 
+	{
+		WithNetSerializer = true
+	};
 };

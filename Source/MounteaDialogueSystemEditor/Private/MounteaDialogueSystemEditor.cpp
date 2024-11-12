@@ -28,6 +28,8 @@
 #include "ToolMenus.h"
 #include "AssetActions/MounteaDialogueDataTableAssetAction.h"
 #include "DetailsPanel/MounteaDialogueDecorator_Details.h"
+#include "DetailsPanel/MounteaDialogueGraph_Details.h"
+#include "Graph/MounteaDialogueGraph.h"
 #include "HelpButton/MDSCommands.h"
 #include "Helpers/MounteaDialogueFixUtilities.h"
 #include "ImportConfig/MounteaDialogueImportConfig.h"
@@ -166,11 +168,13 @@ void FMounteaDialogueSystemEditor::StartupModule()
 			{
 				FOnGetDetailCustomizationInstance::CreateStatic(&FMounteaDialogueGraphNode_Details::MakeInstance),
 				FOnGetDetailCustomizationInstance::CreateStatic(&FMounteaDialogueDecorator_Details::MakeInstance),
+				FOnGetDetailCustomizationInstance::CreateStatic(&FMounteaDialogueGraph_Details::MakeInstance),
 			};
 			RegisteredCustomClassLayouts =
 			{
 				UMounteaDialogueGraphNode::StaticClass()->GetFName(),
 				UMounteaDialogueDecoratorBase::StaticClass()->GetFName(),
+				UMounteaDialogueGraph::StaticClass()->GetFName(),
 			};
 			for (int32 i = 0; i < RegisteredCustomClassLayouts.Num(); i++)
 			{
@@ -218,7 +222,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 
 		PluginCommands->MapAction(
 			FMDSCommands::Get().FixMounteaNodesAction,
-			FExecuteAction::CreateStatic(&FMounteaDialogueFixUtilities::ExecutePythonFixer),
+			FExecuteAction::CreateStatic(&FMounteaDialogueFixUtilities::ReplaceNodesInSelectedBlueprints),
 			FCanExecuteAction::CreateStatic(&FMounteaDialogueFixUtilities::CanExecute)
 		);
 		
@@ -275,9 +279,79 @@ void FMounteaDialogueSystemEditor::StartupModule()
 	{
 		FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
 
-		ContentBrowserModule.GetAllAssetViewContextMenuExtenders().Add(
-			FContentBrowserMenuExtender_SelectedAssets::CreateLambda([this](const TArray<FAssetData>& SelectedAssets)
+		// Get plugin name dynamically
+		const FString PluginPath = [this]() -> FString
+		{
+			if (const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem")))
 			{
+				return TEXT("MounteaDialogueSystem");
+			}
+			return FString();
+		}();
+
+		auto IsInterfaceFromPlugin = [PluginPath](const UClass* Class) -> bool
+		{
+			if (!Class)
+			{
+				return false;
+			}
+
+			// Get all implemented interfaces
+			TArray<FImplementedInterface> Interfaces = Class->Interfaces;
+
+			// Check each interface
+			for (const FImplementedInterface& Interface : Interfaces)
+			{
+				if (Interface.Class && Interface.Class->GetPackage())
+				{
+					const FString InterfacePath = Interface.Class->GetPackage()->GetName();
+					if (InterfacePath.Contains(PluginPath))
+					{
+						return true;
+					}
+				}
+			}
+
+			return false;
+		};
+
+		auto IsAssetFromPlugin = [PluginPath, IsInterfaceFromPlugin](const FAssetData& Asset) -> bool
+		{
+			// Check if asset is directly from plugin OR implements plugin interface
+			const FString PackagePath = Asset.GetPackage()->GetName();
+			
+			// For Blueprint assets
+			if (Asset.GetClass()->IsChildOf(UBlueprint::StaticClass()))
+			{
+				if (UBlueprint* Blueprint = Cast<UBlueprint>(Asset.GetAsset()))
+				{
+					return PackagePath.Contains(PluginPath) || 
+						   (Blueprint->GeneratedClass && IsInterfaceFromPlugin(Blueprint->GeneratedClass));
+				}
+			}
+			
+			// For regular assets
+			return PackagePath.Contains(PluginPath) || IsInterfaceFromPlugin(Asset.GetClass());
+		};
+
+		ContentBrowserModule.GetAllAssetViewContextMenuExtenders().Add(
+			FContentBrowserMenuExtender_SelectedAssets::CreateLambda([this, IsAssetFromPlugin](const TArray<FAssetData>& SelectedAssets)
+			{
+				bool bHasValidAsset = false;
+				for (const FAssetData& Asset : SelectedAssets)
+				{
+					if (IsAssetFromPlugin(Asset))
+					{
+						bHasValidAsset = true;
+						break;
+					}
+				}
+
+				if (!bHasValidAsset)
+				{
+					return TSharedRef<FExtender>(new FExtender());
+				}
+
 				TSharedRef<FExtender> Extender = MakeShared<FExtender>();
 
 				Extender->AddMenuExtension(
@@ -292,7 +366,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 								FMDSCommands::Get().FixMounteaNodesAction,
 								NAME_None,
 								LOCTEXT("MounteaAction", "Fix Mountea Nodes"),
-								LOCTEXT("MounteaActionTooltip", "🔧 Fix old Mountea nodes with new ones"),
+								LOCTEXT("MounteaActionTooltip", "🔧 Replace deprecated Mountea nodes with updated substitutes.\n\n🔓 Solution is using JSON-based configuration from a public GitHub repository.\n\n💪 Supports Blueprint to C++, C++ to Blueprint, and other combinations."),
 								FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Adjust")
 							);
 						}

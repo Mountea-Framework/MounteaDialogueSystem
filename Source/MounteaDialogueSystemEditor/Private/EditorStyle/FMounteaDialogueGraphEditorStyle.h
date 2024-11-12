@@ -21,6 +21,11 @@ public:
 	{
 		return StyleSet->GetBrush(PropertyName, Specifier);
 	};
+
+	static const FTextBlockStyle* GetTextBlockStyle( FName PropertyName, const ANSICHAR* Specifier = NULL )
+	{
+		return &StyleSet->GetWidgetStyle<FTextBlockStyle>(PropertyName);
+	};
 	
 	static const FName& GetAppStyleSetName()
 	{
