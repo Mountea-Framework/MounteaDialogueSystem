@@ -100,6 +100,14 @@ A piece of helpful information is displayed in the Editor and Debug Builds alike
     <img width="65%" src="https://github.com/Mountea-Framework/MounteaDialogueSystem/assets/37410226/00d8004c-bbef-4c76-b1df-2b024a4e857b">
 </p>
 
+## Online Editor Tool
+We're thrilled to announce a game-changing addition to our toolkit: the new standalone dialogue builder! You can now easily check it out [HERE](https://mountea-framework.github.io/MounteaDialoguer/)! ✨
+
+**Dialoguer** is a powerful tool that allows you to create, manage, and refine dialogues like never before. This tool isn't just built for Unreal Engine - it's designed to export dialogues for any engine and media format. Seamlessly import your dialogues into Unreal and export them back for other platforms, making your creative process more flexible and efficient than ever!
+<p align="center" width="100%">
+    <img width="65%" src="https://github.com/user-attachments/assets/3ef3c8ca-325c-45e9-a68c-0e3d436dd97c">
+</p>
+
 ## Installation
 
 Download the plugin (either from Releases or from Marketplace). For a more detailed guide take a look at the Wiki page.
