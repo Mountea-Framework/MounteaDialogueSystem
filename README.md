@@ -24,6 +24,8 @@ Feel free to download the playable demo and take a look at what this plugin (in 
 Join support and community Discord!
 
 ## Documentation
+<a href="https://discord.gg/2vXWEEN"><img src="https://media.tenor.com/mTz7WCbH92oAAAAj/book-transparent.gif" alt="DOCUMENTATION" width="100"></a>
+
 Online [Documentation](https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Getting-Started) including a Quick Start guide which will help you set up the plugin in a few easy-to-follow steps.
 
 ## Tutorial videos
