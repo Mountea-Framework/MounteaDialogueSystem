@@ -253,7 +253,7 @@ public:
 	virtual void SaveTraversedPath_Implementation(TArray<FDialogueTraversePath>& InPath) override;
 
 	virtual FGameplayTag GetParticipantTag_Implementation() const override
-	{ return ParticipantTag;	};
+	{ return ParticipantTag; };
 	
 	virtual void ProcessDialogueCommand_Implementation(const FString& Command, UObject* Payload) override
 	{ ParticipantCommandRequested.Broadcast(Command, Payload); };

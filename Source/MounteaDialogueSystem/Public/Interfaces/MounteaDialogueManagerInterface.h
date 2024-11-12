@@ -163,8 +163,8 @@ public:
 	// --- World UI functions ------------------------------
 	
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
-	void UpdateWorldDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command);
-	virtual void UpdateWorldDialogueUI_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command) = 0;
+	void UpdateWorldDialogueUI(const FString& Command);
+	virtual void UpdateWorldDialogueUI_Implementation(const FString& Command) = 0;
 
 	/**
 	 * Adds a single dialogue UI object to the manager.

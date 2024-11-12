@@ -373,6 +373,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(CustomTag="MounteaK2Getter"))
 	static FDialogueRowData GetActiveDialogueData(const UMounteaDialogueContext* Context, bool& bResult);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(CustomTag="MounteaK2Getter"))
+	static bool DoesRowMatchParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& ParticipantInterface, const FDialogueRow& Row);
+
 	// --- Template functions ------------------------------
 	
 	template <typename NodeType>

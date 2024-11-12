@@ -35,6 +35,9 @@ FString UMounteaDialogueContext::ToString() const
 	FString activeRowData = FString("Active Row Data: ");
 	activeRowData.Append(FString::Printf(TEXT("%d"), ActiveDialogueRow.DialogueRowData.Num()));
 
+	FString lastWidgetCommand = FString("Last Widget Context: ");
+	lastWidgetCommand.Append(FString::Printf(TEXT("%s"), *LastWidgetCommand));
+
 	returnValue
 		.Append(activeDialoguePart).Append(TEXT("\n"))
 		.Append(playerDialoguePart).Append(TEXT("\n"))
@@ -42,7 +45,8 @@ FString UMounteaDialogueContext::ToString() const
 		.Append(allDialogueParts).Append(TEXT("\n"))
 		.Append(activeNode).Append(TEXT("\n"))
 		.Append(activeRow).Append(TEXT("\n"))
-		.Append(activeRowData);
+		.Append(activeRowData)
+		.Append(lastWidgetCommand);
 
 	return returnValue;
 }
@@ -319,6 +323,7 @@ void UMounteaDialogueContext::GetLifetimeReplicatedProps(TArray<class FLifetimeP
 	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueTableHandle);
 	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueRow);
 	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueRowDataIndex);
+	DOREPLIFETIME(UMounteaDialogueContext, LastWidgetCommand);
 }
 
 UMounteaDialogueContext* UMounteaDialogueContext::operator += (const UMounteaDialogueContext* Other)
@@ -343,6 +348,8 @@ UMounteaDialogueContext* UMounteaDialogueContext::operator += (const UMounteaDia
 		ActiveDialogueRow = Other->ActiveDialogueRow;
 	if (Other->ActiveDialogueRowDataIndex != ActiveDialogueRowDataIndex)
 		ActiveDialogueRowDataIndex = Other->ActiveDialogueRowDataIndex;
+	if (Other->LastWidgetCommand != LastWidgetCommand)
+		LastWidgetCommand = Other->LastWidgetCommand;
 	
 	return this;
 }
@@ -364,6 +371,9 @@ UMounteaDialogueContext* UMounteaDialogueContext::operator += (const FMounteaDia
 			ActiveDialogueRowDataIndex = Other.ActiveDialogueRowDataIndex;
 		if (ActiveDialogueTableHandle != Other.ActiveDialogueTableHandle)
 			ActiveDialogueTableHandle = Other.ActiveDialogueTableHandle;
+
+		if (Other.LastWidgetCommand != LastWidgetCommand)
+			LastWidgetCommand = Other.LastWidgetCommand;
 		
 		UMounteaDialogueGraph* activeGraph = DialogueParticipant->Execute_GetDialogueGraph(DialogueParticipant.GetObject());
 

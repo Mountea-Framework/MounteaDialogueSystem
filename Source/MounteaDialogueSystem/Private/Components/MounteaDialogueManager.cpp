@@ -75,7 +75,6 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 
 	DOREPLIFETIME(UMounteaDialogueManager, ManagerState);
 	DOREPLIFETIME(UMounteaDialogueManager, TransientDialogueContext);
-	DOREPLIFETIME(UMounteaDialogueManager, DialogueCommand);
 }
 
 MounteaDialogueManagerHelpers::FDialogueRowDataInfo MounteaDialogueManagerHelpers::GetDialogueRowDataInfo(const UMounteaDialogueContext* DialogueContext)
@@ -167,15 +166,21 @@ void UMounteaDialogueManager::OnRep_DialogueContext()
 	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> participants = TransientDialogueContext.DialogueParticipants;
 
 	*DialogueContext += TransientDialogueContext;
-
+	
 	NotifyParticipants(participants);
-    
-	// Reset after ensuring replication completed
-	FTimerHandle TimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+
+	FTimerHandle TimerHandle_ResetContext;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle_ResetContext, [this]()
 	{
 		TransientDialogueContext.Reset();
 	}, 0.2f, false);
+
+	FTimerHandle TimerHandle_UpdateWorldWidget;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle_UpdateWorldWidget, [this]()
+	{
+		if (IsValid(DialogueContext))
+			ProcessWorldWidgetUpdate(DialogueContext->LastWidgetCommand);
+	}, 0.1f, false);
 }
 
 void UMounteaDialogueManager::RequestBroadcastContext(UMounteaDialogueContext* Context)
@@ -528,13 +533,13 @@ void UMounteaDialogueManager::DialogueStartRequestReceived(const bool bResult, c
 void UMounteaDialogueManager::StartDialogue_Implementation()
 {
 	StartParticipants();
-	
-	if (!IsAuthority())
-		OnDialogueStarted.Broadcast(DialogueContext);
-	
+		
 	FString resultMessage;
 	if (!Execute_CreateDialogueUI(this, resultMessage))
 		LOG_WARNING(TEXT("[Create Dialogue UI] %s"), *(resultMessage))
+
+	if (!IsAuthority())
+		OnDialogueStarted.Broadcast(DialogueContext);
 	
 	Execute_PrepareNode(this);
 }
@@ -786,6 +791,8 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 		Execute_DialogueRowProcessed(this, false);
 		return;
 	}
+
+	OnDialogueRowStarted.Broadcast(DialogueContext);
 	
 	DialogueContext->ActiveDialogueParticipant->Execute_PlayParticipantVoice(DialogueContext->ActiveDialogueParticipant.GetObject(), RowData.RowSound);
 
@@ -819,13 +826,13 @@ void UMounteaDialogueManager::DialogueRowProcessed_Implementation(const bool bFo
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 
 	const auto processInfo = MounteaDialogueManagerHelpers::GetDialogueRowDataInfo(DialogueContext);
-
-	OnDialogueRowFinished.Broadcast(DialogueContext);
 	
 	if (processInfo.ActiveRowExecutionMode == ERowExecutionMode::EREM_AwaitInput && !bForceFinish)
 	{
 		return;
 	}
+
+	OnDialogueRowFinished.Broadcast(DialogueContext);
 	
 	if (processInfo.bIsActiveRowValid && processInfo.bDialogueRowDataValid)
 	{
@@ -873,57 +880,33 @@ void UMounteaDialogueManager::SkipDialogueRow_Implementation()
 	Execute_DialogueRowProcessed(this, true);
 }
 
-void UMounteaDialogueManager::UpdateWorldDialogueUI_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command)
+void UMounteaDialogueManager::UpdateWorldDialogueUI_Implementation(const FString& Command)
 {
 	if (!IsAuthority())
 	{
-		DialogueCommand = Command;
-		LastDialogueCommand = Command;
-		for (const auto& dialogueObject : DialogueObjects)
-		{
-			if (dialogueObject)
-				IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, DialogueManager, Command);
-		}
-
-		auto localOwner = UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(this);
-		auto localOwnerRole = UMounteaDialogueSystemBFC::GetOwnerLocalRole(localOwner);
-		if (localOwnerRole == ROLE_AutonomousProxy)
-			UpdateWorldDialogueUI_Server(Command);
+		ProcessWorldWidgetUpdate(Command);
 	}
 	else
 	{
 		if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
-		{
-			for (const auto& dialogueObject : DialogueObjects)
-			{
-				if (dialogueObject)
-					IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, DialogueManager, Command);
-			}
-		}
-		
-		UpdateWorldDialogueUI_Server(Command);
+			ProcessWorldWidgetUpdate(Command);
 	}
 }
 
-void UMounteaDialogueManager::UpdateWorldDialogueUI_Server_Implementation(const FString& Command)
-{
-	DialogueCommand = Command;
-}
-
-void UMounteaDialogueManager::OnRep_WidgetCommand()
+void UMounteaDialogueManager::ProcessWorldWidgetUpdate(const FString& Command)
 {
 	if (!IsAuthority())
 	{
-		if (LastDialogueCommand == DialogueCommand)
+		if (LastDialogueCommand == Command)
 			return;
 		
 		for (const auto& dialogueObject : DialogueObjects)
 		{
 			if (dialogueObject)
-				IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, this, DialogueCommand);
+				IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, this, Command);
 		}
 
-		LastDialogueCommand = DialogueCommand;
+		LastDialogueCommand = Command;
 	}
 }
 
@@ -1067,15 +1050,14 @@ bool UMounteaDialogueManager::CreateDialogueUI_Implementation(FString& Message)
 
 bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, const FString& Command)
 {
-	LOG_INFO(TEXT("[Update Dialogue UI] Command: %s"), *Command)
-	Execute_UpdateWorldDialogueUI(this, this, Command);
+	if (IsValid(DialogueContext))
+		DialogueContext->LastWidgetCommand = Command;
 
 	if (DialogueWidget)
-	{
 		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidget, this, Command);
-		return true;
-	}
-	return false;
+
+	Execute_UpdateWorldDialogueUI(this, Command);
+	return true;
 }
 
 bool UMounteaDialogueManager::CloseDialogueUI_Implementation()

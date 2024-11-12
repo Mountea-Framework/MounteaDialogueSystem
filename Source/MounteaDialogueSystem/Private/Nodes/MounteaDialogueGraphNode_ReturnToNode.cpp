@@ -44,14 +44,17 @@ void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode_Implementation(const TS
 			auto dialogueNodeToStart = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(SelectedNode);
 			
 			Context->SetDialogueContext(Context->DialogueParticipant, SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
-
-			Context->ActiveDialogueRowDataIndex = 	UMounteaDialogueSystemBFC::GetDialogueRow(SelectedNode).DialogueRowData.Num() - 1; // Force-set the last row
+			
 			FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
 			newDialogueTableHandle.DataTable = dialogueNodeToStart->GetDataTable();
 			newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();
 			Context->UpdateActiveDialogueTable(dialogueNodeToStart ? newDialogueTableHandle : FDataTableRowHandle());
-			Manager->GetDialogueNodeSelectedEventHandle().Broadcast(Context);
+			Context->UpdateActiveDialogueRow( UMounteaDialogueSystemBFC::FindDialogueRow(newDialogueTableHandle.DataTable, newDialogueTableHandle.RowName) );
+			Context->ActiveDialogueRowDataIndex = 0;
 
+			Manager->Execute_NodeProcessed(Manager.GetObject());
+
+			// TODO: Force to the new system
 			if (bAutoCompleteSelectedNode)
 			{
 				//Manager->GetDialogueNodeFinishedEventHandle().Broadcast(Context);

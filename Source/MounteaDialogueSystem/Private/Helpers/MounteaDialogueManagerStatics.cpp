@@ -69,7 +69,7 @@ void UMounteaDialogueManagerStatics::SelectNode(const TScriptInterface<IMounteaD
 
 void UMounteaDialogueManagerStatics::UpdateWorldDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const FString& Command)
 {
-	if (Target.GetObject()) Target->Execute_UpdateWorldDialogueUI(Target.GetObject(), Target, Command);
+	if (Target.GetObject()) Target->Execute_UpdateWorldDialogueUI(Target.GetObject(), Command);
 }
 
 void UMounteaDialogueManagerStatics::PrepareNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)

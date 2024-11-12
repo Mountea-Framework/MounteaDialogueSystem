@@ -110,7 +110,7 @@ public:
 	virtual void DialogueRowProcessed_Implementation(const bool bForceFinish = false) override;
 	virtual void SkipDialogueRow_Implementation() override;
 	
-	virtual void UpdateWorldDialogueUI_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& DialogueManager, const FString& Command) override;
+	virtual void UpdateWorldDialogueUI_Implementation(const FString& Command) override;
 	virtual bool AddDialogueUIObject_Implementation(UObject* NewDialogueObject) override;
 	virtual bool AddDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects) override;
 	virtual bool RemoveDialogueUIObject_Implementation(UObject* DialogueObjectToRemove) override;
@@ -144,15 +144,13 @@ private:
 	void RequestStartDialogue_Server(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
 	UFUNCTION(Server, Reliable)
 	void CleanupDialogue_Server();
-	UFUNCTION(Server, Unreliable)
-	void UpdateWorldDialogueUI_Server(const FString& Command);
 	
 	UFUNCTION()
 	void OnRep_ManagerState();
 	UFUNCTION()
 	void OnRep_DialogueContext();
-	UFUNCTION()
-	void OnRep_WidgetCommand();
+
+	void ProcessWorldWidgetUpdate(const FString& Command);
 
 public:
 	bool IsAuthority() const;
@@ -314,8 +312,7 @@ protected:
 	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	FTimerHandle TimerHandle_RowTimer;
 
-	UPROPERTY(Transient, ReplicatedUsing=OnRep_WidgetCommand)
-	FString DialogueCommand;
+	UPROPERTY(Transient)
 	FString LastDialogueCommand;
 
 private:

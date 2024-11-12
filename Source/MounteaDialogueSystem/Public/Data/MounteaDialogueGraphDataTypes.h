@@ -584,6 +584,8 @@ struct FMounteaDialogueContextReplicatedStruct
 	FDataTableRowHandle ActiveDialogueTableHandle;
 	UPROPERTY()
 	int32 ActiveDialogueRowDataIndex = 0;
+	UPROPERTY()
+	FString LastWidgetCommand;
 
 	FMounteaDialogueContextReplicatedStruct();
 	explicit FMounteaDialogueContextReplicatedStruct(UMounteaDialogueContext* Source);

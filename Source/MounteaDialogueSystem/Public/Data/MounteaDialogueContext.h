@@ -103,6 +103,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue", meta=(NoResetToDefault))
 	TArray<FDialogueTraversePath> TraversedPath;
 
+	// Should be the last command provided on auth. side. Could be outdated on clients! Use with caution!
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	FString LastWidgetCommand;
+
 public:
 
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Context")

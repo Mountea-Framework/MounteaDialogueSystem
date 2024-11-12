@@ -39,9 +39,7 @@ void UMounteaDialogueSystemBFC::CleanupGraph(const UObject* WorldContextObject, 
 bool UMounteaDialogueSystemBFC::HasNodeBeenTraversed(const UMounteaDialogueGraphNode* Node, const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant)
 {
 	if (!Node || !Participant || !Participant.GetObject() || !Node->Graph)
-	{
 		return false;
-	}
 
 	const TArray<FDialogueTraversePath>& TraversedPaths = Participant->Execute_GetTraversedPath(Participant.GetObject());
 	const FDialogueTraversePath* FoundPath = TraversedPaths.FindByPredicate([&](const FDialogueTraversePath& Path)
@@ -55,10 +53,8 @@ bool UMounteaDialogueSystemBFC::HasNodeBeenTraversed(const UMounteaDialogueGraph
 bool UMounteaDialogueSystemBFC::HasNodeBeenTraversedV2(const UMounteaDialogueGraphNode* Node,  const UMounteaDialogueContext* Context)
 {
 	if (!Node || !Context || !Node->Graph)
-	{
 		return false;
-	}
-
+	
 	const TArray<FDialogueTraversePath>& TraversedPaths = Context->TraversedPath;
 
 	const FDialogueTraversePath* FoundPath = TraversedPaths.FindByPredicate([&](const FDialogueTraversePath& Path)
@@ -81,9 +77,7 @@ UAudioComponent* UMounteaDialogueSystemBFC::FindAudioComponentByName(const AActo
 	for (const auto& Itr : OwnerComponents)
 	{
 		if (Itr && Itr->GetName().Equals(Arg.ToString()))
-		{
 			return Itr;
-		}
 	}
 	
 	return nullptr;
@@ -101,9 +95,7 @@ UAudioComponent* UMounteaDialogueSystemBFC::FindAudioComponentByTag(const AActor
 	for (const auto& Itr : OwnerComponents)
 	{
 		if (Itr && Itr->ComponentHasTag(Arg))
-		{
 			return Itr;
-		}
 	}
 	
 	return nullptr;
@@ -114,32 +106,22 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC
 	if (WorldContextObject == nullptr) return nullptr;
 	
 	if (WorldContextObject->Implements<UMounteaDialogueParticipantInterface>())
-	{
 		return WorldContextObject;
-	}
 
 	if (UActorComponent* ParticipantComp = WorldContextObject->FindComponentByInterface(UMounteaDialogueParticipantInterface::StaticClass()))
-	{
 		return ParticipantComp;
-	}
 
 	APawn* playerPawn = Cast<APawn>(WorldContextObject);
 	if (playerPawn)
-	{
 		return GetPlayerDialogueParticipant(playerPawn);
-	}
 
 	const APlayerState* playerState = Cast<APlayerState>(WorldContextObject);
 	if (playerState)
-	{
 		return GetPlayerDialogueParticipant(playerState->GetPawn());
-	}
 	
 	const APlayerController* playerController = Cast<APlayerController>(WorldContextObject);
 	if (playerController)
-	{
 		return GetPlayerDialogueParticipant(playerController->GetPawn());
-	}
 	
 	return nullptr;
 }
@@ -154,26 +136,18 @@ bool UMounteaDialogueSystemBFC::IsContextValid(const UMounteaDialogueContext* Co
 bool UMounteaDialogueSystemBFC::ExecuteDecorators(const UObject* WorldContextObject, const UMounteaDialogueContext* DialogueContext)
 {
 	if (DialogueContext == nullptr)
-	{
 		return false;
-	}
 
 	if (DialogueContext->DialogueParticipant.GetInterface() == nullptr || DialogueContext->DialogueParticipant.GetObject() == nullptr)
-	{
 		return false;
-	}
 
 	UObject* participantObject = DialogueContext->DialogueParticipant.GetObject();
 	if (DialogueContext->DialogueParticipant->Execute_GetDialogueGraph(participantObject) == nullptr)
-	{
 		return false;
-	}
 
 	const auto ActiveNode = DialogueContext->GetActiveNode();
 	if (ActiveNode == nullptr)
-	{
 		return false;
-	}
 
 	// First process Node Decorators, then Graph Decorators
 	// TODO: add weight to them so we can sort them by Weight and execute in correct order
@@ -181,14 +155,10 @@ bool UMounteaDialogueSystemBFC::ExecuteDecorators(const UObject* WorldContextObj
 
 	AllDecorators.Append(DialogueContext->GetActiveNode()->GetNodeDecorators());
 	if (ActiveNode->DoesInheritDecorators())
-	{
 		AllDecorators.Append(DialogueContext->DialogueParticipant->Execute_GetDialogueGraph(participantObject)->GetGraphDecorators());
-	}
 		
 	for (auto Itr : AllDecorators)
-	{
 		Itr.ExecuteDecorator();
-	}
 
 	return true;
 }
@@ -197,16 +167,12 @@ bool UMounteaDialogueSystemBFC::AddParticipants(AActor* WorldContextObject, cons
 {
 	const TScriptInterface<IMounteaDialogueManagerInterface> Manager = GetDialogueManager(WorldContextObject);
 	if (!Manager)
-	{
 		return false;
-	}
 
 	UMounteaDialogueContext* Context = Manager->Execute_GetDialogueContext(Manager.GetObject());
 
 	if (!Context)
-	{
 		return false;
-	}
 
 	return Context->AddDialogueParticipants(NewParticipants);
 }
@@ -215,18 +181,14 @@ bool UMounteaDialogueSystemBFC::RemoveParticipants(AActor* WorldContextObject, c
 {
 	const TScriptInterface<IMounteaDialogueManagerInterface> Manager = GetDialogueManager(WorldContextObject);
 	if (!Manager)
-	{
 		return false;
-	}
 
 	UMounteaDialogueContext* Context = Manager->Execute_GetDialogueContext(Manager.GetObject());
 
 	if (!Context)
-	{
 		return false;
-	}
 
-	return Context->RemoveDialogueParticipants(NewParticipants);		
+	return Context->RemoveDialogueParticipants(NewParticipants);
 }
 
 TScriptInterface<IMounteaDialogueManagerInterface> UMounteaDialogueSystemBFC::GetDialogueManager(UObject* WorldContextObject)
@@ -236,18 +198,14 @@ TScriptInterface<IMounteaDialogueManagerInterface> UMounteaDialogueSystemBFC::Ge
 	if (WorldContextObject->GetWorld() == nullptr) return nullptr;
 
 	if (WorldContextObject->Implements<UMounteaDialogueManagerInterface>())
-	{
 		return WorldContextObject;
-	}
 
 	
 	if (AActor* ActorContext = Cast<AActor>(WorldContextObject))
 	{
 		UActorComponent* ManagerComponent = ActorContext->FindComponentByInterface(UMounteaDialogueManagerInterface::StaticClass());
 		if (ManagerComponent)
-		{
 			return ManagerComponent;
-		}
 	}
 	
 
@@ -258,9 +216,7 @@ TScriptInterface<IMounteaDialogueManagerInterface> UMounteaDialogueSystemBFC::Ge
 	if (!PlayerController) return nullptr;
 
 	if (UActorComponent* ManagerComponent = PlayerController->FindComponentByInterface(UMounteaDialogueManagerInterface::StaticClass()))
-	{
 		return ManagerComponent;
-	}
 		
 	LOG_ERROR(TEXT("[Get Dialogue Manager] Unable to find Dialogue Manager."));
 	return nullptr;
@@ -282,9 +238,7 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC
 			};
 	
 			if (const TScriptInterface<IMounteaDialogueParticipantInterface>* MatchingParticipant = Context->GetDialogueParticipants().FindByPredicate(Predicate))
-			{
 				return *MatchingParticipant;
-			}
 		}
 	}
 
@@ -311,9 +265,7 @@ TArray<UMounteaDialogueGraphNode*> UMounteaDialogueSystemBFC::FindNodesByGUID(co
 	for (const auto& Itr : Guids)
 	{
 		if (auto foundNode = FindNodeByGUID(FromGraph, Itr))
-		{
 			resultArray.Add(foundNode);
-		}
 	}
 
 	return resultArray;
@@ -333,9 +285,7 @@ TArray<FGuid> UMounteaDialogueSystemBFC::NodesToGuids(TArray<UMounteaDialogueGra
 UMounteaDialogueGraphNode* UMounteaDialogueSystemBFC::GetChildrenNodeFromIndex(const int32 Index, const UMounteaDialogueGraphNode* ParentNode)
 {
 	if (ParentNode->GetChildrenNodes().IsValidIndex(Index))
-	{
 		return ParentNode->GetChildrenNodes()[Index];
-	}
 
 	return nullptr;
 }
@@ -345,9 +295,7 @@ UMounteaDialogueGraphNode* UMounteaDialogueSystemBFC::GetFirstChildNode(const UM
 	if (ParentNode == nullptr) return nullptr;
 
 	if (ParentNode->GetChildrenNodes().IsValidIndex(0))
-	{
 		return ParentNode->GetChildrenNodes()[0]->CanStartNode() ? ParentNode->GetChildrenNodes()[0] : nullptr;
-	}
 
 	return nullptr;
 }
@@ -363,9 +311,7 @@ TArray<UMounteaDialogueGraphNode*> UMounteaDialogueSystemBFC::GetAllowedChildNod
 	for (UMounteaDialogueGraphNode* Itr : ParentNode->GetChildrenNodes())
 	{
 		if (Itr && Itr->CanStartNode())
-		{
 			ReturnNodes.Add(Itr);
-		}
 	}
 
 	return ReturnNodes;
@@ -386,9 +332,7 @@ UMounteaDialogueGraphNode* UMounteaDialogueSystemBFC::GetStartingNode(const TScr
 	
 	UMounteaDialogueGraphNode* NodeToStart = Participant->Execute_GetSavedStartingNode(Participant.GetObject());
 	if (!IsValid(NodeToStart) || NodeToStart->CanStartNode() == false)
-	{
 		NodeToStart = Graph->GetStartNode();
-	}
 	
 	if (!IsValid(NodeToStart))
 	{
@@ -549,9 +493,7 @@ ENetRole UMounteaDialogueSystemBFC::GetOwnerLocalRole(const AActor* ForActor)
 TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC::SwitchActiveParticipant(const UMounteaDialogueContext* DialogueContext)
 {
 	if (!IsValid(DialogueContext) || !IsValid(DialogueContext->ActiveNode))
-	{
 		return nullptr;
-	}
 
 	const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& dialogueParticipants = DialogueContext->DialogueParticipants;
 	if (dialogueParticipants.Num() == 0)
@@ -559,15 +501,11 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC
 
 	FGameplayTagContainer activeTags;
 	if (DialogueContext->ActiveNode->IsA<UMounteaDialogueGraphNode_DialogueNodeBase>())
-	{
 		activeTags.AppendTags(DialogueContext->ActiveDialogueRow.CompatibleTags);
-	}	
 	activeTags.AppendTags(DialogueContext->ActiveNode->NodeGameplayTags);
 	
 	if (activeTags.Num() == 0)
-	{
 		return IsValid(DialogueContext->ActiveDialogueParticipant.GetObject()) ? DialogueContext->ActiveDialogueParticipant : dialogueParticipants[0];
-	}
 	
 	auto* foundParticipant = dialogueParticipants.FindByPredicate([&](const TScriptInterface<IMounteaDialogueParticipantInterface>& dialogueParticipant)
 	{
@@ -627,6 +565,30 @@ FDialogueRowData UMounteaDialogueSystemBFC::GetActiveDialogueData(const UMountea
 	bResult = IsDialogueRowDataValid(rowData);
 
 	return bResult ? rowData : FDialogueRowData();
+}
+
+bool UMounteaDialogueSystemBFC::DoesRowMatchParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& ParticipantInterface, const FDialogueRow& Row)
+{
+	if (!Row.IsValid())
+		return false;
+
+	if (!IsValid(ParticipantInterface.GetObject()))
+		return false;
+
+	if (Row.CompatibleTags.IsEmpty())
+	{
+		LOG_WARNING(TEXT("[Does Row Match Participant] Row has now Tags to compare against!"))
+		return false;
+	}
+
+	const auto participantTag = ParticipantInterface->Execute_GetParticipantTag(ParticipantInterface.GetObject());
+	if (!participantTag.IsValid())
+	{
+		LOG_WARNING(TEXT("[Does Row Match Participant] Participant Tag is not valid!"))
+		return false;
+	}
+
+	return Row.CompatibleTags.HasTagExact(participantTag);
 }
 
 FDialogueRow UMounteaDialogueSystemBFC::GetDialogueRow(const UMounteaDialogueGraphNode* Node)
@@ -740,9 +702,7 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueSystemBFC::GetAllDialogueDecor
 	for (const auto& Itr : FromGraph->GetAllNodes())
 	{
 		if (Itr)
-		{
 			Decorators.Append(Itr->GetNodeDecorators());
-		}
 	}
 		
 	return Decorators;
@@ -799,16 +759,11 @@ APawn* UMounteaDialogueSystemBFC::FindPlayerPawn(AActor* ForActor, int& SearchDe
 	{
 		if (playerController->IsLocalPlayerController())
 			return playerController->GetPawn();
-		else
-		{
-			return FindPlayerPawn(playerController->PlayerState, SearchDepth);
-		}
+		return FindPlayerPawn(playerController->PlayerState, SearchDepth);
 	}
 
 	if (AActor* ownerActor = ForActor->GetOwner())
-	{
 		return FindPlayerPawn(ownerActor, SearchDepth);
-	}
 
 	return nullptr;
 }
@@ -820,24 +775,16 @@ APlayerController* UMounteaDialogueSystemBFC::FindPlayerController(AActor* ForAc
 		return nullptr;
 	
 	if (APlayerController* playerController = Cast<APlayerController>(ForActor))
-	{
 		return playerController;
-	}
 
 	if (APlayerState* playerState = Cast<APlayerState>(ForActor))
-	{
 		return playerState->GetPlayerController();
-	}
 
 	if (APawn* actorPawn = Cast<APawn>(ForActor))
-	{
 		return Cast<APlayerController>(actorPawn->GetController());
-	}
 	
 	if (AActor* ownerActor = ForActor->GetOwner())
-	{
 		return FindPlayerController(ownerActor, SearchDepth);
-	}
 	
 	return nullptr;
 }
@@ -856,9 +803,7 @@ bool UMounteaDialogueSystemBFC::DoesPreviousNodeSkipActiveNode(const UMounteaDia
 	if (tempNode == nullptr) return false;
 
 	if (const UMounteaDialogueGraphNode_ReturnToNode* returnNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(tempNode))
-	{
 		return returnNode->bAutoCompleteSelectedNode;
-	}
 	
 	return false;
 }
@@ -868,32 +813,22 @@ ERowExecutionMode UMounteaDialogueSystemBFC::GetActiveRowExecutionMode(UMounteaD
 	constexpr ERowExecutionMode result = ERowExecutionMode::EREM_Automatic;
 
 	if (!DialogueContext)
-	{
 		return result;
-	}
 
 	if (RowIndex < 0)
-	{
 		return result;
-	}
 
 	auto activeRow = DialogueContext->GetActiveDialogueRow();
 	if (!activeRow.IsValid())
-	{
 		return result;
-	}
 
 	const TArray<FDialogueRowData> rowDataArray = activeRow.DialogueRowData.Array();
 	if (!rowDataArray.IsValidIndex(RowIndex))
-	{
 		return result;
-	}
 
 	auto activeRowData = rowDataArray[RowIndex];
 	if (!IsDialogueRowDataValid(activeRowData))
-	{
 		return result;
-	}
 
 	return activeRowData.RowExecutionBehaviour;
 }

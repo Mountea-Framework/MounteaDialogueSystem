@@ -40,6 +40,7 @@ FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct
 	, AllowedChildNodes(TArray<FGuid>())
 	, ActiveDialogueTableHandle(FDataTableRowHandle())
 	, ActiveDialogueRowDataIndex(0)
+	, LastWidgetCommand(FString())
 {}
 
 FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct(UMounteaDialogueContext* Source)
@@ -51,6 +52,7 @@ FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct
 	, AllowedChildNodes(Source ? UMounteaDialogueSystemBFC::NodesToGuids(Source->AllowedChildNodes) : TArray<FGuid>())
 	, ActiveDialogueTableHandle(Source ? Source->ActiveDialogueTableHandle : FDataTableRowHandle())
 	, ActiveDialogueRowDataIndex(Source ? Source->ActiveDialogueRowDataIndex : 0)
+	, LastWidgetCommand(Source ? Source->LastWidgetCommand : FString())
 {
 	DialogueParticipants.Empty();
 	if (Source)
@@ -79,6 +81,8 @@ bool FMounteaDialogueContextReplicatedStruct::NetSerialize(FArchive& Ar, class U
 	
 	Ar << DataTable;
 	Ar << RowName;
+
+	Ar << LastWidgetCommand;
 	
 	if (Ar.IsLoading())
 	{

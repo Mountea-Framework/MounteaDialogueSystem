@@ -93,7 +93,7 @@ UAudioComponent* UMounteaDialogueParticipant::FindAudioComponent() const
 		return Return;
 	}
 
-	LOG_WARNING(TEXT("[FindAudioComponent] No Audio Component found with by Identifiication (%s)\nFirst Audio Component will be used instead. To override this behaviour implement 'FindAudioComponent' event."), *AudioComponentIdentification.ToString())
+	LOG_INFO(TEXT("[FindAudioComponent] No Audio Component found with by Identification (%s)\nFirst Audio Component will be used instead. To override this behaviour implement 'FindAudioComponent' event."), *AudioComponentIdentification.ToString())
 
 	if (!GetOwner()) return nullptr;
 
