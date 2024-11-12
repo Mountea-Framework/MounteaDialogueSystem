@@ -570,6 +570,8 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 		EdMounteaGraph->SetDialogueEditorPtr(SharedThis(this));
 		EdMounteaGraph->RebuildMounteaDialogueGraph();
 	}
+
+	FAssetEditorToolkit::SaveAsset_Execute();
 }
 
 void FAssetEditor_MounteaDialogueGraph::CreateCommandList()

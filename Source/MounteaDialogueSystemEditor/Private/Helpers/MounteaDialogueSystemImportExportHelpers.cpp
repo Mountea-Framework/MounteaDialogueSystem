@@ -976,7 +976,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateParticipants(const UMoun
 	const FString PackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
 	const FString AssetName = FString::Printf(TEXT("DT_%s_Participants"), *Graph->GetName());
 
-	UDataTable* ParticipantsDataTable =ParticipantsDataTable = CreateDataTable<FDialogueRow>(AssetTools, PackagePath, AssetName);;
+	UDataTable* ParticipantsDataTable = CreateDataTable<FDialogueRow>(AssetTools, PackagePath, AssetName);;
 
 	if (!ParticipantsDataTable)
 	{
@@ -1034,7 +1034,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateParticipants(const UMoun
 
 bool UMounteaDialogueSystemImportExportHelpers::PopulateNodes(UMounteaDialogueGraph* Graph, const FString& Json)
 {
-	if (!Graph || !Graph->GetOutermost()->IsValidLowLevel())
+	if (!IsValid(Graph) || !Graph->GetOutermost()->IsValidLowLevel())
 	{
 		EditorLOG_ERROR(TEXT("[PopulateNodes] Invalid Graph object or package provided to PopulateNodes"));
 		return false;
@@ -1211,7 +1211,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateEdges(UMounteaDialogueGr
 
 bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDialogueGraph* Graph, const TMap<FString, FString>& ExtractedFiles)
 {
-	if (!Graph)
+	if (!IsValid(Graph))
 	{
 		EditorLOG_ERROR(TEXT("[PopulateDialogueRows] Invalid Graph object provided to PopulateDialogueRows"));
 		return false;
@@ -1609,9 +1609,9 @@ void UMounteaDialogueSystemImportExportHelpers::AddNodePosition(const TSharedPtr
 {
 	const TSharedPtr<FJsonObject> PositionObject = MakeShareable(new FJsonObject);
 
-	if (!Node)
+	if (!IsValid(Node))
 	{
-		EditorLOG_WARNING(TEXT("[AddNodePosition] Invalid Graph or EdGraph for node %s"), *Node->GetName());
+		EditorLOG_WARNING(TEXT("[AddNodePosition] Invalid Graph or EdGraph for node!"));
 		NodeObject->SetObjectField("position", PositionObject);
 		return;
 	}

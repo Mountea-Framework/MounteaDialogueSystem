@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "Interfaces/MounteaDialogueTickableObject.h"
 #include "MounteaDialogueGraphNode.generated.h"
@@ -11,6 +12,8 @@ class IMounteaDialogueManagerInterface;
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphEdge;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNodeStateChanged, const UMounteaDialogueGraphNode*, Node);
+
 /**
  * Mountea Dialogue Graph Node abstract Base class.
  * 
@@ -18,7 +21,7 @@ class UMounteaDialogueGraphEdge;
  * Does come with ability to define Colours, Name, Description and Title.
  * Contains information about Parent and Children Nodes.
  */
-UCLASS(Abstract, BlueprintType, Blueprintable, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"))
+UCLASS(Abstract, BlueprintType, Blueprintable, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue","Mountea|Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()
@@ -60,7 +63,7 @@ public:
 	 * Pointer to the parent dialogue graph of this node.
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", meta=(DisplayThumbnail=false))
-	UMounteaDialogueGraph* Graph;
+	TObjectPtr<UMounteaDialogueGraph> Graph;
 	
 	/**
 	 * Temporary NodeIndex.
@@ -91,12 +94,19 @@ private:
 	 *❔ Can be used for accessing world-related functionality.
 	 */
 	UPROPERTY(VisibleAnywhere, Category = "Mountea|Dialogue", AdvancedDisplay)
-	UWorld* OwningWorld;
+	TObjectPtr<UWorld> OwningWorld;
 
 #pragma endregion
 
 #pragma region Editable
 public:
+	
+	/**
+	 * Every Node has its own Tags. Those Tags can be used to Match Participants
+	 * or to find specific Nodes.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mountea|Dialogue")
+	FGameplayTagContainer NodeGameplayTags;
 	
 	/**
 	 * The array of allowed input classes for this Dialogue Node.
@@ -164,8 +174,8 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Validate"))
 	virtual bool DoesAutoStart() const
-	{ return bAutoStarts; };
-
+	{ return bAutoStarts; }
+	
 	/**
 	 * Pre-processes the dialogue node before it is activated.
 	 * This function is called before the main processing of the node.
@@ -311,6 +321,10 @@ public:
 	bool ValidateNodeRuntime() const;
 	virtual bool ValidateNodeRuntime_Implementation() const
 	{ return true; };
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Validate"))
+	void CleanupNode();
+	virtual void CleanupNode_Implementation();
 	
 public:
 
@@ -420,6 +434,13 @@ public:
 	FText NodeTitle;
 	
 	FIntPoint NodePosition;
+
+public:
+
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Node")
+	FOnNodeStateChanged OnNodeStateChanged;
+
+public:
 	
 #if WITH_EDITOR
 

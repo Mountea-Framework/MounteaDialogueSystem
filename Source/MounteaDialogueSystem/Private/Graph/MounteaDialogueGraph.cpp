@@ -10,7 +10,7 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraph"
 
-UMounteaDialogueGraph::UMounteaDialogueGraph()
+UMounteaDialogueGraph::UMounteaDialogueGraph() : bIsGraphActive(false)
 {
 	NodeType = UMounteaDialogueGraphNode::StaticClass();
 	EdgeType = UMounteaDialogueGraphEdge::StaticClass();
@@ -158,6 +158,48 @@ bool UMounteaDialogueGraph::CanStartDialogueGraph() const
 	return bSatisfied;
 }
 
+void UMounteaDialogueGraph::InitializeGraph()
+{
+	SetGraphState(true);
+
+	for (const auto& dialogueNode : AllNodes)
+	{
+		if (IsValid(dialogueNode))
+			dialogueNode->OnNodeStateChanged.AddUniqueDynamic(this, &UMounteaDialogueGraph::ProcessNodeStateChanged);
+	}
+}
+
+void UMounteaDialogueGraph::ShutdownGraph()
+{
+	SetGraphState(false);
+	
+	OnGraphNodeStateChanged.Clear();
+	OnGraphStateChanged.Clear();
+
+	CleanupGraph();
+}
+
+void UMounteaDialogueGraph::SetGraphState(const bool bIsActive)
+{
+	if (bIsGraphActive != bIsActive)
+	{
+		bIsGraphActive = bIsActive;
+		OnGraphStateChanged.Broadcast(this);
+		
+#if WITH_EDITORONLY_DATA
+	GraphStateUpdated.ExecuteIfBound(this);
+#endif
+	}
+}
+
+void UMounteaDialogueGraph::CleanupGraph() const
+{
+	for (const auto& dialogueNode : AllNodes)
+	{
+		if (dialogueNode) dialogueNode->CleanupNode();
+	}
+}
+
 void UMounteaDialogueGraph::CreateGraph()
 {
 #if WITH_EDITOR
@@ -236,6 +278,16 @@ void UMounteaDialogueGraph::TickMounteaEvent_Implementation(UObject* SelfRef, UO
 {
 	GraphTickEvent.Broadcast(this, ParentTick, DeltaTime);
 }
+
+#if WITH_EDITORONLY_DATA
+
+void UMounteaDialogueGraph::InitializePIEInstance(const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant, const int32 PIEInstance, const bool bIsRegistered)
+{
+	OnGraphInitialized.ExecuteIfBound(Participant.GetInterface(), this, PIEInstance, bIsRegistered);
+}
+
+#endif
+
 
 #if WITH_EDITOR
 

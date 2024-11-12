@@ -227,17 +227,17 @@ public:
 	virtual void TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime) override;
 	virtual FMounteaDialogueTick& GetMounteaDialogueTickHandle() override {return DecoratorTickEvent; };
 
-	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
 	FMounteaDialogueTick DecoratorTickEvent;
 	
 #pragma endregion
 	
 protected:
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Private")
+	UPROPERTY(BlueprintReadOnly, Category="Private")
 	FText DecoratorName;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Private")
+	UPROPERTY(BlueprintReadOnly, Category="Private")
 	TSet<TSoftClassPtr<UMounteaDialogueGraphNode>> BlacklistedNodes;
 
 	UPROPERTY()
@@ -247,7 +247,7 @@ protected:
 	TObjectPtr<UWorld>	OwningWorld	=	nullptr;
 	UPROPERTY()
 	TScriptInterface<IMounteaDialogueParticipantInterface>	OwnerParticipant	=	nullptr;
-	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue|Decorator")
+	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue|Decorator", AdvancedDisplay)
 	TScriptInterface<IMounteaDialogueManagerInterface>		OwningManager		=	nullptr;
 };
 
