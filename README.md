@@ -49,19 +49,20 @@ UE 5.1 | [2.0.4.51](https://github.com/Mountea-Framework/MounteaDialogueSystem/r
 UE 5.2 | [2.0.4.52](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.4.52) | 🟩
 UE 5.3 | [2.0.4.53](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.4.53) | 🟩
 UE 5.4 | [2.0.4.54](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.4.54) | 🟩
+UE 5.5 | - | 🟨
 
 ## Features
 ### Graph Editor
 This plugin comes with its own Graph Editor! This way you can easily connect nodes and visualise the Dialogue flow even for the most complex graphs you can imagine.
 <p align="center" width="100%">
-    <img width="65%" src="https://user-images.githubusercontent.com/37410226/233844580-a8947def-a4b6-4866-a0ac-d013b1b9d89a.png">
+    <img width="65%" src="https://github.com/user-attachments/assets/7d8f16ee-7336-4215-a9e7-d1e538c9080f">
 </p>
 
 #### Graph Editor Validations
-We are just humans and we tend to make mistakes. Graph Validator tries its best to track down all issues in the Editor before the project is packed, therefore saving a bunch of debugging hours for all parties included.
+We are just humans and we tend to make mistakes. Graph Validator tries its best to track down all issues in the Editor before the project is packed, therefore saving a bunch of debugging hours for all parties included. Validation system is clever enough to provide contextual information which part of the Dialogue is not correct.
 **Bonus:** Graph Validator reflects Graph Themes!
 <p align="center" width="100%">
-    <img width="65%" src="https://user-images.githubusercontent.com/37410226/233845041-81b0f873-5aaa-4881-8e50-f80b4e66c45a.png">
+    <img width="65%" src="https://github.com/user-attachments/assets/77d1b87c-dad7-42c0-a2d7-c84ccfaec415">
 </p>
 
 #### Graph Themes Settings
