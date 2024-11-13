@@ -61,7 +61,7 @@ public:
 	 * @param DialogueRow The row data associated with the dialogue node.
 	 * @return A new `FDialogueOptionData` structure containing the node and row data.
 	 */
-	UFUNCTION(BlueprintPure, Category="Mountea|Dialogue|Helpers|UI", meta = (BlueprintThreadSafe), meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintPure, Category="Mountea|Dialogue|Helpers|UI", meta=(CustomTag="MounteaK2Setter"))
 	static FDialogueOptionData NewDialogueOptionData(const FGuid& Node, const FDialogueRow& DialogueRow);
 
 	/**
@@ -71,7 +71,7 @@ public:
 	 * @param SourceRowData Additional data associated with the source row.
 	 * @return A new `FWidgetDialogueRow` structure containing the source row and its data.
 	 */
-	UFUNCTION(BlueprintPure, Category="Mountea|Dialogue|Helpers|UI", meta = (BlueprintThreadSafe), meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintPure, Category="Mountea|Dialogue|Helpers|UI", meta=(CustomTag="MounteaK2Setter"))
 	static FWidgetDialogueRow NewDialogueWidgetRowData(const FDialogueRow& SourceRow, const FDialogueRowData& SourceRowData);
 
 	/**
@@ -130,7 +130,7 @@ public:
 	 * @param ViewportManager    The viewport manager, an actor that implements the MounteaDialogueHUDClassInterface.
 	 * @return                   The subclass of UUserWidget used as the base class for the viewport, or nullptr if an error occurs.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Getter", HideSelfPin="true"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|HUD|Viewport", meta=(CustomTag="MounteaK2Getter"))
 	static TSubclassOf<UUserWidget> GetViewportBaseClass(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueHUDClassInterface")) AActor* ViewportManager);
 	
 	/**
@@ -138,7 +138,7 @@ public:
 	 *
 	 * @param ViewportManager    The viewport manager, an actor that implements the MounteaDialogueHUDClassInterface.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Setter", HideSelfPin="true"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|HUD|Viewport", meta=(CustomTag="MounteaK2Setter"))
 	static void InitializeViewportWidget(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueHUDClassInterface")) AActor* ViewportManager);
 
 	/**
@@ -147,7 +147,7 @@ public:
 	 * @param ViewportManager    The viewport manager, an actor that implements the MounteaDialogueHUDClassInterface.
 	 * @return                   The UUserWidget representing the viewport, or nullptr if the viewport manager does not implement the interface or an error occurs.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Getter", HideSelfPin="true"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|HUD|Viewport", meta=(CustomTag="MounteaK2Getter"))
 	static UUserWidget* GetViewportWidget(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueHUDClassInterface")) AActor* ViewportManager);
 	
 	/**
@@ -157,7 +157,7 @@ public:
 	 * @param ChildWidget        The child widget to be added to the viewport.
 	 * @param WidgetParams   Contains 3 options:\n 1. the anchors for the widget, determining how the widget is positioned relative to its parent\n2. the margin for the widget, defining the padding or offset from the parent's bounds\n3. The Z-order index of the child widget, determining its rendering order within the parent
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Setter", HideSelfPin="true"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|HUD|Viewport", meta=(CustomTag="MounteaK2Setter"))
 	static void AddChildWidgetToViewport(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueHUDClassInterface")) AActor* ViewportManager, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams = FWidgetAdditionParams());
 
 	/**
@@ -166,7 +166,7 @@ public:
 	 * @param ViewportManager    The viewport manager, an actor that implements the MounteaDialogueHUDClassInterface.
 	 * @param ChildWidget        The child widget to be removed from the viewport.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Setter", HideSelfPin="true"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|HUD|Viewport", meta=(CustomTag="MounteaK2Setter"))
 	static void RemoveChildWidgetFromViewport(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueHUDClassInterface")) AActor* ViewportManager, UUserWidget* ChildWidget);
 
 	// --- Viewport Widget Interface functions ------------------------------
@@ -178,7 +178,7 @@ public:
 	 * @param ChildWidget     The child widget to be added.
 	 * @param WidgetParams   Contains 3 options:\n 1. the anchors for the widget, determining how the widget is positioned relative to its parent\n2. the margin for the widget, defining the padding or offset from the parent's bounds\n3. The Z-order index of the child widget, determining its rendering order within the parent
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Setter", HideSelfPin="true"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|HUD|Viewport", meta=(CustomTag="MounteaK2Setter"))
 	static void AddChildWidget(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueViewportWidgetInterface")) UUserWidget* ParentWidget, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams = FWidgetAdditionParams());
 
 	/**
@@ -187,18 +187,8 @@ public:
 	 * @param ParentWidget    The parent widget that should implement the MounteaDialogueViewportWidgetInterface.
 	 * @param ChildWidget     The child widget to be removed.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Setter", HideSelfPin="true"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|HUD|Viewport", meta=(CustomTag="MounteaK2Setter"))
 	static void RemoveChildWidget(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueViewportWidgetInterface")) UUserWidget* ParentWidget, UUserWidget* ChildWidget);
-
-	// --- Options Container Interface functions ------------------------------
-	
-	/**
-	 * Returns all Dialogue Options from the specified Dialogue Options Container parent widget that implements the MounteaDialogueOptionsContainerInterface.
-	 *
-	 * @param ParentWidget    The parent widget that should implement the MounteaDialogueOptionsContainerInterface.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers|HUD", meta=(CustomTag="MounteaK2Getter", HideSelfPin="true"))
-	static TArray<UUserWidget*> GetDialogueOptions(UPARAM(meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueOptionsContainerInterface")) UUserWidget* ParentWidget);
 
 	// --- Dialogue Base UI Interface functions ------------------------------
 
@@ -240,6 +230,7 @@ public:
 	static void ApplyTheme(UUserWidget* Target);
 
 	// --- Dialogue Widget Interface functions ------------------------------
+	
 	/**
 	 * This event should be called when you want to refresh UI data.
 	 *
@@ -258,4 +249,150 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|Dialogue")
 	static void OnOptionSelected(UObject* Target, const FGuid& SelectionGUID);
+	
+	// --- Dialogue Option Interface functions ------------------------------
+
+	/**
+	 * Gets the current dialogue option data.
+	 *
+	 * @param DialogueOption The object that should implement the MounteaDialogueOptionInterface. Usually Widget Blueprint.
+	 * @return The current dialogue option data.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|UserInterface|Option", meta=(CustomTag="MounteaK2Getter"))
+	static FDialogueOptionData GetDialogueOptionData(UObject* DialogueOption);
+
+	/**
+	 * Sets new dialogue option data.
+	 *
+	 * @param DialogueOption The object that should implement the MounteaDialogueOptionInterface. Usually Widget Blueprint.
+	 * @param NewData The new data to set for the dialogue option.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|Option", meta=(CustomTag="MounteaK2Setter"))
+	static void SetNewDialogueOptionData(UObject* DialogueOption, const FDialogueOptionData& NewData);
+
+	/**
+	 * Resets the dialogue option data to its default state.
+	 *
+	 * @param DialogueOption The object that should implement the MounteaDialogueOptionInterface. Usually Widget Blueprint.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|Option", meta=(CustomTag="MounteaK2Setter"))
+	static void ResetDialogueOptionData(UObject* DialogueOption);
+
+	/**
+	 * Responsible for setting visual data from Dialogue Option data.
+	 *
+	 * @param DialogueOption The object that should implement the MounteaDialogueOptionInterface. Usually Widget Blueprint.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|Option", meta=(CustomTag="MounteaK2Setter"))
+	static void InitializeDialogueOption(UObject* DialogueOption);
+
+	/**
+	 * Processes the event of a dialogue option being selected.
+	 *
+	 * @param DialogueOption The object that should implement the MounteaDialogueOptionInterface. Usually Widget Blueprint.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|Option", meta=(CustomTag="MounteaK2Setter"))
+	static void ProcessOptionSelected(UObject* DialogueOption);
+	
+	// --- Options Container Interface functions ------------------------------
+
+	/**
+	 * Sets the parent dialogue widget.
+	 *
+	 * @param ContainerObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @param NewParentDialogueWidget The UUserWidget instance to be set as the parent dialogue widget. The widget must implement the MounteaDialogueWBPInterface.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Setter"))
+	void SetParentDialogueWidget(UObject* ContainerObject, UUserWidget* NewParentDialogueWidget);
+
+	/**
+	 * Gets the parent dialogue widget.
+	 *
+	 * @param ContainerObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @return A UUserWidget instance that serves as the parent dialogue widget.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Getter"))
+	static UUserWidget* GetParentDialogueWidget(UObject* ContainerObject);
+
+	/**
+	 * Gets the class type of the dialogue option widget.
+	 *
+	 * @param ContainerObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @return A soft class pointer to the UUserWidget that represents the dialogue option.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Getter"))
+	static TSoftClassPtr<UUserWidget> GetDialogueOptionClass(UObject* ContainerObject);
+
+	/**
+	 * Sets the class type of the dialogue option widget.
+	 *
+	 * @param ContainerObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @param NewDialogueOptionClass A soft class pointer to the new UUserWidget class to be used for dialogue options.
+	 * The class must implement the MounteaDialogueOptionInterface.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|OptionsContainer")
+	void SetDialogueOptionClass(UObject* ContainerObject, const TSoftClassPtr<UUserWidget>& NewDialogueOptionClass);
+	
+	/**
+	 * Adds a new dialogue option widget.
+	 *
+	 * @param ContainerObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @param NewDialogueOption The UUserWidget instance to be added as a new dialogue option.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Setter"))
+	void AddNewDialogueOption(UObject* ContainerObject, UMounteaDialogueGraphNode_DialogueNodeBase* NewDialogueOption);
+
+	/**
+	 * Adds multiple new dialogue option widgets.
+	 *
+	 * @param ContainerObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @param NewDialogueOptions An array of UUserWidget instances to be added as new dialogue options.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Setter"))
+	void AddNewDialogueOptions(UObject* ContainerObject, const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& NewDialogueOptions);
+
+	/**
+	 * Removes a specific dialogue option widget.
+	 *
+	 * @param ContainerObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @param DirtyDialogueOption The UUserWidget instance to be removed from the dialogue options.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Setter"))
+	void RemoveDialogueOption(UObject* ContainerObject, UMounteaDialogueGraphNode_DialogueNodeBase* DirtyDialogueOption);
+
+	/**
+	 * Removes multiple dialogue option widgets.
+	 *
+	 * @param ContainerObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @param DirtyDialogueOptions An array of UUserWidget instances to be removed from the dialogue options.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Setter"))
+	void RemoveDialogueOptions(UObject* ContainerObject, const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& DirtyDialogueOptions);
+
+	/**
+	 * Clears all dialogue option widgets.
+	 *
+	 * @param ContainerObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * Removes all currently stored dialogue options, effectively resetting the container.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Setter"))
+	void ClearDialogueOptions(UObject* ContainerObject);
+
+	/**
+	 * Processes the selected option.
+	 *
+	 * @param ContainerObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @param SelectedOption The selected option's identifier.
+	 * @param CallingWidget The widget that triggered the selection process.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Setter"))
+	void ProcessContainerOptionSelected(UObject* ContainerObject, const FGuid& SelectedOption, UUserWidget* CallingWidget);
+	
+	/**
+	 * Returns all Dialogue Options from the specified Dialogue Options Container parent widget that implements the MounteaDialogueOptionsContainerInterface.
+	 *
+	 * @param ContainerObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Getter"))
+	static TArray<UUserWidget*> GetDialogueOptions(UObject* ContainerObject);
 };
