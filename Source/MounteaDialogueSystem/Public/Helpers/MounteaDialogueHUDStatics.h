@@ -401,7 +401,7 @@ public:
 	/**
 	 * Retrieves the dialogue row data associated with the widget.
 	 *
-	 * @param RowObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @param RowObject The object that should implement the MounteaDialogueRowInterface. Usually Widget Blueprint.
 	 * @return FWidgetDialogueRow containing the dialogue row data.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Getter"))
@@ -410,7 +410,7 @@ public:
 	/**
 	 * Sets new dialogue row data for the widget.
 	 *
-	 * @param RowObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @param RowObject The object that should implement the MounteaDialogueRowInterface. Usually Widget Blueprint.
 	 * @param NewData The new dialogue row data to set.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
@@ -419,7 +419,7 @@ public:
 	/**
 	 * Resets the widget's dialogue row data to the default state.
 	 *
-	 * @param RowObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @param RowObject The object that should implement the MounteaDialogueRowInterface. Usually Widget Blueprint.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
 	static void ResetWidgetDialogueRow(UObject* RowObject);
@@ -427,7 +427,7 @@ public:
 	/**
 	 * Initializes the widget's dialogue row data.
 	 *
-	 * @param RowObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @param RowObject The object that should implement the MounteaDialogueRowInterface. Usually Widget Blueprint.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
 	static void InitializeWidgetDialogueRow(UObject* RowObject);
@@ -435,7 +435,7 @@ public:
 	/**
 	 * Stops the typewriter effect and finishes displaying the text.
 	 *
-	 * @param RowObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @param RowObject The object that should implement the MounteaDialogueRowInterface. Usually Widget Blueprint.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
 	static void StopTypeWriterEffect(UObject* RowObject);
@@ -443,7 +443,7 @@ public:
 	/**
 	 * Starts the typewriter effect on the specified text for a given duration.
 	 *
-	 * @param RowObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @param RowObject The object that should implement the MounteaDialogueRowInterface. Usually Widget Blueprint.
 	 * @param SourceText The full text to display.
 	 * @param Duration The duration over which the typewriter effect should play.
 	 */
@@ -453,10 +453,29 @@ public:
 	/**
 	 * Enables or disables the typewriter effect based on the specified parameter.
 	 *
-	 * @param RowObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @param RowObject The object that should implement the MounteaDialogueRowInterface. Usually Widget Blueprint.
 	 * @param bEnable Whether to enable or disable the effect.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
 	static void EnableTypeWriterEffect(UObject* RowObject, bool bEnable);
+
+	// --- Skip Interface functions ------------------------------
+
+	/**
+	 * Requests the widget to show with a fade-in effect.
+	 *
+	 * @param SkipObject The object that should implement the MounteaDialogueSkipInterface. Usually Widget Blueprint.
+	 * @param FadeProgressDuration A vector specifying the fade-in progress duration for the widget.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|Skip", meta=(CustomTag="MounteaK2Setter"))
+	static void RequestShowWidget(UObject* SkipObject, const FVector2D& FadeProgressDuration);
+
+	/**
+	 * Requests the widget to hide with a fade-out effect.
+	 *
+	 * @param SkipObject The object that should implement the MounteaDialogueSkipInterface. Usually Widget Blueprint.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|Skip", meta=(CustomTag="MounteaK2Setter"))
+	static void RequestHideWidget(UObject* SkipObject);
 
 };

@@ -10,6 +10,7 @@
 #include "Interfaces/HUD/MounteaDialogueWBPInterface.h"
 #include "Interfaces/UMG/MounteaDialogueOptionInterface.h"
 #include "Interfaces/UMG/MounteaDialogueRowInterface.h"
+#include "Interfaces/UMG/MounteaDialogueSkipInterface.h"
 #include "Interfaces/UMG/MounteaDialogueViewportWidgetInterface.h"
 #include "Internationalization/Regex.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
@@ -502,4 +503,22 @@ void UMounteaDialogueHUDStatics::EnableTypeWriterEffect(UObject* RowObject, bool
 
 	if (RowObject->Implements<UMounteaDialogueRowInterface>())
 		return IMounteaDialogueRowInterface::Execute_EnableTypeWriterEffect(RowObject, bEnable);
+}
+
+void UMounteaDialogueHUDStatics::RequestShowWidget(UObject* SkipObject, const FVector2D& FadeProgressDuration)
+{
+	if (!IsValid(SkipObject))
+		return;
+
+	if (SkipObject->Implements<UMounteaDialogueSkipInterface>())
+		return IMounteaDialogueSkipInterface::Execute_RequestShowWidget(SkipObject, FadeProgressDuration);
+}
+
+void UMounteaDialogueHUDStatics::RequestHideWidget(UObject* SkipObject)
+{
+	if (!IsValid(SkipObject))
+		return;
+
+	if (SkipObject->Implements<UMounteaDialogueSkipInterface>())
+		return IMounteaDialogueSkipInterface::Execute_RequestHideWidget(SkipObject);
 }
