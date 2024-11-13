@@ -303,7 +303,7 @@ public:
 	 * @param NewParentDialogueWidget The UUserWidget instance to be set as the parent dialogue widget. The widget must implement the MounteaDialogueWBPInterface.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Setter"))
-	void SetParentDialogueWidget(UObject* ContainerObject, UUserWidget* NewParentDialogueWidget);
+	static void SetParentDialogueWidget(UObject* ContainerObject, UUserWidget* NewParentDialogueWidget);
 
 	/**
 	 * Gets the parent dialogue widget.
@@ -330,7 +330,7 @@ public:
 	 * @param NewDialogueOptionClass A soft class pointer to the new UUserWidget class to be used for dialogue options.
 	 * The class must implement the MounteaDialogueOptionInterface.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|OptionsContainer")
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Setter"))
 	static void SetDialogueOptionClass(UObject* ContainerObject, const TSoftClassPtr<UUserWidget>& NewDialogueOptionClass);
 	
 	/**
