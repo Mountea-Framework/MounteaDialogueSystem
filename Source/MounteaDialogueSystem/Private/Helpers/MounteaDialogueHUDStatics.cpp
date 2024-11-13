@@ -438,3 +438,68 @@ TArray<UUserWidget*> UMounteaDialogueHUDStatics::GetDialogueOptions(UObject* Con
 	LOG_ERROR(TEXT("[GetDialogueOptions] ParentWidget does not implement `MounteaDialogueOptionsContainerInterface`!"));
 	return dialogueOptions;
 }
+
+FWidgetDialogueRow UMounteaDialogueHUDStatics::GetDialogueWidgetRowData(UObject* RowObject)
+{
+	if (!IsValid(RowObject))
+		return FWidgetDialogueRow();
+
+	if (RowObject->Implements<UMounteaDialogueRowInterface>())
+		return IMounteaDialogueRowInterface::Execute_GetDialogueWidgetRowData(RowObject);
+
+	return FWidgetDialogueRow();
+}
+
+void UMounteaDialogueHUDStatics::SetNewWidgetDialogueRowData(UObject* RowObject, const FWidgetDialogueRow& NewData)
+{
+	if (!IsValid(RowObject))
+		return;
+
+	if (RowObject->Implements<UMounteaDialogueRowInterface>())
+		return IMounteaDialogueRowInterface::Execute_SetNewWidgetDialogueRowData(RowObject, NewData);
+}
+
+void UMounteaDialogueHUDStatics::ResetWidgetDialogueRow(UObject* RowObject)
+{
+	if (!IsValid(RowObject))
+		return;
+
+	if (RowObject->Implements<UMounteaDialogueRowInterface>())
+		return IMounteaDialogueRowInterface::Execute_ResetWidgetDialogueRow(RowObject);
+}
+
+void UMounteaDialogueHUDStatics::InitializeWidgetDialogueRow(UObject* RowObject)
+{
+	if (!IsValid(RowObject))
+		return;
+
+	if (RowObject->Implements<UMounteaDialogueRowInterface>())
+		return IMounteaDialogueRowInterface::Execute_InitializeWidgetDialogueRow(RowObject);
+}
+
+void UMounteaDialogueHUDStatics::StopTypeWriterEffect(UObject* RowObject)
+{
+	if (!IsValid(RowObject))
+		return;
+
+	if (RowObject->Implements<UMounteaDialogueRowInterface>())
+		return IMounteaDialogueRowInterface::Execute_StopTypeWriterEffect(RowObject);
+}
+
+void UMounteaDialogueHUDStatics::StartTypeWriterEffect(UObject* RowObject, const FText& SourceText, float Duration)
+{
+	if (!IsValid(RowObject))
+		return;
+
+	if (RowObject->Implements<UMounteaDialogueRowInterface>())
+		return IMounteaDialogueRowInterface::Execute_StartTypeWriterEffect(RowObject, SourceText, Duration);
+}
+
+void UMounteaDialogueHUDStatics::EnableTypeWriterEffect(UObject* RowObject, bool bEnable)
+{
+	if (!IsValid(RowObject))
+		return;
+
+	if (RowObject->Implements<UMounteaDialogueRowInterface>())
+		return IMounteaDialogueRowInterface::Execute_EnableTypeWriterEffect(RowObject, bEnable);
+}
