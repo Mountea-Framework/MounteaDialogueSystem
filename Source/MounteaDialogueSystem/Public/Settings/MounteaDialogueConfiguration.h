@@ -8,7 +8,14 @@
 #include "MounteaDialogueConfiguration.generated.h"
 
 /**
- * 
+ * UMounteaDialogueConfiguration
+ *
+ * A data asset that provides configuration settings for the Mountea Dialogue System.
+ * This includes settings for the default dialogue widget, input mode, dialogue skip behavior,
+ * timing coefficients, and various other user interface and subtitle parameters.
+ *
+ * This configuration asset is designed to be customizable within the editor, allowing fine-tuned
+ * control over dialogue behavior, including skip fade durations, update frequencies, and input handling.
  */
 UCLASS(DisplayName="Mountea Dialogue Config")
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueConfiguration : public UDataAsset

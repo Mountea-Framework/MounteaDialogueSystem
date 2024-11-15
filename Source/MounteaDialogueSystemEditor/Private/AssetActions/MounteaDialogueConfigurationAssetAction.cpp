@@ -18,7 +18,7 @@ FText UMounteaDialogueConfigurationAssetAction::GetName() const
 
 FColor UMounteaDialogueConfigurationAssetAction::GetTypeColor() const
 {
-	return FColor(137, 59, 12);
+	return FColor(69, 3, 55);
 }
 
 UClass* UMounteaDialogueConfigurationAssetAction::GetSupportedClass() const
@@ -40,7 +40,7 @@ const TArray<FText>& UMounteaDialogueConfigurationAssetAction::GetSubMenus() con
 {
 	static const TArray<FText> AssetTypeActionSubMenu
 	{
-		FText::FromString("3. Additional Data")
+		FText::FromString("3. Configuration")
 	};
 	return AssetTypeActionSubMenu;
 }
