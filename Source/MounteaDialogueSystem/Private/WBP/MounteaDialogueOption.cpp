@@ -13,6 +13,8 @@ void UMounteaDialogueOption::SetNewDialogueOptionData_Implementation(const FDial
 	if (NewData != DialogueOptionData)
 	{
 		DialogueOptionData = NewData;
+
+		Execute_InitializeDialogueOption(this);
 	}
 }
 

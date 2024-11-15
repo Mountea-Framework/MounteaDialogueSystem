@@ -38,7 +38,7 @@ void UMounteaDialogueParticipant::BeginPlay()
 	if (IsValid(audioComponent))
 		Execute_SetAudioComponent(this, audioComponent);
 	else
-		CreateDialogueAudioComponent();
+		LOG_WARNING(TEXT("[Begin Play] Participant %s has invalid audio component. Voice will be player unbound and skipping might lead to issues."), *GetName())
 
 	Execute_InitializeParticipant(this, DialogueManager);
 
@@ -99,19 +99,6 @@ UAudioComponent* UMounteaDialogueParticipant::FindAudioComponent() const
 
 	UAudioComponent* firstFoundAudioComp = GetOwner()->FindComponentByClass<UAudioComponent>();
 	return firstFoundAudioComp;
-}
-
-void UMounteaDialogueParticipant::CreateDialogueAudioComponent()
-{
-	FAttachmentTransformRules attachmentRules = FAttachmentTransformRules::KeepRelativeTransform;
-	auto newAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("DialogueAudioComponent"));
-	ensure(IsValid(newAudioComponent));
-	
-	newAudioComponent->AttachToComponent(GetOwner()->GetRootComponent(), attachmentRules);
-	const TArray<FName> newAudioTags = {TEXT("Mountea"), TEXT("Dialogue"), TEXT("Audio")};
-	newAudioComponent->ComponentTags.Append(newAudioTags);
-	
-	Execute_SetAudioComponent(this, newAudioComponent);
 }
 
 UAudioComponent* UMounteaDialogueParticipant::FindAudioComponentByName(const FName& Arg) const

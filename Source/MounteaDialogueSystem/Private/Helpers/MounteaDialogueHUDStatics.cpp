@@ -328,53 +328,85 @@ void UMounteaDialogueHUDStatics::SetParentDialogueWidget(UObject* ContainerObjec
 	if (!IsValid(NewParentDialogueWidget))
 		return;
 
-	if (!ContainerObject->Implements<UMounteaDialogueOptionsContainer>())
-		return;
+	auto containerInterface = GetOptionsContainerInterface(ContainerObject);
 
-	if (NewParentDialogueWidget->Implements<UMounteaDialogueWBPInterface>())
+	if (!containerInterface.GetObject())
+	{
+		LOG_WARNING(TEXT("[Set Parent Dialogue Widget] Container Object %s doesn't properly implement `IMounteaDialogueOptionsContainerInterface`!"), *ContainerObject->GetName())
 		return;
+	}
 
-	return IMounteaDialogueOptionsContainerInterface::Execute_SetParentDialogueWidget(ContainerObject, NewParentDialogueWidget);
+	TScriptInterface<IMounteaDialogueWBPInterface> parentWidgetInterface;
+	parentWidgetInterface.SetObject(ContainerObject);
+	parentWidgetInterface.SetInterface(Cast<IMounteaDialogueWBPInterface>(NewParentDialogueWidget));
+
+	if (!parentWidgetInterface.GetObject())
+	{
+		LOG_WARNING(TEXT("[Set Parent Dialogue Widget] Parent Widget Object %s doesn't properly implement `IMounteaDialogueWBPInterface`!"), *NewParentDialogueWidget->GetName())
+		return;
+	}
+
+	return containerInterface->Execute_SetParentDialogueWidget(ContainerObject, NewParentDialogueWidget);
 }
 
 UUserWidget* UMounteaDialogueHUDStatics::GetParentDialogueWidget(UObject* ContainerObject)
 {
-	if (!IsValid(ContainerObject))
-		return nullptr;
+	if (!IsValid(ContainerObject)) return nullptr;
 
-	if (!ContainerObject->Implements<UMounteaDialogueOptionsContainer>())
-		return nullptr;
+	auto containerInterface = GetOptionsContainerInterface(ContainerObject);
 
-	return IMounteaDialogueOptionsContainerInterface::Execute_GetParentDialogueWidget(ContainerObject);
+	if (!containerInterface.GetObject())
+	{
+		 LOG_WARNING(TEXT("[Get Parent Dialogue Widget] Container Object %s doesn't properly implement `IMounteaDialogueOptionsContainerInterface`!"), *ContainerObject->GetName())
+		 return nullptr;
+	}
+
+	return containerInterface->Execute_GetParentDialogueWidget(ContainerObject);
 }
 
 TSoftClassPtr<UUserWidget> UMounteaDialogueHUDStatics::GetDialogueOptionClass(UObject* ContainerObject)
 {
-	if (!IsValid(ContainerObject))
-		return nullptr;
+	if (!IsValid(ContainerObject)) return nullptr;
 
-	if (!ContainerObject->Implements<UMounteaDialogueOptionsContainer>())
-		return nullptr;
+	auto containerInterface = GetOptionsContainerInterface(ContainerObject);
 
-	return IMounteaDialogueOptionsContainerInterface::Execute_GetDialogueOptionClass(ContainerObject);
+	if (!containerInterface.GetObject())
+	{
+		 LOG_WARNING(TEXT("[Get Dialogue Option Class] Container Object %s doesn't properly implement `IMounteaDialogueOptionsContainerInterface`!"), *ContainerObject->GetName())
+		 return nullptr;
+	}
+
+	return containerInterface->Execute_GetDialogueOptionClass(ContainerObject);
 }
 
 void UMounteaDialogueHUDStatics::SetDialogueOptionClass(UObject* ContainerObject, const TSoftClassPtr<UUserWidget>& NewDialogueOptionClass)
 {
-	if (!IsValid(ContainerObject))
-		return;
+	if (!IsValid(ContainerObject)) return;
 
-	if (ContainerObject->Implements<UMounteaDialogueOptionsContainer>())
-		return IMounteaDialogueOptionsContainerInterface::Execute_SetDialogueOptionClass(ContainerObject, NewDialogueOptionClass);
+	auto containerInterface = GetOptionsContainerInterface(ContainerObject);
+
+	if (!containerInterface.GetObject())
+	{
+		 LOG_WARNING(TEXT("[Set Dialogue Option Class] Container Object %s doesn't properly implement `IMounteaDialogueOptionsContainerInterface`!"), *ContainerObject->GetName())
+		 return;
+	}
+
+	containerInterface->Execute_SetDialogueOptionClass(ContainerObject, NewDialogueOptionClass);
 }
 
 void UMounteaDialogueHUDStatics::AddNewDialogueOption(UObject* ContainerObject, UMounteaDialogueGraphNode_DialogueNodeBase* NewDialogueOption)
 {
-	if (!IsValid(ContainerObject))
-		return;
+	if (!IsValid(ContainerObject)) return;
 
-	if (ContainerObject->Implements<UMounteaDialogueOptionsContainer>())
-		return IMounteaDialogueOptionsContainerInterface::Execute_AddNewDialogueOption(ContainerObject, NewDialogueOption);
+	auto containerInterface = GetOptionsContainerInterface(ContainerObject);
+
+	if (!containerInterface.GetObject())
+	{
+		 LOG_WARNING(TEXT("[Add New Dialogue Option] Container Object %s doesn't properly implement `IMounteaDialogueOptionsContainerInterface`!"), *ContainerObject->GetName())
+		 return;
+	}
+
+	containerInterface->Execute_AddNewDialogueOption(ContainerObject, NewDialogueOption);
 }
 
 void UMounteaDialogueHUDStatics::AddNewDialogueOptions(UObject* ContainerObject, const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& NewDialogueOptions)
@@ -382,62 +414,90 @@ void UMounteaDialogueHUDStatics::AddNewDialogueOptions(UObject* ContainerObject,
 	if (!IsValid(ContainerObject))
 		return;
 
-	if (ContainerObject->Implements<UMounteaDialogueOptionsContainer>())
-		return IMounteaDialogueOptionsContainerInterface::Execute_AddNewDialogueOptions(ContainerObject, NewDialogueOptions);
+	TScriptInterface<IMounteaDialogueOptionsContainerInterface> containerInterface;
+	containerInterface.SetObject(ContainerObject);
+	containerInterface.SetInterface(Cast<IMounteaDialogueOptionsContainerInterface>(ContainerObject));
+
+	if (containerInterface.GetObject())
+		containerInterface->Execute_AddNewDialogueOptions(ContainerObject, NewDialogueOptions);
+	else
+		LOG_WARNING(TEXT("[Add New Dialogue Options] Container Object %s doesn't properly implement `IMounteaDialogueOptionsContainerInterface`!"), *ContainerObject->GetName())
 }
 
 void UMounteaDialogueHUDStatics::RemoveDialogueOption(UObject* ContainerObject, UMounteaDialogueGraphNode_DialogueNodeBase* DirtyDialogueOption)
 {
-	if (!IsValid(ContainerObject))
-		return;
+	if (!IsValid(ContainerObject)) return;
 
-	if (ContainerObject->Implements<UMounteaDialogueOptionsContainer>())
-		return IMounteaDialogueOptionsContainerInterface::Execute_RemoveDialogueOption(ContainerObject, DirtyDialogueOption);
+	auto containerInterface = GetOptionsContainerInterface(ContainerObject);
+
+	if (!containerInterface.GetObject())
+	{
+		 LOG_WARNING(TEXT("[Remove Dialogue Option] Container Object %s doesn't properly implement `IMounteaDialogueOptionsContainerInterface`!"), *ContainerObject->GetName())
+		 return;
+	}
+
+	containerInterface->Execute_RemoveDialogueOption(ContainerObject, DirtyDialogueOption);
 }
 
 void UMounteaDialogueHUDStatics::RemoveDialogueOptions(UObject* ContainerObject, const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& DirtyDialogueOptions)
 {
-	if (!IsValid(ContainerObject))
-		return;
+	if (!IsValid(ContainerObject)) return;
 
-	if (ContainerObject->Implements<UMounteaDialogueOptionsContainer>())
-		return IMounteaDialogueOptionsContainerInterface::Execute_RemoveDialogueOptions(ContainerObject, DirtyDialogueOptions);
+	auto containerInterface = GetOptionsContainerInterface(ContainerObject);
+
+	if (!containerInterface.GetObject())
+	{
+		 LOG_WARNING(TEXT("[Remove Dialogue Options] Container Object %s doesn't properly implement `IMounteaDialogueOptionsContainerInterface`!"), *ContainerObject->GetName())
+		 return;
+	}
+
+	containerInterface->Execute_RemoveDialogueOptions(ContainerObject, DirtyDialogueOptions);
 }
 
 void UMounteaDialogueHUDStatics::ClearDialogueOptions(UObject* ContainerObject)
 {
-	if (!IsValid(ContainerObject))
-		return;
+	if (!IsValid(ContainerObject)) return;
 
-	if (ContainerObject->Implements<UMounteaDialogueOptionsContainer>())
-		return IMounteaDialogueOptionsContainerInterface::Execute_ClearDialogueOptions(ContainerObject);
+	auto containerInterface = GetOptionsContainerInterface(ContainerObject);
+
+	if (!containerInterface.GetObject())
+	{
+		 LOG_WARNING(TEXT("[Clear Dialogue Options] Container Object %s doesn't properly implement `IMounteaDialogueOptionsContainerInterface`!"), *ContainerObject->GetName())
+		 return;
+	}
+
+	containerInterface->Execute_ClearDialogueOptions(ContainerObject);
 }
 
 void UMounteaDialogueHUDStatics::ProcessContainerOptionSelected(UObject* ContainerObject, const FGuid& SelectedOption, UUserWidget* CallingWidget)
 {
-	if (!IsValid(ContainerObject))
-		return;
+	if (!IsValid(ContainerObject)) return;
 
-	if (ContainerObject->Implements<UMounteaDialogueOptionsContainer>())
-		return IMounteaDialogueOptionsContainerInterface::Execute_ProcessOptionSelected(ContainerObject, SelectedOption, CallingWidget);
+	auto containerInterface = GetOptionsContainerInterface(ContainerObject);
+
+	if (!containerInterface.GetObject())
+	{
+		 LOG_WARNING(TEXT("[Process Container Option Selected] Container Object %s doesn't properly implement `IMounteaDialogueOptionsContainerInterface`!"), *ContainerObject->GetName())
+		 return;
+	}
+
+	containerInterface->Execute_ProcessOptionSelected(ContainerObject, SelectedOption, CallingWidget);
 }
 
 TArray<UUserWidget*> UMounteaDialogueHUDStatics::GetDialogueOptions(UObject* ContainerObject)
 {
 	TArray<UUserWidget*> dialogueOptions;
-	if (!IsValid(ContainerObject))
+	if (!IsValid(ContainerObject)) return dialogueOptions;
+
+	auto containerInterface = GetOptionsContainerInterface(ContainerObject);
+
+	if (!containerInterface.GetObject())
 	{
-		LOG_ERROR(TEXT("[GetDialogueOptions] Invalid Parent Widget provided!"));
-		return dialogueOptions;
-	}
-	
-	if (ContainerObject->Implements<UMounteaDialogueOptionsContainer>())
-	{
-		return IMounteaDialogueOptionsContainerInterface::Execute_GetDialogueOptions(ContainerObject);
+		 LOG_WARNING(TEXT("[Get Dialogue Options] Container Object %s doesn't properly implement `IMounteaDialogueOptionsContainerInterface`!"), *ContainerObject->GetName())
+		 return dialogueOptions;
 	}
 
-	LOG_ERROR(TEXT("[GetDialogueOptions] ParentWidget does not implement `MounteaDialogueOptionsContainerInterface`!"));
-	return dialogueOptions;
+	return containerInterface->Execute_GetDialogueOptions(ContainerObject);
 }
 
 FWidgetDialogueRow UMounteaDialogueHUDStatics::GetDialogueWidgetRowData(UObject* RowObject)
@@ -521,4 +581,13 @@ void UMounteaDialogueHUDStatics::RequestHideWidget(UObject* SkipObject)
 
 	if (SkipObject->Implements<UMounteaDialogueSkipInterface>())
 		return IMounteaDialogueSkipInterface::Execute_RequestHideWidget(SkipObject);
+}
+
+TScriptInterface<IMounteaDialogueOptionsContainerInterface> UMounteaDialogueHUDStatics::GetOptionsContainerInterface(UObject* ContainerObject)
+{
+	TScriptInterface<IMounteaDialogueOptionsContainerInterface> containerInterface;
+	containerInterface.SetObject(ContainerObject);
+	containerInterface.SetInterface(Cast<IMounteaDialogueOptionsContainerInterface>(ContainerObject));
+
+	return containerInterface;
 }

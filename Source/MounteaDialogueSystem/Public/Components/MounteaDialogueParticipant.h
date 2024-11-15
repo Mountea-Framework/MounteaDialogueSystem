@@ -45,7 +45,6 @@ public:
  	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
 	UAudioComponent* FindAudioComponent() const;
-	void CreateDialogueAudioComponent();
 	
 	/**
 	 * Finds an audio component by the specified Name.

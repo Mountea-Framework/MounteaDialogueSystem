@@ -55,6 +55,7 @@ void UMounteaDialogueOptionsContainer::AddNewDialogueOption_Implementation(UMoun
 		{
 			dialogueOption->GetDialogueOptionSelectedHandle().AddUniqueDynamic(this, &UMounteaDialogueOptionsContainer::ProcessOptionSelected);
 			dialogueOption->Execute_SetNewDialogueOptionData(dialogueOptionWidget, FDialogueOptionData( UMounteaDialogueHUDStatics::GetDialogueNodeGuid(NewDialogueOption),  UMounteaDialogueHUDStatics::GetDialogueNodeRow(NewDialogueOption)));
+			dialogueOption->Execute_InitializeDialogueOption(dialogueOptionWidget);
 		}
 	}
 	else

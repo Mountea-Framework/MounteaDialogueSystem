@@ -16,6 +16,7 @@ struct FDialogueRowData;
 struct FDialogueOptionData;
 struct FDialogueRow;
 struct FWidgetDialogueRow;
+class IMounteaDialogueOptionsContainerInterface;
 
 USTRUCT(BlueprintType)
 struct FWidgetAdditionParams
@@ -478,4 +479,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|Skip", meta=(CustomTag="MounteaK2Setter"))
 	static void RequestHideWidget(UObject* SkipObject);
 
+private:
+	static TScriptInterface<IMounteaDialogueOptionsContainerInterface> GetOptionsContainerInterface(UObject* ContainerObject);
 };
