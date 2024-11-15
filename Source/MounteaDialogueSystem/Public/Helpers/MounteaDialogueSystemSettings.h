@@ -35,7 +35,10 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSystemSettings : public UDevelop
 	UMounteaDialogueSystemSettings();
 
 protected:
-	
+	/**
+	 * Mountea Dialogue Configuration.
+	 * Contains all gameplay 
+	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "Configuration")
 	TSoftObjectPtr<UMounteaDialogueConfiguration> DialogueConfiguration;
 
@@ -46,13 +49,6 @@ protected:
 	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles")
 	TSet<FString> DialogueWidgetCommands;
-
-	/**
-	 * Whether subtitles are allowed or not.
-	 * If subtitles are not allowed, C++ requests won't request showing subtitles.
-	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles")
-	uint8 bAllowSubtitles : 1;
 
 	/**
 	 * Defines logging level that is allowed to be shown.
@@ -135,8 +131,7 @@ public:
 	 * @return True if subtitles are allowed, false otherwise.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Validate"))
-	bool SubtitlesAllowed() const
-	{ return bAllowSubtitles; };
+	bool SubtitlesAllowed() const;
 
 	/**
 	 * Returns the update frequency of the dialogue widgets.
@@ -164,18 +159,7 @@ public:
 	 * @return The subtitles settings for the given row or the default settings if no override is found.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
-	FSubtitlesSettings GetSubtitlesSettings(const FUIRowID& RowID) const
-	{ 
-		if (SubtitlesSettingsOverrides.Contains(RowID))
-		{
-			return SubtitlesSettingsOverrides[RowID].SettingsGUID.IsValid() ? 
-			SubtitlesSettingsOverrides[RowID] :
-			SubtitlesSettings
-			;
-		}
-
-		return SubtitlesSettings;
-	};
+	FSubtitlesSettings GetSubtitlesSettings(const FUIRowID& RowID) const;
 
 	/**
 	 * Sets new subtitles settings for a specific widget or applies them globally.
@@ -187,24 +171,7 @@ public:
 	 * @param RowID The row ID of the UserWidget for which to apply the settings. If not provided, the settings apply globally.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Setter"))
-	void SetSubtitlesSettings(const FSubtitlesSettings& NewSettings, FUIRowID& RowID)
-	{
-		if (RowID.RowWidgetClass == nullptr)
-		{
-			SubtitlesSettings = NewSettings;
-			return;
-		}
-
-		if (SubtitlesSettingsOverrides.Contains(RowID))
-		{
-			SubtitlesSettingsOverrides[RowID] = NewSettings;
-			return;
-		}
-
-		SubtitlesSettingsOverrides.Add(RowID, NewSettings);
-
-		SaveConfig();
-	}
+	void SetSubtitlesSettings(const FSubtitlesSettings& NewSettings, FUIRowID& RowID);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
 	EMounteaDialogueLoggingVerbosity GetAllowedLoggVerbosity() const;
@@ -212,7 +179,7 @@ public:
 protected:
 
 #if WITH_EDITOR
-	FSlateFontInfo SetupDefaultFontSettings() const;
+	static FSlateFontInfo SetupDefaultFontSettings();
 	
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;

@@ -40,6 +40,13 @@ public:
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "UserInterface")
 	EInputMode InputMode;
+	
+	/**
+	 * Whether subtitles are allowed or not.
+	 * If subtitles are not allowed, C++ requests won't request showing subtitles.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Subtitles")
+	uint8 bAllowSubtitles : 1;
 
 	/**
 	 * Defines whether whole Dialogue Row is skipped when audio skip is requested.
@@ -68,5 +75,28 @@ public:
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Subtitles", meta=(UIMin=0.01f, ClampMin=0.01f, UIMax=1.f, ClampMax=1.f, Units="seconds"))
 	float SkipFadeDuration = 0.01f;
+
+	/**
+	 * List of General Dialogue Settings.
+	 * Defines font, sizes etc. for all subtitles.
+	 * If any Widget is supposed to be overriden and use different setup for subtitles, just add that override to 'SubtitlesSettingsOverrides'.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Subtitles")
+	FSubtitlesSettings SubtitlesSettings;
+
+	/**
+	 * Map of Widget Classes and their Subtitles Settings.
+	 * Used for overriding General Defaults.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Subtitles")
+	TMap<FUIRowID, FSubtitlesSettings> SubtitlesSettingsOverrides;
+
+protected:
+	
+#if WITH_EDITOR
+	static FSlateFontInfo SetupDefaultFontSettings();
+	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
+#endif
+	
 	
 };

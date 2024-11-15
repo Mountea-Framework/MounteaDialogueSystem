@@ -12,8 +12,6 @@ UMounteaDialogueSystemSettings::UMounteaDialogueSystemSettings()
 {
 	CategoryName = TEXT("Mountea Framework");
 	SectionName = TEXT("Mountea Dialogue System");
-	
-	bAllowSubtitles = true;
 
 	DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::CreateDialogueWidget);
 	DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::CloseDialogueWidget);
@@ -92,6 +90,12 @@ float UMounteaDialogueSystemSettings::GetDurationCoefficient() const
 	return dialogueConfig ? dialogueConfig->DurationCoefficient : 8.f;
 }
 
+bool UMounteaDialogueSystemSettings::SubtitlesAllowed() const
+{
+	auto dialogueConfig = DialogueConfiguration.LoadSynchronous();
+	return dialogueConfig ? dialogueConfig->bAllowSubtitles : true;
+}
+
 float UMounteaDialogueSystemSettings::GetWidgetUpdateFrequency() const
 {
 	auto dialogueConfig = DialogueConfiguration.LoadSynchronous();
@@ -104,12 +108,47 @@ float UMounteaDialogueSystemSettings::GetSkipFadeDuration() const
 	return dialogueConfig ? dialogueConfig->SkipFadeDuration : 0.05f;
 }
 
+FSubtitlesSettings UMounteaDialogueSystemSettings::GetSubtitlesSettings(const FUIRowID& RowID) const
+{
+	auto dialogueConfig = DialogueConfiguration.LoadSynchronous();
+	if (!dialogueConfig)
+		return FSubtitlesSettings();
+	
+	if (dialogueConfig->SubtitlesSettingsOverrides.Contains(RowID))
+	{
+		return dialogueConfig->SubtitlesSettingsOverrides[RowID].SettingsGUID.IsValid() ? 
+		dialogueConfig->SubtitlesSettingsOverrides[RowID] :
+		dialogueConfig->SubtitlesSettings;
+	}
+
+	return dialogueConfig->SubtitlesSettings;
+}
+
+void UMounteaDialogueSystemSettings::SetSubtitlesSettings(const FSubtitlesSettings& NewSettings, FUIRowID& RowID)
+{
+	auto dialogueConfig = DialogueConfiguration.LoadSynchronous();
+	if (!dialogueConfig)
+		return;
+	
+	if (RowID.RowWidgetClass == nullptr)
+		dialogueConfig->SubtitlesSettings = NewSettings;
+	else
+	{
+		if (SubtitlesSettingsOverrides.Contains(RowID))
+			dialogueConfig->SubtitlesSettingsOverrides[RowID] = NewSettings;
+		else
+			dialogueConfig->SubtitlesSettingsOverrides.Add(RowID, NewSettings);
+	}
+
+	SaveConfig();
+}
+
 EMounteaDialogueLoggingVerbosity UMounteaDialogueSystemSettings::GetAllowedLoggVerbosity() const
 {
 	return static_cast<EMounteaDialogueLoggingVerbosity>(LogVerbosity);
 }
 
-FSlateFontInfo UMounteaDialogueSystemSettings::SetupDefaultFontSettings() const
+FSlateFontInfo UMounteaDialogueSystemSettings::SetupDefaultFontSettings()
 {
 	FSlateFontInfo ReturnFontInfo;
 	ReturnFontInfo.FontObject = LoadObject<UFont>(nullptr, TEXT("/Engine/EngineFonts/Roboto"));
