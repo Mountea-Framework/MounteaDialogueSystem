@@ -26,6 +26,7 @@
 #include "Styling/SlateStyleRegistry.h"
 
 #include "ToolMenus.h"
+#include "AssetActions/MounteaDialogueConfigurationAssetAction.h"
 #include "AssetActions/MounteaDialogueDataTableAssetAction.h"
 #include "DetailsPanel/MounteaDialogueDecorator_Details.h"
 #include "DetailsPanel/MounteaDialogueGraph_Details.h"
@@ -93,6 +94,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		AssetActions.Add(MakeShared<FMounteaDialogueAdditionalDataAssetAction>());
 		AssetActions.Add(MakeShared<FMounteaDialogueDecoratorAssetAction>());
 		AssetActions.Add(MakeShared<FMounteaDialogueDataTableAssetAction>());
+		AssetActions.Add(MakeShared<UMounteaDialogueConfigurationAssetAction>());
 
 		for (const auto& Itr : AssetActions)
 		{
@@ -110,7 +112,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		{
 			const FString ContentDir = IPluginManager::Get().FindPlugin("MounteaDialogueSystem")->GetBaseDir();
 			
-			// Interactor Component
+			// Dialogue specific icons
 			{
 				DialogueTreeSet->SetContentRoot(ContentDir);
 				
@@ -152,6 +154,14 @@ void FMounteaDialogueSystemEditor::StartupModule()
 				{
 					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueParticipant", DialogueParticipantSetClassThumb);
 					DialogueTreeSet->Set("ClassIcon.MounteaDialogueParticipant", DialogueParticipantDataSetClassIcon);
+				}
+				//DialogueConfigIcon.png
+				FSlateImageBrush* DialogueConfigSetClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueConfigIcon"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueConfigDataSetClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueConfigIcon"), TEXT(".png")), FVector2D(16.f, 16.f));
+				if (DialogueConfigSetClassThumb && DialogueConfigDataSetClassIcon)
+				{
+					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueConfiguration", DialogueConfigSetClassThumb);
+					DialogueTreeSet->Set("ClassIcon.MounteaDialogueConfiguration", DialogueConfigDataSetClassIcon);
 				}
 
 				//Register the created style

@@ -7,6 +7,8 @@
 #include "Engine/DeveloperSettings.h"
 #include "MounteaDialogueSystemSettings.generated.h"
 
+class UMounteaDialogueConfiguration;
+
 namespace MounteaDialogueWidgetCommands
 {
 	const FString CreateDialogueWidget			(TEXT("CreateDialogueWidget"));
@@ -33,47 +35,9 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSystemSettings : public UDevelop
 	UMounteaDialogueSystemSettings();
 
 protected:
-
-	/**
-	 * User Widget class to be set as default one if requested.
-	 * ❗ Must implement MounteaDialogueWBPInterface❗
-	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "UserInterface", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
-	TSoftClassPtr<UUserWidget> DefaultDialogueWidgetClass;
-
-	/**
-	 * Sets Input mode when in Dialogue.
-	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "UserInterface")
-	EInputMode InputMode;
-
-	/**
-	 * Defines whether whole Dialogue Row is skipped when audio skip is requested.
-	 * This setting defines behaviour for all Nodes. Each Node allows different behaviour, so in special cases Node inversion can be used.
-	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "Audio")
-	uint8 bSkipRowWithAudioSkip : 1;
-
-	/**
-	 * Defines coefficient of speed per 100 characters for `Automatic` `RowDurationMode`.
-	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "UserInterface")
-	float DurationCoefficient = 8.f;
 	
-	/**
-	 * Defines how often Dialogue Widgets update per second.
-	 * Effectively can replaces Tick.
-	 * ❔ Units: seconds
-	 * ❗Lower the value higher the performance impact❗
-	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles", meta=(UIMin=0.01f, ClampMin=0.01f, UIMax=1.f, ClampMax=1.f, Units="seconds"))
-	float UpdateFrequency = 0.05f;
-
-	/**
-	 * Defines fading duration to naturally stop voice when anything is playing.
-	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles", meta=(UIMin=0.01f, ClampMin=0.01f, UIMax=1.f, ClampMax=1.f, Units="seconds"))
-	float SkipFadeDuration = 0.01f;
+	UPROPERTY(config, EditDefaultsOnly, Category = "Configuration")
+	TSoftObjectPtr<UMounteaDialogueConfiguration> DialogueConfiguration;
 
 	/**
 	 * List of Dialogue commands.
@@ -131,6 +95,9 @@ protected:
 
 public:
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
+	TSoftObjectPtr<UMounteaDialogueConfiguration> GetDialogueConfiguration() const;
+
 	/**
 	 * Returns Default Dialogue Widget if any is defined.
 	 * ❗ Might return Null❗
@@ -144,10 +111,7 @@ public:
 	 * @return True if skipping finishes the entire row, false if it only skips the audio.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Validate"))
-	bool CanSkipWholeRow() const
-	{
-		return bSkipRowWithAudioSkip;
-	}
+	bool CanSkipWholeRow() const;
 
 	/**
 	 * Returns the current input mode used during dialogue.
@@ -155,8 +119,7 @@ public:
 	 * @return The input mode (e.g., Game Only, UI Only, or Game and UI) set for dialogue interaction.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
-	EInputMode GetDialogueInputMode() const
-	{ return InputMode; };
+	EInputMode GetDialogueInputMode() const;
 
 	/**
 	 * Retrieves the duration coefficient used for automatic dialogue row progression.
@@ -164,8 +127,7 @@ public:
 	 * @return The speed coefficient per 100 characters for the `Automatic` RowDurationMode.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
-	float GetDurationCoefficient() const
-	{ return DurationCoefficient; };
+	float GetDurationCoefficient() const;
 	
 	/**
 	 * Returns whether subtitles are allowed or not.
@@ -182,8 +144,7 @@ public:
 	 * @return The frequency, in seconds, at which the widgets are updated.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CompactNodeTitle="Update Frequency", Keywords="update, refresh, tick, frequency"), meta=(CustomTag="MounteaK2Getter"))
-	float GetWidgetUpdateFrequency() const
-	{ return UpdateFrequency; };
+	float GetWidgetUpdateFrequency() const;
 
 	/**
 	 * Retrieves the fade duration when skipping voice or audio in the dialogue.
@@ -191,8 +152,7 @@ public:
 	 * @return The duration, in seconds, of the fade-out effect when audio is skipped.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CompactNodeTitle="SkipFadeDuration", Keywords="skip, fade, easy, smooth"), meta=(CustomTag="MounteaK2Getter"))
-	float GetSkipFadeDuration() const
-	{ return SkipFadeDuration; };
+	float GetSkipFadeDuration() const;
 
 	/**
 	 * Returns Subtitles Settings.

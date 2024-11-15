@@ -4,6 +4,7 @@
 #include "Helpers/MounteaDialogueSystemSettings.h"
 
 #include "Engine/Font.h"
+#include "Settings/MounteaDialogueConfiguration.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueSystemSettings"
 
@@ -11,11 +12,8 @@ UMounteaDialogueSystemSettings::UMounteaDialogueSystemSettings()
 {
 	CategoryName = TEXT("Mountea Framework");
 	SectionName = TEXT("Mountea Dialogue System");
-
-	InputMode = EInputMode::EIM_UIOnly;
+	
 	bAllowSubtitles = true;
-
-	UpdateFrequency = 0.05f;
 
 	DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::CreateDialogueWidget);
 	DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::CloseDialogueWidget);
@@ -65,14 +63,45 @@ void UMounteaDialogueSystemSettings::PostEditChangeProperty(FPropertyChangedEven
 	}
 }
 
+TSoftObjectPtr<UMounteaDialogueConfiguration> UMounteaDialogueSystemSettings::GetDialogueConfiguration() const
+{
+	return DialogueConfiguration;
+}
+
 TSoftClassPtr<UUserWidget> UMounteaDialogueSystemSettings::GetDefaultDialogueWidget() const
 {
-	if (DefaultDialogueWidgetClass.IsNull())
-	{
-		return nullptr;
-	}
+	auto dialogueConfig = DialogueConfiguration.LoadSynchronous();
+	return dialogueConfig ? dialogueConfig->DefaultDialogueWidgetClass : nullptr;
+}
 
-	return  DefaultDialogueWidgetClass;
+bool UMounteaDialogueSystemSettings::CanSkipWholeRow() const
+{
+	auto dialogueConfig = DialogueConfiguration.LoadSynchronous();
+	return dialogueConfig ? dialogueConfig->bSkipRowWithAudioSkip : false;
+}
+
+EInputMode UMounteaDialogueSystemSettings::GetDialogueInputMode() const
+{
+	auto dialogueConfig = DialogueConfiguration.LoadSynchronous();
+	return dialogueConfig ? dialogueConfig->InputMode : EInputMode::EIM_UIAndGame;
+}
+
+float UMounteaDialogueSystemSettings::GetDurationCoefficient() const
+{
+	auto dialogueConfig = DialogueConfiguration.LoadSynchronous();
+	return dialogueConfig ? dialogueConfig->DurationCoefficient : 8.f;
+}
+
+float UMounteaDialogueSystemSettings::GetWidgetUpdateFrequency() const
+{
+	auto dialogueConfig = DialogueConfiguration.LoadSynchronous();
+	return dialogueConfig ? dialogueConfig->UpdateFrequency : 0.2f;
+}
+
+float UMounteaDialogueSystemSettings::GetSkipFadeDuration() const
+{
+	auto dialogueConfig = DialogueConfiguration.LoadSynchronous();
+	return dialogueConfig ? dialogueConfig->SkipFadeDuration : 0.05f;
 }
 
 EMounteaDialogueLoggingVerbosity UMounteaDialogueSystemSettings::GetAllowedLoggVerbosity() const
