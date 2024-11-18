@@ -398,7 +398,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 		if (!newParticipant->Execute_CanParticipateInDialogue(newParticipant.GetObject()))
 			continue;
 
-		dialogueParticipants.Add(dialogueParticipant);
+		dialogueParticipants.Add(newParticipant);
 	}
 
 	LOG_INFO(TEXT("[Request Start Dialogue] Dialogue Type is %s"), *UMounteaDialogueSystemBFC::GetEnumFriendlyName(GetDialogueManagerType()))
