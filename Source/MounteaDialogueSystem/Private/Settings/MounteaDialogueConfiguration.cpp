@@ -9,7 +9,10 @@ UMounteaDialogueConfiguration::UMounteaDialogueConfiguration() :
 	bSkipRowWithAudioSkip(false)
 {
 #if WITH_EDITOR
-	if (SubtitlesSettings.SettingsGUID.IsValid() == false)	SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
+	if (SubtitlesSettings.SettingsGUID.IsValid() == false)
+		SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
+	if (SubtitlesSettings.SubtitlesFont.FontObject == nullptr)
+		SubtitlesSettings.SubtitlesFont = SetupDefaultFontSettings();
 #endif
 }
 
@@ -30,42 +33,25 @@ void UMounteaDialogueConfiguration::PostEditChangeChainProperty(FPropertyChanged
 {
 	Super::PostEditChangeChainProperty(PropertyChangedEvent);
 
-	Super::PostEditChangeChainProperty(PropertyChangedEvent);
+	if (SubtitlesSettings.SettingsGUID.IsValid() == false)
+		SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
 
 	if (PropertyChangedEvent.PropertyChain.GetActiveMemberNode()->GetValue()->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueConfiguration, SubtitlesSettings))
 	{
 		if (SubtitlesSettings.SubtitlesFont.FontObject == nullptr)
-		{
-			SubtitlesSettings.SettingsGUID.Invalidate();
 			SubtitlesSettings.SubtitlesFont = SetupDefaultFontSettings();
-			if (SubtitlesSettings.SettingsGUID.IsValid() == false)	SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
-		}
-		else
-		{
-			if (SubtitlesSettings.SettingsGUID.IsValid() == false)
-			{
-				SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
-			}
-		}
+
 	}
 
 	if (PropertyChangedEvent.PropertyChain.GetActiveMemberNode()->GetValue()->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueConfiguration, SubtitlesSettingsOverrides))
 	{
 		for (auto& Itr : SubtitlesSettingsOverrides)
 		{
+			if (Itr.Value.SettingsGUID.IsValid() == false)
+				Itr.Value.SettingsGUID = FGuid::NewGuid();
+			
 			if (Itr.Value.SubtitlesFont.FontObject == nullptr)
-			{
-				Itr.Value.SettingsGUID.Invalidate();
 				Itr.Value.SubtitlesFont = SetupDefaultFontSettings();
-				if (Itr.Value.SettingsGUID.IsValid() == false)	Itr.Value.SettingsGUID = FGuid::NewGuid();
-			}
-			else
-			{
-				if (Itr.Value.SettingsGUID.IsValid() == false)
-				{
-					Itr.Value.SettingsGUID = FGuid::NewGuid();
-				}
-			}
 		}
 	}
 }

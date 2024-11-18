@@ -34,9 +34,7 @@ FGuid UMounteaDialogueHUDStatics::GetDialogueNodeGuid(UMounteaDialogueGraphNode_
 FDialogueRow UMounteaDialogueHUDStatics::GetDialogueNodeRow(UMounteaDialogueGraphNode_DialogueNodeBase* FromNode)
 {
 	if (TObjectPtr<UMounteaDialogueGraphNode_DialogueNodeBase> dialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(FromNode) )
-	{
 		return UMounteaDialogueSystemBFC::GetDialogueRow(FromNode);
-	}
 
 	return FDialogueRow::Invalid();
 }
@@ -50,9 +48,7 @@ TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> UMounteaDialogueHUDStatics::
 		if (!Itr) continue;
 
 		if (TObjectPtr<UMounteaDialogueGraphNode_DialogueNodeBase> dialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Itr))
-		{
 			returnArray.Add(dialogueNode);
-		}
 	}
 
 	UMounteaDialogueSystemBFC::SortNodes(returnArray);
@@ -110,9 +106,7 @@ TSubclassOf<UUserWidget> UMounteaDialogueHUDStatics::GetViewportBaseClass(AActor
 	}
 	
 	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
-	{
 		return IMounteaDialogueHUDClassInterface::Execute_GetViewportBaseClass(ViewportManager);
-	}
 
 	LOG_ERROR(TEXT("[GetViewportWidget] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
 	return nullptr;
@@ -127,9 +121,7 @@ void UMounteaDialogueHUDStatics::InitializeViewportWidget(AActor* ViewportManage
 	}
 	
 	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
-	{
 		return IMounteaDialogueHUDClassInterface::Execute_InitializeViewportWidget(ViewportManager);
-	}
 
 	LOG_ERROR(TEXT("[InitializeViewportWidget] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
 }
@@ -143,9 +135,7 @@ UUserWidget* UMounteaDialogueHUDStatics::GetViewportWidget(AActor* ViewportManag
 	}
 	
 	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
-	{
 		return IMounteaDialogueHUDClassInterface::Execute_GetViewportWidget(ViewportManager);
-	}
 
 	LOG_ERROR(TEXT("[GetViewportWidget] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
 	return nullptr;
@@ -160,9 +150,7 @@ void UMounteaDialogueHUDStatics::AddChildWidgetToViewport(AActor* ViewportManage
 	}
 	
 	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
-	{
 		return IMounteaDialogueHUDClassInterface::Execute_AddChildWidgetToViewport(ViewportManager, ChildWidget, WidgetParams.ZOrder, WidgetParams.Anchors, WidgetParams.Margin);
-	}
 
 	LOG_ERROR(TEXT("[AddChildWidgetToViewport] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
 }
@@ -176,9 +164,7 @@ void UMounteaDialogueHUDStatics::RemoveChildWidgetFromViewport(AActor* ViewportM
 	}
 	
 	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
-	{
 		return IMounteaDialogueHUDClassInterface::Execute_RemoveChildWidgetFromViewport(ViewportManager, ChildWidget);
-	}
 
 	LOG_ERROR(TEXT("[RemoveChildWidgetFromViewport] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
 }
@@ -192,9 +178,7 @@ void UMounteaDialogueHUDStatics::AddChildWidget(UUserWidget* ParentWidget, UUser
 	}
 	
 	if (ParentWidget->Implements<UMounteaDialogueViewportWidgetInterface>())
-	{
 		return IMounteaDialogueViewportWidgetInterface::Execute_AddChildWidget(ParentWidget, ChildWidget, WidgetParams.ZOrder, WidgetParams.Anchors, WidgetParams.Margin);
-	}
 
 	LOG_ERROR(TEXT("[AddChildWidget] ParentWidget does not implement `MounteaDialogueViewportWidgetInterface`!"));
 }
@@ -208,9 +192,7 @@ void UMounteaDialogueHUDStatics::RemoveChildWidget(UUserWidget* ParentWidget, UU
 	}
 	
 	if (ParentWidget->Implements<UMounteaDialogueViewportWidgetInterface>())
-	{
 		return IMounteaDialogueViewportWidgetInterface::Execute_RemoveChildWidget(ParentWidget, ChildWidget);
-	}
 
 	LOG_ERROR(TEXT("[RemoveChildWidget] ParentWidget does not implement `MounteaDialogueViewportWidgetInterface`!"));
 }

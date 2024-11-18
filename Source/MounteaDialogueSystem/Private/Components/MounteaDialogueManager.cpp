@@ -224,9 +224,21 @@ void UMounteaDialogueManager::NotifyParticipants(const TArray<TScriptInterface<I
 
 bool UMounteaDialogueManager::IsAuthority() const
 {
-	auto localOwner = UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(this);
-	auto localOwnerRole = UMounteaDialogueSystemBFC::GetOwnerLocalRole(localOwner);
-	return GetOwner() && GetOwner()->HasAuthority() && (localOwnerRole == ROLE_AutonomousProxy || localOwnerRole == ROLE_Authority);
+	AActor* Owner = GetOwner();
+	if (!Owner || !Owner->GetWorld())
+		return false;
+	
+	if (Owner->GetWorld()->GetNetMode() == NM_DedicatedServer)
+		return Owner->HasAuthority();
+	
+	if (Owner->GetWorld()->GetNetMode() == NM_ListenServer)
+		return Owner->HasAuthority();
+	
+	if (Owner->GetWorld()->GetNetMode() == NM_Standalone)
+		return true;
+	
+	auto LocalOwner = UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(this);
+	return LocalOwner && LocalOwner->GetLocalRole() == ROLE_AutonomousProxy;
 }
 
 void UMounteaDialogueManager::DialogueFailed(const FString& ErrorMessage)
@@ -347,7 +359,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 		bSatisfied = false;
 	}
 
-	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> dialogueParticipants;
+	TSet<TScriptInterface<IMounteaDialogueParticipantInterface>> dialogueParticipants;
 	bool bMainParticipantFound = true;
 	const TScriptInterface<IMounteaDialogueParticipantInterface> mainParticipant = UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(InitialParticipants.MainParticipant, bMainParticipantFound);
 	if (!bMainParticipantFound || !mainParticipant.GetObject())
@@ -371,6 +383,22 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 	{
 		errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "CannotStart", "Cannot Start Dialogue!"));
 		bSatisfied = false;
+	}
+
+	for (const auto& dialogueParticipant : InitialParticipants.OtherParticipants)
+	{
+		if (!IsValid(dialogueParticipant))
+			continue;
+
+		bool bParticantFound = true;
+		const TScriptInterface<IMounteaDialogueParticipantInterface> newParticipant = UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(dialogueParticipant, bParticantFound);
+		if (!bParticantFound)
+			continue;
+
+		if (!newParticipant->Execute_CanParticipateInDialogue(newParticipant.GetObject()))
+			continue;
+
+		dialogueParticipants.Add(dialogueParticipant);
 	}
 
 	LOG_INFO(TEXT("[Request Start Dialogue] Dialogue Type is %s"), *UMounteaDialogueSystemBFC::GetEnumFriendlyName(GetDialogueManagerType()))
@@ -402,8 +430,25 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 		}
 		case EDialogueManagerType::EDMT_EnvironmentDialogue:
 			{
-				// TODO: We need player NetConnection to make replication work even for non-player dialogues (two NPCs etc.)
-				// Those dialogues are triggered by PLAYER (so Player Pawn/Controller/State should be the Initiator)
+				AActor* currentOwner = GetOwner();
+				AActor* superOwner = currentOwner->GetOwner();
+				int searchDepth = 0;
+				APlayerController* playerController = UMounteaDialogueSystemBFC::FindPlayerController(DialogueInitiator, searchDepth);
+				if (!playerController)
+				{
+					errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "NoPawn", "Unable to find Player Controller!"));
+					bSatisfied = false;
+				}
+				else
+				{
+					for (const auto& dialogueParticipant : dialogueParticipants)
+					{
+						if (AActor* dialogueParticipantOwner = dialogueParticipant->Execute_GetOwningActor(dialogueParticipant.GetObject()))
+							dialogueParticipantOwner->SetOwner(playerController);
+					}
+					LOG_ERROR(TEXT("Previous: %s | New: %s"), *(superOwner ? superOwner->GetName() : FString("none")), *playerController->GetName())
+					GetOwner()->SetOwner(playerController);
+				}
 			}
 			break;
 		case EDialogueManagerType::Default:
@@ -433,7 +478,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 	if (bSatisfied)
 	{
 		if (IsAuthority())
-			SetDialogueContext(UMounteaDialogueSystemBFC::CreateDialogueContext(this, mainParticipant, dialogueParticipants));
+			SetDialogueContext(UMounteaDialogueSystemBFC::CreateDialogueContext(this, mainParticipant, dialogueParticipants.Array()));
 		errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "OK", "OK"));
 	}
 	
@@ -446,6 +491,8 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 		if (!IsAuthority())
 			RequestStartDialogue_Server(DialogueInitiator, InitialParticipants);
 	}
+	else
+		OnDialogueFailed.Broadcast(finalErrorMessage.ToString());
 }
 
 void UMounteaDialogueManager::RequestStartDialogue_Server_Implementation(AActor* DialogueInitiator,const FDialogueParticipants& InitialParticipants)
@@ -558,6 +605,11 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 	if (!IsAuthority())
 	{
 		OnDialogueClosed.Broadcast(DialogueContext);
+	}
+
+	if (GetOwner() && GetDialogueManagerType() == EDialogueManagerType::EDMT_EnvironmentDialogue)
+	{
+		GetOwner()->SetOwner(nullptr);
 	}
 }
 

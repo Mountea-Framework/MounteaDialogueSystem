@@ -303,7 +303,7 @@ public:
 	 * @return								Mountea Dialogue Participant reference
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="get, find, retrieve"), meta=(CustomTag="MounteaK2Getter"))
-	static TScriptInterface<IMounteaDialogueParticipantInterface> FindDialogueParticipantInterface(AActor* ParticipantActor, bool& bResult);
+	static TScriptInterface<IMounteaDialogueParticipantInterface> FindDialogueParticipantInterface(UObject* ParticipantActor, bool& bResult);
 
 	static APawn* FindPlayerPawn(AActor* ForActor, int& SearchDepth);
 	static APlayerController* FindPlayerController(AActor* ForActor, int& SearchDepth);
