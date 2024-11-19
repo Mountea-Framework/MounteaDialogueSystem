@@ -504,10 +504,8 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 			SetDialogueContext(UMounteaDialogueSystemBFC::CreateDialogueContext(this, mainParticipant, dialogueParticipants.Array()));
 		errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "OK", "OK"));
 	}
-	
 	const FText finalErrorMessage = FText::Join(FText::FromString("\n"), errorMessages);
-	OnDialogueStartRequestedResult.Broadcast(bSatisfied, finalErrorMessage.ToString());
-
+	
 	if (bSatisfied)
 	{
 		DialogueInstigator = DialogueInitiator;
@@ -520,9 +518,12 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 					RequestStartDialogue_Server(DialogueInitiator, InitialParticipants);
 				break;
 			case EDialogueManagerType::EDMT_EnvironmentDialogue:
-				OnDialogueStartRequested.Broadcast(this, DialogueInitiator, InitialParticipants);
+				if (!IsAuthority())
+					OnDialogueStartRequested.Broadcast(this, DialogueInitiator, InitialParticipants);
 				break;
 		}
+
+		OnDialogueStartRequestedResult.Broadcast(bSatisfied, finalErrorMessage.ToString());
 	}
 	else
 		OnDialogueFailed.Broadcast(finalErrorMessage.ToString());

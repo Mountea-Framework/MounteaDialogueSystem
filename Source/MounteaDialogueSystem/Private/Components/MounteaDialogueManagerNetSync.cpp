@@ -8,7 +8,8 @@
 UMounteaDialogueManagerNetSync::UMounteaDialogueManagerNetSync()
 {
 	bAutoActivate = true;
-	SetIsReplicated(true);
+	
+	SetIsReplicatedByDefault(true);
 	SetActiveFlag(true);
 	
 	PrimaryComponentTick.bCanEverTick = false;
