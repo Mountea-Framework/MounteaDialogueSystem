@@ -6,6 +6,9 @@
 #include "Components/ActorComponent.h"
 #include "MounteaDialogueManagerNetSync.generated.h"
 
+class IMounteaDialogueManagerInterface;
+struct FMounteaDialogueContextReplicatedStruct;
+
 /**
  * 
  */
@@ -22,4 +25,16 @@ protected:
 
 	virtual void BeginPlay() override;
 
+public:
+
+	void AddManager(const TScriptInterface<IMounteaDialogueManagerInterface>& NewManager);
+
+	void SyncBroadcastContext(const FMounteaDialogueContextReplicatedStruct& Context);
+	UFUNCTION(Server, Reliable)
+	void SyncBroadcastContext_Server(const FMounteaDialogueContextReplicatedStruct& Context);
+
+protected:
+
+	UPROPERTY(VisibleAnywhere, Category="Dialogue")
+	TSet<TScriptInterface<IMounteaDialogueManagerInterface>> Managers;
 };

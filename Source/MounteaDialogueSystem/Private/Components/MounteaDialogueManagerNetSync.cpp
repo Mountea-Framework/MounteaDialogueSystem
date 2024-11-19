@@ -12,3 +12,18 @@ void UMounteaDialogueManagerNetSync::BeginPlay()
 	Super::BeginPlay();
 }
 
+void UMounteaDialogueManagerNetSync::AddManager(const TScriptInterface<IMounteaDialogueManagerInterface>& NewManager)
+{
+	Managers.Add(NewManager);
+}
+
+void UMounteaDialogueManagerNetSync::SyncBroadcastContext(const FMounteaDialogueContextReplicatedStruct& Context)
+{
+	
+}
+
+void UMounteaDialogueManagerNetSync::SyncBroadcastContext_Server_Implementation(const FMounteaDialogueContextReplicatedStruct& Context)
+{
+	
+}
+

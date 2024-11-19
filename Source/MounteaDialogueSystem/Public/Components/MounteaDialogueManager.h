@@ -77,6 +77,7 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void StopParticipants_Server() const;
 	void NotifyParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
+	void CalculateManagerType();
 	
 public:
 
@@ -150,6 +151,11 @@ private:
 	UFUNCTION()
 	void OnRep_DialogueContext();
 
+	bool SetupPlayerDialogue(TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages) const;
+	bool SetupEnvironmentDialogue(AActor* DialogueInitiator, const TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages);
+	static bool ValidateMainParticipant(AActor* MainParticipant, TScriptInterface<IMounteaDialogueParticipantInterface>& OutParticipant, TArray<FText>& ErrorMessages);
+	static void GatherOtherParticipants(const TArray<TObjectPtr<UObject>>& OtherParticipants, TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& OutParticipants);
+	
 	void ProcessWorldWidgetUpdate(const FString& Command);
 
 public:
@@ -251,6 +257,9 @@ protected:
 
 protected:
 
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", meta=(DisplayThumbnail=false))
+	TObjectPtr<UObject> DialogueInstigator;
+
 	/**
 	 * Manager based Dialogue Widget Class.
 	 * ❔ Could be left empty if Project Settings are setup properly
@@ -282,6 +291,9 @@ protected:
 	*/
 	UPROPERTY(ReplicatedUsing=OnRep_ManagerState, SaveGame, VisibleAnywhere, Category="Mountea|Dialogue|Manager")
 	EDialogueManagerState ManagerState;
+
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea|Dialogue|Manager")
+	EDialogueManagerType DialogueManagerType;
 	
 	/**
 	 * An array of dialogue objects. Serves purpose of listeners who receive information about UI events.

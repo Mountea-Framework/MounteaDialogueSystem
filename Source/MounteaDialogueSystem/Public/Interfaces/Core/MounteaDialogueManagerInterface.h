@@ -106,7 +106,7 @@ public:
 	 * @param NewState	Manager State to be set as Default Manager State
 	 */
 	virtual void SetDefaultManagerState(const EDialogueManagerState NewState) = 0;
-
+	
 	virtual EDialogueManagerType GetDialogueManagerType() const = 0;
 
 	// --- Context functions ------------------------------
