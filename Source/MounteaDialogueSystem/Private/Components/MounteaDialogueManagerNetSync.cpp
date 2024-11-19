@@ -3,6 +3,7 @@
 
 #include "Components/MounteaDialogueManagerNetSync.h"
 
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 
 UMounteaDialogueManagerNetSync::UMounteaDialogueManagerNetSync()

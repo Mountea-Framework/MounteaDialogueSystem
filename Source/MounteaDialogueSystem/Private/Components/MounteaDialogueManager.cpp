@@ -318,6 +318,7 @@ void UMounteaDialogueManager::CalculateManagerType()
 		ownerClass->IsChildOf(APlayerController::StaticClass()))
 	{
 		DialogueManagerType = EDialogueManagerType::EDMT_PlayerDialogue;
+		return;
 	}
 
 	DialogueManagerType = EDialogueManagerType::EDMT_EnvironmentDialogue;
@@ -328,18 +329,16 @@ bool UMounteaDialogueManager::IsAuthority() const
 	AActor* Owner = GetOwner();
 	if (!Owner || !Owner->GetWorld())
 		return false;
+    
+	const ENetMode NetMode = Owner->GetWorld()->GetNetMode();
 	
-	if (Owner->GetWorld()->GetNetMode() == NM_DedicatedServer)
-		return Owner->HasAuthority();
-	
-	if (Owner->GetWorld()->GetNetMode() == NM_ListenServer)
-		return Owner->HasAuthority();
-	
-	if (Owner->GetWorld()->GetNetMode() == NM_Standalone)
+	if (NetMode == NM_Standalone)
 		return true;
 	
-	auto LocalOwner = UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(this);
-	return LocalOwner && LocalOwner->GetLocalRole() == ROLE_AutonomousProxy;
+	if (Owner->HasAuthority())
+		return true;
+        
+	return false;
 }
 
 void UMounteaDialogueManager::DialogueFailed(const FString& ErrorMessage)
@@ -1095,45 +1094,40 @@ void UMounteaDialogueManager::ResetDialogueUIObjects_Implementation()
 
 bool UMounteaDialogueManager::CreateDialogueUI_Implementation(FString& Message)
 {
+	bool bSuccess = true;
+   
 	if (GetDialogueWidgetClass() == nullptr)
 	{
 		Message = TEXT("Invalid Widget Class! Setup Widget class at least in Project settings!");
-		return false;
+		bSuccess = false;
 	}
+   
 	if (!GetWorld())
 	{
 		Message = TEXT("Invalid World!");
-		return false;
+		bSuccess = false;
 	}
+   
 	int seachDepth = 0;
 	APlayerController* playerController = UMounteaDialogueSystemBFC::FindPlayerController(GetOwner(), seachDepth);
-	if (playerController == nullptr)
+	if (!playerController || !playerController->IsLocalController())
 	{
-		Message = TEXT("Invalid Player Controller!");
-		return false;
-	}
-	if (!playerController->IsLocalController())
-	{
-		Message = TEXT("UI can be shown only to Local Players!");
-		return false;
+		Message = !playerController ? TEXT("Invalid Player Controller!") : TEXT("UI can be shown only to Local Players!");
+		bSuccess = false;
 	}
 
-	auto newWidget = CreateWidget<UUserWidget>(playerController,  GetDialogueWidgetClass());
-
-	if (newWidget == nullptr)
+	if (bSuccess)
 	{
-		Message = TEXT("Cannot spawn Dialogue Widget!");
-		return false;
+		auto newWidget = CreateWidget<UUserWidget>(playerController, GetDialogueWidgetClass());
+		if (!newWidget || !newWidget->Implements<UMounteaDialogueWBPInterface>())
+		{
+			Message = !newWidget ? TEXT("Cannot spawn Dialogue Widget!") : TEXT("Does not implement Dialogue Widget Interface!");
+			bSuccess = false;
+		}
+		else
+			Execute_SetDialogueWidget(this, newWidget);
 	}
 
-	if (newWidget->Implements<UMounteaDialogueWBPInterface>() == false)
-	{
-		Message = TEXT("Does not implement Diaogue Widget Interface!");
-		return false;
-	}
-
-	Execute_SetDialogueWidget(this, newWidget);
-		
 	return Execute_UpdateDialogueUI(this, Message, MounteaDialogueWidgetCommands::CreateDialogueWidget);
 }
 
