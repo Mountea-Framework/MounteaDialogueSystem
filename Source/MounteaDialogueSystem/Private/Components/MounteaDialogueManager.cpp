@@ -53,7 +53,7 @@ void UMounteaDialogueManager::BeginPlay()
 	
 	if (IsAuthority())
 	{
-		OnDialogueStartRequested.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueStartRequestReceived);
+		OnDialogueStartRequestedResult.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueStartRequestReceived);
 	}
 
 	OnDialogueFailed.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueFailed);
@@ -227,16 +227,9 @@ bool UMounteaDialogueManager::SetupEnvironmentDialogue(AActor* DialogueInitiator
 		return false;
 	}
 	
-	const TScriptInterface<IMounteaDialogueManagerInterface> thisManager (this);
+	const TScriptInterface<IMounteaDialogueManagerInterface> thisManager(this);
 	netSync->AddManager(thisManager);
-	
-	for (const auto& dialogueParticipant : DialogueParticipants)
-	{
-		if (AActor* dialogueParticipantOwner = dialogueParticipant->Execute_GetOwningActor(dialogueParticipant.GetObject()))
-			dialogueParticipantOwner->SetOwner(playerController);
-	}
-    
-	GetOwner()->SetOwner(playerController);
+
 	return true;
 }
 
@@ -513,15 +506,23 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 	}
 	
 	const FText finalErrorMessage = FText::Join(FText::FromString("\n"), errorMessages);
-	OnDialogueStartRequested.Broadcast(bSatisfied, finalErrorMessage.ToString());
+	OnDialogueStartRequestedResult.Broadcast(bSatisfied, finalErrorMessage.ToString());
 
 	if (bSatisfied)
 	{
 		DialogueInstigator = DialogueInitiator;
 		
 		// Request Start on Server
-		if (!IsAuthority())
-			RequestStartDialogue_Server(DialogueInitiator, InitialParticipants);
+		switch (DialogueManagerType)
+		{
+			case EDialogueManagerType::EDMT_PlayerDialogue:
+				if (!IsAuthority())
+					RequestStartDialogue_Server(DialogueInitiator, InitialParticipants);
+				break;
+			case EDialogueManagerType::EDMT_EnvironmentDialogue:
+				OnDialogueStartRequested.Broadcast(this, DialogueInitiator, InitialParticipants);
+				break;
+		}
 	}
 	else
 		OnDialogueFailed.Broadcast(finalErrorMessage.ToString());

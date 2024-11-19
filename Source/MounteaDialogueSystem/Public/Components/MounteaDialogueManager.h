@@ -30,8 +30,10 @@ protected:
 
 public:
 
-	virtual FDialogueStartRequestedResult& GetDialogueStartRequestedResultEventHandle() override
+	virtual FDialogueStartRequested& GetDialogueStartRequestedEventHandle() override
 	{ return OnDialogueStartRequested; };
+	virtual FDialogueStartRequestedResult& GetDialogueStartRequestedResultEventHandle() override
+	{ return OnDialogueStartRequestedResult; };
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() override
 	{ return OnDialogueStarted; };
 	virtual FDialogueEvent& GetDialogueClosedEventHandle() override
@@ -162,12 +164,15 @@ public:
 	bool IsAuthority() const;
 
 protected:
+
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueStartRequested OnDialogueStartRequested;
 	
 	/**
 	 * Even called when Dialogue is Initialized.
 	 */
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
-	FDialogueStartRequestedResult OnDialogueStartRequested;
+	FDialogueStartRequestedResult OnDialogueStartRequestedResult;
 	
 	/**
 	 * Event called when Dialogue has started.

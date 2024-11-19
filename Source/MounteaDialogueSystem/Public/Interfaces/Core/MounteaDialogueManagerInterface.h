@@ -36,6 +36,8 @@ class UMounteaDialogueContext;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueEvent, UMounteaDialogueContext*, Context);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FDialogueStartRequested, const TScriptInterface<IMounteaDialogueManagerInterface>&, CallingManager, AActor*, DialogueInitiator, const FDialogueParticipants&, InitialParticipants);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDialogueStartRequestedResult, const bool, Result, const FString&, ResultMessage);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueContextUpdated, UMounteaDialogueContext*, Context);
@@ -393,7 +395,8 @@ public:
 	virtual void SkipDialogueRow_Implementation() = 0;
 
 public:
-	
+
+	virtual FDialogueStartRequested& GetDialogueStartRequestedEventHandle() = 0;
 	virtual FDialogueStartRequestedResult& GetDialogueStartRequestedResultEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() = 0;
 	virtual FDialogueEvent& GetDialogueClosedEventHandle() = 0;
