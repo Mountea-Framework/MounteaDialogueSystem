@@ -21,28 +21,40 @@ UMounteaDialogueManagerNetSync::UMounteaDialogueManagerNetSync()
 	ComponentTags.Add(FName("Sync"));
 }
 
-void UMounteaDialogueManagerNetSync::OnManagerSyncActivated(UActorComponent* Component, bool bReset)
+void UMounteaDialogueManagerNetSync::RouteRPC_Server_Implementation(UFunction* RPCFunction, APlayerController* Instigator, const FGenericRPCPayload& Payload)
 {
-	
-}
+	// Validate authority
+	if (!GetOwner() || !GetOwner()->HasAuthority())
+		return;
 
-void UMounteaDialogueManagerNetSync::OnManagerSyncDeactivated(UActorComponent* Component)
-{
+	// Unpack and execute
+	FMounteaDialogueContextReplicatedStruct Context;
+	Payload.Unpack(Context);
 	
+	ExecuteRPC(RPCFunction, Instigator, Context);
 }
 
 void UMounteaDialogueManagerNetSync::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Register activation/deactivation handlers
 	OnComponentActivated.AddUniqueDynamic(this, &UMounteaDialogueManagerNetSync::OnManagerSyncActivated);
 	OnComponentDeactivated.AddDynamic(this, &UMounteaDialogueManagerNetSync::OnManagerSyncDeactivated);
 	
+	// Validate owner
 	if (!GetOwner())
+	{
 		SetActive(false, true);
+		return;
+	}
 
+	// Ensure owner is a PlayerController
 	if (!GetOwner()->IsA(APlayerController::StaticClass()))
+	{
 		SetActive(false, true);
+		return;
+	}
 }
 
 void UMounteaDialogueManagerNetSync::AddManager(const TScriptInterface<IMounteaDialogueManagerInterface>& NewManager)
@@ -54,7 +66,6 @@ void UMounteaDialogueManagerNetSync::AddManager(const TScriptInterface<IMounteaD
 		return;
 	
 	Managers.Add(NewManager);
-	NewManager->GetDialogueStartRequestedEventHandle().AddUniqueDynamic(this, &UMounteaDialogueManagerNetSync::SyncStartRequested);
 }
 
 void UMounteaDialogueManagerNetSync::RemoveManager(const TScriptInterface<IMounteaDialogueManagerInterface>& OldManager)
@@ -68,33 +79,15 @@ void UMounteaDialogueManagerNetSync::RemoveManager(const TScriptInterface<IMount
 	if (!OldManager.GetObject())
 		return;
 
-	OldManager->GetDialogueStartRequestedEventHandle().RemoveDynamic(this, &UMounteaDialogueManagerNetSync::SyncStartRequested);
 	Managers.Remove(OldManager);
 }
 
-void UMounteaDialogueManagerNetSync::SyncStartRequested(const TScriptInterface<IMounteaDialogueManagerInterface>& CallingManager, AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants)
+void UMounteaDialogueManagerNetSync::OnManagerSyncActivated(UActorComponent* Component, bool bReset)
 {
-	if (!IsValid(CallingManager.GetObject()))
-		return;
-	
-	if (GetOwner() && GetOwner()->HasAuthority())
-		CallingManager->Execute_RequestStartDialogue(CallingManager.GetObject(), DialogueInitiator, InitialParticipants);
-	else
-		SyncStartRequested_Server(CallingManager, DialogueInitiator, InitialParticipants);
+	// TODO: Setup bindings?
 }
 
-void UMounteaDialogueManagerNetSync::SyncStartRequested_Server_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& CallingManager, AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants)
+void UMounteaDialogueManagerNetSync::OnManagerSyncDeactivated(UActorComponent* Component)
 {
-	SyncStartRequested(CallingManager, DialogueInitiator, InitialParticipants);
+	// TODO: Setup bindings?
 }
-
-void UMounteaDialogueManagerNetSync::SyncBroadcastContext(const FMounteaDialogueContextReplicatedStruct& Context)
-{
-	
-}
-
-void UMounteaDialogueManagerNetSync::SyncBroadcastContext_Server_Implementation(const FMounteaDialogueContextReplicatedStruct& Context)
-{
-	
-}
-

@@ -186,6 +186,27 @@ void UMounteaDialogueManager::OnRep_DialogueContext()
 	}, 0.1f, false);
 }
 
+void UMounteaDialogueManager::RequestStartDialogue_Environment(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants) const
+{
+	int32 searchDepth = 0;
+	APlayerController* playerController = UMounteaDialogueSystemBFC::FindPlayerController(DialogueInitiator, searchDepth);
+	if (!IsValid(playerController))
+	{
+		OnDialogueFailed.Broadcast(FString::Printf(TEXT("[Request Start Dialogue] Environmental Dialogue cannot find Player Controller for Initiator %s"), DialogueInitiator ? *DialogueInitiator->GetName() : TEXT("INVALID")));
+		return;
+	}
+
+	auto netSync = playerController->FindComponentByClass<UMounteaDialogueManagerNetSync>();
+	if (!IsValid(netSync))
+	{
+		OnDialogueFailed.Broadcast(FString::Printf(TEXT("[Request Start Dialogue] Environmental Dialogue cannot find valid Sync Component in Player Controller %s"), *DialogueInitiator->GetName()));
+		return;
+	}
+	
+	if (UFunction* StartFunc = GetClass()->FindFunctionByName(TEXT("RequestStartDialogue")))
+		netSync->RouteRPC(StartFunc, playerController, DialogueInitiator, InitialParticipants);
+}
+
 bool UMounteaDialogueManager::SetupPlayerDialogue(TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages) const
 {
 	int searchDepth = 0;
@@ -461,9 +482,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 		GatherOtherParticipants(InitialParticipants.OtherParticipants, dialogueParticipants);
 	}
 	else
-	{
 		bSatisfied = false;
-	}
 
 	bool bSetupSuccess = false;
 	switch (DialogueManagerType)
@@ -518,7 +537,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 				break;
 			case EDialogueManagerType::EDMT_EnvironmentDialogue:
 				if (!IsAuthority())
-					OnDialogueStartRequested.Broadcast(this, DialogueInitiator, InitialParticipants);
+					RequestStartDialogue_Environment(DialogueInitiator, InitialParticipants);
 				break;
 		}
 
