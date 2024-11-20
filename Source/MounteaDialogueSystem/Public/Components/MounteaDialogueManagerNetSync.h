@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
+#include "Kismet/GameplayStatics.h"
 #include "MounteaDialogueManagerNetSync.generated.h"
 
 class IMounteaDialogueManagerInterface;
@@ -27,9 +28,10 @@ struct FGenericRPCPayload
 	TArray<uint8> SerializedParams;
 
 private:
-	static FString SanitizePIEPackagePath(const FString& OriginalPath)
+	static FString SanitizeInstancePath(const FString& OriginalPath)
 	{
 		FString SanitizedPath = OriginalPath;
+#if WITH_EDITOR
 		static const FString PIEPrefix(TEXT("UEDPIE_"));
 		int32 PIEIndex = SanitizedPath.Find(PIEPrefix);
 		if (PIEIndex != INDEX_NONE)
@@ -38,33 +40,50 @@ private:
 			if (UnderscoreIndex != INDEX_NONE)
 				SanitizedPath.RemoveAt(PIEIndex, (UnderscoreIndex - PIEIndex) + 1);
 		}
+#endif
 		return SanitizedPath;
 	}
 
-	static UObject* FindObjectInPIE(const FString& ObjectPath)
+	static UObject* FindInstanceObject(const FString& ObjectPath, UClass* ExpectedClass = nullptr)
 	{
 		if (UObject* FoundObject = StaticFindObject(nullptr, nullptr, *ObjectPath))
 			return FoundObject;
-
-		FString SanitizedPath = SanitizePIEPackagePath(ObjectPath);
+		
+		FString SanitizedPath = SanitizeInstancePath(ObjectPath);
 		if (UObject* FoundObject = StaticFindObject(nullptr, nullptr, *SanitizedPath))
 			return FoundObject;
-
+		
 		if (UWorld* World = GEngine->GetCurrentPlayWorld())
 		{
-			FString WorldPIEPrefix;
+			if (ExpectedClass)
+			{
+				if (APlayerController* PC = World->GetFirstPlayerController())
+				{
+					if (PC->IsA(ExpectedClass))
+						return PC;
+				}
+				
+				TArray<AActor*> FoundActors;
+				UGameplayStatics::GetAllActorsOfClass(World, ExpectedClass, FoundActors);
+				if (FoundActors.Num() > 0)
+					return FoundActors[0];
+			}
+
+#if WITH_EDITOR
+			FString WorldPrefix;
 			const FString WorldName = World->GetOutermost()->GetName();
 			if (WorldName.StartsWith(TEXT("UEDPIE_")))
 			{
 				int32 UnderscoreIndex;
 				if (WorldName.FindChar('_', UnderscoreIndex))
-					WorldPIEPrefix = WorldName.Left(UnderscoreIndex + 1);
+					WorldPrefix = WorldName.Left(UnderscoreIndex + 1);
 
-				FString PIEPath = ObjectPath;
-				PIEPath.InsertAt(PIEPath.Find(TEXT("/"), ESearchCase::CaseSensitive, ESearchDir::FromStart, 1), *WorldPIEPrefix);
-				if (UObject* FoundObject = StaticFindObject(nullptr, nullptr, *PIEPath))
+				FString AltPath = ObjectPath;
+				AltPath.InsertAt(AltPath.Find(TEXT("/"), ESearchCase::CaseSensitive, ESearchDir::FromStart, 1), *WorldPrefix);
+				if (UObject* FoundObject = StaticFindObject(nullptr, nullptr, *AltPath))
 					return FoundObject;
 			}
+#endif
 		}
 		return nullptr;
 	}
@@ -96,12 +115,10 @@ private:
 			
 			if (!ObjectPath.IsNone())
 			{
-				if (UObject* LoadedObject = FindObjectInPIE(ObjectPath.ToString()))
+				if (UObject* LoadedObject = FindInstanceObject(ObjectPath.ToString(), T::StaticClass()))
 				{
 					Value = Cast<T>(LoadedObject);
-					if (Value.Get())
-						LOG_INFO(TEXT("Successfully found object: %s"), *ObjectPath.ToString())
-					else
+					if (!Value.Get())
 						LOG_WARNING(TEXT("Found object but failed to cast: %s"), *ObjectPath.ToString())
 				}
 				else
@@ -110,16 +127,14 @@ private:
 					LOG_WARNING(TEXT("Failed to find object at path: %s"), *ObjectPath.ToString())
 				}
 			}
-			else Value = nullptr;
+			else
+				Value = nullptr;
 		}
 		else
 		{
 			FName ObjectPath = NAME_None;
 			if (UObject* Object = Value.Get())
-			{
-				ObjectPath = FName(*SanitizePIEPackagePath(Object->GetPathName()));
-				LOG_INFO(TEXT("Saving sanitized object path: %s"), *ObjectPath.ToString())
-			}
+				ObjectPath = FName(*SanitizeInstancePath(Object->GetPathName()));
 			Ar << ObjectPath;
 		}
 	}
@@ -138,7 +153,6 @@ public:
 	void Unpack(ParamTypes&... Params) const
 	{
 		FMemoryReader Reader(SerializedParams);
-		LOG_INFO(TEXT("Starting unpack with payload size: %d"), SerializedParams.Num())
 		SerializeParams(Reader, Params...);
 	}
 
@@ -168,12 +182,10 @@ private:
 			
 			if (!ObjectPath.IsNone())
 			{
-				if (UObject* LoadedObject = FindObjectInPIE(ObjectPath.ToString()))
+				if (UObject* LoadedObject = FindInstanceObject(ObjectPath.ToString(), T::StaticClass()))
 				{
 					Value = Cast<T>(LoadedObject);
-					if (Value)
-						LOG_INFO(TEXT("Successfully found object: %s"), *ObjectPath.ToString())
-					else
+					if (!Value)
 						LOG_WARNING(TEXT("Found object but failed to cast: %s"), *ObjectPath.ToString())
 				}
 				else
@@ -188,10 +200,7 @@ private:
 		{
 			FName ObjectPath = NAME_None;
 			if (Value != nullptr)
-			{
-				ObjectPath = FName(*SanitizePIEPackagePath(Value->GetPathName()));
-				LOG_INFO(TEXT("Saving sanitized object path: %s"), *ObjectPath.ToString())
-			}
+				ObjectPath = FName(*SanitizeInstancePath(Value->GetPathName()));
 			Ar << ObjectPath;
 		}
 	}
