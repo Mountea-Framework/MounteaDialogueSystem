@@ -20,23 +20,22 @@ void UMounteaDialogueManagerNetSync::RouteRPC_Server_Implementation(UFunction* R
 {
 	if (!RPCFunction || !Instigator)
 	{
-		LOG_ERROR(TEXT("Server received invalid RPCFunction or Instigator"))
+		LOG_ERROR(TEXT("Server received invalid RPCFunction or Instigator"));
 		return;
 	}
 
-	// Unpack and execute
-	AActor* DialogueInitiator;
+	AActor* DialogueInitiator = nullptr;
 	FDialogueParticipants InitialParticipants;
-    
+	
 	Payload.Unpack(DialogueInitiator, InitialParticipants);
-    
-	// Verify unpacked data
+	
 	if (!DialogueInitiator)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to unpack DialogueInitiator"));
+		LOG_ERROR(TEXT("Failed to unpack DialogueInitiator"));
 		return;
 	}
 
+	LOG_INFO(TEXT("Successfully unpacked DialogueInitiator: %s"), *DialogueInitiator->GetName());
 	ExecuteRPC(RPCFunction, Instigator, DialogueInitiator, InitialParticipants);
 }
 

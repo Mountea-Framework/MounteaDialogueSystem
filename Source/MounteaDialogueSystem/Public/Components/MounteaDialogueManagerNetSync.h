@@ -11,7 +11,6 @@
 class IMounteaDialogueManagerInterface;
 struct FMounteaDialogueContextReplicatedStruct;
 
-// Add this operator outside the struct
 inline FArchive& operator<<(FArchive& Ar, FMounteaDialogueContextReplicatedStruct& Value)
 {
 	bool bSuccess;
@@ -27,12 +26,110 @@ struct FGenericRPCPayload
 	UPROPERTY()
 	TArray<uint8> SerializedParams;
 
+private:
+	static FString SanitizePIEPackagePath(const FString& OriginalPath)
+	{
+		FString SanitizedPath = OriginalPath;
+		static const FString PIEPrefix(TEXT("UEDPIE_"));
+		int32 PIEIndex = SanitizedPath.Find(PIEPrefix);
+		if (PIEIndex != INDEX_NONE)
+		{
+			int32 UnderscoreIndex = SanitizedPath.Find(TEXT("_"), ESearchCase::CaseSensitive, ESearchDir::FromStart, PIEIndex + PIEPrefix.Len());
+			if (UnderscoreIndex != INDEX_NONE)
+				SanitizedPath.RemoveAt(PIEIndex, (UnderscoreIndex - PIEIndex) + 1);
+		}
+		return SanitizedPath;
+	}
+
+	static UObject* FindObjectInPIE(const FString& ObjectPath)
+	{
+		if (UObject* FoundObject = StaticFindObject(nullptr, nullptr, *ObjectPath))
+			return FoundObject;
+
+		FString SanitizedPath = SanitizePIEPackagePath(ObjectPath);
+		if (UObject* FoundObject = StaticFindObject(nullptr, nullptr, *SanitizedPath))
+			return FoundObject;
+
+		if (UWorld* World = GEngine->GetCurrentPlayWorld())
+		{
+			FString WorldPIEPrefix;
+			const FString WorldName = World->GetOutermost()->GetName();
+			if (WorldName.StartsWith(TEXT("UEDPIE_")))
+			{
+				int32 UnderscoreIndex;
+				if (WorldName.FindChar('_', UnderscoreIndex))
+					WorldPIEPrefix = WorldName.Left(UnderscoreIndex + 1);
+
+				FString PIEPath = ObjectPath;
+				PIEPath.InsertAt(PIEPath.Find(TEXT("/"), ESearchCase::CaseSensitive, ESearchDir::FromStart, 1), *WorldPIEPrefix);
+				if (UObject* FoundObject = StaticFindObject(nullptr, nullptr, *PIEPath))
+					return FoundObject;
+			}
+		}
+		return nullptr;
+	}
+
+	static void SerializeDialogueParticipantsImpl(FArchive& Ar, FDialogueParticipants& Value)
+	{
+		SerializeObjectReference(Ar, Value.MainParticipant);
+		int32 Count = Value.OtherParticipants.Num();
+		Ar << Count;
+
+		if (Ar.IsLoading())
+		{
+			Value.OtherParticipants.SetNum(Count);
+			for (int32 i = 0; i < Count; ++i)
+				SerializeObjectReference(Ar, Value.OtherParticipants[i]);
+		}
+		else
+			for (int32 i = 0; i < Count; ++i)
+				SerializeObjectReference(Ar, Value.OtherParticipants[i]);
+	}
+
+	template<typename T>
+	static void SerializeObjectReference(FArchive& Ar, TObjectPtr<T>& Value)
+	{
+		if (Ar.IsLoading())
+		{
+			FName ObjectPath;
+			Ar << ObjectPath;
+			
+			if (!ObjectPath.IsNone())
+			{
+				if (UObject* LoadedObject = FindObjectInPIE(ObjectPath.ToString()))
+				{
+					Value = Cast<T>(LoadedObject);
+					if (Value.Get())
+						LOG_INFO(TEXT("Successfully found object: %s"), *ObjectPath.ToString())
+					else
+						LOG_WARNING(TEXT("Found object but failed to cast: %s"), *ObjectPath.ToString())
+				}
+				else
+				{
+					Value = nullptr;
+					LOG_WARNING(TEXT("Failed to find object at path: %s"), *ObjectPath.ToString())
+				}
+			}
+			else Value = nullptr;
+		}
+		else
+		{
+			FName ObjectPath = NAME_None;
+			if (UObject* Object = Value.Get())
+			{
+				ObjectPath = FName(*SanitizePIEPackagePath(Object->GetPathName()));
+				LOG_INFO(TEXT("Saving sanitized object path: %s"), *ObjectPath.ToString())
+			}
+			Ar << ObjectPath;
+		}
+	}
+
+public:
 	template<typename... ParamTypes>
 	static FGenericRPCPayload Make(ParamTypes&&... Params)
 	{
 		FGenericRPCPayload Payload;
 		FMemoryWriter Writer(Payload.SerializedParams);
-		// Writer is always in "saving" mode as we're writing TO the payload
 		SerializeParams(Writer, Forward<ParamTypes>(Params)...);
 		return Payload;
 	}
@@ -41,7 +138,7 @@ struct FGenericRPCPayload
 	void Unpack(ParamTypes&... Params) const
 	{
 		FMemoryReader Reader(SerializedParams);
-		// Reader is always in "loading" mode as we're reading FROM the payload
+		LOG_INFO(TEXT("Starting unpack with payload size: %d"), SerializedParams.Num())
 		SerializeParams(Reader, Params...);
 	}
 
@@ -55,90 +152,63 @@ private:
 		SerializeParams(Ar, Forward<Rest>(rest)...);
 	}
 
-	// Handle FDialogueParticipants
-	static void SerializeDialogueParticipantsImpl(FArchive& Ar, FDialogueParticipants& Value)
-	{
-		// Main participant
-		AActor* MainActor = Value.MainParticipant.Get();
-		Ar << MainActor;
-		if (Ar.IsLoading())
-		{
-			Value.MainParticipant = MainActor;
-		}
-
-		// Other participants
-		int32 Count = Value.OtherParticipants.Num();
-		Ar << Count;
-
-		if (Ar.IsLoading())
-		{
-			Value.OtherParticipants.SetNum(Count);
-			for (int32 i = 0; i < Count; ++i)
-			{
-				AActor* Actor = nullptr;
-				Ar << Actor;
-				Value.OtherParticipants[i] = Actor;
-			}
-		}
-		else // We're writing TO the payload
-		{
-			for (int32 i = 0; i < Count; ++i)
-			{
-				AActor* Actor = Cast<AActor>(Value.OtherParticipants[i].Get());
-				Ar << Actor;
-			}
-		}
-	}
-
-	// Non-const version
 	static void SerializeSingleParam(FArchive& Ar, FDialogueParticipants& Value)
-	{
-		SerializeDialogueParticipantsImpl(Ar, Value);
-	}
+	{ SerializeDialogueParticipantsImpl(Ar, Value); }
 
-	// Const version - will be called during Make (saving to payload)
 	static void SerializeSingleParam(FArchive& Ar, const FDialogueParticipants& Value)
-	{
-		// We can always write FROM a const value TO our payload
-		SerializeDialogueParticipantsImpl(Ar, const_cast<FDialogueParticipants&>(Value));
-	}
+	{ SerializeDialogueParticipantsImpl(Ar, const_cast<FDialogueParticipants&>(Value)); }
 
-	// Handle UObject pointers
 	template<typename T>
 	static void SerializeSingleParam(FArchive& Ar, T*& Value)
 	{
-		Ar << Value;
+		if (Ar.IsLoading())
+		{
+			FName ObjectPath;
+			Ar << ObjectPath;
+			
+			if (!ObjectPath.IsNone())
+			{
+				if (UObject* LoadedObject = FindObjectInPIE(ObjectPath.ToString()))
+				{
+					Value = Cast<T>(LoadedObject);
+					if (Value)
+						LOG_INFO(TEXT("Successfully found object: %s"), *ObjectPath.ToString())
+					else
+						LOG_WARNING(TEXT("Found object but failed to cast: %s"), *ObjectPath.ToString())
+				}
+				else
+				{
+					Value = nullptr;
+					LOG_WARNING(TEXT("Failed to find object at path: %s"), *ObjectPath.ToString())
+				}
+			}
+			else Value = nullptr;
+		}
+		else
+		{
+			FName ObjectPath = NAME_None;
+			if (Value != nullptr)
+			{
+				ObjectPath = FName(*SanitizePIEPackagePath(Value->GetPathName()));
+				LOG_INFO(TEXT("Saving sanitized object path: %s"), *ObjectPath.ToString())
+			}
+			Ar << ObjectPath;
+		}
 	}
 
 	template<typename T>
 	static void SerializeSingleParam(FArchive& Ar, const T*& Value)
 	{
-		// We can always write FROM a const pointer TO our payload
 		T* MutablePtr = const_cast<T*>(Value);
-		Ar << MutablePtr;
+		SerializeSingleParam(Ar, MutablePtr);
+		Value = MutablePtr;
 	}
 
-	// Handle TObjectPtr
 	template<typename T>
-	static void SerializeSingleParam(FArchive& Ar, TObjectPtr<T>& Value)
-	{
-		T* RawPtr = Value.Get();
-		Ar << RawPtr;
-		if (Ar.IsLoading())
-		{
-			Value = RawPtr;
-		}
-	}
-
-	// Handle basic types
-	template<typename T>
-	static typename TEnableIf<!TIsPointer<T>::Value && 
-							 !TIsTObjectPtr<T>::Value && 
+	static typename TEnableIf<!TIsPointer<T>::Value && !TIsTObjectPtr<T>::Value && 
 							 !std::is_same<typename TRemoveCV<T>::Type, FDialogueParticipants>::value>::Type
 	SerializeSingleParam(FArchive& Ar, T& Value)
-	{
-		Ar << Value;
-	}
+	{ Ar << Value; }
 };
 
 template<typename ReturnType, typename Func, typename... Args>
@@ -171,6 +241,7 @@ static ReturnType ExecuteIfImplements(UObject* Target, const TCHAR* FunctionName
 /**
  * Component that enables network synchronization for Mountea Dialogue Managers.
  * Handles RPC routing through PlayerController's network connection and manages dialogue manager registration.
+ * Must be attached to Player Controller!
  */
 UCLASS(ClassGroup=(Mountea), Blueprintable, AutoExpandCategories=("Mountea","Dialogue","Mountea|Dialogue"), meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Manager Sync"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueManagerNetSync : public UActorComponent
@@ -219,10 +290,12 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	
 	void AddManager(const TScriptInterface<IMounteaDialogueManagerInterface>& NewManager);
 	void RemoveManager(const TScriptInterface<IMounteaDialogueManagerInterface>& OldManager);
 
 protected:
+	
 	template<typename... ParamTypes>
 	void ExecuteRPC(UFunction* RPCFunction, APlayerController* Instigator, ParamTypes... Params)
 	{
@@ -265,6 +338,7 @@ protected:
 	}
 
 private:
+	
 	template<typename T>
 	void PackParams(void*& Buffer, T& Param)
 	{
@@ -283,7 +357,7 @@ private:
 	}
 
 protected:
-	/** Array of registered dialogue managers */
+	
 	UPROPERTY(VisibleAnywhere, Category="Dialogue", meta=(DisplayThumbnail="false", DisplayName="Registered Managers"))
 	TArray<TScriptInterface<IMounteaDialogueManagerInterface>> Managers;
 };
