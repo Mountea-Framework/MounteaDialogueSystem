@@ -1,18 +1,13 @@
 ﻿// All rights reserved Dominik Morse (Pavlicek) 2024
 
-
 #include "Components/MounteaDialogueManagerNetSync.h"
-
-#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 
 UMounteaDialogueManagerNetSync::UMounteaDialogueManagerNetSync()
 {
 	bAutoActivate = true;
-	
 	SetIsReplicatedByDefault(true);
 	SetActiveFlag(true);
-	
 	PrimaryComponentTick.bCanEverTick = false;
 
 	ComponentTags.Add(FName("Mountea"));
@@ -23,33 +18,41 @@ UMounteaDialogueManagerNetSync::UMounteaDialogueManagerNetSync()
 
 void UMounteaDialogueManagerNetSync::RouteRPC_Server_Implementation(UFunction* RPCFunction, APlayerController* Instigator, const FGenericRPCPayload& Payload)
 {
-	// Validate authority
-	if (!GetOwner() || !GetOwner()->HasAuthority())
+	if (!RPCFunction || !Instigator)
+	{
+		LOG_ERROR(TEXT("Server received invalid RPCFunction or Instigator"))
 		return;
+	}
 
 	// Unpack and execute
-	FMounteaDialogueContextReplicatedStruct Context;
-	Payload.Unpack(Context);
-	
-	ExecuteRPC(RPCFunction, Instigator, Context);
+	AActor* DialogueInitiator;
+	FDialogueParticipants InitialParticipants;
+    
+	Payload.Unpack(DialogueInitiator, InitialParticipants);
+    
+	// Verify unpacked data
+	if (!DialogueInitiator)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to unpack DialogueInitiator"));
+		return;
+	}
+
+	ExecuteRPC(RPCFunction, Instigator, DialogueInitiator, InitialParticipants);
 }
 
 void UMounteaDialogueManagerNetSync::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Register activation/deactivation handlers
 	OnComponentActivated.AddUniqueDynamic(this, &UMounteaDialogueManagerNetSync::OnManagerSyncActivated);
 	OnComponentDeactivated.AddDynamic(this, &UMounteaDialogueManagerNetSync::OnManagerSyncDeactivated);
 	
-	// Validate owner
 	if (!GetOwner())
 	{
 		SetActive(false, true);
 		return;
 	}
 
-	// Ensure owner is a PlayerController
 	if (!GetOwner()->IsA(APlayerController::StaticClass()))
 	{
 		SetActive(false, true);

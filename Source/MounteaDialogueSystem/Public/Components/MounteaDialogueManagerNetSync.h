@@ -4,11 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "MounteaDialogueManagerNetSync.generated.h"
 
 class IMounteaDialogueManagerInterface;
 struct FMounteaDialogueContextReplicatedStruct;
+
+// Add this operator outside the struct
+inline FArchive& operator<<(FArchive& Ar, FMounteaDialogueContextReplicatedStruct& Value)
+{
+	bool bSuccess;
+	Value.NetSerialize(Ar, nullptr, bSuccess);
+	return Ar;
+}
 
 USTRUCT()
 struct FGenericRPCPayload
@@ -19,11 +28,12 @@ struct FGenericRPCPayload
 	TArray<uint8> SerializedParams;
 
 	template<typename... ParamTypes>
-	static FGenericRPCPayload Make(ParamTypes... Params)
+	static FGenericRPCPayload Make(ParamTypes&&... Params)
 	{
 		FGenericRPCPayload Payload;
 		FMemoryWriter Writer(Payload.SerializedParams);
-		SerializeParams(Writer, Params...);
+		// Writer is always in "saving" mode as we're writing TO the payload
+		SerializeParams(Writer, Forward<ParamTypes>(Params)...);
 		return Payload;
 	}
 
@@ -31,66 +41,138 @@ struct FGenericRPCPayload
 	void Unpack(ParamTypes&... Params) const
 	{
 		FMemoryReader Reader(SerializedParams);
+		// Reader is always in "loading" mode as we're reading FROM the payload
 		SerializeParams(Reader, Params...);
 	}
 
 private:
-	template<typename T>
-	struct HasNetSerialize
-	{
-	private:
-		template<typename U>
-		static auto Test(U*) -> decltype(std::declval<U>().NetSerialize(std::declval<FArchive&>(), nullptr, std::declval<bool&>()), std::true_type());
-		static std::false_type Test(...);
-	public:
-		static constexpr bool value = decltype(Test((T*)nullptr))::value;
-	};
-
-	template<typename T>
-	static typename std::enable_if<std::is_same<T, FDialogueParticipants>::value>::type
-	SerializeParam(FArchive& Ar, T& Value)
-	{
-		Ar << Value.MainParticipant;
-		Ar << Value.OtherParticipants;
-	}
-
-	template<typename T>
-	static typename std::enable_if<HasNetSerialize<T>::value>::type
-	SerializeParam(FArchive& Ar, T& Value)
-	{
-		bool bSuccess = true;
-		Value.NetSerialize(Ar, nullptr, bSuccess);
-	}
-
-	template<typename T>
-	static typename std::enable_if<std::is_convertible<T, UObject*>::value>::type
-	SerializeParam(FArchive& Ar, T& Value)
-	{
-		Ar << Value;
-	}
-
-	template<typename T>
-	static typename std::enable_if<!HasNetSerialize<T>::value && !std::is_convertible<T, UObject*>::value && !std::is_same<T, FDialogueParticipants>::value>::type
-	SerializeParam(FArchive& Ar, T& Value)
-	{
-		Ar << Value;
-	}
+	static void SerializeParams(FArchive& Ar) {}
 
 	template<typename T, typename... Rest>
-	static void SerializeParams(FArchive& Ar, T& First, Rest&... Rests)
+	static void SerializeParams(FArchive& Ar, T&& First, Rest&&... rest)
 	{
-		SerializeParam(Ar, First);
-		SerializeParams(Ar, Rests...);
+		SerializeSingleParam(Ar, Forward<T>(First));
+		SerializeParams(Ar, Forward<Rest>(rest)...);
 	}
-		
-	static void SerializeParams(FArchive& Ar) {}
+
+	// Handle FDialogueParticipants
+	static void SerializeDialogueParticipantsImpl(FArchive& Ar, FDialogueParticipants& Value)
+	{
+		// Main participant
+		AActor* MainActor = Value.MainParticipant.Get();
+		Ar << MainActor;
+		if (Ar.IsLoading())
+		{
+			Value.MainParticipant = MainActor;
+		}
+
+		// Other participants
+		int32 Count = Value.OtherParticipants.Num();
+		Ar << Count;
+
+		if (Ar.IsLoading())
+		{
+			Value.OtherParticipants.SetNum(Count);
+			for (int32 i = 0; i < Count; ++i)
+			{
+				AActor* Actor = nullptr;
+				Ar << Actor;
+				Value.OtherParticipants[i] = Actor;
+			}
+		}
+		else // We're writing TO the payload
+		{
+			for (int32 i = 0; i < Count; ++i)
+			{
+				AActor* Actor = Cast<AActor>(Value.OtherParticipants[i].Get());
+				Ar << Actor;
+			}
+		}
+	}
+
+	// Non-const version
+	static void SerializeSingleParam(FArchive& Ar, FDialogueParticipants& Value)
+	{
+		SerializeDialogueParticipantsImpl(Ar, Value);
+	}
+
+	// Const version - will be called during Make (saving to payload)
+	static void SerializeSingleParam(FArchive& Ar, const FDialogueParticipants& Value)
+	{
+		// We can always write FROM a const value TO our payload
+		SerializeDialogueParticipantsImpl(Ar, const_cast<FDialogueParticipants&>(Value));
+	}
+
+	// Handle UObject pointers
+	template<typename T>
+	static void SerializeSingleParam(FArchive& Ar, T*& Value)
+	{
+		Ar << Value;
+	}
+
+	template<typename T>
+	static void SerializeSingleParam(FArchive& Ar, const T*& Value)
+	{
+		// We can always write FROM a const pointer TO our payload
+		T* MutablePtr = const_cast<T*>(Value);
+		Ar << MutablePtr;
+	}
+
+	// Handle TObjectPtr
+	template<typename T>
+	static void SerializeSingleParam(FArchive& Ar, TObjectPtr<T>& Value)
+	{
+		T* RawPtr = Value.Get();
+		Ar << RawPtr;
+		if (Ar.IsLoading())
+		{
+			Value = RawPtr;
+		}
+	}
+
+	// Handle basic types
+	template<typename T>
+	static typename TEnableIf<!TIsPointer<T>::Value && 
+							 !TIsTObjectPtr<T>::Value && 
+							 !std::is_same<typename TRemoveCV<T>::Type, FDialogueParticipants>::value>::Type
+	SerializeSingleParam(FArchive& Ar, T& Value)
+	{
+		Ar << Value;
+	}
 };
+
+template<typename ReturnType, typename Func, typename... Args>
+static ReturnType ExecuteIfImplements(UObject* Target, const TCHAR* FunctionName, Func Function, Args&&... args)
+{
+	if (!IsValid(Target))
+	{
+		LOG_ERROR(TEXT("[%s] Invalid Target provided!"), FunctionName);
+		if constexpr (!std::is_void_v<ReturnType>)
+			return ReturnType{};
+		else return;
+	}
+
+	if (Target->Implements<UMounteaDialogueManagerInterface>())
+	{
+		if constexpr (std::is_void_v<ReturnType>)
+		{
+			Function(Target, Forward<Args>(args)...);
+			return;
+		}
+		return Function(Target, Forward<Args>(args)...);
+	}
+
+	LOG_ERROR(TEXT("[%s] Target does not implement 'MounteaDialogueManagerInterface'!"), FunctionName);
+	if constexpr (!std::is_void_v<ReturnType>)
+		return ReturnType{};
+	else return;
+}
 
 /**
  * Component that enables network synchronization for Mountea Dialogue Managers.
  * Handles RPC routing through PlayerController's network connection and manages dialogue manager registration.
  */
-UCLASS(ClassGroup=(Mountea), Blueprintable, AutoExpandCategories=("Mountea","Dialogue","Mountea|Dialogue"),  meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Manager Sync"))
+UCLASS(ClassGroup=(Mountea), Blueprintable, AutoExpandCategories=("Mountea","Dialogue","Mountea|Dialogue"), meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Manager Sync"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueManagerNetSync : public UActorComponent
 {
 	GENERATED_BODY()
@@ -98,33 +180,36 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueManagerNetSync : public UActorCo
 public:
 	UMounteaDialogueManagerNetSync();
 
-	/**
-	 * Routes an RPC call through the PlayerController's network connection. Call locally from client without client ownership.
-	 * 
-	 * @param RPCFunction The function to be executed
-	 * @param Instigator The PlayerController initiating the RPC
-	 * @param Params Variable number of parameters for the RPC
-	 */
 	template<typename... ParamTypes>
-	void RouteRPC(UFunction* RPCFunction, APlayerController* Instigator, ParamTypes... Params)
+	void RouteRPC(UFunction* RPCFunction, APlayerController* Instigator, ParamTypes&&... Params)
 	{
 		if (!RPCFunction || !Instigator)
-			return;
-
-		if (!GetOwner() || !GetOwner()->HasAuthority())
 		{
-			RouteRPC_Server(RPCFunction, Instigator, FGenericRPCPayload::Make(Params...));
+			LOG_ERROR(TEXT("Invalid RPCFunction or Instigator"));
 			return;
 		}
 
-		ExecuteRPC(RPCFunction, Instigator, Params...);
+		if (!GetOwner() || !GetOwner()->HasAuthority())
+		{
+			FGenericRPCPayload Payload = FGenericRPCPayload::Make(Forward<ParamTypes>(Params)...);
+			
+			if (Payload.SerializedParams.Num() == 0)
+			{
+				LOG_ERROR(TEXT("Empty payload created"));
+				return;
+			}
+			
+			RouteRPC_Server(RPCFunction, Instigator, Payload);
+			return;
+		}
+
+		ExecuteRPC(RPCFunction, Instigator, Forward<ParamTypes>(Params)...);
 	}
 	
 	UFUNCTION(Server, Reliable)
 	void RouteRPC_Server(UFunction* RPCFunction, APlayerController* Instigator, const FGenericRPCPayload& Payload);
 
 protected:
-
 	UFUNCTION()
 	void OnManagerSyncActivated(UActorComponent* Component, bool bReset);
 	
@@ -134,21 +219,10 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	
-	/**
-	 * @brief Registers a new dialogue manager with this sync component
-	 * @param NewManager The manager interface to register
-	 */
 	void AddManager(const TScriptInterface<IMounteaDialogueManagerInterface>& NewManager);
-
-	/**
-	 * @brief Unregisters a dialogue manager from this sync component
-	 * @param OldManager The manager interface to unregister
-	 */
 	void RemoveManager(const TScriptInterface<IMounteaDialogueManagerInterface>& OldManager);
 
 protected:
-
 	template<typename... ParamTypes>
 	void ExecuteRPC(UFunction* RPCFunction, APlayerController* Instigator, ParamTypes... Params)
 	{
@@ -159,16 +233,30 @@ protected:
 		{
 			if (UObject* Object = Manager.GetObject())
 			{
-				if (Object->IsA(RPCFunction->GetOwnerClass()))
+				const bool bIsInterfaceFunction = RPCFunction->GetOwnerClass()->ImplementsInterface(UMounteaDialogueManagerInterface::StaticClass());
+				
+				if (bIsInterfaceFunction || Object->IsA(RPCFunction->GetOwnerClass()))
 				{
 					const size_t TotalSize = (0 + ... + sizeof(ParamTypes));
 					void* ParamBuffer = FMemory::Malloc(TotalSize, 16);
-                
+
 					void* CurrentPtr = ParamBuffer;
 					PackParams(CurrentPtr, Params...);
-                
-					Object->ProcessEvent(RPCFunction, ParamBuffer);
-                
+
+					if (bIsInterfaceFunction)
+					{
+						auto ExecuteFunc = [RPCFunction, ParamBuffer](UObject* Target)
+						{
+							Target->ProcessEvent(RPCFunction, ParamBuffer);
+						};
+						
+						ExecuteIfImplements<void>(Object, *RPCFunction->GetName(), ExecuteFunc);
+					}
+					else
+					{
+						Object->ProcessEvent(RPCFunction, ParamBuffer);
+					}
+
 					FMemory::Free(ParamBuffer);
 					break;
 				}
@@ -177,7 +265,6 @@ protected:
 	}
 
 private:
-	
 	template<typename T>
 	void PackParams(void*& Buffer, T& Param)
 	{
@@ -196,7 +283,6 @@ private:
 	}
 
 protected:
-	
 	/** Array of registered dialogue managers */
 	UPROPERTY(VisibleAnywhere, Category="Dialogue", meta=(DisplayThumbnail="false", DisplayName="Registered Managers"))
 	TArray<TScriptInterface<IMounteaDialogueManagerInterface>> Managers;
