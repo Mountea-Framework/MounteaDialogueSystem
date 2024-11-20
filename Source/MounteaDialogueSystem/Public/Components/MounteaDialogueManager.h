@@ -152,9 +152,7 @@ private:
 	void OnRep_ManagerState();
 	UFUNCTION()
 	void OnRep_DialogueContext();
-
-	void RequestStartDialogue_Environment(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants) const;
-
+	
 	bool SetupPlayerDialogue(TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages) const;
 	bool SetupEnvironmentDialogue(AActor* DialogueInitiator, const TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages);
 	static bool ValidateMainParticipant(AActor* MainParticipant, TScriptInterface<IMounteaDialogueParticipantInterface>& OutParticipant, TArray<FText>& ErrorMessages);
@@ -163,6 +161,10 @@ private:
 	void ProcessWorldWidgetUpdate(const FString& Command);
 
 public:
+	
+	UFUNCTION()
+	void RequestStartDialogue_Environment(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
+	
 	bool IsAuthority() const;
 
 protected:

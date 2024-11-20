@@ -186,25 +186,32 @@ void UMounteaDialogueManager::OnRep_DialogueContext()
 	}, 0.1f, false);
 }
 
-void UMounteaDialogueManager::RequestStartDialogue_Environment(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants) const
+void UMounteaDialogueManager::RequestStartDialogue_Environment(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants)
 {
-	int32 searchDepth = 0;
-	APlayerController* playerController = UMounteaDialogueSystemBFC::FindPlayerController(DialogueInitiator, searchDepth);
-	if (!IsValid(playerController))
+	LOG_WARNING(TEXT("[Requested Start Dialogue Env.] Called"))
+	if (!IsAuthority())
 	{
-		OnDialogueFailed.Broadcast(FString::Printf(TEXT("[Request Start Dialogue] Environmental Dialogue cannot find Player Controller for Initiator %s"), DialogueInitiator ? *DialogueInitiator->GetName() : TEXT("INVALID")));
-		return;
-	}
+		int32 searchDepth = 0;
+		APlayerController* playerController = UMounteaDialogueSystemBFC::FindPlayerController(DialogueInitiator, searchDepth);
+		if (!IsValid(playerController))
+		{
+			OnDialogueFailed.Broadcast(FString::Printf(TEXT("[Request Start Dialogue] Environmental Dialogue cannot find Player Controller for Initiator %s"), DialogueInitiator ? *DialogueInitiator->GetName() : TEXT("INVALID")));
+			return;
+		}
 
-	auto netSync = playerController->FindComponentByClass<UMounteaDialogueManagerNetSync>();
-	if (!IsValid(netSync))
-	{
-		OnDialogueFailed.Broadcast(FString::Printf(TEXT("[Request Start Dialogue] Environmental Dialogue cannot find valid Sync Component in Player Controller %s"), *DialogueInitiator->GetName()));
-		return;
+		auto netSync = playerController->FindComponentByClass<UMounteaDialogueManagerNetSync>();
+		if (!IsValid(netSync))
+		{
+			OnDialogueFailed.Broadcast(FString::Printf(TEXT("[Request Start Dialogue] Environmental Dialogue cannot find valid Sync Component in Player Controller %s"), *DialogueInitiator->GetName()));
+			return;
+		}
+		netSync->RouteRPCWithCallback(playerController, this, TEXT("RequestStartDialogue_Environment") , InitialParticipants);
 	}
-	
-	if (UFunction* StartFunc = GetClass()->FindFunctionByName(TEXT("RequestStartDialogue")))
-		netSync->RouteRPC(StartFunc, playerController, DialogueInitiator, InitialParticipants);
+	else
+	{
+		LOG_WARNING(TEXT("[Requested Start Dialogue Env.] Callback requested"))
+		Execute_RequestStartDialogue(this, DialogueInitiator, InitialParticipants);
+	}
 }
 
 bool UMounteaDialogueManager::SetupPlayerDialogue(TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages) const
@@ -249,7 +256,6 @@ bool UMounteaDialogueManager::SetupEnvironmentDialogue(AActor* DialogueInitiator
 	}
 	
 	const TScriptInterface<IMounteaDialogueManagerInterface> thisManager(this);
-	netSync->AddManager(thisManager);
 
 	return true;
 }

@@ -16,79 +16,54 @@ UMounteaDialogueManagerNetSync::UMounteaDialogueManagerNetSync()
 	ComponentTags.Add(FName("Sync"));
 }
 
-void UMounteaDialogueManagerNetSync::RouteRPC_Server_Implementation(UFunction* RPCFunction, APlayerController* Instigator, const FGenericRPCPayload& Payload)
-{
-	if (!RPCFunction || !Instigator)
-	{
-		LOG_ERROR(TEXT("Server received invalid RPCFunction or Instigator"));
-		return;
-	}
-
-	AActor* DialogueInitiator = nullptr;
-	FDialogueParticipants InitialParticipants;
-	
-	Payload.Unpack(DialogueInitiator, InitialParticipants);
-	
-	if (!DialogueInitiator)
-	{
-		LOG_ERROR(TEXT("Failed to unpack DialogueInitiator"));
-		return;
-	}
-	
-	ExecuteRPC(RPCFunction, Instigator, DialogueInitiator, InitialParticipants);
-}
-
 void UMounteaDialogueManagerNetSync::BeginPlay()
 {
 	Super::BeginPlay();
+    
+	if (!GetOwner() || !GetOwner()->IsA(APlayerController::StaticClass()))
+		SetActive(false);
+}
 
-	OnComponentActivated.AddUniqueDynamic(this, &UMounteaDialogueManagerNetSync::OnManagerSyncActivated);
-	OnComponentDeactivated.AddDynamic(this, &UMounteaDialogueManagerNetSync::OnManagerSyncDeactivated);
-	
-	if (!GetOwner())
+void UMounteaDialogueManagerNetSync::RouteRPC_Server_Implementation(APlayerController* Instigator, const FGenericRPCPayload& Payload)
+{
+	QUICK_SCOPE_CYCLE_COUNTER(STAT_MounteaDialogue_RPCServer); // For profiling
+
+	if (!Instigator)
 	{
-		SetActive(false, true);
+		LOG_ERROR(TEXT("Server received invalid Instigator"));
 		return;
 	}
 
-	if (!GetOwner()->IsA(APlayerController::StaticClass()))
+	FServerFunctionCall FuncCall;
+	AActor* DialogueInitiator = nullptr;
+	FDialogueParticipants InitialParticipants;
+    
 	{
-		SetActive(false, true);
+		QUICK_SCOPE_CYCLE_COUNTER(STAT_MounteaDialogue_UnpackPayload);
+		Payload.Unpack(FuncCall, DialogueInitiator, InitialParticipants);
+	}
+    
+	if (!FuncCall.IsValid())
+	{
+		LOG_ERROR(TEXT("Invalid function call data"));
 		return;
 	}
-}
 
-void UMounteaDialogueManagerNetSync::AddManager(const TScriptInterface<IMounteaDialogueManagerInterface>& NewManager)
-{
-	if (!IsActive())
-		return;
-	
-	if (Managers.Contains(NewManager))
-		return;
-	
-	Managers.Add(NewManager);
-}
+	UFunction* Function = nullptr;
+	{
+		QUICK_SCOPE_CYCLE_COUNTER(STAT_MounteaDialogue_FindFunction);
+		Function = FuncCall.Caller->FindFunction(FuncCall.FunctionName);
+	}
 
-void UMounteaDialogueManagerNetSync::RemoveManager(const TScriptInterface<IMounteaDialogueManagerInterface>& OldManager)
-{
-	if (!IsActive())
-		return;
-	
-	if (!Managers.Contains(OldManager))
-		return;
-
-	if (!OldManager.GetObject())
-		return;
-
-	Managers.Remove(OldManager);
-}
-
-void UMounteaDialogueManagerNetSync::OnManagerSyncActivated(UActorComponent* Component, bool bReset)
-{
-	// TODO: Setup bindings?
-}
-
-void UMounteaDialogueManagerNetSync::OnManagerSyncDeactivated(UActorComponent* Component)
-{
-	// TODO: Setup bindings?
+	if (Function)
+	{
+		struct FParams
+		{
+			AActor* InInitiator;
+			FDialogueParticipants InParticipants;
+		} Params{DialogueInitiator, InitialParticipants};
+        
+		QUICK_SCOPE_CYCLE_COUNTER(STAT_MounteaDialogue_ProcessEvent);
+		FuncCall.Caller->ProcessEvent(Function, &Params);
+	}
 }

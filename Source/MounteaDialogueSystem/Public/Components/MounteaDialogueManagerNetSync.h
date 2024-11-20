@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Engine/NetDriver.h"
+#include "Engine/PackageMapClient.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Kismet/GameplayStatics.h"
@@ -220,36 +222,62 @@ private:
 	{ Ar << Value; }
 };
 
-template<typename ReturnType, typename Func, typename... Args>
-static ReturnType ExecuteIfImplements(UObject* Target, const TCHAR* FunctionName, Func Function, Args&&... args)
+USTRUCT()
+struct FServerFunctionCall
 {
-	if (!IsValid(Target))
-	{
-		LOG_ERROR(TEXT("[%s] Invalid Target provided!"), FunctionName);
-		if constexpr (!std::is_void_v<ReturnType>)
-			return ReturnType{};
-		else return;
+	GENERATED_BODY()
+
+	UPROPERTY()
+	UObject* Caller = nullptr;
+
+	UPROPERTY()
+	FName FunctionName;
+
+	bool IsValid() const 
+	{ 
+		return Caller != nullptr && !FunctionName.IsNone(); 
 	}
 
-	if (Target->Implements<UMounteaDialogueManagerInterface>())
+	friend FArchive& operator<<(FArchive& Ar, FServerFunctionCall& Value)
 	{
-		if constexpr (std::is_void_v<ReturnType>)
+		// Instead of using full path, use a network GUID if possible
+		if (Ar.IsSaving())
 		{
-			Function(Target, Forward<Args>(args)...);
-			return;
+			FNetworkGUID NetGUID = FNetworkGUID();
+			if (Value.Caller && Value.Caller->GetWorld())
+			{
+				UNetDriver* NetDriver = Value.Caller->GetWorld()->GetNetDriver();
+				if (NetDriver)
+				{
+					NetGUID = NetDriver->GuidCache->GetOrAssignNetGUID(Value.Caller);
+				}
+			}
+			Ar << NetGUID;
 		}
-		return Function(Target, Forward<Args>(args)...);
-	}
+		else // Loading
+		{
+			FNetworkGUID NetGUID;
+			Ar << NetGUID;
+            
+			if (!NetGUID.IsDefault() && GEngine)
+			{
+				if (UWorld* World = GEngine->GetCurrentPlayWorld())
+				{
+					if (UNetDriver* NetDriver = World->GetNetDriver())
+					{
+						Value.Caller = Cast<UObject>(NetDriver->GuidCache->GetObjectFromNetGUID(NetGUID, true));
+					}
+				}
+			}
+		}
 
-	LOG_ERROR(TEXT("[%s] Target does not implement 'MounteaDialogueManagerInterface'!"), FunctionName);
-	if constexpr (!std::is_void_v<ReturnType>)
-		return ReturnType{};
-	else return;
-}
+		Ar << Value.FunctionName;
+		return Ar;
+	}
+};
 
 /**
  * Component that enables network synchronization for Mountea Dialogue Managers.
- * Handles RPC routing through PlayerController's network connection and manages dialogue manager registration.
  * Must be attached to Player Controller!
  */
 UCLASS(ClassGroup=(Mountea), Blueprintable, AutoExpandCategories=("Mountea","Dialogue","Mountea|Dialogue"), meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Manager Sync"))
@@ -260,113 +288,38 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueManagerNetSync : public UActorCo
 public:
 	UMounteaDialogueManagerNetSync();
 
+protected:
+	virtual void BeginPlay() override;
+
+public:
 	template<typename... ParamTypes>
-	void RouteRPC(UFunction* RPCFunction, APlayerController* Instigator, ParamTypes&&... Params)
+	void RouteRPCWithCallback(APlayerController* Instigator, UObject* Caller, FName FunctionName, ParamTypes&&... Params)
 	{
-		if (!RPCFunction || !Instigator)
+		if (!Instigator)
 		{
-			LOG_ERROR(TEXT("Invalid RPCFunction or Instigator"));
+			LOG_ERROR(TEXT("Invalid Instigator"));
 			return;
 		}
 
-		if (!GetOwner() || !GetOwner()->HasAuthority())
+		if (GetOwner() && GetOwner()->GetWorld() && GetOwner()->GetWorld()->GetNetMode() != NM_Standalone)
 		{
-			FGenericRPCPayload Payload = FGenericRPCPayload::Make(Forward<ParamTypes>(Params)...);
-			
+			FServerFunctionCall FuncCall;
+			FuncCall.Caller = Caller;
+			FuncCall.FunctionName = FunctionName;
+            
+			FGenericRPCPayload Payload = FGenericRPCPayload::Make(FuncCall, Forward<ParamTypes>(Params)...);
+            
 			if (Payload.SerializedParams.Num() == 0)
 			{
 				LOG_ERROR(TEXT("Empty payload created"));
 				return;
 			}
-			
-			RouteRPC_Server(RPCFunction, Instigator, Payload);
+            
+			RouteRPC_Server(Instigator, MoveTemp(Payload));
 			return;
 		}
-
-		ExecuteRPC(RPCFunction, Instigator, Forward<ParamTypes>(Params)...);
 	}
-	
+
 	UFUNCTION(Server, Reliable)
-	void RouteRPC_Server(UFunction* RPCFunction, APlayerController* Instigator, const FGenericRPCPayload& Payload);
-
-protected:
-	UFUNCTION()
-	void OnManagerSyncActivated(UActorComponent* Component, bool bReset);
-	
-	UFUNCTION()
-	void OnManagerSyncDeactivated(UActorComponent* Component);
-	
-	virtual void BeginPlay() override;
-
-public:
-	
-	void AddManager(const TScriptInterface<IMounteaDialogueManagerInterface>& NewManager);
-	void RemoveManager(const TScriptInterface<IMounteaDialogueManagerInterface>& OldManager);
-
-protected:
-	
-	template<typename... ParamTypes>
-	void ExecuteRPC(UFunction* RPCFunction, APlayerController* Instigator, ParamTypes... Params)
-	{
-		if (!RPCFunction || !Instigator)
-			return;
-
-		for (const auto& Manager : Managers)
-		{
-			if (UObject* Object = Manager.GetObject())
-			{
-				const bool bIsInterfaceFunction = RPCFunction->GetOwnerClass()->ImplementsInterface(UMounteaDialogueManagerInterface::StaticClass());
-				
-				if (bIsInterfaceFunction || Object->IsA(RPCFunction->GetOwnerClass()))
-				{
-					const size_t TotalSize = (0 + ... + sizeof(ParamTypes));
-					void* ParamBuffer = FMemory::Malloc(TotalSize, 16);
-
-					void* CurrentPtr = ParamBuffer;
-					PackParams(CurrentPtr, Params...);
-
-					if (bIsInterfaceFunction)
-					{
-						auto ExecuteFunc = [RPCFunction, ParamBuffer](UObject* Target)
-						{
-							Target->ProcessEvent(RPCFunction, ParamBuffer);
-						};
-						
-						ExecuteIfImplements<void>(Object, *RPCFunction->GetName(), ExecuteFunc);
-					}
-					else
-					{
-						Object->ProcessEvent(RPCFunction, ParamBuffer);
-					}
-
-					FMemory::Free(ParamBuffer);
-					break;
-				}
-			}
-		}
-	}
-
-private:
-	
-	template<typename T>
-	void PackParams(void*& Buffer, T& Param)
-	{
-		size_t Space = SIZE_MAX;
-		void* AlignedPtr = Buffer;
-		AlignedPtr = std::align(alignof(T), sizeof(T), AlignedPtr, Space);
-		FMemory::Memcpy(AlignedPtr, &Param, sizeof(T));
-		Buffer = static_cast<uint8*>(AlignedPtr) + sizeof(T);
-	}
-
-	template<typename T, typename... Rest>
-	void PackParams(void*& Buffer, T& First, Rest&... A)
-	{
-		PackParams(Buffer, First);
-		PackParams(Buffer, A...);
-	}
-
-protected:
-	
-	UPROPERTY(VisibleAnywhere, Category="Dialogue", meta=(DisplayThumbnail="false", DisplayName="Registered Managers"))
-	TArray<TScriptInterface<IMounteaDialogueManagerInterface>> Managers;
+	void RouteRPC_Server(APlayerController* Instigator, const FGenericRPCPayload& Payload);
 };
