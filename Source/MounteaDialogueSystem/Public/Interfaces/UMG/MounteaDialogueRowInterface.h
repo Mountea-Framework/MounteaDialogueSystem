@@ -18,7 +18,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTypeWriterEffectChanged, bool, bE
 /**
  * A helper struct to move Dialogue Row data around.
  */
-USTRUCT(BlueprintType, meta = (HasNativeMake = "/Script/MounteaDialogueSystem.MounteaDialogueHUDStaticsNewDialogueWidgetRowData"))
+USTRUCT(BlueprintType, meta = (HasNativeMake = "/Script/MounteaDialogueSystem.MounteaDialogueHUDStatics.NewDialogueWidgetRowData"))
 struct FWidgetDialogueRow
 {
 	GENERATED_BODY()
