@@ -34,8 +34,7 @@ void UMounteaDialogueManagerNetSync::RouteRPC_Server_Implementation(UFunction* R
 		LOG_ERROR(TEXT("Failed to unpack DialogueInitiator"));
 		return;
 	}
-
-	LOG_INFO(TEXT("Successfully unpacked DialogueInitiator: %s"), *DialogueInitiator->GetName());
+	
 	ExecuteRPC(RPCFunction, Instigator, DialogueInitiator, InitialParticipants);
 }
 
