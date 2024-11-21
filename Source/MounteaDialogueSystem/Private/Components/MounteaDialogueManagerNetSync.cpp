@@ -21,73 +21,30 @@ UMounteaDialogueManagerNetSync::UMounteaDialogueManagerNetSync()
 	ComponentTags.Add(FName("Sync"));
 }
 
-void UMounteaDialogueManagerNetSync::RouteRPC_Server_Implementation(UFunction* RPCFunction, APlayerController* Instigator, const FGenericRPCPayload& Payload)
-{
-	// Validate authority
-	if (!GetOwner() || !GetOwner()->HasAuthority())
-		return;
-
-	// Unpack and execute
-	FMounteaDialogueContextReplicatedStruct Context;
-	Payload.Unpack(Context);
-	
-	ExecuteRPC(RPCFunction, Instigator, Context);
-}
-
 void UMounteaDialogueManagerNetSync::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// Register activation/deactivation handlers
-	OnComponentActivated.AddUniqueDynamic(this, &UMounteaDialogueManagerNetSync::OnManagerSyncActivated);
-	OnComponentDeactivated.AddDynamic(this, &UMounteaDialogueManagerNetSync::OnManagerSyncDeactivated);
 	
-	// Validate owner
-	if (!GetOwner())
-	{
+	if (!GetOwner() || !GetOwner()->IsA(APlayerController::StaticClass()))
 		SetActive(false, true);
-		return;
-	}
-
-	// Ensure owner is a PlayerController
-	if (!GetOwner()->IsA(APlayerController::StaticClass()))
-	{
-		SetActive(false, true);
-		return;
-	}
 }
 
-void UMounteaDialogueManagerNetSync::AddManager(const TScriptInterface<IMounteaDialogueManagerInterface>& NewManager)
+void UMounteaDialogueManagerNetSync::ReceiveStartRequest(UObject* CallingManager, AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants)
 {
 	if (!IsActive())
-		return;
+	{
+		LOG_WARNING(TEXT("[Receive Start Request] Manager Sync Component is not Active!"))
+		return;;
+	}
 	
-	if (Managers.Contains(NewManager))
-		return;
-	
-	Managers.Add(NewManager);
+	if (!GetOwner()->HasAuthority())
+		ReceiveStartRequest_Server(CallingManager, DialogueInitiator, InitialParticipants);
+	else
+		IMounteaDialogueManagerInterface::Execute_RequestStartDialogue(CallingManager, DialogueInitiator, InitialParticipants);
 }
 
-void UMounteaDialogueManagerNetSync::RemoveManager(const TScriptInterface<IMounteaDialogueManagerInterface>& OldManager)
+void UMounteaDialogueManagerNetSync::ReceiveStartRequest_Server_Implementation(UObject* CallingManager, AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants)
 {
-	if (!IsActive())
-		return;
-	
-	if (!Managers.Contains(OldManager))
-		return;
-
-	if (!OldManager.GetObject())
-		return;
-
-	Managers.Remove(OldManager);
-}
-
-void UMounteaDialogueManagerNetSync::OnManagerSyncActivated(UActorComponent* Component, bool bReset)
-{
-	// TODO: Setup bindings?
-}
-
-void UMounteaDialogueManagerNetSync::OnManagerSyncDeactivated(UActorComponent* Component)
-{
-	// TODO: Setup bindings?
+	LOG_WARNING(TEXT("[Receive Start Request] Manager Sync Component Called Start!"))
+	ReceiveStartRequest(CallingManager, DialogueInitiator, InitialParticipants);
 }

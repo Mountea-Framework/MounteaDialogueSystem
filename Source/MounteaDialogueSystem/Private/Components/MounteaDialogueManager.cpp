@@ -186,7 +186,7 @@ void UMounteaDialogueManager::OnRep_DialogueContext()
 	}, 0.1f, false);
 }
 
-void UMounteaDialogueManager::RequestStartDialogue_Environment(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants) const
+void UMounteaDialogueManager::RequestStartDialogue_Environment(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants)
 {
 	int32 searchDepth = 0;
 	APlayerController* playerController = UMounteaDialogueSystemBFC::FindPlayerController(DialogueInitiator, searchDepth);
@@ -203,8 +203,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Environment(AActor* DialogueI
 		return;
 	}
 	
-	if (UFunction* StartFunc = GetClass()->FindFunctionByName(TEXT("RequestStartDialogue")))
-		netSync->RouteRPC(StartFunc, playerController, DialogueInitiator, InitialParticipants);
+	netSync->ReceiveStartRequest(this, DialogueInitiator, InitialParticipants);
 }
 
 bool UMounteaDialogueManager::SetupPlayerDialogue(TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages) const
@@ -247,9 +246,6 @@ bool UMounteaDialogueManager::SetupEnvironmentDialogue(AActor* DialogueInitiator
 		ErrorMessages.Add(NSLOCTEXT("RequestStartDialogue", "NoNetSync", "Unable to find NetSync component on Player Controller!"));
 		return false;
 	}
-	
-	const TScriptInterface<IMounteaDialogueManagerInterface> thisManager(this);
-	netSync->AddManager(thisManager);
 
 	return true;
 }
