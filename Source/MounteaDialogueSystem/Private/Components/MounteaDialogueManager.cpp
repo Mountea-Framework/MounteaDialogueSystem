@@ -148,7 +148,8 @@ void UMounteaDialogueManager::ProcessStateUpdated()
 	}
 	
 	OnDialogueManagerStateChanged.Broadcast(ManagerState);
-	
+
+	LOG_WARNING(TEXT("State Updated"))
 	switch (ManagerState)
 	{
 		case EDialogueManagerState::EDMS_Disabled:
@@ -628,6 +629,17 @@ void UMounteaDialogueManager::DialogueStartRequestReceived(const bool bResult, c
 
 void UMounteaDialogueManager::StartDialogue_Implementation()
 {
+	// TODO: this might lead to infinite loop! Implement safety check
+	if (!IsAuthority() && !UMounteaDialogueSystemBFC::IsContextValid(DialogueContext))
+	{
+		FTimerHandle TimerHandle_AwaitContext;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_AwaitContext, [this]()
+		{
+			Execute_StartDialogue(this);
+		}, 0.1f, false);
+		return;
+	}
+	
 	StartParticipants();
 		
 	FString resultMessage;

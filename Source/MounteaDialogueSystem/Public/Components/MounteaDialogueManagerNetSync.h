@@ -29,10 +29,13 @@ protected:
 
 public:
 
+	void ReceiveCreateContext(UObject* CallingManager, const FMounteaDialogueContextReplicatedStruct& NewContext);
 	void ReceiveStartRequest(UObject* CallingManager, AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
 
 protected:
 
+	UFUNCTION(Server, Reliable)
+	void ReceiveCreateContext_Server(UObject* CallingManager, const FMounteaDialogueContextReplicatedStruct& NewContext);
 	UFUNCTION(Server, Reliable)
 	void ReceiveStartRequest_Server(UObject* CallingManager, AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
 };

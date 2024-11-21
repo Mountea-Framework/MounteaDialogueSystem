@@ -29,6 +29,11 @@ void UMounteaDialogueManagerNetSync::BeginPlay()
 		SetActive(false, true);
 }
 
+void UMounteaDialogueManagerNetSync::ReceiveCreateContext(UObject* CallingManager, const FMounteaDialogueContextReplicatedStruct& NewContext)
+{
+	
+}
+
 void UMounteaDialogueManagerNetSync::ReceiveStartRequest(UObject* CallingManager, AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants)
 {
 	if (!IsActive())
@@ -41,6 +46,12 @@ void UMounteaDialogueManagerNetSync::ReceiveStartRequest(UObject* CallingManager
 		ReceiveStartRequest_Server(CallingManager, DialogueInitiator, InitialParticipants);
 	else
 		IMounteaDialogueManagerInterface::Execute_RequestStartDialogue(CallingManager, DialogueInitiator, InitialParticipants);
+}
+
+void UMounteaDialogueManagerNetSync::ReceiveCreateContext_Server_Implementation(UObject* CallingManager, const FMounteaDialogueContextReplicatedStruct& NewContext)
+{
+	LOG_WARNING(TEXT("[Receive Start Request] Manager Sync Component Called Start!"))
+	ReceiveCreateContext(CallingManager, NewContext);
 }
 
 void UMounteaDialogueManagerNetSync::ReceiveStartRequest_Server_Implementation(UObject* CallingManager, AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants)
