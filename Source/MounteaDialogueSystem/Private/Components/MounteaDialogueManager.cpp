@@ -4,7 +4,7 @@
 
 #include "TimerManager.h"
 #include "Blueprint/GameViewportSubsystem.h"
-#include "Components/MounteaDialogueManagerNetSync.h"
+#include "Components/MounteaDialogueDialogueNetSync.h"
 
 #include "Graph/MounteaDialogueGraph.h"
 
@@ -119,7 +119,19 @@ void UMounteaDialogueManager::SetManagerState(const EDialogueManagerState NewSta
 	}
 	
 	if (!IsAuthority())
-		SetManagerState_Server(NewState);
+	{
+		switch (DialogueManagerType)
+		{
+			case EDialogueManagerType::EDMT_PlayerDialogue:
+				SetManagerState_Server(NewState);
+				break;
+			case EDialogueManagerType::EDMT_EnvironmentDialogue:
+				SetManagerState_Environment(NewState);
+				break;
+			case EDialogueManagerType::Default:
+				break;
+		}
+	}
 	else
 	{
 		ManagerState = NewState; // State can only be changed on server side!
@@ -197,7 +209,7 @@ void UMounteaDialogueManager::RequestStartDialogue_Environment(AActor* DialogueI
 		return;
 	}
 
-	auto netSync = playerController->FindComponentByClass<UMounteaDialogueManagerNetSync>();
+	auto netSync = playerController->FindComponentByClass<UMounteaDialogueDialogueNetSync>();
 	if (!IsValid(netSync))
 	{
 		OnDialogueFailed.Broadcast(FString::Printf(TEXT("[Request Start Dialogue] Environmental Dialogue cannot find valid Sync Component in Player Controller %s"), *DialogueInitiator->GetName()));
@@ -205,6 +217,26 @@ void UMounteaDialogueManager::RequestStartDialogue_Environment(AActor* DialogueI
 	}
 	
 	netSync->ReceiveStartRequest(this, DialogueInitiator, InitialParticipants);
+}
+
+void UMounteaDialogueManager::SetManagerState_Environment(const EDialogueManagerState NewState)
+{
+	int32 searchDepth = 0;
+	APlayerController* playerController = UMounteaDialogueSystemBFC::FindPlayerController(Cast<AActor>(DialogueInstigator), searchDepth);
+	if (!IsValid(playerController))
+	{
+		OnDialogueFailed.Broadcast(FString::Printf(TEXT("[Request Start Dialogue] Environmental Dialogue cannot find Player Controller for Initiator %s"), DialogueInstigator ? *DialogueInstigator->GetName() : TEXT("INVALID")));
+		return;
+	}
+
+	auto netSync = playerController->FindComponentByClass<UMounteaDialogueDialogueNetSync>();
+	if (!IsValid(netSync))
+	{
+		OnDialogueFailed.Broadcast(FString::Printf(TEXT("[Request Start Dialogue] Environmental Dialogue cannot find valid Sync Component in Player Controller %s"), *DialogueInstigator->GetName()));
+		return;
+	}
+	
+	netSync->ReceiveSetState(this, NewState);
 }
 
 bool UMounteaDialogueManager::SetupPlayerDialogue(TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages) const
@@ -241,7 +273,7 @@ bool UMounteaDialogueManager::SetupEnvironmentDialogue(AActor* DialogueInitiator
 		return false;
 	}
 	
-	UMounteaDialogueManagerNetSync* netSync = playerController->FindComponentByClass<UMounteaDialogueManagerNetSync>();
+	UMounteaDialogueDialogueNetSync* netSync = playerController->FindComponentByClass<UMounteaDialogueDialogueNetSync>();
 	if (!netSync)
 	{
 		ErrorMessages.Add(NSLOCTEXT("RequestStartDialogue", "NoNetSync", "Unable to find NetSync component on Player Controller!"));
