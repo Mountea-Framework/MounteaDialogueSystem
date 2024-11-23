@@ -7,6 +7,7 @@
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "MounteaDialogueManager.generated.h"
 
+class UMounteaDialogueDialogueNetSync;
 
 /**
  *  Mountea Dialogue Manager Component
@@ -133,6 +134,8 @@ public:
 	virtual int32 GetDialogueWidgetZOrder_Implementation() const override;
 	virtual void SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder) override;
 
+	virtual void SyncContext(const FMounteaDialogueContextReplicatedStruct& Context) override;
+
 private:
 
 	UFUNCTION(Server, Reliable)
@@ -153,8 +156,12 @@ private:
 	UFUNCTION()
 	void OnRep_DialogueContext();
 
+	UMounteaDialogueDialogueNetSync* GetSyncComponent() const;
+
 	void RequestStartDialogue_Environment(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
+	void RequestCloseDialogue_Environmental();
 	void SetManagerState_Environment(const EDialogueManagerState NewState);
+	void RequestBroadcastContext_Environment(const FMounteaDialogueContextReplicatedStruct& Context);
 
 	bool SetupPlayerDialogue(TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages) const;
 	bool SetupEnvironmentDialogue(AActor* DialogueInitiator, const TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages);

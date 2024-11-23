@@ -161,7 +161,6 @@ void UMounteaDialogueManager::ProcessStateUpdated()
 	
 	OnDialogueManagerStateChanged.Broadcast(ManagerState);
 
-	LOG_WARNING(TEXT("State Updated"))
 	switch (ManagerState)
 	{
 		case EDialogueManagerState::EDMS_Disabled:
@@ -199,44 +198,50 @@ void UMounteaDialogueManager::OnRep_DialogueContext()
 	}, 0.1f, false);
 }
 
-void UMounteaDialogueManager::RequestStartDialogue_Environment(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants)
-{
-	int32 searchDepth = 0;
-	APlayerController* playerController = UMounteaDialogueSystemBFC::FindPlayerController(DialogueInitiator, searchDepth);
-	if (!IsValid(playerController))
-	{
-		OnDialogueFailed.Broadcast(FString::Printf(TEXT("[Request Start Dialogue] Environmental Dialogue cannot find Player Controller for Initiator %s"), DialogueInitiator ? *DialogueInitiator->GetName() : TEXT("INVALID")));
-		return;
-	}
-
-	auto netSync = playerController->FindComponentByClass<UMounteaDialogueDialogueNetSync>();
-	if (!IsValid(netSync))
-	{
-		OnDialogueFailed.Broadcast(FString::Printf(TEXT("[Request Start Dialogue] Environmental Dialogue cannot find valid Sync Component in Player Controller %s"), *DialogueInitiator->GetName()));
-		return;
-	}
-	
-	netSync->ReceiveStartRequest(this, DialogueInitiator, InitialParticipants);
-}
-
-void UMounteaDialogueManager::SetManagerState_Environment(const EDialogueManagerState NewState)
+UMounteaDialogueDialogueNetSync* UMounteaDialogueManager::GetSyncComponent() const
 {
 	int32 searchDepth = 0;
 	APlayerController* playerController = UMounteaDialogueSystemBFC::FindPlayerController(Cast<AActor>(DialogueInstigator), searchDepth);
 	if (!IsValid(playerController))
-	{
-		OnDialogueFailed.Broadcast(FString::Printf(TEXT("[Request Start Dialogue] Environmental Dialogue cannot find Player Controller for Initiator %s"), DialogueInstigator ? *DialogueInstigator->GetName() : TEXT("INVALID")));
-		return;
-	}
+		return nullptr;
 
 	auto netSync = playerController->FindComponentByClass<UMounteaDialogueDialogueNetSync>();
 	if (!IsValid(netSync))
-	{
-		OnDialogueFailed.Broadcast(FString::Printf(TEXT("[Request Start Dialogue] Environmental Dialogue cannot find valid Sync Component in Player Controller %s"), *DialogueInstigator->GetName()));
-		return;
-	}
-	
-	netSync->ReceiveSetState(this, NewState);
+		return nullptr;
+
+	return netSync;
+}
+
+void UMounteaDialogueManager::RequestStartDialogue_Environment(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants)
+{
+	if (auto netSync = GetSyncComponent())
+		netSync->ReceiveStartRequest(this, DialogueInitiator, InitialParticipants);
+	else
+		LOG_WARNING(TEXT("[Request Start Env Dialogue] Unable to find `Mountea Dialogue Dialogue Sync` component in Player Controller!"))
+}
+
+void UMounteaDialogueManager::RequestCloseDialogue_Environmental()
+{
+	if (auto syncComp = GetSyncComponent())
+		syncComp->ReceiveCloseRequest(this);
+	else
+		LOG_WARNING(TEXT("[Set Close Dialogue Env] Unable to find `Mountea Dialogue Dialogue Sync` component in Player Controller!"))
+}
+
+void UMounteaDialogueManager::SetManagerState_Environment(const EDialogueManagerState NewState)
+{
+	if (auto netSync = GetSyncComponent())
+		netSync->ReceiveSetState(this, NewState);
+	else
+		LOG_WARNING(TEXT("[Set Manager Env State] Unable to find `Mountea Dialogue Dialogue Sync` component in Player Controller!"))
+}
+
+void UMounteaDialogueManager::RequestBroadcastContext_Environment(const FMounteaDialogueContextReplicatedStruct& Context)
+{
+	if (auto netSync = GetSyncComponent())
+		netSync->ReceiveBroadcastContextRequest(this, Context);
+	else
+		LOG_WARNING(TEXT("[Set Manager Env State] Unable to find `Mountea Dialogue Dialogue Sync` component in Player Controller!"))
 }
 
 bool UMounteaDialogueManager::SetupPlayerDialogue(TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages) const
@@ -317,12 +322,32 @@ void UMounteaDialogueManager::GatherOtherParticipants(const TArray<TObjectPtr<UO
 	}
 }
 
+void UMounteaDialogueManager::SyncContext(const FMounteaDialogueContextReplicatedStruct& Context)
+{
+	switch (DialogueManagerType)
+	{
+		case EDialogueManagerType::EDMT_PlayerDialogue:
+			{
+				if (!IsAuthority())
+					RequestBroadcastContext_Server(FMounteaDialogueContextReplicatedStruct(Context));
+				else
+					ProcessContextUpdated(FMounteaDialogueContextReplicatedStruct(Context));
+			}
+			break;
+		case EDialogueManagerType::EDMT_EnvironmentDialogue:
+			{
+				if (!IsAuthority())
+					RequestBroadcastContext_Environment(FMounteaDialogueContextReplicatedStruct(Context));
+				else
+					ProcessContextUpdated(FMounteaDialogueContextReplicatedStruct(Context));
+			}
+			break;
+	}
+}
+
 void UMounteaDialogueManager::RequestBroadcastContext(UMounteaDialogueContext* Context)
 {
-	if (!IsAuthority())
-		RequestBroadcastContext_Server(FMounteaDialogueContextReplicatedStruct(Context));
-	else
-		ProcessContextUpdated(FMounteaDialogueContextReplicatedStruct(Context));
+	SyncContext(FMounteaDialogueContextReplicatedStruct(Context));
 }
 
 void UMounteaDialogueManager::RequestBroadcastContext_Server_Implementation(const FMounteaDialogueContextReplicatedStruct& Context)
@@ -583,10 +608,27 @@ void UMounteaDialogueManager::RequestStartDialogue_Server_Implementation(AActor*
 
 void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 {
-	if (!IsAuthority())
-		SetManagerState(DefaultManagerState); // Let's close Dialogue by changing state
+	if (IsAuthority())
+		SetManagerState(DefaultManagerState);
 	
-	Execute_CloseDialogue(this);
+	// Let's close Dialogue by changing state
+	switch (DialogueManagerType)
+	{
+		case EDialogueManagerType::EDMT_PlayerDialogue:
+			{
+				if (!IsAuthority())
+					SetManagerState(DefaultManagerState);
+			}
+			break;
+		case EDialogueManagerType::EDMT_EnvironmentDialogue:
+			{
+				if (!IsAuthority())
+					RequestCloseDialogue_Environmental();
+			}
+			break;
+	}
+	
+	//Execute_CloseDialogue(this);
 }
 
 void UMounteaDialogueManager::StartParticipants()
@@ -693,18 +735,11 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 	Execute_CleanupDialogue(this);
 
 	SetDialogueContext(nullptr);
+	
+	if (!IsAuthority())
+		OnDialogueClosed.Broadcast(DialogueContext);
 
 	DialogueInstigator = nullptr;
-
-	if (!IsAuthority())
-	{
-		OnDialogueClosed.Broadcast(DialogueContext);
-	}
-
-	if (GetOwner() && GetDialogueManagerType() == EDialogueManagerType::EDMT_EnvironmentDialogue)
-	{
-		GetOwner()->SetOwner(nullptr);
-	}
 }
 
 void UMounteaDialogueManager::CleanupDialogue_Implementation()

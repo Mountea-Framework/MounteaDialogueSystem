@@ -29,13 +29,31 @@ protected:
 
 public:
 
+	// --- Manager functions ------------------------------
+	
 	void ReceiveStartRequest(UObject* CallingManager, AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
+	void ReceiveCloseRequest(UObject* CallingManager);
 	void ReceiveSetState(UObject* CallingManager, const EDialogueManagerState NewState);
+	void ReceiveBroadcastContextRequest(UObject* CallingManager, const FMounteaDialogueContextReplicatedStruct& Context);
+
+	// --- Participant functions ------------------------------
+
+	
 
 protected:
+
+	// --- Manager functions ------------------------------
 	
 	UFUNCTION(Server, Reliable)
 	void ReceiveStartRequest_Server(UObject* CallingManager, AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
 	UFUNCTION(Server, Reliable)
+	void ReceiveCloseRequest_Server(UObject* CallingManager);
+	UFUNCTION(Server, Reliable)
 	void ReceiveSetState_Server(UObject* CallingManager, const EDialogueManagerState NewState);
+	UFUNCTION(Server, Reliable)
+	void ReceiveBroadcastContextRequest_Server(UObject* CallingManager, const FMounteaDialogueContextReplicatedStruct& Context);
+	
+	// --- Participant functions ------------------------------
+
+	
 };

@@ -43,6 +43,22 @@ void UMounteaDialogueDialogueNetSync::ReceiveStartRequest(UObject* CallingManage
 		IMounteaDialogueManagerInterface::Execute_RequestStartDialogue(CallingManager, DialogueInitiator, InitialParticipants);
 }
 
+void UMounteaDialogueDialogueNetSync::ReceiveCloseRequest(UObject* CallingManager)
+{
+	if (!IsActive())
+	{
+		LOG_WARNING(TEXT("[Receive Close Request] Manager Sync Component is not Active!"))
+		return;;
+	}
+	
+	if (!GetOwner()->HasAuthority())
+		ReceiveCloseRequest_Server(CallingManager);
+	else
+	{
+		IMounteaDialogueManagerInterface::Execute_RequestCloseDialogue(CallingManager);
+	}
+}
+
 void UMounteaDialogueDialogueNetSync::ReceiveSetState(UObject* CallingManager, const EDialogueManagerState NewState)
 {
 	if (!IsActive())
@@ -60,6 +76,33 @@ void UMounteaDialogueDialogueNetSync::ReceiveSetState(UObject* CallingManager, c
 	}
 }
 
+void UMounteaDialogueDialogueNetSync::ReceiveBroadcastContextRequest(UObject* CallingManager, const FMounteaDialogueContextReplicatedStruct& Context)
+{
+	if (!IsActive())
+	{
+		LOG_WARNING(TEXT("[Receive Broadcast Context] Manager Sync Component is not Active!"))
+		return;
+	}
+
+	if (!GetOwner()->HasAuthority())
+		ReceiveBroadcastContextRequest_Server(CallingManager, Context);
+	else
+	{
+		TScriptInterface<IMounteaDialogueManagerInterface> dialogueManager = CallingManager;
+		dialogueManager->SyncContext(Context);
+	}
+}
+
+void UMounteaDialogueDialogueNetSync::ReceiveCloseRequest_Server_Implementation(UObject* CallingManager)
+{
+	ReceiveCloseRequest(CallingManager);
+}
+
+void UMounteaDialogueDialogueNetSync::ReceiveBroadcastContextRequest_Server_Implementation(UObject* CallingManager, const FMounteaDialogueContextReplicatedStruct& Context)
+{
+	ReceiveBroadcastContextRequest(CallingManager, Context);
+}
+
 void UMounteaDialogueDialogueNetSync::ReceiveSetState_Server_Implementation(UObject* CallingManager, const EDialogueManagerState NewState)
 {
 	ReceiveSetState(CallingManager, NewState);
@@ -67,6 +110,5 @@ void UMounteaDialogueDialogueNetSync::ReceiveSetState_Server_Implementation(UObj
 
 void UMounteaDialogueDialogueNetSync::ReceiveStartRequest_Server_Implementation(UObject* CallingManager, AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants)
 {
-	LOG_WARNING(TEXT("[Receive Start Request] Manager Sync Component Called Start!"))
 	ReceiveStartRequest(CallingManager, DialogueInitiator, InitialParticipants);
 }
