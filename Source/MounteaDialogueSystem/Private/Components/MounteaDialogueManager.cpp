@@ -165,7 +165,17 @@ void UMounteaDialogueManager::ProcessStateUpdated()
 	{
 		case EDialogueManagerState::EDMS_Disabled:
 		case EDialogueManagerState::EDMS_Enabled:
-			Execute_CloseDialogue(this);
+			{
+				switch (DialogueManagerType)
+				{
+					case EDialogueManagerType::EDMT_PlayerDialogue:
+						Execute_CloseDialogue(this);
+						break;
+					case EDialogueManagerType::EDMT_EnvironmentDialogue:
+						CloseDialogue_Environment();
+						break;
+				}
+			}
 			break;
 		case EDialogueManagerState::EDMS_Active:
 			Execute_StartDialogue(this);
@@ -200,6 +210,9 @@ void UMounteaDialogueManager::OnRep_DialogueContext()
 
 UMounteaDialogueDialogueNetSync* UMounteaDialogueManager::GetSyncComponent() const
 {
+	if (!IsValid(DialogueInstigator))
+		return nullptr;
+	
 	int32 searchDepth = 0;
 	APlayerController* playerController = UMounteaDialogueSystemBFC::FindPlayerController(Cast<AActor>(DialogueInstigator), searchDepth);
 	if (!IsValid(playerController))
@@ -242,6 +255,14 @@ void UMounteaDialogueManager::RequestBroadcastContext_Environment(const FMountea
 		netSync->ReceiveBroadcastContextRequest(this, Context);
 	else
 		LOG_WARNING(TEXT("[Set Manager Env State] Unable to find `Mountea Dialogue Dialogue Sync` component in Player Controller!"))
+}
+
+void UMounteaDialogueManager::CloseDialogue_Environment()
+{
+	if (auto netSync = GetSyncComponent())
+		netSync->ReceiveCloseDialogue(this);
+	else
+		LOG_WARNING(TEXT("[Stop Participants Env] Unable to find `Mountea Dialogue Dialogue Sync` component in Player Controller!"))
 }
 
 bool UMounteaDialogueManager::SetupPlayerDialogue(TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages) const
@@ -664,7 +685,7 @@ void UMounteaDialogueManager::StopParticipants() const
 
 	if (!IsAuthority())
 		StopParticipants_Server();
-	
+
 	for (const auto& dialogueParticipant : DialogueContext->DialogueParticipants)
 	{
 		auto participantObject = dialogueParticipant.GetObject();

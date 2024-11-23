@@ -93,6 +93,25 @@ void UMounteaDialogueDialogueNetSync::ReceiveBroadcastContextRequest(UObject* Ca
 	}
 }
 
+void UMounteaDialogueDialogueNetSync::ReceiveCloseDialogue(UObject* CallingManager)
+{
+	if (!IsActive())
+	{
+		LOG_WARNING(TEXT("[Receive Broadcast Context] Manager Sync Component is not Active!"))
+		return;
+	}
+
+	if (!GetOwner()->HasAuthority())
+		ReceiveCloseDialogue_Server(CallingManager);
+	else
+		IMounteaDialogueManagerInterface::Execute_CloseDialogue(CallingManager);
+}
+
+void UMounteaDialogueDialogueNetSync::ReceiveCloseDialogue_Server_Implementation(UObject* CallingManager)
+{
+	ReceiveCloseDialogue(CallingManager);
+}
+
 void UMounteaDialogueDialogueNetSync::ReceiveCloseRequest_Server_Implementation(UObject* CallingManager)
 {
 	ReceiveCloseRequest(CallingManager);

@@ -162,6 +162,7 @@ private:
 	void RequestCloseDialogue_Environmental();
 	void SetManagerState_Environment(const EDialogueManagerState NewState);
 	void RequestBroadcastContext_Environment(const FMounteaDialogueContextReplicatedStruct& Context);
+	void CloseDialogue_Environment();
 
 	bool SetupPlayerDialogue(TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages) const;
 	bool SetupEnvironmentDialogue(AActor* DialogueInitiator, const TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages);
