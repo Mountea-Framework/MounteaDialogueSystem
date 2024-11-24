@@ -36,10 +36,6 @@ public:
 	void ReceiveSetState(UObject* CallingManager, const EDialogueManagerState NewState);
 	void ReceiveBroadcastContextRequest(UObject* CallingManager, const FMounteaDialogueContextReplicatedStruct& Context);
 	void ReceiveCloseDialogue(UObject* CallingManager);
-	
-	// --- Participant functions ------------------------------
-
-	
 
 protected:
 
@@ -55,8 +51,4 @@ protected:
 	void ReceiveBroadcastContextRequest_Server(UObject* CallingManager, const FMounteaDialogueContextReplicatedStruct& Context);
 	UFUNCTION(Server, Reliable)
 	void ReceiveCloseDialogue_Server(UObject* CallingManager);
-	
-	// --- Participant functions ------------------------------
-
-	
 };
