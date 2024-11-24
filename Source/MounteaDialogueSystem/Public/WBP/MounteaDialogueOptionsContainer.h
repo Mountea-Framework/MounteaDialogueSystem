@@ -19,6 +19,10 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueOptionsContainer : public UUserW
 {
 	GENERATED_BODY()
 
+public:
+
+	UMounteaDialogueOptionsContainer(const FObjectInitializer& ObjectInitializer);
+
 protected:
 	// IMounteaDialogueOptionsContainerInterface implementation
 	virtual void SetParentDialogueWidget_Implementation(UUserWidget* NewParentDialogueWidget) override;

@@ -78,10 +78,10 @@ bool UMounteaDialogueSystemSettings::CanSkipWholeRow() const
 	return dialogueConfig ? dialogueConfig->bSkipRowWithAudioSkip : false;
 }
 
-EInputMode UMounteaDialogueSystemSettings::GetDialogueInputMode() const
+EMounteaInputMode UMounteaDialogueSystemSettings::GetDialogueInputMode() const
 {
 	auto dialogueConfig = DialogueConfiguration.LoadSynchronous();
-	return dialogueConfig ? dialogueConfig->InputMode : EInputMode::EIM_UIAndGame;
+	return dialogueConfig ? dialogueConfig->InputMode : EMounteaInputMode::EIM_UIAndGame;
 }
 
 float UMounteaDialogueSystemSettings::GetDurationCoefficient() const

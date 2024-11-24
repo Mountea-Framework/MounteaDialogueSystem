@@ -110,7 +110,7 @@ enum class ERowExecutionMode : uint8
  * Player can be stopped and forced to dialogue 'cinematic' or not affected at all.
  */
 UENUM(BlueprintType)
-enum class EInputMode : uint8
+enum class EMounteaInputMode : uint8
 {
 	EIM_UIOnly UMETA(DisplayName="UI Only"),
 	EIM_UIAndGame UMETA(DisplayName="UI & Game")

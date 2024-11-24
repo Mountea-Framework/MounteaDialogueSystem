@@ -39,7 +39,7 @@ public:
 	 * Sets Input mode when in Dialogue.
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "UserInterface")
-	EInputMode InputMode;
+	EMounteaInputMode InputMode;
 	
 	/**
 	 * Whether subtitles are allowed or not.

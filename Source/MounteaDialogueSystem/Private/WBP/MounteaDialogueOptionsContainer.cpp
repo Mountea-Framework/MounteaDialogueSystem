@@ -10,6 +10,11 @@
 #include "Interfaces/UMG/MounteaDialogueOptionInterface.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 
+UMounteaDialogueOptionsContainer::UMounteaDialogueOptionsContainer(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+	bIsFocusable = true;
+}
+
 void UMounteaDialogueOptionsContainer::SetParentDialogueWidget_Implementation(UUserWidget* NewParentDialogueWidget)
 {
 	if (NewParentDialogueWidget != ParentDialogueWidget)

@@ -4,7 +4,7 @@
 #include "Settings/MounteaDialogueConfiguration.h"
 
 UMounteaDialogueConfiguration::UMounteaDialogueConfiguration() :
-	InputMode(EInputMode::EIM_UIAndGame),
+	InputMode(EMounteaInputMode::EIM_UIAndGame),
 	bAllowSubtitles(true),
 	bSkipRowWithAudioSkip(false)
 {

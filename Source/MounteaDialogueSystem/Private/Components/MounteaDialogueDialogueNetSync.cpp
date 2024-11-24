@@ -54,9 +54,7 @@ void UMounteaDialogueDialogueNetSync::ReceiveCloseRequest(UObject* CallingManage
 	if (!GetOwner()->HasAuthority())
 		ReceiveCloseRequest_Server(CallingManager);
 	else
-	{
 		IMounteaDialogueManagerInterface::Execute_RequestCloseDialogue(CallingManager);
-	}
 }
 
 void UMounteaDialogueDialogueNetSync::ReceiveSetState(UObject* CallingManager, const EDialogueManagerState NewState)

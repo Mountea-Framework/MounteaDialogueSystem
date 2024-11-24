@@ -7,6 +7,7 @@ UMounteaDialogueRow::UMounteaDialogueRow(const FObjectInitializer& ObjectInitial
 	: Super(ObjectInitializer)
 	, bUseTypeWriterEffect(false)
 {
+	bIsFocusable = true;
 }
 
 void UMounteaDialogueRow::StopTypeWriterEffect_Implementation()

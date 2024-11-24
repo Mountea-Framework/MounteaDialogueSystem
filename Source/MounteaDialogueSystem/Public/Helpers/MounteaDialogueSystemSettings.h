@@ -115,7 +115,7 @@ public:
 	 * @return The input mode (e.g., Game Only, UI Only, or Game and UI) set for dialogue interaction.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
-	EInputMode GetDialogueInputMode() const;
+	EMounteaInputMode GetDialogueInputMode() const;
 
 	/**
 	 * Retrieves the duration coefficient used for automatic dialogue row progression.

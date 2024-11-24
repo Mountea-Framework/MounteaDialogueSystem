@@ -7,7 +7,7 @@
 
 UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAllowAutoGameplayTagsCheck(true)
 {
-	NodeType = ENodeType::ENT_SoftCorners;
+	NodeType = ENodeCornerType::ENT_SoftCorners;
 	NodeTheme = ENodeTheme::ENT_DarkTheme;
 	ArrowType = EArrowType::ERT_HollowArrow;
 	

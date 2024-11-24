@@ -49,7 +49,7 @@ enum class EDecoratorsInfoStyle : uint8
 };
 
 UENUM(BlueprintType)
-enum class ENodeType : uint8
+enum class ENodeCornerType : uint8
 {
 	ENT_SoftCorners			UMETA(DisplayName="Soft Corners"),
 	ENT_HardCorners			UMETA(DisplayName="Hard Corners")
@@ -86,7 +86,7 @@ private:
 #pragma region GraphNodes
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
-	ENodeType NodeType;
+	ENodeCornerType NodeType;
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	ENodeTheme NodeTheme;
@@ -228,7 +228,7 @@ public:
 	ENodeTheme GetNodeTheme() const
 	{ return NodeTheme; };
 
-	ENodeType GetNodeType() const
+	ENodeCornerType GetNodeType() const
 	{ return NodeType; };
 
 	bool ShowDetailedInfo_NumDecorators() const

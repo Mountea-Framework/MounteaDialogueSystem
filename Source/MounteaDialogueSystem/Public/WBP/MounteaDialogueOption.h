@@ -17,29 +17,38 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueOption : public UUserWidget, pub
 {
 	GENERATED_BODY()
 
+public:
+
+	UMounteaDialogueOption(const FObjectInitializer& ObjectInitializer);
+
 protected:
+
+	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 	
 	// IMounteaDialogueOptionInterface implementation
-	virtual		FDialogueOptionData				GetDialogueOptionData_Implementation	() const								override;
-	virtual		void							SetNewDialogueOptionData_Implementation	(const FDialogueOptionData& NewData)	override;
-	virtual		void							ResetDialogueOptionData_Implementation	()										override;
-	virtual		void							ProcessOptionSelected_Implementation	()										override;
-	virtual		void							InitializeDialogueOption_Implementation	()										override;
+	virtual	FDialogueOptionData	GetDialogueOptionData_Implementation	() const	override;
+	virtual	void	SetNewDialogueOptionData_Implementation	(const FDialogueOptionData& NewData)	override;
+	virtual	void	ResetDialogueOptionData_Implementation	()	override;
+	virtual	void	ProcessOptionSelected_Implementation	()	override;
+	virtual	void	InitializeDialogueOption_Implementation	()	override;
 
-	virtual		FOnDialogueOptionSelected&		GetDialogueOptionSelectedHandle			()										override
+	virtual	FOnDialogueOptionSelected&	GetDialogueOptionSelectedHandle	()	override
 	{ return OnDialogueOptionSelected; };
 
 protected:
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Mountea|Dialogue|Style", meta=(ExposeOnSpawn=true))
+	FButtonStyle DialogueOptionStyle;
 	
 	/**
 	 * Dialogue Option Data.
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue", meta=(ExposeOnSpawn=true))
-	FDialogueOptionData 								DialogueOptionData;
+	FDialogueOptionData	DialogueOptionData;
 
 	/**
 	 * Event called upon selecting Dialogue Option.
 	 */
 	UPROPERTY(BlueprintReadOnly, BlueprintCallable, VisibleAnywhere, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Delegate"))
-	FOnDialogueOptionSelected							OnDialogueOptionSelected;
+	FOnDialogueOptionSelected	OnDialogueOptionSelected;
 };
