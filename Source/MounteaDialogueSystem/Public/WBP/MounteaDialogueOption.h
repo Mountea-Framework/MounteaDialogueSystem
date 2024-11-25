@@ -59,9 +59,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue|Data")
 	EDialogueOptionState DialogueOptionState;
-
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Mountea|Dialogue|Style", meta=(ExposeOnSpawn=true))
-	FButtonStyle DialogueOptionStyle;
 	
 	/**
 	 * Dialogue Option Data.
