@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Interfaces/UMG/MounteaDialogueOptionInterface.h"
+#include "Interfaces/UMG/MounteaFocusableWidgetInterface.h"
 #include "MounteaDialogueOption.generated.h"
 
 class UButton;
@@ -14,7 +15,7 @@ class UButton;
  * A UserWidget class that implements the 'MounteaDialogueOptionInterface', providing functionalities for dialogue options in the Mountea Dialogue System.
  */
 UCLASS(DisplayName="Mountea Dialogue Option", ClassGroup=Mountea)
-class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueOption : public UUserWidget, public IMounteaDialogueOptionInterface
+class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueOption : public UUserWidget, public IMounteaDialogueOptionInterface, public IMounteaFocusableWidgetInterface
 {
 	GENERATED_BODY()
 
@@ -25,6 +26,7 @@ public:
 public:
 
 	virtual bool NativeSupportsKeyboardFocus() const override { return true; };
+	virtual void NativeConstruct() override;
 	virtual FReply NativeOnFocusReceived(const FGeometry& InGeometry, const FFocusEvent& InFocusEvent) override;
 
 protected:
@@ -41,8 +43,17 @@ protected:
 
 public:
 
-	virtual EDialogueOptionState GetOptionsState_Implementation() const override
+	virtual EDialogueOptionState GetFocusState_Implementation() const override
 	{ return DialogueOptionState; };
+	virtual void SetFocusState_Implementation(const bool IsSelected) override;
+
+	virtual FOnMounteaFocusChanged& GetOnMounteaFocusChangedEventHandle() override
+	{ return OnOptionFocusChanged; };
+
+protected:
+
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue|Focus")
+	void OnOptionFocused(UUserWidget* FocusedWidget, const bool IsFocused);
 
 protected:
 
@@ -63,4 +74,7 @@ protected:
 	 */
 	UPROPERTY(BlueprintReadOnly, BlueprintCallable, VisibleAnywhere, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Delegate"))
 	FOnDialogueOptionSelected	OnDialogueOptionSelected;
+	
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, VisibleAnywhere, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Delegate"))
+	FOnMounteaFocusChanged OnOptionFocusChanged;
 };

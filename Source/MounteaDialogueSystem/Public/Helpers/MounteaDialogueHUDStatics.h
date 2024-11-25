@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Interfaces/UMG/MounteaFocusableWidgetInterface.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Widgets/Layout/Anchors.h"
 #include "Layout/Margin.h"
@@ -123,6 +124,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers|UI", meta=(CustomTag="MounteaK2Getter"))
 	static int32 GetWidgetZOrder(class UUserWidget* Widget, UObject* WorldContext);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers|UI", meta=(CustomTag="MounteaK2Getter"))
+	static EDialogueOptionState GetFocusState(class UUserWidget* Widget);
+
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|UI", meta=(CustomTag="MounteaK2Setter"))
+	static void SetFocusState(UUserWidget* Widget, const bool IsFocused);
+	
 	// --- HUD Interface functions ------------------------------
 
 	/**

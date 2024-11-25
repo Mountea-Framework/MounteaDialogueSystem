@@ -97,6 +97,32 @@ int32 UMounteaDialogueHUDStatics::GetWidgetZOrder(UUserWidget* Widget, UObject* 
 	return -1;
 }
 
+EDialogueOptionState UMounteaDialogueHUDStatics::GetFocusState(UUserWidget* Widget)
+{
+	if (!IsValid(Widget))
+		return EDialogueOptionState::Default;
+
+	if (Widget->Implements<UMounteaFocusableWidgetInterface>())
+		return IMounteaFocusableWidgetInterface::Execute_GetFocusState(Widget);
+	
+	LOG_ERROR(TEXT("[Get Focus State] Widget does not implement 'MounteaFocusableWidgetInterface'!"));
+	return EDialogueOptionState::Default;
+}
+
+void UMounteaDialogueHUDStatics::SetFocusState(UUserWidget* Widget, const bool IsFocused)
+{
+	if (!IsValid(Widget))
+		return;
+
+	if (!Widget->Implements<UMounteaFocusableWidgetInterface>())
+	{
+		LOG_ERROR(TEXT("[Set Focus State] Widget does not implement 'MounteaFocusableWidgetInterface'!"));
+		return;
+	}
+
+	IMounteaFocusableWidgetInterface::Execute_SetFocusState(Widget, IsFocused);
+}
+
 TSubclassOf<UUserWidget> UMounteaDialogueHUDStatics::GetViewportBaseClass(AActor* ViewportManager)
 {
 	if (!IsValid(ViewportManager))

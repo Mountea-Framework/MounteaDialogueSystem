@@ -81,13 +81,6 @@ public:
 	}
 };
 
-UENUM(BlueprintType)
-enum class EDialogueOptionState : uint8
-{
-	EDOS_Focused,
-	EDOS_Unfocused
-};
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDialogueOptionSelected, const FGuid&, SelectedOption, UUserWidget*, CallingWidget);
 
 // This class does not need to be modified.
@@ -144,11 +137,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|Option")
 	void ProcessOptionSelected();
 	virtual void ProcessOptionSelected_Implementation() = 0;
-
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|Option")
-	EDialogueOptionState GetOptionState() const;
-	virtual EDialogueOptionState GetOptionsState_Implementation() const = 0;
-
+	
 	virtual FOnDialogueOptionSelected& GetDialogueOptionSelectedHandle() = 0;
 };
 
