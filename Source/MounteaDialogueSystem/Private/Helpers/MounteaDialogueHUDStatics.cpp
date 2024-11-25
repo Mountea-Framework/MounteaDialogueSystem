@@ -123,6 +123,48 @@ void UMounteaDialogueHUDStatics::SetFocusState(UUserWidget* Widget, const bool I
 	IMounteaFocusableWidgetInterface::Execute_SetFocusState(Widget, IsFocused);
 }
 
+int32 UMounteaDialogueHUDStatics::GetSafeOptionIndex(UObject* Container, const EUINavigation Direction)
+{
+	if (!IsValid(Container))
+		return INDEX_NONE;
+
+	if (!Container->Implements<UMounteaDialogueOptionsContainerInterface>())
+		return INDEX_NONE;
+
+	auto optionValues = IMounteaDialogueOptionsContainerInterface::Execute_GetDialogueOptions(Container);
+	if (optionValues.Num() <= 0)
+		return INDEX_NONE;
+
+	const int32 currentActive = IMounteaDialogueOptionsContainerInterface::Execute_GetFocusedOptionIndex(Container);
+	int32 newActive = currentActive;
+
+	switch (Direction)
+	{
+		case EUINavigation::Down:
+		case EUINavigation::Next:
+		case EUINavigation::Right:
+			newActive++;
+			break;
+		case EUINavigation::Up:
+		case EUINavigation::Previous:
+		case EUINavigation::Left:
+			newActive--;
+			break;
+		case EUINavigation::Num:
+		case EUINavigation::Invalid:
+			newActive = INDEX_NONE;
+			break;
+	}
+	
+	if (newActive < 0)
+		newActive = optionValues.Num() - 1;
+	else if (newActive >= optionValues.Num())
+		newActive = 0;
+
+	return newActive;
+}
+
+
 TSubclassOf<UUserWidget> UMounteaDialogueHUDStatics::GetViewportBaseClass(AActor* ViewportManager)
 {
 	if (!IsValid(ViewportManager))

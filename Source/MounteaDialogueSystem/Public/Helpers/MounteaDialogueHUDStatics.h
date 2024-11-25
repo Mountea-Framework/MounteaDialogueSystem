@@ -129,6 +129,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers|UI", meta=(CustomTag="MounteaK2Setter"))
 	static void SetFocusState(UUserWidget* Widget, const bool IsFocused);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers|UI", meta=(CustomTag="MounteaK2Getter"))
+	static int32 GetSafeOptionIndex(UObject* Container, const EUINavigation Direction);
 	
 	// --- HUD Interface functions ------------------------------
 

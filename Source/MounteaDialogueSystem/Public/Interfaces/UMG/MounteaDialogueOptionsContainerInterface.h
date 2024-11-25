@@ -140,5 +140,5 @@ public:
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|OptionsContainer")
 	void SetFocusedOption(const int32 NewFocusedOption);
-	virtual void SetFocusedOptions_Implementation(const int32 NewFocusedOption) = 0;
+	virtual void SetFocusedOption_Implementation(const int32 NewFocusedOption) = 0;
 };

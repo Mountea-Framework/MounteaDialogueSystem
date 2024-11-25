@@ -37,7 +37,7 @@ protected:
 	virtual void ProcessOptionSelected_Implementation(const FGuid& SelectedOption, UUserWidget* CallingWidget) override;
 	virtual TArray<UUserWidget*> GetDialogueOptions_Implementation() const override;
 	virtual int32 GetFocusedOptionIndex_Implementation() const override;
-	virtual void SetFocusedOptions_Implementation(const int32 NewFocusedOption) override;
+	virtual void SetFocusedOption_Implementation(const int32 NewFocusedOption) override;
 
 protected:
 	/**

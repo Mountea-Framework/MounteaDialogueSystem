@@ -145,7 +145,7 @@ int32 UMounteaDialogueOptionsContainer::GetFocusedOptionIndex_Implementation() c
 	return FocusedOption;
 }
 
-void UMounteaDialogueOptionsContainer::SetFocusedOptions_Implementation(const int32 NewFocusedOption)
+void UMounteaDialogueOptionsContainer::SetFocusedOption_Implementation(const int32 NewFocusedOption)
 {
 	if (NewFocusedOption == FocusedOption)
 		return;
