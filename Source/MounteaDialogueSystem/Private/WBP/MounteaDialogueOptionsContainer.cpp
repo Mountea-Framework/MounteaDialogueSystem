@@ -10,7 +10,7 @@
 #include "Interfaces/UMG/MounteaDialogueOptionInterface.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 
-UMounteaDialogueOptionsContainer::UMounteaDialogueOptionsContainer(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+UMounteaDialogueOptionsContainer::UMounteaDialogueOptionsContainer(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer), FocusedOption(INDEX_NONE)
 {
 	bIsFocusable = true;
 }
@@ -144,6 +144,7 @@ int32 UMounteaDialogueOptionsContainer::GetFocusedOptionIndex_Implementation() c
 {
 	return FocusedOption;
 }
+
 
 void UMounteaDialogueOptionsContainer::SetFocusedOption_Implementation(const int32 NewFocusedOption)
 {
