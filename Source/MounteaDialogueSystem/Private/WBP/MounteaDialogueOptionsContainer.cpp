@@ -139,3 +139,38 @@ TArray<UUserWidget*> UMounteaDialogueOptionsContainer::GetDialogueOptions_Implem
 
 	return dialogueOptions;
 }
+
+int32 UMounteaDialogueOptionsContainer::GetFocusedOptionIndex_Implementation() const
+{
+	return FocusedOption;
+}
+
+void UMounteaDialogueOptionsContainer::SetFocusedOptions_Implementation(const int32 NewFocusedOption)
+{
+	if (NewFocusedOption == FocusedOption)
+		return;
+
+	TArray<TObjectPtr<UUserWidget>> optionWidgets;
+	DialogueOptions.GenerateValueArray(optionWidgets);
+	
+	if (!optionWidgets.IsValidIndex(NewFocusedOption))
+		return;
+
+	UUserWidget* foundWidget = optionWidgets[NewFocusedOption].Get();
+	if (!IsValid(foundWidget))
+		return;
+
+	FocusedOption = NewFocusedOption;
+
+	for (const auto& optionWidget : optionWidgets)
+	{
+		if (optionWidget && optionWidget->Implements<UMounteaFocusableWidgetInterface>())
+			IMounteaFocusableWidgetInterface::Execute_SetFocusState(optionWidget, false);
+	}
+
+	if (foundWidget->Implements<UMounteaFocusableWidgetInterface>())
+		IMounteaFocusableWidgetInterface::Execute_SetFocusState(foundWidget, true);
+}
+
+
+

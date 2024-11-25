@@ -124,4 +124,21 @@ public:
 	TArray<UUserWidget*> GetDialogueOptions() const;
 	virtual TArray<UUserWidget*> GetDialogueOptions_Implementation() const = 0;
 
+	/**
+	 *	Gets focused option. If options are empty then -1 is returned.
+	 * 
+	 * @return Index of currently focused Option
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|OptionsContainer")
+	int32 GetFocusedOptionIndex() const;
+	virtual int32 GetFocusedOptionIndex_Implementation() const = 0;
+
+	/**
+	 *	Set focus to new Option.
+	 * 
+	 * @param NewFocusedOption Index of newly focused Option.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|OptionsContainer")
+	void SetFocusedOption(const int32 NewFocusedOption);
+	virtual void SetFocusedOptions_Implementation(const int32 NewFocusedOption) = 0;
 };

@@ -508,6 +508,36 @@ TArray<UUserWidget*> UMounteaDialogueHUDStatics::GetDialogueOptions(UObject* Con
 	return containerInterface->Execute_GetDialogueOptions(ContainerObject);
 }
 
+int32 UMounteaDialogueHUDStatics::GetFocusedOptionIndex(UObject* ContainerObject)
+{
+	if (!IsValid(ContainerObject)) return INDEX_NONE;
+
+	auto containerInterface = GetOptionsContainerInterface(ContainerObject);
+
+	if (!containerInterface.GetObject())
+	{
+		LOG_WARNING(TEXT("[Get Focused Option Index] Container Object %s doesn't properly implement `IMounteaDialogueOptionsContainerInterface`!"), *ContainerObject->GetName())
+		return INDEX_NONE;
+	}
+
+	return containerInterface->Execute_GetFocusedOptionIndex(ContainerObject);
+}
+
+void UMounteaDialogueHUDStatics::SetFocusedOption(UObject* ContainerObject, const int32 NewFocusedOption)
+{
+	if (!IsValid(ContainerObject)) return;
+
+	auto containerInterface = GetOptionsContainerInterface(ContainerObject);
+
+	if (!containerInterface.GetObject())
+	{
+		LOG_WARNING(TEXT("[Set Focused Option Index] Container Object %s doesn't properly implement `IMounteaDialogueOptionsContainerInterface`!"), *ContainerObject->GetName())
+		return;
+	}
+
+	return containerInterface->Execute_SetFocusedOption(ContainerObject, NewFocusedOption);
+}
+
 FWidgetDialogueRow UMounteaDialogueHUDStatics::GetDialogueWidgetRowData(UObject* RowObject)
 {
 	if (!IsValid(RowObject))

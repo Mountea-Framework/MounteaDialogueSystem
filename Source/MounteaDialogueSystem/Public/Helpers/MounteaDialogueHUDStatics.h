@@ -404,6 +404,24 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Getter"))
 	static TArray<UUserWidget*> GetDialogueOptions(UObject* ContainerObject);
 
+	/**
+	 *	Gets focused option. If options are empty then -1 is returned.
+	 *	
+	 * @param ContainerObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @return Index of currently focused Option
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Getter"))
+	static int32 GetFocusedOptionIndex(UObject* ContainerObject);
+
+	/**
+	 *	Set focus to new Option.
+	 *	
+	 * @param ContainerObject The object that should implement the MounteaDialogueOptionsContainerInterface. Usually Widget Blueprint.
+	 * @param NewFocusedOption Index of newly focused Option.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Setter"))
+	static void SetFocusedOption(UObject* ContainerObject, const int32 NewFocusedOption);
+
 	// --- Dialogue Row Interface functions ------------------------------
 
 	/**

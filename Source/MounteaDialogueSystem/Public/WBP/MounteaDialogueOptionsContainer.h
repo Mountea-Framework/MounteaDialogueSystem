@@ -36,6 +36,8 @@ protected:
 	virtual void ClearDialogueOptions_Implementation() override;
 	virtual void ProcessOptionSelected_Implementation(const FGuid& SelectedOption, UUserWidget* CallingWidget) override;
 	virtual TArray<UUserWidget*> GetDialogueOptions_Implementation() const override;
+	virtual int32 GetFocusedOptionIndex_Implementation() const override;
+	virtual void SetFocusedOptions_Implementation(const int32 NewFocusedOption) override;
 
 protected:
 	/**
@@ -55,4 +57,10 @@ protected:
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue")
 	TMap<FGuid, TObjectPtr<UUserWidget>> DialogueOptions;
+
+	/**
+	 * Index of focused option.
+	 */
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue")
+	int32 FocusedOption;
 };
