@@ -7,6 +7,7 @@
 #include "Interfaces/UMG/MounteaDialogueOptionInterface.h"
 #include "MounteaDialogueOption.generated.h"
 
+class UButton;
 /**
  * UMounteaDialogueOption
  * 
@@ -21,9 +22,12 @@ public:
 
 	UMounteaDialogueOption(const FObjectInitializer& ObjectInitializer);
 
-protected:
+public:
 
-	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
+	virtual bool NativeSupportsKeyboardFocus() const override { return true; };
+	virtual FReply NativeOnFocusReceived(const FGeometry& InGeometry, const FFocusEvent& InFocusEvent) override;
+
+protected:
 	
 	// IMounteaDialogueOptionInterface implementation
 	virtual	FDialogueOptionData	GetDialogueOptionData_Implementation	() const	override;
@@ -35,7 +39,15 @@ protected:
 	virtual	FOnDialogueOptionSelected&	GetDialogueOptionSelectedHandle	()	override
 	{ return OnDialogueOptionSelected; };
 
+public:
+
+	virtual EDialogueOptionState GetOptionsState_Implementation() const override
+	{ return DialogueOptionState; };
+
 protected:
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue|Data")
+	EDialogueOptionState DialogueOptionState;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Mountea|Dialogue|Style", meta=(ExposeOnSpawn=true))
 	FButtonStyle DialogueOptionStyle;

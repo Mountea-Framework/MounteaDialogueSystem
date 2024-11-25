@@ -3,17 +3,18 @@
 
 #include "WBP/MounteaDialogueOption.h"
 
-#include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Components/Button.h"
 
-UMounteaDialogueOption::UMounteaDialogueOption(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+UMounteaDialogueOption::UMounteaDialogueOption(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer), DialogueOptionState(EDialogueOptionState::EDOS_Unfocused)
 {
 	bIsFocusable = true;
+	bStopAction = true;
 }
 
-FReply UMounteaDialogueOption::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+FReply UMounteaDialogueOption::NativeOnFocusReceived(const FGeometry& InGeometry, const FFocusEvent& InFocusEvent)
 {
-	LOG_WARNING(TEXT("Dialogue Option %s received %s key!"), *DialogueOptionData.OptionTitle.ToString(), *InKeyEvent.GetKey().ToString())
-	return FReply::Handled();
+	DialogueOptionState = EDialogueOptionState::EDOS_Focused;
+	return Super::NativeOnFocusReceived(InGeometry, InFocusEvent);
 }
 
 FDialogueOptionData UMounteaDialogueOption::GetDialogueOptionData_Implementation() const
