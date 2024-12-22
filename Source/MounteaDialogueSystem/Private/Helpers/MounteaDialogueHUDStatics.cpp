@@ -580,6 +580,19 @@ void UMounteaDialogueHUDStatics::SetFocusedOption(UObject* ContainerObject, cons
 	return containerInterface->Execute_SetFocusedOption(ContainerObject, NewFocusedOption);
 }
 
+int32 UMounteaDialogueHUDStatics::GetOptionIndex(UObject* ContainerObject, const UUserWidget* OptionWidget)
+{
+	if (!IsValid(ContainerObject) || !IsValid(OptionWidget))
+		return INDEX_NONE;
+
+	auto containerInterface = GetOptionsContainerInterface(ContainerObject);
+	if (!containerInterface.GetObject())
+		return INDEX_NONE;
+
+	TArray<UUserWidget*> dialogueOptions = containerInterface->Execute_GetDialogueOptions(ContainerObject);
+	return dialogueOptions.Find(const_cast<UUserWidget*>(OptionWidget));
+}
+
 FWidgetDialogueRow UMounteaDialogueHUDStatics::GetDialogueWidgetRowData(UObject* RowObject)
 {
 	if (!IsValid(RowObject))

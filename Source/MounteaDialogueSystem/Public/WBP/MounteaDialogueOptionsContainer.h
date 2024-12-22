@@ -25,6 +25,17 @@ public:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 protected:
+
+	UFUNCTION()
+	void ClearChildOptionFocus(UUserWidget* Target);
+
+	void ClearChildOptionsFocus();
+
+	UFUNCTION()
+	void ResetFocus(const UUserWidget* Requestor);
+
+protected:
+	
 	// IMounteaDialogueOptionsContainerInterface implementation
 	virtual void SetParentDialogueWidget_Implementation(UUserWidget* NewParentDialogueWidget) override;
 	virtual UUserWidget* GetParentDialogueWidget_Implementation() const override;
@@ -41,6 +52,7 @@ protected:
 	virtual void SetFocusedOption_Implementation(const int32 NewFocusedOption) override;
 
 protected:
+	
 	/**
 	 * The class type of the dialogue option widget. Must Implement 'MounteaDialogueOptionInterface'.
 	 */

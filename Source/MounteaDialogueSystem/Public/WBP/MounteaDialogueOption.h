@@ -9,6 +9,7 @@
 #include "MounteaDialogueOption.generated.h"
 
 class UButton;
+
 /**
  * UMounteaDialogueOption
  * 
@@ -49,6 +50,8 @@ public:
 
 	virtual FOnMounteaFocusChanged& GetOnMounteaFocusChangedEventHandle() override
 	{ return OnOptionFocusChanged; };
+	virtual FOnMounteaFocusClearRequested& GetOnMounteaFocusClearRequestedEventHandle() override
+	{ return OnMounteaFocusClearRequested; };
 
 protected:
 
@@ -74,4 +77,7 @@ protected:
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, VisibleAnywhere, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Delegate"))
 	FOnMounteaFocusChanged OnOptionFocusChanged;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, VisibleAnywhere, Category="Mountea|Dialogue", meta=(CustomTag="MounteaK2Delegate"))
+	FOnMounteaFocusClearRequested OnMounteaFocusClearRequested;
 };

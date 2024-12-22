@@ -6,11 +6,14 @@
 #include "Data/MounteaDialogueGraphDataTypes.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueHUDStatics.h"
+
 #include "Interfaces/HUD/MounteaDialogueWBPInterface.h"
 #include "Interfaces/UMG/MounteaDialogueOptionInterface.h"
+
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 
-UMounteaDialogueOptionsContainer::UMounteaDialogueOptionsContainer(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer), FocusedOption(INDEX_NONE)
+UMounteaDialogueOptionsContainer::UMounteaDialogueOptionsContainer(const FObjectInitializer& ObjectInitializer) :
+	Super(ObjectInitializer), FocusedOption(INDEX_NONE), LastFocusedOption(INDEX_NONE)
 {
 	bIsFocusable = true;
 }
@@ -36,8 +39,38 @@ void UMounteaDialogueOptionsContainer::NativeTick(const FGeometry& MyGeometry, f
 		{
 			IMounteaFocusableWidgetInterface::Execute_SetFocusState(focusableWidget, true);
 		}
-			
 	}
+}
+
+void UMounteaDialogueOptionsContainer::ClearChildOptionFocus(UUserWidget* Target)
+{
+	if (!IsValid(Target))
+		return;
+	
+	if (Target && Target->Implements<UMounteaFocusableWidgetInterface>())
+		IMounteaFocusableWidgetInterface::Execute_SetFocusState(Target, false);
+}
+
+void UMounteaDialogueOptionsContainer::ClearChildOptionsFocus()
+{
+	TArray<TObjectPtr<UUserWidget>> optionWidgets;
+	DialogueOptions.GenerateValueArray(optionWidgets);
+	
+	for (const auto& optionWidget : optionWidgets)
+	{
+		ClearChildOptionFocus(optionWidget);
+	}
+}
+
+void UMounteaDialogueOptionsContainer::ResetFocus(const UUserWidget* Requestor)
+{
+	ClearChildOptionsFocus();
+
+	auto newFocus = UMounteaDialogueHUDStatics::GetOptionIndex(this, Requestor);
+	if (newFocus == INDEX_NONE)
+		return;
+
+	Execute_SetFocusedOption(this, newFocus);
 }
 
 void UMounteaDialogueOptionsContainer::SetParentDialogueWidget_Implementation(UUserWidget* NewParentDialogueWidget)
@@ -87,6 +120,13 @@ void UMounteaDialogueOptionsContainer::AddNewDialogueOption_Implementation(UMoun
 			dialogueOption->Execute_SetNewDialogueOptionData(dialogueOptionWidget, FDialogueOptionData( UMounteaDialogueHUDStatics::GetDialogueNodeGuid(NewDialogueOption),  UMounteaDialogueHUDStatics::GetDialogueNodeRow(NewDialogueOption)));
 			dialogueOption->Execute_InitializeDialogueOption(dialogueOptionWidget);
 		}
+		TScriptInterface<IMounteaFocusableWidgetInterface> focusableDialogueOption = dialogueOptionWidget;
+		{
+			if (focusableDialogueOption.GetObject() && focusableDialogueOption.GetInterface())
+			{
+				focusableDialogueOption->GetOnMounteaFocusClearRequestedEventHandle().AddUniqueDynamic(this, &UMounteaDialogueOptionsContainer::ResetFocus);
+			}
+		}
 	}
 	else
 	{
@@ -116,6 +156,14 @@ void UMounteaDialogueOptionsContainer::RemoveDialogueOption_Implementation(UMoun
 			{
 				dialogueOption->GetDialogueOptionSelectedHandle().RemoveDynamic(this, &UMounteaDialogueOptionsContainer::ProcessOptionSelected);
 				dialogueOption->Execute_ResetDialogueOptionData(dirtyOptionWidget);
+			}
+			TScriptInterface<IMounteaFocusableWidgetInterface> focusableDialogueOption = dirtyOptionWidget;
+			{
+				if (focusableDialogueOption.GetObject() && focusableDialogueOption.GetInterface())
+				{
+					focusableDialogueOption->GetOnMounteaFocusClearRequestedEventHandle().RemoveDynamic(this, &UMounteaDialogueOptionsContainer::ResetFocus);
+				}
+
 			}
 		}
 		
@@ -170,7 +218,6 @@ int32 UMounteaDialogueOptionsContainer::GetFocusedOptionIndex_Implementation() c
 	return FocusedOption;
 }
 
-
 void UMounteaDialogueOptionsContainer::SetFocusedOption_Implementation(const int32 NewFocusedOption)
 {
 	if (NewFocusedOption == FocusedOption)
@@ -190,15 +237,8 @@ void UMounteaDialogueOptionsContainer::SetFocusedOption_Implementation(const int
 
 	FocusedOption = NewFocusedOption;
 
-	for (const auto& optionWidget : optionWidgets)
-	{
-		if (optionWidget && optionWidget->Implements<UMounteaFocusableWidgetInterface>())
-			IMounteaFocusableWidgetInterface::Execute_SetFocusState(optionWidget, false);
-	}
+	ClearChildOptionsFocus();
 
 	if (foundWidget->Implements<UMounteaFocusableWidgetInterface>())
 		IMounteaFocusableWidgetInterface::Execute_SetFocusState(foundWidget, true);
 }
-
-
-

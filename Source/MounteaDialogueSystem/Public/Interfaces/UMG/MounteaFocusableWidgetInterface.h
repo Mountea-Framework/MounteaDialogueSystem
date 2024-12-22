@@ -16,6 +16,7 @@ enum class EDialogueOptionState : uint8
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnMounteaFocusChanged, UUserWidget*, Widget, const bool, IsFocused);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMounteaFocusClearRequested, const UUserWidget*, Widget);
 
 UINTERFACE(MinimalAPI, BlueprintType, Blueprintable)
 class UMounteaFocusableWidgetInterface : public UInterface
@@ -31,7 +32,7 @@ class MOUNTEADIALOGUESYSTEM_API IMounteaFocusableWidgetInterface
 	GENERATED_BODY()
 
 public:
-
+	
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|Focus")
 	EDialogueOptionState GetFocusState() const;
 	virtual EDialogueOptionState GetFocusState_Implementation() const = 0;
@@ -41,4 +42,5 @@ public:
 	virtual void SetFocusState_Implementation(const bool IsSelected) = 0;
 
 	virtual FOnMounteaFocusChanged& GetOnMounteaFocusChangedEventHandle() = 0;
+	virtual FOnMounteaFocusClearRequested& GetOnMounteaFocusClearRequestedEventHandle() = 0;
 };

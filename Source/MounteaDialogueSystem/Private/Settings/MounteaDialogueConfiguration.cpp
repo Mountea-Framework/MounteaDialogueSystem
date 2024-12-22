@@ -3,6 +3,8 @@
 
 #include "Settings/MounteaDialogueConfiguration.h"
 
+#include "Engine/Font.h"
+
 UMounteaDialogueConfiguration::UMounteaDialogueConfiguration() :
 	InputMode(EMounteaInputMode::EIM_UIAndGame),
 	bAllowSubtitles(true),
