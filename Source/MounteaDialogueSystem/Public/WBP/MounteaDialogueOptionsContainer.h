@@ -22,6 +22,7 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueOptionsContainer : public UUserW
 public:
 
 	UMounteaDialogueOptionsContainer(const FObjectInitializer& ObjectInitializer);
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 protected:
 	// IMounteaDialogueOptionsContainerInterface implementation
@@ -63,4 +64,10 @@ protected:
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue")
 	int32 FocusedOption;
+
+	/**
+	 * Index of last focused option. Used for fallbacks.
+	 */
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue")
+	int32 LastFocusedOption;
 };

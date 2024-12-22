@@ -15,6 +15,31 @@ UMounteaDialogueOptionsContainer::UMounteaDialogueOptionsContainer(const FObject
 	bIsFocusable = true;
 }
 
+void UMounteaDialogueOptionsContainer::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	TArray<TObjectPtr<UUserWidget>> dialogueOptions;
+	DialogueOptions.GenerateValueArray(dialogueOptions);
+
+	TObjectPtr<UUserWidget> focusableWidget = nullptr;
+	if (dialogueOptions.Num() > 0)
+	{
+		if (dialogueOptions.IsValidIndex(FocusedOption))
+			focusableWidget = dialogueOptions[FocusedOption];
+		else if (dialogueOptions.IsValidIndex(LastFocusedOption))
+			focusableWidget = dialogueOptions[LastFocusedOption];
+		else
+			focusableWidget = nullptr;
+
+		if (focusableWidget != nullptr)
+		{
+			IMounteaFocusableWidgetInterface::Execute_SetFocusState(focusableWidget, true);
+		}
+			
+	}
+}
+
 void UMounteaDialogueOptionsContainer::SetParentDialogueWidget_Implementation(UUserWidget* NewParentDialogueWidget)
 {
 	if (NewParentDialogueWidget != ParentDialogueWidget)
@@ -150,6 +175,8 @@ void UMounteaDialogueOptionsContainer::SetFocusedOption_Implementation(const int
 {
 	if (NewFocusedOption == FocusedOption)
 		return;
+
+	LastFocusedOption = FocusedOption;
 
 	TArray<TObjectPtr<UUserWidget>> optionWidgets;
 	DialogueOptions.GenerateValueArray(optionWidgets);
