@@ -17,7 +17,6 @@ enum class EDialogueOptionState : uint8
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnMounteaFocusChanged, UUserWidget*, Widget, const bool, IsFocused);
 
-// This class does not need to be modified.
 UINTERFACE(MinimalAPI, BlueprintType, Blueprintable)
 class UMounteaFocusableWidgetInterface : public UInterface
 {
@@ -31,7 +30,6 @@ class MOUNTEADIALOGUESYSTEM_API IMounteaFocusableWidgetInterface
 {
 	GENERATED_BODY()
 
-	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|Focus")
