@@ -461,7 +461,7 @@ AActor* UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(const UObject* M
 
 AActor* UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(const TScriptInterface<const IMounteaDialogueManagerInterface>& Manager)
 {
-	UObject* playerManagerObject = Manager.GetObject();
+	const UObject* playerManagerObject = Manager.GetObject();
 	if (!IsValid(playerManagerObject))
 		return nullptr;
 	

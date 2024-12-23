@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Styling/AppStyle.h"
 #include "Styling/SlateStyle.h"
 
 class FMonuteaDialogueSystemDeveloperStyle : public FAppStyle
