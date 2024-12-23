@@ -199,7 +199,7 @@ private:
 	 * The system will use this URL to download and apply the tags if allowed.
 	 * Default: @link https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini
 	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay=true, meta=(ConfigRestartRequired=true))
+	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay, meta=(ConfigRestartRequired=true))
 	FString GameplayTagsURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini");
 	
 #pragma endregion
