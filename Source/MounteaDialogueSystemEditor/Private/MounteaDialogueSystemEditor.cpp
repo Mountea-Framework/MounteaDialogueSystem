@@ -3,6 +3,7 @@
 #include "MounteaDialogueSystemEditor.h"
 
 #include "AssetToolsModule.h"
+#include "ContentBrowserModule.h"
 #include "GameplayTagsManager.h"
 #include "HttpModule.h"
 #include "AssetActions/MounteaDialogueAdditionalDataAssetAction.h"
@@ -25,9 +26,13 @@
 #include "Styling/SlateStyleRegistry.h"
 
 #include "ToolMenus.h"
+#include "AssetActions/MounteaDialogueConfigurationAssetAction.h"
 #include "AssetActions/MounteaDialogueDataTableAssetAction.h"
 #include "DetailsPanel/MounteaDialogueDecorator_Details.h"
+#include "DetailsPanel/MounteaDialogueGraph_Details.h"
+#include "Graph/MounteaDialogueGraph.h"
 #include "HelpButton/MDSCommands.h"
+#include "Helpers/MounteaDialogueFixUtilities.h"
 #include "ImportConfig/MounteaDialogueImportConfig.h"
 #include "Interfaces/IMainFrameModule.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
@@ -89,6 +94,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		AssetActions.Add(MakeShared<FMounteaDialogueAdditionalDataAssetAction>());
 		AssetActions.Add(MakeShared<FMounteaDialogueDecoratorAssetAction>());
 		AssetActions.Add(MakeShared<FMounteaDialogueDataTableAssetAction>());
+		AssetActions.Add(MakeShared<UMounteaDialogueConfigurationAssetAction>());
 
 		for (const auto& Itr : AssetActions)
 		{
@@ -106,7 +112,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		{
 			const FString ContentDir = IPluginManager::Get().FindPlugin("MounteaDialogueSystem")->GetBaseDir();
 			
-			// Interactor Component
+			// Dialogue specific icons
 			{
 				DialogueTreeSet->SetContentRoot(ContentDir);
 				
@@ -149,6 +155,22 @@ void FMounteaDialogueSystemEditor::StartupModule()
 					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueParticipant", DialogueParticipantSetClassThumb);
 					DialogueTreeSet->Set("ClassIcon.MounteaDialogueParticipant", DialogueParticipantDataSetClassIcon);
 				}
+				
+				FSlateImageBrush* DialogueConfigSetClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueConfigIcon"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueConfigDataSetClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueConfigIcon"), TEXT(".png")), FVector2D(16.f, 16.f));
+				if (DialogueConfigSetClassThumb && DialogueConfigDataSetClassIcon)
+				{
+					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueConfiguration", DialogueConfigSetClassThumb);
+					DialogueTreeSet->Set("ClassIcon.MounteaDialogueConfiguration", DialogueConfigDataSetClassIcon);
+				}
+				
+				FSlateImageBrush* DialogueManagerSyncSetClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueManagerSyncIcon"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueManagerSyncSetClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueManagerSyncIcon"), TEXT(".png")), FVector2D(16.f, 16.f));
+				if (DialogueManagerSyncSetClassThumb && DialogueManagerSyncSetClassIcon)
+				{
+					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueManagerNetSync", DialogueManagerSyncSetClassThumb);
+					DialogueTreeSet->Set("ClassIcon.MounteaDialogueManagerNetSync", DialogueManagerSyncSetClassIcon);
+				}
 
 				//Register the created style
 				FSlateStyleRegistry::RegisterSlateStyle(*DialogueTreeSet.Get());
@@ -164,11 +186,13 @@ void FMounteaDialogueSystemEditor::StartupModule()
 			{
 				FOnGetDetailCustomizationInstance::CreateStatic(&FMounteaDialogueGraphNode_Details::MakeInstance),
 				FOnGetDetailCustomizationInstance::CreateStatic(&FMounteaDialogueDecorator_Details::MakeInstance),
+				FOnGetDetailCustomizationInstance::CreateStatic(&FMounteaDialogueGraph_Details::MakeInstance),
 			};
 			RegisteredCustomClassLayouts =
 			{
 				UMounteaDialogueGraphNode::StaticClass()->GetFName(),
 				UMounteaDialogueDecoratorBase::StaticClass()->GetFName(),
+				UMounteaDialogueGraph::StaticClass()->GetFName(),
 			};
 			for (int32 i = 0; i < RegisteredCustomClassLayouts.Num(); i++)
 			{
@@ -212,6 +236,12 @@ void FMounteaDialogueSystemEditor::StartupModule()
 			FMDSCommands::Get().DialoguerAction,
 			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::DialoguerButtonClicked), 
 			FCanExecuteAction()
+		);
+
+		PluginCommands->MapAction(
+			FMDSCommands::Get().FixMounteaNodesAction,
+			FExecuteAction::CreateStatic(&FMounteaDialogueFixUtilities::ReplaceNodesInSelectedBlueprints),
+			FCanExecuteAction::CreateStatic(&FMounteaDialogueFixUtilities::CanExecute)
 		);
 		
 		IMainFrameModule& mainFrame = FModuleManager::Get().LoadModuleChecked<IMainFrameModule>("MainFrame");
@@ -261,6 +291,110 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		check(ThisPlugin.IsValid());
 	
 		UGameplayTagsManager::Get().AddTagIniSearchPath(ThisPlugin->GetBaseDir() / TEXT("Config") / TEXT("Tags"));
+	}
+
+	// Extend Menu
+	{
+		FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
+
+		// Get plugin name dynamically
+		const FString PluginPath = [this]() -> FString
+		{
+			if (const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem")))
+			{
+				return TEXT("MounteaDialogueSystem");
+			}
+			return FString();
+		}();
+
+		auto IsInterfaceFromPlugin = [PluginPath](const UClass* Class) -> bool
+		{
+			if (!Class)
+			{
+				return false;
+			}
+
+			// Get all implemented interfaces
+			TArray<FImplementedInterface> Interfaces = Class->Interfaces;
+
+			// Check each interface
+			for (const FImplementedInterface& Interface : Interfaces)
+			{
+				if (Interface.Class && Interface.Class->GetPackage())
+				{
+					const FString InterfacePath = Interface.Class->GetPackage()->GetName();
+					if (InterfacePath.Contains(PluginPath))
+					{
+						return true;
+					}
+				}
+			}
+
+			return false;
+		};
+
+		auto IsAssetFromPlugin = [PluginPath, IsInterfaceFromPlugin](const FAssetData& Asset) -> bool
+		{
+			// Check if asset is directly from plugin OR implements plugin interface
+			const FString PackagePath = Asset.GetPackage()->GetName();
+			
+			// For Blueprint assets
+			if (Asset.GetClass()->IsChildOf(UBlueprint::StaticClass()))
+			{
+				if (UBlueprint* Blueprint = Cast<UBlueprint>(Asset.GetAsset()))
+				{
+					return PackagePath.Contains(PluginPath) || 
+						   (Blueprint->GeneratedClass && IsInterfaceFromPlugin(Blueprint->GeneratedClass));
+				}
+			}
+			
+			// For regular assets
+			return PackagePath.Contains(PluginPath) || IsInterfaceFromPlugin(Asset.GetClass());
+		};
+
+		ContentBrowserModule.GetAllAssetViewContextMenuExtenders().Add(
+			FContentBrowserMenuExtender_SelectedAssets::CreateLambda([this, IsAssetFromPlugin](const TArray<FAssetData>& SelectedAssets)
+			{
+				bool bHasValidAsset = false;
+				for (const FAssetData& Asset : SelectedAssets)
+				{
+					if (IsAssetFromPlugin(Asset))
+					{
+						bHasValidAsset = true;
+						break;
+					}
+				}
+
+				if (!bHasValidAsset)
+				{
+					return TSharedRef<FExtender>(new FExtender());
+				}
+
+				TSharedRef<FExtender> Extender = MakeShared<FExtender>();
+
+				Extender->AddMenuExtension(
+					"CommonAssetActions",
+					EExtensionHook::Before,
+					PluginCommands,
+					FMenuExtensionDelegate::CreateLambda([SelectedAssets](FMenuBuilder& MenuBuilder)
+					{
+						MenuBuilder.BeginSection("MounteaActions", LOCTEXT("MounteaActionsMenuHeading", "Mountea Actions"));
+						{
+							MenuBuilder.AddMenuEntry(
+								FMDSCommands::Get().FixMounteaNodesAction,
+								NAME_None,
+								LOCTEXT("MounteaAction", "Fix Mountea Nodes"),
+								LOCTEXT("MounteaActionTooltip", "🔧 Replace deprecated Mountea nodes with updated substitutes.\n\n🔓 Solution is using JSON-based configuration from a public GitHub repository.\n\n💪 Supports Blueprint to C++, C++ to Blueprint, and other combinations."),
+								FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Adjust")
+							);
+						}
+						MenuBuilder.EndSection();
+					})
+				);
+
+				return Extender;
+			})
+		);
 	}
 	
 	EditorLOG_WARNING(TEXT("MounteaDialogueSystemEditor module has been loaded"));

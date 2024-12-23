@@ -71,7 +71,7 @@ void UMounteaDialogueDecorator_OverrideParticipants::ExecuteDecorator_Implementa
 	if (!OwningManager) return;
 	
 	// Let's return BP Updatable Context rather than Raw
-	Context = OwningManager->GetDialogueContext();
+	Context = OwningManager->Execute_GetDialogueContext(OwningManager.GetObject());
 
 	// We assume Context and Manager are already valid, but safety is safety
 	if (!Context|| !OwningManager.GetInterface() || !UMounteaDialogueSystemBFC::IsContextValid(Context) ) return;
@@ -88,7 +88,7 @@ void UMounteaDialogueDecorator_OverrideParticipants::ExecuteDecorator_Implementa
 	
 	if (bOverrideActiveParticipant)
 	{
-		Context->UpdateActiveDialogueParticipant(Override_ActiveParticipantInterface);
+		UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(Context, Override_ActiveParticipantInterface);
 	}
 }
 

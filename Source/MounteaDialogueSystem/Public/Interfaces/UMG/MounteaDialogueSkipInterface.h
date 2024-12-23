@@ -23,17 +23,19 @@ class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueSkipInterface
 public:
 	
 	/**
-	 * 
-	 * @param FadeProgressDuration 
+	 * Requests the widget to show with a fade-in effect.
+	 *
+	 * @param FadeProgressDuration A vector specifying the fade-in progress duration for the widget.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Mountea|Dialogue|UserInterface|Skip", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue|UserInterface|Skip")
 	void RequestShowWidget(const FVector2D& FadeProgressDuration);
 	virtual void RequestShowWidget_Implementation(const FVector2D& FadeProgressDuration) = 0;
 
 	/**
-	 * 
+	 * Requests the widget to hide with a fade-out effect.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Mountea|Dialogue|UserInterface|Skip", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue|UserInterface|Skip")
 	void RequestHideWidget();
 	virtual void RequestHideWidget_Implementation() = 0;
+
 };

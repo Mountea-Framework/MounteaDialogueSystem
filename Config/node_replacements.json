@@ -1,0 +1,404 @@
+{
+    "replacements": [
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerInterface",
+                "function": "AddDialogueUIObjects",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerStatics",
+                "function": "AddDialogueUIObjectsV2",
+                "is_interface_call": false
+            }
+        },
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerStatics",
+                "function": "GetStateV2",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerStatics",
+                "function": "GetManagerState",
+                "is_interface_call": false
+            }
+        },
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/AnimGraphRuntime.AnimationStateMachineLibrary",
+                "function": "GetState",
+                "is_interface_call": false,
+                "ignore_pins": 
+                [
+                    "UpdateContext", 
+                    "Node"
+                ]
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerStatics",
+                "function": "GetManagerState",
+                "is_interface_call": false
+            }
+        },
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerInterface",
+                "function": "GetDialogueWidgetV2",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerStatics",
+                "function": "GetDialogueWidget",
+                "is_interface_call": false
+            }
+        },
+        {
+            "old_node":{
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerStatics",
+                "function": "InitializeDialogue",
+                "is_interface_call": false
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerStatics",
+                "function": "RequestStartDialogue",
+                "is_interface_call": false,
+                "pin_mapping": {
+                    "execute": "execute",
+                    "Target": "Target",
+                    "OwningPlayerState": "DialogueInitiator",
+                    "Participants": "InitialParticipants"
+                }
+            }
+        },
+        {
+            "old_node":{
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerInterface",
+                "function": "GetDialogueContextV2",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerStatics",
+                "function": "GetDialogueContext",
+                "is_interface_call": false
+            }
+        },
+        {
+            "old_node":{
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerInterface",
+                "function": "GetDialogueWidgetZOrderV2",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerStatics",
+                "function": "GetDialogueWidgetZOrder",
+                "is_interface_call": false
+            }
+        },
+        {
+            "old_node":{
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerInterface",
+                "function": "ExecuteWidgetCommand",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerStatics",
+                "function": "ExecuteWidgetCommand",
+                "is_interface_call": false
+            }
+        },
+        {
+            "old_node":{
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerInterface",
+                "function": "CallDialogueNodeSelectedV2",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerStatics",
+                "function": "SelectNode",
+                "is_interface_call": false
+            }
+        },
+        {
+            "old_node":{
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerInterface",
+                "function": "SkipDialogueRow",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerStatics",
+                "function": "SkipDialogueRow",
+                "is_interface_call": false
+            }
+        },
+        {
+            "old_node":{
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerInterface",
+                "function": "GetDialogueContextEvent",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueManagerStatics",
+                "function": "GetDialogueContext",
+                "is_interface_call": false
+            }
+        },
+        {
+            "old_node":{
+                "type": "function_call",
+                "class_name": "/Script/BlueprintGraph.K2Node_CallFunction",
+                "parent": "",
+                "function": "InitializeDialogueTextStyle",
+                "is_interface_call": false,
+                "is_blueprint_function": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/BlueprintGraph.K2Node_MounteaDialogueCallFunction",
+                "parent": "/MounteaDialogueSystem/Blueprints/Helpers/BFL_MounteaDialogueHelpers.BFL_MounteaDialogueHelpers_C",
+                "function": "Initialize Dialogue Text Style",
+                "is_interface_call": false,
+                "is_blueprint_function": true
+            }
+        },
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/BlueprintGraph.K2Node_CallFunction",
+                "parent": "/Script/MounteaDialogueSystemDeveloper.MounteaDialogueSystemDeveloperUtilities",
+                "function": "CopyToClipboard",
+                "is_interface_call": false
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/BlueprintGraph.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystemDeveloper.MounteaDialogueSystemDeveloperUtilities",
+                "function": "CopyToClipboard",
+                "is_interface_call": false
+            }
+        },
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueUIBaseInterface",
+                "function": "ProcessStringCommand",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueHUDStatics",
+                "function": "ProcessStringCommand",
+                "is_interface_call": false
+            }
+        },
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/BlueprintGraph.K2Node_CallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface",
+                "function": "RefreshDialogueWidget",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueHUDStatics",
+                "function": "RefreshDialogueWidget",
+                "is_interface_call": true,
+                "pin_mapping": {
+                    "Target": "Target"
+                }
+            }
+        },
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueRowInterface",
+                "function": "ResetWidgetDialogueRow",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueHUDStatics",
+                "function": "ResetWidgetDialogueRow",
+                "is_interface_call": false
+            }
+        },
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueSkipInterface",
+                "function": "RequestHideWidget",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueHUDStatics",
+                "function": "RequestHideWidget",
+                "is_interface_call": false
+            }
+        },
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueOptionsContainerInterface",
+                "function": "AddNewDialogueOptions",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueHUDStatics",
+                "function": "AddNewDialogueOptions",
+                "is_interface_call": true
+            }
+        },
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueSkipInterface",
+                "function": "RequestShowWidget",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueHUDStatics",
+                "function": "RequestShowWidget",
+                "is_interface_call": true
+            }
+        },
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueOptionsContainerInterface",
+                "function": "ClearDialogueOptions",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueHUDStatics",
+                "function": "ClearDialogueOptions",
+                "is_interface_call": true
+            }
+        },
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueOptionsContainerInterface",
+                "function": "SetDialogueOptionClass",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueHUDStatics",
+                "function": "SetDialogueOptionClass",
+                "is_interface_call": true
+            }
+        },
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueOptionsContainerInterface",
+                "function": "SetParentDialogueWidget",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueHUDStatics",
+                "function": "SetParentDialogueWidget",
+                "is_interface_call": true
+            }
+        },
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueRowInterface",
+                "function": "SetNewWidgetDialogueRowData",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueHUDStatics",
+                "function": "SetNewWidgetDialogueRowData",
+                "is_interface_call": true
+            }
+        },
+        {
+            "old_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueRowInterface",
+                "function": "InitializeWidgetDialogueRow",
+                "is_interface_call": true
+            },
+            "new_node": {
+                "type": "function_call",
+                "class_name": "/Script/MounteaDialogueSystemDeveloper.K2Node_MounteaDialogueCallFunction",
+                "parent": "/Script/MounteaDialogueSystem.MounteaDialogueHUDStatics",
+                "function": "InitializeWidgetDialogueRow",
+                "is_interface_call": true
+            }
+        }
+    ]
+}

@@ -7,7 +7,7 @@
 
 UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAllowAutoGameplayTagsCheck(true)
 {
-	NodeType = ENodeType::ENT_SoftCorners;
+	NodeType = ENodeCornerType::ENT_SoftCorners;
 	NodeTheme = ENodeTheme::ENT_DarkTheme;
 	ArrowType = EArrowType::ERT_HollowArrow;
 	
@@ -37,7 +37,7 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAl
 	bAllowNativeDecoratorsEdit = false;
 	bUseAdvancedWiring = true;
 
-	bDisplayStandardNodes = false;
+	bDisplayStandardNodes = true;
 }
 
 #if WITH_EDITOR

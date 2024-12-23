@@ -28,6 +28,8 @@ namespace MounteaDialogueGraphColors
 		constexpr FLinearColor Disconnected(0.f, 0.f, 0.f);
 		constexpr FLinearColor BrokenWithParent(1.f, 0.f, 1.f);
 		constexpr FLinearColor QuickFind(0.f, 0.8f, 0.f);
+
+		constexpr FLinearColor InactiveBorder(0.2f, 0.2f, 0.2f);
 	}
 
 	namespace Pin

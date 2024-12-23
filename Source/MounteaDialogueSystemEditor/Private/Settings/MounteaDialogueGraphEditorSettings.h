@@ -51,7 +51,7 @@ enum class EDecoratorsInfoStyle : uint8
 };
 
 UENUM(BlueprintType)
-enum class ENodeType : uint8
+enum class ENodeCornerType : uint8
 {
 	ENT_SoftCorners			UMETA(DisplayName="Soft Corners"),
 	ENT_HardCorners			UMETA(DisplayName="Hard Corners")
@@ -88,7 +88,7 @@ private:
 #pragma region GraphNodes
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
-	ENodeType NodeType;
+	ENodeCornerType NodeType;
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	ENodeTheme NodeTheme;
@@ -131,10 +131,8 @@ private:
 	 * ❗ EXPERIMENTAL FEATURE
 	 * If case of any compile issues TURN THIS ON
 	 *
-	 * If turned off, then standard Nodes will be hidden and Blueprint Graphs will display only custom K2 Nodes.
-	 * Might cause issues if you create Blueprint Classes that directly implement Dialogue Interfaces.
-	 *
-	 * This will also cause Interface Functions to disappear from `My Blueprint` panel, unless class inherits from C++ class which already implemented Interface functions.
+	 * If turned on custom K2 Nodes will contain additional details, which might break visual appearance
+	 * and might not work well with plugins like `BlueprintAssist`.
 	 */
 	UPROPERTY(config, EditDefaultsOnly,  Category = "BlueprintNodes", meta=(ConfigRestartRequired=true))
 	bool bDisplayStandardNodes;
@@ -203,7 +201,7 @@ private:
 	 * The system will use this URL to download and apply the tags if allowed.
 	 * Default: @link https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini
 	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay=true, meta=(ConfigRestartRequired=true))
+	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay, meta=(ConfigRestartRequired=true))
 	FString GameplayTagsURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini");
 	
 #pragma endregion
@@ -232,7 +230,7 @@ public:
 	ENodeTheme GetNodeTheme() const
 	{ return NodeTheme; };
 
-	ENodeType GetNodeType() const
+	ENodeCornerType GetNodeType() const
 	{ return NodeType; };
 
 	bool ShowDetailedInfo_NumDecorators() const

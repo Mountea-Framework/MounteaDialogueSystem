@@ -51,7 +51,7 @@ Now, let's get straight to the exciting new features and bug fixes in this versi
 		const FString InvalidChangelog = FString(R"(
 We're sorry, but there was an error retrieving the online Changelog. We apologize for the inconvenience.
 
-You can still access the complete changelog publicly <a id="browser" href="https://github.com/Mountea-Framework/MounteaInteractionSystem/blob/5.4/CHANGELOG.md">on our GitHub</>.
+You can still access the complete changelog publicly <a id="browser" href="https://github.com/Mountea-Framework/MounteaDialogueSystem/blob/master/CHANGELOG.md">on our GitHub</>.
 
 Thank you for your understanding!
 )");
