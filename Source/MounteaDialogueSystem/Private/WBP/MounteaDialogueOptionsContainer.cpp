@@ -15,7 +15,7 @@
 UMounteaDialogueOptionsContainer::UMounteaDialogueOptionsContainer(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer), FocusedOption(INDEX_NONE), LastFocusedOption(INDEX_NONE)
 {
-	bIsFocusable = true;
+	SetIsFocusable(true);
 }
 
 void UMounteaDialogueOptionsContainer::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)

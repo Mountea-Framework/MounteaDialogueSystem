@@ -5,7 +5,7 @@
 
 UMounteaDialogueSkip::UMounteaDialogueSkip(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	bIsFocusable = true;
+	SetIsFocusable(true);
 }
 
 void UMounteaDialogueSkip::RequestShowWidget_Implementation(const FVector2D& FadeProgressDuration)
