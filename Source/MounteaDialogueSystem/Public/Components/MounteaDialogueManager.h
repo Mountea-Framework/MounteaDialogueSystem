@@ -4,9 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Interfaces/MounteaDialogueManagerInterface.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "MounteaDialogueManager.generated.h"
 
+class UMounteaDialogueDialogueNetSync;
 
 /**
  *  Mountea Dialogue Manager Component
@@ -30,8 +31,10 @@ protected:
 
 public:
 
-	virtual FDialogueStartRequestedResult& GetDialogueStartRequestedResultEventHandle() override
+	virtual FDialogueStartRequested& GetDialogueStartRequestedEventHandle() override
 	{ return OnDialogueStartRequested; };
+	virtual FDialogueStartRequestedResult& GetDialogueStartRequestedResultEventHandle() override
+	{ return OnDialogueStartRequestedResult; };
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() override
 	{ return OnDialogueStarted; };
 	virtual FDialogueEvent& GetDialogueClosedEventHandle() override
@@ -77,6 +80,7 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void StopParticipants_Server() const;
 	void NotifyParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
+	void CalculateManagerType();
 	
 public:
 
@@ -130,6 +134,8 @@ public:
 	virtual int32 GetDialogueWidgetZOrder_Implementation() const override;
 	virtual void SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder) override;
 
+	virtual void SyncContext(const FMounteaDialogueContextReplicatedStruct& Context) override;
+
 private:
 
 	UFUNCTION(Server, Reliable)
@@ -150,18 +156,35 @@ private:
 	UFUNCTION()
 	void OnRep_DialogueContext();
 
+	UMounteaDialogueDialogueNetSync* GetSyncComponent() const;
+
+	void RequestStartDialogue_Environment(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
+	void RequestCloseDialogue_Environmental();
+	void SetManagerState_Environment(const EDialogueManagerState NewState);
+	void RequestBroadcastContext_Environment(const FMounteaDialogueContextReplicatedStruct& Context);
+	void CloseDialogue_Environment();
+
+	bool SetupPlayerDialogue(TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages) const;
+	bool SetupEnvironmentDialogue(AActor* DialogueInitiator, const TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages);
+	static bool ValidateMainParticipant(AActor* MainParticipant, TScriptInterface<IMounteaDialogueParticipantInterface>& OutParticipant, TArray<FText>& ErrorMessages);
+	static void GatherOtherParticipants(const TArray<TObjectPtr<UObject>>& OtherParticipants, TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& OutParticipants);
+	
 	void ProcessWorldWidgetUpdate(const FString& Command);
 
 public:
+	
 	bool IsAuthority() const;
 
 protected:
+
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueStartRequested OnDialogueStartRequested;
 	
 	/**
 	 * Even called when Dialogue is Initialized.
 	 */
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
-	FDialogueStartRequestedResult OnDialogueStartRequested;
+	FDialogueStartRequestedResult OnDialogueStartRequestedResult;
 	
 	/**
 	 * Event called when Dialogue has started.
@@ -251,6 +274,9 @@ protected:
 
 protected:
 
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", meta=(DisplayThumbnail=false))
+	TObjectPtr<UObject> DialogueInstigator;
+
 	/**
 	 * Manager based Dialogue Widget Class.
 	 * ❔ Could be left empty if Project Settings are setup properly
@@ -282,6 +308,9 @@ protected:
 	*/
 	UPROPERTY(ReplicatedUsing=OnRep_ManagerState, SaveGame, VisibleAnywhere, Category="Mountea|Dialogue|Manager")
 	EDialogueManagerState ManagerState;
+
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea|Dialogue|Manager")
+	EDialogueManagerType DialogueManagerType;
 	
 	/**
 	 * An array of dialogue objects. Serves purpose of listeners who receive information about UI events.

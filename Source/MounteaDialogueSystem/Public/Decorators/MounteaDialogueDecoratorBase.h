@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
 #include "Engine/Level.h"
-#include "Interfaces/MounteaDialogueTickableObject.h"
+#include "Interfaces/Core/MounteaDialogueTickableObject.h"
 #include "MounteaDialogueDecoratorBase.generated.h"
 
 class IMounteaDialogueManagerInterface;

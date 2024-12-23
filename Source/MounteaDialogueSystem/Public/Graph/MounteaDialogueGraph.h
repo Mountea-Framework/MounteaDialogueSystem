@@ -7,7 +7,7 @@
 #include "GameplayTagContainer.h"
 
 #include "Decorators/MounteaDialogueDecoratorBase.h"
-#include "Interfaces/MounteaDialogueTickableObject.h"
+#include "Interfaces/Core/MounteaDialogueTickableObject.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 
 #if WITH_EDITORONLY_DATA

@@ -20,7 +20,7 @@
 #include "Editor/UnrealEdEngine.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Graph/MounteaDialogueGraph.h"
-#include "Interfaces/MounteaDialogueManagerInterface.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
 #include "Widgets/Layout/SGridPanel.h"
 #include "Widgets/Layout/SScaleBox.h"
@@ -88,9 +88,9 @@ protected:
 		{
 			switch (GraphEditorSettings->GetNodeType())
 			{
-				case ENodeType::ENT_SoftCorners:
+				case ENodeCornerType::ENT_SoftCorners:
 					return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges");
-				case ENodeType::ENT_HardCorners: 
+				case ENodeCornerType::ENT_HardCorners: 
 					return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextHardEdges");
 			}
 		}
@@ -1042,9 +1042,9 @@ const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetNodeTypeBrush() const
 	{
 		switch (GraphEditorSettings->GetNodeType())
 		{
-			case ENodeType::ENT_SoftCorners:
+			case ENodeCornerType::ENT_SoftCorners:
 				return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges");
-			case ENodeType::ENT_HardCorners: 
+			case ENodeCornerType::ENT_HardCorners: 
 				return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.HardEdges");
 		}
 	}
@@ -1058,9 +1058,9 @@ const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetTextNodeTypeBrush() cons
 	{
 		switch (GraphEditorSettings->GetNodeType())
 		{
-		case ENodeType::ENT_SoftCorners:
+		case ENodeCornerType::ENT_SoftCorners:
 			return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges");
-		case ENodeType::ENT_HardCorners: 
+		case ENodeCornerType::ENT_HardCorners: 
 			return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextHardEdges");
 		}
 	}

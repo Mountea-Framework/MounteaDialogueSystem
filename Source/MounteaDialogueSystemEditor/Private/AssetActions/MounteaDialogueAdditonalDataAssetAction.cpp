@@ -39,7 +39,7 @@ const TArray<FText>& FMounteaDialogueAdditionalDataAssetAction::GetSubMenus() co
 {
 	static const TArray<FText> AssetTypeActionSubMenu
 	{
-		FText::FromString("3. Additional Data")
+		FText::FromString("3. Configuration")
 	};
 	return AssetTypeActionSubMenu;
 };

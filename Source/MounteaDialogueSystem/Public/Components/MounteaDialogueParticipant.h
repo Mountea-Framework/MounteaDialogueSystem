@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Interfaces/MounteaDialogueParticipantInterface.h"
-#include "Interfaces/MounteaDialogueTickableObject.h"
+#include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
+#include "Interfaces/Core/MounteaDialogueTickableObject.h"
 #include "MounteaDialogueParticipant.generated.h"
 
 class UMounteaDialogueGraphNode_CompleteNode;
@@ -45,7 +45,6 @@ public:
  	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
 	UAudioComponent* FindAudioComponent() const;
-	void CreateDialogueAudioComponent();
 	
 	/**
 	 * Finds an audio component by the specified Name.

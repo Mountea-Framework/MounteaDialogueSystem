@@ -15,7 +15,7 @@ struct FDialogueRow;
 /**
  * A helper struct to move Dialogue Option data around.
  */
-USTRUCT(BlueprintType, meta = (HasNativeMake = "/Script/MounteaDialogueSystem.MounteaDialogueUIBFL.NewDialogueOptionData"))
+USTRUCT(BlueprintType, meta = (HasNativeMake = "/Script/MounteaDialogueSystem.MounteaDialogueHUDStatics.NewDialogueOptionData"))
 struct FDialogueOptionData
 {
 	GENERATED_BODY()
@@ -99,7 +99,6 @@ class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueOptionInterface
 {
 	GENERATED_BODY()
 
-
 public:
 	
 	/**
@@ -107,7 +106,7 @@ public:
 	 * 
 	 * @return The current dialogue option data.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|Option", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|Option")
 	FDialogueOptionData GetDialogueOptionData() const;
 	virtual FDialogueOptionData GetDialogueOptionData_Implementation() const = 0;
 
@@ -116,31 +115,31 @@ public:
 	 * 
 	 * @param NewData The new data to set for the dialogue option.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|Option", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|Option")
 	void SetNewDialogueOptionData(const FDialogueOptionData& NewData);
 	virtual void SetNewDialogueOptionData_Implementation(const FDialogueOptionData& NewData) = 0;
 
 	/**
 	 * Resets the dialogue option data to its default state.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|Option", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|Option")
 	void ResetDialogueOptionData();
 	virtual void ResetDialogueOptionData_Implementation() = 0;
 
 	/**
 	 * Responsible for setting visual data from Dialogue Option data.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|Option", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|Option")
 	void InitializeDialogueOption();
 	virtual void InitializeDialogueOption_Implementation() = 0;
 
 	/**
 	 * Processes the event of a dialogue option being selected.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|Option", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|Option")
 	void ProcessOptionSelected();
 	virtual void ProcessOptionSelected_Implementation() = 0;
-
+	
 	virtual FOnDialogueOptionSelected& GetDialogueOptionSelectedHandle() = 0;
 };
 

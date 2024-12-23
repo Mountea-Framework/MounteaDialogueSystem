@@ -51,7 +51,7 @@ enum class EDecoratorsInfoStyle : uint8
 };
 
 UENUM(BlueprintType)
-enum class ENodeType : uint8
+enum class ENodeCornerType : uint8
 {
 	ENT_SoftCorners			UMETA(DisplayName="Soft Corners"),
 	ENT_HardCorners			UMETA(DisplayName="Hard Corners")
@@ -88,7 +88,7 @@ private:
 #pragma region GraphNodes
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
-	ENodeType NodeType;
+	ENodeCornerType NodeType;
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	ENodeTheme NodeTheme;
@@ -201,7 +201,7 @@ private:
 	 * The system will use this URL to download and apply the tags if allowed.
 	 * Default: @link https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini
 	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay=true, meta=(ConfigRestartRequired=true))
+	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay, meta=(ConfigRestartRequired=true))
 	FString GameplayTagsURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini");
 	
 #pragma endregion
@@ -230,7 +230,7 @@ public:
 	ENodeTheme GetNodeTheme() const
 	{ return NodeTheme; };
 
-	ENodeType GetNodeType() const
+	ENodeCornerType GetNodeType() const
 	{ return NodeType; };
 
 	bool ShowDetailedInfo_NumDecorators() const

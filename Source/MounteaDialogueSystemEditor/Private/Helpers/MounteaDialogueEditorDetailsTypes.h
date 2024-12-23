@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Interfaces/MounteaDialogueParticipantInterface.h"
+#include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 
 struct FPIEInstanceData
 {

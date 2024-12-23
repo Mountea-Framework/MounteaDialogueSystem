@@ -444,43 +444,28 @@ UMounteaDialogueContext* UMounteaDialogueSystemBFC::CreateDialogueContext(UObjec
 
 AActor* UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(const UObject* Manager)
 {
-	if (!IsValid(Manager))
+	if (!Manager || !Manager->GetWorld())
 		return nullptr;
-
-	const APlayerState* playerState = Cast<APlayerState>(Manager);
-	if (IsValid(playerState))
-	{
-		if (IsValid(playerState->GetPlayerController()))
-			return playerState->GetPlayerController();
-		return  playerState->GetPawn();
-	}
-
-	auto worldContext = Manager->GetWorld();
-	if (!IsValid(worldContext))
-		return nullptr;
-
-	return worldContext->GetFirstPlayerController();
+	
+	if (const APlayerController* PC = Cast<APlayerController>(Manager))
+		return const_cast<APlayerController*>(PC);
+        
+	if (const APawn* Pawn = Cast<APawn>(Manager))
+		return Pawn->GetController();
+        
+	if (const APlayerState* PS = Cast<APlayerState>(Manager))
+		return PS->GetPlayerController();
+	
+	return Manager->GetWorld()->GetFirstPlayerController();
 }
 
 AActor* UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(const TScriptInterface<const IMounteaDialogueManagerInterface>& Manager)
 {
-	if (!IsValid(Manager.GetObject()))
+	UObject* playerManagerObject = Manager.GetObject();
+	if (!IsValid(playerManagerObject))
 		return nullptr;
-
-	const APlayerState* playerState = Cast<APlayerState>(Manager->Execute_GetOwningActor(Manager.GetObject()));
-	if (IsValid(playerState))
-	{
-		if (IsValid(playerState->GetPlayerController()))
-			return playerState->GetPlayerController();
-		return  playerState->GetPawn();
-	}
-
-	// TODO: Make sure this is local run only, so we can get the first Player
-	auto worldContext = Manager.GetObject()->GetWorld();
-	if (!IsValid(worldContext))
-		return nullptr;
-
-	return worldContext->GetFirstPlayerController();
+	
+	return GetDialogueManagerLocalOwner(playerManagerObject);
 }
 
 ENetRole UMounteaDialogueSystemBFC::GetOwnerLocalRole(const AActor* ForActor)
@@ -713,7 +698,7 @@ bool UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(const UWorld* WorldCont
 	return !UKismetSystemLibrary::IsDedicatedServer(WorldContext);
 }
 
-TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(AActor* ParticipantActor, bool& bResult)
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(UObject* ParticipantActor, bool& bResult)
 {
 	bResult = false;
 	
@@ -731,10 +716,14 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC
 		return resultValue;
 	}
 
-	TArray<UActorComponent*> actorComponets = ParticipantActor->GetComponentsByInterface(UMounteaDialogueParticipantInterface::StaticClass());
+	AActor* dialogueParticipantActor = Cast<AActor>(ParticipantActor);
+	if (!IsValid(dialogueParticipantActor))
+		return nullptr;
+	
+	TArray<UActorComponent*> actorComponets = dialogueParticipantActor->GetComponentsByInterface(UMounteaDialogueParticipantInterface::StaticClass());
 	if (actorComponets.Num() == 0)
 	{
-		LOG_ERROR(TEXT("[FindDialogueParticipantInterface] Actor %s has no Dialogue Participant Component!"), *ParticipantActor->GetName())
+		LOG_ERROR(TEXT("[FindDialogueParticipantInterface] Actor %s has no Dialogue Participant Component!"), *dialogueParticipantActor->GetName())
 		return nullptr;
 	}
 

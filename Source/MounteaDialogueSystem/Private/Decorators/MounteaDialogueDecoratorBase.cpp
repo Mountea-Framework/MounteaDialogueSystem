@@ -3,7 +3,7 @@
 #include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
-#include "Interfaces/MounteaDialogueManagerInterface.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 
 #if WITH_EDITOR

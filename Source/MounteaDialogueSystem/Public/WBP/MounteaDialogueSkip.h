@@ -16,6 +16,10 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSkip : public UUserWidget, publi
 	GENERATED_BODY()
 
 public:
+	
+	UMounteaDialogueSkip(const FObjectInitializer& ObjectInitializer);
+
+public:
 
 	virtual void RequestShowWidget_Implementation(const FVector2D& FadeProgressDuration) override;
 	virtual void RequestHideWidget_Implementation() override;
