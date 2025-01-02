@@ -10,6 +10,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
 
 UMounteaDialogueParticipant::UMounteaDialogueParticipant()
 	: DefaultParticipantState(EDialogueParticipantState::EDPS_Enabled)

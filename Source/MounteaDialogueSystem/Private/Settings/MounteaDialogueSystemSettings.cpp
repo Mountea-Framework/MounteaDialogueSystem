@@ -1,7 +1,7 @@
 // All rights reserved Dominik Pavlicek 2023
 
 
-#include "Helpers/MounteaDialogueSystemSettings.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
 
 #include "Engine/Font.h"
 #include "Settings/MounteaDialogueConfiguration.h"
