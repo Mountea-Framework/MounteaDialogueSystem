@@ -148,6 +148,12 @@ EMounteaDialogueLoggingVerbosity UMounteaDialogueSystemSettings::GetAllowedLoggV
 	return static_cast<EMounteaDialogueLoggingVerbosity>(LogVerbosity);
 }
 
+float UMounteaDialogueSystemSettings::GetSkipDuration() const
+{
+	auto dialogueConfig = DialogueConfiguration.LoadSynchronous();
+	return dialogueConfig ? dialogueConfig->SkipDuration : 1.f;
+}
+
 FSlateFontInfo UMounteaDialogueSystemSettings::SetupDefaultFontSettings()
 {
 	FSlateFontInfo ReturnFontInfo;

@@ -175,6 +175,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
 	EMounteaDialogueLoggingVerbosity GetAllowedLoggVerbosity() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
+	float GetSkipDuration() const;
 	
 protected:
 
