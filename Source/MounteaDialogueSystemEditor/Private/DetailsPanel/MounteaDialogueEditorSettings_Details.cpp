@@ -12,6 +12,7 @@
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
+#include "Slate/MounteaDialogueFilePathWidget.h"
 #include "Widgets/Text/SRichTextBlock.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueEditorSettings_Details"
@@ -86,34 +87,12 @@ void FMounteaDialogueGraphEditorSettings_Details::CustomizeDetails(IDetailLayout
 	.MinDesiredWidth(250.f)
 	.MaxDesiredWidth(0.f)
 	[
-		SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot()
-		.FillWidth(1.f)
-		.VAlign(VAlign_Center)
-		[
-			SNew(STextBlock)
-			.Text_Lambda([this]()
-			{
-				return FText::FromString(SourceSettings ? SourceSettings->GetNodeReplacementLocalPath() : TEXT(""));
-			})
-			.Font(IDetailLayoutBuilder::GetDetailFont())
-		]
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.Padding(2.0f)
-		.VAlign(VAlign_Center)
-		[
-			SNew(SButton)
-			.ButtonStyle(FAppStyle::Get(), "SimpleButton")
-			.ContentPadding(FMargin(1, 0))
-			.OnClicked(this, &FMounteaDialogueGraphEditorSettings_Details::OnOpenFolderButtonClicked)
-			.ToolTipText(LOCTEXT("OpenFolderTooltip", "Open the folder containing the configuration file"))
-			[
-				SNew(SImage)
-				.Image(FAppStyle::GetBrush("Icons.FolderOpen"))
-				.ColorAndOpacity(FSlateColor::UseForeground())
-			]
-		]
+		SNew(SMounteaDialogueFilePathWidget)
+		.OnGetFilePath_Lambda([this]() -> FString
+		{
+			return SourceSettings ? SourceSettings->GetNodeReplacementLocalPath() : TEXT("");
+		})
+		.Font(IDetailLayoutBuilder::GetDetailFont())
 	];
 }
 
@@ -211,8 +190,9 @@ FReply FMounteaDialogueGraphEditorSettings_Details::HandleButtonClicked(const TS
 void FMounteaDialogueGraphEditorSettings_Details::ShowDownloadConfirmationDialog()
 {
 	TSharedRef<SWindow> ModalWindow = SNew(SWindow)
-		.Title(FText::FromString(TEXT("⚠ Download Confirmation  ⚠")))
+		.Title(FText::FromString(TEXT("⚠ Download Confirmation ⚠")))
 		.SizingRule(ESizingRule::Autosized)
+		.ClientSize(FVector2D(400, 150))
 		.AutoCenter(EAutoCenter::PreferredWorkArea)
 		.HasCloseButton(false)
 		.SupportsMinimize(false)
@@ -221,7 +201,7 @@ void FMounteaDialogueGraphEditorSettings_Details::ShowDownloadConfirmationDialog
 	TSharedRef<SVerticalBox> ContentBox = SNew(SVerticalBox)
 		+ SVerticalBox::Slot()
 		.AutoHeight()
-		.Padding(10.0f)
+		.Padding(10.0f, 10.0f, 10.0f, 2.0f)
 		[
 			SNew(SHorizontalBox)
 			+ SHorizontalBox::Slot()
@@ -235,7 +215,7 @@ void FMounteaDialogueGraphEditorSettings_Details::ShowDownloadConfirmationDialog
 			.AutoWidth()
 			[
 				SNew(SRichTextBlock)
-				.Text(FText::FromString(TEXT("<RichTextBlock.Bold>'Node Replacements'</>")))
+				.Text(FText::FromString(TEXT("<RichTextBlock.Bold>Node Replacements</>")))
 				.ToolTipText(FText::Format(
 					LOCTEXT("MounteaDialogueGraphEditorSettings_Details_Validation", "Node Replacements configuration URL:\n{0}\n\nDo not download unless you trust this URL!"),
 					FText::FromString(SourceSettings->GetNodeReplacementURL())))
@@ -244,19 +224,27 @@ void FMounteaDialogueGraphEditorSettings_Details::ShowDownloadConfirmationDialog
 			.AutoWidth()
 			[
 				SNew(STextBlock)
-				.Text(FText::FromString(TEXT(" data?\nMake sure you are downloading only from verified sources!")))
+				.Text(FText::FromString(TEXT(" data?")))
 				.AutoWrapText(true)
 			]
 		]
 		+ SVerticalBox::Slot()
 		.AutoHeight()
-		.Padding(10.f)
+		.Padding(10.0f, 0.0f, 10.0f, 0.0f)
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString(TEXT("Make sure you are downloading only from verified sources!")))
+			.AutoWrapText(true)
+		]
+		+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
 		.HAlign(HAlign_Right)
-		.VAlign(VAlign_Center)
+		.VAlign(VAlign_Bottom)
 		[
 			SNew(SHorizontalBox)
 			+ SHorizontalBox::Slot()
 			.AutoWidth()
+			.Padding(0.0f, 0.0f, 5.0f, 5.0f)
 			[
 				SNew(SButton)
 				.Text(FText::FromString(TEXT("Yes")))
@@ -267,9 +255,8 @@ void FMounteaDialogueGraphEditorSettings_Details::ShowDownloadConfirmationDialog
 				})
 			]
 			+ SHorizontalBox::Slot()
-			.Padding(10.f)
-			+ SHorizontalBox::Slot()
 			.AutoWidth()
+			.Padding(0.0f, 0.0f, 5.0f, 5.0f)
 			[
 				SNew(SButton)
 				.Text(FText::FromString(TEXT("No")))
