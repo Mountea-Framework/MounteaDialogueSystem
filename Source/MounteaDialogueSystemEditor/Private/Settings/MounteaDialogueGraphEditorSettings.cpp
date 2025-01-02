@@ -24,8 +24,6 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAl
 	CoolDownRate = 10.f;
 
 	WireWidth = 0.8f;
-	//WireStyle = EWiringStyle::EWS_Simple;
-	//BubbleDrawRule = EBubbleDrawRule::EBDR_OnSelected;
 
 	bAllowRenameNodes = true;
 	bDisplayAutomaticNames = false;
@@ -40,8 +38,6 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAl
 	bDisplayStandardNodes = true;
 }
 
-#if WITH_EDITOR
-
 void UMounteaDialogueGraphEditorSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -49,12 +45,8 @@ void UMounteaDialogueGraphEditorSettings::PostEditChangeProperty(FPropertyChange
 	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphEditorSettings, AdvancedWiringConnectionTangent))
 	{
 		if (FMath::IsNearlyZero(AdvancedWiringConnectionTangent.Y, 0.01f))
-		{
 			AdvancedWiringConnectionTangent.Y = 1.f;
-		}
 	}
 }
-
-#endif
 
 #undef LOCTEXT_NAMESPACE
