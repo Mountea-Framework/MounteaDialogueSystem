@@ -29,6 +29,7 @@
 #include "AssetActions/MounteaDialogueConfigurationAssetAction.h"
 #include "AssetActions/MounteaDialogueDataTableAssetAction.h"
 #include "DetailsPanel/MounteaDialogueDecorator_Details.h"
+#include "DetailsPanel/MounteaDialogueEditorSettings_Details.h"
 #include "DetailsPanel/MounteaDialogueGraph_Details.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "HelpButton/MDSCommands.h"
@@ -187,12 +188,14 @@ void FMounteaDialogueSystemEditor::StartupModule()
 				FOnGetDetailCustomizationInstance::CreateStatic(&FMounteaDialogueGraphNode_Details::MakeInstance),
 				FOnGetDetailCustomizationInstance::CreateStatic(&FMounteaDialogueDecorator_Details::MakeInstance),
 				FOnGetDetailCustomizationInstance::CreateStatic(&FMounteaDialogueGraph_Details::MakeInstance),
+				FOnGetDetailCustomizationInstance::CreateStatic(&FMounteaDialogueGraphEditorSettings_Details::MakeInstance),
 			};
 			RegisteredCustomClassLayouts =
 			{
 				UMounteaDialogueGraphNode::StaticClass()->GetFName(),
 				UMounteaDialogueDecoratorBase::StaticClass()->GetFName(),
 				UMounteaDialogueGraph::StaticClass()->GetFName(),
+				UMounteaDialogueGraphEditorSettings::StaticClass()->GetFName(),
 			};
 			for (int32 i = 0; i < RegisteredCustomClassLayouts.Num(); i++)
 			{

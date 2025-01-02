@@ -162,6 +162,13 @@ void FMounteaDialogueGraphEditorStyle::Create()
 
 	StyleSet->Set("MDSStyleSet.Buttons.Style", MounteaButtonStyle);
 
+	FButtonStyle MounteaCloseButtonStyle = FAppStyle::Get().GetWidgetStyle<FButtonStyle>("Button");;
+		MounteaCloseButtonStyle.Normal.TintColor = FLinearColor(1.f, 0.1f, 0.1f, 0.65f);
+		MounteaCloseButtonStyle.Hovered.TintColor = FLinearColor(0.8f, 0.1f, 0.1f, 1.f);
+		MounteaCloseButtonStyle.Pressed.TintColor = FLinearColor(1.0f, 0.1f, 0.1f, 0.85f);
+
+	StyleSet->Set("MDSStyleSet.Buttons.CloseStyle", MounteaCloseButtonStyle);
+
 	{
 		const FScrollBarStyle ScrollBar = GetWidgetStyle<FScrollBarStyle>( "ScrollBar" );
 
