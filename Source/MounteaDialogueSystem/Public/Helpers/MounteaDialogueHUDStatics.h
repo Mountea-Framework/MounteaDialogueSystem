@@ -428,6 +428,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Getter"))
 	static int32 GetOptionIndex(UObject* ContainerObject, const UUserWidget* OptionWidget);
 
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|UserInterface|OptionsContainer", meta=(CustomTag="MounteaK2Setter"))
+	static void ToggleForcedFocus(UObject* ContainerObject, bool bIsEnabled);
+	
 	// --- Dialogue Row Interface functions ------------------------------
 
 	/**

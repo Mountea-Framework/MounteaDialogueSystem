@@ -13,7 +13,7 @@
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 
 UMounteaDialogueOptionsContainer::UMounteaDialogueOptionsContainer(const FObjectInitializer& ObjectInitializer) :
-	Super(ObjectInitializer), FocusedOption(INDEX_NONE), LastFocusedOption(INDEX_NONE)
+	Super(ObjectInitializer), FocusedOption(INDEX_NONE), LastFocusedOption(INDEX_NONE), bForcedFocusEnabled(true)
 {
 	bIsFocusable = true;
 }
@@ -22,22 +22,25 @@ void UMounteaDialogueOptionsContainer::NativeTick(const FGeometry& MyGeometry, f
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
-	TArray<TObjectPtr<UUserWidget>> dialogueOptions;
-	DialogueOptions.GenerateValueArray(dialogueOptions);
-
-	TObjectPtr<UUserWidget> focusableWidget = nullptr;
-	if (dialogueOptions.Num() > 0)
+	if (bForcedFocusEnabled)
 	{
-		if (dialogueOptions.IsValidIndex(FocusedOption))
-			focusableWidget = dialogueOptions[FocusedOption];
-		else if (dialogueOptions.IsValidIndex(LastFocusedOption))
-			focusableWidget = dialogueOptions[LastFocusedOption];
-		else
-			focusableWidget = nullptr;
+		TArray<TObjectPtr<UUserWidget>> dialogueOptions;
+		DialogueOptions.GenerateValueArray(dialogueOptions);
 
-		if (focusableWidget != nullptr)
+		TObjectPtr<UUserWidget> focusableWidget = nullptr;
+		if (dialogueOptions.Num() > 0)
 		{
-			IMounteaFocusableWidgetInterface::Execute_SetFocusState(focusableWidget, true);
+			if (dialogueOptions.IsValidIndex(FocusedOption))
+				focusableWidget = dialogueOptions[FocusedOption];
+			else if (dialogueOptions.IsValidIndex(LastFocusedOption))
+				focusableWidget = dialogueOptions[LastFocusedOption];
+			else
+				focusableWidget = nullptr;
+
+			if (focusableWidget != nullptr)
+			{
+				IMounteaFocusableWidgetInterface::Execute_SetFocusState(focusableWidget, true);
+			}
 		}
 	}
 }
@@ -241,4 +244,9 @@ void UMounteaDialogueOptionsContainer::SetFocusedOption_Implementation(const int
 
 	if (foundWidget->Implements<UMounteaFocusableWidgetInterface>())
 		IMounteaFocusableWidgetInterface::Execute_SetFocusState(foundWidget, true);
+}
+
+void UMounteaDialogueOptionsContainer::ToggleForcedFocus_Implementation(const bool bEnable)
+{
+	bForcedFocusEnabled = bEnable;
 }
