@@ -272,7 +272,10 @@ public:
 	FString GetNodeReplacementURL() const
 	{ return NodeReplacementURL; };
 
-#pragma endregion 
+	FString GetNodeReplacementLocalPath() const;
+
+#pragma endregion
+
 
 #pragma region GraphDecorators_Getters
 

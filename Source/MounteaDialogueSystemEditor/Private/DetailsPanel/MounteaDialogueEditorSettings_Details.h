@@ -16,6 +16,7 @@ public:
 	static TSharedRef<IDetailCustomization> MakeInstance() { return MakeShared<Self>(); }
 	
 	FReply OnDownloadJsonButtonClicked();
+	FReply OnOpenFolderButtonClicked();
 	
 	// IDetailCustomization interface
 	/** Called when details should be customized */
@@ -24,8 +25,7 @@ public:
 protected:
 
 	void HandleJsonDownloadResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bSuccess);
-    
-	// JSON Processing
+	
 	void ProcessDownloadedJson(const FString& JsonString);
 	
 	void SendJsonDownloadRequest();

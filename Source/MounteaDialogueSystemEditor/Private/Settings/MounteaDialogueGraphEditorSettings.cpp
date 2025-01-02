@@ -49,4 +49,23 @@ void UMounteaDialogueGraphEditorSettings::PostEditChangeProperty(FPropertyChange
 	}
 }
 
+FString UMounteaDialogueGraphEditorSettings::GetNodeReplacementLocalPath() const
+{
+	FString PluginBaseDir = FPaths::ConvertRelativePathToFull(
+		FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("MounteaDialogueSystem"))
+	);
+	
+	FString ConfigPath = FPaths::Combine(
+		PluginBaseDir,
+		TEXT("Config"),
+		TEXT("node_replacements.json")
+	);
+	
+	// Convert to full path and normalize
+	ConfigPath = FPaths::ConvertRelativePathToFull(ConfigPath);
+	FPaths::NormalizeFilename(ConfigPath);
+
+	return ConfigPath;
+}
+
 #undef LOCTEXT_NAMESPACE

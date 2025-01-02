@@ -25,6 +25,20 @@ FReply FMounteaDialogueGraphEditorSettings_Details::OnDownloadJsonButtonClicked(
 	return FReply::Handled();
 }
 
+FReply FMounteaDialogueGraphEditorSettings_Details::OnOpenFolderButtonClicked()
+{
+	if (!SourceSettings) return FReply::Unhandled();
+    
+	const FString FilePath = SourceSettings->GetNodeReplacementLocalPath();
+	if (!FilePath.IsEmpty())
+	{
+		const FString FolderPath = FPaths::GetPath(FilePath);
+		FPlatformProcess::ExploreFolder(*FolderPath);
+	}
+    
+	return FReply::Handled();
+}
+
 void FMounteaDialogueGraphEditorSettings_Details::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
 	TArray<TWeakObjectPtr<UObject>> ObjectsBeingCustomized;
@@ -41,7 +55,7 @@ void FMounteaDialogueGraphEditorSettings_Details::CustomizeDetails(IDetailLayout
 	
 	DownloadJsonButtonStyle = FMounteaDialogueGraphEditorStyle::GetWidgetStyle<FButtonStyle>(TEXT("MDSStyleSet.Buttons.CloseStyle"));
 		
-	IDetailCategoryBuilder& Category = DetailBuilder.EditCategory("NodesSettings");
+	IDetailCategoryBuilder& Category = DetailBuilder.EditCategory("NodeFixConfiguration", FText::GetEmpty(), ECategoryPriority::Uncommon);
 
 	Category.AddCustomRow(LOCTEXT("DownloadJsonButton", "Download Node Replacement Json"))
 	.ValueContent()
@@ -58,6 +72,47 @@ void FMounteaDialogueGraphEditorSettings_Details::CustomizeDetails(IDetailLayout
 				LOCTEXT("DownloadJsonButtonTooltip", "Attempts to download configuration file from URL.\nURL is saved in NodeReplacementURL attribute.\nCurrent value: {0}"),
 				FText::FromString(SourceSettings->GetNodeReplacementURL())
 			))
+		]
+	];
+
+	Category.AddCustomRow(LOCTEXT("NodeReplacementLocalPath", "Node Replacement Local Path"))
+	.NameContent()
+	[
+		SNew(STextBlock)
+		.Text(LOCTEXT("NodeReplacementLocalPathLabel", "Node Replacement Local Path"))
+		.Font(IDetailLayoutBuilder::GetDetailFont())
+	]
+	.ValueContent()
+	.MinDesiredWidth(250.f)
+	.MaxDesiredWidth(0.f)
+	[
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		.FillWidth(1.f)
+		.VAlign(VAlign_Center)
+		[
+			SNew(STextBlock)
+			.Text_Lambda([this]()
+			{
+				return FText::FromString(SourceSettings ? SourceSettings->GetNodeReplacementLocalPath() : TEXT(""));
+			})
+			.Font(IDetailLayoutBuilder::GetDetailFont())
+		]
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.Padding(2.0f)
+		.VAlign(VAlign_Center)
+		[
+			SNew(SButton)
+			.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+			.ContentPadding(FMargin(1, 0))
+			.OnClicked(this, &FMounteaDialogueGraphEditorSettings_Details::OnOpenFolderButtonClicked)
+			.ToolTipText(LOCTEXT("OpenFolderTooltip", "Open the folder containing the configuration file"))
+			[
+				SNew(SImage)
+				.Image(FAppStyle::GetBrush("Icons.FolderOpen"))
+				.ColorAndOpacity(FSlateColor::UseForeground())
+			]
 		]
 	];
 }
@@ -86,19 +141,8 @@ void FMounteaDialogueGraphEditorSettings_Details::ProcessDownloadedJson(const FS
 		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("Failed to parse downloaded JSON data\nPlease, report this error.")));
 		return;
 	}
-	
-	const FString PluginBaseDir = FPaths::ConvertRelativePathToFull(
-		FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("MounteaDialogueSystem"))
-	);
-	
-	FString ConfigPath = FPaths::Combine(
-		PluginBaseDir,
-		TEXT("Config"),
-		TEXT("node_replacements.json")
-	);
-	
-	ConfigPath = FPaths::ConvertRelativePathToFull(ConfigPath);
-	FPaths::NormalizeFilename(ConfigPath);
+
+	FString ConfigPath = SourceSettings->GetNodeReplacementLocalPath();
 	
 	FString ConfigDir = FPaths::GetPath(ConfigPath);
 	if (!FPlatformFileManager::Get().GetPlatformFile().DirectoryExists(*ConfigDir))
@@ -141,7 +185,7 @@ void FMounteaDialogueGraphEditorSettings_Details::ProcessDownloadedJson(const FS
 	if (FJsonSerializer::Serialize(FinalJsonObject.ToSharedRef(), Writer))
 	{
 		if (FFileHelper::SaveStringToFile(OutputString, *ConfigPath))
-			FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("JSON data successfully saved!\nPlease, report this error.")));
+			FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("JSON data successfully saved!")));
 		else
 			FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("Failed to save JSON file\nPlease, report this error.")));
 	}
