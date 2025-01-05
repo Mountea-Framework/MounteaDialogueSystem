@@ -54,6 +54,7 @@ private:
 	
 	void LauncherButtonClicked() const;
 	void DialoguerButtonClicked() const;
+	void YoutubeButtonClicked() const;
 	void WikiButtonClicked() const;
 	void PluginButtonClicked() const;
 	void RegisterMenus();

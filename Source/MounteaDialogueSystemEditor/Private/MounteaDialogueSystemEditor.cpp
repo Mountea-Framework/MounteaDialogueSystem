@@ -538,6 +538,16 @@ void FMounteaDialogueSystemEditor::DialoguerButtonClicked() const
 	}
 }
 
+void FMounteaDialogueSystemEditor::YoutubeButtonClicked() const
+{
+	const FString URL = "https://www.youtube.com/playlist?list=PLIU53wA8zZmhTPKGFzqYzHiMArrsSyQWh";
+
+	if (!URL.IsEmpty())
+	{
+		FPlatformProcess::LaunchURL(*URL, nullptr, nullptr);
+	}
+}
+
 void FMounteaDialogueSystemEditor::WikiButtonClicked() const
 {
 	const FString URL = "https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Getting-Started";
@@ -759,6 +769,15 @@ TSharedRef<SWidget> FMounteaDialogueSystemEditor::MakeMounteaMenuWidget() const
 			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Wiki"),
 			FUIAction(
 				FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::WikiButtonClicked)
+			)
+		);
+		// Youtube Entry
+		MenuBuilder.AddMenuEntry(
+			LOCTEXT("MounteaSystemEditor_YoutubeButton_Label", "Mountea Dialogue Youtube"),
+			LOCTEXT("MounteaSystemEditor_YoutubeButton_ToolTip", "👁️ Watch Mountea Dialogue Youtube videos. Those videos can be helpful if you are struggling."),
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Youtube"),
+			FUIAction(
+				FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::YoutubeButtonClicked)
 			)
 		);
 	}
