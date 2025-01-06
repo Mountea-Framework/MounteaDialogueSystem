@@ -58,6 +58,7 @@ private:
 	void WikiButtonClicked() const;
 	void PluginButtonClicked() const;
 	void RegisterMenus();
+	void SettingsButtonClicked() const;
 	TSharedRef<SWidget> MakeMounteaMenuWidget() const;
 
 protected:

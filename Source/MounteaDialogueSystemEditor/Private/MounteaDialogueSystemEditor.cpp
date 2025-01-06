@@ -6,6 +6,7 @@
 #include "ContentBrowserModule.h"
 #include "GameplayTagsManager.h"
 #include "HttpModule.h"
+#include "ISettingsModule.h"
 #include "AssetActions/MounteaDialogueAdditionalDataAssetAction.h"
 #include "AssetActions/MounteaDialogueDecoratorAssetAction.h"
 #include "AssetActions/MounteaDialogueGraphAssetAction.h"
@@ -747,9 +748,28 @@ void FMounteaDialogueSystemEditor::RegisterMenus()
 	}
 }
 
+void FMounteaDialogueSystemEditor::SettingsButtonClicked() const
+{
+	FModuleManager::LoadModuleChecked<ISettingsModule>("Settings").ShowViewer("Project",  TEXT("Mountea Framework"), TEXT("Mountea Dialogue System"));
+}
+
 TSharedRef<SWidget> FMounteaDialogueSystemEditor::MakeMounteaMenuWidget() const
 {
 	FMenuBuilder MenuBuilder(true, PluginCommands);
+
+	MenuBuilder.BeginSection("MounteaMenu_Tools", LOCTEXT("MounteaMenuOptions_Settings", "Mountea Dialogue Settings"));
+	{
+		// Dialoguer Entry
+		MenuBuilder.AddMenuEntry(
+			LOCTEXT("MounteaSystemEditor_SettingsButton_Label", "Mountea Dialogue Settings"),
+			LOCTEXT("MounteaSystemEditor_SettingsButton_ToolTip", "⚙ Open Mountea Dialogue Settings."),
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Settings"),
+			FUIAction(
+				FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::SettingsButtonClicked)
+			)
+		);
+	}
+	MenuBuilder.EndSection();
 
 	MenuBuilder.BeginSection("MounteaMenu_Links", LOCTEXT("MounteaMenuOptions_Options", "Mountea Links"));
 	{

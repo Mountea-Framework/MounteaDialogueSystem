@@ -157,6 +157,10 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.Youtube.Small", new IMAGE_BRUSH(TEXT("youtube_icon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Youtube.large", new IMAGE_BRUSH(TEXT("youtube_icon"), Icon64x64));
 
+	StyleSet->Set("MDSStyleSet.Settings", new IMAGE_BRUSH(TEXT("settings_icon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.Settings.Small", new IMAGE_BRUSH(TEXT("settings_icon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Settings.large", new IMAGE_BRUSH(TEXT("settings_icon"), Icon64x64));
+
 	StyleSet->Set("MDSStyleSet.DialogueSystemIcon", new IMAGE_BRUSH(TEXT("DialogueSystem_Icon"), Icon16x16));
 
 	const FButtonStyle MounteaButtonStyle = FButtonStyle()
