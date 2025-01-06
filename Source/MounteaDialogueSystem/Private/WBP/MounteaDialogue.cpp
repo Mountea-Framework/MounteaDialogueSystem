@@ -5,5 +5,5 @@
 
 UMounteaDialogue::UMounteaDialogue(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	bIsFocusable = true;
+	SetIsFocusable(true);
 }
