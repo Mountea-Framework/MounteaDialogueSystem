@@ -2,7 +2,7 @@
 
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 
-#include "MounteaDialogueSystemSettings.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 // Log category definition

@@ -7,7 +7,7 @@
 
 UMounteaDialogueOption::UMounteaDialogueOption(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer), DialogueOptionState(EDialogueOptionState::EDOS_Unfocused)
 {
-	SetIsFocusable(true);
+	SetIsFocusable(true);	
 }
 
 void UMounteaDialogueOption::NativeConstruct()

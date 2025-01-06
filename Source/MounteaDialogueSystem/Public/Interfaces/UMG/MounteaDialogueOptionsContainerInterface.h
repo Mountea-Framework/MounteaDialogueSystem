@@ -124,6 +124,10 @@ public:
 	TArray<UUserWidget*> GetDialogueOptions() const;
 	virtual TArray<UUserWidget*> GetDialogueOptions_Implementation() const = 0;
 
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|OptionsContainer")
+	void ToggleForcedFocus(const bool bEnable);
+	virtual void ToggleForcedFocus_Implementation(const bool bEnable) = 0;
+
 	/**
 	 *	Gets focused option. If options are empty then -1 is returned.
 	 * 

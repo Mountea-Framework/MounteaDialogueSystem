@@ -18,6 +18,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Net/Core/PushModel/PushModel.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
 
 
 UMounteaDialogueManager::UMounteaDialogueManager()
