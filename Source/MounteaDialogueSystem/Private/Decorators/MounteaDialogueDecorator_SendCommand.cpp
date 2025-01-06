@@ -3,7 +3,7 @@
 
 #include "Decorators/MounteaDialogueDecorator_SendCommand.h"
 
-#include "Interfaces/MounteaDialogueParticipantInterface.h"
+#include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 
 #define LOCTEXT_NAMESPACE "UMounteaDialogueDecorator_SendCommand"
 

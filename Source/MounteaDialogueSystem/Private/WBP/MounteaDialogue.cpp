@@ -2,3 +2,8 @@
 
 
 #include "WBP/MounteaDialogue.h"
+
+UMounteaDialogue::UMounteaDialogue(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+	SetIsFocusable(true);
+}

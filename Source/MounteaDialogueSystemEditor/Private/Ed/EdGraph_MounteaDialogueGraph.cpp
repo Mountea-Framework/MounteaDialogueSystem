@@ -8,6 +8,7 @@
 #include "Graph/MounteaDialogueGraph.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
+#include "Helpers/MounteaDialogueEditorDetailsTypes.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Helpers/MounteaDialogueGraphEditorUtilities.h"
 #include "Helpers/MounteaDialogueSystemEditorBFC.h"
@@ -250,6 +251,11 @@ UMounteaDialogueGraphNode* UEdGraph_MounteaDialogueGraph::GetParentNode(const UM
 		return Node.ParentNodes[0];
 	}
 	return nullptr;
+}
+
+void UEdGraph_MounteaDialogueGraph::UpdateFocusedInstance(const FPIEInstanceData& InstanceId)
+{
+	FocusedInstance = InstanceId;
 }
 
 void UEdGraph_MounteaDialogueGraph::AssignExecutionOrder()

@@ -3,12 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MounteaDialogueSystemSettings.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
 
 #include "Data/MounteaDialogueGraphDataTypes.h"
 
-#include "Interfaces/MounteaDialogueManagerInterface.h"
-#include "Interfaces/MounteaDialogueParticipantInterface.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
+#include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Blueprint/UserWidget.h"
@@ -85,8 +85,8 @@ public:
 	static UMounteaDialogueSystemSettings* GetDialogueSystemSettings()
 	{
 		return GetMutableDefault<UMounteaDialogueSystemSettings>();
-	};
-	
+	}
+		
 	/**
 	 * Tries to get default Dialogue Widget from Project Settings.
 	 * 
@@ -112,51 +112,6 @@ public:
 	 * Requests Execution for all Decorators for Graph and Context Node
 	 */
 	static bool ExecuteDecorators(const UObject* WorldContextObject, const UMounteaDialogueContext* DialogueContext);
-	
-	/**
-	 * Tries to close Dialogue.
-	 * 
-	 * ❗ Returns false if Dialogue Manager is not accessible❗
-	 * @param WorldContextObject	World Context Object
-	 * @param DialogueParticipant	Dialogue with which Participant to close
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers", meta=(Keywords="close, exit, dialogue"), meta=(CustomTag="MounteaK2Setter"))
-	static bool CloseDialogue(AActor* WorldContextObject, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant);
-
-	/**
-	 * Tries to initialize Dialogue.
-	 * ❗ Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
-	 * 
-	 * @param WorldContextObject	World Context Object
-	 * @param Initiator							Player State
-	 * @param MainParticipant			Main participant, the one who owns the Dialogue Graph
-	 * @param DialogueParticipants	Other participants, could be NPCs or other Players
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers", meta=(Keywords="start, initialize, dialogue"), meta=(CustomTag="MounteaK2Setter"))
-	static bool StartDialogue(const UObject* WorldContextObject, APlayerState* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants);
-	
-	/**
-	 * Tries to initialize Dialogue.
-	 * ❗ Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
-	 * 
-	 * @param WorldContextObject	World Context Object to read World info from
-	 * @param Initiator						Usually Player State or any Actor who implement `IMounteaDialogueManagerInterface`
-	 * @param DialogueParticipant	Other person, could be NPC or other Player
-	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Helpers", DisplayName="Advanced Dialogue Initialization", meta=(Keywords="start, initialize, dialogue"), meta=(CustomTag="MounteaK2Setter"))
-	static bool InitializeDialogue(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface>& DialogueParticipant);
-	
-	/**
-	 * Tries to initialize Dialogue with given Context.
-	 * ❗ Do not call from Actor's Begin Play, bindings on Manager might not be initialized yet❗
-	 * ❗ Preferred way to Initialize Dialogue is to call 'InitializeDialogue' instead❗
-	 * 
-	 * @param WorldContextObject	World Context Object
-	 * @param Initiator						Usually Player State or any Actor who implement `IMounteaDialogueManagerInterface`
-	 * @param DialogueParticipant	Other person, could be NPC or other Player
-	 * @param Context					Dialogue Context which is passed to Dialogue Manager
-	 */
-	static bool InitializeDialogueWithContext(const UObject* WorldContextObject, AActor* Initiator, const TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant, UMounteaDialogueContext* Context);
 
 	/**
 	 * Adds new participants to the Dialogue Manager.
@@ -198,8 +153,8 @@ public:
 	 * @param Context The Mountea dialogue context containing the active node and participants.
 	 * @return The best matching dialogue participant, or nullptr if no match is found.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="get,find"), meta=(CustomTag="MounteaK2Getter"))
-	static TScriptInterface<IMounteaDialogueParticipantInterface> FindBestMatchingParticipant(const UObject* WorldContextObject, const UMounteaDialogueContext* Context);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="get"), meta=(CustomTag="MounteaK2Getter"))
+	static TScriptInterface<IMounteaDialogueParticipantInterface> FindBestMatchingParticipant(const UMounteaDialogueContext* Context);
 
 	/**
 	 * Searches in Graph for Node by GUID.
@@ -348,9 +303,10 @@ public:
 	 * @return								Mountea Dialogue Participant reference
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="get, find, retrieve"), meta=(CustomTag="MounteaK2Getter"))
-	static TScriptInterface<IMounteaDialogueParticipantInterface> FindDialogueParticipantInterface(AActor* ParticipantActor, bool& bResult);
+	static TScriptInterface<IMounteaDialogueParticipantInterface> FindDialogueParticipantInterface(UObject* ParticipantActor, bool& bResult);
 
-	static APlayerController* FindPlayerController(AActor* ForActor);
+	static APawn* FindPlayerPawn(AActor* ForActor, int& SearchDepth);
+	static APlayerController* FindPlayerController(AActor* ForActor, int& SearchDepth);
 
 	static bool DoesNodeInvertSkipSettings(UMounteaDialogueGraphNode* Node);
 
@@ -391,7 +347,37 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta = (ClassFilter = "Interface"), meta=(DeterminesOutputType = "InterfaceFilter"), meta=(CustomTag="MounteaK2Getter"))
 	static UActorComponent* GetSingleComponentByInterface(const AActor* Target, TSubclassOf<UInterface> InterfaceFilter, bool& bResult);
+	
+	/**
+	 * Sorts given array of Dialogue Nodes based on their Execution Order.
+	 * 
+	 * @param SortedNodes OUT Nodes array that will be sorted
+	 */ 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="sort,order,diaogue,child,nodes"), meta=(CustomTag="MounteaK2Getter"))
+	static void SortNodes(TArray<UMounteaDialogueGraphNode*>& SortedNodes);
 
+	static UMounteaDialogueGraphNode* GetStartingNode(const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant, const UMounteaDialogueGraph* Graph);
+
+	static UMounteaDialogueContext* CreateDialogueContext(UObject* NewOwner, const TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants);
+	static UMounteaDialogueContext* CreateDialogueContext(UObject* NewOwner, const FMounteaDialogueContextReplicatedStruct& NewData);
+
+	static AActor* GetDialogueManagerLocalOwner(const UObject* Manager);
+	static AActor* GetDialogueManagerLocalOwner(const TScriptInterface<const IMounteaDialogueManagerInterface>& Manager);
+	static ENetRole GetOwnerLocalRole(const AActor* ForActor);
+
+	static TScriptInterface<IMounteaDialogueParticipantInterface> SwitchActiveParticipant(const UMounteaDialogueContext* DialogueContext);
+	static TScriptInterface<IMounteaDialogueParticipantInterface> FindParticipantByTag(const UMounteaDialogueContext* DialogueContext, const FGameplayTag& SearchTag);
+
+	static bool UpdateMatchingDialogueParticipant(UMounteaDialogueContext* Context, const TScriptInterface<IMounteaDialogueParticipantInterface>& NewActiveParticipant);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(CustomTag="MounteaK2Getter"))
+	static FDialogueRowData GetActiveDialogueData(const UMounteaDialogueContext* Context, bool& bResult);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(CustomTag="MounteaK2Getter"))
+	static bool DoesRowMatchParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& ParticipantInterface, const FDialogueRow& Row);
+
+	// --- Template functions ------------------------------
+	
 	template <typename NodeType>
 	static void SortNodes(TArray<NodeType*>& SortedNodes)
 	{
@@ -400,13 +386,26 @@ public:
 			return A.ExecutionOrder < B.ExecutionOrder;
 		});
 	}
-
-	/**
-	 * Sorts given array of Dialogue Nodes based on their Execution Order.
-	 * 
-	 * @param SortedNodes OUT Nodes array that will be sorted
-	 */ 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="sort,order,diaogue,child,nodes"), meta=(CustomTag="MounteaK2Getter"))
-	static void SortNodes(TArray<UMounteaDialogueGraphNode*>& SortedNodes);
+	
+	template<typename T>
+	static FString GetEnumFriendlyName(const T EnumValue, const bool bShortName = false)
+	{
+		static_assert(TIsEnum<T>::Value, "Template parameter must be an enum type");
+    
+		const UEnum* EnumPtr = StaticEnum<T>();
+		if (ensure(EnumPtr))
+		{
+			if (bShortName)
+			{
+				return EnumPtr->GetDisplayNameTextByValue(static_cast<int64>(EnumValue)).ToString();
+			}
+			else
+			{
+				return EnumPtr->GetDisplayNameTextByValue(static_cast<int64>(EnumValue)).ToString();
+			}
+		}
+    
+		return TEXT("Invalid");
+	}
 
 };

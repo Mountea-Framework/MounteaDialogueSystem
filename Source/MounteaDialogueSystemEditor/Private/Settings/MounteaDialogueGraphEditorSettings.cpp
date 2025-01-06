@@ -1,13 +1,12 @@
 // All rights reserved Dominik Pavlicek 2023
 
-
 #include "MounteaDialogueGraphEditorSettings.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphEditorSettings"
 
 UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAllowAutoGameplayTagsCheck(true)
 {
-	NodeType = ENodeType::ENT_SoftCorners;
+	NodeType = ENodeCornerType::ENT_SoftCorners;
 	NodeTheme = ENodeTheme::ENT_DarkTheme;
 	ArrowType = EArrowType::ERT_HollowArrow;
 	
@@ -24,8 +23,6 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAl
 	CoolDownRate = 10.f;
 
 	WireWidth = 0.8f;
-	//WireStyle = EWiringStyle::EWS_Simple;
-	//BubbleDrawRule = EBubbleDrawRule::EBDR_OnSelected;
 
 	bAllowRenameNodes = true;
 	bDisplayAutomaticNames = false;
@@ -37,10 +34,8 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAl
 	bAllowNativeDecoratorsEdit = false;
 	bUseAdvancedWiring = true;
 
-	bDisplayStandardNodes = false;
+	bDisplayStandardNodes = true;
 }
-
-#if WITH_EDITOR
 
 void UMounteaDialogueGraphEditorSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
@@ -49,12 +44,27 @@ void UMounteaDialogueGraphEditorSettings::PostEditChangeProperty(FPropertyChange
 	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphEditorSettings, AdvancedWiringConnectionTangent))
 	{
 		if (FMath::IsNearlyZero(AdvancedWiringConnectionTangent.Y, 0.01f))
-		{
 			AdvancedWiringConnectionTangent.Y = 1.f;
-		}
 	}
 }
 
-#endif
+FString UMounteaDialogueGraphEditorSettings::GetNodeReplacementLocalPath() const
+{
+	FString PluginBaseDir = FPaths::ConvertRelativePathToFull(
+		FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("MounteaDialogueSystem"))
+	);
+	
+	FString ConfigPath = FPaths::Combine(
+		PluginBaseDir,
+		TEXT("Config"),
+		TEXT("node_replacements.json")
+	);
+	
+	// Convert to full path and normalize
+	ConfigPath = FPaths::ConvertRelativePathToFull(ConfigPath);
+	FPaths::NormalizeFilename(ConfigPath);
+
+	return ConfigPath;
+}
 
 #undef LOCTEXT_NAMESPACE

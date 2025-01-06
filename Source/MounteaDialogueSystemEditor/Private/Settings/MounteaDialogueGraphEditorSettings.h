@@ -51,7 +51,7 @@ enum class EDecoratorsInfoStyle : uint8
 };
 
 UENUM(BlueprintType)
-enum class ENodeType : uint8
+enum class ENodeCornerType : uint8
 {
 	ENT_SoftCorners			UMETA(DisplayName="Soft Corners"),
 	ENT_HardCorners			UMETA(DisplayName="Hard Corners")
@@ -83,12 +83,31 @@ public:
 
 	UMounteaDialogueGraphEditorSettings();
 
-private:
+public:
+
+	virtual FText GetSectionText() const override
+	{
+		return NSLOCTEXT("MounteaDialogueEditorSystem", "MounteaSettingsEditorSection", "Mountea Dialogue System (Editor)");
+	}
+
+	virtual FText GetSectionDescription() const override
+	{
+		return NSLOCTEXT("MounteaDialogueEditorSystem", "MounteaSettingsEditorDescription", "Default values for Mountea Plugins (Editor).");
+	}
+
+	virtual FName GetContainerName() const override
+	{
+		return "Project";
+	}
+
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+
+protected:
 
 #pragma region GraphNodes
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
-	ENodeType NodeType;
+	ENodeCornerType NodeType;
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	ENodeTheme NodeTheme;
@@ -115,6 +134,16 @@ private:
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings", meta=(ShowTreeView))
 	TMap<TSoftClassPtr<UMounteaDialogueGraphNode>, FLinearColor> OverrideNodeBackgroundColours;
 
+	/**
+	 * URL for the Nodes Replacement configuration file.
+	 * 
+	 * This URL points to a remote file containing base Node Replacement definitions.
+	 * The system will use this URL to download and apply the tags if allowed.
+	 * Default: @link https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/refs/heads/master/Config/node_replacements.json
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings", AdvancedDisplay, meta=(ConfigRestartRequired=true))
+	FString NodeReplacementURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/refs/heads/master/Config/node_replacements.json");
+
 #pragma endregion
 
 #pragma region GraphDecorators
@@ -131,10 +160,8 @@ private:
 	 * ❗ EXPERIMENTAL FEATURE
 	 * If case of any compile issues TURN THIS ON
 	 *
-	 * If turned off, then standard Nodes will be hidden and Blueprint Graphs will display only custom K2 Nodes.
-	 * Might cause issues if you create Blueprint Classes that directly implement Dialogue Interfaces.
-	 *
-	 * This will also cause Interface Functions to disappear from `My Blueprint` panel, unless class inherits from C++ class which already implemented Interface functions.
+	 * If turned on custom K2 Nodes will contain additional details, which might break visual appearance
+	 * and might not work well with plugins like `BlueprintAssist`.
 	 */
 	UPROPERTY(config, EditDefaultsOnly,  Category = "BlueprintNodes", meta=(ConfigRestartRequired=true))
 	bool bDisplayStandardNodes;
@@ -203,27 +230,10 @@ private:
 	 * The system will use this URL to download and apply the tags if allowed.
 	 * Default: @link https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini
 	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay=true, meta=(ConfigRestartRequired=true))
+	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay, meta=(ConfigRestartRequired=true))
 	FString GameplayTagsURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini");
-	
+
 #pragma endregion
-	
-#if WITH_EDITOR
-	virtual FText GetSectionText() const override
-	{
-		return NSLOCTEXT("MounteaDialogueEditorSystem", "MounteaSettingsEditorSection", "Mountea Dialogue System (Editor)");
-	}
-
-	virtual FText GetSectionDescription() const override
-	{
-		return NSLOCTEXT("MounteaDialogueEditorSystem", "MounteaSettingsEditorDescription", "Default values for Mountea Plugins (Editor).");
-	}
-
-	virtual FName GetContainerName() const override
-	{
-		return "Project";
-	}
-#endif
 
 public:
 
@@ -232,7 +242,7 @@ public:
 	ENodeTheme GetNodeTheme() const
 	{ return NodeTheme; };
 
-	ENodeType GetNodeType() const
+	ENodeCornerType GetNodeType() const
 	{ return NodeType; };
 
 	bool ShowDetailedInfo_NumDecorators() const
@@ -261,7 +271,13 @@ public:
 		return false;
 	}
 
-#pragma endregion 
+	FString GetNodeReplacementURL() const
+	{ return NodeReplacementURL; };
+
+	FString GetNodeReplacementLocalPath() const;
+
+#pragma endregion
+
 
 #pragma region GraphDecorators_Getters
 
@@ -269,7 +285,6 @@ public:
 	{ return bAllowNativeDecoratorsEdit; };
 
 #pragma endregion 
-	
 
 #pragma region GraphWiring_Getters
 
@@ -331,14 +346,5 @@ public:
 	{ return GameplayTagsURL; };
 	
 #pragma endregion
-	
-#pragma region EDITOR
-	
-#if WITH_EDITOR
-
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-	
-#endif
-	
-#pragma endregion 
+ 
 };

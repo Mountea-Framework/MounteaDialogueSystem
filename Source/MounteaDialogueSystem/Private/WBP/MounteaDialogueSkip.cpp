@@ -3,6 +3,11 @@
 
 #include "WBP/MounteaDialogueSkip.h"
 
+UMounteaDialogueSkip::UMounteaDialogueSkip(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+	SetIsFocusable(true);
+}
+
 void UMounteaDialogueSkip::RequestShowWidget_Implementation(const FVector2D& FadeProgressDuration)
 {
 	

@@ -5,10 +5,76 @@
 
 #include "Data/MounteaDialogueGraphDataTypes.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
-#include "Helpers/MounteaDialogueUIBFL.h"
-#include "Interfaces/MounteaDialogueWBPInterface.h"
+#include "Helpers/MounteaDialogueHUDStatics.h"
+
+#include "Interfaces/HUD/MounteaDialogueWBPInterface.h"
 #include "Interfaces/UMG/MounteaDialogueOptionInterface.h"
+
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
+
+UMounteaDialogueOptionsContainer::UMounteaDialogueOptionsContainer(const FObjectInitializer& ObjectInitializer) :
+	Super(ObjectInitializer), FocusedOption(INDEX_NONE), LastFocusedOption(INDEX_NONE), bForcedFocusEnabled(true)
+{
+	SetIsFocusable(true);
+}
+
+void UMounteaDialogueOptionsContainer::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	if (bForcedFocusEnabled)
+	{
+		TArray<TObjectPtr<UUserWidget>> dialogueOptions;
+		DialogueOptions.GenerateValueArray(dialogueOptions);
+
+		TObjectPtr<UUserWidget> focusableWidget = nullptr;
+		if (dialogueOptions.Num() > 0)
+		{
+			if (dialogueOptions.IsValidIndex(FocusedOption))
+				focusableWidget = dialogueOptions[FocusedOption];
+			else if (dialogueOptions.IsValidIndex(LastFocusedOption))
+				focusableWidget = dialogueOptions[LastFocusedOption];
+			else
+				focusableWidget = nullptr;
+
+			if (focusableWidget != nullptr)
+			{
+				IMounteaFocusableWidgetInterface::Execute_SetFocusState(focusableWidget, true);
+			}
+		}
+	}
+}
+
+void UMounteaDialogueOptionsContainer::ClearChildOptionFocus(UUserWidget* Target)
+{
+	if (!IsValid(Target))
+		return;
+	
+	if (Target && Target->Implements<UMounteaFocusableWidgetInterface>())
+		IMounteaFocusableWidgetInterface::Execute_SetFocusState(Target, false);
+}
+
+void UMounteaDialogueOptionsContainer::ClearChildOptionsFocus()
+{
+	TArray<TObjectPtr<UUserWidget>> optionWidgets;
+	DialogueOptions.GenerateValueArray(optionWidgets);
+	
+	for (const auto& optionWidget : optionWidgets)
+	{
+		ClearChildOptionFocus(optionWidget);
+	}
+}
+
+void UMounteaDialogueOptionsContainer::ResetFocus(const UUserWidget* Requestor)
+{
+	ClearChildOptionsFocus();
+
+	auto newFocus = UMounteaDialogueHUDStatics::GetOptionIndex(this, Requestor);
+	if (newFocus == INDEX_NONE)
+		return;
+
+	Execute_SetFocusedOption(this, newFocus);
+}
 
 void UMounteaDialogueOptionsContainer::SetParentDialogueWidget_Implementation(UUserWidget* NewParentDialogueWidget)
 {
@@ -54,7 +120,15 @@ void UMounteaDialogueOptionsContainer::AddNewDialogueOption_Implementation(UMoun
 		if (dialogueOption.GetObject() && dialogueOption.GetInterface())
 		{
 			dialogueOption->GetDialogueOptionSelectedHandle().AddUniqueDynamic(this, &UMounteaDialogueOptionsContainer::ProcessOptionSelected);
-			dialogueOption->Execute_SetNewDialogueOptionData(dialogueOptionWidget, FDialogueOptionData( UMounteaDialogueUIBFL::GetDialogueNodeGuid(NewDialogueOption),  UMounteaDialogueUIBFL::GetDialogueNodeRow(NewDialogueOption)));
+			dialogueOption->Execute_SetNewDialogueOptionData(dialogueOptionWidget, FDialogueOptionData( UMounteaDialogueHUDStatics::GetDialogueNodeGuid(NewDialogueOption),  UMounteaDialogueHUDStatics::GetDialogueNodeRow(NewDialogueOption)));
+			dialogueOption->Execute_InitializeDialogueOption(dialogueOptionWidget);
+		}
+		TScriptInterface<IMounteaFocusableWidgetInterface> focusableDialogueOption = dialogueOptionWidget;
+		{
+			if (focusableDialogueOption.GetObject() && focusableDialogueOption.GetInterface())
+			{
+				focusableDialogueOption->GetOnMounteaFocusClearRequestedEventHandle().AddUniqueDynamic(this, &UMounteaDialogueOptionsContainer::ResetFocus);
+			}
 		}
 	}
 	else
@@ -63,7 +137,7 @@ void UMounteaDialogueOptionsContainer::AddNewDialogueOption_Implementation(UMoun
 		return;
 	}
 	
-	DialogueOptions.Add(UMounteaDialogueUIBFL::GetDialogueNodeGuid(NewDialogueOption), dialogueOptionWidget);
+	DialogueOptions.Add(UMounteaDialogueHUDStatics::GetDialogueNodeGuid(NewDialogueOption), dialogueOptionWidget);
 }
 
 void UMounteaDialogueOptionsContainer::AddNewDialogueOptions_Implementation(const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& NewDialogueOptions)
@@ -78,7 +152,7 @@ void UMounteaDialogueOptionsContainer::RemoveDialogueOption_Implementation(UMoun
 {
 	if (DirtyDialogueOption)
 	{
-		if (TObjectPtr<UUserWidget> dirtyOptionWidget = DialogueOptions.FindRef(UMounteaDialogueUIBFL::GetDialogueNodeGuid(DirtyDialogueOption)))
+		if (TObjectPtr<UUserWidget> dirtyOptionWidget = DialogueOptions.FindRef(UMounteaDialogueHUDStatics::GetDialogueNodeGuid(DirtyDialogueOption)))
 		{
 			TScriptInterface<IMounteaDialogueOptionInterface> dialogueOption = dirtyOptionWidget;
 			if (dialogueOption.GetObject() && dialogueOption.GetInterface())
@@ -86,10 +160,18 @@ void UMounteaDialogueOptionsContainer::RemoveDialogueOption_Implementation(UMoun
 				dialogueOption->GetDialogueOptionSelectedHandle().RemoveDynamic(this, &UMounteaDialogueOptionsContainer::ProcessOptionSelected);
 				dialogueOption->Execute_ResetDialogueOptionData(dirtyOptionWidget);
 			}
+			TScriptInterface<IMounteaFocusableWidgetInterface> focusableDialogueOption = dirtyOptionWidget;
+			{
+				if (focusableDialogueOption.GetObject() && focusableDialogueOption.GetInterface())
+				{
+					focusableDialogueOption->GetOnMounteaFocusClearRequestedEventHandle().RemoveDynamic(this, &UMounteaDialogueOptionsContainer::ResetFocus);
+				}
+
+			}
 		}
 		
 	}
-	DialogueOptions.Remove(UMounteaDialogueUIBFL::GetDialogueNodeGuid(DirtyDialogueOption));
+	DialogueOptions.Remove(UMounteaDialogueHUDStatics::GetDialogueNodeGuid(DirtyDialogueOption));
 }
 
 void UMounteaDialogueOptionsContainer::RemoveDialogueOptions_Implementation(const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& DirtyDialogueOptions)
@@ -132,4 +214,39 @@ TArray<UUserWidget*> UMounteaDialogueOptionsContainer::GetDialogueOptions_Implem
 		dialogueOptions.Add(dialogueOption.Value);
 
 	return dialogueOptions;
+}
+
+int32 UMounteaDialogueOptionsContainer::GetFocusedOptionIndex_Implementation() const
+{
+	return FocusedOption;
+}
+
+void UMounteaDialogueOptionsContainer::SetFocusedOption_Implementation(const int32 NewFocusedOption)
+{
+	if (NewFocusedOption == FocusedOption)
+		return;
+
+	LastFocusedOption = FocusedOption;
+
+	TArray<TObjectPtr<UUserWidget>> optionWidgets;
+	DialogueOptions.GenerateValueArray(optionWidgets);
+	
+	if (!optionWidgets.IsValidIndex(NewFocusedOption))
+		return;
+
+	UUserWidget* foundWidget = optionWidgets[NewFocusedOption].Get();
+	if (!IsValid(foundWidget))
+		return;
+
+	FocusedOption = NewFocusedOption;
+
+	ClearChildOptionsFocus();
+
+	if (foundWidget->Implements<UMounteaFocusableWidgetInterface>())
+		IMounteaFocusableWidgetInterface::Execute_SetFocusState(foundWidget, true);
+}
+
+void UMounteaDialogueOptionsContainer::ToggleForcedFocus_Implementation(const bool bEnable)
+{
+	bForcedFocusEnabled = bEnable;
 }

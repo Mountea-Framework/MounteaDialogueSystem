@@ -35,7 +35,7 @@ public:
 	 * @param WidgetAnchors The anchors for the widget, determining how the widget is positioned relative to its parent
 	 * @param WidgetMargin The margin for the widget, defining the padding or offset from the parent's bounds
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UI|Viewport")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|HUD|Viewport")
 	void AddChildWidget(UUserWidget* ChildWidget, const int32 ZOrder = 0, const FAnchors WidgetAnchors = FAnchors(0.f,0.f,1.f,1.f), const FMargin& WidgetMargin = FMargin());
 	virtual void AddChildWidget_Implementation(UUserWidget* ChildWidget, const int32 ZOrder = 0, const FAnchors WidgetAnchors = FAnchors(0.f,0.f,1.f,1.f), const FMargin& WidgetMargin = FMargin()) = 0;
 
@@ -44,7 +44,7 @@ public:
 	 *
 	 * @param ChildWidget     The child widget to be removed.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UI|Viewport")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|HUD|Viewport")
 	void RemoveChildWidget(UUserWidget* ChildWidget);
 	virtual void RemoveChildWidget_Implementation(UUserWidget* ChildWidget) = 0;
 };

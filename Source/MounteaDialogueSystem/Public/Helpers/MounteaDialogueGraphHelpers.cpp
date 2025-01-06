@@ -3,7 +3,7 @@
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Engine/World.h"
 
-#include "MounteaDialogueSystemSettings.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 // Log category definition
@@ -30,10 +30,12 @@ void PrintLog(const ELogVerbosity::Type Verbosity, const FString& Message, FLine
 				isVerbosityAllowed = EnumHasAnyFlags(AllowedLogging, EMounteaDialogueLoggingVerbosity::Warning);
 				break;
 			case ELogVerbosity::Display:
-			case ELogVerbosity::Log:
 				isVerbosityAllowed = EnumHasAnyFlags(AllowedLogging, EMounteaDialogueLoggingVerbosity::Info);
 				break;
 			case ELogVerbosity::VeryVerbose:
+				isVerbosityAllowed = false;
+				break;
+			case ELogVerbosity::Log:
 				isVerbosityAllowed = false;
 				break;
 			default:

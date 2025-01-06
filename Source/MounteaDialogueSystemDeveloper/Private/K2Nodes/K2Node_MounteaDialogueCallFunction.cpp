@@ -2,9 +2,9 @@
 
 #include "K2Nodes/K2Node_MounteaDialogueCallFunction.h"
 #include "BlueprintActionDatabaseRegistrar.h"
-#include "MounteaDialogueSystemEditor/Private/EditorStyle/FMounteaDialogueGraphEditorStyle.h"
-#include "MounteaDialogueSystemEditor/Private/Settings/MounteaDialogueGraphEditorSettings.h"
 #include "BlueprintNodeSpawner.h"
+#include "Kismet2/BlueprintEditorUtils.h"
+#include "Styling/MonuteaDialogueSystemDeveloperStyle.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueCallFunction"
 
@@ -13,9 +13,7 @@ void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabas
 	Super::GetMenuActions(actionRegistrar);
 
 	UClass* nodeClass = GetClass();
-
-	auto Settings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>();
-
+	
 	// Lambda for node customization
 	auto customizeNodeLambda = [](UEdGraphNode* newNode, bool bIsTemplateNode, UFunction* relevantFunction, UClass* relevantClass)
 	{
@@ -53,16 +51,9 @@ void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabas
 
 			for (UFunction* itrFunction : classFunctions)
 			{
-				if (Settings && !Settings->DisplayStandardNodes())
+				if (!itrFunction->HasAnyFunctionFlags(FUNC_BlueprintEvent))
 				{
 					itrFunction->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
-				}
-				else
-				{
-					if (!itrFunction->HasAnyFunctionFlags(FUNC_BlueprintEvent))
-					{
-						itrFunction->SetMetaData(TEXT("BlueprintInternalUseOnly"), TEXT("true"));
-					}
 				}
 
 				UBlueprintNodeSpawner* nodeSpawner = UBlueprintNodeSpawner::Create(GetClass());
@@ -78,7 +69,6 @@ FText UK2Node_MounteaDialogueCallFunction::GetToolTipHeading() const
 {
 	return LOCTEXT("MounteaDialogueCallFunctionFunctions", "Mountea Dialogue Function");
 }
-
 
 EFunctionCallType UK2Node_MounteaDialogueCallFunction::GetFunctionType() const
 {
@@ -136,7 +126,6 @@ FText UK2Node_MounteaDialogueCallFunction::GetTooltipText() const
 	}
 }
 
-
 FLinearColor UK2Node_MounteaDialogueCallFunction::GetNodeTitleColor() const
 {
 	switch (GetFunctionRole())
@@ -165,14 +154,37 @@ FSlateIcon UK2Node_MounteaDialogueCallFunction::GetIconAndTint(FLinearColor& out
 	switch (GetFunctionRole())
 	{
 		case EFunctionRole::Validate:
-			return FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.K2Node_ValidateIcon.small");
+			return FSlateIcon(FMonuteaDialogueSystemDeveloperStyle::GetAppStyleSetName(), "MDSStyleSet.K2Node_ValidateIcon.small");
 		case EFunctionRole::Set:
-			return FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.K2Node_SetterIcon.small");
+			return FSlateIcon(FMonuteaDialogueSystemDeveloperStyle::GetAppStyleSetName(), "MDSStyleSet.K2Node_SetterIcon.small");
 		case EFunctionRole::Get:
-			return FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.K2Node_GetterIcon.small");
+			return FSlateIcon(FMonuteaDialogueSystemDeveloperStyle::GetAppStyleSetName(), "MDSStyleSet.K2Node_GetterIcon.small");
 		default:
 			return Super::GetIconAndTint(outColor);
 	}
+}
+
+FText UK2Node_MounteaDialogueCallFunction::GetFunctionContextString() const
+{
+	FText ContextString = LOCTEXT("MounteaDialogueCallFunctionContext", "Source is Mountea Dialogue System");
+	
+	const UFunction* Function = GetTargetFunction();
+	UClass* CurrentSelfClass = (Function != nullptr) ? Function->GetOwnerClass() : nullptr;
+	UClass const* TrueSelfClass = CurrentSelfClass;
+	if (CurrentSelfClass && CurrentSelfClass->ClassGeneratedBy)
+	{
+		TrueSelfClass = CurrentSelfClass->GetAuthoritativeClass();
+	}
+
+	if (TrueSelfClass != nullptr)
+	{
+		const FText TargetText = TrueSelfClass->GetDisplayNameText();
+
+		FFormatNamedArguments Args;
+		Args.Add(TEXT("TargetName"), TargetText);
+		ContextString = FText::Format(LOCTEXT("CallFunctionOnDifferentContext", "Source is {TargetName}"), Args);
+	}
+	return ContextString;
 }
 
 void UK2Node_MounteaDialogueCallFunction::Initialize(const UFunction* relevantFunction, UClass* relevantClass)

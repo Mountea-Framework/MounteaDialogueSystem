@@ -19,7 +19,23 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueOptionsContainer : public UUserW
 {
 	GENERATED_BODY()
 
+public:
+
+	UMounteaDialogueOptionsContainer(const FObjectInitializer& ObjectInitializer);
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
 protected:
+
+	UFUNCTION()
+	void ClearChildOptionFocus(UUserWidget* Target);
+
+	void ClearChildOptionsFocus();
+
+	UFUNCTION()
+	void ResetFocus(const UUserWidget* Requestor);
+
+protected:
+	
 	// IMounteaDialogueOptionsContainerInterface implementation
 	virtual void SetParentDialogueWidget_Implementation(UUserWidget* NewParentDialogueWidget) override;
 	virtual UUserWidget* GetParentDialogueWidget_Implementation() const override;
@@ -32,8 +48,12 @@ protected:
 	virtual void ClearDialogueOptions_Implementation() override;
 	virtual void ProcessOptionSelected_Implementation(const FGuid& SelectedOption, UUserWidget* CallingWidget) override;
 	virtual TArray<UUserWidget*> GetDialogueOptions_Implementation() const override;
+	virtual int32 GetFocusedOptionIndex_Implementation() const override;
+	virtual void SetFocusedOption_Implementation(const int32 NewFocusedOption) override;
+	virtual void ToggleForcedFocus_Implementation(const bool bEnable) override;
 
 protected:
+	
 	/**
 	 * The class type of the dialogue option widget. Must Implement 'MounteaDialogueOptionInterface'.
 	 */
@@ -51,4 +71,19 @@ protected:
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue")
 	TMap<FGuid, TObjectPtr<UUserWidget>> DialogueOptions;
+
+	/**
+	 * Index of focused option.
+	 */
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue")
+	int32 FocusedOption;
+
+	/**
+	 * Index of last focused option. Used for fallbacks.
+	 */
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue")
+	int32 LastFocusedOption;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue")
+	uint8 bForcedFocusEnabled : 1;
 };

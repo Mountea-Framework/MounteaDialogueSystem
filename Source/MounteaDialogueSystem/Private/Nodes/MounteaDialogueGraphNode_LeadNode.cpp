@@ -4,7 +4,7 @@
 #include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
 
 #include "Data/MounteaDialogueContext.h"
-#include "Interfaces/MounteaDialogueManagerInterface.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
@@ -36,9 +36,9 @@ void UMounteaDialogueGraphNode_LeadNode::PreProcessNode_Implementation(const TSc
 		// Switch Active Participant to NPC
 		if (Manager.GetInterface())
 		{
-			if (const auto TempContext = Manager->GetDialogueContext())
+			if (const auto TempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
 			{
-				TempContext->UpdateActiveDialogueParticipant(TempContext->GetDialogueParticipant());
+				TempContext->SetActiveDialogueParticipant(TempContext->GetDialogueParticipant());
 			}
 		}
 	}
