@@ -593,6 +593,18 @@ int32 UMounteaDialogueHUDStatics::GetOptionIndex(UObject* ContainerObject, const
 	return dialogueOptions.Find(const_cast<UUserWidget*>(OptionWidget));
 }
 
+void UMounteaDialogueHUDStatics::ToggleForcedFocus(UObject* ContainerObject, bool bIsEnabled)
+{
+	if (!IsValid(ContainerObject))
+		return;
+
+	auto containerInterface = GetOptionsContainerInterface(ContainerObject);
+	if (!containerInterface.GetObject())
+		return;
+
+	containerInterface->Execute_ToggleForcedFocus(ContainerObject, bIsEnabled);
+}
+
 FWidgetDialogueRow UMounteaDialogueHUDStatics::GetDialogueWidgetRowData(UObject* RowObject)
 {
 	if (!IsValid(RowObject))

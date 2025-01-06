@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MounteaDialogueSystemSettings.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
 
 #include "Data/MounteaDialogueGraphDataTypes.h"
 
