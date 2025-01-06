@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Interfaces/MounteaDialogueParticipantInterface.h"
-#include "Interfaces/MounteaDialogueTickableObject.h"
+#include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
+#include "Interfaces/Core/MounteaDialogueTickableObject.h"
 #include "MounteaDialogueParticipant.generated.h"
 
 class UMounteaDialogueGraphNode_CompleteNode;
@@ -35,7 +35,7 @@ protected:
 
 public:
 	
-	virtual void InitializeParticipant_Implementation() override;
+	virtual void InitializeParticipant_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 
 	/**
 	 * Finds an audio component using FindAudioComponentByName or FindAudioComponentByTag.
@@ -85,7 +85,7 @@ protected:
 	 *
 	 * Set Graph is allowed only outside active Dialogue.
 	 */
-	UPROPERTY(ReplicatedUsing=OnRep_DialogueGraph, SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(ReplicatedUsing=OnRep_DialogueGraph, SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(NoResetToDefault))
 	TObjectPtr<UMounteaDialogueGraph> DialogueGraph = nullptr;
 
 	/**
@@ -101,7 +101,7 @@ protected:
 	* ❗ In order to start Dialogue, this value must not be Disabled.
 	* ❔ Can be updated using SetDialogueParticipantState function.
 	*/
-	UPROPERTY(ReplicatedUsing=OnResp_ParticipantState, Transient, VisibleAnywhere,  Category="Mountea|Dialogue|Participant", AdvancedDisplay,  meta=(NoResetToDefault))
+	UPROPERTY(ReplicatedUsing=OnRep_ParticipantState, Transient, VisibleAnywhere,  Category="Mountea|Dialogue|Participant",  meta=(NoResetToDefault))
 	EDialogueParticipantState ParticipantState;
 
 	/**
@@ -148,6 +148,11 @@ protected:
 	UPROPERTY(Replicated, SaveGame, EditAnywhere, Category="Mountea|Dialogue|Participant", meta=(NoResetToDefault))
 	FGameplayTag ParticipantTag;
 
+private:
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category="Mountea|Dialogue|Participant", meta=(AllowPrivateAccess))
+	TScriptInterface<IMounteaDialogueManagerInterface> DialogueManager;
+
 #pragma endregion
 
 #pragma region EventVariables
@@ -184,6 +189,12 @@ protected:
 	 */
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Participant")
 	FParticipantCommandRequested ParticipantCommandRequested;
+	/**
+	 * Event called once Dialogue updates.
+	 * Manager calls to Every participant. This serves as notification rather than passing any data.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Participant")
+	FDialogueUpdated OnDialogueUpdated;
 	
 #pragma endregion 
 
@@ -203,9 +214,10 @@ protected:
 #pragma region IMounteaDialogueInterface
 	
 public:
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Validate"))
+	
 	virtual bool CanStartDialogue_Implementation() const override;
+
+	virtual bool CanParticipateInDialogue_Implementation() const override;
 
 	virtual UMounteaDialogueGraphNode* GetSavedStartingNode_Implementation() const override
 	{ return StartingNode; };
@@ -217,8 +229,7 @@ public:
 
 	virtual void SetDialogueGraph_Implementation(UMounteaDialogueGraph* NewDialogueGraph) override;
 
-	virtual EDialogueParticipantState GetParticipantState_Implementation() const override
-	{ return  ParticipantState; };
+	virtual EDialogueParticipantState GetParticipantState_Implementation() const override;
 
 	virtual void SetParticipantState_Implementation(const EDialogueParticipantState NewState) override;
 	
@@ -241,10 +252,13 @@ public:
 	virtual void SaveTraversedPath_Implementation(TArray<FDialogueTraversePath>& InPath) override;
 
 	virtual FGameplayTag GetParticipantTag_Implementation() const override
-	{ return ParticipantTag;	};
+	{ return ParticipantTag; };
 	
 	virtual void ProcessDialogueCommand_Implementation(const FString& Command, UObject* Payload) override
 	{ ParticipantCommandRequested.Broadcast(Command, Payload); };
+
+	virtual TScriptInterface<IMounteaDialogueManagerInterface> GetDialogueManager() const override
+	{ return DialogueManager; };
 	
 #pragma region EventHandleGetters
 	
@@ -258,6 +272,8 @@ public:
 	{ return OnStartingNodeSaved; };
 	virtual FParticipantCommandRequested& GetParticipantCommandRequestedEventHandle() override
 	{return ParticipantCommandRequested; };
+	virtual FDialogueUpdated& GetDialogueUpdatedEventHandle() override
+	{ return OnDialogueUpdated; };
 	
 #pragma endregion 
 
@@ -271,7 +287,7 @@ public:
 	virtual void TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime) override;
 	virtual FMounteaDialogueTick& GetMounteaDialogueTickHandle() override {return ParticipantTickEvent; };
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|Participant")
+	UPROPERTY(BlueprintAssignable, BlueprintReadOnly, Category="Mountea|Dialogue|Participant")
 	FMounteaDialogueTick ParticipantTickEvent;
 	
 #pragma endregion
@@ -285,7 +301,7 @@ protected:
 	UFUNCTION()
 	void OnRep_DialogueGraph();
 	UFUNCTION()
-	void OnResp_ParticipantState();
+	void OnRep_ParticipantState();
 	UFUNCTION(Server, Reliable)
 	void SetParticipantState_Server(const EDialogueParticipantState NewState);
 	UFUNCTION(Server, Reliable)
@@ -296,4 +312,13 @@ protected:
 	void SetDialogueGraph_Server(UMounteaDialogueGraph* NewGraph);
 
 #pragma endregion
+
+#if WITH_EDITORONLY_DATA
+
+	virtual void RegisterWithPIEInstance();
+	virtual void UnregisterFromPIEInstance();
+	virtual int32 GetCurrentPIEInstanceID() const;
+	
+#endif
+	
 };

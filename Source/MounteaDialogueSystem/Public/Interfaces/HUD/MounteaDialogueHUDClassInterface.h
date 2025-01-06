@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "Blueprint/UserWidget.h"
 #include "Widgets/Layout/Anchors.h"
 #include "Layout/Margin.h"
 #include "Blueprint/UserWidget.h" // WTF why?

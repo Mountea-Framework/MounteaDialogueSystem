@@ -18,7 +18,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTypeWriterEffectChanged, bool, bE
 /**
  * A helper struct to move Dialogue Row data around.
  */
-USTRUCT(BlueprintType, meta = (HasNativeMake = "/Script/MounteaDialogueSystem.MounteaDialogueUIBFL.NewDialogueWidgetRowData"))
+USTRUCT(BlueprintType, meta = (HasNativeMake = "/Script/MounteaDialogueSystem.MounteaDialogueHUDStatics.NewDialogueWidgetRowData"))
 struct FWidgetDialogueRow
 {
 	GENERATED_BODY()
@@ -114,63 +114,67 @@ class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueRowInterface
 {
 	GENERATED_BODY()
 
-
 public:
 
 	
 	/**
-	 * 
-	 * @return 
+	 * Retrieves the dialogue row data associated with the widget.
+	 *
+	 * @return FWidgetDialogueRow containing the dialogue row data.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|DialogueRow")
 	FWidgetDialogueRow GetDialogueWidgetRowData() const;
 	virtual FWidgetDialogueRow GetDialogueWidgetRowData_Implementation() const = 0;
 
 	/**
-	 * 
-	 * @param NewData 
+	 * Sets new dialogue row data for the widget.
+	 *
+	 * @param NewData The new dialogue row data to set.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|DialogueRow")
 	void SetNewWidgetDialogueRowData(const FWidgetDialogueRow& NewData);
 	virtual void SetNewWidgetDialogueRowData_Implementation(const FWidgetDialogueRow& NewData) = 0;
 
 	/**
-	 * 
+	 * Resets the widget's dialogue row data to the default state.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|DialogueRow")
 	void ResetWidgetDialogueRow();
 	virtual void ResetWidgetDialogueRow_Implementation() = 0;
 
 	/**
-	 * 
+	 * Initializes the widget's dialogue row data.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|DialogueRow")
 	void InitializeWidgetDialogueRow();
 	virtual void InitializeWidgetDialogueRow_Implementation() = 0;
 
 	/**
-	 * Stop the effect from play and finishes the text.
+	 * Stops the typewriter effect and finishes displaying the text.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
-	void StopTypeWriterEffect ();
-	virtual void StopTypeWriterEffect_Implementation () = 0;
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|DialogueRow")
+	void StopTypeWriterEffect();
+	virtual void StopTypeWriterEffect_Implementation() = 0;
 
 	/**
-	 * Starts the typewriter effect on the given text for the specified duration.
-	 * @param SourceText		The full text to display.
-	 * @param Duration				The total duration for the typewriter effect.
+	 * Starts the typewriter effect on the specified text for a given duration.
+	 *
+	 * @param SourceText The full text to display.
+	 * @param Duration The duration over which the typewriter effect should play.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
-	void StartTypeWriterEffect (const FText& SourceText, float Duration);
-	virtual void StartTypeWriterEffect_Implementation (const FText& SourceText, float Duration) = 0;
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|DialogueRow")
+	void StartTypeWriterEffect(const FText& SourceText, float Duration);
+	virtual void StartTypeWriterEffect_Implementation(const FText& SourceText, float Duration) = 0;
 
 	/**
-	 * Enables Type-Writer effect.
-	 * Based on implementation the effect can start or stop.
+	 * Enables or disables the typewriter effect based on the specified parameter.
+	 *
+	 * @param bEnable Whether to enable or disable the effect.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|UserInterface|DialogueRow", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|DialogueRow")
 	void EnableTypeWriterEffect(bool bEnable);
 	virtual void EnableTypeWriterEffect_Implementation(bool bEnable) = 0;
+
 };
 
 #undef LOCTEXT_NAMESPACE

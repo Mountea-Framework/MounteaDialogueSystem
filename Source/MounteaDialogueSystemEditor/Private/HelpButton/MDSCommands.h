@@ -26,4 +26,6 @@ public:
 	
 	TSharedPtr< FUICommandInfo > PluginAction;
 	TSharedPtr< FUICommandInfo > DialoguerAction;
+
+	TSharedPtr< FUICommandInfo > FixMounteaNodesAction;
 };

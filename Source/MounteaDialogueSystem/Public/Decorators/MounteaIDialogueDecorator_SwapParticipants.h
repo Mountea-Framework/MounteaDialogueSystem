@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "MounteaIDialogueDecorator_SwapParticipants.generated.h"
 
@@ -27,6 +28,11 @@ public:
 	virtual  FString GetDecoratorDocumentationLink_Implementation() const override
 	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Decorator:-Swap-Participants"); }
 
+protected:
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category="Settings")
+	FGameplayTag NewParticipantTag;
+	
 private:
 	
 	UPROPERTY()
