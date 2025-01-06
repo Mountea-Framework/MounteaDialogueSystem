@@ -153,6 +153,14 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.Wiki.Small", new IMAGE_BRUSH(TEXT("Wiki_Icon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Wiki.large", new IMAGE_BRUSH(TEXT("Wiki_Icon"), Icon64x64));
 
+	StyleSet->Set("MDSStyleSet.Youtube", new IMAGE_BRUSH(TEXT("youtube_icon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.Youtube.Small", new IMAGE_BRUSH(TEXT("youtube_icon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Youtube.large", new IMAGE_BRUSH(TEXT("youtube_icon"), Icon64x64));
+
+	StyleSet->Set("MDSStyleSet.Settings", new IMAGE_BRUSH(TEXT("settings_icon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.Settings.Small", new IMAGE_BRUSH(TEXT("settings_icon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Settings.large", new IMAGE_BRUSH(TEXT("settings_icon"), Icon64x64));
+
 	StyleSet->Set("MDSStyleSet.DialogueSystemIcon", new IMAGE_BRUSH(TEXT("DialogueSystem_Icon"), Icon16x16));
 
 	const FButtonStyle MounteaButtonStyle = FButtonStyle()
@@ -161,6 +169,13 @@ void FMounteaDialogueGraphEditorStyle::Create()
 		.SetPressed(BOX_BRUSH("RoundedSelection_16x", 4.0f / 16.0f,  FLinearColor(1, .55f, 0, 0.4f)));
 
 	StyleSet->Set("MDSStyleSet.Buttons.Style", MounteaButtonStyle);
+
+	FButtonStyle MounteaCloseButtonStyle = FAppStyle::Get().GetWidgetStyle<FButtonStyle>("Button");;
+		MounteaCloseButtonStyle.Normal.TintColor = FLinearColor(1.f, 0.1f, 0.1f, 0.65f);
+		MounteaCloseButtonStyle.Hovered.TintColor = FLinearColor(0.8f, 0.1f, 0.1f, 1.f);
+		MounteaCloseButtonStyle.Pressed.TintColor = FLinearColor(1.0f, 0.1f, 0.1f, 0.85f);
+
+	StyleSet->Set("MDSStyleSet.Buttons.CloseStyle", MounteaCloseButtonStyle);
 
 	{
 		const FScrollBarStyle ScrollBar = GetWidgetStyle<FScrollBarStyle>( "ScrollBar" );

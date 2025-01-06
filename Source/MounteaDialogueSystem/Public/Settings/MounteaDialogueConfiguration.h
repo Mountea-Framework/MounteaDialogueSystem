@@ -48,6 +48,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Subtitles")
 	uint8 bAllowSubtitles : 1;
 
+	// Defines how long a Skip Key must be held in order to start the Skip
+	UPROPERTY(EditDefaultsOnly, Category = "UserInterface")
+	float SkipDuration = 1.f;
+
 	/**
 	 * Defines whether whole Dialogue Row is skipped when audio skip is requested.
 	 * This setting defines behaviour for all Nodes. Each Node allows different behaviour, so in special cases Node inversion can be used.
