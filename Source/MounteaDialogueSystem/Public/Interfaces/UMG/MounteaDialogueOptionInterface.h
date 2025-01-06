@@ -10,6 +10,7 @@ class UTexture;
 
 #define LOCTEXT_NAMESPACE "DialogueOption"
 
+class UTexture;
 struct FDialogueRow;
 
 /**

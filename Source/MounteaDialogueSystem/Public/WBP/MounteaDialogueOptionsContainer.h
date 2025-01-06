@@ -50,6 +50,7 @@ protected:
 	virtual TArray<UUserWidget*> GetDialogueOptions_Implementation() const override;
 	virtual int32 GetFocusedOptionIndex_Implementation() const override;
 	virtual void SetFocusedOption_Implementation(const int32 NewFocusedOption) override;
+	virtual void ToggleForcedFocus_Implementation(const bool bEnable) override;
 
 protected:
 	
@@ -82,4 +83,7 @@ protected:
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue")
 	int32 LastFocusedOption;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue")
+	uint8 bForcedFocusEnabled : 1;
 };
