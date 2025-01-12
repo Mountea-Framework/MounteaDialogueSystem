@@ -1,8 +1,37 @@
-Current Version: 2.0.4.54
+Current Version: 3.0.0.55
 
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+**Version 3.0.0**
+### Added
+> - Custom Nodes for whole Dialogue System
+> - `Fix Mountea Nodes` option
+>   - Editor only `EXPERIMENTAL` feature that should fix broken Nodes
+>   - This feature is based on `nodes_replacement.json` file that can be udpated, editor and downloaded from Editor Settings
+> - World Space UI support
+> - NPC Dialogues
+>   - Environmental Dialogue where, for example, 2 NPCs talk about weather without any Player Interaction
+> - Graph PIE Focus to see Active Node and progress per NPC per Client
+> - Added Dialogue Manager Actor that can be placed in World
+>   - This Actor is used for Environmental Dialogues
+> - Keyboard/Gamepad selection in UI
+
+### Fixed
+> - Custom Nodes are now fully integrated even for Interfaces
+> - Dialogue Data are now trully replicated
+> - Listen Server is now viable option, fixed Client 1+ bug with UI and Sound
+
+### Changed
+> - Complete Source Code refactoring
+>   - Major code improvements in stability and readibility
+> - All functions are now in `Statics` libraries, including generic HUD Statics
+> - Dialogue Settings (Gameplay) are now stored in `Config` DataAsset
+>   - This will break existing settings, however, this approach offers easier loading
+>   - This approach also enables custom settings by making custom Config class
+> - Content Browser menu is updated
+> - Main Ribbon menu button has been updated, now including links to YouTube channel and even links to Settings
 
 **Version 2.0.4**
 ### Added
