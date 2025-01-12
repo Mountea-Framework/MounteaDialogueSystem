@@ -83,7 +83,26 @@ public:
 
 	UMounteaDialogueGraphEditorSettings();
 
-private:
+public:
+
+	virtual FText GetSectionText() const override
+	{
+		return NSLOCTEXT("MounteaDialogueEditorSystem", "MounteaSettingsEditorSection", "Mountea Dialogue System (Editor)");
+	}
+
+	virtual FText GetSectionDescription() const override
+	{
+		return NSLOCTEXT("MounteaDialogueEditorSystem", "MounteaSettingsEditorDescription", "Default values for Mountea Plugins (Editor).");
+	}
+
+	virtual FName GetContainerName() const override
+	{
+		return "Project";
+	}
+
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+
+protected:
 
 #pragma region GraphNodes
 
@@ -114,6 +133,16 @@ private:
 	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings", meta=(ShowTreeView))
 	TMap<TSoftClassPtr<UMounteaDialogueGraphNode>, FLinearColor> OverrideNodeBackgroundColours;
+
+	/**
+	 * URL for the Nodes Replacement configuration file.
+	 * 
+	 * This URL points to a remote file containing base Node Replacement definitions.
+	 * The system will use this URL to download and apply the tags if allowed.
+	 * Default: @link https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/refs/heads/master/Config/node_replacements.json
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings", AdvancedDisplay, meta=(ConfigRestartRequired=true))
+	FString NodeReplacementURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/refs/heads/master/Config/node_replacements.json");
 
 #pragma endregion
 
@@ -203,25 +232,8 @@ private:
 	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay, meta=(ConfigRestartRequired=true))
 	FString GameplayTagsURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini");
-	
+
 #pragma endregion
-	
-#if WITH_EDITOR
-	virtual FText GetSectionText() const override
-	{
-		return NSLOCTEXT("MounteaDialogueEditorSystem", "MounteaSettingsEditorSection", "Mountea Dialogue System (Editor)");
-	}
-
-	virtual FText GetSectionDescription() const override
-	{
-		return NSLOCTEXT("MounteaDialogueEditorSystem", "MounteaSettingsEditorDescription", "Default values for Mountea Plugins (Editor).");
-	}
-
-	virtual FName GetContainerName() const override
-	{
-		return "Project";
-	}
-#endif
 
 public:
 
@@ -259,7 +271,13 @@ public:
 		return false;
 	}
 
-#pragma endregion 
+	FString GetNodeReplacementURL() const
+	{ return NodeReplacementURL; };
+
+	FString GetNodeReplacementLocalPath() const;
+
+#pragma endregion
+
 
 #pragma region GraphDecorators_Getters
 
@@ -267,7 +285,6 @@ public:
 	{ return bAllowNativeDecoratorsEdit; };
 
 #pragma endregion 
-	
 
 #pragma region GraphWiring_Getters
 
@@ -329,14 +346,5 @@ public:
 	{ return GameplayTagsURL; };
 	
 #pragma endregion
-	
-#pragma region EDITOR
-	
-#if WITH_EDITOR
-
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-	
-#endif
-	
-#pragma endregion 
+ 
 };

@@ -1,7 +1,7 @@
 // All rights reserved Dominik Pavlicek 2023
 
 
-#include "Helpers/MounteaDialogueSystemSettings.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
 
 #include "Engine/Font.h"
 #include "Settings/MounteaDialogueConfiguration.h"
@@ -146,6 +146,12 @@ void UMounteaDialogueSystemSettings::SetSubtitlesSettings(const FSubtitlesSettin
 EMounteaDialogueLoggingVerbosity UMounteaDialogueSystemSettings::GetAllowedLoggVerbosity() const
 {
 	return static_cast<EMounteaDialogueLoggingVerbosity>(LogVerbosity);
+}
+
+float UMounteaDialogueSystemSettings::GetSkipDuration() const
+{
+	auto dialogueConfig = DialogueConfiguration.LoadSynchronous();
+	return dialogueConfig ? dialogueConfig->SkipDuration : 1.f;
 }
 
 FSlateFontInfo UMounteaDialogueSystemSettings::SetupDefaultFontSettings()

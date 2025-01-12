@@ -361,11 +361,11 @@ const FPinConnectionResponse UAssetGraphScheme_MounteaDialogueGraph::CanCreateCo
 	FNodeVisitorCycleChecker CycleChecker;
 	if (!CycleChecker.CheckForLoop(A->GetOwningNode(), B->GetOwningNode()))
 	{
-		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Can't create a graph cycle"));
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Can't create a graph cycle.\nIn order to return back, please use `Return To Node`."));
 	}
 	if (!CycleChecker.CheckForLoop(B->GetOwningNode(), A->GetOwningNode()))
 	{
-		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Can't create a graph cycle"));
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Can't create a graph cycle.\nIn order to return back, please use `Return To Node`."));
 	}
 
 	UEdNode_MounteaDialogueGraphNode* EdNode_A = Cast<UEdNode_MounteaDialogueGraphNode>(A->GetOwningNode());

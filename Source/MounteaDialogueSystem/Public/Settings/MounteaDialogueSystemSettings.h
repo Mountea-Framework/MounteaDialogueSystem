@@ -37,7 +37,8 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSystemSettings : public UDevelop
 protected:
 	/**
 	 * Mountea Dialogue Configuration.
-	 * Contains all gameplay 
+	 * Contains all gameplay configuration that was stored in settings.
+	 * Defines update frequency, Widget classes etc.
 	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "Configuration")
 	TSoftObjectPtr<UMounteaDialogueConfiguration> DialogueConfiguration;
@@ -175,6 +176,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
 	EMounteaDialogueLoggingVerbosity GetAllowedLoggVerbosity() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
+	float GetSkipDuration() const;
 	
 protected:
 
