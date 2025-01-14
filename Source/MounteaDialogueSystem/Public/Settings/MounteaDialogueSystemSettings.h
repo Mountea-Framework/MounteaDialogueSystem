@@ -3,11 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MounteaDialogueConfiguration.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
 #include "Engine/DeveloperSettings.h"
 #include "MounteaDialogueSystemSettings.generated.h"
-
-class UMounteaDialogueConfiguration;
 
 namespace MounteaDialogueWidgetCommands
 {
