@@ -39,7 +39,10 @@ namespace InternalBlueprintEditorLibrary
 		UK2Node_CallFunction* OldFuncNode = Cast<UK2Node_CallFunction>(OldNode);
 		UK2Node_CallFunction* NewFuncNode = Cast<UK2Node_CallFunction>(NewNode);
 		bool bIsInterfaceToStatic = OldFuncNode && NewFuncNode && 
-								   OldFuncNode->bIsInterfaceCall && !NewFuncNode->bIsInterfaceCall;
+						   OldFuncNode->FunctionReference.GetMemberParentClass() && 
+						   OldFuncNode->FunctionReference.GetMemberParentClass()->HasAnyClassFlags(CLASS_Interface) && 
+						   (!NewFuncNode->FunctionReference.GetMemberParentClass() || 
+							!NewFuncNode->FunctionReference.GetMemberParentClass()->HasAnyClassFlags(CLASS_Interface));
 
 		for (UEdGraphPin* Pin : OldNode->Pins)
 		{
@@ -360,7 +363,7 @@ void FMounteaDialogueFixUtilities::ReplaceNode(UEdGraph* Graph, UK2Node* OldNode
 			
 		UK2Node_MounteaDialogueCallFunction* NewNode = NewObject<UK2Node_MounteaDialogueCallFunction>(Graph);
 		NewNode->SetFromFunction(NewFunction);
-		NewNode->bIsInterfaceCall = NewNodeDef.bIsInterfaceCall;
+		NewNode->FunctionReference.SetFromField<UFunction>(NewFunction, NewNodeDef.bIsInterfaceCall);
 		if (OldNode->NodeGuid.IsValid())
 		{
 			NewNode->NodeGuid = OldNode->NodeGuid;
@@ -372,7 +375,7 @@ void FMounteaDialogueFixUtilities::ReplaceNode(UEdGraph* Graph, UK2Node* OldNode
 			
 		if (UK2Node_CallFunction* OldFuncNode = Cast<UK2Node_CallFunction>(OldNode))
 		{
-			NewNode->bIsPureFunc = OldFuncNode->bIsPureFunc;
+			NewNode->bDefaultsToPureFunc = OldFuncNode->IsNodePure();
 		}
 			
 		NewNode->NodePosX = OldNode->NodePosX;

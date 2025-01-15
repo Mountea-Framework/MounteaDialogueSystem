@@ -85,7 +85,6 @@ void SMounteaDialogueSearch::Construct(const FArguments& InArgs, const TSharedPt
 			.BorderImage(FAppStyle::GetBrush("Menu.Background"))
 			[
 				SAssignNew(TreeView, STreeView<TSharedPtr<FMounteaDialogueSearchResult>>)
-				.ItemHeight(24)
 				.TreeItemsSource(&ItemsFound)
 				.OnGenerateRow(this, &Self::HandleGenerateRow)
 				.OnGetChildren(this, &Self::HandleGetChildren)
