@@ -47,11 +47,11 @@ Engine Version | Plugin Version | Support
 UE 4.26 | [1.0.0.426](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.426) | 🟪
 UE 4.27 | [1.0.0.427](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.427) | 🟪
 UE 5.00 | [1.0.0.50](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/1.0.0.50) | 🟪
-UE 5.1 | [2.0.4.51](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.4.51) | 🟥
-UE 5.2 | [2.0.4.52](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.4.52) | 🟩
-UE 5.3 | [2.0.4.53](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.4.53) | 🟩
-UE 5.4 | [2.0.4.54](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/2.0.4.54) | 🟩
-UE 5.5 | - | 🟨
+UE 5.1 | [3.0.0.51](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/3.0.0.51) | 🟥
+UE 5.2 | [3.0.0.52](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/3.0.0.52) | 🟩
+UE 5.3 | [3.0.0.53](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/3.0.0.53) | 🟩
+UE 5.4 | [3.0.0.54](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/3.0.0.54) | 🟩
+UE 5.5 | [3.0.0.55](https://github.com/Mountea-Framework/MounteaDialogueSystem/releases/tag/3.0.0.55) | 🟩
 
 ## Features
 ### Graph Editor
