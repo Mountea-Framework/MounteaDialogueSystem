@@ -46,7 +46,7 @@ enum class EDialogueManagerType : uint8
 
 /**
  * Dialogue Manager State
- * 
+ *
  * Define state of Dialogue Manager.
  */
 UENUM(BlueprintType)
@@ -61,8 +61,8 @@ enum class EDialogueManagerState : uint8
 
 /**
  * Dialogue Participant State
- * 
- * Define state of Dialogue Participant. 
+ *
+ * Define state of Dialogue Participant.
  */
 UENUM(BlueprintType)
 enum class EDialogueParticipantState : uint8
@@ -76,7 +76,7 @@ enum class EDialogueParticipantState : uint8
 
 /**
  * Row Duration Mode
- * 
+ *
  * Used for calculation of the Row Duration.
  */
 UENUM(BlueprintType)
@@ -161,7 +161,7 @@ struct FSubtitlesSettings
 	 * Defines whether settings are valid or not.
 	 * Invalid settings are:
 	 * * With no Font
-	 * 
+	 *
 	 * Invalid settings are ignored!
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Subtitles")
@@ -195,7 +195,7 @@ public:
 
 /**
  * Dialogue Row Data
- * 
+ *
  * Structure which contains Dialogue Row data, which will be displayed in UI and/or played.
  */
 USTRUCT(BlueprintType)
@@ -206,21 +206,21 @@ struct FDialogueRowData
 public:
 	/**
 	 * Row Text.
-	 * 
+	 *
 	 * ❗ Required value
-	 * ❔ Localizable 
+	 * ❔ Localizable
 	 * Row Text contains data Players will see in the UI.
-	 * 
+	 *
 	 * ❗ This Text should not be displayed as option to be selected, for that use 'DialogueRow.RowTitle' value
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true, MultiLine=true))
 	FText RowText;
 	/**
 	 * Row Sound.
-	 * 
+	 *
 	 * ❗ Recommended value
 	 * ❔ Sound to be triggered once this Row Data has been displayed in UI.
-	 * 
+	 *
 	 * ❗ Is not directly used in any C++ code
 	 * ❔ Could be used with 'DP_PlayDialogueSound' or as Sound Value for any better way of handling synced animations and sounds (to get more info how to do that, join the Support Discord)
 	 */
@@ -228,7 +228,7 @@ public:
 	TObjectPtr<USoundBase> RowSound = nullptr;
 	/**
 	 * Row Duration Mode
-	 * 
+	 *
 	 * ❗ Recommended value
 	 * ❔ Determines how the 'Row Duration' is calculated.
 	 */
@@ -236,7 +236,7 @@ public:
 	ERowDurationMode RowDurationMode;
 	/**
 	 * Row Duration
-	 * 
+	 *
 	 * ❗ Recommended value
 	 * ❔ Determines for how long the UI will display this Row Data.
 	 */
@@ -245,10 +245,10 @@ public:
 	float RowDuration;
 	/**
 	 * Row Duration Override
-	 * 
+	 *
 	 * ❗ Optional value
 	 * ❔ Determines how much time is added to the Row Duration if any.
-	 * 
+	 *
 	 * ❗ No validation applied here, so using value of -4684 will result in weird behaviour.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
@@ -261,10 +261,10 @@ public:
 	ERowExecutionMode RowExecutionBehaviour;
 	/**
 	 * Row GUID.
-	 * 
+	 *
 	 * Unique Key when searching and binding this Row.
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, meta = (IgnoreForMemberInitializationTest))
 	FGuid RowGUID = FGuid::NewGuid();
 
 public:
@@ -326,7 +326,7 @@ public:
 
 /**
  * Dialogue Row
- * 
+ *
  * Data Table compatible Dialogue Row.
  * Contains name of Participant and Row Data.
  */
@@ -337,8 +337,8 @@ struct FDialogueRow : public FTableRowBase
 
 public:
 	/**
-	 * List of GameplayTags which distinguish participants. 
-	 * 
+	 * List of GameplayTags which distinguish participants.
+	 *
 	 * ❗ New feature in version 1.0.5.X.
 	 * ❔ Each unique dialogue Participant should be using different Tag, if generic, then use something like `Dialogue.NPC`
 	 */
@@ -347,11 +347,11 @@ public:
 
 	/**
 	 * Optional Row type ID.
-	 * 
+	 *
 	 * ❗ Optional value.
 	 * ❔ Could be used to visually differentiate rows which are using same UI Class.
 	 * Example: Quest dialogue options are yellow or bold, while optional dialogue options are white or regular.
-	 * 
+	 *
 	 * Range:
 	 * * Min: 0
 	 * * Max: 255
@@ -359,72 +359,72 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
 		meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true, DisplayName="Row Type ID"))
 	int32 UIRowID = 0;
-	
+
 	/**
 	 * Optional Row Icon.
-	 * 
+	 *
 	 * ❗ Optional value.
 	 * ❔ Could be used to mark special dialogue options, like "Open Store" or "Leave conversation" with special icon.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
 	TObjectPtr<UTexture> RowOptionalIcon = nullptr;
-	
+
 	/**
 	 * Name of the Dialogue Participant.
-	 * 
+	 *
 	 * ❗ Optional value.
 	 * If left empty, Dialogue will ignore it and use its default Participant name.
 	 * ❔ Each row might have different participant tied to it, so there can be three-way dialogues, where one player talks to 2 NPCs
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
 	FText DialogueParticipant;
-	
+
 	/**
 	 * Title of the Dialogue Row.
-	 * 
+	 *
 	 * ❔ This should summarize what is this row about, let's say "Accept offering" is a title for "Thank you very much, kind sir, it would be pleasure to join you on your adventure!".
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
 	FText RowTitle;
-	
+
 	/**
 	 * List of Dialogue Row Data. Not replicated, must be found locally for each Client from replicated Active Node!
-	 * 
+	 *
 	 * ❔ Each Dialogue Row can contain multiple of those, where each Data Row represents:
 	 * * What Sound should be played
 	 * * What text should be displayed
-	 * 
+	 *
 	 * This provides easy way to have multiple dialogue lines per single Node.
 	 * As example, Player asks NPC what happened to its family. And each sentence could be its own Dialogue Row Data input.
 	 * This makes UI easier to read and sounds more managable.
-	 * 
+	 *
 	 * Each Data Row has its Duration, which could be based on the Sound, directly set, calculated on generic formula or added atop of the sound duration.
 	 */
 	UPROPERTY(NotReplicated, EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(TitleProperty="RowText"))
 	TSet<FDialogueRowData> DialogueRowData;
-	
+
 	/**
 	 * Additional Row Data
-	 * 
+	 *
 	 * Generic Data Asset reference which could hold some more data.
 	 * This data could be used for Decorators or UI in general.
 	 * Any Data Asset can be used here and no logic is tied to this attribute.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(AllowAbstract=false))
 	TObjectPtr<UDialogueAdditionalData> DialogueRowAdditionalData = nullptr;
-	
+
 	/**
 	 * Row GUID.
-	 * 
+	 *
 	 * Unique Key when searching and binding this Row.
 	 */
 	UPROPERTY(/*Transient, */VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate))
 	FGuid RowGUID;
-	
+
 	/**
 	 * ❗ WIP
 	 * Title Settings Override.
-	 * 
+	 *
 	 * ❔ Provides ability to override this Row Title using direct settings rather than 'UIRowID'.
 	 * ❗ No logic is implemented yet
 	 */
@@ -448,7 +448,7 @@ public:
 	}
 
 public:
-	
+
 	inline FDialogueRow& operator=(const FDialogueRow& Other)
 	{
 		RowOptionalIcon = Other.RowOptionalIcon;
@@ -510,7 +510,7 @@ public:
 	}
 
 	FString ToString() const;
-	
+
 	static FDialogueRow Invalid()
 	{
 		FDialogueRow Row;
@@ -523,7 +523,7 @@ public:
 #undef LOCTEXT_NAMESPACE
 
 /**
- * 
+ *
  */
 USTRUCT(BlueprintType)
 struct FUIRowID
@@ -531,12 +531,12 @@ struct FUIRowID
 	GENERATED_BODY()
 
 	/**
-	 * 
+	 *
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true))
 	int32 UIRowID = 0;
 	/**
-	 * 
+	 *
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
 	TSubclassOf<UUserWidget> RowWidgetClass;
@@ -561,7 +561,7 @@ public:
 };
 
 /**
- * 
+ *
  */
 USTRUCT(BlueprintType)
 struct FDialogueTraversePath
@@ -569,7 +569,7 @@ struct FDialogueTraversePath
 	GENERATED_BODY()
 
 public:
-	
+
 	FDialogueTraversePath()
 		: NodeGuid(FGuid::NewGuid())
 		, GraphGuid(FGuid::NewGuid())
@@ -582,10 +582,10 @@ public:
 		, TraverseCount(FMath::Max(0, InTraverseCount))
 	{}
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath", meta = (IgnoreForMemberInitializationTest))
 	FGuid NodeGuid;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath", meta = (IgnoreForMemberInitializationTest))
 	FGuid GraphGuid;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
@@ -630,7 +630,7 @@ USTRUCT()
 struct FMounteaDialogueContextReplicatedStruct
 {
 	GENERATED_BODY()
-	
+
 	UPROPERTY()
 	TScriptInterface<IMounteaDialogueParticipantInterface> ActiveDialogueParticipant;
 	UPROPERTY()
@@ -639,10 +639,10 @@ struct FMounteaDialogueContextReplicatedStruct
 	TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant;
 	UPROPERTY()
 	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipants;
-	
-	UPROPERTY()
+
+	UPROPERTY(meta = (IgnoreForMemberInitializationTest))
 	FGuid ActiveNodeGuid;
-	UPROPERTY()
+	UPROPERTY(meta = (IgnoreForMemberInitializationTest))
 	FGuid PreviousActiveNodeGuid;
 	UPROPERTY()
 	TArray<FGuid> AllowedChildNodes;
@@ -681,7 +681,7 @@ struct FMounteaDialogueContextReplicatedStruct
 template<>
 struct TStructOpsTypeTraits<FMounteaDialogueContextReplicatedStruct> : public TStructOpsTypeTraitsBase2<FMounteaDialogueContextReplicatedStruct>
 {
-	enum 
+	enum
 	{
 		WithNetSerializer = true
 	};
