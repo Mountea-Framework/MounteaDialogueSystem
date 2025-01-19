@@ -30,43 +30,43 @@ public:
 	 * The name of the dialogue participant.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	FText DialogueRowParticipantName		= LOCTEXT("DialogueRow_Particpant", "Participant Name");
+	FText DialogueRowParticipantName = LOCTEXT("DialogueRow_Particpant", "Participant Name");
 
 	/**
 	 * The title of the dialogue row.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	FText DialogueRowTitle					= LOCTEXT("DialogueRow_Title", "This is dialogue row title text.");
+	FText DialogueRowTitle = LOCTEXT("DialogueRow_Title", "This is dialogue row title text.");
 
 	/**
 	 * The text of the dialogue row body.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	FText DialogueRowBody					= LOCTEXT("DialogueRow_Body", "This is dialogue option title text.");
+	FText DialogueRowBody = LOCTEXT("DialogueRow_Body", "This is dialogue option title text.");
 
 	/**
 	 * The duration of the dialogue row.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	float RowDuration						= 0.f;
+	float RowDuration = 0.f;
 
 	/**
 	 * The UI row ID.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	int32 UIRowID							= 0;
+	int32 UIRowID = 0;
 
 	/**
 	 * An optional icon for the dialogue row.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	UTexture* RowOptionalIcon				= nullptr;
+	UTexture* RowOptionalIcon = nullptr;
 
 	/**
 	 * The unique identifier for the dialogue row.
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	FGuid RowGuid							= FGuid::NewGuid();
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue", meta = (IgnoreForMemberInitializationTest))
+	FGuid RowGuid = FGuid::NewGuid();
 
 public:
 
@@ -75,15 +75,15 @@ public:
 	bool operator==(const FWidgetDialogueRow& Other) const
 	{
 		return
-		Other.RowGuid == RowGuid	&&
+		Other.RowGuid == RowGuid &&
 		Other.DialogueRowParticipantName.EqualTo(DialogueRowParticipantName)	&&
 		Other.DialogueRowTitle.EqualTo(DialogueRowTitle)	&&
 		Other.DialogueRowBody.EqualTo(DialogueRowBody)	&&
-		Other.UIRowID == UIRowID	&&
+		Other.UIRowID == UIRowID &&
 		FMath::IsNearlyEqual(Other.RowDuration, RowDuration)	&&
 		Other.RowOptionalIcon == RowOptionalIcon;
 	}
-	
+
 	bool operator!=(const FWidgetDialogueRow& Other) const
 	{
 		return !(*this == Other);
@@ -109,7 +109,7 @@ class UMounteaDialogueRowInterface : public UInterface
 };
 
 /**
- * 
+ *
  */
 class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueRowInterface
 {
@@ -117,7 +117,7 @@ class MOUNTEADIALOGUESYSTEM_API IMounteaDialogueRowInterface
 
 public:
 
-	
+
 	/**
 	 * Retrieves the dialogue row data associated with the widget.
 	 *

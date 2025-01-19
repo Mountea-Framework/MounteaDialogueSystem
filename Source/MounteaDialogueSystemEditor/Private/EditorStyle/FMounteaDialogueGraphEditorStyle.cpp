@@ -41,10 +41,10 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	const FVector2D Icon64x64(64.0f, 64.0f);
 	const FVector2D Icon128x128(128.f, 128.f);
 	const FVector2D Icon200x70(200.f, 70.f);
-	
+
 	StyleSet = MakeShareable(new FSlateStyleSet(GetAppStyleSetName()));
 	StyleSet->SetContentRoot(IPluginManager::Get().FindPlugin("MounteaDialogueSystem")->GetBaseDir() / TEXT("Resources"));
-	
+
 	StyleSet->Set("MDSStyleSet.MounteaLogo.Small", new IMAGE_BRUSH(TEXT("Mountea_Logo"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.MounteaLogo", new IMAGE_BRUSH(TEXT("Mountea_Logo"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.MounteaLogo.large", new IMAGE_BRUSH(TEXT("Mountea_Logo"), Icon64x64));
@@ -72,7 +72,7 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.K2Node_SetterIcon.Small", new IMAGE_BRUSH(TEXT("K2Node_SetterIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.K2Node_SetterIcon", new IMAGE_BRUSH(TEXT("K2Node_SetterIcon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.K2Node_SetterIcon.large", new IMAGE_BRUSH(TEXT("K2Node_SetterIcon"), Icon64x64));
-	
+
 	StyleSet->Set("MDSStyleSet.K2Node_ValidateIcon.Small", new IMAGE_BRUSH(TEXT("K2Node_ValidateIcon"), Icon16x16));
     StyleSet->Set("MDSStyleSet.K2Node_ValidateIcon", new IMAGE_BRUSH(TEXT("K2Node_ValidateIcon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.K2Node_ValidateIcon.large", new IMAGE_BRUSH(TEXT("K2Node_ValidateIcon"), Icon64x64));
@@ -92,7 +92,7 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.ReimportGraph.Small", new IMAGE_BRUSH(TEXT("ReimportGraphIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.ReimportGraph", new IMAGE_BRUSH(TEXT("ReimportGraphIcon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.ReimportGraph.large", new IMAGE_BRUSH(TEXT("ReimportGraphIcon"), Icon64x64));
-	
+
 	StyleSet->Set("MDSStyleSet.GraphSettings.Small", new IMAGE_BRUSH(TEXT("GraphSettings"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.GraphSettings", new IMAGE_BRUSH(TEXT("GraphSettings"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.GraphSettings.large", new IMAGE_BRUSH(TEXT("GraphSettings"), Icon64x64));
@@ -100,7 +100,7 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.ValidateGraph.Small", new IMAGE_BRUSH(TEXT("ValidateGraph"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.ValidateGraph", new IMAGE_BRUSH(TEXT("ValidateGraph"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.ValidateGraph.large", new IMAGE_BRUSH(TEXT("ValidateGraph"), Icon64x64));
-	
+
 	StyleSet->Set("MDSStyleSet.Graph.NodeOverlay", new BOX_BRUSH( TEXT("NodeOverlay"), FMargin(8.0f/64.0f, 3.0f/32.0f, 0, 0) ));
 	StyleSet->Set("MDSStyleSet.Graph.PinDocksOverlay", new BOX_BRUSH( TEXT("PinDocksOverlay"), FMargin(8.0f/64.0f, 3.0f/32.0f, 0, 0) ));
 
@@ -120,12 +120,12 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.Icon.OK", new IMAGE_BRUSH(TEXT("OKIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Icon.Error", new IMAGE_BRUSH(TEXT("ErrorIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Icon.BulletPoint", new IMAGE_BRUSH(TEXT("CircleBox"), Icon16x16));
-	
+
 	StyleSet->Set("MDSStyleSet.Graph.CornerImage", new IMAGE_BRUSH(TEXT("Icon128"), Icon128x128));
 
 	StyleSet->Set("MDSStyleSet.Icon.Browse", new IMAGE_BRUSH(TEXT("BrowseIcon"), Icon12x12));
 	StyleSet->Set("MDSStyleSet.Icon.Edit", new IMAGE_BRUSH(TEXT("EditIcon"), Icon12x12));
-	
+
 	StyleSet->Set("MDSStyleSet.Buttons.Documentation", new IMAGE_BRUSH(TEXT("Documentation"), Icon200x70));
 	StyleSet->Set("MDSStyleSet.Buttons.Documentation.Small", new IMAGE_BRUSH(TEXT("DocumentationIcon"), Icon12x12));
 
@@ -178,7 +178,7 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.Buttons.CloseStyle", MounteaCloseButtonStyle);
 
 	{
-		const FScrollBarStyle ScrollBar = GetWidgetStyle<FScrollBarStyle>( "ScrollBar" );
+		const FScrollBarStyle ScrollBar = FAppStyle::Get().GetWidgetStyle<FScrollBarStyle>( "ScrollBar" );
 
 		FTextBlockStyle NormalText = FTextBlockStyle()
 			.SetFont(DEFAULT_FONT("Regular", FCoreStyle::RegularTextSize))
@@ -187,7 +187,7 @@ void FMounteaDialogueGraphEditorStyle::Create()
 			.SetShadowColorAndOpacity(FLinearColor::Black)
 			.SetHighlightColor( MounteaDialogueGraphColors::TextColors::Normal )
 			.SetHighlightShape( BOX_BRUSH( "TextBlockHighlightShape", FMargin(3.f/8.f) ) );
-		
+
 		FTextBlockStyle NodeTitle = FTextBlockStyle(NormalText)
 			.SetFont( DEFAULT_FONT( "Bold", 14 ) )
 			.SetColorAndOpacity( MounteaDialogueGraphColors::TextColors::Normal )
