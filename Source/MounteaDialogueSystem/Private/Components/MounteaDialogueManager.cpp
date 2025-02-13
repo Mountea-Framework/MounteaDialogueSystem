@@ -1010,6 +1010,13 @@ void UMounteaDialogueManager::DialogueRowProcessed_Implementation(const bool bFo
 	// To avoid race conditions simply return if active
 	if (ManagerState != EDialogueManagerState::EDMS_Active)
 		return;
+
+	if (!IsValid(DialogueContext))
+	{
+		LOG_ERROR(TEXT("[Process Dialogue Row] Invalid Dialogue Context!"))
+		OnDialogueFailed.Broadcast(TEXT("[Process Dialogue Row] Invalid Dialogue Context!"));
+		return;
+	}
 	
 	FString resultMessage;
 	if (!Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::HideDialogueRow))
@@ -1027,6 +1034,7 @@ void UMounteaDialogueManager::DialogueRowProcessed_Implementation(const bool bFo
 	
 	if (processInfo.ActiveRowExecutionMode == ERowExecutionMode::EREM_AwaitInput && !bForceFinish)
 	{
+		LOG_INFO(TEXT("[Process Dialogue Row] Manual Input is Required to Skip/Finish this Row!"))
 		return;
 	}
 
