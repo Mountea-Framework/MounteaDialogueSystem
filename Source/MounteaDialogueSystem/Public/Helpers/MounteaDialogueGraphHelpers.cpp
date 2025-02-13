@@ -9,7 +9,7 @@
 // Log category definition
 DEFINE_LOG_CATEGORY(LogMounteaDialogueSystem);
 
-void PrintLog(const ELogVerbosity::Type Verbosity, const FString& Message, FLinearColor Color, float Duration)
+void PrintDialogueLog(const ELogVerbosity::Type Verbosity, const FString& Message, FLinearColor Color, float Duration)
 {
 	if (!GWorld) return;
 
