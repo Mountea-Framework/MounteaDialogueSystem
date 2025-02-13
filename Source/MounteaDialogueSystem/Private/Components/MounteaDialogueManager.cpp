@@ -623,7 +623,7 @@ void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 	if (IsAuthority())
 		SetManagerState(DefaultManagerState);
 
-	TimerHandle_RowTimer.Invalidate();
+	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 	
 	// Let's close Dialogue by changing state
 	switch (DialogueManagerType)
@@ -756,7 +756,7 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 
 void UMounteaDialogueManager::CleanupDialogue_Implementation()
 {
-	TimerHandle_RowTimer.Invalidate();
+	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 	
 	if (!UMounteaDialogueSystemBFC::IsContextValid(DialogueContext))
 		return;
@@ -1007,6 +1007,10 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 
 void UMounteaDialogueManager::DialogueRowProcessed_Implementation(const bool bForceFinish)
 {
+	// To avoid race conditions simply return if active
+	if (ManagerState != EDialogueManagerState::EDMS_Active)
+		return;
+	
 	FString resultMessage;
 	if (!Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::HideDialogueRow))
 		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
