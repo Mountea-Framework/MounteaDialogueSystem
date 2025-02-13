@@ -19,7 +19,7 @@ UMounteaDialogueGraphNode_CompleteNode::UMounteaDialogueGraphNode_CompleteNode()
 
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_DialogueNodeBase::StaticClass());
 	bAutoStarts = false;
-	bUseGameplayTags = false;
+	bUseGameplayTags = true;
 }
 
 #if WITH_EDITOR

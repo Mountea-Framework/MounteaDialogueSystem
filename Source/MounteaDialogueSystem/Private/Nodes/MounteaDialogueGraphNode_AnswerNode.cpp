@@ -27,7 +27,7 @@ UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_AnswerNode::StaticClass());
 
 	bAutoStarts = false;
-	bUseGameplayTags = false;
+	bUseGameplayTags = true;
 }
 
 void UMounteaDialogueGraphNode_AnswerNode::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
