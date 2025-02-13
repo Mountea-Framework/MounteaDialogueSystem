@@ -124,7 +124,7 @@ void UMounteaDialogueParticipant::PlayParticipantVoice_Implementation(USoundBase
 		return;
 	}
 	
-	if (IsValid(AudioComponent))
+	if (IsValid(AudioComponent) && IsValid(ParticipantVoice))
 	{
 		AudioComponent->SetSound(ParticipantVoice);
 		AudioComponent->Play();
