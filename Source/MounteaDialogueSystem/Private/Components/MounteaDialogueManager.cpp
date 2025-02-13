@@ -622,6 +622,8 @@ void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 {
 	if (IsAuthority())
 		SetManagerState(DefaultManagerState);
+
+	TimerHandle_RowTimer.Invalidate();
 	
 	// Let's close Dialogue by changing state
 	switch (DialogueManagerType)
@@ -639,8 +641,6 @@ void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 			}
 			break;
 	}
-	
-	//Execute_CloseDialogue(this);
 }
 
 void UMounteaDialogueManager::StartParticipants()
@@ -756,6 +756,8 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 
 void UMounteaDialogueManager::CleanupDialogue_Implementation()
 {
+	TimerHandle_RowTimer.Invalidate();
+	
 	if (!UMounteaDialogueSystemBFC::IsContextValid(DialogueContext))
 		return;
 	
@@ -987,8 +989,6 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 	}
 
 	OnDialogueRowStarted.Broadcast(DialogueContext);
-	
-	DialogueContext->ActiveDialogueParticipant->Execute_PlayParticipantVoice(DialogueContext->ActiveDialogueParticipant.GetObject(), RowData.RowSound);
 
 	if (bValidRowData)
 	{
