@@ -7,6 +7,7 @@
 #include "GameplayTagsManager.h"
 #include "HttpModule.h"
 #include "ISettingsModule.h"
+
 #include "AssetActions/MounteaDialogueAdditionalDataAssetAction.h"
 #include "AssetActions/MounteaDialogueDecoratorAssetAction.h"
 #include "AssetActions/MounteaDialogueGraphAssetAction.h"
@@ -27,12 +28,16 @@
 #include "Styling/SlateStyleRegistry.h"
 
 #include "ToolMenus.h"
+#include "WorkspaceMenuStructure.h"
+#include "WorkspaceMenuStructureModule.h"
+
 #include "AssetActions/MounteaDialogueConfigurationAssetAction.h"
 #include "AssetActions/MounteaDialogueDataTableAssetAction.h"
 #include "DetailsPanel/MounteaDialogueDecorator_Details.h"
 #include "DetailsPanel/MounteaDialogueEditorSettings_Details.h"
 #include "DetailsPanel/MounteaDialogueGraph_Details.h"
 #include "Graph/MounteaDialogueGraph.h"
+#include "HelpButton/DialogueSystemTutorialPage.h"
 #include "HelpButton/MDSCommands.h"
 #include "Helpers/MounteaDialogueFixUtilities.h"
 #include "ImportConfig/MounteaDialogueImportConfig.h"
@@ -400,6 +405,11 @@ void FMounteaDialogueSystemEditor::StartupModule()
 			})
 		);
 	}
+
+	// Register Tab Spawner
+	{
+		RegisterTabSpawners(FGlobalTabmanager::Get());
+	}
 	
 	EditorLOG_WARNING(TEXT("MounteaDialogueSystemEditor module has been loaded"));
 }
@@ -695,6 +705,31 @@ void FMounteaDialogueSystemEditor::OnGetResponse_Tags(FHttpRequestPtr Request, F
 	}
 }
 
+void FMounteaDialogueSystemEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& TabManager)
+{
+	TabManager->RegisterTabSpawner("DialogueSystemTutorial", 
+		FOnSpawnTab::CreateRaw(this, &FMounteaDialogueSystemEditor::OnSpawnDialogueSystemTutorialTab))
+		.SetDisplayName(FText::FromString("Dialogue System Tutorial"))
+		.SetTooltipText(FText::FromString("Learn about the Mountea Dialogue System"))
+		.SetGroup(WorkspaceMenu::GetMenuStructure().GetDeveloperToolsMiscCategory())
+		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "InputBindingEditor.OutputLog"));
+}
+
+TSharedRef<SDockTab> FMounteaDialogueSystemEditor::OnSpawnDialogueSystemTutorialTab(const FSpawnTabArgs& SpawnTabArgs)
+{
+	return SNew(SDockTab)
+		.TabRole(ETabRole::NomadTab)
+		.Label(FText::FromString("Dialogue System Tutorial"))
+		[
+			SNew(SDialogueSystemTutorialPage)
+		];
+}
+
+void FMounteaDialogueSystemEditor::TutorialButtonClicked() const
+{
+	FGlobalTabmanager::Get()->TryInvokeTab(FName("DialogueSystemTutorial"));
+}
+
 void FMounteaDialogueSystemEditor::RegisterMenus()
 {
 	// Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
@@ -761,6 +796,19 @@ void FMounteaDialogueSystemEditor::EditorSettingsButtonClicked() const
 TSharedRef<SWidget> FMounteaDialogueSystemEditor::MakeMounteaMenuWidget() const
 {
 	FMenuBuilder MenuBuilder(true, PluginCommands);
+
+	MenuBuilder.BeginSection("MounteaMenu_Tools", LOCTEXT("MounteaMenuOptions_Tutorial", "Mountea Dialogue Tutorial"));
+	{
+		MenuBuilder.AddMenuEntry(
+		LOCTEXT("MounteaSystemEditor_TutorialButton_Label", "Dialogue System Tutorial"),
+		LOCTEXT("MounteaSystemEditor_TutorialButton_ToolTip", "📖 Open the Mountea Dialogue System Tutorial"),
+		FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Tutorial"),
+		FUIAction(
+			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::TutorialButtonClicked)
+			)
+		);
+	};
+	MenuBuilder.EndSection();
 
 	MenuBuilder.BeginSection("MounteaMenu_Tools", LOCTEXT("MounteaMenuOptions_Settings", "Mountea Dialogue Settings"));
 	{
