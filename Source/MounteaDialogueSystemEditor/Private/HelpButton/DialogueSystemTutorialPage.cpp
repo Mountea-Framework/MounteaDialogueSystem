@@ -119,8 +119,7 @@ For multiplayer purposes, the Player Controller contains <RichTextBlock.BoldHigh
 	FString PlayerStateTitle = TEXT("Player State");
 	FString PlayerStateMessage = FString(R"(
 Default Player State Class is <a id="folder" href="/MounteaDialogueSystem/Blueprints/Core">in this folder</>.
-<RichTextBlock.BoldHighlight>Player State</> is one of the most important keys for this configuration!
-Player State is where <RichTextBlock.BoldHighlight>Dialogue Manager Component</> must be.
+<RichTextBlock.BoldHighlight>Player State</> is one of the most important keys for this configuration! Player State is where <RichTextBlock.BoldHighlight>Dialogue Manager Component</> must be.
 )");
 
 	FString UserInterfaceTitle = TEXT("User Interface");
@@ -166,8 +165,7 @@ Then simply drag-and-drop to any folder, and Dialogue will be created for you, i
 	FString HaveFunTitle = TEXT("Have Fun!");
 
 	FString HaveFunContent = FString(R"(
-If you need anything, feel free to join <a id="browser" href="https://discord.gg/2vXWEEN">free Discord server</> 
-and read <a id="browser" href="https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Getting-Started">online Documentation</>.
+If you need anything, feel free to join <a id="browser" href="https://discord.gg/2vXWEEN">free Discord server</> and read <a id="browser" href="https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Getting-Started">online Documentation</>.
 )");
 	
 	ChildSlot
