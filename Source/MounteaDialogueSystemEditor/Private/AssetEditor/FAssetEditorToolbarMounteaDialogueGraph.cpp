@@ -22,7 +22,12 @@ void FAssetEditorToolbarMounteaDialogueGraph::FillMounteaDialogueGraphToolbar(FT
 {
 	check(MounteaDialogueGraphEditor.IsValid());
 	TSharedPtr<FAssetEditor_MounteaDialogueGraph> MounteaDialogueGraphEditorPtr = MounteaDialogueGraphEditor.Pin();
-
+	
+	if (!FMounteaDialogueGraphEditorCommands::IsRegistered())
+	{
+		FMounteaDialogueGraphEditorCommands::Register();
+	}
+	
 	ToolbarBuilder.BeginSection("Util");
 	{
 		ToolbarBuilder.AddToolBarButton(FMounteaDialogueGraphEditorCommands::Get().AutoArrange,
