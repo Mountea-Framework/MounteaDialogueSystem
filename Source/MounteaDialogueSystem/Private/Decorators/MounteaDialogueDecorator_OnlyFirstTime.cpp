@@ -6,6 +6,7 @@
 #include "Data/MounteaDialogueContext.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
@@ -68,23 +69,17 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::EvaluateDecorator_Implementation()
 	bool bSatisfied = Super::EvaluateDecorator_Implementation();
 
 	if (!OwningManager)
-	{
 		return false;
-	}
 
 	auto Context = GetContext();
 	// Let's return BP Updatable Context rather than Raw
 	if (!Context)
-	{
 		Context = OwningManager->Execute_GetDialogueContext(OwningManager.GetObject());
-	}
 
 	// We can live for a moment without Context, because this Decorator might be called before Context is initialized
 	bSatisfied = GetOwnerParticipant() != nullptr  || Context != nullptr;
 	if (!bSatisfied)
-	{
 		return bSatisfied;
-	}
 	
 	return IsFirstTime();
 }
@@ -104,12 +99,12 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::IsFirstTime() const
 	
 	TScriptInterface<IMounteaDialogueParticipantInterface> ParticipantInterface = GetOwnerParticipant();
 	if (!ParticipantInterface.GetObject())
-	{
 		ParticipantInterface = Context->GetDialogueParticipant();
-	}
-	const bool bParticipantRemembers = UMounteaDialogueSystemBFC::HasNodeBeenTraversed(GetOwningNode(), ParticipantInterface);
-	const bool bContextRemembers = UMounteaDialogueSystemBFC::HasNodeBeenTraversedV2(GetOwningNode(), Context);
-	return !bParticipantRemembers || !bContextRemembers;
+	
+	if (UMounteaDialogueSystemBFC::HasNodeBeenTraversed(GetOwningNode(), ParticipantInterface)) return false;
+	if (UMounteaDialogueSystemBFC::HasNodeBeenTraversedV2(GetOwningNode(), Context)) return false;
+
+	return true;
 }
 
 #undef LOCTEXT_NAMESPACE
