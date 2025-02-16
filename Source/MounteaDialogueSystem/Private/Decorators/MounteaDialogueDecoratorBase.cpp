@@ -25,19 +25,13 @@ void UMounteaDialogueDecoratorBase::InitializeDecorator_Implementation(UWorld* W
 {
 	OwningWorld = World;
 	if (World)
-	{
 		DecoratorState = EDecoratorState::Initialized;
-	}
 
 	if (OwningParticipant)
-	{
 		OwnerParticipant = OwningParticipant;
-	}
 
 	if (NewOwningManager != nullptr)
-	{
 		OwningManager = NewOwningManager;
-	}
 };
 
 void UMounteaDialogueDecoratorBase::SetOwningManager_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
