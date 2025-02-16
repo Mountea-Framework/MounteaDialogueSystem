@@ -75,6 +75,7 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(
 	EditingGraph = Graph;
 	CreateEdGraph();
 	FMounteaDialogueGraphEditorCommands::Register();
+	CreateCommandList();
 
 	if (!ToolbarBuilder.IsValid())
 	{
@@ -82,7 +83,6 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(
 	}
 
 	BindCommands();
-
 	CreateInternalWidgets();
 
 	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);

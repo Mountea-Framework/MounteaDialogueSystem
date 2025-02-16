@@ -77,7 +77,7 @@ void UMounteaDialogueParticipant::InitializeParticipant_Implementation(const TSc
 	for (const auto& Itr : Decorators)
 	{
 		if (Itr.DecoratorType)
-			Itr.DecoratorType->InitializeDecorator(GetWorld(), this, nullptr);
+			Itr.DecoratorType->InitializeDecorator(GetWorld(), this, Manager);
 	}
 }
 
