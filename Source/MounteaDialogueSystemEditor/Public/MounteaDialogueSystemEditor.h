@@ -69,6 +69,12 @@ protected:
 	void UpdateTagsConfig(const FString& NewContent);
 	void CreateTagsConfig(const FString& NewContent);
 
+	void RegisterTabSpawners(const TSharedRef<FTabManager>& TabManager);
+	void TutorialButtonClicked() const;
+	
+private:
+	TSharedRef<SDockTab> OnSpawnDialogueSystemTutorialTab(const FSpawnTabArgs& SpawnTabArgs);
+
 private:
 	
 	TSharedPtr<class FUICommandList> PluginCommands;
