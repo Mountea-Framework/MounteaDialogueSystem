@@ -661,6 +661,7 @@ void UMounteaDialogueManager::StartParticipants()
 
 		dialogueParticipant->Execute_SetParticipantState(dialogueParticipant.GetObject(), EDialogueParticipantState::EDPS_Active);
 		dialogueParticipant->Execute_InitializeParticipant(dialogueParticipant.GetObject(), this);
+		dialogueParticipant->GetOnDialogueStartedEventHandle().Broadcast();
 	}
 }
 
@@ -690,6 +691,7 @@ void UMounteaDialogueManager::StopParticipants() const
 		}
 		
 		dialogueParticipant->Execute_SetParticipantState(participantObject, dialogueParticipant->Execute_GetDefaultParticipantState(participantObject));
+		dialogueParticipant->GetOnDialogueEndedEventHandle().Broadcast();
 	}
 }
 
@@ -814,6 +816,7 @@ void UMounteaDialogueManager::ProcessNode_Implementation()
 	{
 		DialogueContext->ActiveNode->ProcessNode(this);
 
+		DialogueContext->ActiveDialogueParticipant->GetOnParticipantBecomeActiveEventHandle().Broadcast(true);
 		OnDialogueNodeStarted.Broadcast(DialogueContext);
 
 		Execute_ProcessDialogueRow(this);
