@@ -6,6 +6,7 @@
 #include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Misc/DataValidation.h"
+#include "TimerManager.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
