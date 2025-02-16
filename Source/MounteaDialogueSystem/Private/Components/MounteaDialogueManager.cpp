@@ -690,6 +690,8 @@ void UMounteaDialogueManager::StopParticipants() const
 			tickableObject->Execute_UnregisterTick(tickableObject.GetObject(), nullptr);
 		}
 		
+		UMounteaDialogueSystemBFC::SaveTraversePathToParticipant(DialogueContext->TraversedPath, dialogueParticipant);
+		
 		dialogueParticipant->Execute_SetParticipantState(participantObject, dialogueParticipant->Execute_GetDefaultParticipantState(participantObject));
 		dialogueParticipant->GetOnDialogueEndedEventHandle().Broadcast();
 	}
@@ -832,7 +834,7 @@ void UMounteaDialogueManager::NodeProcessed_Implementation()
 		OnDialogueFailed.Broadcast(TEXT("[Node Processed] Invalid Dialogue Context!"));
 		return;
 	}
-
+	
 	if (!IsValid(DialogueContext->ActiveNode) )
 	{
 		OnDialogueFailed.Broadcast(TEXT("[Node Processed] Invalid Active Node!"));
@@ -840,7 +842,7 @@ void UMounteaDialogueManager::NodeProcessed_Implementation()
 	}
 
 	DialogueContext->ActiveNode->Execute_UnregisterTick(DialogueContext->ActiveNode, DialogueContext->ActiveNode->Graph);
-
+	
 	// TODO: This is extremely similar to NodeSelected!
 	TArray<UMounteaDialogueGraphNode*> allowedChildrenNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(DialogueContext->ActiveNode);
 	UMounteaDialogueSystemBFC::SortNodes(allowedChildrenNodes);
