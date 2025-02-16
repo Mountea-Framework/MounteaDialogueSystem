@@ -195,7 +195,15 @@ protected:
 	 */
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Participant")
 	FDialogueUpdated OnDialogueUpdated;
-	
+	/** Event called once this participant's dialogue starts.*/
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Participant")
+	FOnDialogueStarted OnDialogueStarted;
+	/** Event called once this participant's dialogue ends.*/
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Participant")
+	FOnDialogueEnded OnDialogueEnded;
+	/** Event called once this participant become active participant in dialogue.*/
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Participant")
+	FOnParticipantBecomeActive OnParticipantBecomeActive;
 #pragma endregion 
 
 #pragma region EventFunctions
@@ -274,6 +282,12 @@ public:
 	{return ParticipantCommandRequested; };
 	virtual FDialogueUpdated& GetDialogueUpdatedEventHandle() override
 	{ return OnDialogueUpdated; };
+	virtual FOnDialogueStarted& GetOnDialogueStartedEventHandle() override
+	{ return OnDialogueStarted; };
+	virtual FOnDialogueEnded& GetOnDialogueEndedEventHandle() override
+	{ return OnDialogueEnded; };
+	virtual FOnParticipantBecomeActive& GetOnParticipantBecomeActiveEventHandle() override
+	{ return OnParticipantBecomeActive; };
 	
 #pragma endregion 
 
