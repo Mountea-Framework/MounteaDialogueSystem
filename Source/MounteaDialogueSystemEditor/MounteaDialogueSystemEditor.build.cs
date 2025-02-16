@@ -80,7 +80,9 @@ public class MounteaDialogueSystemEditor : ModuleRules
 				
 				"Blutility", 
 				
-				"MounteaDialogueSystemDeveloper",
+				"MounteaDialogueSystemDeveloper", 
+				
+				"WorkspaceMenuStructure",
 			}
 		);
 	}

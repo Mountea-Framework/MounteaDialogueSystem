@@ -569,13 +569,13 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 			}
 		}
 
-		MounteaDialogueGraph->RebuildMounteaDialogueGraph();
+		//MounteaDialogueGraph->RebuildMounteaDialogueGraph();
 	}
 
 	if (UEdGraph_MounteaDialogueGraph* EdMounteaGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph))
 	{
 		EdMounteaGraph->SetDialogueEditorPtr(SharedThis(this));
-		EdMounteaGraph->RebuildMounteaDialogueGraph();
+		//EdMounteaGraph->RebuildMounteaDialogueGraph();
 	}
 
 	FAssetEditorToolkit::SaveAsset_Execute();
@@ -1231,7 +1231,7 @@ void FAssetEditor_MounteaDialogueGraph::OnSelectedNodesChanged(const TSet<UObjec
 		PropertyWidget->SetObject(EditingGraph);
 	}
 
-	RebuildMounteaDialogueGraph();
+	//RebuildMounteaDialogueGraph();
 }
 
 void FAssetEditor_MounteaDialogueGraph::OnNodeDoubleClicked(UEdGraphNode* Node)
