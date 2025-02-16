@@ -622,6 +622,8 @@ void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 {
 	if (IsAuthority())
 		SetManagerState(DefaultManagerState);
+
+	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 	
 	// Let's close Dialogue by changing state
 	switch (DialogueManagerType)
@@ -639,8 +641,6 @@ void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 			}
 			break;
 	}
-	
-	//Execute_CloseDialogue(this);
 }
 
 void UMounteaDialogueManager::StartParticipants()
@@ -661,6 +661,7 @@ void UMounteaDialogueManager::StartParticipants()
 
 		dialogueParticipant->Execute_SetParticipantState(dialogueParticipant.GetObject(), EDialogueParticipantState::EDPS_Active);
 		dialogueParticipant->Execute_InitializeParticipant(dialogueParticipant.GetObject(), this);
+		dialogueParticipant->GetOnDialogueStartedEventHandle().Broadcast();
 	}
 }
 
@@ -690,6 +691,7 @@ void UMounteaDialogueManager::StopParticipants() const
 		}
 		
 		dialogueParticipant->Execute_SetParticipantState(participantObject, dialogueParticipant->Execute_GetDefaultParticipantState(participantObject));
+		dialogueParticipant->GetOnDialogueEndedEventHandle().Broadcast();
 	}
 }
 
@@ -756,6 +758,8 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 
 void UMounteaDialogueManager::CleanupDialogue_Implementation()
 {
+	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
+	
 	if (!UMounteaDialogueSystemBFC::IsContextValid(DialogueContext))
 		return;
 	
@@ -812,6 +816,7 @@ void UMounteaDialogueManager::ProcessNode_Implementation()
 	{
 		DialogueContext->ActiveNode->ProcessNode(this);
 
+		DialogueContext->ActiveDialogueParticipant->GetOnParticipantBecomeActiveEventHandle().Broadcast(true);
 		OnDialogueNodeStarted.Broadcast(DialogueContext);
 
 		Execute_ProcessDialogueRow(this);
@@ -987,8 +992,6 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 	}
 
 	OnDialogueRowStarted.Broadcast(DialogueContext);
-	
-	DialogueContext->ActiveDialogueParticipant->Execute_PlayParticipantVoice(DialogueContext->ActiveDialogueParticipant.GetObject(), RowData.RowSound);
 
 	if (bValidRowData)
 	{
@@ -1007,6 +1010,17 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 
 void UMounteaDialogueManager::DialogueRowProcessed_Implementation(const bool bForceFinish)
 {
+	// To avoid race conditions simply return if active
+	if (ManagerState != EDialogueManagerState::EDMS_Active)
+		return;
+
+	if (!IsValid(DialogueContext))
+	{
+		LOG_ERROR(TEXT("[Process Dialogue Row] Invalid Dialogue Context!"))
+		OnDialogueFailed.Broadcast(TEXT("[Process Dialogue Row] Invalid Dialogue Context!"));
+		return;
+	}
+	
 	FString resultMessage;
 	if (!Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::HideDialogueRow))
 		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
@@ -1023,6 +1037,7 @@ void UMounteaDialogueManager::DialogueRowProcessed_Implementation(const bool bFo
 	
 	if (processInfo.ActiveRowExecutionMode == ERowExecutionMode::EREM_AwaitInput && !bForceFinish)
 	{
+		LOG_INFO(TEXT("[Process Dialogue Row] Manual Input is Required to Skip/Finish this Row!"))
 		return;
 	}
 

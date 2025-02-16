@@ -163,6 +163,8 @@ void FMounteaDialogueGraphEditorStyle::Create()
 
 	StyleSet->Set("MDSStyleSet.DialogueSystemIcon", new IMAGE_BRUSH(TEXT("DialogueSystem_Icon"), Icon16x16));
 
+	StyleSet->Set("MDSStyleSet.Tutorial", new IMAGE_BRUSH(TEXT("tutorialPage_icon"), Icon16x16));
+
 	const FButtonStyle MounteaButtonStyle = FButtonStyle()
 		.SetNormal(BOX_BRUSH("RoundedSelection_16x", 4.0f / 16.0f, FLinearColor(1, 1, 1, 0.1f)))
 		.SetHovered(BOX_BRUSH("RoundedSelection_16x", 4.0f / 16.0f, FLinearColor(1, .55f, 0, 0.2f)))

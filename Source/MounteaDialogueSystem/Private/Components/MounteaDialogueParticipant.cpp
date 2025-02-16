@@ -11,6 +11,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Settings/MounteaDialogueSystemSettings.h"
+#include "Sound/SoundBase.h"
 
 UMounteaDialogueParticipant::UMounteaDialogueParticipant()
 	: DefaultParticipantState(EDialogueParticipantState::EDPS_Enabled)
@@ -124,7 +125,7 @@ void UMounteaDialogueParticipant::PlayParticipantVoice_Implementation(USoundBase
 		return;
 	}
 	
-	if (IsValid(AudioComponent))
+	if (IsValid(AudioComponent) && IsValid(ParticipantVoice))
 	{
 		AudioComponent->SetSound(ParticipantVoice);
 		AudioComponent->Play();
