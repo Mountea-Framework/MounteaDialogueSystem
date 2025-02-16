@@ -27,6 +27,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueParticipantAudioComponentCh
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FParticipantStartingNodeSaved, const UMounteaDialogueGraphNode*, NewSavedNode);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FParticipantCommandRequested, const FString&, Command, UObject*, OptionalPayload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueUpdated, const TScriptInterface<IMounteaDialogueManagerInterface>&, OwningManager);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDialogueStarted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDialogueEnded);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnParticipantBecomeActive, const bool, bIsActiveParticipant);
 
 /**
  * Mountea Dialogue Participant Interface.
@@ -227,6 +230,9 @@ public:
 	virtual FParticipantStartingNodeSaved& GetParticipantStartingNodeSavedEventHandle() = 0;
 	virtual FParticipantCommandRequested& GetParticipantCommandRequestedEventHandle() = 0;
 	virtual FDialogueUpdated& GetDialogueUpdatedEventHandle() = 0;
+	virtual FOnDialogueStarted& GetOnDialogueStartedEventHandle() = 0;
+	virtual FOnDialogueEnded& GetOnDialogueEndedEventHandle() = 0;
+	virtual FOnParticipantBecomeActive& GetOnParticipantBecomeActiveEventHandle() = 0;
 
 #pragma endregion 
 };

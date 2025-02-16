@@ -27,6 +27,13 @@ public:
 public:
 
 	/**
+	 * Defines how long it takes before the actual Jump happens.
+	 * Short delay time can avoid cutting audio and can provide time for Client-sided actions.
+	 */
+	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault,Units = "s", UIMin = 0.01, ClampMin = 0.01))
+	float DelayDuration;
+
+	/**
 	 * Shows list of Node Indexes.
 	 * This is not very user friendly, however, to combat this Preview is generated with ability to click on it and get focused on selected Node.
 	 */
@@ -55,6 +62,11 @@ public:
 #endif
 
 protected:
+
+	FTimerHandle TimerHandle_Delay;
+
+	UFUNCTION()
+	void OnDelayDurationExpired(const TScriptInterface<IMounteaDialogueManagerInterface>& MounteaDialogueManagerInterface);
 
 #if WITH_EDITOR
 	

@@ -312,7 +312,7 @@ bool UMounteaDialogueContext::RemoveDialogueParticipantsBP(const TArray<TScriptI
 void UMounteaDialogueContext::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    
+	
 	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueParticipant);
 	DOREPLIFETIME(UMounteaDialogueContext, PlayerDialogueParticipant);
 	DOREPLIFETIME(UMounteaDialogueContext, DialogueParticipant);
@@ -375,20 +375,35 @@ UMounteaDialogueContext* UMounteaDialogueContext::operator += (const FMounteaDia
 		if (Other.LastWidgetCommand != LastWidgetCommand)
 			LastWidgetCommand = Other.LastWidgetCommand;
 		
-		UMounteaDialogueGraph* activeGraph = DialogueParticipant->Execute_GetDialogueGraph(DialogueParticipant.GetObject());
+		UMounteaDialogueGraph* activeGraph = nullptr;
+		if (DialogueParticipant.GetObject() && DialogueParticipant.GetInterface())
+			activeGraph = DialogueParticipant->Execute_GetDialogueGraph(DialogueParticipant.GetObject());
 
-		if (!ActiveNode || (ActiveNode && ActiveNode->GetNodeGUID() != Other.ActiveNodeGuid))
-			ActiveNode = UMounteaDialogueSystemBFC::FindNodeByGUID(activeGraph, Other.ActiveNodeGuid);
-		if (PreviousActiveNode != Other.PreviousActiveNodeGuid)
-			PreviousActiveNode = Other.PreviousActiveNodeGuid;
-		
-		AllowedChildNodes = UMounteaDialogueSystemBFC::FindNodesByGUID(activeGraph, Other.AllowedChildNodes);
-		
-		UMounteaDialogueGraphNode_DialogueNodeBase* dialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(ActiveNode);
+		// Only proceed with node updates if we have a valid graph
+		if (activeGraph)
+		{
+			if (!ActiveNode || (ActiveNode && ActiveNode->GetNodeGUID() != Other.ActiveNodeGuid))
+				ActiveNode = UMounteaDialogueSystemBFC::FindNodeByGUID(activeGraph, Other.ActiveNodeGuid);
+			if (PreviousActiveNode != Other.PreviousActiveNodeGuid)
+				PreviousActiveNode = Other.PreviousActiveNodeGuid;
+			
+			AllowedChildNodes = UMounteaDialogueSystemBFC::FindNodesByGUID(activeGraph, Other.AllowedChildNodes);
+			
+			UMounteaDialogueGraphNode_DialogueNodeBase* dialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(ActiveNode);
 
-		const FDialogueRow selectedRow = dialogueNode ? UMounteaDialogueSystemBFC::GetDialogueRow(ActiveDialogueTableHandle.DataTable,ActiveDialogueTableHandle.RowName) : FDialogueRow::Invalid();
-		if (dialogueNode)
-			ActiveDialogueRow = selectedRow.IsValid() ? selectedRow : UMounteaDialogueSystemBFC::GetDialogueRow(ActiveNode);
+			const FDialogueRow selectedRow = dialogueNode ? UMounteaDialogueSystemBFC::GetDialogueRow(ActiveDialogueTableHandle.DataTable,ActiveDialogueTableHandle.RowName) : FDialogueRow::Invalid();
+			if (dialogueNode)
+				ActiveDialogueRow = selectedRow.IsValid() ? selectedRow : UMounteaDialogueSystemBFC::GetDialogueRow(ActiveNode);
+		}
+		else
+		{
+			ActiveNode = nullptr;
+			AllowedChildNodes.Empty();
+			PreviousActiveNode = FGuid();
+			ActiveDialogueRow = FDialogueRow::Invalid();
+
+			LOG_INFO(TEXT("[Dialogue Context] Dialogue Context had no Graph!"))
+		}
 	}
 
 	return this;
