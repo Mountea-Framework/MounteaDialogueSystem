@@ -164,7 +164,7 @@ struct FSubtitlesSettings
 	 * 
 	 * Invalid settings are ignored!
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Subtitles")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Subtitles", meta=(IgnoreForMemberInitializationTest))
 	FGuid SettingsGUID;
 
 public:
@@ -264,7 +264,7 @@ public:
 	 * 
 	 * Unique Key when searching and binding this Row.
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, meta=(IgnoreForMemberInitializationTest))
 	FGuid RowGUID = FGuid::NewGuid();
 
 public:
@@ -640,9 +640,9 @@ struct FMounteaDialogueContextReplicatedStruct
 	UPROPERTY()
 	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipants;
 	
-	UPROPERTY()
+	UPROPERTY(meta=(IgnoreForMemberInitializationTest))
 	FGuid ActiveNodeGuid;
-	UPROPERTY()
+	UPROPERTY(meta=(IgnoreForMemberInitializationTest))
 	FGuid PreviousActiveNodeGuid;
 	UPROPERTY()
 	TArray<FGuid> AllowedChildNodes;

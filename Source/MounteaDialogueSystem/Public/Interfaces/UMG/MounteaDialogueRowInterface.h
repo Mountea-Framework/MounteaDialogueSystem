@@ -60,12 +60,12 @@ public:
 	 * An optional icon for the dialogue row.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	UTexture* RowOptionalIcon				= nullptr;
+	TObjectPtr<UTexture> RowOptionalIcon				= nullptr;
 
 	/**
 	 * The unique identifier for the dialogue row.
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue", meta=(IgnoreForMemberInitializationTest))
 	FGuid RowGuid							= FGuid::NewGuid();
 
 public:

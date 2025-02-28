@@ -994,9 +994,11 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 	}
 
 	OnDialogueRowStarted.Broadcast(DialogueContext);
-
+	
 	if (bValidRowData)
 	{
+		DialogueContext->ActiveDialogueParticipant->Execute_PlayParticipantVoice(DialogueContext->ActiveDialogueParticipant.GetObject(), RowData.RowSound);
+		
 		FTimerDelegate Delegate;
 		Delegate.BindUObject(this, &UMounteaDialogueManager::DialogueRowProcessed_Implementation, false);
 		
