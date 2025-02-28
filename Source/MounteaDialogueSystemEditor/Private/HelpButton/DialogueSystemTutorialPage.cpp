@@ -43,7 +43,6 @@ void OpenWorldSettings()
 
 void SDialogueSystemTutorialPage::Construct(const FArguments& InArgs)
 {
-
 	// Header 1 (Largest, Bold)
 	FTextBlockStyle Header1Style = FCoreStyle::Get().GetWidgetStyle<FTextBlockStyle>("NormalText");
 	Header1Style.SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 22));
@@ -129,11 +128,11 @@ Mountea Dialogue System provides a structured way to handle this situation.
 )");
 
 	FString UserInterfaceHierarchy = FString(R"(
-- Main Dialogue UI
--- Options Container
---- Option
--- Dialogue Row
--- Skip
++-- Main Dialogue UI
+	+-- Options Container
+		+-- Option
+	+-- Dialogue Row
+	+-- Skip
 )");
 
 	FString UserInterfaceOutro = FString(R"(
