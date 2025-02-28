@@ -41,7 +41,7 @@
 
 #pragma region ConstantNames
 
-const FName MounteaDialogueGraphEditorAppName = FName(TEXT("MounteaDialogueGraphEditorApp"));
+const FName MounteaDocumentationPageTabName = FName(TEXT("MounteaDialogueGraphEditorApp"));
 const FName FAssetEditorTabs_MounteaDialogueGraph::MounteaDialogueGraphPropertyID(TEXT("MounteaDialogueGraphProperty"));
 const FName FAssetEditorTabs_MounteaDialogueGraph::ViewportID(TEXT("Viewport"));
 const FName FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID(TEXT("Search"));
@@ -141,7 +141,7 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(
 	(
 		Mode,
 		InitToolkitHost,
-		MounteaDialogueGraphEditorAppName,
+		MounteaDocumentationPageTabName,
 		StandaloneDefaultLayout,
 		bCreateDefaultStandaloneMenu,
 		bCreateDefaultToolbar,
