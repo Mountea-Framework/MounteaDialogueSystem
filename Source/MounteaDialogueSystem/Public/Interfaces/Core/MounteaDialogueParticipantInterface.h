@@ -53,7 +53,7 @@ public:
 		, TraverseCount(FMath::Max(0, InTraverseCount))
 	{}
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath", meta=(IgnoreForMemberInitializationTest))
 	FGuid NodeGuid;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
