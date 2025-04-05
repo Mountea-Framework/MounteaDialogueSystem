@@ -44,6 +44,10 @@ protected:
 
 public:
 
+	virtual bool IsFocusEnabled_Implementation() const override
+	{return bIsFocusable; };
+	virtual void EnableFocus_Implementation(const bool bIsWidgetEnabled = true) override;
+
 	virtual EDialogueOptionState GetFocusState_Implementation() const override
 	{ return DialogueOptionState; };
 	virtual void SetFocusState_Implementation(const bool IsSelected) override;
