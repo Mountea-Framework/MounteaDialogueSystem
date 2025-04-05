@@ -32,6 +32,14 @@ class MOUNTEADIALOGUESYSTEM_API IMounteaFocusableWidgetInterface
 	GENERATED_BODY()
 
 public:
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|Focus")
+	bool IsFocusEnabled() const;
+	virtual bool IsFocusEnabled_Implementation() const = 0;
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|Focus")
+	void EnableFocus(const bool bIsWidgetEnabled = true);
+	virtual void EnableFocus_Implementation(const bool bIsWidgetEnabled = true) = 0;
 	
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|Focus")
 	EDialogueOptionState GetFocusState() const;
