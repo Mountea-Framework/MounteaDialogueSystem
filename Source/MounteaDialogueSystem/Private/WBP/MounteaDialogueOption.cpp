@@ -53,8 +53,15 @@ void UMounteaDialogueOption::InitializeDialogueOption_Implementation()
 	// ...
 }
 
+void UMounteaDialogueOption::EnableFocus_Implementation(const bool bIsWidgetEnabled)
+{
+	bIsFocusable = bIsWidgetEnabled;
+}
+
 void UMounteaDialogueOption::SetFocusState_Implementation(const bool IsSelected)
 {
+	if (!bIsFocusable) return;
+	
 	DialogueOptionState = IsSelected ? EDialogueOptionState::EDOS_Focused : EDialogueOptionState::EDOS_Unfocused;
 
 	OnOptionFocusChanged.Broadcast(this, IsSelected);

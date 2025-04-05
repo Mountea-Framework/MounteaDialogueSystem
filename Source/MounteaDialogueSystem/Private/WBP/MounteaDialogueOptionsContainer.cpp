@@ -36,11 +36,9 @@ void UMounteaDialogueOptionsContainer::NativeTick(const FGeometry& MyGeometry, f
 				focusableWidget = dialogueOptions[LastFocusedOption];
 			else
 				focusableWidget = nullptr;
-
-			if (focusableWidget != nullptr)
-			{
+			
+			if (focusableWidget != nullptr && IMounteaFocusableWidgetInterface::Execute_IsFocusEnabled(focusableWidget))
 				IMounteaFocusableWidgetInterface::Execute_SetFocusState(focusableWidget, true);
-			}
 		}
 	}
 }
