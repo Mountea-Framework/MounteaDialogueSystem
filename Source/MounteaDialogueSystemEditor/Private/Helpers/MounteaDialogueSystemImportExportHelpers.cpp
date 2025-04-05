@@ -254,6 +254,10 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 
 bool UMounteaDialogueSystemImportExportHelpers::CanReimport(UObject* ObjectRedirector, TArray<FString>& OutFilenames)
 {
+	if (ObjectRedirector == nullptr) return false;
+	UMounteaDialogueGraph* dialogueGraph = Cast<UMounteaDialogueGraph>(ObjectRedirector);
+	if (dialogueGraph == nullptr) return false;
+	
 	return true;
 }
 
