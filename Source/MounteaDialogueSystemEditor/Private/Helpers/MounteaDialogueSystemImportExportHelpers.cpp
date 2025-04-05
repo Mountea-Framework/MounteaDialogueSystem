@@ -332,7 +332,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FStrin
 			
 			if (JsonObject->HasField(TEXT("dialogueGuid")))
 			{
-				dialogueName = JsonObject->GetStringField(TEXT("dialogueGuid"));
+				dialogueName = JsonObject->GetStringField(TEXT("dialogueName"));
 			}
 			else
 			{

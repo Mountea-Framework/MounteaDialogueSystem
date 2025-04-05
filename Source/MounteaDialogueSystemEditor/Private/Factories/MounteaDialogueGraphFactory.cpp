@@ -21,7 +21,7 @@ UMounteaDialogueGraphFactory::UMounteaDialogueGraphFactory()
 
 UObject* UMounteaDialogueGraphFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
 {
-	return NewObject<UObject>(InParent, Class, Name, Flags | RF_Transactional);
+	return NewObject<UMounteaDialogueGraph>(InParent, Class, Name, Flags | RF_Transactional);
 }
 
 UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, FFeedbackContext* Warn, bool& bOutOperationCanceled)
@@ -67,6 +67,7 @@ UObject* UMounteaDialogueGraphFactory::FactoryCreateFile(UClass* InClass, UObjec
 	}
 	
 	UMounteaDialogueGraph* NewGraph = NewObject<UMounteaDialogueGraph>(InParent, InClass, InName, Flags);
+
 	if (UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(Filename, InParent, InName, Flags, NewGraph, outMessage))
 	{
 		// Success notification
