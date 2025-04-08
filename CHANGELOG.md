@@ -1,8 +1,16 @@
-Current Version: 3.0.0.55
+Current Version: 3.0.2.55
 
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+**Version 3.0.2**
+### Fixed
+> - Fixed issue with Dialogue Plugin blocking reimport
+> - Fixed Dialogue `mnteadlg` file import errors
+
+### Changed
+> - Focusable interface is now driven by native `Is Focusable` variable
 
 **Version 3.0.0**
 ### Added
