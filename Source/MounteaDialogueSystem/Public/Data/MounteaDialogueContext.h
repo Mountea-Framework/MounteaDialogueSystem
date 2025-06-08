@@ -8,8 +8,11 @@
 #include "UObject/Object.h"
 #include "MounteaDialogueContext.generated.h"
 
+struct FDialogueTraversePath;
 class IMounteaDialogueParticipantInterface;
 class UMounteaDialogueGraphNode;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDialogueContextUpdated);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueContextUpdatedFromBlueprint, UMounteaDialogueContext*, Context);
 
@@ -36,7 +39,7 @@ public:
 	 * ❔ Answer Node sets this value to Player Participant.
 	 * ❗ Might be invalid
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TScriptInterface<IMounteaDialogueParticipantInterface> ActiveDialogueParticipant;
 	
 	/**
@@ -45,21 +48,27 @@ public:
 	 * This is the Participant who represent the Player.
 	 * ❗ Might be invalid
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TScriptInterface<IMounteaDialogueParticipantInterface> PlayerDialogueParticipant;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipants;
 	
 	/**
 	 * Pointer to the Node which is currently active.
 	 * ❗ Might be null
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	UMounteaDialogueGraphNode* ActiveNode = nullptr;
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	TObjectPtr<UMounteaDialogueGraphNode> ActiveNode = nullptr;
+
+	/**
+	 * Keeps info about the Previous Active Node.
+	 */
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	FGuid PreviousActiveNode = FGuid::NewGuid();
 	
 	/**
 	 * List of Nodes that can be accessed from Active Node.
@@ -68,19 +77,22 @@ public:
 	 * ❔ Filter is done by 'CanStartNode', which can have its own logic and can be driven by Decorators as well.
 	 * ❗ Might be empty
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
-	TArray<UMounteaDialogueGraphNode*> AllowedChildNodes;
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	TArray<TObjectPtr<UMounteaDialogueGraphNode>> AllowedChildNodes;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	FDataTableRowHandle ActiveDialogueTableHandle;
 	
 	/**
 	 * Active Dialogue Row from Active Node. 
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	FDialogueRow ActiveDialogueRow;
 	
 	/**
 	 * Index of currently used Dialogue Row Data row.
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	int32 ActiveDialogueRowDataIndex = 0;
 	
 	/**
@@ -89,11 +101,23 @@ public:
 	 * Updates Participant once Dialogue is done.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue", meta=(NoResetToDefault))
-	TMap<FGuid, int32> TraversedPath;
+	TArray<FDialogueTraversePath> TraversedPath;
+
+	// Should be the last command provided on auth. side. Could be outdated on clients! Use with caution!
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	FString LastWidgetCommand;
 
 public:
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Debug")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Context")
+	FOnDialogueContextUpdated OnDialogueContextUpdated;
+
+public:
+
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(CompactNodeTitle="To String"), meta=(CustomTag="MounteaK2Setter"))
+	virtual FString ToString() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Context", meta=(CustomTag="MounteaK2Validate"))
 	virtual bool IsValid() const;
 
 	TScriptInterface<IMounteaDialogueParticipantInterface> GetActiveDialogueParticipant() const
@@ -104,6 +128,7 @@ public:
 	{ return DialogueParticipant; };
 	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> GetDialogueParticipants() const
 	{ return DialogueParticipants; }
+	
 	/**
 	 * Returns the Active Node object.
 	 * ❗ Might be null
@@ -112,6 +137,7 @@ public:
 	 */
 	UMounteaDialogueGraphNode* GetActiveNode() const
 	{ return ActiveNode; };
+	
 	/**
 	 * Returns lsit of Children Nodes from Active Node.
 	 * ❗ Might be empty
@@ -120,6 +146,10 @@ public:
 	 */
 	TArray<UMounteaDialogueGraphNode*> GetChildrenNodes() const
 	{ return AllowedChildNodes; };
+
+	FDataTableRowHandle GetActiveDataTable() const
+	{ return ActiveDialogueTableHandle; };
+	
 	/**
 	 * Returns Active Dialogue Row if any.
 	 * ❗ Might return invalid
@@ -128,6 +158,7 @@ public:
 	 */
 	FDialogueRow GetActiveDialogueRow() const
 	{ return ActiveDialogueRow; };
+	
 	/**
 	 *Returns the Active Dialogue Row Data Index.
 	 * 
@@ -135,30 +166,32 @@ public:
 	 */
 	int32 GetActiveDialogueRowDataIndex() const
 	{ return ActiveDialogueRowDataIndex; };
+	
 	/**
 	 * Returns the map of nodes traversed during this dialogue instance.
 	 * 
 	 * @return The map of nodes traversed during this dialogue instance.
 	 */
-	TMap<FGuid, int32> GetTraversedPath() const
+	TArray<FDialogueTraversePath> GetTraversedPath() const
 	{ return TraversedPath; };
 	
 	virtual void SetDialogueContext(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant, UMounteaDialogueGraphNode* NewActiveNode, TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes);
 	virtual void UpdateDialogueParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
 	virtual void UpdateActiveDialogueNode(UMounteaDialogueGraphNode* NewActiveNode);
 	virtual void UpdateAllowedChildrenNodes(const TArray<UMounteaDialogueGraphNode*>& NewNodes);
+	virtual void UpdateActiveDialogueTable(const FDataTableRowHandle& NewHandle);
 	virtual void UpdateActiveDialogueRow(const FDialogueRow& NewActiveRow);
 	virtual void UpdateActiveDialogueRowDataIndex(int32 NewIndex);
-	void UpdateDialoguePlayerParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
-	void UpdateActiveDialogueParticipant(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
-	void AddTraversedNode(const UMounteaDialogueGraphNode* TraversedNode);
+	virtual void UpdateDialoguePlayerParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant);
+	virtual void SetActiveDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant);
+	virtual void AddTraversedNode(const UMounteaDialogueGraphNode* TraversedNode);
 
 	virtual bool AddDialogueParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 	virtual bool AddDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant);
 	virtual bool RemoveDialogueParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 	virtual bool RemoveDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant);
 	virtual void ClearDialogueParticipants();
-	
+		
 	/**
 	 * Sets the dialogue context.
 	 *
@@ -166,7 +199,7 @@ public:
 	 * @param NewActiveNode The new active dialogue node.
 	 * @param NewAllowedChildNodes The new allowed child dialogue nodes.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="SetDialogueContext"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="SetDialogueContext"), meta=(CustomTag="MounteaK2Setter"))
 	virtual void SetDialogueContextBP(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant, UMounteaDialogueGraphNode* NewActiveNode, TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes);
 
 	/**
@@ -175,58 +208,81 @@ public:
 	 * @param NewParticipant - new Dialogue Participant.
 	 * ❗ Must implement IMounteaDialogueParticipantInterface.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateDialogueParticipant"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateDialogueParticipant"), meta=(CustomTag="MounteaK2Setter"))
 	virtual void UpdateDialogueParticipantBP(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
+	
 	/**
 	 * Updates Active Dialogue Node in Context.
 	 * 
 	 * @param NewActiveNode - New Active Dialogue Node to update to.
 	 * ❗ Must not be Null
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateActiveDialogueNode"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateActiveDialogueNode"), meta=(CustomTag="MounteaK2Setter"))
 	virtual void UpdateActiveDialogueNodeBP(UMounteaDialogueGraphNode* NewActiveNode);
+
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateActiveDialogueRowDataIndex"), meta=(CustomTag="MounteaK2Setter"))
+	virtual void UpdateActiveDialogueRowDataIndexBP(int32 NewIndex);
+	
 	/**
 	 * Updates the active dialogue row.
 	 * 
 	 * @param NewActiveRow - The new active dialogue row.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateActiveDialogueRow"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateActiveDialogueRow"), meta=(CustomTag="MounteaK2Setter"))
 	virtual void UpdateActiveDialogueRowBP(const FDialogueRow& NewActiveRow);
+	
 	/**
-	 * Updates the active dialogue row Data Index.
+	 * Updates the active dialogue Table.
 	 * 
-	 * @param NewIndex - The new active dialogue data row Index.
+	 * @param NewTable - New table to be used
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateActiveDialogueRowDataIndex"))
-	virtual void UpdateActiveDialogueRowDataIndexBP(int32 NewIndex);
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateActiveDialogueRowDataIndex"), meta=(CustomTag="MounteaK2Setter"))
+	virtual void UpdateActiveDialogueTableBP(const FDataTableRowHandle& NewTable);
+	
 	/**
 	 * Updates Dialogue Player Participant.
 	 *
 	 * @param NewParticipant - new Dialogue Player Participant.
 	 * ❗ Must implement IMounteaDialogueParticipantInterface.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateDialoguePlayerParticipant"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateDialoguePlayerParticipant"), meta=(CustomTag="MounteaK2Setter"))
 	void UpdateDialoguePlayerParticipantBP(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
+	
 	/**
 	 * Updates Dialogue Active Participant.
 	 *
 	 * @param NewParticipant - new Dialogue Active Participant.
 	 * ❗ Must implement IMounteaDialogueParticipantInterface.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateActiveDialogueParticipant"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="UpdateActiveDialogueParticipant"), meta=(CustomTag="MounteaK2Setter"))
 	void UpdateActiveDialogueParticipantBP(TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant);
 
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="AddDialogueParticipant"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="AddDialogueParticipant"), meta=(CustomTag="MounteaK2Setter"))
 	virtual bool AddDialogueParticipantBP(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant);
 	
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="RemoveDialogueParticipant"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="RemoveDialogueParticipant"), meta=(CustomTag="MounteaK2Setter"))
 	virtual bool RemoveDialogueParticipantBP(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant);
 
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="AddDialogueParticipants"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="AddDialogueParticipants"), meta=(CustomTag="MounteaK2Setter"))
 	virtual bool AddDialogueParticipantsBP(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 	
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="RemoveDialogueParticipants"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Context", meta=(DisplayName="RemoveDialogueParticipants"), meta=(CustomTag="MounteaK2Setter"))
 	virtual bool RemoveDialogueParticipantsBP(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 	
 	FDialogueContextUpdatedFromBlueprint DialogueContextUpdatedFromBlueprint;
+
+private:
+
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual bool IsSupportedForNetworking() const override {return true;};
+
+public:
+
+	UMounteaDialogueContext* operator += (const UMounteaDialogueContext* Other);
+	UMounteaDialogueContext* operator+=(const TObjectPtr<UMounteaDialogueContext>& Other)
+	{
+		if (!Other) return this;
+		return (*this) += Other.Get();
+	}
+	UMounteaDialogueContext* operator += (const FMounteaDialogueContextReplicatedStruct& Other);
 };

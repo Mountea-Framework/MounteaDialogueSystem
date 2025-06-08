@@ -14,9 +14,35 @@
 
 #include "MounteaDialogueGraphDataTypes.generated.h"
 
+class UMounteaDialogueContext;
+class IMounteaDialogueParticipantInterface;
+class UMounteaDialogueGraphNode;
 class USoundBase;
 class UTexture;
 class UDataAsset;
+
+UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
+enum class EMounteaDialogueLoggingVerbosity : uint8
+{
+	None		= 0			UMETA(hidden),
+	// Toggle Info On/Off. Info level provides most basic information. Color is green.
+	Info		= 1 << 0,
+	// Toggle Warning On/Off. Warning level provides information about issues that might affect dialogue, but are not blockers.
+	Warning		= 1 << 1,
+	// Toggle Error On/Off. Error level provides information about issues that will block dialogue.
+	Error		= 1 << 2
+};
+ENUM_CLASS_FLAGS(EMounteaDialogueLoggingVerbosity)
+
+
+UENUM(BlueprintType)
+enum class EDialogueManagerType : uint8
+{
+	EDMT_PlayerDialogue UMETA(DisplayName="Player (Active) Dialogue"),
+	EDMT_EnvironmentDialogue UMETA(DisplayName="Environment (Passive) Dialogue"),
+
+	Default UMETA(hidden)
+};
 
 /**
  * Dialogue Manager State
@@ -26,9 +52,11 @@ class UDataAsset;
 UENUM(BlueprintType)
 enum class EDialogueManagerState : uint8
 {
-	EDMS_Disabled		UMETA(DisplayName="Disabled",			Tooltip="Disabled. Dialogue cannot start."),
-	EDMS_Enabled			UMETA(DisplayName="Enabled",			Tooltip="Enabled. Dialogue can start."),
-	EDMS_Active			UMETA(DisplayName="Active",				Tooltip="Active. Is in Diaologue."),
+	EDMS_Disabled UMETA(DisplayName="Disabled", Tooltip="Disabled. Dialogue cannot start."),
+	EDMS_Enabled UMETA(DisplayName="Enabled", Tooltip="Enabled. Dialogue can start."),
+	EDMS_Active UMETA(DisplayName="Active", Tooltip="Active. Is in Diaologue."),
+
+	Default UMETA(hidden)
 };
 
 /**
@@ -39,9 +67,11 @@ enum class EDialogueManagerState : uint8
 UENUM(BlueprintType)
 enum class EDialogueParticipantState : uint8
 {
-	EDPS_Disabled		UMETA(DisplayName="Disabled",			Tooltip="Disabled. Dialogue cannot start."),
-	EDPS_Enabled		UMETA(DisplayName="Enabled",			Tooltip="Enabled. Dialogue can start."),
-	EDPS_Active		UMETA(DisplayName="Active",				Tooltip="Active. Is in Diaologue."),
+	EDPS_Disabled UMETA(DisplayName="Disabled", Tooltip="Disabled. Dialogue cannot start."),
+	EDPS_Enabled UMETA(DisplayName="Enabled", Tooltip="Enabled. Dialogue can start."),
+	EDPS_Active UMETA(DisplayName="Active", Tooltip="Active. Is in Diaologue."),
+
+	Default UMETA(hidden)
 };
 
 /**
@@ -52,10 +82,26 @@ enum class EDialogueParticipantState : uint8
 UENUM(BlueprintType)
 enum class ERowDurationMode : uint8
 {
-	ERDM_Duration				UMETA(DisplayName="Duration",			Tooltip="Uses either duration of 'Row Sound' or value from 'Duration'."),
-	EDRM_Override				UMETA(DisplayName="Override",			Tooltip="Uses 'Duration Override' value."),
-	EDRM_Add					UMETA(DisplayName="Add Time",			Tooltip="Adds 'Duration Override' value to 'Duration'."),
-	ERDM_AutoCalculate	UMETA(DisplayName="Calculate",			Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds.")
+	ERDM_Manual UMETA(DisplayName="Manual", Tooltip="Row won't start automatically and will wait for `NextDialogueRow` request.", hidden),
+	ERDM_Duration UMETA(DisplayName="Duration", Tooltip="Uses either duration of 'Row Sound' or value from 'Duration'."),
+	EDRM_Override UMETA(DisplayName="Override", Tooltip="Uses 'Duration Override' value."),
+	EDRM_Add UMETA(DisplayName="Add Time", Tooltip="Adds 'Duration Override' value to 'Duration'."),
+	ERDM_AutoCalculate UMETA(DisplayName="Calculate", Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds."),
+
+	Default UMETA(hidden)
+};
+
+/**
+ * Row execution mode. Defines
+ */
+UENUM(BlueprintType)
+enum class ERowExecutionMode : uint8
+{
+	EREM_Automatic UMETA(DisplayName="Automatic", Tooltip="Next row will be executed if any is present."),
+	EREM_AwaitInput UMETA(DisplayName="Await Input", Tooltip="Next row will be executed once request is triggered."),
+	EREM_Stopping UMETA(DisplayName="Stopping", Tooltip="Row will stop execution of whole Node and will finish both."),
+
+	Default UMETA(hidden)
 };
 
 /**
@@ -64,10 +110,10 @@ enum class ERowDurationMode : uint8
  * Player can be stopped and forced to dialogue 'cinematic' or not affected at all.
  */
 UENUM(BlueprintType)
-enum class EInputMode : uint8
+enum class EMounteaInputMode : uint8
 {
-	EIM_UIOnly			UMETA(DisplayName="UI Only"),
-	EIM_UIAndGame	UMETA(DisplayName="UI & Game")
+	EIM_UIOnly UMETA(DisplayName="UI Only"),
+	EIM_UIAndGame UMETA(DisplayName="UI & Game")
 };
 
 /**
@@ -118,16 +164,32 @@ struct FSubtitlesSettings
 	 * 
 	 * Invalid settings are ignored!
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Subtitles")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Subtitles", meta=(IgnoreForMemberInitializationTest))
 	FGuid SettingsGUID;
 
 public:
-
 	FSubtitlesSettings() : FontColor(FLinearColor::White), ShadowOffset(1.5f, 1.25f), ShadowColor(FLinearColor::Black)
 	{
 		SubtitlesFont = FCoreStyle::GetDefaultFontStyle("Regular", 16, FFontOutlineSettings(1));
 	};
 };
+
+#define LOCTEXT_NAMESPACE "DialogueParticipant"
+
+USTRUCT(BlueprintType)
+struct FDialogueParticipant : public FTableRowBase
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Participant")
+	FName ParticipantName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
+	FGameplayTag ParticipantCategoryTag;
+};
+
+#undef LOCTEXT_NAMESPACE
 
 #define LOCTEXT_NAMESPACE "FDialogueRow"
 
@@ -142,7 +204,6 @@ struct FDialogueRowData
 	GENERATED_BODY()
 
 public:
-	
 	/**
 	 * Row Text.
 	 * 
@@ -164,7 +225,7 @@ public:
 	 * ❔ Could be used with 'DP_PlayDialogueSound' or as Sound Value for any better way of handling synced animations and sounds (to get more info how to do that, join the Support Discord)
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
-	USoundBase* RowSound = nullptr;
+	TObjectPtr<USoundBase> RowSound = nullptr;
 	/**
 	 * Row Duration Mode
 	 * 
@@ -179,7 +240,8 @@ public:
 	 * ❗ Recommended value
 	 * ❔ Determines for how long the UI will display this Row Data.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(EditCondition="RowSound==nullptr", UIMin=0.f, ClampMin=0.f, ExposeOnSpawn = true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
+		meta=(EditCondition="RowSound==nullptr", UIMin=0.f, ClampMin=0.f, ExposeOnSpawn = true))
 	float RowDuration;
 	/**
 	 * Row Duration Override
@@ -192,28 +254,47 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
 	float RowDurationOverride;
 	/**
+	 * If set to true this Row will stop the whole Node execution and next row won't start.
+	 * Default is false.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
+	ERowExecutionMode RowExecutionBehaviour;
+	/**
 	 * Row GUID.
 	 * 
 	 * Unique Key when searching and binding this Row.
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay)
-	FGuid RowGUID;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, meta=(IgnoreForMemberInitializationTest))
+	FGuid RowGUID = FGuid::NewGuid();
 
 public:
-
 	FDialogueRowData()
-		: RowText(LOCTEXT("FDialogueRowData_RowText", "Dialogue Example")), RowSound(nullptr), RowDurationMode(ERowDurationMode::ERDM_Duration), RowDuration(0), RowDurationOverride(0), RowGUID(FGuid::NewGuid())
-	{};
+		: RowText(LOCTEXT("FDialogueRowData_RowText", "Dialogue Example"))
+		, RowSound(nullptr)
+		, RowDurationMode(ERowDurationMode::ERDM_Duration)
+		, RowDuration(0)
+		, RowDurationOverride(0)
+		, RowExecutionBehaviour(ERowExecutionMode::EREM_Automatic)
+		, RowGUID(FGuid::NewGuid())
+	{
+	};
 
 	FDialogueRowData
 	(
-		const FText& InText, USoundBase* InSound, const ERowDurationMode InRowDurationMode, const float InDuration, const float InDurationOverride
+		const FText& InText, USoundBase* InSound, const ERowDurationMode InRowDurationMode, const float InDuration,
+		const float InDurationOverride, const ERowExecutionMode InRowBehaviour = ERowExecutionMode::EREM_Automatic
 	)
-	: RowText(InText), RowSound(InSound), RowDurationMode(InRowDurationMode), RowDuration(InDuration), RowDurationOverride(InDurationOverride), RowGUID(FGuid::NewGuid())
-	{};
+		: RowText(InText)
+		, RowSound(InSound)
+		, RowDurationMode(InRowDurationMode)
+		, RowDuration(InDuration)
+		, RowDurationOverride(InDurationOverride)
+		, RowExecutionBehaviour(InRowBehaviour)
+		, RowGUID(FGuid::NewGuid())
+	{
+	};
 
 public:
-
 	inline FDialogueRowData& operator =(const FDialogueRowData& Other)
 	{
 		RowText = Other.RowText;
@@ -221,8 +302,9 @@ public:
 		RowDurationMode = Other.RowDurationMode;
 		RowDuration = Other.RowDuration;
 		RowDurationOverride = Other.RowDurationOverride;
+		RowExecutionBehaviour = Other.RowExecutionBehaviour;
 		RowGUID = FGuid::NewGuid();
-		
+
 		return *this;
 	}
 
@@ -235,7 +317,7 @@ public:
 	{
 		return !(*this == Other);
 	}
-	
+
 	friend uint32 GetTypeHash(const FDialogueRowData& ActionKeyData)
 	{
 		return FCrc::MemCrc32(&ActionKeyData.RowGUID, sizeof(FGuid));
@@ -254,7 +336,6 @@ struct FDialogueRow : public FTableRowBase
 	GENERATED_BODY()
 
 public:
-	
 	/**
 	 * List of GameplayTags which distinguish participants. 
 	 * 
@@ -263,7 +344,7 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", DisplayName="Compatible Participants Tags")
 	FGameplayTagContainer CompatibleTags;
-	
+
 	/**
 	 * Optional Row type ID.
 	 * 
@@ -275,8 +356,10 @@ public:
 	 * * Min: 0
 	 * * Max: 255
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true, DisplayName="Row Type ID"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
+		meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true, DisplayName="Row Type ID"))
 	int32 UIRowID = 0;
+	
 	/**
 	 * Optional Row Icon.
 	 * 
@@ -284,7 +367,8 @@ public:
 	 * ❔ Could be used to mark special dialogue options, like "Open Store" or "Leave conversation" with special icon.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
-	UTexture* RowOptionalIcon = nullptr;
+	TObjectPtr<UTexture> RowOptionalIcon = nullptr;
+	
 	/**
 	 * Name of the Dialogue Participant.
 	 * 
@@ -294,6 +378,7 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
 	FText DialogueParticipant;
+	
 	/**
 	 * Title of the Dialogue Row.
 	 * 
@@ -301,8 +386,9 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
 	FText RowTitle;
+	
 	/**
-	 * List of Dialogue Row Data.
+	 * List of Dialogue Row Data. Not replicated, must be found locally for each Client from replicated Active Node!
 	 * 
 	 * ❔ Each Dialogue Row can contain multiple of those, where each Data Row represents:
 	 * * What Sound should be played
@@ -314,8 +400,9 @@ public:
 	 * 
 	 * Each Data Row has its Duration, which could be based on the Sound, directly set, calculated on generic formula or added atop of the sound duration.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(TitleProperty="RowText"))
+	UPROPERTY(NotReplicated, EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(TitleProperty="RowText"))
 	TSet<FDialogueRowData> DialogueRowData;
+	
 	/**
 	 * Additional Row Data
 	 * 
@@ -324,14 +411,16 @@ public:
 	 * Any Data Asset can be used here and no logic is tied to this attribute.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(AllowAbstract=false))
-	TSubclassOf<UDialogueAdditionalData> DialogueRowAdditionalData = nullptr;
+	TObjectPtr<UDialogueAdditionalData> DialogueRowAdditionalData = nullptr;
+	
 	/**
 	 * Row GUID.
 	 * 
 	 * Unique Key when searching and binding this Row.
 	 */
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate))
+	UPROPERTY(/*Transient, */VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate))
 	FGuid RowGUID;
+	
 	/**
 	 * ❗ WIP
 	 * Title Settings Override.
@@ -343,21 +432,23 @@ public:
 	FSubtitlesSettings TitleSettingsOverride;
 
 public:
-
 	FDialogueRow()
-		:  RowOptionalIcon(nullptr), DialogueParticipant(LOCTEXT("FDialogueRow_Participant", "Dialogue Participant")), RowTitle(LOCTEXT("FDialogueRow_Title", "Selectable Option"))
+		: CompatibleTags(), RowOptionalIcon(nullptr),
+		DialogueParticipant(LOCTEXT("FDialogueRow_Participant", "Dialogue Participant")), RowTitle(LOCTEXT("FDialogueRow_Title", "Selectable Option"))
 	{
 		RowGUID = FGuid::NewGuid();
 	};
 
-	FDialogueRow(const int32 NewUIRowID, UTexture* InRowIcon, const FText& InText, const FText& InParticipant, const TSet<FDialogueRowData>& InData, const TSubclassOf<UDialogueAdditionalData> NewData)
-		: UIRowID(NewUIRowID), RowOptionalIcon(InRowIcon), DialogueParticipant(InParticipant), RowTitle(InText), DialogueRowData(InData), DialogueRowAdditionalData(NewData)
+	FDialogueRow(const int32 NewUIRowID, UTexture* InRowIcon, const FText& InText, const FText& InParticipant,
+				const TSet<FDialogueRowData>& InData, UDialogueAdditionalData* NewData, const FGameplayTagContainer& InCompatibleTags)
+		: CompatibleTags(InCompatibleTags), UIRowID(NewUIRowID), RowOptionalIcon(InRowIcon), DialogueParticipant(InParticipant),
+		RowTitle(InText), DialogueRowData(InData), DialogueRowAdditionalData(NewData)
 	{
 		RowGUID = FGuid::NewGuid();
 	}
-	
-public:
 
+public:
+	
 	inline FDialogueRow& operator=(const FDialogueRow& Other)
 	{
 		RowOptionalIcon = Other.RowOptionalIcon;
@@ -368,7 +459,8 @@ public:
 		UIRowID = Other.UIRowID;
 		DialogueRowAdditionalData = Other.DialogueRowAdditionalData;
 		RowGUID = FGuid::NewGuid();
-		
+		CompatibleTags = Other.CompatibleTags;
+
 		return *this;
 	}
 
@@ -381,12 +473,53 @@ public:
 	{
 		return !(*this == Other);
 	}
-	
+
 	friend uint32 GetTypeHash(const FDialogueRow& Row)
 	{
 		return FCrc::MemCrc32(&Row.RowGUID, sizeof(FGuid));
 	}
+
+	bool IsValid() const
+	{
+		return
+		RowGUID.IsValid() &&
+		DialogueRowData.Num() > 0;
+	}
+
+	bool IsNearlyEqual(const FDialogueRow& Other) const
+	{
+		if (RowTitle.EqualTo(Other.RowTitle) &&
+		CompatibleTags.HasAllExact(Other.CompatibleTags) &&
+		DialogueParticipant.EqualTo(Other.DialogueParticipant))
+		{
+			return true;
+		}
+
+		if (RowTitle.EqualTo(Other.RowTitle) && DialogueRowData.Num() > 0 && Other.DialogueRowData.Num() > 0)
+		{
+			const FDialogueRowData ThisFirstRowData = DialogueRowData.Array()[0];
+			const FDialogueRowData OtherFirstRowData = Other.DialogueRowData.Array()[0];
+
+			if (ThisFirstRowData == OtherFirstRowData)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	FString ToString() const;
+	
+	static FDialogueRow Invalid()
+	{
+		FDialogueRow Row;
+		Row.RowGUID.Invalidate();
+		Row.DialogueRowData.Empty();
+		return Row;
+	}
 };
+
 #undef LOCTEXT_NAMESPACE
 
 /**
@@ -409,21 +542,81 @@ struct FUIRowID
 	TSubclassOf<UUserWidget> RowWidgetClass;
 
 public:
-
 	bool operator==(const FUIRowID& Other) const
 	{
 		return
-		UIRowID == Other.UIRowID &&
-		RowWidgetClass == Other.RowWidgetClass;
+			UIRowID == Other.UIRowID &&
+			RowWidgetClass == Other.RowWidgetClass;
 	}
 
 	bool operator!=(const FUIRowID& Other) const
 	{
 		return !(*this == Other);
 	}
-	
+
 	friend uint32 GetTypeHash(const FUIRowID& RowID)
 	{
 		return FCrc::MemCrc32(&RowID.RowWidgetClass, sizeof(FUIRowID)) + RowID.UIRowID;
 	}
+};
+
+USTRUCT()
+struct FMounteaDialogueContextReplicatedStruct
+{
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	TScriptInterface<IMounteaDialogueParticipantInterface> ActiveDialogueParticipant;
+	UPROPERTY()
+	TScriptInterface<IMounteaDialogueParticipantInterface> PlayerDialogueParticipant;
+	UPROPERTY()
+	TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant;
+	UPROPERTY()
+	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipants;
+	
+	UPROPERTY(meta=(IgnoreForMemberInitializationTest))
+	FGuid ActiveNodeGuid;
+	UPROPERTY(meta=(IgnoreForMemberInitializationTest))
+	FGuid PreviousActiveNodeGuid;
+	UPROPERTY()
+	TArray<FGuid> AllowedChildNodes;
+	UPROPERTY()
+	FDataTableRowHandle ActiveDialogueTableHandle;
+	UPROPERTY()
+	int32 ActiveDialogueRowDataIndex = 0;
+	UPROPERTY()
+	FString LastWidgetCommand;
+
+	FMounteaDialogueContextReplicatedStruct();
+	explicit FMounteaDialogueContextReplicatedStruct(UMounteaDialogueContext* Source);
+
+	FMounteaDialogueContextReplicatedStruct operator+=(UMounteaDialogueContext* Source);
+	bool operator==(const FMounteaDialogueContextReplicatedStruct& Other) const
+	{
+		return ActiveDialogueParticipant == Other.ActiveDialogueParticipant
+		&& DialogueParticipants == Other.DialogueParticipants
+		&& ActiveNodeGuid == Other.ActiveNodeGuid
+		&& AllowedChildNodes == Other.AllowedChildNodes
+		&& ActiveDialogueTableHandle == Other.ActiveDialogueTableHandle
+		&& ActiveDialogueRowDataIndex == Other.ActiveDialogueRowDataIndex;
+	}
+	bool operator!=(const FMounteaDialogueContextReplicatedStruct& Other) const
+	{
+		return !(*this == Other);
+	}
+
+	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess);
+
+	FString ToString() const;
+	bool IsValid() const;
+	void Reset();
+};
+
+template<>
+struct TStructOpsTypeTraits<FMounteaDialogueContextReplicatedStruct> : public TStructOpsTypeTraitsBase2<FMounteaDialogueContextReplicatedStruct>
+{
+	enum 
+	{
+		WithNetSerializer = true
+	};
 };

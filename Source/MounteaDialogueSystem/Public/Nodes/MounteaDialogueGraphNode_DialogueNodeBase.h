@@ -27,9 +27,9 @@ public:
 
 public:
 	
-	virtual void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
+	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 
-	virtual void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
+	virtual void PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 
 	/**
 	 * Returns the Dialogue Data Table for this graph node.
@@ -37,7 +37,7 @@ public:
 	 *
 	 * @return The Dialogue Data Table for this graph node.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Getter"))
 	virtual UDataTable* GetDataTable() const;
 
 	/**
@@ -46,9 +46,29 @@ public:
 	 *
 	 * @return The Dialogue Data Row name.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Getter"))
 	virtual FName GetRowName() const
 	{ return RowName; }
+
+	/**
+	 * Sets the Dialogue Data Table for this graph node.
+	 * @param NewDataTable The new DataTable to set.
+	 */
+	UFUNCTION(/*BlueprintCallable,*/ Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Setter"))
+	virtual void SetDataTable(UDataTable* NewDataTable)
+	{
+		DataTable = NewDataTable;
+	}
+
+	/**
+	 * Sets the Dialogue Data Row name.
+	 * @param NewRowName The new row name to set.
+	 */
+	UFUNCTION(/*BlueprintCallable,*/ Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Setter"))
+	virtual void SetRowName(const FName NewRowName)
+	{
+		RowName = NewRowName;
+	}
 
 	virtual bool ValidateNodeRuntime_Implementation() const override;
 
@@ -72,12 +92,12 @@ protected:
 	 * The data table containing the dialogue rows.
 	 * ❗ Strongly suggested to use 'DialogueRow' based Data Tables
 	 */
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault))
-	UDataTable*	DataTable;
+	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, RequiredAssetDataTags = "RowStructure=/Script/MounteaDialogueSystem.DialogueRow"))
+	TObjectPtr<UDataTable>	DataTable;
 
 	/** Name of row in the table that we want */
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
-	FName RowName;
+	FName					RowName;
 
 	/**
 	 * Flag defining how the Participant is searched for.
@@ -98,11 +118,11 @@ protected:
 	 * ❔ Each unique dialogue Participant should be using different Tag, if generic, then use something like `Dialogue.NPC`
 	 */
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault))
-	uint8 bUseGameplayTags : 1;
+	uint8				bUseGameplayTags : 1;
 
 #if WITH_EDITOR
 	
-	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat) override;
+	virtual bool ValidateNode(FDataValidationContext& Context, const bool RichFormat) const override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual FText GetDescription_Implementation() const override;
 	

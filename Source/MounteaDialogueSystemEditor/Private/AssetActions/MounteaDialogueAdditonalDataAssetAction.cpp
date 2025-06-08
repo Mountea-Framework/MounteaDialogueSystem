@@ -11,7 +11,7 @@ FMounteaDialogueAdditionalDataAssetAction::FMounteaDialogueAdditionalDataAssetAc
 
 FText FMounteaDialogueAdditionalDataAssetAction::GetName() const
 {
-	return LOCTEXT("MounteaDialogueAdditionalDataAssetAction_Name", "2. Mountea Dialogue Additional Data");
+	return LOCTEXT("MounteaDialogueAdditionalDataAssetAction_Name", "Mountea Dialogue Additional Data");
 }
 
 FColor FMounteaDialogueAdditionalDataAssetAction::GetTypeColor() const
@@ -33,6 +33,15 @@ uint32 FMounteaDialogueAdditionalDataAssetAction::GetCategories()
 	}
 	
 	return  EAssetTypeCategories::Misc;
+}
+
+const TArray<FText>& FMounteaDialogueAdditionalDataAssetAction::GetSubMenus() const
+{
+	static const TArray<FText> AssetTypeActionSubMenu
+	{
+		FText::FromString("3. Configuration")
+	};
+	return AssetTypeActionSubMenu;
 };
 
 #undef LOCTEXT_NAMESPACE

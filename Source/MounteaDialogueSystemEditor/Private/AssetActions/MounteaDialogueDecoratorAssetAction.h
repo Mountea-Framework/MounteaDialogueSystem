@@ -17,6 +17,7 @@ public:
 	virtual FColor GetTypeColor() const override;
 	virtual UClass* GetSupportedClass() const override;
 	virtual uint32 GetCategories() override;
+	virtual const TArray<FText>& GetSubMenus() const override;
 
 	virtual bool CanFilter() override
 	{ return false; };
@@ -34,7 +35,7 @@ public:
 			FilterAddNativeParentClassPath(InFilter, ChildNativeClass);
 		}
 
-		InFilter.ClassNames.Add(UBlueprint::StaticClass()->GetFName());
+		InFilter.ClassPaths.Add(UBlueprint::StaticClass()->GetClassPathName()); 
 		InFilter.bRecursiveClasses = true;
 	};
 	static void FilterAddNativeParentClassPath(FARFilter& InFilter, const UClass* Class)

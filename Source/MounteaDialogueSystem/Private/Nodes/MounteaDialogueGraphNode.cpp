@@ -3,14 +3,18 @@
 #include "Nodes/MounteaDialogueGraphNode.h"
 
 #include "Graph/MounteaDialogueGraph.h"
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Misc/DataValidation.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueNode"
 
-UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
+UMounteaDialogueGraphNode::UMounteaDialogueGraphNode(): Graph(nullptr), OwningWorld(nullptr)
 {
 	NodeGUID = FGuid::NewGuid();
 	bInheritGraphDecorators = true;
+
+	NodeTypeName = LOCTEXT("MounteaDialogueNode_InternalName", "MounteaDialogueGraphNode");
 
 #if WITH_EDITORONLY_DATA
 	CompatibleGraphType = UMounteaDialogueGraph::StaticClass();
@@ -25,17 +29,33 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode()
 	bAllowDelete = true;
 	bAllowPaste = true;
 	bAllowManualCreate = true;
-
-	NodeTypeName = LOCTEXT("MounteaDialogueNode_InternalName", "MounteaDialogueGraphNode");
+	bCanRenameNode = true;	
 	NodeTooltipText = LOCTEXT("MounteaDialogueNode_Tooltip", "Mountea Dialogue Base Node.\n\nChild Nodes provide more Information.");
 #endif
 
 	bAutoStarts = false;
 }
 
+void UMounteaDialogueGraphNode::SetNodeGUID(const FGuid& NewGuid)
+{
+	NodeGUID = NewGuid;
+}
+
 UMounteaDialogueGraph* UMounteaDialogueGraphNode::GetGraph() const
 {
 	return Graph;
+}
+
+FGuid UMounteaDialogueGraphNode::GetGraphGUID() const
+{
+	return Graph ? Graph->GetGraphGUID() : FGuid();
+}
+
+void UMounteaDialogueGraphNode::CleanupNode_Implementation()
+{
+	OwningWorld = nullptr;
+
+	OnNodeStateChanged.Clear();
 }
 
 void UMounteaDialogueGraphNode::SetNewWorld(UWorld* NewWorld)
@@ -46,19 +66,52 @@ void UMounteaDialogueGraphNode::SetNewWorld(UWorld* NewWorld)
 	OwningWorld = NewWorld;
 }
 
+void UMounteaDialogueGraphNode::RegisterTick_Implementation( const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+{
+	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
+	{
+		ParentTickable->GetMounteaDialogueTickHandle().AddUniqueDynamic(this, &UMounteaDialogueGraphNode::TickMounteaEvent);
+	}
+}
+
+void UMounteaDialogueGraphNode::UnregisterTick_Implementation( const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+{
+	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
+	{
+		ParentTickable->GetMounteaDialogueTickHandle().RemoveDynamic(this, &UMounteaDialogueGraphNode::TickMounteaEvent);
+	}
+}
+
+void UMounteaDialogueGraphNode::TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime)
+{
+	NodeTickEvent.Broadcast(this, ParentTick, DeltaTime);
+}
+
 void UMounteaDialogueGraphNode::InitializeNode_Implementation(UWorld* InWorld)
 {
 	SetNewWorld(InWorld);
 
 	if (Graph) SetNodeIndex(Graph->AllNodes.Find(this));
+	
+	OnNodeStateChanged.Broadcast(this);
 }
 
-void UMounteaDialogueGraphNode::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	// Child Classes Implementations
+	Execute_RegisterTick(this, Graph);
+
+	for (const auto& nodeDecorator : NodeDecorators)
+	{
+		if (!IsValid(nodeDecorator.DecoratorType))
+			continue;
+
+		nodeDecorator.DecoratorType->SetOwningManager(Manager);
+	}
+	
+	Manager->Execute_NodePrepared(Manager.GetObject());
 }
 
-void UMounteaDialogueGraphNode::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	if (!Manager) return;
 	
@@ -70,20 +123,18 @@ void UMounteaDialogueGraphNode::ProcessNode(const TScriptInterface<IMounteaDialo
 
 	if (!GetGraph())
 	{
-		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid owning Graph!!"));
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid owning Graph!"));
 		return;
 	}
 	
-	UMounteaDialogueContext* Context = Manager->GetDialogueContext();
+	UMounteaDialogueContext* Context = Manager->Execute_GetDialogueContext(Manager.GetObject());
 	if (!Context || !UMounteaDialogueSystemBFC::IsContextValid(Context))
 	{
-		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid Dialogue Context!!"));
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid Dialogue Context!"));
 		return;
 	}
 	
 	UMounteaDialogueSystemBFC::ExecuteDecorators(this, Context);
-	
-	Manager->GetDialogueNodeStartedEventHandle().Broadcast(Context);
 }
 
 TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators() const
@@ -97,25 +148,17 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators()
 		{
 			TempReturn.AddUnique(Itr);
 		}
-	}
-
-	/* TODO: Cleanup duplicates
-	for (auto Itr : TempReturn)
-	{
-		
-	}
-	*/
-	
+	}	
 	Return = TempReturn;
 	return Return;
 }
 
-bool UMounteaDialogueGraphNode::CanStartNode() const
+bool UMounteaDialogueGraphNode::CanStartNode_Implementation() const
 {
 	return EvaluateDecorators();
 }
 
-bool UMounteaDialogueGraphNode::EvaluateDecorators() const
+bool UMounteaDialogueGraphNode::EvaluateDecorators_Implementation() const
 {
 	if (GetGraph() == nullptr)
 	{
@@ -149,6 +192,11 @@ void UMounteaDialogueGraphNode::SetNodeIndex(const int32 NewIndex)
 	NodeIndex = NewIndex;
 }
 
+FText UMounteaDialogueGraphNode::GetNodeTitle_Implementation() const
+{
+	return NodeTitle;
+}
+
 #if WITH_EDITOR
 
 FText UMounteaDialogueGraphNode::GetDescription_Implementation() const
@@ -174,11 +222,6 @@ FText UMounteaDialogueGraphNode::GetNodeTooltipText_Implementation() const
 FLinearColor UMounteaDialogueGraphNode::GetBackgroundColor() const
 {
 	return BackgroundColor;
-}
-
-FText UMounteaDialogueGraphNode::GetNodeTitle_Implementation() const
-{
-	return NodeTitle;
 }
 
 void UMounteaDialogueGraphNode::SetNodeTitle(const FText& NewTitle)
@@ -228,7 +271,7 @@ bool UMounteaDialogueGraphNode::CanCreateConnection(UMounteaDialogueGraphNode* O
 	return true;
 }
 
-bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
+bool UMounteaDialogueGraphNode::ValidateNode(FDataValidationContext& Context, const bool RichFormat) const
 {
 	bool bResult = true;
 	if (ParentNodes.Num() == 0 && ChildrenNodes.Num() == 0)
@@ -246,7 +289,7 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 		FString(NodeTitle.ToString()).
 		Append(": This Node has no Connections!");
 		
-		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
 	if (bAllowInputNodes && ParentNodes.Num() == 0)
@@ -264,7 +307,7 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 		FString(NodeTitle.ToString()).
 		Append(": This Node requires Inputs, however, none are found!");
 		
-		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
 	// DECORATORS VALIDATION
@@ -295,7 +338,7 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 				Append(FString::FromInt(i )).
 				Append(".");
 		
-				ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+				Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 
 				bResult = false;
 			}
@@ -304,6 +347,10 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 		TMap<UClass*, int32> DuplicatedDecoratorsMap;
 		for (const auto& Itr : UsedNodeDecorators)
 		{
+			if (!Itr) continue;
+
+			if (Itr->IsDecoratorStackable()) continue;;
+			
 			int32 ClassAppearance = 1;
 			for (const auto& Itr2 : UsedNodeDecorators)
 			{
@@ -347,7 +394,7 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 				Append(FString::FromInt(Itr.Value)).
 				Append("x times! Please, avoid duplicates!");
 		
-				ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+				Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 			}
 		}
 
@@ -371,7 +418,7 @@ bool UMounteaDialogueGraphNode::ValidateNode(TArray<FText>& ValidationsMessages,
 					Append(": ").
 					Append(FString(Error.ToString()));
 		
-					ValidationsMessages.Add(FText::FromString(RichFormat ? ErrorTextRich : ErrorTextSimple));
+					Context.AddError(FText::FromString(RichFormat ? ErrorTextRich : ErrorTextSimple));
 
 					bResult = false;
 				}
@@ -395,14 +442,16 @@ FText UMounteaDialogueGraphNode::GetDefaultTooltipBody() const
 {
 	const FText InheritsValue = bInheritGraphDecorators ? LOCTEXT("True","Yes") : LOCTEXT("False","No");
 	const FText Inherits = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_InheritsTooltip", "Inherits Graph Decorators: {0}"), InheritsValue);
-
 	FText ImplementsNumber;
 	if (NodeDecorators.Num() == 0) ImplementsNumber = LOCTEXT("None","-");
 	else ImplementsNumber = FText::FromString(FString::FromInt(NodeDecorators.Num()));
 	
 	const FText Implements = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_ImplementsTooltip", "Implements Decorators: {0}"), ImplementsNumber);
 	
-	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0}\n\n{1}\n{2}"), NodeTypeName,  Inherits, Implements);
+	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0} ({1})\n\n{2}\n{3}\nNode Execution Order: {4}\nNode Index: {5}"),
+		NodeTypeName,
+		FText::FromString(NodeGUID.ToString(EGuidFormats::DigitsWithHyphensLower)),
+		Inherits, Implements, ExecutionOrder, NodeIndex);
 }
 
 #endif

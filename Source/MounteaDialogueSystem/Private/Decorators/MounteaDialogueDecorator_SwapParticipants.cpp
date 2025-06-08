@@ -3,48 +3,34 @@
 
 #include "Decorators/MounteaIDialogueDecorator_SwapParticipants.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Data/MounteaDialogueContext.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_SwapParticipants"
-
-void UMounteaDialogueDecorator_SwapParticipants::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant)
-{
-	Super::InitializeDecorator_Implementation(World, OwningParticipant);
-
-	if (World)
-	{
-		Manager = UMounteaDialogueSystemBFC::GetDialogueManager(GetOwningWorld());
-	}
-}
 
 void UMounteaDialogueDecorator_SwapParticipants::CleanupDecorator_Implementation()
 {
 	Super::CleanupDecorator_Implementation();
 
 	Context = nullptr;
-	Manager = nullptr;
+	OwningManager = nullptr;
 }
 
 void UMounteaDialogueDecorator_SwapParticipants::ExecuteDecorator_Implementation()
 {
 	Super::ExecuteDecorator_Implementation();
 
-	if (!Context)
-	{
-		// Let's return BP Updatable Context rather than Raw
-		Context = Manager->GetDialogueContext();
-	}
+	if (!OwningManager) return;
+	
+	Context = OwningManager->Execute_GetDialogueContext(OwningManager.GetObject());
 
 	if (!Context) return;
 
-	const bool bIsPlayerActive = Context->GetActiveDialogueParticipant() == Context->GetDialoguePlayerParticipant();
-	
-	const TScriptInterface<IMounteaDialogueParticipantInterface> NewActiveParticipant =
-		bIsPlayerActive
-		?
-		Context->GetDialogueParticipant() :
-		Context->GetDialoguePlayerParticipant();
+	auto newParticipant = UMounteaDialogueSystemBFC::FindParticipantByTag(Context, NewParticipantTag);
+	if (newParticipant != Context->ActiveDialogueParticipant)
+		return;
 
-	Context->UpdateActiveDialogueParticipant(NewActiveParticipant);
+	UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(Context, newParticipant);
+	OwningManager->GetDialogueContextUpdatedEventHande().Broadcast(Context);
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -36,6 +36,9 @@ void UEdNode_MounteaDialogueGraphNode::SetMounteaDialogueGraphNode(UMounteaDialo
 		bAllowDuplicate = DialogueGraphNode->bAllowPaste;
 		bAllowPaste = DialogueGraphNode->bAllowPaste;
 	}
+
+	if (GetDialogueGraphEdGraph())
+		GetDialogueGraphEdGraph()->AssignExecutionOrder();
 }
 
 UEdGraph_MounteaDialogueGraph* UEdNode_MounteaDialogueGraphNode::GetDialogueGraphEdGraph() const
@@ -48,7 +51,7 @@ void UEdNode_MounteaDialogueGraphNode::AllocateDefaultPins()
 	if (DialogueGraphNode == nullptr)
 	{
 		EditorLOG_ERROR(TEXT("[AllocateDefaultPins] Cannot find Owning Graph Node!"))
-		return;
+		//return;
 	}
 		
 	if (DialogueGraphNode->bAllowInputNodes)
@@ -166,9 +169,27 @@ FText UEdNode_MounteaDialogueGraphNode::GetTooltipText() const
 
 FSlateIcon UEdNode_MounteaDialogueGraphNode::GetIconAndTint(FLinearColor& OutColor) const
 {
-	static const FSlateIcon Icon = FSlateIcon(FMounteaDialogueGraphEditorStyle::GetStyleSetName(), "MDSStyleSet.Node.Icon.small");
+	static const FSlateIcon Icon = FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Node.Icon.small");
 	OutColor = DialogueGraphNode->GetBackgroundColor();
 	return Icon;
+}
+
+bool UEdNode_MounteaDialogueGraphNode::Modify(bool bAlwaysMarkDirty)
+{
+	bool bSatisfied = Super::Modify(bAlwaysMarkDirty);
+
+	UpdatePosition();
+	
+	return bSatisfied;
+}
+
+void UEdNode_MounteaDialogueGraphNode::UpdatePosition()
+{
+	if (DialogueGraphNode)
+	{
+		DialogueGraphNode->NodePosition = FIntPoint(NodePosX, NodePosY);
+		DialogueGraphNode->Modify(true);
+	}
 }
 
 void UEdNode_MounteaDialogueGraphNode::PostEditUndo()

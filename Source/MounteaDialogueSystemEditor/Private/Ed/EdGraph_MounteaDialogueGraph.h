@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraph.h"
+#include "Helpers/MounteaDialogueEditorDetailsTypes.h"
 #include "EdGraph_MounteaDialogueGraph.generated.h"
 
 class UMounteaDialogueGraphNode;
@@ -24,6 +25,8 @@ public:
 	virtual ~UEdGraph_MounteaDialogueGraph() override;
 
 	virtual void RebuildMounteaDialogueGraph();
+	UEdNode_MounteaDialogueGraphNode* CreateEdNode(UMounteaDialogueGraphNode* DialogueNode);
+	UEdNode_MounteaDialogueGraphEdge* CreateEdgeNode(UEdNode_MounteaDialogueGraphNode* StartNode, UEdNode_MounteaDialogueGraphNode* EndNode);
 
 	UMounteaDialogueGraph* GetMounteaDialogueGraph() const;
 
@@ -46,13 +49,29 @@ public:
 	UPROPERTY(Transient)
 	TMap<UMounteaDialogueGraphEdge*, UEdNode_MounteaDialogueGraphEdge*> EdgeMap;
 
+public:
+
+	void UpdateFocusedInstance(const FPIEInstanceData& InstanceId);
+	void AssignExecutionOrder();
+
 protected:
-	
+
 	void Clear();
 	void SortNodes(UMounteaDialogueGraphNode* RootNode);
+	
+	void ResetExecutionOrders() const;
+	static UMounteaDialogueGraphNode* GetParentNode(const UMounteaDialogueGraphNode& Node);
+	
+	static void AssignNodeToLayer(UMounteaDialogueGraphNode* Node, int32 LayerIndex, TMap<int32, TArray<UMounteaDialogueGraphNode*>>& LayeredNodes);
 
 private:
 
+	TArray<UMounteaDialogueGraphNode*> CachedGraphData;
+
 	/** Pointer back to the Dialogue editor that owns us */
 	TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr;
+
+public:
+	
+	FPIEInstanceData FocusedInstance;
 };

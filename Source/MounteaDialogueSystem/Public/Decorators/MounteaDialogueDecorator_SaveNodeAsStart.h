@@ -19,17 +19,17 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecorator_SaveNodeAsStart : publ
 	GENERATED_BODY()
 
 public:
-
-	virtual void InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant) override;
+	
 	virtual void CleanupDecorator_Implementation() override;
-	virtual bool ValidateDecorator_Implementation(TArray<FText>& ValidationMessages) override;
+	virtual bool ValidateDecorator_Implementation(UPARAM(ref) TArray<FText>& ValidationMessages) override;
 	virtual void ExecuteDecorator_Implementation() override;
+	virtual bool IsDecoratorAllowedForGraph_Implementation() const override {  return false;  };
 
 	virtual  FString GetDecoratorDocumentationLink_Implementation() const override
 	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Decorator:-Set-Node-as-Start"); }
 
 private:
 	
-	UMounteaDialogueContext* Context = nullptr;
-	TScriptInterface<IMounteaDialogueManagerInterface> Manager = nullptr;
+	UPROPERTY()
+	TObjectPtr<UMounteaDialogueContext> Context = nullptr;
 };

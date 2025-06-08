@@ -22,20 +22,31 @@ void FAssetEditorToolbarMounteaDialogueGraph::FillMounteaDialogueGraphToolbar(FT
 {
 	check(MounteaDialogueGraphEditor.IsValid());
 	TSharedPtr<FAssetEditor_MounteaDialogueGraph> MounteaDialogueGraphEditorPtr = MounteaDialogueGraphEditor.Pin();
-
+	
+	if (!FMounteaDialogueGraphEditorCommands::IsRegistered())
+	{
+		FMounteaDialogueGraphEditorCommands::Register();
+	}
+	
 	ToolbarBuilder.BeginSection("Util");
 	{
 		ToolbarBuilder.AddToolBarButton(FMounteaDialogueGraphEditorCommands::Get().AutoArrange,
 			NAME_None,
 			LOCTEXT("AutoArrange_Label", "Auto Arrange"),
-			LOCTEXT("AutoArrange_ToolTip", "ALPHA version!\n\nTries its best to arrange Graph Nodes. Don't judge too harshly please."),
-			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetStyleSetName(), "MDSStyleSet.AutoArrange"));
+			LOCTEXT("AutoArrange_ToolTip", "📊 Tries its best to arrange Graph Nodes. Don't judge too harshly please."),
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.AutoArrange"));
 
 		ToolbarBuilder.AddToolBarButton(FMounteaDialogueGraphEditorCommands::Get().ValidateGraph,
 			NAME_None,
 			LOCTEXT("ValidateGraph_Label", "Validate Graph"),
-			LOCTEXT("ValidateGraph_ToolTip", "Validates Graph if there are any invalid connections or broken data."),
-			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetStyleSetName(), "MDSStyleSet.ValidateGraph"));
+			LOCTEXT("ValidateGraph_ToolTip", "🚨️ Validates Graph if there are any invalid connections or broken data."),
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.ValidateGraph"));
+
+		ToolbarBuilder.AddToolBarButton(FMounteaDialogueGraphEditorCommands::Get().ExportGraph,
+			NAME_None,
+			LOCTEXT("ExportDialogueGraph_Label", "Export Dialogue Graph"),
+			LOCTEXT("ExportDialogueGraph_Tooltip", "📤 Export the Dialogue Graph as a file containing MNTEADLG data."),
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.ExportGraph"));
 	}
 	ToolbarBuilder.EndSection();
 }

@@ -31,4 +31,8 @@ protected:
 	void ShiftSubTree(UMounteaDialogueGraphNode* RootNode, const FVector2D& Offset);
 
 	void UpdateParentNodePosition(UMounteaDialogueGraphNode* RootNode);
+
+private:
+
+	TSet<UMounteaDialogueGraphNode*> processedNodes;
 };

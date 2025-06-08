@@ -2,6 +2,7 @@
 
 #include "SEdNode_MounteaDialogueGraphNode.h"
 
+#include "EdGraph_MounteaDialogueGraph.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Helpers/MounteaDialogueGraphColors.h"
 #include "Ed/SEdNode_MounteaDialogueGraphNodeIndex.h"
@@ -13,9 +14,13 @@
 #include "SlateOptMacros.h"
 #include "SGraphPin.h"
 #include "GraphEditorSettings.h"
+#include "UnrealEdGlobals.h"
 #include "Blueprint/UserWidget.h"
+#include "Data/MounteaDialogueContext.h"
+#include "Editor/UnrealEdEngine.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Graph/MounteaDialogueGraph.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
 #include "Widgets/Layout/SGridPanel.h"
 #include "Widgets/Layout/SScaleBox.h"
@@ -83,9 +88,9 @@ protected:
 		{
 			switch (GraphEditorSettings->GetNodeType())
 			{
-				case ENodeType::ENT_SoftCorners:
+				case ENodeCornerType::ENT_SoftCorners:
 					return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges");
-				case ENodeType::ENT_HardCorners: 
+				case ENodeCornerType::ENT_HardCorners: 
 					return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextHardEdges");
 			}
 		}
@@ -114,17 +119,18 @@ void SEdNode_MounteaDialogueGraphNode::Construct(const FArguments& InArgs, UEdNo
 void SEdNode_MounteaDialogueGraphNode::OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
 	//bIsHovered = true;
-
-	SetToolTipText(GetTooltipText());
-	OnVisualizeTooltip(GetToolTip()->AsWidget());
-	
+	if (GUnrealEd && !GUnrealEd->IsPlayingSessionInEditor())
+	{
+		SetToolTipText(GetTooltipText());
+		OnVisualizeTooltip(GetToolTip()->AsWidget());
+	}
 	SGraphNode::OnMouseEnter(MyGeometry, MouseEvent);
 }
 
 void SEdNode_MounteaDialogueGraphNode::OnMouseLeave(const FPointerEvent& MouseEvent)
 {
 	//bIsHovered = false;
-
+	
 	SetToolTipText(FText::GetEmpty());
 	OnToolTipClosing();
 	
@@ -136,10 +142,48 @@ const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetIndexBrush() const
 	return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges");
 }
 
+FText SEdNode_MounteaDialogueGraphNode::GetNodeTitle() const
+{
+	FText NodeTitle =  INVTEXT("Dialogue Node");
+	if (const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
+	{
+		if (EdParentNode->DialogueGraphNode)
+		{
+			NodeTitle = EdParentNode->DialogueGraphNode->GetNodeTitle();
+		}
+	}
+	return NodeTitle;
+}
+
+TSharedRef<SWidget> SEdNode_MounteaDialogueGraphNode::CreateNameSlotWidget()
+{
+	return SAssignNew(InlineEditableText, SInlineEditableTextBlock)
+	.Style(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitleInlineEditableText")
+	.Text(this, &SEdNode_MounteaDialogueGraphNode::GetNodeTitle)
+	.OnVerifyTextChanged(this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
+	.OnTextCommitted(this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
+	.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
+	.IsSelected(this, &SEdNode_MounteaDialogueGraphNode::IsSelectedExclusively)
+	.Justification(ETextJustify::Center)
+	.Visibility(EVisibility::Visible)
+	.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetFontColor);
+}
+
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 {
+	if (GraphNode)
+	{
+		if (auto dialogueGraphNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
+		{
+			if (dialogueGraphNode->SEdNode == nullptr)
+			{
+				dialogueGraphNode->SEdNode = this;
+			}
+		}
+	}
+	
 	const FMargin NodePadding = FMargin(2.0f);
 	const FMargin UnifiedRowsPadding = FMargin(0.f, 1.15f, 0.f, 0.f);
 
@@ -155,6 +199,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 
 	TSharedPtr<SErrorText> ErrorText;
 	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, GraphNode);
+	TSharedPtr<SWidget> TitleWidget = CreateNameSlotWidget();
 
 	TSharedPtr<SVerticalBox> StackBox;
 	TSharedPtr<SVerticalBox> UniformBox;
@@ -288,6 +333,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 												SNew(STextBlock)
 												.Text(this, &SEdNode_MounteaDialogueGraphNode::GetDecoratorsInheritanceText)
 												.Justification(ETextJustify::Center)
+												.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetFontColor)
 											]
 										]
 									]
@@ -316,6 +362,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 												SNew(STextBlock)
 												.Text(this, &SEdNode_MounteaDialogueGraphNode::GetDecoratorsText)
 												.Justification(ETextJustify::Center)
+												.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetFontColor)
 											]
 										]
 									]
@@ -363,11 +410,11 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 													// POPUP ERROR MESSAGE
 													SAssignNew(ErrorText, SErrorText)
 													.BackgroundColor(
-					                                 this,
-					                                 &SEdNode_MounteaDialogueGraphNode::GetErrorColor)
+													 this,
+													 &SEdNode_MounteaDialogueGraphNode::GetErrorColor)
 													.ToolTipText(
-					                                 this,
-					                                 &SEdNode_MounteaDialogueGraphNode::GetErrorMsgToolTip)
+													 this,
+													 &SEdNode_MounteaDialogueGraphNode::GetErrorMsgToolTip)
 												]
 												+ SHorizontalBox::Slot()
 												  .AutoWidth()
@@ -382,17 +429,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 														  .HAlign(HAlign_Center)
 														  .AutoHeight()
 														[
-															SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-															.Style(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitleInlineEditableText")
-															.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
-															.OnVerifyTextChanged(
-															this, &SEdNode_MounteaDialogueGraphNode::OnVerifyNameTextChanged)
-															.OnTextCommitted(
-															this, &SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted)
-															.IsReadOnly(this, &SEdNode_MounteaDialogueGraphNode::IsNameReadOnly)
-															.IsSelected(this, &SEdNode_MounteaDialogueGraphNode::IsSelectedExclusively)
-															.Justification(ETextJustify::Center)
-															.Visibility(EVisibility::Visible)
+															TitleWidget.ToSharedRef()
 														]
 														
 														+ SVerticalBox::Slot()
@@ -449,7 +486,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 														SNew(STextBlock)
 														.Text(LOCTEXT("A", "DECORATORS"))
 														.Font(FCoreStyle::GetDefaultFontStyle("Bold", 8))
-														.ColorAndOpacity(DefaultFontColor)
+														.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetFontColor)
 													]
 #pragma endregion 
 
@@ -482,6 +519,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 																		[
 																			SNew(SImage)
 																			.Image(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointImageBrush)
+																			.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor_Inherits)
 																		]
 																	]
 																]
@@ -500,7 +538,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 																	.Text(LOCTEXT("B", "inherits"))
 																	.Font(FCoreStyle::GetDefaultFontStyle("Regular", 8))
 																	.Justification(ETextJustify::Left)
-																	.ColorAndOpacity(DefaultFontColor)
+																	.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetFontColor)
 																]
 															]
 														]
@@ -556,7 +594,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 														SNew(STextBlock)
 														.Text(LOCTEXT("A", "DECORATORS"))
 														.Font(FCoreStyle::GetDefaultFontStyle("Bold", 8))
-														.ColorAndOpacity(DefaultFontColor)
+														.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetFontColor)
 													]
 #pragma endregion 
 
@@ -589,7 +627,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 																		[
 																			SNew(SImage)
 																			.Image(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointImageBrush)
-																			.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor)
+																			.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor_Implements)
 																		]
 																	]
 																]
@@ -673,7 +711,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 														SNew(STextBlock)
 														.Text(LOCTEXT("A", "DECORATORS"))
 														.Font(FCoreStyle::GetDefaultFontStyle("Bold", 8))
-														.ColorAndOpacity(DefaultFontColor)
+														.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetFontColor)
 													]
 #pragma endregion 
 
@@ -706,6 +744,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 																		[
 																			SNew(SImage)
 																			.Image(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointImageBrush)
+																			.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor_Inherits)
 																		]
 																	]
 																]
@@ -724,7 +763,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 																	.Text(LOCTEXT("B", "inherits"))
 																	.Font(FCoreStyle::GetDefaultFontStyle("Regular", 8))
 																	.Justification(ETextJustify::Left)
-																	.ColorAndOpacity(DefaultFontColor)
+																	.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetFontColor)
 																]
 															]
 														]
@@ -781,7 +820,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 																		[
 																			SNew(SImage)
 																			.Image(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointImageBrush)
-																			.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor)
+																			.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor_Implements)
 																		]
 																	]
 																]
@@ -974,7 +1013,7 @@ bool SEdNode_MounteaDialogueGraphNode::IsNameReadOnly() const
 	UMounteaDialogueGraph* MounteaDialogueGraphNode = EdNode_Node->DialogueGraphNode->Graph;
 	check(MounteaDialogueGraphNode != nullptr);
 
-	return !MounteaDialogueGraphNode->bCanRenameNode || SGraphNode::IsNameReadOnly();
+	return (!MounteaDialogueGraphNode->bCanRenameNode && !EdNode_Node->DialogueGraphNode->bCanRenameNode) || SGraphNode::IsNameReadOnly();
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
@@ -990,7 +1029,7 @@ void SEdNode_MounteaDialogueGraphNode::OnNameTextCommitted(const FText& InText, 
 	if (MyNode != nullptr && MyNode->DialogueGraphNode != nullptr)
 	{
 		const FScopedTransaction Transaction(LOCTEXT("MounteaDiaogueGraphEditorRenameNode", "Mountea Diaogue Editor: Rename Node"));
-		MyNode->Modify();
+		MyNode->Modify(true);
 		MyNode->DialogueGraphNode->Modify();
 		MyNode->DialogueGraphNode->SetNodeTitle(InText);
 		UpdateGraphNode();
@@ -1003,9 +1042,9 @@ const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetNodeTypeBrush() const
 	{
 		switch (GraphEditorSettings->GetNodeType())
 		{
-			case ENodeType::ENT_SoftCorners:
+			case ENodeCornerType::ENT_SoftCorners:
 				return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.SoftEdges");
-			case ENodeType::ENT_HardCorners: 
+			case ENodeCornerType::ENT_HardCorners: 
 				return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.HardEdges");
 		}
 	}
@@ -1019,9 +1058,9 @@ const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetTextNodeTypeBrush() cons
 	{
 		switch (GraphEditorSettings->GetNodeType())
 		{
-		case ENodeType::ENT_SoftCorners:
+		case ENodeCornerType::ENT_SoftCorners:
 			return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges");
-		case ENodeType::ENT_HardCorners: 
+		case ENodeCornerType::ENT_HardCorners: 
 			return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextHardEdges");
 		}
 	}
@@ -1029,26 +1068,81 @@ const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetTextNodeTypeBrush() cons
 	return FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges");
 }
 
+FSlateColor SEdNode_MounteaDialogueGraphNode::GetFontColor() const
+{
+	return  ShouldUpdate() ? (IsNodeActive() ? MounteaDialogueGraphColors::TextColors::Normal : MounteaDialogueGraphColors::TextColors::Disabled) : MounteaDialogueGraphColors::TextColors::Normal;
+}
+
+bool SEdNode_MounteaDialogueGraphNode::ShouldUpdate() const
+{
+	if (!GEditor)
+		return false;
+		
+	if (!GEditor->IsPlayingSessionInEditor())
+		return false;
+
+	UEdNode_MounteaDialogueGraphNode* MyNode = CastChecked<UEdNode_MounteaDialogueGraphNode>(GraphNode);
+	const auto dialogueGraphEditor = MyNode->GetDialogueGraphEdGraph();
+	if (!dialogueGraphEditor)
+		return false;
+
+	auto focusedInstance = dialogueGraphEditor->FocusedInstance;
+	if (focusedInstance.InstanceId == INDEX_NONE)
+		return false;
+		
+	return true;
+}
+
+bool SEdNode_MounteaDialogueGraphNode::IsNodeActive() const
+{
+	UEdNode_MounteaDialogueGraphNode* MyNode = CastChecked<UEdNode_MounteaDialogueGraphNode>(GraphNode);
+	const auto dialogueGraphEditor = MyNode->GetDialogueGraphEdGraph();
+	if (!dialogueGraphEditor)
+		return false;
+
+	auto focusedInstance = dialogueGraphEditor->FocusedInstance;
+	if (focusedInstance.InstanceId == INDEX_NONE)
+		return false;
+
+	if (focusedInstance.Participant.GetObject() == nullptr)
+		return false;
+
+	auto dialogueManager = focusedInstance.Participant->GetDialogueManager();
+	if (!dialogueManager.GetObject())
+		return false;
+
+	auto dialogueContext = dialogueManager->Execute_GetDialogueContext(dialogueManager.GetObject());
+	if (!dialogueContext)
+		return false;
+
+	return dialogueContext->GetActiveNode() == MyNode->DialogueGraphNode;
+}
+
 FSlateColor SEdNode_MounteaDialogueGraphNode::GetBorderBackgroundColor() const
 {
 	UEdNode_MounteaDialogueGraphNode* MyNode = CastChecked<UEdNode_MounteaDialogueGraphNode>(GraphNode);
-	return MyNode ? MyNode->GetBackgroundColor() : MounteaDialogueGraphColors::NodeBorder::HighlightAbortRange0;
+	auto nodeBackgroundColor = MyNode ? MyNode->GetBackgroundColor() : MounteaDialogueGraphColors::NodeBorder::HighlightAbortRange0;
+	
+	return  ShouldUpdate() ? (IsNodeActive() ? nodeBackgroundColor : nodeBackgroundColor * MounteaDialogueGraphColors::NodeBorder::InactiveBorder) : nodeBackgroundColor;
 }
 
 FSlateColor SEdNode_MounteaDialogueGraphNode::GetBorderFrontColor() const
 {
+	auto selectedTheme = MounteaDialogueGraphColors::Overlay::DarkTheme;
 	if (GraphEditorSettings)
 	{
 		switch (GraphEditorSettings->GetNodeTheme())
 		{
 			case ENodeTheme::ENT_DarkTheme:
-				return  MounteaDialogueGraphColors::Overlay::DarkTheme;
+				selectedTheme = MounteaDialogueGraphColors::Overlay::DarkTheme;
+				break;
 			case ENodeTheme::ENT_LightTheme:
-				return MounteaDialogueGraphColors::Overlay::LightTheme;
+				selectedTheme = MounteaDialogueGraphColors::Overlay::LightTheme;
+				break;
 		} 
 	}
-
-	return MounteaDialogueGraphColors::Overlay::DarkTheme;
+	
+	return ShouldUpdate() ? (IsNodeActive() ? selectedTheme : selectedTheme * MounteaDialogueGraphColors::NodeBorder::InactiveBorder) : selectedTheme;
 }
 
 FSlateColor SEdNode_MounteaDialogueGraphNode::GetNodeTitleBackgroundColor() const
@@ -1084,7 +1178,7 @@ EVisibility SEdNode_MounteaDialogueGraphNode::GetDragOverMarkerVisibility() cons
 
 const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetNameIcon() const
 {
-	return FEditorStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Icon"));
+	return FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Icon"));
 }
 
 const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetInheritsImageBrush() const
@@ -1105,14 +1199,17 @@ FSlateColor SEdNode_MounteaDialogueGraphNode::GetInheritsImageTint() const
 {
 	bool bHasDecorators = false;
 	if (const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
-	{
 		if (EdParentNode->DialogueGraphNode)
-		{
-			bHasDecorators =  EdParentNode->DialogueGraphNode->DoesInheritDecorators() ;
-		}
-	}
+			bHasDecorators = EdParentNode->DialogueGraphNode->DoesInheritDecorators();
 	
-	return bHasDecorators ? FSlateColor(FLinearColor::Green) : FSlateColor(FLinearColor::Red);
+	const FSlateColor BaseColor = bHasDecorators ? 
+		FSlateColor(FLinearColor::Green) : 
+		FSlateColor(FLinearColor::Red);
+	
+	if (!ShouldUpdate())
+		return BaseColor;
+	
+	return IsNodeActive() ? BaseColor : MounteaDialogueGraphColors::TextColors::Disabled;
 }
 
 const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetBulletPointImageBrush() const
@@ -1343,36 +1440,47 @@ EVisibility SEdNode_MounteaDialogueGraphNode::ShowDecoratorsBottomPadding() cons
 
 FSlateColor SEdNode_MounteaDialogueGraphNode::GetImplementsRowColor() const
 {
-	if (const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
-	{
-		if (EdParentNode->DialogueGraphNode)
-		{
-			if (EdParentNode->DialogueGraphNode->GetNodeDecorators().Num() > 0)
-			{
-				return MounteaDialogueGraphColors::TextColors::Normal;
-			}
-			
-			return MounteaDialogueGraphColors::TextColors::Disabled;
-		}
-	}
-	return MounteaDialogueGraphColors::TextColors::Normal;
+	const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode);
+	if (!EdParentNode || !EdParentNode->DialogueGraphNode)
+		return GetFontColor();
+
+	return EdParentNode->DialogueGraphNode->GetNodeDecorators().Num() == 0 
+		? MounteaDialogueGraphColors::TextColors::Disabled 
+		: GetFontColor();
 }
 
-FSlateColor SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor() const
+FSlateColor SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor_Implements() const
 {
-	if (const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode))
-	{
-		if (EdParentNode->DialogueGraphNode)
-		{
-			if (EdParentNode->DialogueGraphNode->GetNodeDecorators().Num() > 0)
-			{
-				return MounteaDialogueGraphColors::BulletPointsColors::Normal;
-			}
-			
-			return MounteaDialogueGraphColors::BulletPointsColors::Disabled;
-		}
-	}
-	return MounteaDialogueGraphColors::BulletPointsColors::Normal;
+	const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode);
+	if (!EdParentNode || !EdParentNode->DialogueGraphNode)
+		return MounteaDialogueGraphColors::BulletPointsColors::Normal;
+
+	const bool bImplements = EdParentNode->DialogueGraphNode->GetNodeDecorators().Num() > 0;
+
+	if (!ShouldUpdate())
+		return bImplements
+		? MounteaDialogueGraphColors::BulletPointsColors::Normal
+		: MounteaDialogueGraphColors::BulletPointsColors::Disabled;
+
+	return IsNodeActive() ? bImplements ? MounteaDialogueGraphColors::BulletPointsColors::Normal
+		: MounteaDialogueGraphColors::BulletPointsColors::Disabled : MounteaDialogueGraphColors::BulletPointsColors::Disabled;
+}
+
+FSlateColor SEdNode_MounteaDialogueGraphNode::GetBulletPointsImagePointColor_Inherits() const
+{
+	const UEdNode_MounteaDialogueGraphNode* EdParentNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode);
+	if (!EdParentNode || !EdParentNode->DialogueGraphNode)
+		return MounteaDialogueGraphColors::BulletPointsColors::Normal;
+
+	const bool bInherits = EdParentNode->DialogueGraphNode->DoesInheritDecorators();
+
+	if (!ShouldUpdate())
+		return bInherits
+		? MounteaDialogueGraphColors::BulletPointsColors::Normal
+		: MounteaDialogueGraphColors::BulletPointsColors::Disabled;
+
+	return IsNodeActive() ? bInherits ? MounteaDialogueGraphColors::BulletPointsColors::Normal
+		: MounteaDialogueGraphColors::BulletPointsColors::Disabled : MounteaDialogueGraphColors::BulletPointsColors::Disabled;
 }
 
 FText SEdNode_MounteaDialogueGraphNode::GetDecoratorsInheritanceText() const

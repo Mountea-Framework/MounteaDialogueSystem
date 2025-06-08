@@ -4,7 +4,7 @@
 #include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
 
 #include "Data/MounteaDialogueContext.h"
-#include "Interfaces/MounteaDialogueManagerInterface.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
@@ -12,10 +12,9 @@
 
 UMounteaDialogueGraphNode_LeadNode::UMounteaDialogueGraphNode_LeadNode()
 {
-#if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_LeadNodeBaseTitle", "Lead Node");
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_LeadNodeBaseInternalTitle", "Lead Node");
-	
+#if WITH_EDITORONLY_DATA	
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_LeadNodeContextMenuName", "Lead Node");
 	
 	BackgroundColor = FLinearColor(FColor::Orange);
@@ -24,31 +23,32 @@ UMounteaDialogueGraphNode_LeadNode::UMounteaDialogueGraphNode_LeadNode()
 	
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode_AnswerNode::StaticClass());
+	AllowedInputClasses.Add(UMounteaDialogueGraphNode_LeadNode::StaticClass());
 
 	bAutoStarts = true;
-	bUseGameplayTags = false;
+	bUseGameplayTags = true;
 }
 
-void UMounteaDialogueGraphNode_LeadNode::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode_LeadNode::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	if (!bUseGameplayTags)
 	{
 		// Switch Active Participant to NPC
 		if (Manager.GetInterface())
 		{
-			if (const auto TempContext = Manager->GetDialogueContext())
+			if (const auto TempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
 			{
-				TempContext->UpdateActiveDialogueParticipant(TempContext->GetDialogueParticipant());
+				TempContext->SetActiveDialogueParticipant(TempContext->GetDialogueParticipant());
 			}
 		}
 	}
-	
-	Super::PreProcessNode(Manager);
+
+	Super::PreProcessNode_Implementation(Manager);
 }
 
-void UMounteaDialogueGraphNode_LeadNode::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode_LeadNode::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	Super::ProcessNode(Manager);
+	Super::ProcessNode_Implementation(Manager);
 }
 
 #if WITH_EDITOR

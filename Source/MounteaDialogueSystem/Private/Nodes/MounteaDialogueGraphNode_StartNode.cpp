@@ -3,14 +3,17 @@
 
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
+#include "Misc/DataValidation.h"
+
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_StartNode"
 
 UMounteaDialogueGraphNode_StartNode::UMounteaDialogueGraphNode_StartNode()
 {
-#if WITH_EDITORONLY_DATA
-	bAllowInputNodes = false;
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_StartNodeTitle", "Start Dialogue");
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_StartNodeInternalTitle", "Start Dialogue");
+#if WITH_EDITORONLY_DATA
+	bAllowInputNodes = false;
+	
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_StartNodeContextMenuName", "Start Dialogue");
 	BackgroundColor = FLinearColor(0, 1, 0, 1);
 	
@@ -19,6 +22,7 @@ UMounteaDialogueGraphNode_StartNode::UMounteaDialogueGraphNode_StartNode()
 	bAllowPaste = false;
 	bAllowDelete = false;
 	bAllowManualCreate = false;
+	bCanRenameNode = false;
 
 	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_CompleteTooltip", "* This Node will be added to the Dialogue Graph automatically when Graph is created.\n* This Node cannot be created manually.\n* This Node cannot be deleted from Graph.\n* Does not implement any logic, works as an Anchor starting point.");
 #endif
@@ -39,9 +43,9 @@ FText UMounteaDialogueGraphNode_StartNode::GetNodeCategory_Implementation() cons
 	return Super::GetNodeCategory_Implementation();
 }
 
-bool UMounteaDialogueGraphNode_StartNode::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
+bool UMounteaDialogueGraphNode_StartNode::ValidateNode(FDataValidationContext& Context, const bool RichFormat) const
 {
-	bool bResult = Super::ValidateNode(ValidationsMessages, RichFormat);
+	bool bResult = Super::ValidateNode(Context, RichFormat);
 
 	if (ChildrenNodes.Num() == 0)
 	{
@@ -58,7 +62,7 @@ bool UMounteaDialogueGraphNode_StartNode::ValidateNode(TArray<FText>& Validation
 		FString(NodeTitle.ToString()).
 		Append(": Does not have any Children Nodes!");
 		
-		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
 	if (ChildrenNodes.Num() > 1)
@@ -76,7 +80,7 @@ bool UMounteaDialogueGraphNode_StartNode::ValidateNode(TArray<FText>& Validation
 		FString(NodeTitle.ToString()).
 		Append(": Does have more than 1 Child Node. This version can utilize only first Child Node from Start Node!");
 		
-		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
 	return bResult;

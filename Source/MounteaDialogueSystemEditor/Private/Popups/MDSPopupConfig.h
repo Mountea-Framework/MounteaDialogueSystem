@@ -1,3 +1,5 @@
+// All rights reserved Dominik Morse (Pavlicek) 2024
+
 #pragma once
 
 #include "Engine/DeveloperSettings.h"

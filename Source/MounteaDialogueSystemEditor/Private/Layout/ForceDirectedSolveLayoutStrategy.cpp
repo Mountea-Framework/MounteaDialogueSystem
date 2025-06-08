@@ -57,6 +57,11 @@ void UForceDirectedSolveLayoutStrategy::Layout(UEdGraph* InEdGraph)
 
 FBox2D UForceDirectedSolveLayoutStrategy::LayoutOneTree(UMounteaDialogueGraphNode* RootNode, const FBox2D& PreTreeBound)
 {
+	Graph->AllNodes.Sort([](const UMounteaDialogueGraphNode& A, const UMounteaDialogueGraphNode& B)
+	{
+		return A.ExecutionOrder < B.ExecutionOrder;
+	});
+
 	float Temp = InitTemperature;
 	FBox2D TreeBound = GetActualBounds(RootNode);
 	TreeBound.Min.X += PreTreeBound.Max.X + OptimalDistance;

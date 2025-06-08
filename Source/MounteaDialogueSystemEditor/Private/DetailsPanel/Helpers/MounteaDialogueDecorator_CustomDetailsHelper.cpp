@@ -31,10 +31,8 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 	);
 	
 	PropertyRow->ShowPropertyButtons(true);
-
-	FExecuteAction OnInsertClicked; // Insert is not allowed
+	
 	FExecuteAction OnDeleteClicked = FExecuteAction::CreateSP( this, &FMounteaDialogueDecorator_CustomDetailsHelper::RequestDeleteItem );
-	FExecuteAction OnDuplicateClicked; // Duplicates are not allowed
 	
 	FDetailWidgetRow& DetailWidgetRow = PropertyRow->CustomWidget(true);
 	DetailWidgetRow.NameContent()
@@ -62,19 +60,8 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 	.VAlign(VAlign_Center)
 	.Padding(4.f)
 	[
-		PropertyCustomizationHelpers::MakeInsertDeleteDuplicateButton( OnInsertClicked, OnDeleteClicked, OnDuplicateClicked)
+		PropertyCustomizationHelpers::MakeDeleteButton(OnDeleteClicked)
 	];
-
-	// GEditor doesn't support inserting Handle values for EditInline
-	/*
-	HorizontalBox->AddSlot()
-	.AutoWidth()
-	.VAlign(VAlign_Center)
-	.Padding(4.f)
-	[
-		PropertyCustomizationHelpers::MakeUseSelectedButton( OnUseSelectedClicked)
-	];
-	*/
 	
 	// Browse Asset
 	HorizontalBox->AddSlot()
@@ -83,7 +70,7 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 	.Padding(4.f)
 	[
 		SNew(SButton)
-		.ButtonStyle(FEditorStyle::Get(), "HoverHintOnly")
+		.ButtonStyle(FAppStyle::Get(), "HoverHintOnly")
 		.ToolTipText(this, &Self::GetBrowseObjectText)
 		.ContentPadding(4.f)
 		.ForegroundColor(FSlateColor::UseForeground())
@@ -103,7 +90,7 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 	.Padding(4.f, 2.f)
 	[
 		SNew(SButton)
-		.ButtonStyle(FEditorStyle::Get(), "HoverHintOnly")
+		.ButtonStyle(FAppStyle::Get(), "HoverHintOnly")
 		.ToolTipText(this, &Self::GetJumpToObjectText)
 		.ContentPadding(4.f)
 		.ForegroundColor(FSlateColor::UseForeground())
@@ -123,7 +110,7 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 	.Padding(4.f, 2.f)
 	[
 		SNew(SButton)
-		.ButtonStyle(FEditorStyle::Get(), "HoverHintOnly")
+		.ButtonStyle(FAppStyle::Get(), "HoverHintOnly")
 		.ToolTipText(this, &Self::GetOpenDocumentationText)
 		.ContentPadding(4.f)
 		.ForegroundColor(FSlateColor::UseForeground())

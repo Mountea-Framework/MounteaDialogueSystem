@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MDSHelpStyle.h"
+#include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 
 
 class FMDSCommands : public TCommands<FMDSCommands>
@@ -11,7 +11,11 @@ class FMDSCommands : public TCommands<FMDSCommands>
 public:
 
 	FMDSCommands()
-	: TCommands<FMDSCommands>(TEXT("MounteaSupport"), NSLOCTEXT("Contexts", "Support", "Mountea Dialogue System"), NAME_None, FMDSHelpStyle::GetStyleSetName())
+	: TCommands<FMDSCommands>(
+		TEXT("MounteaSupport"),
+		NSLOCTEXT("Contexts", "Support", "Mountea Dialogue System"),
+		NAME_None,
+		FMounteaDialogueGraphEditorStyle::GetAppStyleSetName())
 	{
 	}
 
@@ -21,5 +25,7 @@ public:
 public:
 	
 	TSharedPtr< FUICommandInfo > PluginAction;
-	//TSharedPtr< FUICommandInfo > WikiAction;
+	TSharedPtr< FUICommandInfo > DialoguerAction;
+
+	TSharedPtr< FUICommandInfo > FixMounteaNodesAction;
 };

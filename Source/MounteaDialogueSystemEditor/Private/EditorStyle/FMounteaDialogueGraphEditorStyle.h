@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Styling/SlateStyle.h"
 
-class FMounteaDialogueGraphEditorStyle
+class FMounteaDialogueGraphEditorStyle : public FAppStyle
 {
 public:
 	
@@ -21,8 +21,13 @@ public:
 	{
 		return StyleSet->GetBrush(PropertyName, Specifier);
 	};
+
+	static const FTextBlockStyle* GetTextBlockStyle( FName PropertyName, const ANSICHAR* Specifier = NULL )
+	{
+		return &StyleSet->GetWidgetStyle<FTextBlockStyle>(PropertyName);
+	};
 	
-	static const FName& GetStyleSetName()
+	static const FName& GetAppStyleSetName()
 	{
 		static FName StyleSetName(TEXT("MounteaDialogueEditorStyle"));
 		return StyleSetName;

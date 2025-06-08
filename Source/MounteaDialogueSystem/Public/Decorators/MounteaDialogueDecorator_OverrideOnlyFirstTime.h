@@ -22,8 +22,10 @@ class MOUNTEADIALOGUESYSTEM_API  UMounteaDialogueDecorator_OverrideOnlyFirstTime
 
 public:
 	
-	virtual bool ValidateDecorator_Implementation(TArray<FText>& ValidationMessages) override;
+	virtual bool ValidateDecorator_Implementation(UPARAM(ref) TArray<FText>& ValidationMessages) override;
 	virtual void ExecuteDecorator_Implementation() override;
+	virtual bool EvaluateDecorator_Implementation() override;
+	virtual bool IsDecoratorAllowedForGraph_Implementation() const override {  return false;  };
 
 	virtual  FString GetDecoratorDocumentationLink_Implementation() const override
 	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Decorator:-Override-Only-Frist-Time"); }
@@ -31,8 +33,8 @@ public:
 
 protected:
 
-	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault))
-	UDataTable* DataTable;
+	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, RequiredAssetDataTags = "RowStructure=/Script/MounteaDialogueSystem.DialogueRow"))
+	TObjectPtr<UDataTable> DataTable;
 
 	/** Name of row in the table that we want */
 	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))

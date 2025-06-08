@@ -2,16 +2,19 @@
 
 
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
-
+#include "TimerManager.h"
+#include "Data/MounteaDialogueContext.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Misc/DataValidation.h"
+#include "Nodes/MounteaDialogueGraphNode_Delay.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_DialogueNodeBase"
 
 UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNodeBase()
 {
-#if WITH_EDITORONLY_DATA
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseTitle", "Dialogue Node Base");
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseInternalTitle", "Dialogue Node Base");
+#if WITH_EDITORONLY_DATA
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseContextMenu", "Dialogue Node");
 	BackgroundColor = FLinearColor(FColor::Orange);
 
@@ -20,13 +23,15 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 	
 	bAutoStarts = false;
 	bUseGameplayTags = true;
+
+	AllowedInputClasses.Add(UMounteaDialogueGraphNode_Delay::StaticClass());
 }
 
-void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	if (Manager)
 	{
-		if (UMounteaDialogueContext* Context = Manager->GetDialogueContext())
+		if (UMounteaDialogueContext* Context = Manager->Execute_GetDialogueContext(Manager.GetObject()))
 		{
 			GetWorld()->GetTimerManager().ClearTimer(Manager->GetDialogueRowTimerHandle());
 
@@ -40,26 +45,25 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode(const TScriptInterf
 		}
 	}
 	
-	Super::ProcessNode(Manager);
+	Super::ProcessNode_Implementation(Manager);
 }
 
-void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	if (bUseGameplayTags)
 	{
 		// Switch Participants based on Tags
 		if (Manager.GetInterface())
 		{
-			if (const auto TempContext = Manager->GetDialogueContext())
+			if (const auto TempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
 			{
-				const TScriptInterface<IMounteaDialogueParticipantInterface> BestMatchingParticipant = UMounteaDialogueSystemBFC::FindBestMatchingParticipant(Manager.GetObject(), TempContext);
-				
-				TempContext->UpdateActiveDialogueParticipant(BestMatchingParticipant);
+				const TScriptInterface<IMounteaDialogueParticipantInterface> BestMatchingParticipant = UMounteaDialogueSystemBFC::SwitchActiveParticipant(TempContext);
+				UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(TempContext, BestMatchingParticipant);
 			}
 		}
 	}
-	
-	Super::PreProcessNode(Manager);
+
+	Super::PreProcessNode_Implementation(Manager);
 }
 
 UDataTable* UMounteaDialogueGraphNode_DialogueNodeBase::GetDataTable() const
@@ -105,9 +109,9 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNodeRuntime_Implementat
 
 #if WITH_EDITOR
 
-bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat)
+bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(FDataValidationContext& Context, const bool RichFormat) const
 {
-	bool bResult = Super::ValidateNode(ValidationsMessages, RichFormat);
+	bool bResult = Super::ValidateNode(Context, RichFormat);
 
 	if (DataTable == nullptr)
 	{
@@ -124,7 +128,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 		FString(NodeTitle.ToString()).
 		Append(": Does not contain any Dialogue Data Table!");
 	
-		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
 	if (RowName.IsNone())
@@ -142,7 +146,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 		FString(NodeTitle.ToString()).
 		Append(": Does not contain valid Dialogue Row!");
 	
-		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
 	if (MaxChildrenNodes > -1 && ChildrenNodes.Num() > MaxChildrenNodes)
@@ -162,11 +166,11 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 		FString(NodeTitle.ToString()).
 		Append(": Has more than ").Append(FString::FromInt(MaxChildrenNodes)).Append(" Children Nodes!");
 	
-		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
-	const FString Context;
-	const FDialogueRow* SelectedRow = DataTable!=nullptr ? DataTable->FindRow<FDialogueRow>(RowName, Context) : nullptr;
+	const FString ContextString;
+	const FDialogueRow* SelectedRow = DataTable!=nullptr ? DataTable->FindRow<FDialogueRow>(RowName, ContextString) : nullptr;
 
 	if (SelectedRow == nullptr)
 	{
@@ -183,7 +187,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 		FString(NodeTitle.ToString()).
 		Append(": Invalid Selected Row!");
 	
-		ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+		Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 	}
 
 	if (SelectedRow)
@@ -203,7 +207,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(TArray<FText>& Val
 			FString(NodeTitle.ToString()).
 			Append(": Invalid Selected Row! No Dialogue Data Rows inside!");
 	
-			ValidationsMessages.Add(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
+			Context.AddError(FText::FromString(RichFormat ? RichTextReturn : TextReturn));
 		}
 	}
 	

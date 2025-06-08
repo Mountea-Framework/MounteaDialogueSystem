@@ -13,7 +13,7 @@ class MOUNTEADIALOGUESYSTEMEDITOR_API FAssetEditor_MounteaDialogueGraph : public
 {
 
 public:
-
+	void OnPackageSaved(const FString& String, UPackage* Package, FObjectPostSaveContext ObjectPostSaveContext);
 	FAssetEditor_MounteaDialogueGraph();
 	virtual ~FAssetEditor_MounteaDialogueGraph() override;
 	
@@ -85,7 +85,7 @@ private:
 	
 	void CreateInternalWidgets();
 	TSharedRef<SGraphEditor> CreateViewportWidget();
-
+	
 	void BindCommands();
 	void CreateEdGraph();
 	void CreateCommandList();
@@ -97,6 +97,7 @@ private:
 	void RebuildMounteaDialogueGraph();
 
 	void SummonSearchUI(FString NewSearch = FString(), bool bSelectFirstResult = false);
+	void ExportGraph();
 
 #pragma region GraphEditorCommands
 
@@ -134,7 +135,7 @@ private:
 
 	void OnFinishedChangingProperties(const FPropertyChangedEvent& PropertyChangedEvent);
 
-	void OnPackageSaved(const FString& PackageFileName, UObject* Outer);
+	//void OnPackageSaved(const FString& PackageFileName, UObject* Outer);
 
 #pragma endregion 
 

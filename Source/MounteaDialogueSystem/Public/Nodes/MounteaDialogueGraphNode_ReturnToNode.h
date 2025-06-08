@@ -22,9 +22,16 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_ReturnToNode : public 
 
 public:
 
-	virtual void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
+	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 
 public:
+
+	/**
+	 * Defines how long it takes before the actual Jump happens.
+	 * Short delay time can avoid cutting audio and can provide time for Client-sided actions.
+	 */
+	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault,Units = "s", UIMin = 0.01, ClampMin = 0.01))
+	float DelayDuration;
 
 	/**
 	 * Shows list of Node Indexes.
@@ -33,11 +40,14 @@ public:
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames"))
 	FString SelectedNodeIndex;
 
+	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(EditCondition ="SelectedNode!=nullptr"))
+	uint8 bAutoCompleteSelectedNode : 1;
+
 	/**
 	 * Dialogue Node to which this Node leads to.
 	 */
 	UPROPERTY(SaveGame, Category="Private", VisibleAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, DisplayThumbnail="false"))
-	UMounteaDialogueGraphNode* SelectedNode;
+	TObjectPtr<UMounteaDialogueGraphNode> SelectedNode;
 
 	/**
 	 * Filters OUT all nodes by that class.
@@ -53,10 +63,15 @@ public:
 
 protected:
 
+	FTimerHandle TimerHandle_Delay;
+
+	UFUNCTION()
+	void OnDelayDurationExpired(const TScriptInterface<IMounteaDialogueManagerInterface>& MounteaDialogueManagerInterface);
+
 #if WITH_EDITOR
 	
 	virtual FText GetNodeCategory_Implementation() const override;
-	virtual bool ValidateNode(TArray<FText>& ValidationsMessages, const bool RichFormat) override;
+	virtual bool ValidateNode(FDataValidationContext& Context, const bool RichFormat) const override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual FText GetDescription_Implementation() const override;
 	virtual FString GetNodeDocumentationLink_Implementation() const override
@@ -69,32 +84,39 @@ private:
 	UFUNCTION()
 	TArray<FString> GetRowNames() const
 	{
-		if (Graph)
+		TArray<FString> nodeNames;
+		if (!Graph)
 		{
-			TArray<FString> NodesNames;
-			for (const auto& Itr : Graph->GetAllNodes())
+			return nodeNames;
+		}
+		for (const auto& Itr : Graph->GetAllNodes())
+		{
+			if (!Itr)
 			{
-				if (Itr)
+				continue;
+			}
+			
+			// Check if this is allowed class
+			bool bIsAllowed = true;
+			for (auto& ItrClass : AllowedNodesFilter)
+			{
+				if (Itr->IsA(ItrClass))
 				{
-					// Check if this is allowed class
-					bool bIsAllowed = true;
-					for (auto& ItrClass : AllowedNodesFilter)
-					{
-						if (Itr->IsA(ItrClass)) bIsAllowed = false;
-					}
-					
-					// Show only those allowed
-					if (bIsAllowed)
-					{
-						FString AllowedIndex = FString::FromInt(Graph->AllNodes.Find(Itr));
-						NodesNames.Add(AllowedIndex);
-					}
+					bIsAllowed = false;
+					break;
 				}
 			}
 
-			return NodesNames;
+			if (!bIsAllowed)
+			{
+				continue;
+			}
+			
+			// Show only those allowed
+			FString AllowedIndex = FString::FromInt(Graph->AllNodes.Find(Itr));
+			nodeNames.Add(AllowedIndex);
 		}
 
-		return TArray<FString>();
+		return nodeNames;
 	}
 };

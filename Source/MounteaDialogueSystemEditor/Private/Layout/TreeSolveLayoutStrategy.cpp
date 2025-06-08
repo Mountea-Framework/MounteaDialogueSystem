@@ -31,6 +31,8 @@ void UTreeSolveLayoutStrategy::Layout(UEdGraph* InEdGraph)
 		MaxIteration = Settings->GetMaxIteration();
 		bFirstPassOnly = Settings->IsFirstPassOnly();
 	}
+	
+	processedNodes.Empty();
 
 	FVector2D Anchor(0.f, 0.f);
 	for (int32 i = 0; i < Graph->RootNodes.Num(); ++i)
@@ -62,7 +64,20 @@ void UTreeSolveLayoutStrategy::Layout(UEdGraph* InEdGraph)
 
 void UTreeSolveLayoutStrategy::InitPass(UMounteaDialogueGraphNode* RootNode, const FVector2D& Anchor)
 {
+	if (processedNodes.Contains(RootNode))
+	{
+		return;
+	}
+
+	processedNodes.Add(RootNode);
+    
 	UEdNode_MounteaDialogueGraphNode* EdNode_RootNode = EdGraph->NodeMap[RootNode];
+
+	// Sort child nodes by execution order before laying them out
+	RootNode->ChildrenNodes.Sort([](const UMounteaDialogueGraphNode& A, const UMounteaDialogueGraphNode& B)
+	{
+		return A.ExecutionOrder < B.ExecutionOrder;
+	});
 
 	FVector2D ChildAnchor(FVector2D(0.f, GetNodeHeight(EdNode_RootNode) + OptimalDistance + Anchor.Y));
 	for (int32 i = 0; i < RootNode->ChildrenNodes.Num(); ++i)
@@ -78,7 +93,7 @@ void UTreeSolveLayoutStrategy::InitPass(UMounteaDialogueGraphNode* RootNode, con
 		ChildAnchor.X += GetNodeWidth(EdNode_ChildNode) / 2;
 		InitPass(Child, ChildAnchor);
 	}
-	
+    
 	float NodeWidth = GetNodeWidth(EdNode_RootNode);
 
 	EdNode_RootNode->NodePosY = Anchor.Y;
@@ -91,6 +106,7 @@ void UTreeSolveLayoutStrategy::InitPass(UMounteaDialogueGraphNode* RootNode, con
 		UpdateParentNodePosition(RootNode);
 	}
 }
+
 
 bool UTreeSolveLayoutStrategy::ResolveConflictPass(UMounteaDialogueGraphNode* Node)
 {

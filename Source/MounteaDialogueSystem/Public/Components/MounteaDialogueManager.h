@@ -4,18 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Interfaces/MounteaDialogueManagerInterface.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "MounteaDialogueManager.generated.h"
+
+class UMounteaDialogueDialogueNetSync;
 
 /**
  *  Mountea Dialogue Manager Component
  * 
- * Should be attached to Player Controller or any other Controller which should be able to trigger dialogues.
+ * Should be attached to Player State in order to be replication ready.
  * ❔ Allows any Actor to be Dialogue Manager
  * ❔ Implements 'IMounteaDialogueManagerInterface'.
- * ❗ If attached to non-Controller class, then it will show Dialogue UI to first found Player Controller
  */
-UCLASS(ClassGroup=(Mountea), Blueprintable,  AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"), meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Manager"))
+UCLASS(ClassGroup=(Mountea), Blueprintable,  AutoExpandCategories=("Mountea","Dialogue","Mountea|Dialogue"), meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Manager"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueManager : public UActorComponent, public IMounteaDialogueManagerInterface
 {
 	GENERATED_BODY()
@@ -27,269 +28,13 @@ public:
 protected:
 	
 	virtual void BeginPlay() override;
-	
-public:
-	
-#pragma region EventFunctions
-	
-public:
-	
-	virtual void CallDialogueNodeSelected_Implementation(const FGuid& NodeGUID) override;
-
-	/**
-	 * Even called when Dialogue is Initialized.
-	 * ❗ In order to use native logic, call Parent node
-	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Initialized, Start"))
-	void OnDialogueInitializedEvent(UMounteaDialogueContext* Context);
-	UFUNCTION()
-	virtual void OnDialogueInitializedEvent_Internal(UMounteaDialogueContext* Context);
-	
-	/**
-	 * Event called when Dialogue Context is updated.
-	 * ❗ Could be Null
-	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Update, Context"))
-	void OnDialogueContextUpdatedEvent(UMounteaDialogueContext* Context);
-	UFUNCTION()
-	virtual void OnDialogueContextUpdatedEvent_Internal(UMounteaDialogueContext* NewContext);
-
-	/**
-	 * Event called when Dialogue Widget Class or Widget have changed.
-	 * ❗ Dialogue Widget Could be Null
-	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Update, Context"))
-	void OnDialogueUserInterfaceChangedEvent(TSubclassOf<UUserWidget> DialogueUIClass, UUserWidget* DialogueUIWidget);
-	UFUNCTION()
-	void OnDialogueUserInterfaceChangedEvent_Internal(TSubclassOf<UUserWidget> DialogueUIClass, UUserWidget* DialogueUIWidget);
-
-	/**
-	 * Event called when Dialogue has Started.
-	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Update, Context"))
-	void OnDialogueStartedEvent(UMounteaDialogueContext* Context);
-	UFUNCTION()
-	void OnDialogueStartedEvent_Internal(UMounteaDialogueContext* Context);
-
-	/**
-	 * Event called when Dialogue has Closed.
-	 * Could be either by manual request or automatic, as there are no nodes to follow.
-	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Close, Context"))
-	void OnDialogueClosedEvent(UMounteaDialogueContext* Context);
-	UFUNCTION()
-	void OnDialogueClosedEvent_Internal(UMounteaDialogueContext* Context);
-
-	/**
-	 * Event called when new Node is selected.
-	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Start, Begin"))
-	void OnDialogueNodeSelectedEvent(UMounteaDialogueContext* Context);
-	UFUNCTION()
-	void OnDialogueNodeSelectedEvent_Internal(UMounteaDialogueContext* Context);
-	/**
-	 * Event called when Dialogue Node has Started.
-	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Start, Begin"))
-	void OnDialogueNodeStartedEvent(UMounteaDialogueContext* Context);
-	UFUNCTION()
-	void OnDialogueNodeStartedEvent_Internal(UMounteaDialogueContext* Context);
-	/**
-	 * Event called when Dialogue Node has Finished.
-	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Finish, End, Complete"))
-	void OnDialogueNodeFinishedEvent(UMounteaDialogueContext* Context);
-	UFUNCTION()
-	void OnDialogueNodeFinishedEvent_Internal(UMounteaDialogueContext* Context);
-
-	UFUNCTION() void OnDialogueRowStartedEvent_Internal(UMounteaDialogueContext* Context);
-	UFUNCTION() void OnDialogueRowFinishedEvent_Internal(UMounteaDialogueContext* Context);
-	
-	/**
-	 * Event called when a new voice line is requested to play in dialogue.
-	 * ❗ VoiceToStart may be null.
-	 * 
-	 * @param VoiceToStart The voice line to start playing.
-	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Finish, End, Complete"))
-	void OnDialogueVoiceStartRequestEvent(USoundBase* VoiceToStart);
-	UFUNCTION()
-	void OnDialogueVoiceStartRequestEvent_Internal(USoundBase* VoiceToStart);
-	/**
-	 * Event called when the user requests to skip a dialogue voice line.
-	 * ❗ VoiceToSkip could be null.
-	 * 
-	 * @param VoiceToSkip - The voice line to be skipped.
-	 */
-	UFUNCTION(BlueprintImplementableEvent, Category="Mountea|Dialogue", meta=(Keywords="Finish, End, Complete"))
-	void OnDialogueVoiceSkipRequestEvent(USoundBase* VoiceToSkip);
-	UFUNCTION()
-	void OnDialogueVoiceSkipRequestEvent_Internal(USoundBase* VoiceToSkip);
-
-#pragma endregion
-
-protected:
-	
-#pragma region EventVariables
-	
-protected:
-	/**
-	 * Even called when Dialogue is Initialized.
-	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
-	FDialogueInitialized OnDialogueInitialized;
-	/**
-	 * Event called when Dialogue has started.
-	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
-	FDialogueEvent OnDialogueStarted;
-	/**
-	 * Event called when Dialogue has been closed.
-	 * Could be either manual or automatic.
-	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
-	FDialogueEvent OnDialogueClosed;
-	
-	
-	/**
-	 * Event called when Dialogue Context is updated.
-	 * ❗ Could be Null
-	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
-	FDialogueContextUpdated OnDialogueContextUpdated;
-	/**
-	 * Event called when Dialogue Widget Class or Widget have changed.
-	 *❗ Dialogue Widget Could be Null
-	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
-	FDialogueUserInterfaceChanged OnDialogueUserInterfaceChanged;
-	
-
-	/**
-	 * Event called when new Dialogue Node has been selected.
-	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
-	FDialogueNodeEvent OnDialogueNodeSelected;
-
-	/**
-	 * Event called when Dialogue Node has started.
-	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
-	FDialogueNodeEvent OnDialogueNodeStarted;
-	/**
-	 * Event called when Dialogue Node has finished.
-	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
-	FDialogueNodeEvent OnDialogueNodeFinished;
-	
-	/**
-	 * Event called when Dialogue Row has started.
-	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
-	FDialogueRowEvent OnDialogueRowStarted;
-	/**
-	 * Event called when Dialogue Row has finished.
-	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
-	FDialogueRowEvent OnDialogueRowFinished;
-
-	/**
-	 * Event called if Dialogue fails to execute.
-	 * Provides Error Message with explanation.
-	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
-	FDialogueFailed OnDialogueFailed;
-
-	/**
-	 * Event called when Dialogue State changes.
-	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
-	FDialogueManagerStateChanged OnDialogueManagerStateChanged;
-
-	/**
-	 * Event called when Dialogue Voice is requested to Start.
-	 * Provides info what Dialogue Voice is requested to Start.
-	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue")
-	FDialogueVoiceEvent OnDialogueVoiceStartRequest;
-	/**
-	 * Event called when Dialogue Voice is requested to Skip.
-	 * Provides info what Dialogue Voice is requested to Skip.
-	 */
-	UPROPERTY(BlueprintCallable, BlueprintAssignable, Category="Mountea|Dialogue")
-	FDialogueVoiceEvent OnDialogueVoiceSkipRequest;
-
-#pragma endregion
-
-#pragma region InterfaceImplementations
 
 public:
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue")
-	virtual AActor* GetOwningActor_Implementation() const override;
-
-	/**
-	 * Returns Dialogue Widget Class if any exists already.
-	 * ❗ If none specified per Manager will return Class from Project Settings
-	 * ❗ Could return null
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
-	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const override;
-	/**
-	 * Returns Dialogue Widget Pointer if any exists already.
-	 * ❗ Could return null
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="UI, Widget"))
-	virtual UUserWidget* GetDialogueUIPtr() const override
-	{ return DialogueWidgetPtr; };
-
-	/**
-	 * Returns Dialogue Context if any exists.
-	 * ❗ Could return null
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="Context, Get"))
-	virtual UMounteaDialogueContext* GetDialogueContext() const override
-	{ return DialogueContext; };
-
-	/**
-	 * Returns the current state of the Dialogue Manager.
-	 * @return The current state of the Dialogue Manager.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="Context, Get"))
-	virtual EDialogueManagerState GetDialogueManagerState() const override
-	{ return  ManagerState; };
-
-	/**
-	 * Returns the default state of the Dialogue Manager.
-	 * @return The default state of the Dialogue Manager.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue", meta=(Keywords="Context, Get"))
-	virtual EDialogueManagerState GetDefaultDialogueManagerState() const override
-	{ return DefaultManagerState; };
-	
-	virtual void PrepareNode_Implementation() override;
-	
-public:
-
-	virtual void StartDialogue() override;
-	virtual void CloseDialogue() override;
-	virtual void ProcessNode();
-
-	virtual bool InvokeDialogueUI(FString& Message) override;
-	
-	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) override;
-	virtual void SetDialogueUIPtr(UUserWidget* NewDialogueWidgetPtr) override;
-
-	UFUNCTION() virtual void StartExecuteDialogueRow() override;
-	UFUNCTION() virtual void FinishedExecuteDialogueRow() override;
-	
-	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) override;
-	
-	virtual void SetDialogueManagerState(const EDialogueManagerState NewState) override;
-	virtual void SetDefaultDialogueManagerState(const EDialogueManagerState NewState) override;
-	
-	virtual FDialogueInitialized& GetDialogueInitializedEventHandle() override
-	{ return OnDialogueInitialized; };
+	virtual FDialogueStartRequested& GetDialogueStartRequestedEventHandle() override
+	{ return OnDialogueStartRequested; };
+	virtual FDialogueStartRequestedResult& GetDialogueStartRequestedResultEventHandle() override
+	{ return OnDialogueStartRequestedResult; };
 	virtual FDialogueEvent& GetDialogueStartedEventHandle() override
 	{ return OnDialogueStarted; };
 	virtual FDialogueEvent& GetDialogueClosedEventHandle() override
@@ -312,32 +57,248 @@ public:
 	{ return OnDialogueFailed; };
 	virtual FDialogueManagerStateChanged& GetDialogueManagerStateChangedEventHandle() override
 	{ return OnDialogueManagerStateChanged; };
-	virtual FDialogueVoiceEvent& GetDialogueVoiceSkipRequestEventHandle() override
-	{ return OnDialogueVoiceStartRequest; };
-	virtual FDialogueVoiceEvent& GetDialogueVoiceStartRequestEventHandle() override
-	{ return OnDialogueVoiceSkipRequest; };
+	virtual FDialogueWidgetCommand& GetDialogueWidgetCommandHandle() override
+	{ return OnDialogueWidgetCommandRequested; };
 	virtual FTimerHandle& GetDialogueRowTimerHandle() override
-	{ return TimerHandle_RowTimer; }; 
+	{ return TimerHandle_RowTimer; };
 
-#pragma endregion 
-
-#pragma region Variables
 protected:
+
+	void ProcessStateUpdated();
+	void ProcessContextUpdated(const FMounteaDialogueContextReplicatedStruct& Context);
+	UFUNCTION()
+	void RequestBroadcastContext(UMounteaDialogueContext* Context);
+	UFUNCTION(Server, Reliable)
+	void RequestBroadcastContext_Server(const FMounteaDialogueContextReplicatedStruct& Context);
+	UFUNCTION()
+	void DialogueFailed(const FString& ErrorMessage);
+
+	void StartParticipants();
+	UFUNCTION(Server, Reliable)
+	void StartParticipants_Server();
+	void StopParticipants() const;
+	UFUNCTION(Server, Reliable)
+	void StopParticipants_Server() const;
+	void NotifyParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
+	void CalculateManagerType();
+	
+public:
+
+	virtual AActor* GetOwningActor_Implementation() const override;
+	virtual EDialogueManagerState GetManagerState_Implementation() const override;
+	virtual void SetManagerState(const EDialogueManagerState NewState) override;
+	virtual EDialogueManagerState GetDefaultManagerState_Implementation() const override;
+	virtual void SetDefaultManagerState(const EDialogueManagerState NewState) override;
+	virtual EDialogueManagerType GetDialogueManagerType() const override;
+
+	virtual bool CanStartDialogue_Implementation() const override;;
+	virtual UMounteaDialogueContext* GetDialogueContext_Implementation() const override;
+	virtual void SetDialogueContext(UMounteaDialogueContext* NewContext) override;
+	virtual void UpdateDialogueContext_Implementation(UMounteaDialogueContext* NewContext) override;
+
+	virtual void RequestStartDialogue_Implementation(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants) override;
+	virtual void RequestCloseDialogue_Implementation() override;
+	UFUNCTION()
+	virtual void DialogueStartRequestReceived(const bool bResult, const FString& ResultMessage) override;
+	virtual void StartDialogue_Implementation() override;
+	virtual void CloseDialogue_Implementation() override;
+	virtual void CleanupDialogue_Implementation() override;
+	
+	virtual void PrepareNode_Implementation() override;
+	virtual void NodePrepared_Implementation() override;
+	virtual void ProcessNode_Implementation() override;
+	virtual void NodeProcessed_Implementation() override;
+	virtual void SelectNode_Implementation(const FGuid& NodeGuid) override;
+
+	virtual void ProcessDialogueRow_Implementation() override;
+	virtual void DialogueRowProcessed_Implementation(const bool bForceFinish = false) override;
+	virtual void SkipDialogueRow_Implementation() override;
+	
+	virtual void UpdateWorldDialogueUI_Implementation(const FString& Command) override;
+	virtual bool AddDialogueUIObject_Implementation(UObject* NewDialogueObject) override;
+	virtual bool AddDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects) override;
+	virtual bool RemoveDialogueUIObject_Implementation(UObject* DialogueObjectToRemove) override;
+	virtual bool RemoveDialogueUIObjects_Implementation(const TArray<UObject*>& DialogueObjectsToRemove) override;
+	virtual void SetDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects) override;
+	virtual void ResetDialogueUIObjects_Implementation() override;
+
+	virtual bool CreateDialogueUI_Implementation(FString& Message) override;
+	virtual bool UpdateDialogueUI_Implementation(FString& Message, const FString& Command) override;
+	virtual bool CloseDialogueUI_Implementation() override;
+
+	virtual void ExecuteWidgetCommand_Implementation(const FString& Command) override;
+	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const override;
+	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) override;
+	virtual void SetDialogueWidget_Implementation(UUserWidget* NewDialogueWidget) override;
+	virtual UUserWidget* GetDialogueWidget_Implementation() const override;
+	virtual int32 GetDialogueWidgetZOrder_Implementation() const override;
+	virtual void SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder) override;
+
+	virtual void SyncContext(const FMounteaDialogueContextReplicatedStruct& Context) override;
+
+private:
+
+	UFUNCTION(Server, Reliable)
+	void SetManagerState_Server(const EDialogueManagerState NewState);
+	UFUNCTION(Server, Unreliable)
+	void SetDefaultManagerState_Server(const EDialogueManagerState NewState);
+	UFUNCTION(Server, Reliable)
+	void SetDialogueContext_Server(UMounteaDialogueContext* NewContext);
+	UFUNCTION(Server, Reliable)
+	void UpdateDialogueContext_Server(UMounteaDialogueContext* NewContext);
+	UFUNCTION(Server, Reliable)
+	void RequestStartDialogue_Server(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
+	UFUNCTION(Server, Reliable)
+	void CleanupDialogue_Server();
+	
+	UFUNCTION()
+	void OnRep_ManagerState();
+	UFUNCTION()
+	void OnRep_DialogueContext();
+
+	UMounteaDialogueDialogueNetSync* GetSyncComponent() const;
+
+	void RequestStartDialogue_Environment(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
+	void RequestCloseDialogue_Environmental();
+	void SetManagerState_Environment(const EDialogueManagerState NewState);
+	void RequestBroadcastContext_Environment(const FMounteaDialogueContextReplicatedStruct& Context);
+	void CloseDialogue_Environment();
+
+	bool SetupPlayerDialogue(TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages) const;
+	bool SetupEnvironmentDialogue(AActor* DialogueInitiator, const TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages);
+	static bool ValidateMainParticipant(AActor* MainParticipant, TScriptInterface<IMounteaDialogueParticipantInterface>& OutParticipant, TArray<FText>& ErrorMessages);
+	static void GatherOtherParticipants(const TArray<TObjectPtr<UObject>>& OtherParticipants, TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& OutParticipants);
+	
+	void ProcessWorldWidgetUpdate(const FString& Command);
+
+public:
+	
+	bool IsAuthority() const;
+
+protected:
+
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueStartRequested OnDialogueStartRequested;
+	
+	/**
+	 * Even called when Dialogue is Initialized.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueStartRequestedResult OnDialogueStartRequestedResult;
+	
+	/**
+	 * Event called when Dialogue has started.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueEvent OnDialogueStarted;
+	
+	/**
+	 * Event called when Dialogue has been closed.
+	 * Could be either manual or automatic.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueEvent OnDialogueClosed;
+	
+
+	/**
+	 * Event called when Dialogue Context is updated.
+	 * ❗ Could be Null
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueContextUpdated OnDialogueContextUpdated;
+	
+	/**
+	 * Event called when Dialogue Widget Class or Widget have changed.
+	 *❗ Dialogue Widget Could be Null
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueUserInterfaceChanged OnDialogueUserInterfaceChanged;
+	
+
+	/**
+	 * Event called when new Dialogue Node has been selected.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueNodeEvent OnDialogueNodeSelected;
+
+	/**
+	 * Event called when Dialogue Node has started.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueNodeEvent OnDialogueNodeStarted;
+	
+	/**
+	 * Event called when Dialogue Node has finished.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueNodeEvent OnDialogueNodeFinished;
+	
+	/**
+	 * Event called when Dialogue Row has started.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueRowEvent OnDialogueRowStarted;
+	
+	/**
+	 * Event called when Dialogue Row has finished.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueRowEvent OnDialogueRowFinished;
+	
+	/**
+	 * Event called once Dialogue Row Data update has been requested.
+	 * Is never called from Code and is bound to `FinishedExecuteDialogueRow` function.
+	 * Should be used carefully. Suggested usage is with Dialogue Row Data which are using `RowDurationMode::Manual`.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueRowEvent OnNextDialogueRowDataRequested;
+
+	/**
+	 * Event called if Dialogue fails to execute.
+	 * Provides Error Message with explanation.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueFailed OnDialogueFailed;
+
+	/**
+	 * Event called when Dialogue State changes.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueManagerStateChanged OnDialogueManagerStateChanged;
+
+	/**
+	* Event called for all listening Dialogue Objects.
+	*/
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueWidgetCommand OnDialogueWidgetCommandRequested;
+
+protected:
+
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", meta=(DisplayThumbnail=false))
+	TObjectPtr<UObject> DialogueInstigator;
 
 	/**
 	 * Manager based Dialogue Widget Class.
 	 * ❔ Could be left empty if Project Settings are setup properly
 	 * ❗ Must implement MounteaDialogueWBPInterface
 	 */
-	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
+	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue|Manager", DisplayName="Dialogue Widget Class Override", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
 	TSubclassOf<UUserWidget> DialogueWidgetClass = nullptr;
+
+	/**
+	 * The Z-order of the dialogue widget.
+	 * ❔ This determines the order in which the widget is rendered relative to other UI elements.
+	 * ❔ A higher Z-order means the widget will be rendered on top of others with lower Z-orders.
+	 */
+	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue|Manager", meta=(UIMin=0,ClampMin=0))
+	int32 DialogueWidgetZOrder;
 
 	/**
 	 * Mountea Dialogue Manager Default State.
 	 * ❔ Is used in BeginPlay to set ManagerState.
 	 * ❔ Is used as fallback value once Dialogue Ends.
 	 */
-	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue")
+	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue|Manager")
 	EDialogueManagerState DefaultManagerState;
 	
 	/**
@@ -345,21 +306,31 @@ protected:
 	* ❗ In order to start Dialogue, this value must not be Disabled.
 	* ❔ Can be updated using SetDialogueManagerState function.
 	*/
-	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea|Dialogue")
+	UPROPERTY(ReplicatedUsing=OnRep_ManagerState, SaveGame, VisibleAnywhere, Category="Mountea|Dialogue|Manager")
 	EDialogueManagerState ManagerState;
+
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea|Dialogue|Manager")
+	EDialogueManagerType DialogueManagerType;
+	
+	/**
+	 * An array of dialogue objects. Serves purpose of listeners who receive information about UI events.
+	 * Each must implement `IMounteaDialogueWBPInterface` interface.
+	 */
+	UPROPERTY(VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
+	TArray<TObjectPtr<UObject>> DialogueObjects;
 	
 	/**
 	 * Dialogue Widget which has been created.
 	 * ❔ Transient, for actual runtime only.
 	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
-	UUserWidget* DialogueWidgetPtr = nullptr;
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
+	TObjectPtr<UUserWidget> DialogueWidget = nullptr;
 
 	/**
 	 * Dialogue Context which is used to contain temporary data.
 	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
-	UMounteaDialogueContext* DialogueContext = nullptr;
+	UPROPERTY(VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
+	TObjectPtr<UMounteaDialogueContext> DialogueContext = nullptr;
 
 	/**
 	 * TimerHandle managing Dialogue Row.
@@ -367,15 +338,34 @@ protected:
 	 * 
 	 * ❔ Expiration is driven by Dialogue data Duration variable
 	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
 	FTimerHandle TimerHandle_RowTimer;
 
-	 /**
-	 * Is saved once Dialogue starts.
-	 * Once Dialogue ends, cached value is set back again.
-	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea", AdvancedDisplay)
-	uint8 bWasCursorVisible : 1;
+	UPROPERTY(Transient)
+	FString LastDialogueCommand;
 
-#pragma endregion 
+private:
+
+	// Replication helper to move Dialogue Context round
+	UPROPERTY(Transient, ReplicatedUsing=OnRep_DialogueContext)
+	FMounteaDialogueContextReplicatedStruct TransientDialogueContext;
+
+protected:
+	
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 };
+
+namespace MounteaDialogueManagerHelpers
+{
+	struct FDialogueRowDataInfo
+	{
+		int32	IncreasedIndex;
+		bool	bIsActiveRowValid;
+		bool	bDialogueRowDataValid;
+		ERowExecutionMode	NextRowExecutionMode;
+		ERowExecutionMode	ActiveRowExecutionMode;
+	};
+
+	inline FDialogueRowDataInfo GetDialogueRowDataInfo(const UMounteaDialogueContext* DialogueContext);
+}

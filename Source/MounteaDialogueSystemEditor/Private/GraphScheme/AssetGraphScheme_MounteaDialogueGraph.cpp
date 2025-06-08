@@ -2,6 +2,7 @@
 
 #include "AssetGraphScheme_MounteaDialogueGraph.h"
 
+#include "FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph.h"
 #include "FConnectionDrawingPolicy_MounteaDialogueGraph.h"
 #include "GraphEditorActions.h"
 #include "Graph/MounteaDialogueGraph.h"
@@ -117,7 +118,6 @@ UEdGraphNode* FAssetSchemaAction_MounteaDialogueGraph_NewNode::PerformAction(UEd
 
 		ResultNode = NodeTemplate;
 	}
-	
 	return ResultNode;
 }
 
@@ -357,11 +357,11 @@ const FPinConnectionResponse UAssetGraphScheme_MounteaDialogueGraph::CanCreateCo
 	FNodeVisitorCycleChecker CycleChecker;
 	if (!CycleChecker.CheckForLoop(A->GetOwningNode(), B->GetOwningNode()))
 	{
-		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Can't create a graph cycle"));
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Can't create a graph cycle.\nIn order to return back, please use `Return To Node`."));
 	}
 	if (!CycleChecker.CheckForLoop(B->GetOwningNode(), A->GetOwningNode()))
 	{
-		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Can't create a graph cycle"));
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Can't create a graph cycle.\nIn order to return back, please use `Return To Node`."));
 	}
 
 	UEdNode_MounteaDialogueGraphNode* EdNode_A = Cast<UEdNode_MounteaDialogueGraphNode>(A->GetOwningNode());
@@ -441,7 +441,6 @@ FConnectionDrawingPolicy* UAssetGraphScheme_MounteaDialogueGraph::CreateConnecti
 		}
 	}
 	*/
-	
 	return new FConnectionDrawingPolicy_MounteaDialogueGraph(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
 }
 

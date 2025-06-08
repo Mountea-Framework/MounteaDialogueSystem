@@ -10,6 +10,8 @@
 class FHttpModule;
 class FSlateStyleSet;
 
+DECLARE_DELEGATE_OneParam(FOnMounteaMenuSelected, FString);
+
 class FMounteaDialogueSystemEditor : public IModuleInterface
 {
 	public:
@@ -47,23 +49,43 @@ private:
 	
 	void OnGetResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 	UFUNCTION() void SendHTTPGet();
-
-	void PluginButtonClicked();
+	void OnGetResponse_Tags(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
+	UFUNCTION() void SendHTTPGet_Tags();
+	
+	void LauncherButtonClicked() const;
+	void DialoguerButtonClicked() const;
+	void YoutubeButtonClicked() const;
+	void WikiButtonClicked() const;
+	void PluginButtonClicked() const;
 	void RegisterMenus();
+	void SettingsButtonClicked() const;
+	void EditorSettingsButtonClicked() const;
+	TSharedRef<SWidget> MakeMounteaMenuWidget() const;
+
+protected:
+		
+	bool DoesHaveValidTags() const;
+	void RefreshGameplayTags();
+	void UpdateTagsConfig(const FString& NewContent);
+	void CreateTagsConfig(const FString& NewContent);
+
+	void RegisterTabSpawners(const TSharedRef<FTabManager>& TabManager);
+	void TutorialButtonClicked() const;
+	
+private:
+	TSharedRef<SDockTab> OnSpawnDialogueSystemTutorialTab(const FSpawnTabArgs& SpawnTabArgs);
 
 private:
 	
 	TSharedPtr<class FUICommandList> PluginCommands;
 	TSharedPtr<FSlateStyleSet> DialogueTreeSet;
-	TSharedPtr<class FMounteaDialogueGraphAssetAction> MounteaDialogueGraphAssetActions;
-	TSharedPtr<class FMounteaDialogueAdditionalDataAssetAction> MounteaDialogueAdditionalDataAssetActions;
-	TSharedPtr<class FMounteaDialogueDecoratorAssetAction> MounteaDialogueDecoratorAssetAction;
+	TArray<TSharedPtr<class FAssetTypeActions_Base>> AssetActions;
 	
 	TSharedPtr<struct FGraphPanelNodeFactory> GraphPanelNodeFactory_MounteaDialogueGraph;
 	TArray< TSharedPtr<IAssetTypeActions> > CreatedAssetTypeActions;
 
 	EAssetTypeCategories::Type MounteaDialogueGraphAssetCategoryBit;
-	FHttpModule* Http;
+	FHttpModule* Http = nullptr;
 
 	TArray<FName> RegisteredCustomClassLayouts;
 	TArray<FName> RegisteredCustomPropertyTypeLayout;

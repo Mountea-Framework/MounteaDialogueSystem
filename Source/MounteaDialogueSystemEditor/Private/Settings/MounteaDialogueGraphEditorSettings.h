@@ -49,7 +49,7 @@ enum class EDecoratorsInfoStyle : uint8
 };
 
 UENUM(BlueprintType)
-enum class ENodeType : uint8
+enum class ENodeCornerType : uint8
 {
 	ENT_SoftCorners			UMETA(DisplayName="Soft Corners"),
 	ENT_HardCorners			UMETA(DisplayName="Hard Corners")
@@ -67,10 +67,12 @@ enum class EArrowType : uint8
 
 #pragma endregion 
 
+class UMounteaDialogueGraphNode;
+
 /**
  * Mountea Dialogue System global settings.
  */
-UCLASS(config = MounteaSettings)
+UCLASS(config = MounteaSettings, DefaultConfig, ProjectUserConfig)
 class MOUNTEADIALOGUESYSTEMEDITOR_API UMounteaDialogueGraphEditorSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
@@ -79,12 +81,31 @@ public:
 
 	UMounteaDialogueGraphEditorSettings();
 
-private:
+public:
+
+	virtual FText GetSectionText() const override
+	{
+		return NSLOCTEXT("MounteaDialogueEditorSystem", "MounteaSettingsEditorSection", "Mountea Dialogue System (Editor)");
+	}
+
+	virtual FText GetSectionDescription() const override
+	{
+		return NSLOCTEXT("MounteaDialogueEditorSystem", "MounteaSettingsEditorDescription", "Default values for Mountea Plugins (Editor).");
+	}
+
+	virtual FName GetContainerName() const override
+	{
+		return "Project";
+	}
+
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+
+protected:
 
 #pragma region GraphNodes
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
-	ENodeType NodeType;
+	ENodeCornerType NodeType;
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	ENodeTheme NodeTheme;
@@ -111,6 +132,16 @@ private:
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings", meta=(ShowTreeView))
 	TMap<TSoftClassPtr<UMounteaDialogueGraphNode>, FLinearColor> OverrideNodeBackgroundColours;
 
+	/**
+	 * URL for the Nodes Replacement configuration file.
+	 * 
+	 * This URL points to a remote file containing base Node Replacement definitions.
+	 * The system will use this URL to download and apply the tags if allowed.
+	 * Default: @link https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/refs/heads/master/Config/node_replacements.json
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings", AdvancedDisplay, meta=(ConfigRestartRequired=true))
+	FString NodeReplacementURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/refs/heads/master/Config/node_replacements.json");
+
 #pragma endregion
 
 #pragma region GraphDecorators
@@ -121,50 +152,36 @@ private:
 
 #pragma endregion 
 
+#pragma region BlueprintNodes
+
+	/**
+	 * ❗ EXPERIMENTAL FEATURE
+	 * If case of any compile issues TURN THIS ON
+	 *
+	 * If turned on custom K2 Nodes will contain additional details, which might break visual appearance
+	 * and might not work well with plugins like `BlueprintAssist`.
+	 */
+	UPROPERTY(config, EditDefaultsOnly,  Category = "BlueprintNodes", meta=(ConfigRestartRequired=true))
+	bool bDisplayStandardNodes;
+	
+#pragma endregion
+	
 #pragma region GraphWiring
 	
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(UIMin=0.1f, ClampMin=0.1f, UIMax=1.5f, ClampMax=1.5f))
 	float WireWidth;
 
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring") //, meta=(ConfigRestartRequired=true))
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring")
 	EArrowType ArrowType;
 
-	/* Advanced Wiring doesn't work now
-	
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!"))
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]"))
 	bool bUseAdvancedWiring;
-	
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	EWiringStyle WireStyle;
 
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	uint32 HorizontalOffset = 16;
+	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]", EditCondition="bUseAdvancedWiring"))
+	FVector2D AdvancedWiringConnectionTangent = FVector2D(0.0f, 350.f);
 
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	EBubbleDrawRule BubbleDrawRule;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	int32 BubbleZoomThreshold;
-
-	// Space between bubbles on the wires. Default: 20.0
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta = (ClampMin = "10.0", ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	float BubbleSpace = 20.0f;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta = (ClampMin = "10.0", ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	float BubbleSize = 2.0f;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta = (ClampMin = "10.0", ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	float BubbleSpeed = 2.0f;
-	
-	// Disable the offset for pins. Default: false
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	bool DisablePinOffset = false;
-
-	// Fix default zoomed-out wire displacement. Default: true
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", AdvancedDisplay, meta=(ToolTip="Work in Progress!", EditCondition="bUseAdvancedWiring"))
-	bool FixZoomDisplacement = true;
-
-	*/
+	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]", EditCondition="bUseAdvancedWiring"))
+	float ControlPointDistance = 100.0f;
 
 #pragma endregion
 
@@ -191,24 +208,30 @@ private:
 	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
 	float CoolDownRate;
 
-#pragma endregion 
+#pragma endregion
 
-#if WITH_EDITOR
-	virtual FText GetSectionText() const override
-	{
-		return NSLOCTEXT("MounteaDialogueEditorSystem", "MounteaSettingsEditorSection", "Mountea Dialogue System (Editor)");
-	}
+#pragma region GameplayTags
 
-	virtual FText GetSectionDescription() const override
-	{
-		return NSLOCTEXT("MounteaDialogueEditorSystem", "MounteaSettingsEditorDescription", "Default values for Mountea Plugins (Editor).");
-	}
+	/**
+	 * Allow automatic gameplay tag checks.
+	 * 
+	 * If set to true, the system will automatically verify and update gameplay tags on engine startup.
+	 * Default is True.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", meta=(ConfigRestartRequired=true))
+	uint8 bAllowAutoGameplayTagsCheck : 1;
 
-	virtual FName GetContainerName() const override
-	{
-		return "Project";
-	}
-#endif
+	/**
+	 * URL for the Gameplay Tags configuration file.
+	 * 
+	 * This URL points to a remote file containing base gameplay tag definitions.
+	 * The system will use this URL to download and apply the tags if allowed.
+	 * Default: @link https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay, meta=(ConfigRestartRequired=true))
+	FString GameplayTagsURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini");
+
+#pragma endregion
 
 public:
 
@@ -217,7 +240,7 @@ public:
 	ENodeTheme GetNodeTheme() const
 	{ return NodeTheme; };
 
-	ENodeType GetNodeType() const
+	ENodeCornerType GetNodeType() const
 	{ return NodeType; };
 
 	bool ShowDetailedInfo_NumDecorators() const
@@ -246,7 +269,13 @@ public:
 		return false;
 	}
 
-#pragma endregion 
+	FString GetNodeReplacementURL() const
+	{ return NodeReplacementURL; };
+
+	FString GetNodeReplacementLocalPath() const;
+
+#pragma endregion
+
 
 #pragma region GraphDecorators_Getters
 
@@ -254,7 +283,6 @@ public:
 	{ return bAllowNativeDecoratorsEdit; };
 
 #pragma endregion 
-	
 
 #pragma region GraphWiring_Getters
 
@@ -263,35 +291,18 @@ public:
 
 	EArrowType GetArrowType() const
 	{ return ArrowType; };
-	
-	/*
+
 	bool AllowAdvancedWiring() const
 	{ return bUseAdvancedWiring; };
-	
-	EWiringStyle GetWireStyle() const
-	{ return WireStyle; };
 
-	int32 GetHorizontalOffset() const
-	{ return HorizontalOffset; };
+	FVector2D GetAdvancedWiringConnectionTangent() const
+	{ return AdvancedWiringConnectionTangent; };
 
-	EBubbleDrawRule GetBubbleDrawRule() const
-	{ return  BubbleDrawRule; };
+	float GetControlPointDistance() const
+	{ return ControlPointDistance; };
 
-	int32 GetBubbleZoomThreshold() const
-	{ return BubbleZoomThreshold; };
-
-	float GetBubbleSpace() const
-	{ return BubbleSpace; };
-
-	float GetBubbleSpeed() const
-	{ return BubbleSpeed; };
-
-	float GetBubbleSize() const
-	{ return BubbleSize; };
-	*/
 #pragma endregion 
 
-	
 #pragma region GraphArrange_Getters
 	
 	EAutoLayoutStrategyType GetAutoLayoutStrategy() const
@@ -316,5 +327,22 @@ public:
 	{ return CoolDownRate; };
 
 #pragma endregion 
-};
 
+#pragma region BlueprintNodes_Getters
+
+	bool DisplayStandardNodes() const
+	{ return bDisplayStandardNodes; };;
+	
+#pragma endregion
+
+#pragma region GameplayTags_Getters
+
+	bool AllowCheckTagUpdate() const
+	{ return bAllowAutoGameplayTagsCheck; };
+
+	FString GetGameplayTagsURL() const
+	{ return GameplayTagsURL; };
+	
+#pragma endregion
+ 
+};

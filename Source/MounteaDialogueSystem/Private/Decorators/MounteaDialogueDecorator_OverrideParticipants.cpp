@@ -7,13 +7,13 @@
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_OverrideParticipants"
 
-void UMounteaDialogueDecorator_OverrideParticipants::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant)
+void UMounteaDialogueDecorator_OverrideParticipants::InitializeDecorator_Implementation(UWorld* World, const TScriptInterface<IMounteaDialogueParticipantInterface>& OwningParticipant, const TScriptInterface<IMounteaDialogueManagerInterface>& NewOwningManager)
 {
-	Super::InitializeDecorator_Implementation(World, OwningParticipant);
+	Super::InitializeDecorator_Implementation(World, OwningParticipant, NewOwningManager);
 
 	if (World)
 	{
-		Manager = UMounteaDialogueSystemBFC::GetDialogueManager(GetOwningWorld());
+		OwningManager = NewOwningManager;
 
 		// Keep in mind that override cannot override nulls!
 		if (bOverridePlayerParticipant)
@@ -36,14 +36,14 @@ void UMounteaDialogueDecorator_OverrideParticipants::CleanupDecorator_Implementa
 	Super::CleanupDecorator_Implementation();
 
 	Context = nullptr;
-	Manager = nullptr;
+	OwningManager = nullptr;
 
 	Override_PlayerParticipantInterface = nullptr;
 	Override_ParticipantInterface = nullptr;
 	Override_ActiveParticipantInterface = nullptr;
 }
 
-bool UMounteaDialogueDecorator_OverrideParticipants::ValidateDecorator_Implementation(TArray<FText>& ValidationMessages)
+bool UMounteaDialogueDecorator_OverrideParticipants::ValidateDecorator_Implementation(UPARAM(ref) TArray<FText>& ValidationMessages)
 {
 	bool bSatisfied =  Super::ValidateDecorator_Implementation(ValidationMessages);
 	const FText Name = FText::FromString(GetName());
@@ -67,12 +67,14 @@ bool UMounteaDialogueDecorator_OverrideParticipants::ValidateDecorator_Implement
 void UMounteaDialogueDecorator_OverrideParticipants::ExecuteDecorator_Implementation()
 {
 	Super::ExecuteDecorator_Implementation();
-
+	
+	if (!OwningManager) return;
+	
 	// Let's return BP Updatable Context rather than Raw
-	Context = Manager->GetDialogueContext();
+	Context = OwningManager->Execute_GetDialogueContext(OwningManager.GetObject());
 
 	// We assume Context and Manager are already valid, but safety is safety
-	if (!Context|| !Manager.GetInterface() || !UMounteaDialogueSystemBFC::IsContextValid(Context) ) return;
+	if (!Context|| !OwningManager.GetInterface() || !UMounteaDialogueSystemBFC::IsContextValid(Context) ) return;
 	
 	if (bOverridePlayerParticipant)
 	{
@@ -86,7 +88,7 @@ void UMounteaDialogueDecorator_OverrideParticipants::ExecuteDecorator_Implementa
 	
 	if (bOverrideActiveParticipant)
 	{
-		Context->UpdateActiveDialogueParticipant(Override_ActiveParticipantInterface);
+		UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(Context, Override_ActiveParticipantInterface);
 	}
 }
 

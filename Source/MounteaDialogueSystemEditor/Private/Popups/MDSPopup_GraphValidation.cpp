@@ -1,3 +1,5 @@
+// All rights reserved Dominik Morse (Pavlicek) 2024
+
 #include "MDSPopup_GraphValidation.h"
 #include "EditorStyleSet.h"
 #include "Widgets/Layout/SScrollBox.h"
@@ -9,6 +11,7 @@
 #include "Helpers/MounteaDialogueSystemEditorBFC.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
 #include "Interfaces/IPluginManager.h"
+#include "Widgets/Layout/SScaleBox.h"
 
 #define LOCTEXT_NAMESPACE "MDSPopup_GraphValidation"
 
@@ -65,8 +68,8 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 			[
 				SNew(SRichTextBlock)
 				.Text(Itr)
-				.TextStyle(FEditorStyle::Get(), "NormalText")
-				.DecoratorStyleSet(&FEditorStyle::Get())
+				.TextStyle(FAppStyle::Get(), "NormalText")
+				.DecoratorStyleSet(&FAppStyle::Get())
 				.AutoWrapText(true)
 			]
 		];
@@ -78,7 +81,7 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 		[
 			SNew(STextBlock)
 			.Text(FText::FromString("There are no issues with your Graph. You can close this window."))
-			.TextStyle(FEditorStyle::Get(), "NormalText")
+			.TextStyle(FAppStyle::Get(), "NormalText")
 			.AutoWrapText(true)
 		];
 	}
@@ -108,7 +111,7 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 		[
 			SNew(SBorder)
 			.Padding(10)
-			.BorderImage(FEditorStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
 			[
 				ListOfMessages
 			]
@@ -124,7 +127,7 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 				.HAlign(HAlign_Center)
 				.OnClicked_Lambda([]()
 				{
-					const FString URL = "https://discord.gg/2vXWEEN";
+					const FString URL = "https://discord.gg/c2WQ658V44";
 					FPlatformProcess::LaunchURL(*URL, nullptr, nullptr);
 
 					return FReply::Handled();
@@ -147,8 +150,13 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
 					[
-						SNew(SImage)
-						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.SupportDiscord"))
+						SNew(SScaleBox)
+						.VAlign(VAlign_Center)
+						.HAlign(HAlign_Center)
+						[
+							SNew(SImage)
+							.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.SupportDiscord"))
+						]
 					]
 				]
 			]
@@ -186,9 +194,14 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
 					[
-						SNew(SImage)
-						.ColorAndOpacity(FLinearColor::Red)
-						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.HeartIcon"))
+						SNew(SScaleBox)
+						.VAlign(VAlign_Center)
+						.HAlign(HAlign_Center)
+						[
+							SNew(SImage)
+							.ColorAndOpacity(FLinearColor::Red)
+							.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.HeartIcon"))
+						]
 					]
 				]
 			]
@@ -226,8 +239,13 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
 					[
-						SNew(SImage)
-						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.MoneyIcon"))
+						SNew(SScaleBox)
+						.VAlign(VAlign_Center)
+						.HAlign(HAlign_Center)
+						[
+							SNew(SImage)
+							.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.MoneyIcon"))
+						]
 					]
 				]
 			]
@@ -264,9 +282,14 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
 					[
-						SNew(SImage)
-						.ColorAndOpacity(FLinearColor::Red)
-						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.Close"))
+						SNew(SScaleBox)
+						.VAlign(VAlign_Center)
+						.HAlign(HAlign_Center)
+						[
+							SNew(SImage)
+							.ColorAndOpacity(FLinearColor::Red)
+							.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.Close"))
+						]
 					]
 				]
 			]
