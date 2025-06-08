@@ -11,26 +11,6 @@ public class MounteaDialogueSystemEditor : ModuleRules
 		PrecompileForTargets = PrecompileTargetsType.None;
 		bPrecompile = false;
 		bUsePrecompiled = false;
-		
-		// Add the zip library
-		PublicIncludePaths.Add(System.IO.Path.Combine(ModuleDirectory, "ThirdParty", "zip"));
-		PublicDefinitions.Add("ZIP_STATIC");
-		
-		var MZPlatformValue = "0";
-		if (Target.Platform == UnrealTargetPlatform.Win64)
-		{
-			MZPlatformValue = "1";
-		}
-		else if (Target.Platform == UnrealTargetPlatform.Mac)
-		{
-			MZPlatformValue = "2";
-		}
-		else if (Target.Platform == UnrealTargetPlatform.Linux)
-		{
-			MZPlatformValue = "3";
-		}
-
-		PublicDefinitions.Add("MZ_PLATFORM=" + MZPlatformValue);
 
 		PublicDependencyModuleNames.AddRange
 		(new string[]
@@ -39,7 +19,7 @@ public class MounteaDialogueSystemEditor : ModuleRules
 				"CoreUObject", 
 				"Engine", 
 				"UnrealEd",
-				"AssetTools",
+				"AssetTools"
 			}
 		);
 		
@@ -54,7 +34,6 @@ public class MounteaDialogueSystemEditor : ModuleRules
 				"SlateCore",
 				"GraphEditor",
 				"PropertyEditor",
-				"AudioEditor",
 				"EditorStyle",
 				"Kismet",
 				"KismetWidgets",
@@ -71,18 +50,8 @@ public class MounteaDialogueSystemEditor : ModuleRules
 				"BlueprintGraph",
 				"InputCore", 
 				
-				"MainFrame",
-				
-				"GameplayTags",
-				"DesktopPlatform", 
-				
-				"UMGEditor",
-				
-				"Blutility", 
-				
-				"MounteaDialogueSystemDeveloper", 
-				
-				"WorkspaceMenuStructure",
+				"MainFrame"
+				// ... add private dependencies that you statically link with here ...
 			}
 		);
 	}

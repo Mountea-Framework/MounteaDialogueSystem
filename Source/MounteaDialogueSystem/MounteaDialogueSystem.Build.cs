@@ -35,7 +35,8 @@ public class MounteaDialogueSystem : ModuleRules
 				"Core",
 				"CoreUObject",
 				"Engine",
-				"UMG"
+				"UMG",
+				// ... add other public dependencies that you statically link with here ...
 			}
 		);
 			
@@ -50,9 +51,8 @@ public class MounteaDialogueSystem : ModuleRules
 				"GameplayTags",
 				"DeveloperSettings",
 				"UMG",
-				"Projects",
-				"NetCore",
-				"InputCore"
+				"Projects"
+				// ... add private dependencies that you statically link with here ...	
 			}
 		);
 		
