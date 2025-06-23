@@ -23,4 +23,5 @@ public:
 	static void	FormatTextWithTags(FString& SourceText, const FString& StartMarker, const FString& EndMarker, const FString& StartTag, const FString& EndTag);
 
 	static FPluginVersion GetPluginVersion();
+	static bool IsVersionGreater(const FString& NewVersion, const FString& OldVersion);
 };
