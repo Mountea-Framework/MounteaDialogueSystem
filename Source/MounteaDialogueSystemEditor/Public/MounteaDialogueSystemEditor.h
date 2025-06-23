@@ -60,6 +60,7 @@ private:
 	void RegisterMenus();
 	void SettingsButtonClicked() const;
 	void EditorSettingsButtonClicked() const;
+	void ConfigButtonClicked() const;
 	TSharedRef<SWidget> MakeMounteaMenuWidget() const;
 
 protected:
@@ -84,7 +85,6 @@ private:
 	TSharedPtr<struct FGraphPanelNodeFactory> GraphPanelNodeFactory_MounteaDialogueGraph;
 	TArray< TSharedPtr<IAssetTypeActions> > CreatedAssetTypeActions;
 
-	EAssetTypeCategories::Type MounteaDialogueGraphAssetCategoryBit;
 	FHttpModule* Http = nullptr;
 
 	TArray<FName> RegisteredCustomClassLayouts;
