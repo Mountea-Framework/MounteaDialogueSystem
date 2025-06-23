@@ -161,9 +161,13 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.Settings.Small", new IMAGE_BRUSH(TEXT("settings_icon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Settings.large", new IMAGE_BRUSH(TEXT("settings_icon"), Icon64x64));
 
+	StyleSet->Set("MDSStyleSet.Config", new IMAGE_BRUSH(TEXT("configIcon"), Icon40x40));
+
 	StyleSet->Set("MDSStyleSet.DialogueSystemIcon", new IMAGE_BRUSH(TEXT("DialogueSystem_Icon"), Icon16x16));
 
 	StyleSet->Set("MDSStyleSet.Tutorial", new IMAGE_BRUSH(TEXT("tutorialPage_icon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.Folder", new IMAGE_BRUSH(TEXT("FolderIcon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.Level", new IMAGE_BRUSH(TEXT("LevelIcon"), Icon40x40));
 
 	const FButtonStyle MounteaButtonStyle = FButtonStyle()
 		.SetNormal(BOX_BRUSH("RoundedSelection_16x", 4.0f / 16.0f, FLinearColor(1, 1, 1, 0.1f)))
