@@ -120,7 +120,7 @@ enum class EMounteaInputMode : uint8
  * Helper structure exposing Widget text settings to set them globally in Dialogue Settings.
  */
 USTRUCT(BlueprintType)
-struct FSubtitlesSettings
+struct FMounteaSubtitlesSettings
 {
 	GENERATED_BODY()
 
@@ -168,7 +168,7 @@ struct FSubtitlesSettings
 	FGuid SettingsGUID;
 
 public:
-	FSubtitlesSettings() : FontColor(FLinearColor::White), ShadowOffset(1.5f, 1.25f), ShadowColor(FLinearColor::Black)
+	FMounteaSubtitlesSettings() : FontColor(FLinearColor::White), ShadowOffset(1.5f, 1.25f), ShadowColor(FLinearColor::Black)
 	{
 		SubtitlesFont = FCoreStyle::GetDefaultFontStyle("Regular", 16, FFontOutlineSettings(1));
 	};
@@ -429,7 +429,7 @@ public:
 	 * ❗ No logic is implemented yet
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay)
-	FSubtitlesSettings TitleSettingsOverride;
+	FMounteaSubtitlesSettings TitleSettingsOverride;
 
 public:
 	FDialogueRow()

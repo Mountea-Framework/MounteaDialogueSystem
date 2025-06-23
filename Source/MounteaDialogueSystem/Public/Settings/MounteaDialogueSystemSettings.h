@@ -63,14 +63,14 @@ protected:
 	 * If any Widget is supposed to be overriden and use different setup for subtitles, just add that override to 'SubtitlesSettingsOverrides'.
 	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles")
-	FSubtitlesSettings SubtitlesSettings;
+	FMounteaSubtitlesSettings SubtitlesSettings;
 
 	/**
 	 * Map of Widget Classes and their Subtitles Settings.
 	 * Used for overriding General Defaults.
 	 */
 	UPROPERTY(config, EditDefaultsOnly, Category = "Subtitles")
-	TMap<FUIRowID, FSubtitlesSettings> SubtitlesSettingsOverrides;
+	TMap<FUIRowID, FMounteaSubtitlesSettings> SubtitlesSettingsOverrides;
 
 #if WITH_EDITOR
 	virtual FText GetSectionText() const override
@@ -159,7 +159,7 @@ public:
 	 * @return The subtitles settings for the given row or the default settings if no override is found.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
-	FSubtitlesSettings GetSubtitlesSettings(const FUIRowID& RowID) const;
+	FMounteaSubtitlesSettings GetSubtitlesSettings(const FUIRowID& RowID) const;
 
 	/**
 	 * Sets new subtitles settings for a specific widget or applies them globally.
@@ -171,7 +171,7 @@ public:
 	 * @param RowID The row ID of the UserWidget for which to apply the settings. If not provided, the settings apply globally.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Setter"))
-	void SetSubtitlesSettings(const FSubtitlesSettings& NewSettings, FUIRowID& RowID);
+	void SetSubtitlesSettings(const FMounteaSubtitlesSettings& NewSettings, FUIRowID& RowID);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
 	EMounteaDialogueLoggingVerbosity GetAllowedLoggVerbosity() const;
