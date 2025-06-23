@@ -95,7 +95,7 @@ bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(UPARAM(ref)
 			{
 				bSatisfied = false;
 				FText guiltyNodeName = FText::FromString(Itr->GetName());
-				if (const UMounteaDialogueGraphNode* guiltyNode = Cast<UMounteaDialogueGraphNode>(Itr->ClassDefaultObject))
+				if (const UMounteaDialogueGraphNode* guiltyNode = GetDefault<UMounteaDialogueGraphNode>(Itr))
 					guiltyNodeName = guiltyNode->NodeTypeName;
 		
 				const FText TempText = FText::Format(
