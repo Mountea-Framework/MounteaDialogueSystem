@@ -4,8 +4,10 @@
 
 #include "AssetToolsModule.h"
 #include "ContentBrowserModule.h"
+#include "FileHelpers.h"
 #include "GameplayTagsManager.h"
 #include "HttpModule.h"
+#include "IContentBrowserSingleton.h"
 #include "ISettingsModule.h"
 
 #include "AssetActions/MounteaDialogueAdditionalDataAssetAction.h"
@@ -43,6 +45,7 @@
 #include "ImportConfig/MounteaDialogueImportConfig.h"
 #include "Interfaces/IMainFrameModule.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
 
 const FString ChangelogURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/CHANGELOG.md");
 
@@ -793,6 +796,19 @@ void FMounteaDialogueSystemEditor::EditorSettingsButtonClicked() const
 	FModuleManager::LoadModuleChecked<ISettingsModule>("Settings").ShowViewer("Project",  TEXT("Mountea Framework"), TEXT("Mountea Dialogue System (Editor)"));
 }
 
+void FMounteaDialogueSystemEditor::ConfigButtonClicked() const
+{
+	auto settings = GetMutableDefault<UMounteaDialogueSystemSettings>();
+	auto config = settings ? settings->GetDialogueConfiguration().LoadSynchronous() : nullptr;
+	if (!IsValid(config))
+	{
+		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("Unable to locate the Mountea Dialogue Config asset.\nPlease, open Mountea Dialogue Settings and select proper Config!")));
+		return;
+	}
+
+	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(config->GetPathName());
+}
+
 TSharedRef<SWidget> FMounteaDialogueSystemEditor::MakeMounteaMenuWidget() const
 {
 	FMenuBuilder MenuBuilder(true, PluginCommands);
@@ -807,11 +823,51 @@ TSharedRef<SWidget> FMounteaDialogueSystemEditor::MakeMounteaMenuWidget() const
 			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::TutorialButtonClicked)
 			)
 		);
+
+		MenuBuilder.AddMenuEntry(
+				LOCTEXT("MounteaSystemEditor_OpenExampleLevel_Label", "Open Example Level"),
+				LOCTEXT("MounteaSystemEditor_OpenExampleLevel_ToolTip", "🌄 Opens an example level demonstrating Mountea Dialogue System"),
+				FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Level"),
+				FUIAction(
+					FExecuteAction::CreateLambda([]()
+					{
+						const FString mapPath = TEXT("/MounteaDialogueSystem/Example/M_DialogueExample");
+						if (FPackageName::DoesPackageExist(mapPath))
+							FEditorFileUtils::LoadMap(mapPath, false, true);
+						else
+							EditorLOG_ERROR(TEXT("Example map not found at:\nContent/Mountea/Maps/M_DialogueExample.umap"))
+					})
+				)
+			);
+
+		MenuBuilder.AddMenuEntry(
+			LOCTEXT("MounteaSystemEditor_OpenPluginFolder_Label", "Open Plugin Folder"),
+			LOCTEXT("MounteaSystemEditor_OpenPluginFolder_ToolTip", "📂 Open the Mountea Dialogue plugin's folder"),
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Folder"),
+			FUIAction(
+				FExecuteAction::CreateLambda([]()
+				{
+					const FContentBrowserModule& contentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+					TArray<FString> folderPaths;
+					folderPaths.Add(TEXT("/MounteaDialogueSystem"));
+					contentBrowserModule.Get().SetSelectedPaths(folderPaths, true);
+				})
+			)
+		);
 	};
 	MenuBuilder.EndSection();
 
 	MenuBuilder.BeginSection("MounteaMenu_Tools", LOCTEXT("MounteaMenuOptions_Settings", "Mountea Dialogue Settings"));
 	{
+		MenuBuilder.AddMenuEntry(
+			LOCTEXT("MounteaSystemEditor_ConfigButton_Label", "Mountea Dialogue Config"),
+			LOCTEXT("MounteaSystemEditor_ConfigButton_ToolTip", "📄 Open Mountea Dialogue Configuration\n\n❔ Define dialogue UI, subtitles and important settings behaviors used by the core system."),
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Config"),
+			FUIAction(
+				FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::ConfigButtonClicked)
+			)
+		);
+		
 		MenuBuilder.AddMenuEntry(
 			LOCTEXT("MounteaSystemEditor_SettingsButton_Label", "Mountea Dialogue Settings"),
 			LOCTEXT("MounteaSystemEditor_SettingsButton_ToolTip", "⚙ Open Mountea Dialogue Settings\n\n❔ Configure core dialogue system settings including default behaviors, performance options, and dialogue flow parameters. Customize your dialogue system's foundation here."),
