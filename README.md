@@ -10,26 +10,28 @@
 # MounteaDialogueSystem
 Mountea Dialogue System is an Open-source Mountea Framework Unreal Engine tool for creating (not just) complex dialogues within its own editor and validation system.
 
-## Playable Demo
-Feel free to download the playable demo and take a look at what this plugin (in combination with its Dialogue sibling) can do in a matter of a few clicks!
-<p align="center" width="100%">
-    <a href="https://drive.google.com/file/d/1XS6meFqXbDM_YfbjQijcco6q1O1wl9-J/view?usp=drive_link">
-        <img width="20%" src="https://github.com/Mountea-Framework/MounteaInteractionSystem/assets/37410226/da51eced-84e4-4c96-a9ff-cd5a03055d64">
-    </a>
-</p>
+> [!IMPORTANT]
+> **PLAYEBALE DEMO**
+> 
+> Feel free to download the playable demo and take a look at what this plugin (in combination with its Dialogue sibling) can do in a matter of a few clicks!
+> <p align="center" width="100%">    <a href="https://drive.google.com/file/d/1XS6meFqXbDM_YfbjQijcco6q1O1wl9-J/view?usp=drive_link">        <img width="20%" src="https://github.com/Mountea-Framework/MounteaInteractionSystem/assets/37410226/da51eced-84e4-4c96-a9ff-cd5a03055d64">    </a></p>
 
-## Discord Channel
-<a href="https://discord.gg/2vXWEEN"><img src="https://anbhelp.zendesk.com/hc/article_attachments/360021176052/discord.gif" alt="Discord LINK" width="100"></a>
+> [!IMPORTANT]
+> **DISCORD CHANNEL**
+> 
+> <a href="https://discord.gg/2vXWEEN"><img src="https://anbhelp.zendesk.com/hc/article_attachments/360021176052/discord.gif" alt="Discord LINK" width="100"></a>
 
-Join support and community Discord!
+> [!IMPORTANT]
+> **DOCUMENTATION**
+>
+> Online [Documentation](https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Getting-Started) including a Quick Start guide which will help you set up the plugin in a few easy-to-follow steps.
+> 
+> <a href="https://discord.gg/2vXWEEN"><img src="https://media.tenor.com/mTz7WCbH92oAAAAj/book-transparent.gif" alt="DOCUMENTATION" width="100"></a>
 
-## Documentation
-<a href="https://discord.gg/2vXWEEN"><img src="https://media.tenor.com/mTz7WCbH92oAAAAj/book-transparent.gif" alt="DOCUMENTATION" width="100"></a>
-
-Online [Documentation](https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Getting-Started) including a Quick Start guide which will help you set up the plugin in a few easy-to-follow steps.
-
-## Tutorial videos
-<a href="https://www.youtube.com/playlist?list=PLIU53wA8zZmg5eBKEcpZr7G8JBBZ4QPKq"><img src="https://cdnl.iconscout.com/lottie/premium/thumb/youtube-8622218-6842833.gif" alt="TUTORIAL playlist" width="150"></a>
+> [!IMPORTANT]
+> **TUTORIAL VIDEOS**
+>
+> <a href="https://www.youtube.com/playlist?list=PLIU53wA8zZmg5eBKEcpZr7G8JBBZ4QPKq"><img src="https://cdnl.iconscout.com/lottie/premium/thumb/youtube-8622218-6842833.gif" alt="TUTORIAL playlist" width="150"></a>
 
 ## Compatible Engine Version
 
