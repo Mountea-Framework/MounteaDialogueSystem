@@ -814,7 +814,7 @@ void UMounteaDialogueManager::NodePrepared_Implementation()
 
 void UMounteaDialogueManager::ProcessNode_Implementation()
 {
-	if (DialogueContext && DialogueContext->ActiveNode)
+	if (DialogueContext && DialogueContext->ActiveNode && DialogueContext->ActiveDialogueParticipant.GetObject())
 	{
 		DialogueContext->ActiveNode->ProcessNode(this);
 
@@ -824,7 +824,7 @@ void UMounteaDialogueManager::ProcessNode_Implementation()
 		Execute_ProcessDialogueRow(this);
 	}
 	else
-		OnDialogueFailed.Broadcast(TEXT("[Process Node] Invalid Context or Active Node!"));
+		OnDialogueFailed.Broadcast(TEXT("[Process Node] Invalid Context or Active Node or Active Dialogue Participant!"));
 }
 
 void UMounteaDialogueManager::NodeProcessed_Implementation()

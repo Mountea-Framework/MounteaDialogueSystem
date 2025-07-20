@@ -86,14 +86,14 @@ public:
 	 * If any Widget is supposed to be overriden and use different setup for subtitles, just add that override to 'SubtitlesSettingsOverrides'.
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Subtitles")
-	FSubtitlesSettings SubtitlesSettings;
+	FMounteaSubtitlesSettings SubtitlesSettings;
 
 	/**
 	 * Map of Widget Classes and their Subtitles Settings.
 	 * Used for overriding General Defaults.
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Subtitles")
-	TMap<FUIRowID, FSubtitlesSettings> SubtitlesSettingsOverrides;
+	TMap<FUIRowID, FMounteaSubtitlesSettings> SubtitlesSettingsOverrides;
 
 protected:
 	
