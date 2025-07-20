@@ -1,8 +1,21 @@
-Current Version: 3.0.2.55
+Current Version: 3.0.3.56
 
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+** Version 3.0.3**
+### Added
+> - Added new features to Toolbar menu
+> - Added dependency on CommonUI
+
+### Changed
+> - Updated Toolbar menu
+> - Changed version validation process to match against Major, Minor and Hotfix values
+
+### Fixed
+> - Guid validation ignored for builds
+> - Fixed Crash when `ActiveDialogueParticipant` is nullptr
 
 **Version 3.0.2**
 ### Fixed
