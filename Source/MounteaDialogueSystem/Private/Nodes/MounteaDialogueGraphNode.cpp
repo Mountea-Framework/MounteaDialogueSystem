@@ -66,6 +66,11 @@ void UMounteaDialogueGraphNode::SetNewWorld(UWorld* NewWorld)
 	OwningWorld = NewWorld;
 }
 
+TArray<TSubclassOf<UMounteaDialogueGraphNode>> UMounteaDialogueGraphNode::GetAllowedInputClasses_Implementation() const
+{
+	return AllowedInputClasses;
+}
+
 void UMounteaDialogueGraphNode::RegisterTick_Implementation( const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
 {
 	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
