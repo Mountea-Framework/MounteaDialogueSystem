@@ -12,7 +12,8 @@ struct FMounteaDialogueGraphNodeConfig
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Configuration")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Configuration",
+		meta=(AllowAbstract))
 	TSet<TSoftClassPtr<UMounteaDialogueGraphNode>> AllowedInputClasses;
 };
 
@@ -93,7 +94,8 @@ public:
 	 * Defines the per-node type configuration of allowed classes.
 	 * The list of per-node type configurations will be enhanced in future.
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "⚙ Configuration")
+	UPROPERTY(EditDefaultsOnly, Category = "⚙ Configuration",
+		meta=(AllowAbstract))
 	TMap<TSoftClassPtr<UMounteaDialogueGraphNode>, FMounteaDialogueGraphNodeConfig> NodesConfiguration;
 
 	/**
