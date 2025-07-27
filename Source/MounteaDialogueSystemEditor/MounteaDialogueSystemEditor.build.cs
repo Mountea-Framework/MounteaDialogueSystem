@@ -6,7 +6,7 @@ public class MounteaDialogueSystemEditor : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		bLegacyPublicIncludePaths = false;
-		ShadowVariableWarningLevel = WarningLevel.Error;
+		CppCompileWarningSettings.ShadowVariableWarningLevel = WarningLevel.Error;
 		
 		PrecompileForTargets = PrecompileTargetsType.None;
 		bPrecompile = false;
@@ -18,17 +18,11 @@ public class MounteaDialogueSystemEditor : ModuleRules
 		
 		var MZPlatformValue = "0";
 		if (Target.Platform == UnrealTargetPlatform.Win64)
-		{
 			MZPlatformValue = "1";
-		}
 		else if (Target.Platform == UnrealTargetPlatform.Mac)
-		{
 			MZPlatformValue = "2";
-		}
 		else if (Target.Platform == UnrealTargetPlatform.Linux)
-		{
 			MZPlatformValue = "3";
-		}
 
 		PublicDefinitions.Add("MZ_PLATFORM=" + MZPlatformValue);
 
