@@ -111,7 +111,7 @@ private:
 	void CopySelectedNodes();
 	bool CanCopyNodes();
 	void PasteNodes();
-	void PasteNodesHere(const FVector2D& Location);
+	void PasteNodesHere(const FVector2f& Location);
 	bool CanPasteNodes();
 	void DuplicateNodes();
 	bool CanDuplicateNodes();

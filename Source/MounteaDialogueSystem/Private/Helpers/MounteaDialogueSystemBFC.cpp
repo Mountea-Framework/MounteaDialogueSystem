@@ -3,6 +3,7 @@
 
 #include "Helpers/MounteaDialogueSystemBFC.h"
 
+#include "Algo/ForEach.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 #include "Graph/MounteaDialogueGraph.h"
@@ -574,6 +575,70 @@ bool UMounteaDialogueSystemBFC::DoesRowMatchParticipant(const TScriptInterface<I
 	}
 
 	return Row.CompatibleTags.HasTagExact(participantTag);
+}
+
+TArray<TSubclassOf<UMounteaDialogueGraphNode>> UMounteaDialogueSystemBFC::GetAllowedInputClasses(UMounteaDialogueGraphNode* Target)
+{
+	if (!IsValid(Target))
+	{
+		LOG_ERROR(TEXT("[Get Allowed Input Classes] Invalid Target!"));
+		return {};
+	}
+
+	if (!Target->Implements<UMounteaDialogueGraphNodeInterface>())
+	{
+		LOG_ERROR(TEXT("[Get Allowed Input Classes] Target does not implement IMounteaDialogueGraphNodeInterface!"));
+		return {};
+	}
+
+	TArray<TSubclassOf<UMounteaDialogueGraphNode>> nodeAllowedClasses = IMounteaDialogueGraphNodeInterface::Execute_GetAllowedInputClasses(Target);
+
+	const auto dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+	if (!IsValid(dialogueSettings))
+	{
+		LOG_WARNING(TEXT("[Get Allowed Input Classes] Dialogue Settings are not valid!"));
+		return nodeAllowedClasses;
+	}
+
+	const auto dialogueConfig = dialogueSettings->GetDialogueConfiguration().LoadSynchronous();
+	if (!IsValid(dialogueConfig))
+	{
+		LOG_WARNING(TEXT("[Get Allowed Input Classes] Dialogue Configuration is not valid! Returning Node Allowed Classes only."));
+		return nodeAllowedClasses;
+	}
+
+	const auto nodeConfig = dialogueConfig->NodesConfiguration.Find(Target->GetClass());
+	if (!nodeConfig)
+	{
+		LOG_WARNING(TEXT("[Get Allowed Input Classes] Target Node is not configured in Dialogue Configuration! Returning Node Allowed Classes only."));
+		return nodeAllowedClasses;
+	}
+
+	const auto configInputClasses = nodeConfig->AllowedInputClasses;
+	if (configInputClasses.IsEmpty())
+	{
+		LOG_WARNING(TEXT("[Get Allowed Input Classes] AllowedInputClasses is empty in configuration! Returning Node Allowed Classes only."));
+		return nodeAllowedClasses;
+	}
+	
+	Algo::ForEach(configInputClasses, [&](const TSoftClassPtr<UMounteaDialogueGraphNode>& configClass)
+	{
+		if (!configClass.IsNull())
+		{
+			const TSubclassOf<UMounteaDialogueGraphNode> loadedClass = configClass.LoadSynchronous();
+
+			if (loadedClass && !nodeAllowedClasses.ContainsByPredicate(
+				[&](const TSubclassOf<UMounteaDialogueGraphNode>& existingClass)
+				{
+					return existingClass == loadedClass;
+				}))
+			{
+				nodeAllowedClasses.Add(loadedClass);
+			}
+		}
+	});
+
+	return nodeAllowedClasses;
 }
 
 FDialogueRow UMounteaDialogueSystemBFC::GetDialogueRow(const UMounteaDialogueGraphNode* Node)
