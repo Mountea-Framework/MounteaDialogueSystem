@@ -28,16 +28,20 @@ public:
 	virtual bool IsDecoratorAllowedForGraph_Implementation() const override {  return false;  };
 
 	virtual  FString GetDecoratorDocumentationLink_Implementation() const override
-	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Decorator:-Override-Only-Frist-Time"); }
+	{ return TEXT("https://mountea.tools/docs/DialogueSystem/DialogueDecorators/OverrideOnlyFristTime"); }
 
 
 protected:
 
-	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, RequiredAssetDataTags = "RowStructure=/Script/MounteaDialogueSystem.DialogueRow"))
+	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly,
+		meta=(DisplayThumbnail=false, NoResetToDefault,
+			RequiredAssetDataTags = "RowStructure=/Script/MounteaDialogueSystem.DialogueRow"))
 	TObjectPtr<UDataTable> DataTable;
 
 	/** Name of row in the table that we want */
-	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
+	UPROPERTY(Category="Override", EditAnywhere, BlueprintReadOnly,
+		meta=(GetOptions ="GetRowNames", NoResetToDefault,
+			EditCondition="DataTable!=nullptr"))
 	FName RowName;
 	
 private:
@@ -46,9 +50,7 @@ private:
 	TArray<FName> GetRowNames() const
 	{
 		if (DataTable)
-		{
 			return DataTable->GetRowNames();
-		}
 
 		return TArray<FName>();
 	}

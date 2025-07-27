@@ -26,7 +26,7 @@ public:
 	virtual bool IsDecoratorAllowedForGraph_Implementation() const override {  return false;  };
 
 	virtual  FString GetDecoratorDocumentationLink_Implementation() const override
-	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Decorator:-Set-Node-as-Start"); }
+	{ return TEXT("https://mountea.tools/docs/DialogueSystem/DialogueDecorators/SetNodeAsStart"); }
 
 private:
 	
