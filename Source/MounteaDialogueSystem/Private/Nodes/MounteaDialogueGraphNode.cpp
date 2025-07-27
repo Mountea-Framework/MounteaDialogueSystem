@@ -2,6 +2,7 @@
 
 #include "Nodes/MounteaDialogueGraphNode.h"
 
+#include "Algo/AnyOf.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
@@ -64,6 +65,11 @@ void UMounteaDialogueGraphNode::SetNewWorld(UWorld* NewWorld)
 	if (NewWorld == OwningWorld) return;
 
 	OwningWorld = NewWorld;
+}
+
+TArray<TSubclassOf<UMounteaDialogueGraphNode>> UMounteaDialogueGraphNode::GetAllowedInputClasses_Implementation() const
+{
+	return AllowedInputClasses;
 }
 
 void UMounteaDialogueGraphNode::RegisterTick_Implementation( const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
@@ -211,7 +217,7 @@ FText UMounteaDialogueGraphNode::GetNodeCategory_Implementation() const
 
 FString UMounteaDialogueGraphNode::GetNodeDocumentationLink_Implementation() const
 {
-	return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Dialogue-Nodes");
+	return TEXT("https://mountea.tools/docs/DialogueSystem/DialogueNodes/DialogueNode/");
 }
 
 FText UMounteaDialogueGraphNode::GetNodeTooltipText_Implementation() const
@@ -229,43 +235,44 @@ void UMounteaDialogueGraphNode::SetNodeTitle(const FText& NewTitle)
 	NodeTitle = NewTitle;
 }
 
-bool UMounteaDialogueGraphNode::CanCreateConnection(UMounteaDialogueGraphNode* Other, enum EEdGraphPinDirection Direction, FText& ErrorMessage)
+bool UMounteaDialogueGraphNode::CanCreateConnection(UMounteaDialogueGraphNode* Other, EEdGraphPinDirection Direction, FText& ErrorMessage)
 {
-	if (Other == nullptr)
+	// Validate input
+	if (!IsValid(Other))
 	{
 		ErrorMessage = FText::FromString("Invalid Other Node!");
+		return false;
 	}
 
+	// Enforce max child nodes
 	if (Other->GetMaxChildNodes() > -1 && Other->ChildrenNodes.Num() >= Other->GetMaxChildNodes())
 	{
-		const FString TextReturn =
-		FString(Other->GetNodeTitle().ToString()).
-		Append(": Cannot have more than ").Append(FString::FromInt(Other->GetMaxChildNodes())).Append(" Children Nodes!");
-
-		ErrorMessage = FText::FromString(TextReturn);
+		ErrorMessage = FText::Format(
+			NSLOCTEXT("MounteaDialogue", "MaxChildrenReached", "{0}: Cannot have more than {1} Children Nodes!"),
+			Other->GetNodeTitle(),
+			FText::AsNumber(Other->GetMaxChildNodes())
+		);
 		return false;
 	}
 
+	// Check allowed input classes (only applies for output pins)
 	if (Direction == EGPD_Output)
 	{
-		
-		// Fast checking for native classes
-		if ( AllowedInputClasses.Contains(Other->GetClass()) )
-		{
-			return true;
-		}
+		// Use centralized logic from the Dialogue System
+		const TArray<TSubclassOf<UMounteaDialogueGraphNode>> allowedClasses = UMounteaDialogueSystemBFC::GetAllowedInputClasses(this);
 
-		// Slower iterative checking for child classes
-		for (auto Itr : AllowedInputClasses)
+		const UClass* otherClass = Other->GetClass();
+
+		const bool bIsAllowed = Algo::AnyOf(allowedClasses, [otherClass](const TSubclassOf<UMounteaDialogueGraphNode>& allowedClass)
 		{
-			if (Other->GetClass()->IsChildOf(Itr))
-			{
-				return true;
-			}
+			return otherClass->IsChildOf(allowedClass);
+		});
+
+		if (!bIsAllowed)
+		{
+			ErrorMessage = FText::FromString("Invalid Node Connection: Target node type is not allowed.\nIf connection is required, please modify the AllowedInputClasses in the Dialogue Configuration.");
+			return false;
 		}
-		
-		ErrorMessage = FText::FromString("Invalid Node Connection!");
-		return false;
 	}
 
 	return true;

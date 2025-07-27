@@ -7,6 +7,7 @@
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Misc/DataValidation.h"
 #include "TimerManager.h"
+#include "Algo/AnyOf.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
@@ -85,6 +86,50 @@ void UMounteaDialogueGraphNode_ReturnToNode::OnDelayDurationExpired(const TScrip
 			*/
 		}
 	}
+}
+
+TArray<FString> UMounteaDialogueGraphNode_ReturnToNode::GetRowNames() const
+{
+	if (!Graph)
+		return {};
+
+	const auto AllNodes = Graph->GetAllNodes();
+	const int32 NumNodes = AllNodes.Num();
+
+	TArray<int32> Indices;
+	Indices.Reserve(NumNodes);
+	
+	for (int32 i = 0; i < NumNodes; ++i)
+	{
+		Indices.Add(i);
+	}
+
+	TArray<FString> NodeNames;
+	NodeNames.Reserve(NumNodes);
+
+	Algo::TransformIf(
+		Indices,
+		NodeNames,
+		[&](const int32 Index)
+		{
+			const auto Node = AllNodes[Index];
+			if (!Node)
+				return false;
+			return !Algo::AnyOf(
+				AllowedNodesFilter,
+				[Node](const TSubclassOf<UMounteaDialogueGraphNode>& FilterClass)
+				{
+					return Node->IsA(FilterClass);
+				}
+			);
+		},
+		[](int32 Index)
+		{
+			return FString::FromInt(Index);
+		}
+	);
+
+	return NodeNames;
 }
 
 #if WITH_EDITOR

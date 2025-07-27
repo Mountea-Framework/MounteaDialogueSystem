@@ -4,6 +4,11 @@
 #include "Settings/MounteaDialogueConfiguration.h"
 
 #include "Engine/Font.h"
+#include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
+#include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
+#include "Nodes/MounteaDialogueGraphNode_Delay.h"
+#include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
+#include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 UMounteaDialogueConfiguration::UMounteaDialogueConfiguration() :
 	InputMode(EMounteaInputMode::EIM_UIAndGame),
@@ -16,6 +21,36 @@ UMounteaDialogueConfiguration::UMounteaDialogueConfiguration() :
 	if (SubtitlesSettings.SubtitlesFont.FontObject == nullptr)
 		SubtitlesSettings.SubtitlesFont = SetupDefaultFontSettings();
 #endif
+
+	{
+		FMounteaDialogueGraphNodeConfig leadNodeConfig;
+		leadNodeConfig.AllowedInputClasses.Add(UMounteaDialogueGraphNode_LeadNode::StaticClass());
+		leadNodeConfig.AllowedInputClasses.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
+		leadNodeConfig.AllowedInputClasses.Add(UMounteaDialogueGraphNode_AnswerNode::StaticClass());
+		NodesConfiguration.Add(UMounteaDialogueGraphNode_AnswerNode::StaticClass(), leadNodeConfig);
+	}
+	{
+		FMounteaDialogueGraphNodeConfig answerNodeConfig;
+		answerNodeConfig.AllowedInputClasses.Add(UMounteaDialogueGraphNode_LeadNode::StaticClass());
+		answerNodeConfig.AllowedInputClasses.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
+		answerNodeConfig.AllowedInputClasses.Add(UMounteaDialogueGraphNode_AnswerNode::StaticClass());
+		NodesConfiguration.Add(UMounteaDialogueGraphNode_LeadNode::StaticClass(), answerNodeConfig);
+	}
+	{
+		FMounteaDialogueGraphNodeConfig completeNodeConfig;
+		completeNodeConfig.AllowedInputClasses.Add(UMounteaDialogueGraphNode_DialogueNodeBase::StaticClass());
+		NodesConfiguration.Add(UMounteaDialogueGraphNode_CompleteNode::StaticClass(), completeNodeConfig);
+	}
+	{
+		FMounteaDialogueGraphNodeConfig delayNodeConfig;
+		delayNodeConfig.AllowedInputClasses.Add(UMounteaDialogueGraphNode::StaticClass());
+		NodesConfiguration.Add(UMounteaDialogueGraphNode_Delay::StaticClass(), delayNodeConfig);
+	}
+	{
+		FMounteaDialogueGraphNodeConfig dialogueBaseNodeConfig;
+		dialogueBaseNodeConfig.AllowedInputClasses.Add(UMounteaDialogueGraphNode_Delay::StaticClass());
+		NodesConfiguration.Add(UMounteaDialogueGraphNode_DialogueNodeBase::StaticClass(), dialogueBaseNodeConfig);
+	}
 }
 
 #if WITH_EDITOR
