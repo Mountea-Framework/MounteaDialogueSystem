@@ -24,7 +24,7 @@ public:
 	virtual bool IsDecoratorStackable_Implementation() const override {return true; };
 
 	virtual  FString GetDecoratorDocumentationLink_Implementation() const override
-	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Decorator:-Send-Command"); }
+	{ return TEXT("https://mountea.tools/docs/DialogueSystem/DialogueDecorators/SendCommand"); }
 
 protected:
 
