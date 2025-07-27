@@ -26,7 +26,7 @@ public:
 	virtual void ExecuteDecorator_Implementation() override;
 
 	virtual  FString GetDecoratorDocumentationLink_Implementation() const override
-	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Decorator:-Swap-Participants"); }
+	{ return TEXT("https://mountea.tools/docs/DialogueSystem/DialogueDecorators/SwapParticipants"); }
 
 protected:
 

@@ -574,7 +574,7 @@ void FMounteaDialogueSystemEditor::YoutubeButtonClicked() const
 
 void FMounteaDialogueSystemEditor::WikiButtonClicked() const
 {
-	const FString URL = "https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Getting-Started";
+	const FString URL = "https://mountea.tools/docs/dialoguesystem/gettingstarted/firststeps/";
 
 	if (!URL.IsEmpty())
 	{
@@ -584,7 +584,7 @@ void FMounteaDialogueSystemEditor::WikiButtonClicked() const
 
 void FMounteaDialogueSystemEditor::PluginButtonClicked() const
 {
-	const FString URL = "https://discord.gg/2vXWEEN";
+	const FString URL = "https://discord.gg/c2WQ658V44";
 
 	if (!URL.IsEmpty())
 	{
