@@ -25,7 +25,7 @@ public:
 	
 protected:
 	void Internal_DrawLineWithArrow(const FVector2f& StartAnchorPoint, const FVector2f& EndAnchorPoint, const FConnectionParams& Params);
-	void DrawConnectionDown(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params);
+	/*void DrawConnectionDown(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params);*/
 	void DrawCurvedConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params);
 	
 	virtual void DrawConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params) override;
