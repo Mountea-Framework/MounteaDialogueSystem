@@ -27,7 +27,7 @@ public:
 	virtual bool IsDecoratorAllowedForGraph_Implementation() const override {  return false;  };
 
 	virtual  FString GetDecoratorDocumentationLink_Implementation() const override
-	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Decorator:-Override-Dialogue-Row-Data"); }
+	{ return TEXT("https://mountea.tools/docs/DialogueSystem/DialogueDecorators/OverrideDialogueRowData"); }
 
 protected:
 
