@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "Decorators/MounteaDialogueDecoratorBase.h"
 #include "Interfaces/Core/MounteaDialogueTickableObject.h"
+#include "Interfaces/Nodes/MounteaDialogueGraphNodeInterface.h"
 #include "MounteaDialogueGraphNode.generated.h"
 
 class IMounteaDialogueManagerInterface;
@@ -22,7 +23,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNodeStateChanged, const UMounteaD
  * Contains information about Parent and Children Nodes.
  */
 UCLASS(Abstract, BlueprintType, Blueprintable, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue","Mountea|Dialogue"))
-class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject, public IMounteaDialogueTickableObject
+class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject, public IMounteaDialogueGraphNodeInterface, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()
 
@@ -360,6 +361,12 @@ public:
 
 #pragma endregion 
 
+#pragma region MounteaDialogueGraphNodeInterface
+
+	virtual TArray<TSubclassOf<UMounteaDialogueGraphNode>> GetAllowedInputClasses_Implementation() const override;
+	
+#pragma endregion
+	
 #pragma region TickableInterface
 	
 public:

@@ -96,7 +96,7 @@ If you are feeling lost, you can simply take a look at the <a id="folder" href="
 	FString PlayerPawnTitle = TEXT("Player Pawn");
 	FString PlayerPawnMessage = FString(R"(
 Player Pawn must have <RichTextBlock.BoldHighlight>Dialogue Participant</> component.
-)") + bookEmoji + FString(R"( <a id="browser" href="https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Getting-Started#7-dialogue-participant-component-">Wiki setup</> if you need help.
+)") + bookEmoji + FString(R"( <a id="browser" href="https://mountea.tools/docs/dialoguesystem/gettingstarted/setupdialogueparticipant/">Wiki setup</> if you need help.
 )");
 
 	FString HUDClassTitle= TEXT("HUD Class");
@@ -104,7 +104,7 @@ Player Pawn must have <RichTextBlock.BoldHighlight>Dialogue Participant</> compo
 HUD Class is very important and Dialogue system is using a custom one! This is to ensure there is a single place that manages all UI elements. 
 Without HUD Class your UI won't show.
 Default HUD Class is <a id="folder" href="/MounteaDialogueSystem/Blueprints/Core">in this folder</>. It comes with code to handle multiple full-screen Widgets at once to ensure proper layering (Dialogue will not overlap over Health etc.).
-)") + graduationEmoji + FString(R"( To learn more join our <a id="browser" href="https://discord.gg/2vXWEEN">free Discord server</>, as this is a fairly <RichTextBlock.BoldHighlight>advanced</> topic.
+)") + graduationEmoji + FString(R"( To learn more join our <a id="browser" href="https://discord.gg/c2WQ658V44">free Discord server</>, as this is a fairly <RichTextBlock.BoldHighlight>advanced</> topic.
 )");
 
 	FString PlayerControllerTitle = TEXT("Player Controller");
@@ -112,7 +112,7 @@ Default HUD Class is <a id="folder" href="/MounteaDialogueSystem/Blueprints/Core
 Default Player Controller Class is <a id="folder" href="/MounteaDialogueSystem/Blueprints/Core">in this folder</>.
 I would strongly suggest using the default one as your parent class!
 For multiplayer purposes, the Player Controller contains <RichTextBlock.BoldHighlight>Dialogue Manager Net Sync</> component.
-)") + graduationEmoji + FString(R"( To learn more join our <a id="browser" href="https://discord.gg/2vXWEEN">free Discord server</>, as this is a fairly <RichTextBlock.BoldHighlight>advanced</> topic.
+)") + graduationEmoji + FString(R"( To learn more join our <a id="browser" href="https://discord.gg/c2WQ658V44">free Discord server</>, as this is a fairly <RichTextBlock.BoldHighlight>advanced</> topic.
 )");
 
 	FString PlayerStateTitle = TEXT("Player State");
@@ -164,7 +164,7 @@ Then simply drag-and-drop to any folder, and Dialogue will be created for you, i
 	FString HaveFunTitle = TEXT("Have Fun!");
 
 	FString HaveFunContent = FString(R"(
-If you need anything, feel free to join <a id="browser" href="https://discord.gg/2vXWEEN">free Discord server</> and read <a id="browser" href="https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Getting-Started">online Documentation</>.
+If you need anything, feel free to join <a id="browser" href="https://discord.gg/2vXWEEN">free Discord server</> and read <a id="browser" href="https://mountea.tools/docs/dialoguesystem/gettingstarted/firststeps/">online Documentation</>.
 )");
 	
 	ChildSlot

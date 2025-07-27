@@ -36,7 +36,7 @@ public:
 	virtual bool IsDecoratorAllowedForGraph_Implementation() const override {  return false;  };
 
 	virtual  FString GetDecoratorDocumentationLink_Implementation() const override
-	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Decorator:-Only-First-Time-Base"); }
+	{ return TEXT("https://mountea.tools/docs/DialogueSystem/DialogueDecorators/OnlyFirstTimeBase"); }
 
 	// Returns whether Owning Node has never been called before.
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Validate"))
