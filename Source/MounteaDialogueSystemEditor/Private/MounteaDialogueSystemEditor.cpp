@@ -35,6 +35,7 @@
 
 #include "AssetActions/MounteaDialogueConfigurationAssetAction.h"
 #include "AssetActions/MounteaDialogueDataTableAssetAction.h"
+#include "AssetActions/MounteaDialogueNodeAssetAction.h"
 #include "DetailsPanel/MounteaDialogueDecorator_Details.h"
 #include "DetailsPanel/MounteaDialogueEditorSettings_Details.h"
 #include "DetailsPanel/MounteaDialogueGraph_Details.h"
@@ -105,6 +106,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		AssetActions.Add(MakeShared<FMounteaDialogueDecoratorAssetAction>());
 		AssetActions.Add(MakeShared<FMounteaDialogueDataTableAssetAction>());
 		AssetActions.Add(MakeShared<UMounteaDialogueConfigurationAssetAction>());
+		AssetActions.Add(MakeShared<FMounteaDialogueNodeAssetAction>());
 
 		for (const auto& Itr : AssetActions)
 		{
@@ -180,6 +182,14 @@ void FMounteaDialogueSystemEditor::StartupModule()
 				{
 					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueManagerNetSync", DialogueManagerSyncSetClassThumb);
 					DialogueTreeSet->Set("ClassIcon.MounteaDialogueManagerNetSync", DialogueManagerSyncSetClassIcon);
+				}
+
+				FSlateImageBrush* DialogueGraphNodeClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueNodeClassIcon"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueGraphNodeClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueNodeClassIcon"), TEXT(".png")), FVector2D(16.f, 16.f));
+				if (DialogueGraphNodeClassThumb && DialogueGraphNodeClassIcon)
+				{
+					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueGraphNode", DialogueGraphNodeClassThumb);
+					DialogueTreeSet->Set("ClassIcon.MounteaDialogueGraphNode", DialogueGraphNodeClassIcon);
 				}
 
 				//Register the created style
