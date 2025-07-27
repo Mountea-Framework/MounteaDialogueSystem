@@ -217,7 +217,7 @@ FText UMounteaDialogueGraphNode::GetNodeCategory_Implementation() const
 
 FString UMounteaDialogueGraphNode::GetNodeDocumentationLink_Implementation() const
 {
-	return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Dialogue-Nodes");
+	return TEXT("https://mountea.tools/docs/DialogueSystem/DialogueNodes/DialogueNode/");
 }
 
 FText UMounteaDialogueGraphNode::GetNodeTooltipText_Implementation() const

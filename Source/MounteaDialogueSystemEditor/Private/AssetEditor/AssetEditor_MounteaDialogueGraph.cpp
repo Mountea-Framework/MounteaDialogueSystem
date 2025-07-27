@@ -247,7 +247,7 @@ FString FAssetEditor_MounteaDialogueGraph::GetWorldCentricTabPrefix() const
 
 FString FAssetEditor_MounteaDialogueGraph::GetDocumentationLink() const
 {
-	return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Dialogue-Tree-Editor");
+	return TEXT("https://mountea.tools/docs/dialoguesystem/gettingstarted/createdialogueasset/");
 }
 
 void FAssetEditor_MounteaDialogueGraph::SaveAsset_Execute()
