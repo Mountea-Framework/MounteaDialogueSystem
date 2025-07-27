@@ -7,7 +7,7 @@
 // Log category declaration
 MOUNTEADIALOGUESYSTEM_API DECLARE_LOG_CATEGORY_EXTERN(LogMounteaDialogueSystem, Log, All);
 
-void PrintDialogueLog(const ELogVerbosity::Type Verbosity, const FString& Message, FLinearColor Color, float Duration);
+MOUNTEADIALOGUESYSTEM_API void PrintDialogueLog(const ELogVerbosity::Type Verbosity, const FString& Message, FLinearColor Color, float Duration);
 
 // Logging macro definitions
 #define LOG_INFO(Format, ...) \
