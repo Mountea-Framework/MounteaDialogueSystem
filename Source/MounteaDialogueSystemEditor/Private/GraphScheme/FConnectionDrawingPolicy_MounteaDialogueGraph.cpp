@@ -86,47 +86,41 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Draw(TMap<TSharedRef<SWidget
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FGeometry& StartGeom, const FGeometry& EndGeom, const FConnectionParams& Params)
 {
-	const FVector2D StartCenter = FGeometryHelper::CenterOf(StartGeom);
-	const FVector2D EndCenter = FGeometryHelper::CenterOf(EndGeom);
+	const FVector2f StartCenter = FGeometryHelper::CenterOf(StartGeom);
+	const FVector2f EndCenter = FGeometryHelper::CenterOf(EndGeom);
 
 	DrawSplineWithArrow(StartCenter, EndCenter, Params);
 }
 
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FVector2f& StartPoint, const FVector2f& EndPoint, const FConnectionParams& Params)
 {
 	// bUserFlag1 indicates that we need to reverse the direction of connection (used by debugger)
-	const FVector2D& P0 = Params.bUserFlag1 ? EndPoint : StartPoint;
-	const FVector2D& P1 = Params.bUserFlag1 ? StartPoint : EndPoint;
+	const FVector2f& P0 = Params.bUserFlag1 ? EndPoint : StartPoint;
+	const FVector2f& P1 = Params.bUserFlag1 ? StartPoint : EndPoint;
 	
 	FConnectionParams NewParams = Params;
 	
 	if (const UMounteaDialogueGraphEditorSettings* MounteaDialogueGraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
-	{
 		NewParams.WireThickness = MounteaDialogueGraphEditorSettings->GetWireWidth();
-	}
 	
 	Internal_DrawLineWithArrow(P0, P1, NewParams);
 }
 
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawPreviewConnector(const FGeometry& PinGeometry, const FVector2D& StartPoint, const FVector2D& EndPoint, UEdGraphPin* Pin)
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawPreviewConnector(const FGeometry& PinGeometry, const FVector2f& StartPoint, const FVector2f& EndPoint, UEdGraphPin* Pin)
 {
 	FConnectionParams Params;
 	DetermineWiringStyle(Pin, nullptr, /*inout*/ Params);
 
 	if (Pin->Direction == EGPD_Output)
-	{
 		DrawSplineWithArrow(FGeometryHelper::FindClosestPointOnGeom(PinGeometry, EndPoint), EndPoint, Params);
-	}
 	else
-	{
 		DrawSplineWithArrow(FGeometryHelper::FindClosestPointOnGeom(PinGeometry, StartPoint), StartPoint, Params);
-	}
 }
 
-FVector2D FConnectionDrawingPolicy_MounteaDialogueGraph::ComputeSplineTangent(const FVector2D& Start, const FVector2D& End) const
+FVector2f FConnectionDrawingPolicy_MounteaDialogueGraph::ComputeSplineTangent(const FVector2f& Start, const FVector2f& End) const
 {
-	const FVector2D Delta = End - Start;
-	const FVector2D NormDelta = Delta.GetSafeNormal();
+	const FVector2f Delta = End - Start;
+	const FVector2f NormDelta = Delta.GetSafeNormal();
 
 	return NormDelta;
 }
@@ -160,13 +154,13 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineLinkGeometry(FArran
 	}
 }
 
-void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(const FVector2D& StartAnchorPoint, const FVector2D& EndAnchorPoint, const FConnectionParams& Params)
+void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(const FVector2f& StartAnchorPoint, const FVector2f& EndAnchorPoint, const FConnectionParams& Params)
 {
-	const FVector2D DeltaPos = EndAnchorPoint - StartAnchorPoint;
-	const FVector2D UnitDelta = DeltaPos.GetSafeNormal();
+	const FVector2f DeltaPos = EndAnchorPoint - StartAnchorPoint;
+	const FVector2f UnitDelta = DeltaPos.GetSafeNormal();
 
-	const FVector2D StartPoint = StartAnchorPoint;
-	const FVector2D EndPoint = EndAnchorPoint - (ArrowRadius.X * UnitDelta);
+	const FVector2f StartPoint = StartAnchorPoint;
+	const FVector2f EndPoint = EndAnchorPoint - (ArrowRadius.X * UnitDelta);
 
 	const float nodesDelta = abs(StartPoint.X - EndPoint.X);
 	
@@ -179,7 +173,7 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(c
 	else
 	{
 		OffsetValue = -3.f;
-		const FVector2D ConnectionEndPoint = FVector2D(EndPoint.X, EndPoint.Y + OffsetValue);
+		const FVector2f ConnectionEndPoint = FVector2f(EndPoint.X, EndPoint.Y + OffsetValue);
 		DrawCurvedConnection(WireLayerID, StartPoint, ConnectionEndPoint, Params);
 		
 	}
@@ -205,19 +199,19 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(c
 	}
 }
 
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawCurvedConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawCurvedConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params)
 {
 	const UMounteaDialogueGraphEditorSettings* GraphSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
 
-	FVector2D Tangent = GraphSettings->GetAdvancedWiringConnectionTangent().GetAbs();
+	FVector2f Tangent = GraphSettings->GetAdvancedWiringConnectionTangent().GetAbs();
 
 	const int32 SideValue = (End.X > Start.X) ? 1 : -1;
 
 	Tangent.X *= SideValue;
 	Tangent.Y *= 0.5f;
 	
-	FVector2D ControlPoint1 = Start + (Tangent * ZoomFactor);
-	FVector2D ControlPoint2 = End - (Tangent * ZoomFactor);
+	FVector2f ControlPoint1 = Start + (Tangent * ZoomFactor);
+	FVector2f ControlPoint2 = End - (Tangent * ZoomFactor);
 	
 	ControlPoint1 = FMath::Lerp(Start, ControlPoint1, 0.6f);
 	ControlPoint2 = FMath::Lerp(End, ControlPoint2, 0.6f);
@@ -239,7 +233,7 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawCurvedConnection(int32 L
 }
 
 
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params)
 {
 	FKismetConnectionDrawingPolicy::DrawConnection(LayerId, Start, End, Params);
 }

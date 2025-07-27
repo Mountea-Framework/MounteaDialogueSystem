@@ -30,27 +30,32 @@ public:
 	virtual void ExecuteDecorator_Implementation() override;
 
 	virtual  FString GetDecoratorDocumentationLink_Implementation() const override
-	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Decorator:-Override-Dialogue-Participants"); }
+	{ return TEXT("https://mountea.tools/docs/DialogueSystem/DialogueDecorators/OverrideDialogueParticipants"); }
 
 protected:
 
 	// Enables setting NewPlayerParticipant to a value
 	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, InlineEditConditionToggle))
 	bool bOverridePlayerParticipant;
+	
 	// Non-nullable reference to Actor from Level. Either must implement 'MounteaDialogueParticipantInterface' or must contain at least 1 component which implements such interface.
 	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, EditCondition="bOverridePlayerParticipant"))
 	TSoftObjectPtr<AActor>NewPlayerParticipant;
 
+	
 	// Enables setting NewDialogueParticipant to a value
 	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, InlineEditConditionToggle))
 	bool bOverrideDialogueParticipant;
+	
 	// Non-nullable reference to Actor from Level. Either must implement 'MounteaDialogueParticipantInterface' or must contain at least 1 component which implements such interface.
 	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, EditCondition="bOverrideDialogueParticipant"))
 	TSoftObjectPtr<AActor>NewDialogueParticipant;
 
+	
 	// Enables setting NewActiveParticipant to a value
 	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, InlineEditConditionToggle))
 	bool bOverrideActiveParticipant;
+	
 	// Non-nullable reference to Actor from Level. Either must implement 'MounteaDialogueParticipantInterface' or must contain at least 1 component which implements such interface.
 	UPROPERTY(SaveGame, Category="Override", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, EditCondition="bOverrideActiveParticipant"))
 	TSoftObjectPtr<AActor>NewActiveParticipant;

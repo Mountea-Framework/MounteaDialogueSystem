@@ -52,8 +52,8 @@ public:
 	virtual FText GetIndexOverlayTooltipText() const;
 	virtual FText GetIndexText() const;
 	EVisibility GetIndexSlotVisibility() const;
-	FVector2D GetIndexSlotOffset() const;
-	FVector2D GetIndexSlotSize() const;
+	FVector2f GetIndexSlotOffset() const;
+	FVector2f GetIndexSlotSize() const;
 	
 	virtual void OnIndexHoverStateChanged(bool bArg) const;
 	virtual FSlateColor GetOverlayWidgetBackgroundColor(bool bArg) const;

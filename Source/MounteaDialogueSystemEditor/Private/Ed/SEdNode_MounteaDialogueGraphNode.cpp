@@ -50,7 +50,7 @@ public:
 
 		// Pins Out/In Border
 		SBorder::Construct(SBorder::FArguments()
-			.BorderImage(this, &SMounteaDialogueGraphPin::GetPinBorder)
+			.BorderImage(this, &SMounteaDialogueGraphPin::GetMounteaPinBorder)
 			.BorderBackgroundColor(this, &SMounteaDialogueGraphPin::GetPinColor)
 			.OnMouseButtonDown(this, &SMounteaDialogueGraphPin::OnPinMouseDown)
 			.Cursor(this, &SMounteaDialogueGraphPin::GetPinCursor)
@@ -82,7 +82,7 @@ protected:
 		return SNew(STextBlock);
 	}
 
-	const FSlateBrush* GetPinBorder() const
+	const FSlateBrush* GetMounteaPinBorder() const
 	{
 		if (const UMounteaDialogueGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
 		{
@@ -208,8 +208,8 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 	
 	const FSlateBrush* CircleBrush = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.IndexCircle"));
 	this->GetOrAddSlot(ENodeZone::Left)
-	.SlotOffset(TAttribute<FVector2D>(this, &SEdNode_MounteaDialogueGraphNode::GetIndexSlotOffset))
-	.SlotSize(TAttribute<FVector2D>(this, &SEdNode_MounteaDialogueGraphNode::GetIndexSlotSize))
+	.SlotOffset2f(TAttribute<FVector2f>(this, &SEdNode_MounteaDialogueGraphNode::GetIndexSlotOffset))
+	.SlotSize2f(TAttribute<FVector2f>(this, &SEdNode_MounteaDialogueGraphNode::GetIndexSlotSize))
 	[
 		SNew(SOverlay)
 		+SOverlay::Slot()
@@ -940,8 +940,8 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 		.IsGraphNodeHovered(this, &SGraphNode::IsHovered);
 
 	GetOrAddSlot(ENodeZone::TopCenter)
-		.SlotOffset(TAttribute<FVector2D>(CommentBubble.Get(), &SCommentBubble::GetOffset))
-		.SlotSize(TAttribute<FVector2D>(CommentBubble.Get(), &SCommentBubble::GetSize))
+		.SlotOffset2f(TAttribute<FVector2f>(CommentBubble.Get(), &SCommentBubble::GetOffset2f))
+		.SlotSize2f(TAttribute<FVector2f>(CommentBubble.Get(), &SCommentBubble::GetSize2f))
 		.AllowScaling(TAttribute<bool>(CommentBubble.Get(), &SCommentBubble::IsScalingAllowed))
 		.VAlign(VAlign_Top)
 		[
@@ -1243,31 +1243,25 @@ FText SEdNode_MounteaDialogueGraphNode::GetIndexText() const
 EVisibility SEdNode_MounteaDialogueGraphNode::GetIndexSlotVisibility() const
 {
 	if (IsHovered())
-	{
 		return EVisibility::SelfHitTestInvisible;
-	}
 
 	return EVisibility::Collapsed;
 }
 
-FVector2D SEdNode_MounteaDialogueGraphNode::GetIndexSlotOffset() const
+FVector2f SEdNode_MounteaDialogueGraphNode::GetIndexSlotOffset() const
 {
 	if (IsHovered())
-	{
-		return FVector2D(-20.f);
-	}
+		return FVector2f(-20.f);
 
-	return FVector2D(-15.f);
+	return FVector2f(-15.f);
 }
 
-FVector2D SEdNode_MounteaDialogueGraphNode::GetIndexSlotSize() const
+FVector2f SEdNode_MounteaDialogueGraphNode::GetIndexSlotSize() const
 {
 	if (IsHovered())
-	{
-		return FVector2D(24.f);
-	}
+		return FVector2f(24.f);
 
-	return FVector2D(12.f);
+	return FVector2f(12.f);
 }
 
 void SEdNode_MounteaDialogueGraphNode::OnIndexHoverStateChanged(bool bArg) const

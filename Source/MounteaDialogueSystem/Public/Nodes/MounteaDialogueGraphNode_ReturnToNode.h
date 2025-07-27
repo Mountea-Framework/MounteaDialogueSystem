@@ -75,48 +75,12 @@ protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual FText GetDescription_Implementation() const override;
 	virtual FString GetNodeDocumentationLink_Implementation() const override
-	{ return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Return-To-Node"); };
+	{ return TEXT("https://mountea.tools/docs/DialogueSystem/DialogueNodes/ReturnToNode/"); };
 
 #endif
 
 private:
 
 	UFUNCTION()
-	TArray<FString> GetRowNames() const
-	{
-		TArray<FString> nodeNames;
-		if (!Graph)
-		{
-			return nodeNames;
-		}
-		for (const auto& Itr : Graph->GetAllNodes())
-		{
-			if (!Itr)
-			{
-				continue;
-			}
-			
-			// Check if this is allowed class
-			bool bIsAllowed = true;
-			for (auto& ItrClass : AllowedNodesFilter)
-			{
-				if (Itr->IsA(ItrClass))
-				{
-					bIsAllowed = false;
-					break;
-				}
-			}
-
-			if (!bIsAllowed)
-			{
-				continue;
-			}
-			
-			// Show only those allowed
-			FString AllowedIndex = FString::FromInt(Graph->AllNodes.Find(Itr));
-			nodeNames.Add(AllowedIndex);
-		}
-
-		return nodeNames;
-	}
+	TArray<FString> GetRowNames() const;
 };

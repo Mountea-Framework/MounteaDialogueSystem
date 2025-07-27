@@ -247,7 +247,7 @@ FString FAssetEditor_MounteaDialogueGraph::GetWorldCentricTabPrefix() const
 
 FString FAssetEditor_MounteaDialogueGraph::GetDocumentationLink() const
 {
-	return TEXT("https://github.com/Mountea-Framework/MounteaDialogueSystem/wiki/Dialogue-Tree-Editor");
+	return TEXT("https://mountea.tools/docs/dialoguesystem/gettingstarted/createdialogueasset/");
 }
 
 void FAssetEditor_MounteaDialogueGraph::SaveAsset_Execute()
@@ -952,11 +952,11 @@ void FAssetEditor_MounteaDialogueGraph::PasteNodes()
 	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
 	if (CurrentGraphEditor.IsValid())
 	{
-		PasteNodesHere(CurrentGraphEditor->GetPasteLocation());
+		PasteNodesHere(CurrentGraphEditor->GetPasteLocation2f());
 	}
 }
 
-void FAssetEditor_MounteaDialogueGraph::PasteNodesHere(const FVector2D& Location)
+void FAssetEditor_MounteaDialogueGraph::PasteNodesHere(const FVector2f& Location)
 {
 	// Find the graph editor with focus
 	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
@@ -1012,16 +1012,17 @@ void FAssetEditor_MounteaDialogueGraph::PasteNodesHere(const FVector2D& Location
 			// Give new node a different Guid from the old one
 			Node->CreateNewGuid();
 
-			if (UEdNode_MounteaDialogueGraphNode* MounteaNode = Cast<UEdNode_MounteaDialogueGraphNode>(Node))
+			UEdNode_MounteaDialogueGraphNode* MounteaNode = Cast<UEdNode_MounteaDialogueGraphNode>(Node);
+			if (!MounteaNode)
+				continue;
+			
+			if (MounteaNode->DialogueGraphNode)
 			{
-				if (MounteaNode->DialogueGraphNode)
-				{
-					MounteaNode->DialogueGraphNode->OnPasted();
-					MounteaNode->SetDialogueNodeIndex(SharedIndex);
-				}
-
-				SharedIndex++;
+				MounteaNode->DialogueGraphNode->OnPasted();
+				MounteaNode->SetDialogueNodeIndex(SharedIndex);
 			}
+
+			SharedIndex++;
 		}
 	}
 
