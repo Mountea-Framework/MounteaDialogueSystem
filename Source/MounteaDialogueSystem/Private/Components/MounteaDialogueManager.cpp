@@ -841,7 +841,8 @@ void UMounteaDialogueManager::NodeProcessed_Implementation()
 		return;
 	}
 
-	DialogueContext->ActiveNode->Execute_UnregisterTick(DialogueContext->ActiveNode, DialogueContext->ActiveNode->Graph);
+	DialogueContext->ActiveNode->CleanupNode();
+	OnDialogueNodeFinished.Broadcast(DialogueContext);
 	
 	// TODO: This is extremely similar to NodeSelected!
 	TArray<UMounteaDialogueGraphNode*> allowedChildrenNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(DialogueContext->ActiveNode);
