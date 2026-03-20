@@ -16,7 +16,8 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseInternalTitle", "Dialogue Node Base");
 #if WITH_EDITORONLY_DATA
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseContextMenu", "Dialogue Node");
-	BackgroundColor = FLinearColor(FColor::Orange);
+	EditorNodeColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("3b82f6")));
+	EditorHeaderForegroundColour = FLinearColor::White;
 
 	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_BaseTooltip", "* Abstract class, should not appear in Graph Editor.\n* Enhances 'MounteaDialogueGraphNode' Base class with Dialogue data.\n* Provides DataTable and Row options that define the Dialogue data which will be displayed in UI.");
 #endif

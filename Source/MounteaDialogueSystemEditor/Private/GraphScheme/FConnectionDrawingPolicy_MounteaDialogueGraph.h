@@ -24,13 +24,9 @@ public:
 	// End of FConnectionDrawingPolicy interface
 	
 protected:
-	void Internal_DrawLineWithArrow(const FVector2D& StartAnchorPoint, const FVector2D& EndAnchorPoint, const FConnectionParams& Params);
-	void DrawConnectionDown(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params);
-	void DrawCurvedConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params);
-	
-	virtual void DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params) override;
+	void DrawBezierSplineWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params);
+	static void CalculateBezierControlPoints(const FVector2D& StartPoint, const FVector2D& EndPoint, FVector2D& OutControlPointA, FVector2D& OutControlPointB);
 
-protected:
 	UEdGraph* GraphObj;
 	TMap<UEdGraphNode*, int32> NodeWidgetMap;
 	

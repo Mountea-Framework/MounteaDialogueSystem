@@ -493,10 +493,17 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC
 	if (activeTags.Num() == 0)
 		return IsValid(DialogueContext->ActiveDialogueParticipant.GetObject()) ? DialogueContext->ActiveDialogueParticipant : dialogueParticipants[0];
 	
-	auto* foundParticipant = dialogueParticipants.FindByPredicate([&](const TScriptInterface<IMounteaDialogueParticipantInterface>& dialogueParticipant)
-	{
-		return dialogueParticipant.GetObject() && activeTags.HasTagExact(dialogueParticipant->Execute_GetParticipantTag(dialogueParticipant.GetObject()));
-	});
+	auto* foundParticipant = dialogueParticipants.FindByPredicate(
+	[&](const TScriptInterface<IMounteaDialogueParticipantInterface>& testParticipant)
+		{
+			if (!testParticipant.GetObject()) return false;
+
+			const FGameplayTag participantTag =
+				IMounteaDialogueParticipantInterface::Execute_GetParticipantTag(testParticipant.GetObject());
+
+			return participantTag.MatchesAny(activeTags);
+		}
+	);
 
 	return (foundParticipant && *foundParticipant != DialogueContext->ActiveDialogueParticipant) ? *foundParticipant : DialogueContext->ActiveDialogueParticipant;
 }
@@ -652,8 +659,7 @@ FDialogueRow UMounteaDialogueSystemBFC::GetDialogueRow(const UMounteaDialogueGra
 		
 	if (!DialogueNodeBase)
 	{
-		LOG_WARNING(TEXT("[GetDialogueRow] Invalid Dialogue Node input!"))
-		return FDialogueRow::Invalid();
+		return FDialogueRow::Invalid();		
 	}
 	if (DialogueNodeBase->GetDataTable() == nullptr)
 	{

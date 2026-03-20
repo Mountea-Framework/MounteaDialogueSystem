@@ -6,10 +6,6 @@
 
 UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAllowAutoGameplayTagsCheck(true)
 {
-	NodeType = ENodeCornerType::ENT_SoftCorners;
-	NodeTheme = ENodeTheme::ENT_DarkTheme;
-	ArrowType = EArrowType::ERT_HollowArrow;
-	
 	CategoryName = TEXT("Mountea Framework");
 	SectionName = TEXT("Mountea Dialogue System (Editor)");
 	
@@ -22,30 +18,19 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAl
 	InitTemperature = 10.f;
 	CoolDownRate = 10.f;
 
-	WireWidth = 0.8f;
-
 	bAllowRenameNodes = true;
 	bDisplayAutomaticNames = false;
 
-	bShowDetailedInfo_InheritsDecorators = true;
-	bShowDetailedInfo_NumDecorators = true;
-	DecoratorsInfoStyle = EDecoratorsInfoStyle::EDIS_Unified;
-
 	bAllowNativeDecoratorsEdit = false;
-	bUseAdvancedWiring = true;
 
 	bDisplayStandardNodes = true;
+
+	ReportLegacyVisualSettings();
 }
 
 void UMounteaDialogueGraphEditorSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-
-	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphEditorSettings, AdvancedWiringConnectionTangent))
-	{
-		if (FMath::IsNearlyZero(AdvancedWiringConnectionTangent.Y, 0.01f))
-			AdvancedWiringConnectionTangent.Y = 1.f;
-	}
 }
 
 FString UMounteaDialogueGraphEditorSettings::GetNodeReplacementLocalPath() const
@@ -65,6 +50,44 @@ FString UMounteaDialogueGraphEditorSettings::GetNodeReplacementLocalPath() const
 	FPaths::NormalizeFilename(ConfigPath);
 
 	return ConfigPath;
+}
+
+void UMounteaDialogueGraphEditorSettings::ReportLegacyVisualSettings() const
+{
+	if (!GConfig)
+		return;
+
+	const FString configFilename = GetDefaultConfigFilename();
+	const TCHAR* section = TEXT("/Script/MounteaDialogueSystemEditor.MounteaDialogueGraphEditorSettings");
+	const TArray<const TCHAR*> deprecatedKeys =
+	{
+		TEXT("NodeType"),
+		TEXT("NodeTheme"),
+		TEXT("DecoratorsInfoStyle"),
+		TEXT("bShowDetailedInfo_NumDecorators"),
+		TEXT("bShowDetailedInfo_InheritsDecorators"),
+		TEXT("OverrideNodeBackgroundColours"),
+		TEXT("WireWidth"),
+		TEXT("ArrowType"),
+		TEXT("bUseAdvancedWiring"),
+		TEXT("AdvancedWiringConnectionTangent"),
+		TEXT("ControlPointDistance")
+	};
+
+	for (const TCHAR* key : deprecatedKeys)
+	{
+		FString deprecatedValue;
+		if (GConfig->GetString(section, key, deprecatedValue, configFilename))
+		{
+			UE_LOG(
+				LogTemp,
+				Warning,
+				TEXT("[MounteaDialogueGraphEditorSettings] Deprecated visual key '%s' found in '%s'. This value is ignored."),
+				key,
+				*configFilename
+			);
+		}
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

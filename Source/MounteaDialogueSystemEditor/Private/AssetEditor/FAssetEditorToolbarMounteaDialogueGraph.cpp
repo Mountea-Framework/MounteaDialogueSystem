@@ -30,6 +30,18 @@ void FAssetEditorToolbarMounteaDialogueGraph::FillMounteaDialogueGraphToolbar(FT
 	
 	ToolbarBuilder.BeginSection("Util");
 	{
+		ToolbarBuilder.AddToolBarButton(FMounteaDialogueGraphEditorCommands::Get().RecenterGraph,
+			NAME_None,
+			LOCTEXT("RecenterGraph_Label", "Recenter"),
+			LOCTEXT("RecenterGraph_ToolTip", "Focus Start node in the graph viewport."),
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.RecenterGraph"));
+
+		ToolbarBuilder.AddToolBarButton(FMounteaDialogueGraphEditorCommands::Get().FitGraphToView,
+			NAME_None,
+			LOCTEXT("FitGraphToView_Label", "Fit to View"),
+			LOCTEXT("FitGraphToView_ToolTip", "Frame the full graph in the viewport."),
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.FitGraphToView"));
+
 		ToolbarBuilder.AddToolBarButton(FMounteaDialogueGraphEditorCommands::Get().AutoArrange,
 			NAME_None,
 			LOCTEXT("AutoArrange_Label", "Auto Arrange"),

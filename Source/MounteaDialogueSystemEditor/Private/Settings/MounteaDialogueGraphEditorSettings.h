@@ -6,8 +6,6 @@
 #include "Engine/DeveloperSettings.h"
 #include "MounteaDialogueGraphEditorSettings.generated.h"
 
-class UMounteaDialogueGraphNode;
-
 #pragma region Enums
 
 UENUM(BlueprintType)
@@ -19,57 +17,7 @@ enum class EAutoLayoutStrategyType : uint8
 	Default						UMETA(Hidden)
 };
 
-UENUM(BlueprintType)
-enum class EWiringStyle : uint8
-{
-	EWS_Vanilla				UMETA(DisplayName="Vanilla"),
-	EWS_Simple			UMETA(DisplayName="90° Angle"),
-	EWS_Complex			UMETA(DisplayName="45° Angle"),
-
-	Default						UMETA(Hidden)
-};
-
-UENUM(BlueprintType)
-enum class EBubbleDrawRule : uint8
-{
-	EBDR_Always			UMETA(DisplayName="Always"),
-	EBDR_OnSelected	UMETA(DisplayName="When Selected")
-};
-
-UENUM(BlueprintType)
-enum class ENodeTheme : uint8
-{
-	ENT_DarkTheme			UMETA(DisplayName="Dark Theme"),
-	ENT_LightTheme			UMETA(DisplayName="Light Theme")
-};
-
-UENUM(BlueprintType)
-enum class EDecoratorsInfoStyle : uint8
-{
-	EDSI_Stack				UMETA(DisplayName="Stack"),
-	EDIS_Unified				UMETA(DisplayName="Unified")
-};
-
-UENUM(BlueprintType)
-enum class ENodeCornerType : uint8
-{
-	ENT_SoftCorners			UMETA(DisplayName="Soft Corners"),
-	ENT_HardCorners			UMETA(DisplayName="Hard Corners")
-};
-
-UENUM(BlueprintType)
-enum class EArrowType : uint8
-{
-	ERT_SimpleArrow			UMETA(DisplayName="Simple Arrow"),
-	ERT_HollowArrow			UMETA(DisplayName="Hollow Arrow"),
-	ERT_FancyArrow			UMETA(DisplayName="Fancy Arrow"),
-	ERT_Bubble					UMETA(DisplayName="Bubble"),
-	ERT_None					UMETA(DisplayName="Nothing")
-};
-
 #pragma endregion 
-
-class UMounteaDialogueGraphNode;
 
 /**
  * Mountea Dialogue System global settings.
@@ -107,32 +55,10 @@ protected:
 #pragma region GraphNodes
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
-	ENodeCornerType NodeType;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
-	ENodeTheme NodeTheme;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings|DecoratorsInfo")
-	uint8 bShowDetailedInfo_NumDecorators : 1;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings|DecoratorsInfo")
-	uint8 bShowDetailedInfo_InheritsDecorators : 1;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
-	EDecoratorsInfoStyle DecoratorsInfoStyle;
-	
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	bool bDisplayAutomaticNames;
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	bool bAllowRenameNodes;
-
-	/**
-	 * Select a Node Class and specify Override Colour for this Node type.
-	 * Only non-abstract classes are allowed!
-	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings", meta=(ShowTreeView))
-	TMap<TSoftClassPtr<UMounteaDialogueGraphNode>, FLinearColor> OverrideNodeBackgroundColours;
 
 	/**
 	 * URL for the Nodes Replacement configuration file.
@@ -168,25 +94,6 @@ protected:
 	
 #pragma endregion
 	
-#pragma region GraphWiring
-	
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(UIMin=0.1f, ClampMin=0.1f, UIMax=1.5f, ClampMax=1.5f))
-	float WireWidth;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring")
-	EArrowType ArrowType;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]"))
-	bool bUseAdvancedWiring;
-
-	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]", EditCondition="bUseAdvancedWiring"))
-	FVector2D AdvancedWiringConnectionTangent = FVector2D(0.0f, 350.f);
-
-	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]", EditCondition="bUseAdvancedWiring"))
-	float ControlPointDistance = 100.0f;
-
-#pragma endregion
-
 #pragma region GraphArrange
 	
 	UPROPERTY(config, EditDefaultsOnly, Category = "AutoArrange")
@@ -239,37 +146,11 @@ public:
 
 #pragma region GraphNodes_Getters
 	
-	ENodeTheme GetNodeTheme() const
-	{ return NodeTheme; };
-
-	ENodeCornerType GetNodeType() const
-	{ return NodeType; };
-
-	bool ShowDetailedInfo_NumDecorators() const
-	{ return bShowDetailedInfo_NumDecorators; };
-
-	bool ShowDetailedInfo_InheritsDecorators() const
-	{ return bShowDetailedInfo_InheritsDecorators; };
-	
 	bool ShowAutomaticNames() const
 	{ return bDisplayAutomaticNames; };
 
-	EDecoratorsInfoStyle GetDecoratorsStyle() const
-	{ return DecoratorsInfoStyle; };
-
 	bool AllowRenameNodes() const
 	{ return bAllowRenameNodes; };
-
-	bool FindNodeBackgroundColourOverride(const TSoftClassPtr<UMounteaDialogueGraphNode> NodeClass, FLinearColor& BackgroundColour)
-	{
-		if (OverrideNodeBackgroundColours.Contains(NodeClass))
-		{
-			BackgroundColour = *OverrideNodeBackgroundColours.Find(NodeClass);
-			return true;
-		}
-
-		return false;
-	}
 
 	FString GetNodeReplacementURL() const
 	{ return NodeReplacementURL; };
@@ -283,25 +164,6 @@ public:
 
 	bool IsNativeDecoratorsEditAllowed() const
 	{ return bAllowNativeDecoratorsEdit; };
-
-#pragma endregion 
-
-#pragma region GraphWiring_Getters
-
-	float GetWireWidth() const
-	{ return WireWidth; };
-
-	EArrowType GetArrowType() const
-	{ return ArrowType; };
-
-	bool AllowAdvancedWiring() const
-	{ return bUseAdvancedWiring; };
-
-	FVector2D GetAdvancedWiringConnectionTangent() const
-	{ return AdvancedWiringConnectionTangent; };
-
-	float GetControlPointDistance() const
-	{ return ControlPointDistance; };
 
 #pragma endregion 
 
@@ -346,5 +208,9 @@ public:
 	{ return GameplayTagsURL; };
 	
 #pragma endregion
+
+private:
+
+	void ReportLegacyVisualSettings() const;
  
 };

@@ -16,6 +16,7 @@
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
+#include "Ed/SEdNode_MounteaDialogueGraphNode.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "GraphScheme/AssetGraphScheme_MounteaDialogueGraph.h"
@@ -84,6 +85,28 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(
 
 	BindCommands();
 	CreateInternalWidgets();
+
+	if (UEdGraph_MounteaDialogueGraph* dialogueEdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph ? EditingGraph->EdGraph : nullptr))
+	{
+		int32 migratedLinks = 0;
+		int32 removedDuplicateEdges = 0;
+		const bool bGraphNormalized = dialogueEdGraph->NormalizeEdgeNodes(true, migratedLinks, removedDuplicateEdges);
+
+		if (migratedLinks > 0 || removedDuplicateEdges > 0)
+			UE_LOG(LogTemp, Warning, TEXT("[InitMounteaDialogueGraphAssetEditor] Migrated %d direct link(s), removed %d duplicate edge node(s)."), migratedLinks, removedDuplicateEdges);
+		else
+			UE_LOG(LogTemp, Log, TEXT("[InitMounteaDialogueGraphAssetEditor] Edge normalization skipped (already normalized)."));
+
+		if (bGraphNormalized && EditingGraph)
+		{
+			EditingGraph->Modify();
+			EditingGraph->MarkPackageDirty();
+		}
+	}
+
+	RebuildMounteaDialogueGraph();
+	if (ViewportWidget.IsValid())
+		ViewportWidget->NotifyGraphChanged();
 
 	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
 
@@ -358,6 +381,20 @@ void FAssetEditor_MounteaDialogueGraph::BindCommands()
 
 	ToolkitCommands->MapAction
 	(
+		FMounteaDialogueGraphEditorCommands::Get().RecenterGraph,
+		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::RecenterGraph),
+		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::CanRecenterGraph)
+	);
+
+	ToolkitCommands->MapAction
+	(
+		FMounteaDialogueGraphEditorCommands::Get().FitGraphToView,
+		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::FitGraphToView),
+		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::CanFitGraphToView)
+	);
+
+	ToolkitCommands->MapAction
+	(
 		FMounteaDialogueGraphEditorCommands::Get().ValidateGraph,
 		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::ValidateGraph),
 		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::CanValidateGraph)
@@ -594,6 +631,16 @@ void FAssetEditor_MounteaDialogueGraph::CreateCommandList()
 									FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::AutoArrange),
 									FCanExecuteAction::CreateRaw(
 										this, &FAssetEditor_MounteaDialogueGraph::CanAutoArrange));
+
+	GraphEditorCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().RecenterGraph,
+									FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::RecenterGraph),
+									FCanExecuteAction::CreateRaw(
+										this, &FAssetEditor_MounteaDialogueGraph::CanRecenterGraph));
+
+	GraphEditorCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().FitGraphToView,
+									FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::FitGraphToView),
+									FCanExecuteAction::CreateRaw(
+										this, &FAssetEditor_MounteaDialogueGraph::CanFitGraphToView));
 
 	GraphEditorCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().ValidateGraph,
 									FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::ValidateGraph),
@@ -1012,16 +1059,17 @@ void FAssetEditor_MounteaDialogueGraph::PasteNodesHere(const FVector2D& Location
 			// Give new node a different Guid from the old one
 			Node->CreateNewGuid();
 
-			if (UEdNode_MounteaDialogueGraphNode* MounteaNode = Cast<UEdNode_MounteaDialogueGraphNode>(Node))
+			UEdNode_MounteaDialogueGraphNode* MounteaNode = Cast<UEdNode_MounteaDialogueGraphNode>(Node);
+			if (!MounteaNode)
+				continue;
+			
+			if (MounteaNode->DialogueGraphNode)
 			{
-				if (MounteaNode->DialogueGraphNode)
-				{
-					MounteaNode->DialogueGraphNode->OnPasted();
-					MounteaNode->SetDialogueNodeIndex(SharedIndex);
-				}
-
-				SharedIndex++;
+				MounteaNode->DialogueGraphNode->OnPasted();
+				MounteaNode->SetDialogueNodeIndex(SharedIndex);
 			}
+
+			SharedIndex++;
 		}
 	}
 
@@ -1113,12 +1161,56 @@ bool FAssetEditor_MounteaDialogueGraph::CanAutoArrange() const
 	return EditingGraph != nullptr && Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph) != nullptr;
 }
 
+void FAssetEditor_MounteaDialogueGraph::RecenterGraph()
+{
+	if (!EditingGraph || !EditingGraph->EdGraph || !EditingGraph->StartNode)
+	{
+		return;
+	}
+
+	UEdGraphNode* startEdNode = nullptr;
+	for (UEdGraphNode* graphNode : EditingGraph->EdGraph->Nodes)
+	{
+		UEdNode_MounteaDialogueGraphNode* dialogueEdNode = Cast<UEdNode_MounteaDialogueGraphNode>(graphNode);
+		if (!dialogueEdNode)
+			continue;
+
+		const bool bIsMatchingNodeObject = dialogueEdNode->DialogueGraphNode == EditingGraph->StartNode;
+		const bool bIsMatchingNodeGuid = dialogueEdNode->NodeGuid == EditingGraph->StartNode->GetNodeGUID();
+		if (bIsMatchingNodeObject || bIsMatchingNodeGuid)
+		{
+			startEdNode = dialogueEdNode;
+			break;
+		}
+	}
+
+	if (startEdNode)
+		JumpToNode(startEdNode, false, true);
+}
+
+bool FAssetEditor_MounteaDialogueGraph::CanRecenterGraph() const
+{
+	return EditingGraph && EditingGraph->EdGraph && EditingGraph->StartNode && ViewportWidget.IsValid();
+}
+
+void FAssetEditor_MounteaDialogueGraph::FitGraphToView()
+{
+	TSharedPtr<SGraphEditor> currentGraphEditor = GetCurrGraphEditor();
+	if (!currentGraphEditor.IsValid())
+		return;
+
+	currentGraphEditor->ZoomToFit(false);
+}
+
+bool FAssetEditor_MounteaDialogueGraph::CanFitGraphToView() const
+{
+	return EditingGraph && EditingGraph->EdGraph && ViewportWidget.IsValid();
+}
+
 void FAssetEditor_MounteaDialogueGraph::ValidateGraph()
 {
 	if (ValidationWindow.IsValid())
-	{
 		ValidationWindow->RequestDestroyWindow();
-	}
 
 	const UEdGraph_MounteaDialogueGraph* EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
 	check(EdGraph != nullptr);
@@ -1142,9 +1234,7 @@ void FAssetEditor_MounteaDialogueGraph::ValidateGraph()
 		ValidationWindow = MDSPopup_GraphValidation::Open(Combined);
 	}
 	else
-	{
 		ValidationWindow = MDSPopup_GraphValidation::Open(TArray<FText>());
-	}
 }
 
 bool FAssetEditor_MounteaDialogueGraph::CanValidateGraph() const
@@ -1165,9 +1255,7 @@ void FAssetEditor_MounteaDialogueGraph::OnRenameNode()
 			{
 				UMounteaDialogueGraphNode* GraphNode = Cast<UMounteaDialogueGraphNode>(SelectedNode->DialogueGraphNode);
 				if (GraphNode && !GraphNode->bCanRenameNode)
-				{
 					return;
-				}
 			}
 			if (SelectedNode != nullptr && SelectedNode->bCanRenameNode)
 			{
@@ -1195,15 +1283,11 @@ bool FAssetEditor_MounteaDialogueGraph::CanRenameNodes() const
 			{
 				UMounteaDialogueGraphNode* GraphNode = Cast<UMounteaDialogueGraphNode>(SelectedNode->DialogueGraphNode);
 				if (GraphNode && !GraphNode->bCanRenameNode)
-				{
 					return false;
-				}
 			}
 			
 			if (SelectedNode != nullptr && !SelectedNode->bCanRenameNode)
-			{
 				return false;
-			}
 		}
 	}
 	return true;
@@ -1227,9 +1311,7 @@ void FAssetEditor_MounteaDialogueGraph::OnSelectedNodesChanged(const TSet<UObjec
 		UMounteaDialogueSystemEditorBFC::TriggerPreviewRefresh(Selection);
 	}
 	else
-	{
 		PropertyWidget->SetObject(EditingGraph);
-	}
 
 	//RebuildMounteaDialogueGraph();
 }
@@ -1245,8 +1327,27 @@ void FAssetEditor_MounteaDialogueGraph::OnFinishedChangingProperties(const FProp
 		return;
 
 	EditingGraph->EdGraph->GetSchema()->ForceVisualizationCacheClear();
-
 	RebuildMounteaDialogueGraph();
+
+	TSharedPtr<SGraphEditor> currentGraphEditor = GetCurrGraphEditor();
+	if (!currentGraphEditor.IsValid())
+		return;
+
+	UEdGraph_MounteaDialogueGraph* mounteaGraphEditor = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
+	if (!mounteaGraphEditor)
+	{
+		currentGraphEditor->NotifyGraphChanged();
+		return;
+	}
+
+	for (UEdGraphNode* graphnode : mounteaGraphEditor->Nodes)
+	{
+		UEdNode_MounteaDialogueGraphNode* selectednode = Cast<UEdNode_MounteaDialogueGraphNode>(graphnode);
+		if (selectednode && selectednode->SEdNode)
+			selectednode->SEdNode->UpdateGraphNode();
+	}
+
+	currentGraphEditor->NotifyGraphChanged();
 }
 
 TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Viewport(const FSpawnTabArgs& Args)
@@ -1257,9 +1358,7 @@ TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Viewport(const 
 		.Label(LOCTEXT("ViewportTab_Title", "Viewport"));
 
 	if (ViewportWidget.IsValid())
-	{
 		SpawnedTab->SetContent(ViewportWidget.ToSharedRef());
-	}
 
 	return SpawnedTab;
 }

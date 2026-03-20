@@ -422,9 +422,13 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Editor")
 	TSubclassOf<UObject> CompatibleGraphType;
 
-	// Defines background colour of this Node
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
-	FLinearColor BackgroundColor;
+	// Defines accent colour used by the Graph Editor visual system for this node.
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor|Visual")
+	FLinearColor EditorNodeColour;
+
+	// Defines header foreground colour used by the Graph Editor visual system for this node.
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor|Visual")
+	FLinearColor EditorHeaderForegroundColour;
 
 	// Contains Node Tooltip text
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")

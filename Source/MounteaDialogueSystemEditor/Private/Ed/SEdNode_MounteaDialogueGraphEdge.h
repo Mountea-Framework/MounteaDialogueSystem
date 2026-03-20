@@ -22,12 +22,15 @@ public:
 	virtual void PerformSecondPassLayout(const TMap< UObject*, TSharedRef<SNode> >& NodeToWidgetLookup) const override;
 
 	virtual void UpdateGraphNode() override;
+	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 
 	// Calculate position for multiple nodes to be placed between a start and end point, by providing this nodes index and max expected nodes 
 	void PositionBetweenTwoNodesWithOffset(const FGeometry& StartGeom, const FGeometry& EndGeom, int32 NodeIndex, int32 MaxNodes) const;
 
 protected:
 	FSlateColor GetEdgeColor() const;
+	FSlateColor GetEdgeActionBackgroundColor() const;
+	FSlateColor GetEdgeActionIconColor() const;
 
 private:
 	TSharedPtr<STextEntryPopup> TextEntryWidget;

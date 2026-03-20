@@ -23,6 +23,11 @@ public:
 	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 	virtual FText GetNodeTitle_Implementation() const override;
 
+	inline int32 GetDelayDuration() const
+	{
+		return DelayDuration;
+	}
+
 protected:
 
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault,Units = "s", UIMin = 0.01, ClampMin = 0.01))

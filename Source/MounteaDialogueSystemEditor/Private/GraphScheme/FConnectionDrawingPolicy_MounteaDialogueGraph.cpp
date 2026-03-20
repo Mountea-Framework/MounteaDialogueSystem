@@ -5,39 +5,60 @@
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
+#include "EditorStyle/MounteaDialogueGraphVisualTokens.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
-#include "Settings/MounteaDialogueGraphEditorSettings.h"
+#include "Rendering/DrawElements.h"
+
+namespace MDSGraphWireTokens
+{
+	constexpr float WireThickness = 2.0f;
+	constexpr float ConnectorVisualRadius = 0.1f;
+	constexpr float EdgeBubbleRadius = 16.0f;
+	constexpr float EdgeBubbleIconSize = 16.0f;
+	constexpr float MinimumControlDistance = 42.0f;
+	constexpr float MaximumControlDistance = 220.0f;
+	constexpr float HorizontalControlFactor = 0.22f;
+	constexpr float VerticalControlFactor = 0.56f;
+	constexpr float LowVerticalThreshold = 36.0f;
+	constexpr float FlatCurveControlFactor = 0.45f;
+}
+
+namespace MDSGraphWireHelpers
+{
+	static FVector2D EvaluateCubicBezierPoint(const FVector2D& StartPoint, const FVector2D& ControlPointA, const FVector2D& ControlPointB, const FVector2D& EndPoint, const float T)
+	{
+		const float oneMinusT = 1.0f - T;
+		const float oneMinusTSquared = oneMinusT * oneMinusT;
+		const float oneMinusTCubed = oneMinusTSquared * oneMinusT;
+		const float tSquared = T * T;
+		const float tCubed = tSquared * T;
+
+		return (oneMinusTCubed * StartPoint) +
+			(3.0f * oneMinusTSquared * T * ControlPointA) +
+			(3.0f * oneMinusT * tSquared * ControlPointB) +
+			(tCubed * EndPoint);
+	}
+
+	static bool IsDirectNodeToNodeConnection(const FConnectionParams& Params)
+	{
+		if (!Params.AssociatedPin1 || !Params.AssociatedPin2)
+		{
+			return false;
+		}
+
+		const UEdGraphNode* owningNodeA = Params.AssociatedPin1->GetOwningNode();
+		const UEdGraphNode* owningNodeB = Params.AssociatedPin2->GetOwningNode();
+		const bool bEdgeNodeConnection = Cast<UEdNode_MounteaDialogueGraphEdge>(owningNodeA) || Cast<UEdNode_MounteaDialogueGraphEdge>(owningNodeB);
+		return !bEdgeNodeConnection;
+	}
+}
 
 FConnectionDrawingPolicy_MounteaDialogueGraph::FConnectionDrawingPolicy_MounteaDialogueGraph
 (int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj)
 	: FKismetConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, ZoomFactor, InClippingRect, InDrawElements, InGraphObj)
 	  , GraphObj(InGraphObj)
 {
-	if (const UMounteaDialogueGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
-	{
-		switch (GraphEditorSettings->GetArrowType())
-		{
-			case EArrowType::ERT_SimpleArrow:
-					ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.SimpleArrow"));
-					break;
-			case EArrowType::ERT_HollowArrow:
-				ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.HollowArrow"));
-				break;
-			case EArrowType::ERT_FancyArrow:
-				ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.FancyArrow"));
-				break;
-			case EArrowType::ERT_Bubble:
-				ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.Bubble"));
-				break;
-			case EArrowType::ERT_None:
-			default:
-				ArrowImage = nullptr;
-		}
-	}
-	else
-	{
-		ArrowImage = FAppStyle::GetBrush( TEXT("GenericPlay") );
-	}
+	ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.SimpleArrow"));
 	
 	ArrowRadius = ArrowImage ? ArrowImage->ImageSize * ZoomFactor * 0.5f : FVector2D(0.f);
 	MidpointImage = nullptr;
@@ -51,22 +72,12 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineWiringStyle(UEdGrap
 {
 	Params.AssociatedPin1 = OutputPin;
 	Params.AssociatedPin2 = InputPin;
-
-	const UMounteaDialogueGraphEditorSettings* MounteaDialogueGraphEditorSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
-	if (MounteaDialogueGraphEditorSettings)
-	{
-		Params.WireThickness = MounteaDialogueGraphEditorSettings->GetWireWidth();
-	}
-	else
-	{
-		Params.WireThickness = 1.f;
-	}
+	Params.WireThickness = MDSGraphWireTokens::WireThickness;
+	Params.WireColor = FMounteaDialogueGraphVisualTokens::GetWireColor();
 
 	const bool bDeemphasizeUnhoveredPins = HoveredPins.Num() > 0;
 	if (bDeemphasizeUnhoveredPins)
-	{
 		ApplyHoverDeemphasis(OutputPin, InputPin, /*inout*/ Params.WireThickness, /*inout*/ Params.WireColor);
-	}
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& InPinGeometries, FArrangedChildren& ArrangedNodes)
@@ -86,160 +97,195 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Draw(TMap<TSharedRef<SWidget
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FGeometry& StartGeom, const FGeometry& EndGeom, const FConnectionParams& Params)
 {
-	const FVector2D StartCenter = FGeometryHelper::CenterOf(StartGeom);
-	const FVector2D EndCenter = FGeometryHelper::CenterOf(EndGeom);
+	const FVector2D startCenter = FGeometryHelper::CenterOf(StartGeom);
+	const FVector2D endCenter = FGeometryHelper::CenterOf(EndGeom);
+	const FVector2D seedPoint = (startCenter + endCenter) * 0.5f;
+	const FVector2D startPoint = FGeometryHelper::FindClosestPointOnGeom(StartGeom, seedPoint);
+	const FVector2D endPoint = FGeometryHelper::FindClosestPointOnGeom(EndGeom, seedPoint);
 
-	DrawSplineWithArrow(StartCenter, EndCenter, Params);
+	FConnectionParams adjustedParams = Params;
+	adjustedParams.WireThickness = MDSGraphWireTokens::WireThickness;
+	DrawBezierSplineWithArrow(startPoint, endPoint, adjustedParams);
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)
 {
-	// bUserFlag1 indicates that we need to reverse the direction of connection (used by debugger)
-	const FVector2D& P0 = Params.bUserFlag1 ? EndPoint : StartPoint;
-	const FVector2D& P1 = Params.bUserFlag1 ? StartPoint : EndPoint;
-	
-	FConnectionParams NewParams = Params;
-	
-	if (const UMounteaDialogueGraphEditorSettings* MounteaDialogueGraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
-	{
-		NewParams.WireThickness = MounteaDialogueGraphEditorSettings->GetWireWidth();
-	}
-	
-	Internal_DrawLineWithArrow(P0, P1, NewParams);
+	FConnectionParams adjustedParams = Params;
+	adjustedParams.WireThickness = MDSGraphWireTokens::WireThickness;
+	DrawBezierSplineWithArrow(StartPoint, EndPoint, adjustedParams);
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawPreviewConnector(const FGeometry& PinGeometry, const FVector2D& StartPoint, const FVector2D& EndPoint, UEdGraphPin* Pin)
 {
-	FConnectionParams Params;
-	DetermineWiringStyle(Pin, nullptr, /*inout*/ Params);
-
-	if (Pin->Direction == EGPD_Output)
-	{
-		DrawSplineWithArrow(FGeometryHelper::FindClosestPointOnGeom(PinGeometry, EndPoint), EndPoint, Params);
-	}
-	else
-	{
-		DrawSplineWithArrow(FGeometryHelper::FindClosestPointOnGeom(PinGeometry, StartPoint), StartPoint, Params);
-	}
+	FConnectionParams previewParams;
+	previewParams.WireColor = FMounteaDialogueGraphVisualTokens::GetWireColor();
+	previewParams.WireThickness = MDSGraphWireTokens::WireThickness;
+	previewParams.bDrawBubbles = false;
+	DrawBezierSplineWithArrow(StartPoint, EndPoint, previewParams);
 }
 
 FVector2D FConnectionDrawingPolicy_MounteaDialogueGraph::ComputeSplineTangent(const FVector2D& Start, const FVector2D& End) const
 {
-	const FVector2D Delta = End - Start;
-	const FVector2D NormDelta = Delta.GetSafeNormal();
-
-	return NormDelta;
+	FVector2D controlPointA;
+	FVector2D controlPointB;
+	CalculateBezierControlPoints(Start, End, controlPointA, controlPointB);
+	return controlPointA - Start;
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineLinkGeometry(FArrangedChildren& ArrangedNodes, TSharedRef<SWidget>& OutputPinWidget, UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FArrangedWidget*& StartWidgetGeometry, FArrangedWidget*& EndWidgetGeometry)
 {
-	if (UEdNode_MounteaDialogueGraphEdge* EdgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(InputPin->GetOwningNode()))
+	StartWidgetGeometry = nullptr;
+	EndWidgetGeometry = nullptr;
+
+	const auto resolveGeometryFromPin = [this](UEdGraphPin* TargetPin) -> FArrangedWidget*
 	{
-		UEdNode_MounteaDialogueGraphNode* Start = EdgeNode->GetStartNode();
-		UEdNode_MounteaDialogueGraphNode* End = EdgeNode->GetEndNode();
-		if (Start != nullptr && End != nullptr)
+		if (!TargetPin || !PinGeometries)
+			return nullptr;
+
+		if (TSharedPtr<SGraphPin>* targetWidget = PinToPinWidgetMap.Find(TargetPin))
 		{
-			int32* StartNodeIndex = NodeWidgetMap.Find(Start);
-			int32* EndNodeIndex = NodeWidgetMap.Find(End);
-			if (StartNodeIndex != nullptr && EndNodeIndex != nullptr)
-			{
-				StartWidgetGeometry = &(ArrangedNodes[*StartNodeIndex]);
-				EndWidgetGeometry = &(ArrangedNodes[*EndNodeIndex]);
-			}
+			TSharedRef<SGraphPin> pinWidget = (*targetWidget).ToSharedRef();
+			return PinGeometries->Find(pinWidget);
+		}
+
+		return nullptr;
+	};
+
+	const auto resolveGeometryFromNode = [this, &ArrangedNodes](UEdGraphNode* TargetNode) -> FArrangedWidget*
+	{
+		if (!TargetNode)
+			return nullptr;
+
+		if (int32* nodeIndex = NodeWidgetMap.Find(TargetNode))
+			return &(ArrangedNodes[*nodeIndex]);
+
+		return nullptr;
+	};
+
+	FString geometryPath = TEXT("missing");
+	UEdNode_MounteaDialogueGraphEdge* edgeInputOwner = InputPin ? Cast<UEdNode_MounteaDialogueGraphEdge>(InputPin->GetOwningNode()) : nullptr;
+	if (edgeInputOwner)
+	{
+		UEdNode_MounteaDialogueGraphNode* startNode = edgeInputOwner->GetStartNode();
+		UEdNode_MounteaDialogueGraphNode* endNode = edgeInputOwner->GetEndNode();
+		UEdGraphPin* startConnectorPin = startNode ? startNode->GetOutputPin() : nullptr;
+		UEdGraphPin* endConnectorPin = endNode ? endNode->GetInputPin() : nullptr;
+
+		StartWidgetGeometry = resolveGeometryFromPin(startConnectorPin);
+		EndWidgetGeometry = resolveGeometryFromPin(endConnectorPin);
+
+		if (StartWidgetGeometry && EndWidgetGeometry)
+			geometryPath = TEXT("pin");
+		else
+		{
+			StartWidgetGeometry = resolveGeometryFromNode(startNode);
+			EndWidgetGeometry = resolveGeometryFromNode(endNode);
+			if (StartWidgetGeometry && EndWidgetGeometry)
+				geometryPath = TEXT("node-fallback");
 		}
 	}
 	else
 	{
-		StartWidgetGeometry = PinGeometries->Find(OutputPinWidget);
+		StartWidgetGeometry = PinGeometries ? PinGeometries->Find(OutputPinWidget) : nullptr;
+		EndWidgetGeometry = resolveGeometryFromPin(InputPin);
+		if (StartWidgetGeometry && EndWidgetGeometry)
+			geometryPath = TEXT("pin");
+	}
 
-		if (TSharedPtr<SGraphPin>* pTargetWidget = PinToPinWidgetMap.Find(InputPin))
+	if (!StartWidgetGeometry || !EndWidgetGeometry)
+	{
+		const FString outputNodeName = OutputPin && OutputPin->GetOwningNode() ? OutputPin->GetOwningNode()->GetName() : TEXT("None");
+		const FString inputNodeName = InputPin && InputPin->GetOwningNode() ? InputPin->GetOwningNode()->GetName() : TEXT("None");
+
+		static double lastMissingGeometryLogTime = 0.0;
+		const double now = FPlatformTime::Seconds();
+		if ((now - lastMissingGeometryLogTime) > 0.25)
 		{
-			TSharedRef<SGraphPin> InputWidget = (*pTargetWidget).ToSharedRef();
-			EndWidgetGeometry = PinGeometries->Find(InputWidget);
+			UE_LOG(LogTemp, Verbose, TEXT("[DetermineLinkGeometry] Missing geometry (Path=%s, OutputNode=%s, InputNode=%s)."), *geometryPath, *outputNodeName, *inputNodeName);
+			lastMissingGeometryLogTime = now;
 		}
 	}
 }
 
-void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(const FVector2D& StartAnchorPoint, const FVector2D& EndAnchorPoint, const FConnectionParams& Params)
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawBezierSplineWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)
 {
-	const FVector2D DeltaPos = EndAnchorPoint - StartAnchorPoint;
-	const FVector2D UnitDelta = DeltaPos.GetSafeNormal();
+	FVector2D controlPointA;
+	FVector2D controlPointB;
+	CalculateBezierControlPoints(StartPoint, EndPoint, controlPointA, controlPointB);
 
-	const FVector2D StartPoint = StartAnchorPoint;
-	const FVector2D EndPoint = EndAnchorPoint - (ArrowRadius.X * UnitDelta);
+	FVector2D arrowDirection = (EndPoint - controlPointB).GetSafeNormal();
+	if (arrowDirection.IsNearlyZero())
+		arrowDirection = FVector2D(0.0f, 1.0f);
 
-	const float nodesDelta = abs(StartPoint.X - EndPoint.X);
-	
-	float OffsetValue = 0.f;
-	const UMounteaDialogueGraphEditorSettings* GraphSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
-	if (GraphSettings == nullptr || GraphSettings->AllowAdvancedWiring() == false || nodesDelta <= GraphSettings->GetControlPointDistance() * ZoomFactor)
-	{
-		DrawConnection(WireLayerID, StartPoint, EndPoint, Params);
-	}
-	else
-	{
-		OffsetValue = -3.f;
-		const FVector2D ConnectionEndPoint = FVector2D(EndPoint.X, EndPoint.Y + OffsetValue);
-		DrawCurvedConnection(WireLayerID, StartPoint, ConnectionEndPoint, Params);
-		
-	}
+	const float connectorInset = MDSGraphWireTokens::ConnectorVisualRadius * ZoomFactor;
+	const FVector2D targetTipPoint = EndPoint - (arrowDirection * connectorInset);
 
-	// Draw the arrow
-	if (ArrowImage)
-	{
-		FVector2D ArrowDrawPos = EndPoint - ArrowRadius;
-		ArrowDrawPos.Y += OffsetValue;
-		const float AngleInRadians = FMath::DegreesToRadians(90.f);
-
-		FSlateDrawElement::MakeRotatedBox(
-			DrawElementsList,
-			ArrowLayerID,
-			FPaintGeometry(ArrowDrawPos, ArrowImage->ImageSize * ZoomFactor, ZoomFactor),
-			ArrowImage,
-			ESlateDrawEffect::None,
-			AngleInRadians,
-			TOptional<FVector2D>(),
-			FSlateDrawElement::RelativeToElement,
-			Params.WireColor
-		);
-	}
-}
-
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawCurvedConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
-{
-	const UMounteaDialogueGraphEditorSettings* GraphSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
-
-	FVector2D Tangent = GraphSettings->GetAdvancedWiringConnectionTangent().GetAbs();
-
-	const int32 SideValue = (End.X > Start.X) ? 1 : -1;
-
-	Tangent.X *= SideValue;
-	Tangent.Y *= 0.5f;
-	
-	FVector2D ControlPoint1 = Start + (Tangent * ZoomFactor);
-	FVector2D ControlPoint2 = End - (Tangent * ZoomFactor);
-	
-	ControlPoint1 = FMath::Lerp(Start, ControlPoint1, 0.6f);
-	ControlPoint2 = FMath::Lerp(End, ControlPoint2, 0.6f);
-	
-	const FVector2D connectionEnd = FVector2D(End.X, End.Y + 5.f);
+	const float rawArrowInset = ArrowImage ? (ArrowImage->ImageSize.X * ZoomFactor * 0.50f) : 8.0f;
+	const float maxArrowInset = FVector2D::Distance(StartPoint, EndPoint) * 0.45f;
+	const float arrowInset = FMath::Min(rawArrowInset, maxArrowInset);
+	const FVector2D splineEnd = targetTipPoint;
+	const FVector2D adjustedControlPointB = controlPointB - (arrowDirection * (arrowInset * 0.15f));
 
 	FSlateDrawElement::MakeCubicBezierSpline(
 		DrawElementsList,
-		LayerId,
+		WireLayerID,
 		FPaintGeometry(),
-		Start,
-		ControlPoint1,
-		ControlPoint2,
-		connectionEnd,
+		StartPoint,
+		controlPointA,
+		adjustedControlPointB,
+		splineEnd,
 		Params.WireThickness,
 		ESlateDrawEffect::None,
 		Params.WireColor
 	);
+
+	if (!ArrowImage)
+		return;
+
+	const FVector2D arrowSize = ArrowImage->ImageSize * ZoomFactor;
+	const FVector2D arrowCenter = targetTipPoint - (arrowDirection * (arrowSize.X * 0.50f));
+	const FVector2D arrowDrawPosition = arrowCenter - (arrowSize * 0.5f);
+	const float arrowAngle = FMath::Atan2(arrowDirection.Y, arrowDirection.X);
+
+	FSlateDrawElement::MakeRotatedBox(
+		DrawElementsList,
+		ArrowLayerID,
+		FPaintGeometry(arrowDrawPosition, arrowSize, 1.0f),
+		ArrowImage,
+		ESlateDrawEffect::None,
+		arrowAngle,
+		TOptional<FVector2D>(),
+		FSlateDrawElement::RelativeToElement,
+		Params.WireColor
+	);
+
+	return;
 }
 
-
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
+void FConnectionDrawingPolicy_MounteaDialogueGraph::CalculateBezierControlPoints(const FVector2D& StartPoint, const FVector2D& EndPoint, FVector2D& OutControlPointA, FVector2D& OutControlPointB)
 {
-	FKismetConnectionDrawingPolicy::DrawConnection(LayerId, Start, End, Params);
+	const FVector2D delta = EndPoint - StartPoint;
+	const float absDeltaX = FMath::Abs(delta.X);
+	const float absDeltaY = FMath::Abs(delta.Y);
+	const float signX = (delta.X >= 0.0f) ? 1.0f : -1.0f;
+	const float signY = (delta.Y >= 0.0f) ? 1.0f : -1.0f;
+
+	const bool isMostlyHorizontal = absDeltaY < MDSGraphWireTokens::LowVerticalThreshold && absDeltaX > MDSGraphWireTokens::LowVerticalThreshold;
+	if (isMostlyHorizontal)
+	{
+		const float flatControlDistance = FMath::Clamp(absDeltaX * MDSGraphWireTokens::FlatCurveControlFactor, 56.0f, 220.0f);
+		OutControlPointA = StartPoint + FVector2D(signX * flatControlDistance, 0.0f);
+		OutControlPointB = EndPoint - FVector2D(signX * flatControlDistance, 0.0f);
+		return;
+	}
+
+	const float verticalControlDistance = FMath::Clamp(
+		(absDeltaY * MDSGraphWireTokens::VerticalControlFactor) + (absDeltaX * 0.08f),
+		MDSGraphWireTokens::MinimumControlDistance,
+		MDSGraphWireTokens::MaximumControlDistance
+	);
+	const float horizontalControlDistance = FMath::Clamp(absDeltaX * MDSGraphWireTokens::HorizontalControlFactor, 0.0f, 96.0f);
+
+	OutControlPointA = StartPoint + FVector2D(signX * horizontalControlDistance, signY * verticalControlDistance);
+	OutControlPointB = EndPoint - FVector2D(signX * horizontalControlDistance * 0.55f, signY * verticalControlDistance);
 }

@@ -15,7 +15,8 @@ UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 #if WITH_EDITORONLY_DATA
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeContextMenuName", "Answer Node");
 	
-	BackgroundColor = FLinearColor(FColor::Turquoise);
+	EditorNodeColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("8b5cf6")));
+	EditorHeaderForegroundColour = FLinearColor::White;
 
 	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_AnswerTooltip", "* This Node represents Player's answers.\n* This Node requires Player's input to be started.\n* Requires Dialogue Data Table to work properly.");
 #endif

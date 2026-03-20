@@ -2,7 +2,6 @@
 
 #include "AssetGraphScheme_MounteaDialogueGraph.h"
 
-#include "FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph.h"
 #include "FConnectionDrawingPolicy_MounteaDialogueGraph.h"
 #include "GraphEditorActions.h"
 #include "Graph/MounteaDialogueGraph.h"
@@ -392,14 +391,40 @@ const FPinConnectionResponse UAssetGraphScheme_MounteaDialogueGraph::CanCreateCo
 		}
 	}
 	
-	if (EdNode_A->DialogueGraphNode->GetGraph()->bEdgeEnabled)
+	return FPinConnectionResponse(CONNECT_RESPONSE_MAKE_WITH_CONVERSION_NODE, LOCTEXT("PinConnect", "Connect nodes with edge"));
+}
+
+bool UAssetGraphScheme_MounteaDialogueGraph::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const
+{
+	UEdNode_MounteaDialogueGraphNode* outputNode = nullptr;
+	UEdNode_MounteaDialogueGraphNode* inputNode = nullptr;
+
+	if (A && A->Direction == EGPD_Output)
 	{
-		return FPinConnectionResponse(CONNECT_RESPONSE_MAKE_WITH_CONVERSION_NODE, LOCTEXT("PinConnect", "Connect nodes with edge"));
+		outputNode = Cast<UEdNode_MounteaDialogueGraphNode>(A->GetOwningNode());
+		inputNode = Cast<UEdNode_MounteaDialogueGraphNode>(B ? B->GetOwningNode() : nullptr);
 	}
 	else
 	{
-		return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, LOCTEXT("PinConnect", "Connect nodes"));
+		outputNode = Cast<UEdNode_MounteaDialogueGraphNode>(B ? B->GetOwningNode() : nullptr);
+		inputNode = Cast<UEdNode_MounteaDialogueGraphNode>(A ? A->GetOwningNode() : nullptr);
 	}
+
+	if (!outputNode || !inputNode || !outputNode->GetOutputPin() || !inputNode->GetInputPin())
+		return false;
+
+	for (UEdGraphPin* linkedPin : outputNode->GetOutputPin()->LinkedTo)
+	{
+		UEdGraphNode* childNode = linkedPin ? linkedPin->GetOwningNode() : nullptr;
+		if (UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(childNode))
+			childNode = edgeNode->GetEndNode();
+
+		if (childNode == inputNode)
+			return false;
+	}
+
+	Super::TryCreateConnection(outputNode->GetOutputPin(), inputNode->GetInputPin());
+	return true;
 }
 
 bool UAssetGraphScheme_MounteaDialogueGraph::CreateAutomaticConversionNodeAndConnections(UEdGraphPin* A, UEdGraphPin* B) const
@@ -436,15 +461,6 @@ bool UAssetGraphScheme_MounteaDialogueGraph::CreateAutomaticConversionNodeAndCon
 
 FConnectionDrawingPolicy* UAssetGraphScheme_MounteaDialogueGraph::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj) const
 {
-	/*
-	if (const UMounteaDialogueGraphEditorSettings* MounteaDialogueGraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
-	{
-		if (MounteaDialogueGraphEditorSettings->AllowAdvancedWiring())
-		{
-			return new FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
-		}
-	}
-	*/
 	return new FConnectionDrawingPolicy_MounteaDialogueGraph(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
 }
 

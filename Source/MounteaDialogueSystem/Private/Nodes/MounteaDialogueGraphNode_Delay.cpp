@@ -19,7 +19,8 @@ UMounteaDialogueGraphNode_Delay::UMounteaDialogueGraphNode_Delay()
 #if WITH_EDITORONLY_DATA
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_DelayNodeContextMenuName", "Delay Node");
 	
-	BackgroundColor = FLinearColor(FColor::FromHex("007ddc"));
+	EditorNodeColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("7dd3fc")));
+	EditorHeaderForegroundColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("0f172a")));
 	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_DelayTooltip", "* This Node does nothing but waits until its Timer expires\n* After expiration following node is selected automatically");
 	bCanRenameNode = false;
 #endif

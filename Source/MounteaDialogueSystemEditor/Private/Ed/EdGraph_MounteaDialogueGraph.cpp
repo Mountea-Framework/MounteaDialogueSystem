@@ -13,6 +13,21 @@
 #include "Helpers/MounteaDialogueGraphEditorUtilities.h"
 #include "Helpers/MounteaDialogueSystemEditorBFC.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
+#include "GraphScheme/AssetGraphScheme_MounteaDialogueGraph.h"
+
+namespace
+{
+	void BreakAllDirectLinksBetween(UEdGraphPin* OutputPin, UEdGraphPin* InputPin)
+	{
+		if (!OutputPin || !InputPin)
+			return;
+
+		while (OutputPin->LinkedTo.Contains(InputPin))
+		{
+			OutputPin->BreakLinkTo(InputPin);
+		}
+	}
+}
 
 UEdGraph_MounteaDialogueGraph::UEdGraph_MounteaDialogueGraph()
 {
@@ -22,8 +37,131 @@ UEdGraph_MounteaDialogueGraph::~UEdGraph_MounteaDialogueGraph()
 {
 }
 
+bool UEdGraph_MounteaDialogueGraph::NormalizeEdgeNodes(bool BMigrateDirectLinks, int32& OutMigratedLinks, int32& OutRemovedDuplicateEdges)
+{
+	OutMigratedLinks = 0;
+	OutRemovedDuplicateEdges = 0;
+	bool bWasModified = false;
+
+	TMap<TPair<UEdNode_MounteaDialogueGraphNode*, UEdNode_MounteaDialogueGraphNode*>, UEdNode_MounteaDialogueGraphEdge*> uniqueEdges;
+	TArray<UEdNode_MounteaDialogueGraphEdge*> duplicateEdges;
+
+	for (UEdGraphNode* graphNode : Nodes)
+	{
+		UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(graphNode);
+		if (!edgeNode)
+			continue;
+
+		UEdNode_MounteaDialogueGraphNode* startNode = edgeNode->GetStartNode();
+		UEdNode_MounteaDialogueGraphNode* endNode = edgeNode->GetEndNode();
+		if (!startNode || !endNode)
+		{
+			duplicateEdges.Add(edgeNode);
+			continue;
+		}
+
+		const TPair<UEdNode_MounteaDialogueGraphNode*, UEdNode_MounteaDialogueGraphNode*> edgeKey(startNode, endNode);
+		if (uniqueEdges.Contains(edgeKey))
+		{
+			duplicateEdges.Add(edgeNode);
+			continue;
+		}
+
+		uniqueEdges.Add(edgeKey, edgeNode);
+	}
+
+	for (UEdNode_MounteaDialogueGraphEdge* duplicateEdge : duplicateEdges)
+	{
+		if (!duplicateEdge)
+			continue;
+
+		duplicateEdge->Modify();
+		duplicateEdge->BreakAllNodeLinks();
+		duplicateEdge->DestroyNode();
+		OutRemovedDuplicateEdges++;
+		bWasModified = true;
+	}
+
+	if (!BMigrateDirectLinks)
+		return bWasModified;
+
+	TArray<TPair<UEdNode_MounteaDialogueGraphNode*, UEdNode_MounteaDialogueGraphNode*>> directLinks;
+	for (UEdGraphNode* graphNode : Nodes)
+	{
+		UEdNode_MounteaDialogueGraphNode* startNode = Cast<UEdNode_MounteaDialogueGraphNode>(graphNode);
+		if (!startNode || !startNode->GetOutputPin())
+			continue;
+
+		for (UEdGraphPin* linkedPin : startNode->GetOutputPin()->LinkedTo)
+		{
+			UEdNode_MounteaDialogueGraphNode* endNode = linkedPin ? Cast<UEdNode_MounteaDialogueGraphNode>(linkedPin->GetOwningNode()) : nullptr;
+			if (!endNode)
+				continue;
+
+			directLinks.AddUnique(TPair<UEdNode_MounteaDialogueGraphNode*, UEdNode_MounteaDialogueGraphNode*>(startNode, endNode));
+		}
+	}
+
+	const UAssetGraphScheme_MounteaDialogueGraph* graphSchema = Cast<UAssetGraphScheme_MounteaDialogueGraph>(GetSchema());
+
+	for (const TPair<UEdNode_MounteaDialogueGraphNode*, UEdNode_MounteaDialogueGraphNode*>& directLink : directLinks)
+	{
+		UEdNode_MounteaDialogueGraphNode* startNode = directLink.Key;
+		UEdNode_MounteaDialogueGraphNode* endNode = directLink.Value;
+		if (!startNode || !endNode || !startNode->GetOutputPin() || !endNode->GetInputPin())
+			continue;
+
+		const TPair<UEdNode_MounteaDialogueGraphNode*, UEdNode_MounteaDialogueGraphNode*> edgeKey(startNode, endNode);
+		const bool bHasEdgeNode = uniqueEdges.Contains(edgeKey);
+		const bool bHadDirectLink = startNode->GetOutputPin()->LinkedTo.Contains(endNode->GetInputPin());
+
+		BreakAllDirectLinksBetween(startNode->GetOutputPin(), endNode->GetInputPin());
+		if (bHadDirectLink)
+			bWasModified = true;
+
+		if (bHasEdgeNode)
+			continue;
+
+		bool bCreatedEdge = false;
+		if (graphSchema)
+			bCreatedEdge = graphSchema->CreateAutomaticConversionNodeAndConnections(startNode->GetOutputPin(), endNode->GetInputPin());
+
+		if (!bCreatedEdge)
+		{
+			UEdNode_MounteaDialogueGraphEdge* edgeNode = CreateEdgeNode(startNode, endNode);
+			if (edgeNode)
+			{
+				edgeNode->CreateNewGuid();
+				edgeNode->NodePosX = (startNode->NodePosX + endNode->NodePosX) * 0.5f;
+				edgeNode->NodePosY = (startNode->NodePosY + endNode->NodePosY) * 0.5f;
+				edgeNode->SetFlags(RF_Transactional);
+				if (edgeNode->MounteaDialogueGraphEdge)
+					edgeNode->MounteaDialogueGraphEdge->SetFlags(RF_Transactional);
+				AddNode(edgeNode, true, false);
+				bCreatedEdge = true;
+			}
+		}
+
+		if (bCreatedEdge)
+		{
+			OutMigratedLinks++;
+			bWasModified = true;
+			uniqueEdges.Add(edgeKey, nullptr);
+		}
+	}
+
+	return bWasModified;
+}
+
 void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 {
+	int32 migratedLinks = 0;
+	int32 removedDuplicateEdges = 0;
+	NormalizeEdgeNodes(false, migratedLinks, removedDuplicateEdges);
+
+	if (removedDuplicateEdges > 0)
+		UE_LOG(LogTemp, Warning, TEXT("[RebuildMounteaDialogueGraph] Removed %d duplicate edge node(s)."), removedDuplicateEdges);
+
 	UMounteaDialogueGraph* Graph = GetMounteaDialogueGraph();
 
 	Clear();

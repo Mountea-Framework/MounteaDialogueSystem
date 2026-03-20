@@ -8,6 +8,7 @@
 
 
 class UMounteaDialogueGraphNode_ReturnToNode;
+class UMounteaDialogueGraphNode_OpenChildGraph;
 class UMounteaDialogueGraphNode_DialogueNodeBase;
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
@@ -91,6 +92,7 @@ private:
 	static void AddNodeData(const TSharedPtr<FJsonObject>& NodeObject, const UMounteaDialogueGraphNode* Node);
 	static void AddDialogueNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode);
 	static void AddJumpNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_ReturnToNode* Node);
+	static void AddOpenChildGraphNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_OpenChildGraph* Node);
 	static FString CreateEdgesJson(const UMounteaDialogueGraph* Graph);
 	static FString CreateCategoriesJson(const UMounteaDialogueGraph* Graph);
 	static FString CreateDialogueDataJson(const UMounteaDialogueGraph* Graph);

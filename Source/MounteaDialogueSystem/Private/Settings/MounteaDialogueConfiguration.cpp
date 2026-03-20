@@ -8,6 +8,7 @@
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
 #include "Nodes/MounteaDialogueGraphNode_Delay.h"
 #include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
+#include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 UMounteaDialogueConfiguration::UMounteaDialogueConfiguration() :
@@ -50,6 +51,11 @@ UMounteaDialogueConfiguration::UMounteaDialogueConfiguration() :
 		FMounteaDialogueGraphNodeConfig dialogueBaseNodeConfig;
 		dialogueBaseNodeConfig.AllowedInputClasses.Add(UMounteaDialogueGraphNode_Delay::StaticClass());
 		NodesConfiguration.Add(UMounteaDialogueGraphNode_DialogueNodeBase::StaticClass(), dialogueBaseNodeConfig);
+	}
+	{
+		FMounteaDialogueGraphNodeConfig openChildGraphNodeConfig;
+		openChildGraphNodeConfig.AllowedInputClasses.Add(UMounteaDialogueGraphNode::StaticClass());
+		NodesConfiguration.Add(UMounteaDialogueGraphNode_OpenChildGraph::StaticClass(), openChildGraphNodeConfig);
 	}
 }
 

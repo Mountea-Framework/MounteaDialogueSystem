@@ -17,7 +17,8 @@ UMounteaDialogueGraphNode_LeadNode::UMounteaDialogueGraphNode_LeadNode()
 #if WITH_EDITORONLY_DATA	
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_LeadNodeContextMenuName", "Lead Node");
 	
-	BackgroundColor = FLinearColor(FColor::Orange);
+	EditorNodeColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("3b82f6")));
+	EditorHeaderForegroundColour = FLinearColor::White;
 	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_LeadTooltip", "* This Node represents NPC lines.\n* This Node starts automatically upon reaching in the Dialogue Tree.\n* Requires Dialogue Data Table to work properly.");
 #endif
 	

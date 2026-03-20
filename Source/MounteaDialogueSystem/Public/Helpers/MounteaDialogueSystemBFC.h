@@ -280,11 +280,11 @@ public:
 	 * @return Returns the settings related to dialogue subtitles, or default settings if none are found.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(CompactNodeTitle="Subtitles Settings", Keywords="settings, subtitles, font"), meta=(CustomTag="MounteaK2Getter"))
-	static FSubtitlesSettings GetSubtitlesSettings(const UObject* WorldContextObject, const FUIRowID& OptionalFilterClass)
+	static FMounteaSubtitlesSettings GetSubtitlesSettings(const UObject* WorldContextObject, const FUIRowID& OptionalFilterClass)
 	{
 		if (GetDialogueSystemSettings_Internal() == nullptr)
 		{
-			return FSubtitlesSettings();
+			return FMounteaSubtitlesSettings();
 		}
 
 		return GetDialogueSystemSettings_Internal()->GetSubtitlesSettings(OptionalFilterClass);

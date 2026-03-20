@@ -77,11 +77,11 @@ float UMounteaDialogueSystemSettings::GetSkipFadeDuration() const
 	return dialogueConfig ? dialogueConfig->SkipFadeDuration : 0.05f;
 }
 
-FSubtitlesSettings UMounteaDialogueSystemSettings::GetSubtitlesSettings(const FUIRowID& RowID) const
+FMounteaSubtitlesSettings UMounteaDialogueSystemSettings::GetSubtitlesSettings(const FUIRowID& RowID) const
 {
 	auto dialogueConfig = DialogueConfiguration.LoadSynchronous();
 	if (!dialogueConfig)
-		return FSubtitlesSettings();
+		return FMounteaSubtitlesSettings();
 	
 	if (dialogueConfig->SubtitlesSettingsOverrides.Contains(RowID))
 	{
@@ -93,7 +93,7 @@ FSubtitlesSettings UMounteaDialogueSystemSettings::GetSubtitlesSettings(const FU
 	return dialogueConfig->SubtitlesSettings;
 }
 
-void UMounteaDialogueSystemSettings::SetSubtitlesSettings(const FSubtitlesSettings& NewSettings, FUIRowID& RowID)
+void UMounteaDialogueSystemSettings::SetSubtitlesSettings(const FMounteaSubtitlesSettings& NewSettings, FUIRowID& RowID)
 {
 	auto dialogueConfig = DialogueConfiguration.LoadSynchronous();
 	if (!dialogueConfig)

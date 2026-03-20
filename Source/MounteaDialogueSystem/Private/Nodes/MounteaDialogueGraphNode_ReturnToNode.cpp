@@ -21,7 +21,8 @@ UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode()
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeInternalTitle", "Return To Node");
 #if WITH_EDITORONLY_DATA
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeContextMenu", "Return To Node");
-	BackgroundColor = FLinearColor(FColor::White);
+	EditorNodeColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("f97316")));
+	EditorHeaderForegroundColour = FLinearColor::White;
 
 	bAllowOutputNodes = false;
 
@@ -74,7 +75,7 @@ void UMounteaDialogueGraphNode_ReturnToNode::OnDelayDurationExpired(const TScrip
 			Context->UpdateActiveDialogueRow( UMounteaDialogueSystemBFC::FindDialogueRow(newDialogueTableHandle.DataTable, newDialogueTableHandle.RowName) );
 			Context->ActiveDialogueRowDataIndex = 0;
 
-			MounteaDialogueManagerInterface->Execute_NodeProcessed(MounteaDialogueManagerInterface.GetObject());
+			MounteaDialogueManagerInterface->Execute_PrepareNode(MounteaDialogueManagerInterface.GetObject());
 
 			// TODO: Force to the new system
 			/*

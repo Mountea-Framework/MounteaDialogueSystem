@@ -3,6 +3,7 @@
 #include "Nodes/MounteaDialogueGraphNode.h"
 
 #include "Algo/AnyOf.h"
+#include "Data/MounteaDialogueContext.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
@@ -20,7 +21,8 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode(): Graph(nullptr), OwningWo
 #if WITH_EDITORONLY_DATA
 	CompatibleGraphType = UMounteaDialogueGraph::StaticClass();
 
-	BackgroundColor = FLinearColor::Black;
+	EditorNodeColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("f97316")));
+	EditorHeaderForegroundColour = FLinearColor::White;
 
 	bAllowInputNodes = true;
 	bAllowOutputNodes = true;
@@ -56,6 +58,16 @@ void UMounteaDialogueGraphNode::CleanupNode_Implementation()
 {
 	OwningWorld = nullptr;
 
+	Execute_UnregisterTick(this, Graph);
+	
+	for (const auto& nodeDecorator : NodeDecorators)
+	{
+		if (!IsValid(nodeDecorator.DecoratorType))
+			continue;
+
+		nodeDecorator.DecoratorType->CleanupDecorator();
+	}
+	
 	OnNodeStateChanged.Clear();
 }
 
@@ -72,19 +84,37 @@ TArray<TSubclassOf<UMounteaDialogueGraphNode>> UMounteaDialogueGraphNode::GetAll
 	return AllowedInputClasses;
 }
 
-void UMounteaDialogueGraphNode::RegisterTick_Implementation( const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+void UMounteaDialogueGraphNode::RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
 {
 	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
 	{
 		ParentTickable->GetMounteaDialogueTickHandle().AddUniqueDynamic(this, &UMounteaDialogueGraphNode::TickMounteaEvent);
+		
+		for (const auto& nodeDecorator : NodeDecorators)
+		{
+			if (!IsValid(nodeDecorator.DecoratorType))
+				continue;
+			
+			if (nodeDecorator.DecoratorType->Implements<UMounteaDialogueTickableObject>())
+				IMounteaDialogueTickableObject::Execute_RegisterTick(nodeDecorator.DecoratorType, this);
+		}
 	}
 }
 
-void UMounteaDialogueGraphNode::UnregisterTick_Implementation( const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
+void UMounteaDialogueGraphNode::UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
 {
 	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
 	{
 		ParentTickable->GetMounteaDialogueTickHandle().RemoveDynamic(this, &UMounteaDialogueGraphNode::TickMounteaEvent);
+		
+		for (const auto& nodeDecorator : NodeDecorators)
+		{
+			if (!IsValid(nodeDecorator.DecoratorType))
+				continue;
+			
+			if (nodeDecorator.DecoratorType->Implements<UMounteaDialogueTickableObject>())
+				IMounteaDialogueTickableObject::Execute_UnregisterTick(nodeDecorator.DecoratorType, this);
+		}
 	}
 }
 
@@ -104,6 +134,11 @@ void UMounteaDialogueGraphNode::InitializeNode_Implementation(UWorld* InWorld)
 
 void UMounteaDialogueGraphNode::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
+	const auto managerOwner = Manager->Execute_GetOwningActor(Manager.GetObject());
+	ensure(managerOwner);
+	
+	InitializeNode(managerOwner->GetWorld());
+	
 	Execute_RegisterTick(this, Graph);
 
 	for (const auto& nodeDecorator : NodeDecorators)
@@ -111,7 +146,9 @@ void UMounteaDialogueGraphNode::PreProcessNode_Implementation(const TScriptInter
 		if (!IsValid(nodeDecorator.DecoratorType))
 			continue;
 
-		nodeDecorator.DecoratorType->SetOwningManager(Manager);
+		nodeDecorator.DecoratorType->InitializeDecorator(managerOwner->GetWorld(), 
+			Manager->Execute_GetDialogueContext(Manager.GetObject())->ActiveDialogueParticipant, 
+			Manager);
 	}
 	
 	Manager->Execute_NodePrepared(Manager.GetObject());
@@ -227,7 +264,11 @@ FText UMounteaDialogueGraphNode::GetNodeTooltipText_Implementation() const
 
 FLinearColor UMounteaDialogueGraphNode::GetBackgroundColor() const
 {
-	return BackgroundColor;
+#if WITH_EDITORONLY_DATA
+	return EditorNodeColour;
+#else
+	return FLinearColor::Black;
+#endif
 }
 
 void UMounteaDialogueGraphNode::SetNodeTitle(const FText& NewTitle)

@@ -36,6 +36,7 @@
 #include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
 #include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
+#include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
@@ -49,31 +50,21 @@
 bool UMounteaDialogueSystemImportExportHelpers::IsReimport(const FString& Filename)
 {
 	if (Filename.IsEmpty())
-	{
 		return false;
-	}
 	
 	TArray<uint8> fileData;
 	if (!FFileHelper::LoadFileToArray(fileData, *Filename))
-	{
 		return false;
-	}
 
 	if (!IsZipFile(fileData))
-	{
 		return false;
-	}
 
 	TMap<FString, FString> extractedFiles;
 	if (!ExtractFilesFromZip(fileData, extractedFiles))
-	{
 		return false;
-	}
 
 	if (!ValidateExtractedContent(extractedFiles))
-	{
 		return false;
-	}
 
 	FGuid dialogueGuid;
 	if (extractedFiles.Contains("dialogueData.json"))
@@ -83,16 +74,12 @@ bool UMounteaDialogueSystemImportExportHelpers::IsReimport(const FString& Filena
 		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
 		{
 			if (JsonObject->HasField(TEXT("dialogueGuid")))
-			{
 				dialogueGuid = FGuid(JsonObject->GetStringField(TEXT("dialogueGuid")));
-			}
 			
 		}
 	}
 	else
-	{
 		return false;
-	}
 
 	const UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
 	if (!importConfig)
@@ -917,11 +904,11 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateCategories(UMounteaDialo
 		FString FullTag;
 		if (Parent.IsEmpty())
 		{
-			FullTag = FString::Printf(TEXT("MounteaDialogue.Categories.%s"), *Name);
+			FullTag = FString::Printf(TEXT("Mountea_Dialogue.Categories.%s"), *Name);
 		}
 		else
 		{
-			FullTag = FString::Printf(TEXT("MounteaDialogue.Categories.%s.%s"), *Parent, *Name);
+			FullTag = FString::Printf(TEXT("Mountea_Dialogue.Categories.%s.%s"), *Parent, *Name);
 		}
 
 		FGameplayTag ExistingTag = TagsManager.RequestGameplayTag(FName(*FullTag), false);
@@ -1051,7 +1038,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateNodes(UMounteaDialogueGr
 		return false;
 	}
 
-	TArray<TSharedPtr<FJsonValue>> LeadNodes, AnswerNodes, CloseDialogueNodes, JumpToNodes, StartNodes;
+	TArray<TSharedPtr<FJsonValue>> LeadNodes, AnswerNodes, CloseDialogueNodes, JumpToNodes, OpenChildGraphNodes, StartNodes;
 	TArray<UMounteaDialogueGraphNode*> SpawnedNodes;
 
 	// Categorize nodes
@@ -1065,25 +1052,17 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateNodes(UMounteaDialogueGr
 
 		const FString NodeType = NodeObject->GetStringField(TEXT("type"));
 		if (NodeType == "leadNode")
-		{
 			LeadNodes.Add(NodeValue);
-		}
 		else if (NodeType == "answerNode")
-		{
 			AnswerNodes.Add(NodeValue);
-		}
 		else if (NodeType == "closeDialogueNode")
-		{
 			CloseDialogueNodes.Add(NodeValue);
-		}
 		else if (NodeType == "jumpToNode")
-		{
 			JumpToNodes.Add(NodeValue);
-		}
+		else if (NodeType == "openChildGraphNode")
+			OpenChildGraphNodes.Add(NodeValue);
 		else if (NodeType == "startNode")
-		{
 			StartNodes.Add(NodeValue);
-		}
 	}
 
 	if (StartNodes.Num() > 0)
@@ -1121,6 +1100,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateNodes(UMounteaDialogueGr
 	CreateNodes(AnswerNodes, UMounteaDialogueGraphNode_AnswerNode::StaticClass());
 	CreateNodes(CloseDialogueNodes, UMounteaDialogueGraphNode_CompleteNode::StaticClass());
 	CreateNodes(JumpToNodes, UMounteaDialogueGraphNode_ReturnToNode::StaticClass());
+	CreateNodes(OpenChildGraphNodes, UMounteaDialogueGraphNode_OpenChildGraph::StaticClass());
 
 	return true;
 }
@@ -1147,6 +1127,16 @@ void UMounteaDialogueSystemImportExportHelpers::PopulateNodeData(UMounteaDialogu
 			returnToNode->SelectedNode = returnToNode->Graph->FindNodeByGuid(FGuid(AdditionalInfoObject->GetStringField(TEXT("targetNodeId"))));
 
 			returnToNode->ReturnNodeUpdated.ExecuteIfBound();
+		}
+	}
+
+	if (AdditionalInfoObject->HasField(TEXT("targetDialogue")))
+	{
+		if (UMounteaDialogueGraphNode_OpenChildGraph* openChildGraphNode = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(Node))
+		{
+			const FString targetDialogue = AdditionalInfoObject->GetStringField(TEXT("targetDialogue"));
+			if (!targetDialogue.IsEmpty())
+				openChildGraphNode->TargetDialogue = TSoftObjectPtr<UMounteaDialogueGraph>(FSoftObjectPath(targetDialogue));
 		}
 	}
 }
@@ -1533,6 +1523,8 @@ void UMounteaDialogueSystemImportExportHelpers::GatherNodesFromGraph(const UMoun
 			OutNodeData.Add(FDialogueNodeData(TEXT("closeDialogueNode"), Node));
 		else if (Cast<UMounteaDialogueGraphNode_ReturnToNode>(Node))
 			OutNodeData.Add(FDialogueNodeData(TEXT("jumpToNode"), Node));
+		else if (Cast<UMounteaDialogueGraphNode_OpenChildGraph>(Node))
+			OutNodeData.Add(FDialogueNodeData(TEXT("openChildGraphNode"), Node));
 		else
 			EditorLOG_WARNING(TEXT("[GatherNodesFromGraph] Unknown node type: %s"), *Node->GetClass()->GetName());
 	}
@@ -1633,14 +1625,13 @@ void UMounteaDialogueSystemImportExportHelpers::AddNodeData(const TSharedPtr<FJs
 	TSharedPtr<FJsonObject> AdditionalInfoObject = MakeShareable(new FJsonObject);
 
 	if (const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node))
-	{
 		AddDialogueNodeData(AdditionalInfoObject, DialogueNode);
-	}
 
 	if (const UMounteaDialogueGraphNode_ReturnToNode* JumpNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(Node))
-	{
 		AddJumpNodeData(AdditionalInfoObject, JumpNode);
-	}
+
+	if (const UMounteaDialogueGraphNode_OpenChildGraph* OpenChildGraphNode = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(Node))
+		AddOpenChildGraphNodeData(AdditionalInfoObject, OpenChildGraphNode);
 
 	DataObject->SetObjectField("additionalInfo", AdditionalInfoObject);
 	NodeObject->SetObjectField("data", DataObject);
@@ -1698,6 +1689,17 @@ void UMounteaDialogueSystemImportExportHelpers::AddJumpNodeData(const TSharedPtr
 	{
 		AdditionalInfoObject->SetStringField("targetNodeId", "");
 	}
+}
+
+void UMounteaDialogueSystemImportExportHelpers::AddOpenChildGraphNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_OpenChildGraph* Node)
+{
+	if (!Node)
+	{
+		AdditionalInfoObject->SetStringField("targetDialogue", "");
+		return;
+	}
+
+	AdditionalInfoObject->SetStringField("targetDialogue", Node->TargetDialogue.ToSoftObjectPath().ToString());
 }
 
 FString UMounteaDialogueSystemImportExportHelpers::CreateEdgesJson(const UMounteaDialogueGraph* Graph)

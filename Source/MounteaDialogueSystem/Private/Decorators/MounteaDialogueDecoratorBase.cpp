@@ -58,15 +58,7 @@ bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(UPARAM(ref)
 		ValidationMessages.Add(TempText);
 
 		bSatisfied = false;
-	}
-
-	if (DecoratorState == EDecoratorState::Uninitialized && bIsEditorCall == false)
-	{
-		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_Base_Validation_State", "[{0}]: Not Initialized properly!"), GetDecoratorName());
-		ValidationMessages.Add(TempText);
-
-		bSatisfied = false;
-	}
+	}	
 	
 	if (GetOwner() == nullptr)
 	{
@@ -95,7 +87,7 @@ bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(UPARAM(ref)
 			{
 				bSatisfied = false;
 				FText guiltyNodeName = FText::FromString(Itr->GetName());
-				if (const UMounteaDialogueGraphNode* guiltyNode = Cast<UMounteaDialogueGraphNode>(Itr->ClassDefaultObject))
+				if (const UMounteaDialogueGraphNode* guiltyNode = GetDefault<UMounteaDialogueGraphNode>(Itr))
 					guiltyNodeName = guiltyNode->NodeTypeName;
 		
 				const FText TempText = FText::Format(
@@ -113,7 +105,7 @@ bool UMounteaDialogueDecoratorBase::ValidateDecorator_Implementation(UPARAM(ref)
 
 bool UMounteaDialogueDecoratorBase::EvaluateDecorator_Implementation()
 {
-	return OwningWorld != nullptr;
+	return OwningWorld != nullptr && DecoratorState == EDecoratorState::Initialized;
 }
 
 void UMounteaDialogueDecoratorBase::ExecuteDecorator_Implementation()

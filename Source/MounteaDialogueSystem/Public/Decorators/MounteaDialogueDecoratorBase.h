@@ -11,6 +11,9 @@
 class IMounteaDialogueManagerInterface;
 class IMounteaDialogueParticipantInterface;
 
+class UMounteaDialogueGraph;
+class UMounteaDialogueGraphNode;
+
 UENUM(BlueprintType)
 enum class EDecoratorState : uint8
 {
@@ -243,8 +246,10 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UWorld>	OwningWorld	=	nullptr;
+	
 	UPROPERTY()
 	TScriptInterface<IMounteaDialogueParticipantInterface>	OwnerParticipant	=	nullptr;
+	
 	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue|Decorator", AdvancedDisplay)
 	TScriptInterface<IMounteaDialogueManagerInterface>		OwningManager		=	nullptr;
 };

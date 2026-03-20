@@ -15,7 +15,8 @@ UMounteaDialogueGraphNode_StartNode::UMounteaDialogueGraphNode_StartNode()
 	bAllowInputNodes = false;
 	
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_StartNodeContextMenuName", "Start Dialogue");
-	BackgroundColor = FLinearColor(0, 1, 0, 1);
+	EditorNodeColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("22c55e")));
+	EditorHeaderForegroundColour = FLinearColor::White;
 	
 	bAllowCopy = false;
 	bAllowCut = false;

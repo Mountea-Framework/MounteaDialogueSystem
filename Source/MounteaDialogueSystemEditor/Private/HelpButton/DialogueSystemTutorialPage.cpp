@@ -45,15 +45,18 @@ void SDialogueSystemTutorialPage::Construct(const FArguments& InArgs)
 {
 	// Header 1 (Largest, Bold)
 	FTextBlockStyle Header1Style = FCoreStyle::Get().GetWidgetStyle<FTextBlockStyle>("NormalText");
-	Header1Style.SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 22));
+	FSlateFontInfo Header1FontInfo = FCoreStyle::GetDefaultFontStyle("Bold", 22);
+	Header1Style.SetFont(Header1FontInfo);
 
 	// Header 2 (Medium, Semi-Bold)
 	FTextBlockStyle Header2Style = FCoreStyle::Get().GetWidgetStyle<FTextBlockStyle>("NormalText");
-	Header2Style.SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Medium.ttf"), 18));
+	FSlateFontInfo Header2FontInfo = FCoreStyle::GetDefaultFontStyle("Regular", 18);
+	Header2Style.SetFont(Header2FontInfo);
 
 	// Header 3 (Smaller, Regular)
 	FTextBlockStyle Header3Style = FCoreStyle::Get().GetWidgetStyle<FTextBlockStyle>("NormalText");
-	Header3Style.SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 16));
+	FSlateFontInfo Header3FontInfo = FCoreStyle::GetDefaultFontStyle("Light", 16);
+	Header3Style.SetFont(Header3FontInfo);
 
 	FString arrowEmoji = TEXT("➡");
 	FString bookEmoji = TEXT("📖");

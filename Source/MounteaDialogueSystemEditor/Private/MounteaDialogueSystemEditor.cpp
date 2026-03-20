@@ -889,7 +889,7 @@ TSharedRef<SWidget> FMounteaDialogueSystemEditor::MakeMounteaMenuWidget() const
 
 		MenuBuilder.AddMenuEntry(
 			LOCTEXT("MounteaSystemEditor_EditorSettingsButton_Label", "Mountea Dialogue Editor Settings"),
-			LOCTEXT("MounteaSystemEditor_EditorSettingsButton_ToolTip", "⚙ Open Mountea Dialogue Editor Settings\n\n❔ Customize your dialogue editor experience with settings for:\n\n📝 Node Settings:\n- Visual style (Node Type, Theme, and Info Style)\n- Automatic naming and node behavior options\n- Background colors and decorator settings\n\n🔌 Node Wiring:\n- Wire appearance and arrow types\n- Advanced wiring controls and tangent settings\n- Auto-layout strategies and iteration controls\n\n🏷️ Gameplay Tags:\n- Auto gameplay tag check configuration\n- URL configurations for external resources\n\nAll settings are saved in DefaultMounteaSettings.ini"),
+			LOCTEXT("MounteaSystemEditor_EditorSettingsButton_ToolTip", "⚙ Open Mountea Dialogue Editor Settings\n\n❔ Configure editor behavior and tooling options:\n\n📝 Node Behavior:\n- Automatic naming\n- Rename permissions\n- Native decorator edit permissions\n\n🧭 Auto-Arrange:\n- Layout strategy and simulation tuning\n\n🏷️ Gameplay Tags:\n- Auto check configuration\n- Remote source URL\n\nAll settings are saved in DefaultMounteaSettings.ini"),
 			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Settings"),
 			FUIAction(
 				FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::EditorSettingsButtonClicked)

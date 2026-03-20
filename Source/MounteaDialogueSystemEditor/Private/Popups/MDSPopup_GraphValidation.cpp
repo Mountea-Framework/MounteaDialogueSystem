@@ -8,8 +8,6 @@
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Helpers/MounteaDialogueGraphColors.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
-#include "Helpers/MounteaDialogueSystemEditorBFC.h"
-#include "Settings/MounteaDialogueGraphEditorSettings.h"
 #include "Interfaces/IPluginManager.h"
 #include "Widgets/Layout/SScaleBox.h"
 
@@ -36,9 +34,7 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText> Validatio
 			.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.TextSoftEdges"))
 			.BorderBackgroundColor
 			(
-				UMounteaDialogueSystemEditorBFC::GetNodeTheme() == ENodeTheme::ENT_DarkTheme ?
-				MounteaDialogueGraphColors::ValidationGraph::DarkTheme :
-				MounteaDialogueGraphColors::ValidationGraph::LightTheme
+				MounteaDialogueGraphColors::ValidationGraph::DarkTheme
 			)
 			.Padding(FMargin(8.0f, 8.0f));
 	

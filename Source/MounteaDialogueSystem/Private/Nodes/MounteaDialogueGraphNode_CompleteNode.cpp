@@ -10,7 +10,8 @@ UMounteaDialogueGraphNode_CompleteNode::UMounteaDialogueGraphNode_CompleteNode()
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_CompleteNodeInternalTitle", "Complete Dialogue");
 #if WITH_EDITORONLY_DATA
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_CompleteNodeContextMenuName", "Complete Dialogue");
-	BackgroundColor = FLinearColor(1, 0, 0, 1);
+	EditorNodeColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("CC2100")));
+	EditorHeaderForegroundColour = FLinearColor::White;
 
 	bAllowOutputNodes = false;
 
