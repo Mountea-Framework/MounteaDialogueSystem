@@ -13,6 +13,7 @@
 #include "AssetActions/MounteaDialogueAdditionalDataAssetAction.h"
 #include "AssetActions/MounteaDialogueDecoratorAssetAction.h"
 #include "AssetActions/MounteaDialogueGraphAssetAction.h"
+#include "DetailsPanel/MounteaDialogueCondition_DetailsPanel.h"
 #include "DetailsPanel/MounteaDialogueDecorator_DetailsPanel.h"
 #include "DetailsPanel/MounteaDialogueGraphNode_Details.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
@@ -36,6 +37,7 @@
 #include "AssetActions/MounteaDialogueConfigurationAssetAction.h"
 #include "AssetActions/MounteaDialogueDataTableAssetAction.h"
 #include "AssetActions/MounteaDialogueNodeAssetAction.h"
+#include "Conditions/MounteaDialogueConditionBase.h"
 #include "DetailsPanel/MounteaDialogueDecorator_Details.h"
 #include "DetailsPanel/MounteaDialogueEditorSettings_Details.h"
 #include "DetailsPanel/MounteaDialogueGraph_Details.h"
@@ -128,8 +130,8 @@ void FMounteaDialogueSystemEditor::StartupModule()
 			{
 				DialogueTreeSet->SetContentRoot(ContentDir);
 				
-				FSlateImageBrush* DialogueTreeSetClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueTreeIcon_128"), TEXT(".png")), FVector2D(128.f, 128.f));
-				FSlateImageBrush* DialogueTreeSetClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueTreeIcon_16"), TEXT(".png")), FVector2D(16.f, 16.f));
+				FSlateImageBrush* DialogueTreeSetClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueGraph"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueTreeSetClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueGraph"), TEXT(".png")), FVector2D(16.f, 16.f));
 				if (DialogueTreeSetClassThumb && DialogueTreeSetClassIcon)
 				{
 					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueGraph", DialogueTreeSetClassThumb);
@@ -184,8 +186,8 @@ void FMounteaDialogueSystemEditor::StartupModule()
 					DialogueTreeSet->Set("ClassIcon.MounteaDialogueManagerNetSync", DialogueManagerSyncSetClassIcon);
 				}
 
-				FSlateImageBrush* DialogueGraphNodeClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueNodeClassIcon"), TEXT(".png")), FVector2D(128.f, 128.f));
-				FSlateImageBrush* DialogueGraphNodeClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueNodeClassIcon"), TEXT(".png")), FVector2D(16.f, 16.f));
+				FSlateImageBrush* DialogueGraphNodeClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueNodeIcon"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueGraphNodeClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueNodeIcon"), TEXT(".png")), FVector2D(16.f, 16.f));
 				if (DialogueGraphNodeClassThumb && DialogueGraphNodeClassIcon)
 				{
 					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueGraphNode", DialogueGraphNodeClassThumb);
@@ -226,10 +228,12 @@ void FMounteaDialogueSystemEditor::StartupModule()
 			TArray<FOnGetPropertyTypeCustomizationInstance> CustomPropertyTypeLayouts =
 		   {
 				FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FMounteaDialogueDecorator_DetailsPanel::MakeInstance),
+				FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FMounteaDialogueCondition_DetailsPanel::MakeInstance),
 			};
 			RegisteredCustomPropertyTypeLayout =
 			{
 				FMounteaDialogueDecorator::StaticStruct()->GetFName(),
+				FMounteaDialogueCondition::StaticStruct()->GetFName(),
 			};
 			for (int32 i = 0; i < RegisteredCustomPropertyTypeLayout.Num(); i++)
 			{

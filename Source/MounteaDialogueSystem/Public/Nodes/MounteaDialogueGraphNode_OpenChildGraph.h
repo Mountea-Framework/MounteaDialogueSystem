@@ -34,11 +34,22 @@ public:
 	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 
 	/** Soft reference to the dialogue graph which should be opened in a future implementation pass. */
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, 
+	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly,
 		meta=(NoResetToDefault),
 		meta=(DisplayThumbnail="false"),
 		meta=(ForceShowEngineContent, ForceShowPluginContent))
 	TSoftObjectPtr<UMounteaDialogueGraph> TargetDialogue;
+
+#if WITH_EDITORONLY_DATA
+
+	/**
+	 * Transient GUID set by the import pipeline when a Dialoguer file references a target
+	 * dialogue by GUID. Cleared by ResolveOpenChildGraphTargets once the target asset is found.
+	 */
+	UPROPERTY(Transient)
+	FGuid PendingTargetDialogueGUID;
+
+#endif
 
 #if WITH_EDITOR
 	virtual FText GetDescription_Implementation() const override;

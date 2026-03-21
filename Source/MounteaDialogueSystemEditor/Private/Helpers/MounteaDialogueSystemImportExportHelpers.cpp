@@ -1,6 +1,8 @@
 ﻿// All rights reserved Dominik Morse (Pavlicek) 2024
 
 #include "MounteaDialogueSystemImportExportHelpers.h"
+
+#include "AssetImportTask.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 
 #include "Sound/SoundWave.h"
@@ -28,6 +30,7 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
+#include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Framework/Notifications/NotificationManager.h"
 
 #include "Internationalization/StringTable.h"
@@ -38,9 +41,15 @@
 #include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
 #include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
+#include "Conditions/MounteaDialogueConditionBase.h"
+#include "Decorators/MounteaDialogueDecoratorBase.h"
+#include "Nodes/MounteaDialogueGraphNode_Delay.h"
+#include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 #include "ImportConfig/MounteaDialogueImportConfig.h"
+
+#include "Interfaces/IPluginManager.h"
 
 #include "UObject/SavePackage.h"
 #include "Widgets/Notifications/SNotificationList.h"
@@ -92,23 +101,22 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 {
 	if (FilePath.IsEmpty())
 	{
-		OutMessage = TEXT("Source File is empty.");
+		OutMessage = TEXT("Source file path is empty");
 		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
 		return false;
 	}
 
-	// TODO: with recursive calls FilePath is wrong so maybe do not call with different path?
 	TArray<uint8> fileData;
 	if (!FFileHelper::LoadFileToArray(fileData, *FilePath))
 	{
-		OutMessage = FString::Printf( TEXT("Failed to load file: %s"), *FilePath);
+		OutMessage = FString::Printf(TEXT("Failed to read file: %s"), *FilePath);
 		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
 		return false;
 	}
 
 	if (!IsZipFile(fileData))
 	{
-		OutMessage = FString::Printf( TEXT("File is not a valid mnteadlg/zip: %s"), *FilePath);
+		OutMessage = FString::Printf(TEXT("Not a valid archive: %s"), *FilePath);
 		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
 		return false;
 	}
@@ -116,127 +124,15 @@ bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FStr
 	TMap<FString, FString> extractedFiles;
 	if (!ExtractFilesFromZip(fileData, extractedFiles))
 	{
-		OutMessage = FString::Printf( TEXT("Failed to extract files from archive: %s"), *FilePath);
-		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
-		return false;
-	}
-	
-	if (!ValidateExtractedContent(extractedFiles))
-	{
-		OutMessage = FString::Printf( TEXT("Invalid content in file: %s"), *FilePath);
+		OutMessage = FString::Printf(TEXT("Failed to extract archive: %s"), *FilePath);
 		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
 		return false;
 	}
 
-	FGuid dialogueGuid;
-	if (extractedFiles.Contains("dialogueData.json"))
-	{
-		TSharedPtr<FJsonObject> JsonObject;
-		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(extractedFiles["dialogueData.json"]);
-		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
-		{
-			if (JsonObject->HasField(TEXT("dialogueGuid")))
-			{
-				dialogueGuid = FGuid(JsonObject->GetStringField(TEXT("dialogueGuid")));
-			}
-			else
-			{
-				OutMessage = FString::Printf( TEXT("`dialogueGuid` field not found in dialogueData.json"));
-				EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
-				return false;
-			}
-		}
-		else
-		{
-			OutMessage = FString::Printf( TEXT("Failed to parse dialogueData.json"));
-			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
-			return false;
-		}
-	}
-	else
-	{
-		OutMessage = FString::Printf( TEXT("Invalid Dialogue source, missing dialogueData.json"));
-		EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
-		return false;
-	}
-
-	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
-	if (!importConfig)
-		return false;
-
-	if (!OutGraph)
-	{		
-		if (importConfig->ImportHistory.Contains(dialogueGuid))
-		{
-			const FString dialoguePath = importConfig->ImportHistory.Find(dialogueGuid)->DialogueAssetPath;
-
-			const FString Directory = FPaths::GetPath(dialoguePath);
-			FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-			FARFilter Filter;
-			Filter.bRecursivePaths = false;
-			Filter.PackagePaths.Add(FName(*Directory));
-			Filter.ClassPaths.Add(UMounteaDialogueGraph::StaticClass()->GetClassPathName());
-
-			TArray<FAssetData> AssetDataList;
-			AssetRegistryModule.Get().GetAssets(Filter, AssetDataList);
-
-			for (const FAssetData& AssetData : AssetDataList)
-			{
-				UMounteaDialogueGraph* DialogueGraph = Cast<UMounteaDialogueGraph>(AssetData.GetAsset());
-				if (DialogueGraph && DialogueGraph->GetGraphGUID() == dialogueGuid)
-				{
-					OutGraph = DialogueGraph;
-					break;
-				}
-			}
-		}
-	}
-	
-	if (OutGraph)
-	{
-		if (dialogueGuid != OutGraph->GetGraphGUID())
-		{
-			// TODO: Rather than return false process creating new dialogue? Maybe expose this option to settings?
-			OutMessage = FString::Printf( TEXT("Attempting to reimport different Graph.\nUnreal Graph: %s\nSource Graph: %s"), *OutGraph->GetGraphGUID().ToString(EGuidFormats::DigitsWithHyphensLower), *dialogueGuid.ToString(EGuidFormats::DigitsWithHyphensLower));
-			EditorLOG_ERROR(TEXT("[ReimportDialogueGraph] %s"), *OutMessage);
-			return false;
-		}
-
-		OutGraph->ClearGraph();
-		
-		if (PopulateGraphFromExtractedFiles(OutGraph, extractedFiles, FilePath))
-		{
-			ImportAudioFiles(extractedFiles, OutGraph, OutGraph);
-			
-			if (OutGraph->EdGraph)
-			{
-				if (UEdGraph_MounteaDialogueGraph *edGraph = Cast<UEdGraph_MounteaDialogueGraph>(OutGraph->EdGraph))
-					edGraph->RebuildMounteaDialogueGraph();
-			}
-		}
-
-		for (const auto &File : extractedFiles)
-		{
-			if (File.Key.StartsWith("audio/"))
-			{
-				IFileManager::Get().Delete(*File.Value);
-			}
-		}
-
-		OutMessage = FString::Printf(TEXT("Graph `%s` has been refreshed."), *OutGraph->GetName());
-
-		return true;
-	}
-	
-	// Create new, because:
-	// - we dont have OutGraph
-	// - config doesnt know this guid yet
-	EObjectFlags flags = RF_Public | RF_Standalone | RF_Transactional;
-	UMounteaDialogueGraph* NewGraph = NewObject<UMounteaDialogueGraph>(ObjectRedirector, UMounteaDialogueGraph::StaticClass(), FName(ObjectRedirector->GetName()), flags);
-	OutGraph = NewGraph;
-	FString outMessage;
-	return ImportDialogueGraph(FilePath, ObjectRedirector, FName(ObjectRedirector->GetName()), flags, NewGraph, outMessage);
+	UObject* parent = OutGraph ? OutGraph->GetOuter() : ObjectRedirector;
+	const FName assetName = OutGraph ? FName(*OutGraph->GetName()) : NAME_None;
+	const EObjectFlags reimportFlags = OutGraph ? OutGraph->GetFlags() : RF_Public | RF_Standalone | RF_Transactional;
+	return ImportDialogueGraphFromFiles(extractedFiles, FilePath, parent, assetName, reimportFlags, OutGraph, OutMessage);
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::CanReimport(UObject* ObjectRedirector, TArray<FString>& OutFilenames)
@@ -277,180 +173,171 @@ void UMounteaDialogueSystemImportExportHelpers::UpdateGraphImportDataConfig(cons
 
 bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FString& FilePath, UObject* InParent, const FName Name, const EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph, FString& OutMessage)
 {
-	// 1. Load the file
 	TArray<uint8> fileData;
 	if (!FFileHelper::LoadFileToArray(fileData, *FilePath))
 	{
-		OutMessage = FString::Printf(TEXT("Failed to extract files from archive: %s"), *FilePath);
-		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
-		return false;
-	}
-
-	// 2. Make sure it's a zip file
-	if (!IsZipFile(fileData))
-	{
-		EditorLOG_ERROR(TEXT("[FactoryCreateFile] File is not a valid mnteadlg/zip: %s"), *FilePath);
-		return false;
-	}
-
-	// 3. Extract and read content
-	TMap<FString, FString> extractedFiles;
-	if (!ExtractFilesFromZip(fileData, extractedFiles))
-	{
-		OutMessage = FString::Printf(TEXT("Failed to extract files from archive: %s"), *FilePath);
-		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
-		return false;
-	}
-
-	// 3. Read the GUID from dialogueData.json
-	FGuid importedGuid;
-	FString dialogueName;
-	if (extractedFiles.Contains("dialogueData.json"))
-	{
-		TSharedPtr<FJsonObject> JsonObject;
-		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(extractedFiles["dialogueData.json"]);
-		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
-		{
-			if (JsonObject->HasField(TEXT("dialogueGuid")))
-			{
-				FString guidString = JsonObject->GetStringField(TEXT("dialogueGuid"));
-				FGuid::Parse(guidString, importedGuid);
-			}
-			
-			if (JsonObject->HasField(TEXT("dialogueGuid")))
-			{
-				dialogueName = JsonObject->GetStringField(TEXT("dialogueName"));
-			}
-			else
-			{
-				OutMessage = TEXT("dialogueName field not found in dialogueData.json");
-				EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
-				return false;
-			}
-		}
-		else
-		{
-			OutMessage = TEXT("Failed to parse dialogueData.json");
-			EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
-			return false;
-		}
-	}
-	else
-	{
-		OutMessage = TEXT("dialogueData.json not found in extracted files");
-		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
-		return false;
-	}
-
-	if (!importedGuid.IsValid())
-	{
-		OutMessage = TEXT("Failed to read GUID from imported file");
+		OutMessage = FString::Printf(TEXT("Failed to read file: %s"), *FilePath);
 		EditorLOG_ERROR(TEXT("[ImportDialogueGraph] %s"), *OutMessage);
 		return false;
 	}
-	
-	// 4. Check for existing Dialogue Graphs in the folder
-	const FString Directory = FPaths::GetPath(InParent->GetPackage()->GetName());
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-	FARFilter Filter;
-	Filter.bRecursivePaths = false;
-	Filter.PackagePaths.Add(FName(*Directory));
-	Filter.ClassPaths.Add(UMounteaDialogueGraph::StaticClass()->GetClassPathName());
-
-	TArray<FAssetData> AssetDataList;
-	AssetRegistryModule.Get().GetAssets(Filter, AssetDataList);
-
-	// 5. Compare GUIDs and handle reimport or new import
-	bool bFoundGraphOk = false;
-	UMounteaDialogueGraph* ExistingGraph = nullptr;
-	for (const FAssetData& AssetData : AssetDataList)
+	if (!IsZipFile(fileData))
 	{
-		UMounteaDialogueGraph* DialogueGraph = Cast<UMounteaDialogueGraph>(AssetData.GetAsset());
-		if (DialogueGraph && DialogueGraph->GetGraphGUID() == importedGuid)
-		{
-			ExistingGraph = DialogueGraph;
-			break;
-		}
-	}
-	
-	if (ExistingGraph)
-	{
-		// Reimport
-		OutGraph = ExistingGraph;
-		return ReimportDialogueGraph(FilePath, InParent, OutGraph, OutMessage);
-	}
-
-	if (AssetDataList.Num() > 0)
-	{
-		for (const FAssetData& AssetData : AssetDataList)
-		{
-			UMounteaDialogueGraph* DialogueGraph = Cast<UMounteaDialogueGraph>(AssetData.GetAsset());
-			if (DialogueGraph == OutGraph)
-			{
-				bFoundGraphOk = true;
-				break;
-			}
-		}
-
-		if (!bFoundGraphOk)
-		{
-			OutMessage = TEXT("A different Dialogue Graph already exists in this folder. Import canceled.");
-			EditorLOG_ERROR(TEXT("[ImportDialogueGraph] %s"), *OutMessage);
-			return false;
-		}
-	}
-
-	// 4. Validate content
-	if (!ValidateExtractedContent(extractedFiles))
-	{
-		OutMessage = FString::Printf(TEXT("Invalid content in file: %s"), *FilePath);
-		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
+		OutMessage = FString::Printf(TEXT("Not a valid archive: %s"), *FilePath);
+		EditorLOG_ERROR(TEXT("[ImportDialogueGraph] %s"), *OutMessage);
 		return false;
 	}
-	const FName assetName = !dialogueName.IsEmpty() ? FName(*dialogueName) : Name;
 
-	// 6. Process UMounteaDialogueGraph if all is good
-	if (OutGraph)
+	TMap<FString, FString> extractedFiles;
+	if (!ExtractFilesFromZip(fileData, extractedFiles))
 	{
-		OutGraph->Rename(*assetName.ToString());
+		OutMessage = FString::Printf(TEXT("Failed to extract archive: %s"), *FilePath);
+		EditorLOG_ERROR(TEXT("[ImportDialogueGraph] %s"), *OutMessage);
+		return false;
+	}
 
-		if (PopulateGraphFromExtractedFiles(OutGraph, extractedFiles, FilePath))
+	return ImportDialogueGraphFromFiles(extractedFiles, FilePath, InParent, Name, Flags, OutGraph, OutMessage);
+}
+
+bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraphFromFiles(TMap<FString, FString>& extractedFiles, const FString& sourceFilePath, UObject* inParent, FName name, EObjectFlags flags, UMounteaDialogueGraph*& outGraph, FString& outMessage)
+{
+	// 1. Parse dialogueData.json for GUID and dialogue name
+	if (!extractedFiles.Contains(TEXT("dialogueData.json")))
+	{
+		outMessage = TEXT("dialogueData.json not found in extracted files");
+		EditorLOG_ERROR(TEXT("[ImportDialogueGraphFromFiles] %s"), *outMessage);
+		return false;
+	}
+
+	TSharedPtr<FJsonObject> dialogueDataJson;
+	TSharedRef<TJsonReader<>> jsonReader = TJsonReaderFactory<>::Create(extractedFiles[TEXT("dialogueData.json")]);
+	if (!FJsonSerializer::Deserialize(jsonReader, dialogueDataJson) || !dialogueDataJson.IsValid())
+	{
+		outMessage = TEXT("Failed to parse dialogueData.json");
+		EditorLOG_ERROR(TEXT("[ImportDialogueGraphFromFiles] %s"), *outMessage);
+		return false;
+	}
+
+	FGuid importedGuid;
+	FString guidStr;
+	if (!dialogueDataJson->TryGetStringField(TEXT("dialogueGuid"), guidStr) || !FGuid::Parse(guidStr, importedGuid))
+	{
+		outMessage = TEXT("dialogueGuid missing or invalid in dialogueData.json");
+		EditorLOG_ERROR(TEXT("[ImportDialogueGraphFromFiles] %s"), *outMessage);
+		return false;
+	}
+
+	FString dialogueName;
+	dialogueDataJson->TryGetStringField(TEXT("dialogueName"), dialogueName);
+
+	// 2. Locate an existing graph with this GUID (via import config history)
+	UMounteaDialogueGraph* existingGraph = outGraph;
+	if (!existingGraph)
+	{
+		UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
+		if (importConfig && importConfig->ImportHistory.Contains(importedGuid))
 		{
-			// 7. Import audio files if present
-			ImportAudioFiles(extractedFiles, InParent, OutGraph);
+			const FString& assetPath = importConfig->ImportHistory[importedGuid].DialogueAssetPath;
+			const FString assetDir = FPaths::GetPath(assetPath);
 
-			OutGraph->CreateGraph();
-			if (OutGraph->EdGraph)
+			FAssetRegistryModule& assetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+			FARFilter filter;
+			filter.bRecursivePaths = false;
+			filter.PackagePaths.Add(FName(*assetDir));
+			filter.ClassPaths.Add(UMounteaDialogueGraph::StaticClass()->GetClassPathName());
+
+			TArray<FAssetData> assetDataList;
+			assetRegistryModule.Get().GetAssets(filter, assetDataList);
+
+			for (const FAssetData& assetData : assetDataList)
 			{
-				if (UEdGraph_MounteaDialogueGraph *edGraph = Cast<UEdGraph_MounteaDialogueGraph>(OutGraph->EdGraph))
-					edGraph->RebuildMounteaDialogueGraph();
+				UMounteaDialogueGraph* graph = Cast<UMounteaDialogueGraph>(assetData.GetAsset());
+				if (graph && graph->GetGraphGUID() == importedGuid)
+				{
+					existingGraph = graph;
+					break;
+				}
 			}
-
-			SaveAsset(OutGraph);
-
-			OutMessage = FString::Printf(TEXT("New Dialogue Graph created!"));
-			return true;
 		}
-		OutMessage = FString::Printf(TEXT("Failed to populate graph from extracted files: %s"), *FilePath);
-		EditorLOG_ERROR(TEXT("[FactoryCreateFile] "), *OutMessage);
+	}
+
+	// Shared helper: populate the graph and rebuild/save it
+	auto PopulateAndSave = [&](UMounteaDialogueGraph* graph) -> bool
+	{
+		if (!ValidateExtractedContent(extractedFiles))
+		{
+			outMessage = TEXT("Archive is missing required files");
+			EditorLOG_ERROR(TEXT("[ImportDialogueGraphFromFiles] %s"), *outMessage);
+			return false;
+		}
+
+		if (!PopulateGraphFromExtractedFiles(graph, extractedFiles, sourceFilePath))
+		{
+			outMessage = TEXT("Failed to populate graph from extracted files");
+			EditorLOG_ERROR(TEXT("[ImportDialogueGraphFromFiles] %s"), *outMessage);
+			return false;
+		}
+
+		graph->CreateGraph();
+		if (graph->EdGraph)
+		{
+			if (UEdGraph_MounteaDialogueGraph* edGraph = Cast<UEdGraph_MounteaDialogueGraph>(graph->EdGraph))
+				edGraph->RebuildMounteaDialogueGraph();
+		}
+
+		SaveAsset(graph);
+
+		// Resolve OpenChildGraph targets now that the graph is saved and visible to the asset registry.
+		// For single-file imports this catches pre-existing target graphs.
+		// For project imports the factory runs a second pass with the full imported-graphs map.
+		ResolveOpenChildGraphTargets(graph, TMap<FGuid, UMounteaDialogueGraph*>());
+
+		return true;
+	};
+
+	bool bSuccess = false;
+
+	// 3a. Reimport path: existing graph found with matching GUID
+	if (existingGraph && existingGraph->GetGraphGUID() == importedGuid)
+	{
+		existingGraph->ClearGraph();
+		bSuccess = PopulateAndSave(existingGraph);
+		if (bSuccess)
+		{
+			outGraph = existingGraph;
+			outMessage = FString::Printf(TEXT("Graph '%s' reimported successfully."), *existingGraph->GetName());
+		}
 	}
 	else
 	{
-		OutMessage = FString::Printf(TEXT("Failed to create new graph object"));
-		EditorLOG_ERROR(TEXT("[FactoryCreateFile] %s"), *OutMessage);
-	}
+		// 3b. New import path
+		const FName assetName = !dialogueName.IsEmpty() ? FName(*dialogueName) : name;
 
-	// Cleanup
-	for (const auto &File : extractedFiles)
-	{
-		if (File.Key.StartsWith("audio/"))
+		if (!outGraph)
+			outGraph = NewObject<UMounteaDialogueGraph>(inParent, UMounteaDialogueGraph::StaticClass(), assetName, flags | RF_Transactional);
+		else
+			outGraph->Rename(*assetName.ToString());
+
+		if (!outGraph)
 		{
-			IFileManager::Get().Delete(*File.Value);
+			outMessage = TEXT("Failed to create new graph object");
+			EditorLOG_ERROR(TEXT("[ImportDialogueGraphFromFiles] %s"), *outMessage);
+			return false;
 		}
+
+		bSuccess = PopulateAndSave(outGraph);
+		if (bSuccess)
+			outMessage = FString::Printf(TEXT("Graph '%s' created successfully."), *outGraph->GetName());
 	}
 
-	return false;
+	// Always clean up audio temp files
+	for (const auto& file : extractedFiles)
+	{
+		if (file.Key.StartsWith(TEXT("audio/")))
+			IFileManager::Get().Delete(*file.Value);
+	}
+
+	return bSuccess;
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::ExportDialogueGraph(const UMounteaDialogueGraph* Graph, const FString& FilePath)
@@ -560,28 +447,39 @@ bool UMounteaDialogueSystemImportExportHelpers::ExtractFilesFromZip(const TArray
 			int size = zip_entry_size(zip);
 
 			FString FileName = UTF8_TO_TCHAR(name);
-			if (FileName.StartsWith(TEXT("audio/")) && FileName.EndsWith(TEXT(".wav")))
+			const bool bIsPng = (FileName.StartsWith(TEXT("Thumbnails/")) || FileName.StartsWith(TEXT("thumbnails/"))) && FileName.EndsWith(TEXT(".png"));
+			const bool bIsAudioFile = FileName.StartsWith(TEXT("audio/")) &&
+				(FileName.EndsWith(TEXT(".wav")) || FileName.EndsWith(TEXT(".mp3"))
+				|| FileName.EndsWith(TEXT(".ogg")) || FileName.EndsWith(TEXT(".flac")));
+			const bool bIsBinaryFile = bIsAudioFile || FileName.EndsWith(TEXT(".mnteadlg")) || bIsPng;
+
+			if (bIsBinaryFile)
 			{
-				// For audio files, extract to a temporary file
-				FString TempAudioPath = FPaths::CreateTempFilename(FPlatformProcess::UserTempDir(), TEXT("TempAudio"), TEXT(".wav"));
-				
+				// Binary files — extract to a temp file; store the path (not the content).
+				// Preserve the original extension so format-detection in the audio/texture
+				// importers works correctly (e.g. ImportSoundWave dispatches by extension).
+				FString tempSuffix = TEXT(".wav");
+				FString tempPrefix = TEXT("TempAudio");
+				if (FileName.EndsWith(TEXT(".mnteadlg")))      { tempSuffix = TEXT(".mnteadlg"); tempPrefix = TEXT("MounteaDialogue"); }
+				else if (bIsPng)                               { tempSuffix = TEXT(".png");       tempPrefix = TEXT("TempThumbnail");  }
+				else if (FileName.EndsWith(TEXT(".mp3")))        tempSuffix = TEXT(".mp3");
+				else if (FileName.EndsWith(TEXT(".ogg")))        tempSuffix = TEXT(".ogg");
+				else if (FileName.EndsWith(TEXT(".flac")))       tempSuffix = TEXT(".flac");
+				FString TempBinaryPath = FPaths::CreateTempFilename(FPlatformProcess::UserTempDir(), *tempPrefix, *tempSuffix);
+
 				TArray<uint8> Buffer;
 				Buffer.SetNum(size);
-				
+
 				if (zip_entry_noallocread(zip, Buffer.GetData(), size) != -1)
 				{
-					if (FFileHelper::SaveArrayToFile(Buffer, *TempAudioPath))
-					{
-						OutExtractedFiles.Add(FileName, TempAudioPath);
-					}
+					if (FFileHelper::SaveArrayToFile(Buffer, *TempBinaryPath))
+						OutExtractedFiles.Add(FileName, TempBinaryPath);
 					else
-					{
-						EditorLOG_ERROR(TEXT("Failed to save temporary audio file: %s"), *TempAudioPath);
-					}
+						EditorLOG_ERROR(TEXT("[ExtractFilesFromZip] Failed to save temp binary file: %s"), *TempBinaryPath);
 				}
 				else
 				{
-					EditorLOG_ERROR(TEXT("Failed to read audio file content: %hs"), name);
+					EditorLOG_ERROR(TEXT("[ExtractFilesFromZip] Failed to read binary file content: %hs"), name);
 				}
 			}
 			else
@@ -612,14 +510,12 @@ bool UMounteaDialogueSystemImportExportHelpers::ExtractFilesFromZip(const TArray
 
 FString UMounteaDialogueSystemImportExportHelpers::BytesToString(const uint8* Bytes, const int32 Count)
 {
-	TArray<TCHAR> CharArray;
-	CharArray.SetNum(Count + 1);
-	for (int32 i = 0; i < Count; ++i)
-	{
-		CharArray[i] = static_cast<TCHAR>(Bytes[i]);
-	}
-	CharArray[Count] = '\0';
-	return FString(CharArray.GetData());
+	// Skip UTF-8 BOM (0xEF 0xBB 0xBF) when present so JSON deserialization never sees it
+	int32 offset = 0;
+	if (Count >= 3 && Bytes[0] == 0xEF && Bytes[1] == 0xBB && Bytes[2] == 0xBF)
+		offset = 3;
+
+	return FString(FUTF8ToTCHAR(reinterpret_cast<const UTF8CHAR*>(Bytes + offset), Count - offset));
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::ValidateExtractedContent(const TMap<FString, FString>& ExtractedFiles)
@@ -644,176 +540,220 @@ bool UMounteaDialogueSystemImportExportHelpers::ValidateExtractedContent(const T
 
 bool UMounteaDialogueSystemImportExportHelpers::PopulateGraphFromExtractedFiles(UMounteaDialogueGraph* Graph, const TMap<FString, FString>& ExtractedFiles, const FString& SourceFilePath)
 {
+	// ── Phase 1: Pre-graph assets ─────────────────────────────────────────────────
+
 	if (!PopulateDialogueData(Graph, SourceFilePath, ExtractedFiles))
-	{
 		return false;
-	}
 
-	if (!PopulateCategories(Graph, ExtractedFiles["categories.json"]))
-	{
-		return false;
-	}
+	const TMap<FString, FString> tagMap = RegisterGameplayTags(Graph, ExtractedFiles["participants.json"]);
 
-	if (!PopulateParticipants(Graph, ExtractedFiles["participants.json"]))
-	{
-		return false;
-	}
+	FString defaultLocale;
+	TMap<FString, FString> stringTableLookup;
+	TSharedPtr<FJsonObject> entriesObj;
+	BuildStringTableLookup(ExtractedFiles, defaultLocale, stringTableLookup, entriesObj);
 
-	if (!PopulateNodes(Graph, ExtractedFiles["nodes.json"]))
-	{
+	const TMap<FString, FString> rowIdToTextKey = BuildRowIdToTextKeyMap(ExtractedFiles["dialogueRows.json"]);
+
+	FAssetToolsModule& assetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+	IAssetTools& assetTools = assetToolsModule.Get();
+
+	UStringTable* stDialogueRows = nullptr;
+	UStringTable* stNodes = nullptr;
+	if (!CreateGraphStringTables(Graph, assetTools, ExtractedFiles, stringTableLookup, rowIdToTextKey, stDialogueRows, stNodes))
 		return false;
-	}
+
+	UDataTable* dtParticipants = nullptr;
+	UDataTable* dtDialogueRows = nullptr;
+	if (!CreateGraphDataTables(Graph, assetTools, dtParticipants, dtDialogueRows))
+		return false;
+
+	const TMap<FGuid, USoundWave*> audioMap = CreateAudioAssets(ExtractedFiles, Graph->GetOuter());
+
+	// Import per-dialogue thumbnails (Thumbnails/*.png inside standalone .mnteadlg archives)
+	CreateTextureAssets(ExtractedFiles, FPackageName::GetLongPackagePath(Graph->GetPathName()));
+
+	// ── Phase 2: Graph population ─────────────────────────────────────────────────
+
+	TMap<FGuid, UMounteaDialogueGraphNode*> spawnedNodes;
+	if (!PopulateNodes(Graph, ExtractedFiles["nodes.json"], spawnedNodes))
+		return false;
 
 	if (!PopulateEdges(Graph, ExtractedFiles["edges.json"]))
-	{
 		return false;
-	}
 
-	if (!PopulateDialogueRows(Graph, ExtractedFiles))
-	{
+	ResolveReturnToNodeTargets(Graph, spawnedNodes);
+
+	// ── Phase 3: Fill data tables ─────────────────────────────────────────────────
+
+	if (!FillParticipantsDataTable(Graph, dtParticipants, ExtractedFiles["participants.json"], tagMap))
 		return false;
+
+	if (!FillDialogueRowsDataTable(Graph, dtDialogueRows, dtParticipants, stDialogueRows, stNodes, ExtractedFiles, rowIdToTextKey, audioMap))
+		return false;
+
+	if (entriesObj.IsValid())
+	{
+		ExportLocalizationPoFiles(
+			FString::Printf(TEXT("ST_%s_DialogueRows"), *Graph->GetName()),
+			defaultLocale,
+			stringTableLookup,
+			entriesObj);
 	}
 
 	return true;
 }
 
-void UMounteaDialogueSystemImportExportHelpers::ImportAudioFiles(const TMap<FString, FString>& ExtractedFiles, UObject* InParent, UMounteaDialogueGraph* Graph)
+TMap<FGuid, USoundWave*> UMounteaDialogueSystemImportExportHelpers::CreateAudioAssets(const TMap<FString, FString>& ExtractedFiles, UObject* InParent)
 {
+	TMap<FGuid, USoundWave*> audioMap;
+
+	if (!InParent)
+		return audioMap;
+
+	auto IsSupportedAudioFile = [](const FString& path) -> bool
+	{
+		return path.EndsWith(TEXT(".wav"))
+			|| path.EndsWith(TEXT(".mp3"))
+			|| path.EndsWith(TEXT(".ogg"))
+			|| path.EndsWith(TEXT(".flac"));
+	};
+
+	// Early-out if the archive has no audio files — avoids creating an empty content folder
+	bool bHasAudio = false;
+	for (const auto& file : ExtractedFiles)
+	{
+		if (file.Key.StartsWith(TEXT("audio/")) && IsSupportedAudioFile(file.Key))
+		{
+			bHasAudio = true;
+			break;
+		}
+	}
+	if (!bHasAudio)
+		return audioMap;
+
 	FModuleManager::LoadModuleChecked<IAudioEditorModule>("AudioEditor");
-	IAudioEditorModule& AudioEditorModule = FModuleManager::GetModuleChecked<IAudioEditorModule>("AudioEditor");
+	IAudioEditorModule& audioEditorModule = FModuleManager::GetModuleChecked<IAudioEditorModule>("AudioEditor");
 
-	const FString Directory = FPaths::GetPath(InParent->GetPackage()->GetName());
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	FAssetRegistryModule& assetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	const FString packagePath = FPackageName::GetLongPackagePath(InParent->GetPathName());
 
-	FString PackagePath = FPackageName::GetLongPackagePath(InParent->GetPathName());
-
-	// Create `audio` folder if one doesn't exist yet
+	// Create the audio content folder once, only when there are files to import
 	{
-		FString AudioFolderPath = FPaths::Combine(
-			FPaths::ProjectContentDir(),
-			PackagePath.RightChop(6),
-			TEXT("audio")
-		);
+		FString audioFolderPath = FPaths::Combine(FPaths::ProjectContentDir(), packagePath.RightChop(6), TEXT("audio"));
+		FPaths::MakeStandardFilename(audioFolderPath);
+		if (!FPaths::DirectoryExists(audioFolderPath))
+			FPlatformFileManager::Get().GetPlatformFile().CreateDirectoryTree(*audioFolderPath);
+	}
 
-		FPaths::MakeStandardFilename(AudioFolderPath);
+	for (const auto& file : ExtractedFiles)
+	{
+		if (!file.Key.StartsWith(TEXT("audio/")) || !IsSupportedAudioFile(file.Key))
+			continue;
 
-		if (!FPaths::DirectoryExists(AudioFolderPath))
+		const FString& tempPath = file.Value;
+
+		FString relativePath = file.Key;
+		relativePath.RemoveFromStart(TEXT("audio/"));
+		const FString subfolderPath = FPaths::GetPath(relativePath);
+		const FGuid rowGuid = FGuid(FPaths::GetBaseFilename(subfolderPath));
+
+		const FString relativePackagePath = FString::Printf(TEXT("/audio/%s"), *subfolderPath);
+		const FString fullPackagePath = packagePath / relativePackagePath / FPaths::GetBaseFilename(file.Key);
+
+		FARFilter filter;
+		filter.PackagePaths.Add(FName(*(packagePath + relativePackagePath)));
+		filter.ClassPaths.Add(USoundWave::StaticClass()->GetClassPathName());
+
+		TArray<FAssetData> assetDataList;
+		assetRegistryModule.Get().GetAssets(filter, assetDataList);
+
+		UPackage* soundPackage = nullptr;
+		USoundWave* importedSound = nullptr;
+
+		if (assetDataList.Num() > 0)
 		{
-			FPlatformFileManager::Get().GetPlatformFile().CreateDirectoryTree(*AudioFolderPath);
+			if (USoundWave* existing = Cast<USoundWave>(assetDataList[0].GetAsset()))
+			{
+				// Replace existing asset in-place
+				soundPackage = existing->GetOutermost();
+				soundPackage->FullyLoad();
+				importedSound = audioEditorModule.ImportSoundWave(soundPackage, existing->GetName(), tempPath);
+			}
 		}
-	}
-	
-	// Extract just the asset name from InParent
-	FString AssetName = FPaths::GetBaseFilename(Graph->GetName());
-	
-	FString DialogueRowsDataTableName = FString::Printf(TEXT("DT_%s_DialogueRows"), *AssetName);
-	FString FullAssetPath = FString::Printf(TEXT("%s/%s"), *PackagePath, *DialogueRowsDataTableName);
-	FSoftObjectPath AssetReference(FullAssetPath);
-	UDataTable* DialogueRowsDataTable = Cast<UDataTable>(AssetReference.TryLoad());
-
-	if (!DialogueRowsDataTable)
-	{
-		EditorLOG_ERROR(TEXT("[ImportAudioFiles] Failed to load Dialogue Rows DataTable: %s"), *FullAssetPath);
-	}
-
-	TMap<FGuid, USoundWave*> ImportedAudioMap;
-	
-	for (const auto& File : ExtractedFiles)
-	{
-		if (File.Key.StartsWith("audio/") && File.Key.EndsWith(".wav"))
+		else
 		{
-			FString TempAudioPath = File.Value;
-			
-			FString RelativePath = File.Key;
-			RelativePath.RemoveFromStart(TEXT("audio/"));
-			FString SubfolderPath = FPaths::GetPath(RelativePath);
-			
-			FGuid RowDataGuid = FGuid(FPaths::GetBaseFilename(SubfolderPath));
+			soundPackage = CreatePackage(*fullPackagePath);
+			soundPackage->FullyLoad();
+			importedSound = audioEditorModule.ImportSoundWave(soundPackage, FPaths::GetBaseFilename(file.Key), tempPath);
+		}
 
-			FString DestinationPath = FPaths::Combine(FPaths::GetPath(InParent->GetPathName()), TEXT("audio"), SubfolderPath);
-			
-			FPlatformFileManager::Get().GetPlatformFile().CreateDirectoryTree(*DestinationPath);
-			
-			FString FullDestinationPath = FPaths::Combine(DestinationPath, FPaths::GetCleanFilename(File.Key));
-			
-			FString RelativePackagePath = FString::Printf(TEXT("/audio/%s"), *SubfolderPath);
-			FString FullPackagePath = PackagePath / RelativePackagePath / FPaths::GetBaseFilename(File.Key);
+		if (soundPackage)
+			soundPackage->FullyLoad();
 
-			FARFilter Filter;
-			const FString FullAssetPathComposite = FString::Printf(TEXT("%s%s"), *PackagePath, *RelativePackagePath);
-			Filter.PackagePaths.Add(FName(*FullAssetPathComposite));
-			Filter.ClassPaths.Add(USoundWave::StaticClass()->GetClassPathName());
-
-			TArray<FAssetData> AssetDataList;
-			AssetRegistryModule.Get().GetAssets(Filter, AssetDataList);
-
-			USoundWave* ExistingSoundWave = nullptr;
-			if (AssetDataList.Num() > 0)
-			{
-				ExistingSoundWave = Cast<USoundWave>(AssetDataList[0].GetAsset());
-			}
-
-			UPackage* SoundWavePackage = nullptr;
-			USoundWave* ImportedSoundWave = nullptr;
-
-			if (ExistingSoundWave)
-			{
-				// Update existing asset
-				SoundWavePackage = ExistingSoundWave->GetOutermost();
-				SoundWavePackage->FullyLoad();
-				ImportedSoundWave = AudioEditorModule.ImportSoundWave(SoundWavePackage, ExistingSoundWave->GetName(), TempAudioPath);
-			}
-			else
-			{
-				// Create new asset
-				SoundWavePackage = CreatePackage(*FullPackagePath);
-				SoundWavePackage->FullyLoad();
-				ImportedSoundWave = AudioEditorModule.ImportSoundWave(SoundWavePackage, FPaths::GetBaseFilename(File.Key), TempAudioPath);
-			}
-			
-			SoundWavePackage->FullyLoad();
-
-			if (ImportedSoundWave)
-			{
-				FAssetRegistryModule::AssetCreated(ImportedSoundWave);
-				SaveAsset(ImportedSoundWave);
-				ImportedAudioMap.Add(RowDataGuid, ImportedSoundWave);
-			}
-			else
-			{
-				EditorLOG_WARNING(TEXT("[ImportAudioFiles] Failed to import audio file: %s"), *TempAudioPath);
-			}
-
-			// Clean up the temporary file
-			IFileManager::Get().Delete(*TempAudioPath);
+		if (importedSound)
+		{
+			FAssetRegistryModule::AssetCreated(importedSound);
+			SaveAsset(importedSound);
+			audioMap.Add(rowGuid, importedSound);
+		}
+		else
+		{
+			EditorLOG_WARNING(TEXT("[CreateAudioAssets] Failed to import audio: %s"), *tempPath);
 		}
 	}
 
-	if (!DialogueRowsDataTable)
-	{
-		EditorLOG_WARNING(TEXT("[ImportAudioFiles] Failed to find Dialogue Rows table: %s"), *FullAssetPath);
-		return;
-	}
+	return audioMap;
+}
 
-	TMap<FName, uint8 *> rowMap = DialogueRowsDataTable->GetRowMap();
-	for (auto It = rowMap.CreateIterator(); It; ++It)
-	{
-		FName RowName = It.Key();
-		FDialogueRow* DialogueRow = reinterpret_cast<FDialogueRow*>(It.Value());
+void UMounteaDialogueSystemImportExportHelpers::CreateTextureAssets(const TMap<FString, FString>& ExtractedFiles, const FString& DestPackagePath)
+{
+	FAssetToolsModule& assetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+	IAssetTools& assetTools = assetToolsModule.Get();
 
-		if(!DialogueRow) continue;
-		
-		for (FDialogueRowData& RowData : DialogueRow->DialogueRowData)
+	const FString thumbnailsPackagePath = DestPackagePath / TEXT("thumbnails");
+
+	for (const auto& file : ExtractedFiles)
+	{
+		const bool bIsThumbnailPng =
+			(file.Key.StartsWith(TEXT("Thumbnails/")) || file.Key.StartsWith(TEXT("thumbnails/")))
+			&& file.Key.EndsWith(TEXT(".png"));
+
+		if (!bIsThumbnailPng)
+			continue;
+
+		const FString& tempPath = file.Value;
+		if (tempPath.IsEmpty() || !FPaths::FileExists(tempPath))
 		{
-			if (USoundWave** FoundSound = ImportedAudioMap.Find(RowData.RowGUID))
-			{
-				RowData.RowSound = *FoundSound;
-			}
+			EditorLOG_WARNING(TEXT("[CreateTextureAssets] Temp file missing for '%s'"), *file.Key);
+			continue;
 		}
-	}
 
-	// Save the updated DataTable
-	SaveAsset(DialogueRowsDataTable);
+		const FString assetName = FPaths::GetBaseFilename(file.Key);
+
+		// Re-use existing asset if already imported
+		FAssetRegistryModule& assetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		const FSoftObjectPath existingPath = thumbnailsPackagePath / assetName + TEXT(".") + assetName;
+		const FAssetData existingData = assetRegistry.Get().GetAssetByObjectPath(existingPath);
+		if (existingData.IsValid())
+		{
+			// Asset already exists — skip re-import to preserve any manual tweaks
+			EditorLOG_INFO(TEXT("[CreateTextureAssets] Texture '%s' already exists — skipped"), *assetName);
+			continue;
+		}
+
+		UAssetImportTask* importTask = NewObject<UAssetImportTask>();
+		importTask->Filename        = tempPath;
+		importTask->DestinationPath = thumbnailsPackagePath;
+		importTask->DestinationName = assetName;
+		importTask->bReplaceExisting= true;
+		importTask->bSave           = true;
+
+		TArray<UAssetImportTask*> tasks = { importTask };
+		assetTools.ImportAssetTasks(tasks);
+
+		if (importTask->GetObjects().Num() == 0)
+			EditorLOG_WARNING(TEXT("[CreateTextureAssets] Failed to import texture: %s"), *file.Key);
+	}
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& SourceFilePath, const TMap<FString, FString>& ExtractedFiles)
@@ -851,13 +791,9 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueData(UMounteaDia
 	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
 
 	if (FPaths::FileExists(UpdatedConfigFile))
-	{
 		importConfig->LoadConfig(nullptr, *UpdatedConfigFile);
-	}
 	else
-	{
 		importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
-	}
 
 	const FString PackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
 	const FString AssetName = *Graph->GetName();
@@ -876,153 +812,271 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueData(UMounteaDia
 	return true;
 }
 
-bool UMounteaDialogueSystemImportExportHelpers::PopulateCategories(UMounteaDialogueGraph* Graph, const FString& Json)
+TMap<FString, FString> UMounteaDialogueSystemImportExportHelpers::RegisterGameplayTags(const UMounteaDialogueGraph* Graph, const FString& ParticipantsJson)
 {
-	TArray<TSharedPtr<FJsonValue>> dialogueRowsJsonArray;
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Json);
-	if (!FJsonSerializer::Deserialize(Reader, dialogueRowsJsonArray))
+	TMap<FString, FString> participantTagMap;
+
+	TArray<TSharedPtr<FJsonValue>> participantsArray;
+	TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(ParticipantsJson);
+	if (!FJsonSerializer::Deserialize(reader, participantsArray))
 	{
-		EditorLOG_ERROR(TEXT("[PopulateCategories] Failed to parse categories.json"));
+		EditorLOG_ERROR(TEXT("[RegisterGameplayTags] Failed to parse participants.json"));
+		return participantTagMap;
+	}
+
+	TSharedPtr<IPlugin> plugin = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"));
+	if (!plugin.IsValid())
+	{
+		EditorLOG_ERROR(TEXT("[RegisterGameplayTags] MounteaDialogueSystem plugin not found — cannot write participant tags"));
+		return participantTagMap;
+	}
+
+	const FString tagsDir = FPaths::Combine(plugin->GetBaseDir(), TEXT("Config"), TEXT("Tags"));
+	const FString tagsIniPath = FPaths::Combine(tagsDir, TEXT("MounteaDialogueSystemTags.ini"));
+	IPlatformFile::GetPlatformPhysical().CreateDirectoryTree(*tagsDir);
+
+	FString fileContent;
+	if (FPaths::FileExists(tagsIniPath))
+		FFileHelper::LoadFileToString(fileContent, *tagsIniPath);
+
+	const FString sectionHeader = TEXT("[/Script/GameplayTags.GameplayTagsList]");
+	if (!fileContent.Contains(sectionHeader))
+	{
+		if (!fileContent.IsEmpty() && !fileContent.EndsWith(TEXT("\n")))
+			fileContent.AppendChar(TEXT('\n'));
+		fileContent.Append(sectionHeader);
+		fileContent.AppendChar(TEXT('\n'));
+	}
+
+	// Collect existing tags to avoid duplicates
+	TSet<FString> existingTags;
+	{
+		TArray<FString> iniLines;
+		fileContent.ParseIntoArrayLines(iniLines);
+		for (const FString& line : iniLines)
+		{
+			if (!line.StartsWith(TEXT("GameplayTagList=")) && !line.StartsWith(TEXT("+GameplayTagList=")))
+				continue;
+			int32 tagStart = line.Find(TEXT("Tag=\""));
+			if (tagStart == INDEX_NONE)
+				continue;
+			tagStart += 5;
+			const int32 tagEnd = line.Find(TEXT("\""), ESearchCase::IgnoreCase, ESearchDir::FromStart, tagStart);
+			if (tagEnd != INDEX_NONE)
+				existingTags.Add(line.Mid(tagStart, tagEnd - tagStart));
+		}
+	}
+
+	bool bAnyAdded = false;
+
+	for (const auto& participantValue : participantsArray)
+	{
+		TSharedPtr<FJsonObject> participant = participantValue->AsObject();
+		if (!participant.IsValid())
+			continue;
+
+		FString pName;
+		FString pFullPath;
+		participant->TryGetStringField(TEXT("name"), pName);
+		if (!participant->TryGetStringField(TEXT("fullPath"), pFullPath))
+			participant->TryGetStringField(TEXT("category"), pFullPath);
+
+		if (pName.IsEmpty())
+			continue;
+
+		const FString fullTag = pFullPath.IsEmpty()
+			? FString::Printf(TEXT("Mountea_Dialogue.%s"), *pName)
+			: FString::Printf(TEXT("Mountea_Dialogue.%s.%s"), *pFullPath, *pName);
+
+		participantTagMap.Add(pName, fullTag);
+
+		if (!existingTags.Contains(fullTag))
+		{
+			if (!fileContent.EndsWith(TEXT("\n")))
+				fileContent.AppendChar(TEXT('\n'));
+			fileContent.Append(FString::Printf(
+				TEXT("GameplayTagList=(Tag=\"%s\",DevComment=\"Mountea Dialogue Participant: %s\")\n"),
+				*fullTag, *pName));
+			existingTags.Add(fullTag);
+			bAnyAdded = true;
+		}
+	}
+
+	if (bAnyAdded)
+	{
+		FFileHelper::SaveStringToFile(fileContent, *tagsIniPath);
+		UGameplayTagsManager::Get().AddTagIniSearchPath(tagsDir);
+		UGameplayTagsManager::Get().EditorRefreshGameplayTagTree();
+	}
+
+	return participantTagMap;
+}
+
+bool UMounteaDialogueSystemImportExportHelpers::FillParticipantsDataTable(const UMounteaDialogueGraph* Graph, UDataTable* ParticipantsTable, const FString& ParticipantsJson, const TMap<FString, FString>& ParticipantTagMap)
+{
+	if (!Graph || !ParticipantsTable)
+	{
+		EditorLOG_ERROR(TEXT("[FillParticipantsDataTable] Invalid Graph or DataTable"));
 		return false;
 	}
 
-	UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
-
-	UGameplayTagsSettings* MutableTagsSettings = GetMutableDefault<UGameplayTagsSettings>();
-
-	for (const auto& CategoryValue : dialogueRowsJsonArray)
+	TArray<TSharedPtr<FJsonValue>> participantsArray;
+	TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(ParticipantsJson);
+	if (!FJsonSerializer::Deserialize(reader, participantsArray))
 	{
-		TSharedPtr<FJsonObject> Category = CategoryValue->AsObject();
-		if (!Category.IsValid())
+		EditorLOG_ERROR(TEXT("[FillParticipantsDataTable] Failed to parse participants.json"));
+		return false;
+	}
+
+	// Clear stale rows so reimport starts fresh
+	ParticipantsTable->EmptyTable();
+
+	for (const auto& participantValue : participantsArray)
+	{
+		TSharedPtr<FJsonObject> participant = participantValue->AsObject();
+		if (!participant.IsValid())
 		{
+			EditorLOG_WARNING(TEXT("[FillParticipantsDataTable] Invalid participant object — skipped"));
 			continue;
 		}
 
-		FString Name = Category->GetStringField(TEXT("name"));
-		FString Parent = Category->GetStringField(TEXT("parent"));
+		FString name;
+		participant->TryGetStringField(TEXT("name"), name);
+		if (name.IsEmpty())
+			continue;
 
-		FString FullTag;
-		if (Parent.IsEmpty())
-		{
-			FullTag = FString::Printf(TEXT("Mountea_Dialogue.Categories.%s"), *Name);
-		}
-		else
-		{
-			FullTag = FString::Printf(TEXT("Mountea_Dialogue.Categories.%s.%s"), *Parent, *Name);
-		}
+		FDialogueParticipant newRow;
+		newRow.ParticipantName = FName(*name);
 
-		FGameplayTag ExistingTag = TagsManager.RequestGameplayTag(FName(*FullTag), false);
-		if (!ExistingTag.IsValid())
-		{
-			// If the tag doesn't exist, create a new FGameplayTagTableRow and add it to the config
-			FGameplayTagTableRow NewTagRow;
-			NewTagRow.Tag = FName(*FullTag);
-			NewTagRow.DevComment = FString::Printf(TEXT("Mountea Dialogue Category: %s"), *Name);
+		const FString* fullTagPtr = ParticipantTagMap.Find(name);
+		if (fullTagPtr)
+			newRow.ParticipantCategoryTag = UGameplayTagsManager::Get().RequestGameplayTag(FName(**fullTagPtr), false);
 
-			// Check if the tag already exists in the list
-			bool bTagExists = false;
-			for (const FGameplayTagTableRow& ExistingRow : MutableTagsSettings->GameplayTagList)
-			{
-				if (ExistingRow.Tag == NewTagRow.Tag)
-				{
-					bTagExists = true;
-					break;
-				}
-			}
-
-			if (!bTagExists)
-			{
-				MutableTagsSettings->GameplayTagList.Add(NewTagRow);
-			}
-		}
+		ParticipantsTable->AddRow(FName(*name), newRow);
 	}
 
-	MutableTagsSettings->SaveConfig();
+	const FString packagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
+	const FString assetName = FString::Printf(TEXT("DT_%s_Participants"), *Graph->GetName());
+	UpdateGraphImportDataConfig(Graph, TEXT("participants.json"), ParticipantsJson, packagePath, assetName);
 
-	TagsManager.EditorRefreshGameplayTagTree();
-
+	SaveAsset(ParticipantsTable);
 	return true;
 }
 
-bool UMounteaDialogueSystemImportExportHelpers::PopulateParticipants(const UMounteaDialogueGraph* Graph, const FString& Json)
+void UMounteaDialogueSystemImportExportHelpers::ResolveOpenChildGraphTargets(
+	UMounteaDialogueGraph* graph,
+	const TMap<FGuid, UMounteaDialogueGraph*>& knownGraphs)
 {
-	if (!Graph)
+#if WITH_EDITORONLY_DATA
+	if (!IsValid(graph))
+		return;
+
+	bool bAnySaved = false;
+
+	for (UMounteaDialogueGraphNode* node : graph->GetAllNodes())
 	{
-		EditorLOG_ERROR(TEXT("[PopulateParticipants] Invalid Graph object provided to PopulateParticipants"));
-		return false;
-	}
+		UMounteaDialogueGraphNode_OpenChildGraph* openNode =
+			Cast<UMounteaDialogueGraphNode_OpenChildGraph>(node);
+		if (!openNode || !openNode->PendingTargetDialogueGUID.IsValid())
+			continue;
 
-	TArray<TSharedPtr<FJsonValue>> dialogueRowsJsonArray;
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Json);
-	if (!FJsonSerializer::Deserialize(Reader, dialogueRowsJsonArray))
-	{
-		EditorLOG_ERROR(TEXT("[PopulateParticipants] Failed to parse participants.json"));
-		return false;
-	}
+		const FGuid pendingGuid = openNode->PendingTargetDialogueGUID;
 
-	FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
-	IAssetTools& AssetTools = AssetToolsModule.Get();
-
-	const FString PackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
-	const FString AssetName = FString::Printf(TEXT("DT_%s_Participants"), *Graph->GetName());
-
-	UDataTable* ParticipantsDataTable = CreateDataTable<FDialogueRow>(AssetTools, PackagePath, AssetName);;
-
-	if (!ParticipantsDataTable)
-	{
-		EditorLOG_ERROR(TEXT("[PopulateParticipants] Failed to create DataTable asset"));
-		return false;
-	}
-
-	ParticipantsDataTable->RowStruct = FDialogueParticipant::StaticStruct();
-
-	const UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
-
-	FGameplayTagContainer AllTags;
-	TagsManager.RequestAllGameplayTags(AllTags, true);
-
-	for (const auto& ParticipantValue : dialogueRowsJsonArray)
-	{
-		TSharedPtr<FJsonObject> Participant = ParticipantValue->AsObject();
-		if (!Participant.IsValid())
+		// 1. Check the caller-supplied map first (O(1), no I/O)
+		UMounteaDialogueGraph* const* knownEntry = knownGraphs.Find(pendingGuid);
+		if (knownEntry && *knownEntry)
 		{
-			EditorLOG_WARNING(TEXT("[PopulateParticipants] Invalid participant object in JSON"));
+			openNode->TargetDialogue = TSoftObjectPtr<UMounteaDialogueGraph>(*knownEntry);
+			openNode->PendingTargetDialogueGUID = FGuid();
+			bAnySaved = true;
 			continue;
 		}
 
-		FString Name = Participant->GetStringField(TEXT("name"));
-		FString Category = Participant->GetStringField(TEXT("category"));
+		// 2. Fall back to a full asset-registry scan (pre-existing graphs not in the batch)
+		FAssetRegistryModule& assetRegistryModule =
+			FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-		FDialogueParticipant* NewRow = new FDialogueParticipant();
-		NewRow->ParticipantName = FName(*Name);
+		FARFilter filter;
+		filter.bRecursivePaths = true;
+		filter.ClassPaths.Add(UMounteaDialogueGraph::StaticClass()->GetClassPathName());
 
-		FGameplayTag FoundTag;
-		for (const FGameplayTag& Tag : AllTags)
+		TArray<FAssetData> assetDataList;
+		assetRegistryModule.Get().GetAssets(filter, assetDataList);
+
+		bool bFound = false;
+		for (const FAssetData& assetData : assetDataList)
 		{
-			if (Tag.ToString().EndsWith(Category))
-			{
-				FoundTag = Tag;
-				break;
-			}
+			UMounteaDialogueGraph* candidate = Cast<UMounteaDialogueGraph>(assetData.GetAsset());
+			if (!candidate || candidate->GetGraphGUID() != pendingGuid)
+				continue;
+
+			openNode->TargetDialogue = TSoftObjectPtr<UMounteaDialogueGraph>(candidate);
+			openNode->PendingTargetDialogueGUID = FGuid();
+			bAnySaved = true;
+			bFound = true;
+			break;
 		}
 
-		if (FoundTag.IsValid())
+		if (!bFound)
 		{
-			NewRow->ParticipantCategoryTag = FoundTag;
+			EditorLOG_WARNING(
+				TEXT("[ResolveOpenChildGraphTargets] No dialogue found for GUID '%s' (node in '%s')"),
+				*pendingGuid.ToString(), *graph->GetName());
 		}
-
-		ParticipantsDataTable->AddRow(FName(*Name), *NewRow);
 	}
 
-	// Process Config Update
-	UpdateGraphImportDataConfig(Graph, TEXT("participants.json"), Json, PackagePath, AssetName);
-	
-	SaveAsset(ParticipantsDataTable);
-
-	return true;
+	if (bAnySaved)
+		SaveAsset(graph);
+#endif
 }
 
-bool UMounteaDialogueSystemImportExportHelpers::PopulateNodes(UMounteaDialogueGraph* Graph, const FString& Json)
+UClass* UMounteaDialogueSystemImportExportHelpers::FindConditionClassByName(const FString& nameOrGUID)
+{
+	for (TObjectIterator<UClass> classIt; classIt; ++classIt)
+	{
+		if (!classIt->IsChildOf(UMounteaDialogueConditionBase::StaticClass()))
+			continue;
+		if (classIt->HasAnyClassFlags(CLASS_Abstract))
+			continue;
+
+		if (classIt->GetName().Contains(nameOrGUID))
+			return *classIt;
+
+		const UMounteaDialogueConditionBase* cdo = classIt->GetDefaultObject<UMounteaDialogueConditionBase>();
+		if (!cdo)
+			continue;
+		if (cdo->GetConditionName() == nameOrGUID)
+			return *classIt;
+		if (cdo->GetConditionGUID().ToString() == nameOrGUID)
+			return *classIt;
+	}
+	return nullptr;
+}
+
+UClass* UMounteaDialogueSystemImportExportHelpers::FindDecoratorClassByName(const FString& nameOrGUID)
+{
+	for (TObjectIterator<UClass> classIt; classIt; ++classIt)
+	{
+		if (!classIt->IsChildOf(UMounteaDialogueDecoratorBase::StaticClass()))
+			continue;
+		if (classIt->HasAnyClassFlags(CLASS_Abstract))
+			continue;
+
+		if (classIt->GetName().Contains(nameOrGUID))
+			return *classIt;
+
+		const UMounteaDialogueDecoratorBase* cdo = classIt->GetDefaultObject<UMounteaDialogueDecoratorBase>();
+		if (!cdo)
+			continue;
+		if (cdo->GetDecoratorName().ToString() == nameOrGUID)
+			return *classIt;
+		if (cdo->GetDecoratorGUID().ToString() == nameOrGUID)
+			return *classIt;
+	}
+	return nullptr;
+}
+
+bool UMounteaDialogueSystemImportExportHelpers::PopulateNodes(UMounteaDialogueGraph* Graph, const FString& Json, TMap<FGuid, UMounteaDialogueGraphNode*>& OutSpawnedNodes)
 {
 	if (!IsValid(Graph) || !Graph->GetOutermost()->IsValidLowLevel())
 	{
@@ -1030,113 +1084,218 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateNodes(UMounteaDialogueGr
 		return false;
 	}
 
-	TArray<TSharedPtr<FJsonValue>> dialogueRowsJsonArray;
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Json);
-	if (!FJsonSerializer::Deserialize(Reader, dialogueRowsJsonArray))
+	TArray<TSharedPtr<FJsonValue>> nodesJsonArray;
+	TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(Json);
+	if (!FJsonSerializer::Deserialize(reader, nodesJsonArray))
 	{
 		EditorLOG_ERROR(TEXT("[PopulateNodes] Failed to parse nodes.json"));
 		return false;
 	}
 
-	TArray<TSharedPtr<FJsonValue>> LeadNodes, AnswerNodes, CloseDialogueNodes, JumpToNodes, OpenChildGraphNodes, StartNodes;
-	TArray<UMounteaDialogueGraphNode*> SpawnedNodes;
+	TArray<TSharedPtr<FJsonValue>> leadNodes, answerNodes, closeDialogueNodes, jumpToNodes, openChildGraphNodes, startNodes, delayNodes;
 
-	// Categorize nodes
-	for (const auto& NodeValue : dialogueRowsJsonArray)
+	for (const auto& nodeValue : nodesJsonArray)
 	{
-		TSharedPtr<FJsonObject> NodeObject = NodeValue->AsObject();
-		if (!NodeObject.IsValid())
-		{
+		TSharedPtr<FJsonObject> nodeObject = nodeValue->AsObject();
+		if (!nodeObject.IsValid())
 			continue;
-		}
 
-		const FString NodeType = NodeObject->GetStringField(TEXT("type"));
-		if (NodeType == "leadNode")
-			LeadNodes.Add(NodeValue);
-		else if (NodeType == "answerNode")
-			AnswerNodes.Add(NodeValue);
-		else if (NodeType == "closeDialogueNode")
-			CloseDialogueNodes.Add(NodeValue);
-		else if (NodeType == "jumpToNode")
-			JumpToNodes.Add(NodeValue);
-		else if (NodeType == "openChildGraphNode")
-			OpenChildGraphNodes.Add(NodeValue);
-		else if (NodeType == "startNode")
-			StartNodes.Add(NodeValue);
+		const FString nodeType = nodeObject->GetStringField(TEXT("type"));
+		if (nodeType == TEXT("leadNode"))
+			leadNodes.Add(nodeValue);
+		else if (nodeType == TEXT("answerNode"))
+			answerNodes.Add(nodeValue);
+		else if (nodeType == TEXT("closeDialogueNode") || nodeType == TEXT("completeNode"))
+			closeDialogueNodes.Add(nodeValue);
+		else if (nodeType == TEXT("jumpToNode") || nodeType == TEXT("returnNode"))
+			jumpToNodes.Add(nodeValue);
+		else if (nodeType == TEXT("openChildGraphNode"))
+			openChildGraphNodes.Add(nodeValue);
+		else if (nodeType == TEXT("startNode"))
+			startNodes.Add(nodeValue);
+		else if (nodeType == TEXT("delayNode"))
+			delayNodes.Add(nodeValue);
 	}
 
-	if (StartNodes.Num() > 0)
+	if (startNodes.Num() > 0)
 	{
-		if (Graph && Graph->GetStartNode())
+		if (Graph->GetStartNode())
 		{
-			PopulateNodeData(Graph->GetStartNode(), StartNodes[0]->AsObject());
-			SpawnedNodes.Add(Graph->GetStartNode());
+			PopulateNodeData(Graph->GetStartNode(), startNodes[0]->AsObject());
+			OutSpawnedNodes.Add(Graph->GetStartNode()->GetNodeGUID(), Graph->GetStartNode());
 		}
 		else
 		{
-			if (UMounteaDialogueGraphNode_StartNode* NewStartNode = Graph->ConstructDialogueNode<UMounteaDialogueGraphNode_StartNode>())
+			if (UMounteaDialogueGraphNode_StartNode* newStart = Graph->ConstructDialogueNode<UMounteaDialogueGraphNode_StartNode>())
 			{
-				Graph->StartNode = NewStartNode;
-				PopulateNodeData(NewStartNode, StartNodes[0]->AsObject());
-				SpawnedNodes.Add(NewStartNode);
+				Graph->StartNode = newStart;
+				PopulateNodeData(newStart, startNodes[0]->AsObject());
+				OutSpawnedNodes.Add(newStart->GetNodeGUID(), newStart);
 			}
 		}
 	}
 
-	auto CreateNodes = [&](const TArray<TSharedPtr<FJsonValue>>& Nodes, const TSubclassOf<UMounteaDialogueGraphNode> NodeClass)
+	auto CreateNodes = [&](const TArray<TSharedPtr<FJsonValue>>& nodes, const TSubclassOf<UMounteaDialogueGraphNode> nodeClass)
 	{
-		for (const auto& Node : Nodes)
+		for (const auto& nodeValue : nodes)
 		{
-			UMounteaDialogueGraphNode* NewNode = Graph->ConstructDialogueNode(NodeClass);
-			if (!NewNode) continue;
-			
-			PopulateNodeData(NewNode, Node->AsObject());
-			Graph->AllNodes.Add(NewNode);
-			SpawnedNodes.Add(NewNode);
+			UMounteaDialogueGraphNode* newNode = Graph->ConstructDialogueNode(nodeClass);
+			if (!newNode)
+				continue;
+
+			PopulateNodeData(newNode, nodeValue->AsObject());
+			Graph->AllNodes.Add(newNode);
+			OutSpawnedNodes.Add(newNode->GetNodeGUID(), newNode);
 		}
 	};
 
-	CreateNodes(LeadNodes, UMounteaDialogueGraphNode_LeadNode::StaticClass());
-	CreateNodes(AnswerNodes, UMounteaDialogueGraphNode_AnswerNode::StaticClass());
-	CreateNodes(CloseDialogueNodes, UMounteaDialogueGraphNode_CompleteNode::StaticClass());
-	CreateNodes(JumpToNodes, UMounteaDialogueGraphNode_ReturnToNode::StaticClass());
-	CreateNodes(OpenChildGraphNodes, UMounteaDialogueGraphNode_OpenChildGraph::StaticClass());
+	CreateNodes(leadNodes,          UMounteaDialogueGraphNode_LeadNode::StaticClass());
+	CreateNodes(answerNodes,        UMounteaDialogueGraphNode_AnswerNode::StaticClass());
+	CreateNodes(closeDialogueNodes, UMounteaDialogueGraphNode_CompleteNode::StaticClass());
+	CreateNodes(jumpToNodes,        UMounteaDialogueGraphNode_ReturnToNode::StaticClass());
+	CreateNodes(openChildGraphNodes,UMounteaDialogueGraphNode_OpenChildGraph::StaticClass());
+	CreateNodes(delayNodes,         UMounteaDialogueGraphNode_Delay::StaticClass());
 
 	return true;
+}
+
+void UMounteaDialogueSystemImportExportHelpers::ResolveReturnToNodeTargets(UMounteaDialogueGraph* Graph, const TMap<FGuid, UMounteaDialogueGraphNode*>& SpawnedNodesByGuid)
+{
+	if (!IsValid(Graph))
+		return;
+
+	for (UMounteaDialogueGraphNode* node : Graph->AllNodes)
+	{
+		UMounteaDialogueGraphNode_ReturnToNode* returnNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(node);
+		if (!returnNode || returnNode->SelectedNode)
+			continue;
+
+		FGuid pendingGuid;
+		if (!FGuid::Parse(returnNode->SelectedNodeIndex, pendingGuid))
+			continue;
+
+		UMounteaDialogueGraphNode* const* found = SpawnedNodesByGuid.Find(pendingGuid);
+		if (found && *found)
+		{
+			returnNode->SelectedNodeIndex = FString::FromInt(Graph->AllNodes.Find(*found));
+			returnNode->SelectedNode = *found;
+			returnNode->ReturnNodeUpdated.ExecuteIfBound();
+		}
+		else
+		{
+			EditorLOG_WARNING(
+				TEXT("[ResolveReturnToNodeTargets] Target GUID '%s' not found in spawned nodes"),
+				*pendingGuid.ToString());
+		}
+	}
 }
 
 void UMounteaDialogueSystemImportExportHelpers::PopulateNodeData(UMounteaDialogueGraphNode* Node, const TSharedPtr<FJsonObject>& JsonObject)
 {
 	if (!Node || !JsonObject.IsValid())
-	{
 		return;
-	}
 
-	Node->SetNodeGUID(FGuid(JsonObject->GetStringField((TEXT("id")))));
-	Node->NodeTitle = FText::FromString(JsonObject->GetObjectField(TEXT("data"))->GetStringField(TEXT("title")));
+	Node->SetNodeGUID(FGuid(JsonObject->GetStringField(TEXT("id"))));
 	Node->ExecutionOrder = JsonObject->GetIntegerField(TEXT("executionOrder"));
 
-	TSharedPtr<FJsonObject> AdditionalInfoObject = JsonObject->GetObjectField(TEXT("data"))->GetObjectField(TEXT("additionalInfo"));
-	if (AdditionalInfoObject->HasField(TEXT("targetNodeId")) && Node->Graph)
+	// Restore canvas position so nodes appear where the user placed them in Dialoguer
+	const TSharedPtr<FJsonObject>* positionObject;
+	if (JsonObject->TryGetObjectField(TEXT("position"), positionObject))
 	{
-		if (UMounteaDialogueGraphNode_ReturnToNode* returnToNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(Node))
-		{
-			UMounteaDialogueGraphNode* targetNode = returnToNode->Graph->FindNodeByGuid(FGuid(AdditionalInfoObject->GetStringField(TEXT("targetNodeId"))));
-			const int32 targetNodeIndex = returnToNode->Graph->AllNodes.Find(targetNode);
-			returnToNode->SelectedNodeIndex = FString::FromInt(targetNodeIndex);
-			returnToNode->SelectedNode = returnToNode->Graph->FindNodeByGuid(FGuid(AdditionalInfoObject->GetStringField(TEXT("targetNodeId"))));
+		double posX = 0.0, posY = 0.0;
+		(*positionObject)->TryGetNumberField(TEXT("x"), posX);
+		(*positionObject)->TryGetNumberField(TEXT("y"), posY);
+		Node->NodePosition = FIntPoint(FMath::RoundToInt(posX), FMath::RoundToInt(posY));
+	}
 
-			returnToNode->ReturnNodeUpdated.ExecuteIfBound();
+	const TSharedPtr<FJsonObject> dataObject = JsonObject->GetObjectField(TEXT("data"));
+	if (!dataObject.IsValid())
+		return;
+
+	// Dialoguer exports "label"; UE round-trips use "title"
+	FString nodeTitle;
+	if (!dataObject->TryGetStringField(TEXT("label"), nodeTitle))
+		dataObject->TryGetStringField(TEXT("title"), nodeTitle);
+	Node->NodeTitle = FText::FromString(nodeTitle);
+
+	// Delay node — read duration
+	double delayDuration = 1.0;
+	if (dataObject->TryGetNumberField(TEXT("duration"), delayDuration))
+	{
+		if (UMounteaDialogueGraphNode_Delay* delayNode = Cast<UMounteaDialogueGraphNode_Delay>(Node))
+			delayNode->SetDelayDuration(FMath::RoundToInt(delayDuration));
+	}
+
+	// Decorators
+	const TArray<TSharedPtr<FJsonValue>>* decoratorsArray;
+	if (dataObject->TryGetArrayField(TEXT("decorators"), decoratorsArray))
+	{
+		for (const auto& decorVal : *decoratorsArray)
+		{
+			TSharedPtr<FJsonObject> decorObj = decorVal->AsObject();
+			if (!decorObj.IsValid())
+				continue;
+
+			FString decorName;
+			FString decorIdStr;
+			decorObj->TryGetStringField(TEXT("name"), decorName);
+			decorObj->TryGetStringField(TEXT("id"), decorIdStr);
+
+			UClass* decorClass = FindDecoratorClassByName(decorName);
+			if (!decorClass)
+			{
+				EditorLOG_WARNING(TEXT("[PopulateNodeData] No UE decorator class for '%s' — skipped"), *decorName);
+				continue;
+			}
+
+			FMounteaDialogueDecorator decorInst;
+			decorInst.DecoratorType = NewObject<UMounteaDialogueDecoratorBase>(Node, decorClass);
+			if (decorInst.DecoratorType && !decorIdStr.IsEmpty())
+				decorInst.DecoratorType->DecoratorGUID = FGuid(decorIdStr);
+
+			Node->NodeDecorators.Add(decorInst);
 		}
 	}
 
-	if (AdditionalInfoObject->HasField(TEXT("targetDialogue")))
+	// Return-to-node: read target GUID and store it raw in SelectedNodeIndex for deferred
+	// resolution in PopulateNodes (where all nodes are guaranteed to exist).
+	// Dialoguer: data.targetNode  |  UE round-trip: data.additionalInfo.targetNodeId
+	if (UMounteaDialogueGraphNode_ReturnToNode* returnToNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(Node))
 	{
-		if (UMounteaDialogueGraphNode_OpenChildGraph* openChildGraphNode = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(Node))
+		FString targetGuidStr;
+		if (!dataObject->TryGetStringField(TEXT("targetNode"), targetGuidStr))
 		{
-			const FString targetDialogue = AdditionalInfoObject->GetStringField(TEXT("targetDialogue"));
-			if (!targetDialogue.IsEmpty())
-				openChildGraphNode->TargetDialogue = TSoftObjectPtr<UMounteaDialogueGraph>(FSoftObjectPath(targetDialogue));
+			const TSharedPtr<FJsonObject>* additionalInfoPtr;
+			if (dataObject->TryGetObjectField(TEXT("additionalInfo"), additionalInfoPtr))
+				(*additionalInfoPtr)->TryGetStringField(TEXT("targetNodeId"), targetGuidStr);
+		}
+
+		if (!targetGuidStr.IsEmpty())
+			returnToNode->SelectedNodeIndex = targetGuidStr;
+	}
+
+	// Open-child-graph: store pending target GUID for deferred resolution by ResolveOpenChildGraphTargets.
+	// Dialoguer: data.targetDialogue is a GUID string.
+	// UE round-trip: data.additionalInfo.targetDialogue is a soft asset path.
+	if (UMounteaDialogueGraphNode_OpenChildGraph* openChildGraphNode = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(Node))
+	{
+		FString targetDialogueStr;
+		if (!dataObject->TryGetStringField(TEXT("targetDialogue"), targetDialogueStr))
+		{
+			const TSharedPtr<FJsonObject>* additionalInfoPtr;
+			if (dataObject->TryGetObjectField(TEXT("additionalInfo"), additionalInfoPtr))
+				(*additionalInfoPtr)->TryGetStringField(TEXT("targetDialogue"), targetDialogueStr);
+		}
+
+		if (!targetDialogueStr.IsEmpty())
+		{
+#if WITH_EDITORONLY_DATA
+			FGuid targetGuid;
+			if (FGuid::Parse(targetDialogueStr, targetGuid))
+				openChildGraphNode->PendingTargetDialogueGUID = targetGuid;
+			else
+				openChildGraphNode->TargetDialogue = TSoftObjectPtr<UMounteaDialogueGraph>(FSoftObjectPath(targetDialogueStr));
+#endif
 		}
 	}
 }
@@ -1188,8 +1347,63 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateEdges(UMounteaDialogueGr
 
 			SourceNode->ChildrenNodes.AddUnique(TargetNode);
 			SourceNode->Edges.Add(TargetNode, NewEdge);
-
 			TargetNode->ParentNodes.AddUnique(SourceNode);
+
+			// Parse optional edge conditions
+			const TSharedPtr<FJsonObject>* dataObjPtr;
+			if (EdgeObject->TryGetObjectField(TEXT("data"), dataObjPtr))
+			{
+				const TSharedPtr<FJsonObject>* condObjPtr;
+				if ((*dataObjPtr)->TryGetObjectField(TEXT("conditions"), condObjPtr))
+				{
+					FString modeStr;
+					(*condObjPtr)->TryGetStringField(TEXT("mode"), modeStr);
+					NewEdge->EdgeConditions.Mode = modeStr.Equals(TEXT("any"), ESearchCase::IgnoreCase)
+						? EConditionEvaluationMode::Any
+						: EConditionEvaluationMode::All;
+
+					const TArray<TSharedPtr<FJsonValue>>* rulesArray;
+					if ((*condObjPtr)->TryGetArrayField(TEXT("rules"), rulesArray))
+					{
+						for (const auto& ruleVal : *rulesArray)
+						{
+							const TSharedPtr<FJsonObject> ruleObj = ruleVal->AsObject();
+							if (!ruleObj.IsValid())
+								continue;
+
+							FString condName;
+							FString condIdStr;
+							bool bNegate = false;
+							ruleObj->TryGetStringField(TEXT("name"), condName);
+							ruleObj->TryGetStringField(TEXT("id"), condIdStr);
+							ruleObj->TryGetBoolField(TEXT("negate"), bNegate);
+
+							UClass* condClass = FindConditionClassByName(condName);
+							if (!condClass)
+							{
+								EditorLOG_WARNING(
+									TEXT("[PopulateEdges] No UE condition class for '%s' — using base class as placeholder"),
+									*condName);
+								condClass = UMounteaDialogueConditionBase::StaticClass();
+							}
+
+							FMounteaDialogueCondition condInst;
+							condInst.ConditionClass = NewObject<UMounteaDialogueConditionBase>(NewEdge, condClass);
+							condInst.bNegate = bNegate;
+							if (condInst.ConditionClass)
+							{
+								// Preserve the original Dialoguer name so the user knows what to replace it with
+								if (!condName.IsEmpty())
+									condInst.ConditionClass->ConditionName = FName(*condName);
+								if (!condIdStr.IsEmpty())
+									condInst.ConditionClass->SetConditionGUID(FGuid(condIdStr));
+							}
+
+							NewEdge->EdgeConditions.Rules.Add(condInst);
+						}
+					}
+				}
+			}
 
 			EdgesCreated++;
 		}
@@ -1202,268 +1416,486 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateEdges(UMounteaDialogueGr
 	return true;
 }
 
-bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueRows(UMounteaDialogueGraph* Graph, const TMap<FString, FString>& ExtractedFiles)
+void UMounteaDialogueSystemImportExportHelpers::BuildStringTableLookup(const TMap<FString, FString>& ExtractedFiles, FString& OutDefaultLocale, TMap<FString, FString>& OutLookup, TSharedPtr<FJsonObject>& OutEntriesObject)
+{
+	OutDefaultLocale = TEXT("en");
+	OutLookup.Reset();
+	OutEntriesObject.Reset();
+
+	if (!ExtractedFiles.Contains(TEXT("stringTable.json")))
+		return;
+
+	TSharedPtr<FJsonObject> stRoot;
+	TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(ExtractedFiles[TEXT("stringTable.json")]);
+	if (!FJsonSerializer::Deserialize(reader, stRoot) || !stRoot.IsValid())
+		return;
+
+	stRoot->TryGetStringField(TEXT("defaultLocale"), OutDefaultLocale);
+
+	const TSharedPtr<FJsonObject>* entriesPtr;
+	if (!stRoot->TryGetObjectField(TEXT("entries"), entriesPtr))
+		return;
+
+	OutEntriesObject = *entriesPtr;
+
+	for (const auto& entry : OutEntriesObject->Values)
+	{
+		const TSharedPtr<FJsonObject> localeMap = entry.Value->AsObject();
+		if (!localeMap.IsValid())
+			continue;
+
+		FString text;
+		if (!localeMap->TryGetStringField(*OutDefaultLocale, text))
+		{
+			// Fall back to first available locale
+			for (const auto& locPair : localeMap->Values)
+			{
+				text = locPair.Value->AsString();
+				break;
+			}
+		}
+		OutLookup.Add(entry.Key, text);
+	}
+}
+
+TMap<FString, FString> UMounteaDialogueSystemImportExportHelpers::BuildRowIdToTextKeyMap(const FString& DialogueRowsJson)
+{
+	TMap<FString, FString> rowIdToTextKey;
+
+	TArray<TSharedPtr<FJsonValue>> rowsArray;
+	TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(DialogueRowsJson);
+	if (!FJsonSerializer::Deserialize(reader, rowsArray))
+		return rowIdToTextKey;
+
+	for (const auto& rowValue : rowsArray)
+	{
+		const TSharedPtr<FJsonObject> rowObj = rowValue->AsObject();
+		if (!rowObj.IsValid())
+			continue;
+
+		FString rowId;
+		FString textKey;
+		rowObj->TryGetStringField(TEXT("id"), rowId);
+		if (!rowObj->TryGetStringField(TEXT("textKey"), textKey) || textKey.IsEmpty())
+			textKey = rowId;
+
+		if (!rowId.IsEmpty())
+			rowIdToTextKey.Add(rowId, textKey);
+	}
+
+	return rowIdToTextKey;
+}
+
+bool UMounteaDialogueSystemImportExportHelpers::CreateGraphStringTables(UMounteaDialogueGraph* Graph, IAssetTools& AssetTools, const TMap<FString, FString>& ExtractedFiles, const TMap<FString, FString>& StringTableLookup, const TMap<FString, FString>& RowIdToTextKey, UStringTable*& OutDialogueRowsStringTable, UStringTable*& OutNodesStringTable)
 {
 	if (!IsValid(Graph))
 	{
-		EditorLOG_ERROR(TEXT("[PopulateDialogueRows] Invalid Graph object provided to PopulateDialogueRows"));
+		EditorLOG_ERROR(TEXT("[CreateGraphStringTables] Invalid Graph"));
+		return false;
+	}
+
+	const FString packagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
+	const FString stRowsName  = FString::Printf(TEXT("ST_%s_DialogueRows"), *Graph->GetName());
+	const FString stNodesName = FString::Printf(TEXT("ST_%s_Nodes"), *Graph->GetName());
+
+	// Parse rows and nodes JSON once for the lambdas below
+	TArray<TSharedPtr<FJsonValue>> rowsArray;
+	{
+		TSharedRef<TJsonReader<>> r = TJsonReaderFactory<>::Create(ExtractedFiles["dialogueRows.json"]);
+		FJsonSerializer::Deserialize(r, rowsArray);
+	}
+
+	TArray<TSharedPtr<FJsonValue>> nodesArray;
+	{
+		TSharedRef<TJsonReader<>> r = TJsonReaderFactory<>::Create(ExtractedFiles["nodes.json"]);
+		FJsonSerializer::Deserialize(r, nodesArray);
+	}
+
+	OutDialogueRowsStringTable = CreateStringTable(AssetTools, packagePath, stRowsName, [&](UStringTable* table)
+	{
+		for (const auto& rowValue : rowsArray)
+		{
+			const TSharedPtr<FJsonObject> rowObj = rowValue->AsObject();
+			if (!rowObj.IsValid())
+				continue;
+
+			FString rowId;
+			rowObj->TryGetStringField(TEXT("id"), rowId);
+			const FString tableKey = RowIdToTextKey.FindRef(rowId);
+
+			FString rowText;
+			if (!rowObj->TryGetStringField(TEXT("text"), rowText) || rowText.IsEmpty())
+				rowText = StringTableLookup.FindRef(tableKey);
+
+			if (!tableKey.IsEmpty())
+				table->GetMutableStringTable()->SetSourceString(tableKey, rowText);
+		}
+	});
+
+	OutNodesStringTable = CreateStringTable(AssetTools, packagePath, stNodesName, [&](UStringTable* table)
+	{
+		for (const auto& nodeValue : nodesArray)
+		{
+			const TSharedPtr<FJsonObject> nodeObj = nodeValue->AsObject();
+			if (!nodeObj.IsValid())
+				continue;
+
+			FString nodeId;
+			nodeObj->TryGetStringField(TEXT("id"), nodeId);
+
+			const TSharedPtr<FJsonObject>* dataPtr;
+			if (!nodeObj->TryGetObjectField(TEXT("data"), dataPtr))
+				continue;
+
+			FString displayName;
+			FString displayNameKey;
+			if ((*dataPtr)->TryGetStringField(TEXT("displayNameKey"), displayNameKey))
+				displayName = StringTableLookup.FindRef(displayNameKey);
+
+			if (displayName.IsEmpty())
+			{
+				const TSharedPtr<FJsonObject>* additionalInfoPtr;
+				if ((*dataPtr)->TryGetObjectField(TEXT("additionalInfo"), additionalInfoPtr))
+					(*additionalInfoPtr)->TryGetStringField(TEXT("displayName"), displayName);
+			}
+
+			if (!displayName.IsEmpty())
+				table->GetMutableStringTable()->SetSourceString(nodeId, displayName);
+		}
+	});
+
+	if (!OutDialogueRowsStringTable || !OutNodesStringTable)
+	{
+		EditorLOG_ERROR(TEXT("[CreateGraphStringTables] Failed to create one or more string tables for '%s'"), *Graph->GetName());
+		return false;
+	}
+
+	SaveAsset(OutDialogueRowsStringTable);
+	SaveAsset(OutNodesStringTable);
+	return true;
+}
+
+bool UMounteaDialogueSystemImportExportHelpers::CreateGraphDataTables(UMounteaDialogueGraph* Graph, IAssetTools& AssetTools, UDataTable*& OutParticipantsTable, UDataTable*& OutDialogueRowsTable)
+{
+	if (!IsValid(Graph))
+	{
+		EditorLOG_ERROR(TEXT("[CreateGraphDataTables] Invalid Graph"));
+		return false;
+	}
+
+	const FString packagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
+
+	OutParticipantsTable = CreateDataTable<FDialogueParticipant>(
+		AssetTools, packagePath,
+		FString::Printf(TEXT("DT_%s_Participants"), *Graph->GetName()));
+
+	OutDialogueRowsTable = CreateDataTable<FDialogueRow>(
+		AssetTools, packagePath,
+		FString::Printf(TEXT("DT_%s_DialogueRows"), *Graph->GetName()));
+
+	if (!OutParticipantsTable || !OutDialogueRowsTable)
+	{
+		EditorLOG_ERROR(TEXT("[CreateGraphDataTables] Failed to create one or more data tables for '%s'"), *Graph->GetName());
+		return false;
+	}
+
+	return true;
+}
+
+bool UMounteaDialogueSystemImportExportHelpers::FillDialogueRowsDataTable(UMounteaDialogueGraph* Graph, UDataTable* DialogueRowsTable, UDataTable* ParticipantsTable, UStringTable* DialogueRowsStringTable, UStringTable* NodesStringTable, const TMap<FString, FString>& ExtractedFiles, const TMap<FString, FString>& RowIdToTextKey, const TMap<FGuid, USoundWave*>& AudioMap)
+{
+	if (!IsValid(Graph) || !DialogueRowsTable || !ParticipantsTable || !DialogueRowsStringTable || !NodesStringTable)
+	{
+		EditorLOG_ERROR(TEXT("[FillDialogueRowsDataTable] One or more required assets are null"));
 		return false;
 	}
 
 	const FString dialogueRowsJson = ExtractedFiles["dialogueRows.json"];
 	const FString dialogueNodesJson = ExtractedFiles["nodes.json"];
 
-	TArray<TSharedPtr<FJsonValue>> dialogueRowsJsonArray;
-	TSharedRef<TJsonReader<>> dialogueRowsJsonReader = TJsonReaderFactory<>::Create(dialogueRowsJson);
-	if (!FJsonSerializer::Deserialize(dialogueRowsJsonReader, dialogueRowsJsonArray))
+	TArray<TSharedPtr<FJsonValue>> rowsArray;
 	{
-		EditorLOG_ERROR(TEXT("[PopulateDialogueRows] Failed to parse dialogueRows.json"));
-		return false;
-	}
-
-	TArray<TSharedPtr<FJsonValue>> dialogueNodesJsonArray;
-	TSharedRef<TJsonReader<>> dialogueNodesJsonReader = TJsonReaderFactory<>::Create(dialogueNodesJson);
-	if (!FJsonSerializer::Deserialize(dialogueNodesJsonReader, dialogueNodesJsonArray))
-	{
-		EditorLOG_ERROR(TEXT("[PopulateDialogueRows] Failed to parse nodes.json"));
-		return false;
-	}
-
-	FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
-	IAssetTools& AssetTools = AssetToolsModule.Get();
-
-	FString PackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
-
-	const FString ParticipantsAssetName = FString::Printf(TEXT("DT_%s_Participants"), *Graph->GetName());
-	FString DialogueRowsStringTableName = FString::Printf(TEXT("ST_%s_DialogueRows"), *Graph->GetName());
-	FString DialogueRowsDataTableName = FString::Printf(TEXT("DT_%s_DialogueRows"), *Graph->GetName());
-	FString DialogueNodesStringTableName = FString::Printf(TEXT("ST_%s_Nodes"), *Graph->GetName());
-
-	// Create StringTables and DataTable
-	UStringTable* DialogueRowsStringTable = CreateStringTable(AssetTools, PackagePath, DialogueRowsStringTableName, [&](UStringTable* Table)
-	{
-		if (!Table) return;
-		
-		for (const auto& Row : dialogueRowsJsonArray)
+		TSharedRef<TJsonReader<>> r = TJsonReaderFactory<>::Create(dialogueRowsJson);
+		if (!FJsonSerializer::Deserialize(r, rowsArray))
 		{
-			const TSharedPtr<FJsonObject>& RowObject = Row->AsObject();
-			FString Id = RowObject->GetStringField(TEXT("id"));
-			FString Text = RowObject->GetStringField(TEXT("text"));
-			Table->GetMutableStringTable()->SetSourceString(Id, Text);
+			EditorLOG_ERROR(TEXT("[FillDialogueRowsDataTable] Failed to parse dialogueRows.json"));
+			return false;
 		}
-	});
-
-	UStringTable* NodesStringTable = CreateStringTable(AssetTools, PackagePath, DialogueNodesStringTableName,[&dialogueNodesJsonArray](UStringTable* Table)
-	{
-		for (const auto& Node : dialogueNodesJsonArray)
-		{
-			const TSharedPtr<FJsonObject>& NodeObject = Node->AsObject();
-			if (!NodeObject.IsValid()) continue;
-			
-			FString Id = NodeObject->GetStringField(TEXT("id"));
-			const TSharedPtr<FJsonObject>& DataObject = NodeObject->GetObjectField(TEXT("data"));
-			if (!DataObject.IsValid()) continue;
-			
-			const TSharedPtr<FJsonObject>& AdditionalInfoObject = DataObject->GetObjectField(TEXT("additionalInfo"));
-			if (!AdditionalInfoObject.IsValid()) continue;
-			
-			FString DisplayName = AdditionalInfoObject->GetStringField(TEXT("displayName"));
-			Table->GetMutableStringTable()->SetSourceString(Id, DisplayName);
-		}
-	});
-
-	UDataTable* DialogueRowsDataTable = CreateDataTable<FDialogueRow>(AssetTools, PackagePath, DialogueRowsDataTableName);
-
-	// Load ParticipantsDataTable
-	FString FullAssetPath = FString::Printf(TEXT("%s/%s"), *PackagePath, *ParticipantsAssetName);
-	FSoftObjectPath AssetReference(FullAssetPath);
-	UDataTable* ParticipantsDataTable = Cast<UDataTable>(AssetReference.TryLoad());
-
-	if (!ParticipantsDataTable)
-	{
-		EditorLOG_ERROR(TEXT("Failed to load Participants DataTable: %s"), *FullAssetPath);
-		return false;
 	}
 
-	// Process Config Update
-	UpdateGraphImportDataConfig(Graph, TEXT("dialogueRows.json"), dialogueRowsJson, PackagePath, DialogueRowsDataTableName);
-
-	DialogueRowsDataTable->EmptyTable();
-
-	// Create a mapping of node IDs to participant information
-	TMap<FString, FString> NodeParticipantMap;
-	for (const auto& Node : dialogueNodesJsonArray)
+	TArray<TSharedPtr<FJsonValue>> nodesArray;
 	{
-		const TSharedPtr<FJsonObject>& NodeObject = Node->AsObject();
-		if (!NodeObject.IsValid()) continue;
-		
-		FString NodeId = NodeObject->GetStringField(TEXT("id"));
-		const TSharedPtr<FJsonObject>& DataObject = NodeObject->GetObjectField(TEXT("data"));
-		if (!DataObject.IsValid()) continue;
-		
-		const TSharedPtr<FJsonObject>& AdditionalInfoObject = DataObject->GetObjectField(TEXT("additionalInfo"));
-		if (!AdditionalInfoObject.IsValid()) continue;
-		
-		const TSharedPtr<FJsonObject>* ParticipantObject = nullptr;
-		if (AdditionalInfoObject->TryGetObjectField(TEXT("participant"), ParticipantObject) && ParticipantObject != nullptr)
+		TSharedRef<TJsonReader<>> r = TJsonReaderFactory<>::Create(dialogueNodesJson);
+		if (!FJsonSerializer::Deserialize(r, nodesArray))
 		{
-			FString ParticipantName;
-			if ((*ParticipantObject)->TryGetStringField(TEXT("name"), ParticipantName))
+			EditorLOG_ERROR(TEXT("[FillDialogueRowsDataTable] Failed to parse nodes.json"));
+			return false;
+		}
+	}
+
+	// Clear stale rows so reimport starts fresh
+	DialogueRowsTable->EmptyTable();
+
+	// Build node → participant name map and node → display name map from nodes.json
+	TMap<FString, FString> nodeParticipantMap;
+	TMap<FString, FString> nodeDisplayNameMap;
+	for (const auto& nodeValue : nodesArray)
+	{
+		const TSharedPtr<FJsonObject> nodeObj = nodeValue->AsObject();
+		if (!nodeObj.IsValid())
+			continue;
+
+		FString nodeId;
+		nodeObj->TryGetStringField(TEXT("id"), nodeId);
+
+		const TSharedPtr<FJsonObject>* dataPtr;
+		if (!nodeObj->TryGetObjectField(TEXT("data"), dataPtr))
+			continue;
+
+		FString participantName;
+		if (!(*dataPtr)->TryGetStringField(TEXT("participant"), participantName))
+		{
+			const TSharedPtr<FJsonObject>* addInfoPtr;
+			if ((*dataPtr)->TryGetObjectField(TEXT("additionalInfo"), addInfoPtr))
 			{
-				NodeParticipantMap.Add(NodeId, ParticipantName);
-			}
-			else
-			{
-				EditorLOG_WARNING(TEXT("[PopulateDialogueRows] Participant name not found for NodeId: %s"), *NodeId);
+				const TSharedPtr<FJsonObject>* participantObjPtr;
+				if ((*addInfoPtr)->TryGetObjectField(TEXT("participant"), participantObjPtr))
+					(*participantObjPtr)->TryGetStringField(TEXT("name"), participantName);
 			}
 		}
+		if (!participantName.IsEmpty())
+			nodeParticipantMap.Add(nodeId, participantName);
 		else
-		{
-			EditorLOG_WARNING(TEXT("[PopulateDialogueRows] Participant object not found or invalid for NodeId: %s"), *NodeId);
-		}
+			EditorLOG_WARNING(TEXT("[FillDialogueRowsDataTable] No participant for node: %s"), *nodeId);
 	}
-	
+
 	// Group dialogue rows by nodeId
-	TMap<FString, TArray<TSharedPtr<FJsonObject>>> GroupedDialogueRows;
-	for (const auto& Row : dialogueRowsJsonArray)
+	TMap<FString, TArray<TSharedPtr<FJsonObject>>> groupedRows;
+	for (const auto& rowValue : rowsArray)
 	{
-		const TSharedPtr<FJsonObject>& RowObject = Row->AsObject();
-		if (RowObject.IsValid())
-		{
-			FString NodeId = RowObject->GetStringField(TEXT("nodeId"));
-			GroupedDialogueRows.FindOrAdd(NodeId).Add(RowObject);
-		}
+		const TSharedPtr<FJsonObject> rowObj = rowValue->AsObject();
+		if (!rowObj.IsValid())
+			continue;
+
+		FString nodeId;
+		rowObj->TryGetStringField(TEXT("nodeId"), nodeId);
+		groupedRows.FindOrAdd(nodeId).Add(rowObj);
 	}
-	
-	// Populate the DialogueRowsDataTable
-	for (const auto& GroupedRow : GroupedDialogueRows)
+
+	for (const auto& group : groupedRows)
 	{
-		const FString& NodeId = GroupedRow.Key;
-		const TArray<TSharedPtr<FJsonObject>>& Rows = GroupedRow.Value;
+		const FString& nodeId = group.Key;
+		const TArray<TSharedPtr<FJsonObject>>& rows = group.Value;
 
-		if (Rows.Num() == 0)
+		if (rows.Num() == 0)
 		{
-			EditorLOG_WARNING(TEXT("[PopulateDialogueRows] No dialogue Rows associated with NodeId: %s"), *NodeId);
-			
+			EditorLOG_WARNING(TEXT("[FillDialogueRowsDataTable] No rows for node: %s"), *nodeId);
 			continue;
 		}
-		
-		FDialogueRow NewRow;
-		const FGuid newRowGuid = FGuid(GroupedRow.Key);
-		NewRow.RowGUID = newRowGuid;
 
-		// Set DialogueParticipant using the NodeParticipantMap
-		const FString* ParticipantName = NodeParticipantMap.Find(NodeId);
-		if (!ParticipantName || ParticipantName->IsEmpty())
+		const FString* participantNamePtr = nodeParticipantMap.Find(nodeId);
+		if (!participantNamePtr || participantNamePtr->IsEmpty())
 		{
-			EditorLOG_WARNING(TEXT("[PopulateDialogueRows] Participant name not valid not found for NodeId %s"), *NodeId);
-		
+			EditorLOG_WARNING(TEXT("[FillDialogueRowsDataTable] No participant for node: %s — skipped"), *nodeId);
 			continue;
 		}
-		
-		FDialogueParticipant* Participant = ParticipantsDataTable->FindRow<FDialogueParticipant>(FName(**ParticipantName), TEXT(""));
-		if (!Participant)
+
+		FDialogueParticipant* participant = ParticipantsTable->FindRow<FDialogueParticipant>(FName(**participantNamePtr), TEXT(""));
+		if (!participant)
 		{
-			EditorLOG_WARNING(TEXT("[PopulateDialogueRows] Participant not found for NodeId: %s"), *NodeId);
-			
+			EditorLOG_WARNING(TEXT("[FillDialogueRowsDataTable] Participant '%s' not in table — skipped"), **participantNamePtr);
 			continue;
 		}
-		
-		NewRow.DialogueParticipant = FText::FromString(Participant->ParticipantName.ToString());
-		NewRow.CompatibleTags.AddTag(Participant->ParticipantCategoryTag);
-		NewRow.RowTitle = FText::FromStringTable(NodesStringTable->GetStringTableId(), NodeId);
 
-		// Add FDialogueRowData for each row in the group
-		for (const auto& RowObject : Rows)
+		FDialogueRow newRow;
+		newRow.RowGUID = FGuid(nodeId);
+		newRow.DialogueParticipant = FText::FromString(participant->ParticipantName.ToString());
+		newRow.CompatibleTags.AddTag(participant->ParticipantCategoryTag);
+		newRow.RowTitle = FText::FromStringTable(NodesStringTable->GetStringTableId(), nodeId);
+
+		for (const auto& rowObj : rows)
 		{
-			FString Id = RowObject->GetStringField(TEXT("id"));
-			FDialogueRowData RowData;
-			RowData.RowText = FText::FromStringTable(DialogueRowsStringTable->GetStringTableId(), Id);
-			RowData.RowGUID = FGuid(Id);
-			RowData.RowDuration = RowObject->GetNumberField(TEXT("duration"));;
-			NewRow.DialogueRowData.Add(RowData);
-		}		
+			FString rowId;
+			rowObj->TryGetStringField(TEXT("id"), rowId);
+			const FString tableKey = RowIdToTextKey.FindRef(rowId);
 
-		TArray<FDialogueRow*> dialogueRows;
-		FString outString;
-		DialogueRowsDataTable->GetAllRows(outString, dialogueRows);
-		
-		TArray<FName> rowNames = DialogueRowsDataTable->GetRowNames();
-		FString newRowName = NewRow.DialogueParticipant.ToString();
-		newRowName.Append(TEXT("_")).Append(FString::FromInt(dialogueRows.Num()));
-		DialogueRowsDataTable->AddRow(FName(*newRowName), NewRow);
+			FDialogueRowData rowData;
+			rowData.RowGUID = FGuid(rowId);
+			rowData.RowText = FText::FromStringTable(DialogueRowsStringTable->GetStringTableId(), tableKey);
+			rowData.RowDuration = rowObj->GetNumberField(TEXT("duration"));
 
-		// Update nodes
-		if (Graph && Graph->GetAllNodes().Num() > 0)
+			// Set audio reference if one was imported for this row
+			USoundWave* const* foundSound = AudioMap.Find(rowData.RowGUID);
+			if (foundSound && *foundSound)
+				rowData.RowSound = *foundSound;
+
+			newRow.DialogueRowData.Add(rowData);
+		}
+
+		TArray<FDialogueRow*> existingRows;
+		FString tmp;
+		DialogueRowsTable->GetAllRows(tmp, existingRows);
+
+		FString rowName = newRow.DialogueParticipant.ToString();
+		rowName.Append(TEXT("_")).Append(FString::FromInt(existingRows.Num()));
+		DialogueRowsTable->AddRow(FName(*rowName), newRow);
+
+		// Link matching dialogue nodes to this row
+		for (UMounteaDialogueGraphNode* node : Graph->GetAllNodes())
 		{
-			for (const auto& Node : Graph->GetAllNodes())
+			if (!node || node->GetNodeGUID() != newRow.RowGUID)
+				continue;
+
+			if (UMounteaDialogueGraphNode_DialogueNodeBase* dialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(node))
 			{
-				if (!Node || Node->GetNodeGUID() != newRowGuid) continue;
-        
-				if (UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Node))
-				{
-					DialogueNode->SetDataTable(DialogueRowsDataTable);
-					DialogueNode->SetRowName(FName(*newRowName));
-				}
+				dialogueNode->SetDataTable(DialogueRowsTable);
+				dialogueNode->SetRowName(FName(*rowName));
 			}
 		}
 	}
 
-	// Save all created assets
-	SaveAsset(DialogueRowsStringTable);
-	SaveAsset(NodesStringTable);
-	SaveAsset(DialogueRowsDataTable);
+	const FString packagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
+	const FString dtName = FString::Printf(TEXT("DT_%s_DialogueRows"), *Graph->GetName());
+	UpdateGraphImportDataConfig(Graph, TEXT("dialogueRows.json"), dialogueRowsJson, packagePath, dtName);
 
+	SaveAsset(DialogueRowsTable);
 	return true;
+}
+
+void UMounteaDialogueSystemImportExportHelpers::ExportLocalizationPoFiles(
+	const FString& stringTableID,
+	const FString& defaultLocale,
+	const TMap<FString, FString>& defaultTexts,
+	const TSharedPtr<FJsonObject>& entriesObject)
+{
+	if (!entriesObject.IsValid() || entriesObject->Values.IsEmpty())
+		return;
+
+	// Discover all locale codes from the first entry's child keys
+	TSet<FString> allLocales;
+	for (const auto& entryPair : entriesObject->Values)
+	{
+		const TSharedPtr<FJsonObject> localeMap = entryPair.Value->AsObject();
+		if (!localeMap.IsValid())
+			continue;
+		for (const auto& localePair : localeMap->Values)
+			allLocales.Add(localePair.Key);
+		break; // one entry is enough to enumerate locales
+	}
+
+	for (const FString& locale : allLocales)
+	{
+		if (locale.Equals(defaultLocale, ESearchCase::IgnoreCase))
+			continue; // default locale is the string table itself
+
+		// Build the .po file content
+		FString poContent;
+		poContent.Append(FString::Printf(TEXT("# Mountea Dialogue localization — %s (%s)\n"), *stringTableID, *locale));
+		poContent.Append(TEXT("msgid \"\"\n"));
+		poContent.Append(TEXT("msgstr \"\"\n"));
+		poContent.Append(TEXT("\"Content-Type: text/plain; charset=UTF-8\\n\"\n"));
+		poContent.Append(TEXT("\"Content-Transfer-Encoding: 8bit\\n\"\n\n"));
+
+		for (const auto& entryPair : entriesObject->Values)
+		{
+			const FString& textKey = entryPair.Key;
+			const TSharedPtr<FJsonObject> localeMap = entryPair.Value->AsObject();
+			if (!localeMap.IsValid())
+				continue;
+
+			const FString* defaultTextPtr = defaultTexts.Find(textKey);
+			const FString defaultText = defaultTextPtr ? *defaultTextPtr : FString();
+
+			FString translatedText;
+			localeMap->TryGetStringField(*locale, translatedText);
+
+			// Escape inner double-quotes and newlines for .po format
+			auto EscapePo = [](const FString& in) -> FString
+			{
+				FString out = in;
+				out.ReplaceInline(TEXT("\\"), TEXT("\\\\"), ESearchCase::CaseSensitive);
+				out.ReplaceInline(TEXT("\""), TEXT("\\\""), ESearchCase::CaseSensitive);
+				out.ReplaceInline(TEXT("\n"), TEXT("\\n"), ESearchCase::CaseSensitive);
+				return out;
+			};
+
+			poContent.Append(FString::Printf(TEXT("msgctxt \"%s|%s\"\n"), *stringTableID, *textKey));
+			poContent.Append(FString::Printf(TEXT("msgid \"%s\"\n"), *EscapePo(defaultText)));
+			poContent.Append(FString::Printf(TEXT("msgstr \"%s\"\n\n"), *EscapePo(translatedText)));
+		}
+
+		// Write: {ProjectDir}/Content/Localization/{StringTableID}/{Locale}/{StringTableID}.po
+		const FString locDir = FPaths::Combine(
+			FPaths::ProjectDir(), TEXT("Content"), TEXT("Localization"),
+			stringTableID, locale);
+		IPlatformFile::GetPlatformPhysical().CreateDirectoryTree(*locDir);
+
+		const FString poPath = FPaths::Combine(locDir, stringTableID + TEXT(".po"));
+		const bool bSuccess = FFileHelper::SaveStringToFile(poContent, *poPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
+		if (!bSuccess)
+			EditorLOG_WARNING(TEXT("[ExportLocalizationPoFiles] Failed to write .po file: %s"), *poPath);
+		if (bSuccess)
+			EditorLOG_INFO(TEXT("[ExportLocalizationPoFiles] Wrote %s"), *poPath);
+	}
 }
 
 UStringTable* UMounteaDialogueSystemImportExportHelpers::CreateStringTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName, TFunction<void(UStringTable*)> PopulateFunction)
 {
-	UStringTable* StringTable = nullptr;
-	
-	FSoftObjectPath StringTableAssetPath = PackagePath + TEXT("/") + AssetName + TEXT(".") + AssetName;
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-	FAssetData StringTableAssetData = AssetRegistryModule.Get().GetAssetByObjectPath(StringTableAssetPath);
-	if (StringTableAssetData.IsValid())
+	UStringTable* stringTable = nullptr;
+
+	const FSoftObjectPath assetPath = PackagePath + TEXT("/") + AssetName + TEXT(".") + AssetName;
+	FAssetRegistryModule& assetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	const FAssetData assetData = assetRegistry.Get().GetAssetByObjectPath(assetPath);
+
+	if (assetData.IsValid())
 	{
-		StringTable = Cast<UStringTable>(StringTableAssetData.GetAsset());
+		stringTable = Cast<UStringTable>(assetData.GetAsset());
 	}
 	else
 	{
-		StringTable = Cast<UStringTable>(AssetTools.CreateAsset(AssetName, PackagePath, UStringTable::StaticClass(), nullptr));
+		const FString packageName = PackagePath + TEXT("/") + AssetName;
+		UPackage* package = CreatePackage(*packageName);
+		if (package)
+		{
+			package->FullyLoad();
+			stringTable = NewObject<UStringTable>(package, FName(*AssetName), RF_Public | RF_Standalone | RF_Transactional);
+			if (stringTable)
+			{
+				stringTable->GetMutableStringTable()->SetNamespace(AssetName);
+				FAssetRegistryModule::AssetCreated(stringTable);
+				stringTable->MarkPackageDirty();
+			}
+		}
 	}
-	
-	if (StringTable)
+
+	if (stringTable)
 	{
-		PopulateFunction(StringTable);
+		stringTable->GetMutableStringTable()->ClearSourceStrings();
+		PopulateFunction(stringTable);
 	}
-	return StringTable;
+	return stringTable;
 }
 
 template <typename RowType>
 UDataTable* UMounteaDialogueSystemImportExportHelpers::CreateDataTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName)
 {
-	UDataTable* DataTable = nullptr;
+	UDataTable* dataTable = nullptr;
 
 	FSoftObjectPath DataTableAssetPath = PackagePath + TEXT("/") + AssetName + TEXT(".") + AssetName;
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	FAssetData DataTableAssetData = AssetRegistryModule.Get().GetAssetByObjectPath(DataTableAssetPath);
 	if (DataTableAssetData.IsValid())
-	{
-		DataTable = Cast<UDataTable>(DataTableAssetData.GetAsset());
-	}
+		dataTable = Cast<UDataTable>(DataTableAssetData.GetAsset());
 	else
 	{
-		DataTable = Cast<UDataTable>(
+		dataTable = Cast<UDataTable>(
 		AssetTools.CreateAsset(AssetName, PackagePath, UDataTable::StaticClass(), nullptr));
 	}
 	
-	if (DataTable)
-	{
-		DataTable->RowStruct = RowType::StaticStruct();
-	}
+	if (dataTable)
+		dataTable->RowStruct = RowType::StaticStruct();
 	
-	return DataTable;
+	return dataTable;
 }
 
 void UMounteaDialogueSystemImportExportHelpers::SaveAsset(UObject* Asset)
@@ -1501,6 +1933,10 @@ bool UMounteaDialogueSystemImportExportHelpers::GatherAssetsFromGraph(const UMou
 	OutJsonFiles.Add(TEXT("participants.json"), CreateParticipantsJson(Graph));
 	OutJsonFiles.Add(TEXT("dialogueRows.json"), CreateDialogueRowsJson(AllNodeData, Graph));
 
+	const FString stringTableJson = CreateStringTableJson(Graph);
+	if (!stringTableJson.IsEmpty())
+		OutJsonFiles.Add(TEXT("stringTable.json"), stringTableJson);
+
 	// Gather audio files
 	GatherAudioFiles(Graph, OutAudioFiles);
 
@@ -1520,11 +1956,13 @@ void UMounteaDialogueSystemImportExportHelpers::GatherNodesFromGraph(const UMoun
 		else if (Cast<UMounteaDialogueGraphNode_AnswerNode>(Node))
 			OutNodeData.Add(FDialogueNodeData(TEXT("answerNode"), Node));
 		else if (Cast<UMounteaDialogueGraphNode_CompleteNode>(Node))
-			OutNodeData.Add(FDialogueNodeData(TEXT("closeDialogueNode"), Node));
+			OutNodeData.Add(FDialogueNodeData(TEXT("completeNode"), Node));
 		else if (Cast<UMounteaDialogueGraphNode_ReturnToNode>(Node))
-			OutNodeData.Add(FDialogueNodeData(TEXT("jumpToNode"), Node));
+			OutNodeData.Add(FDialogueNodeData(TEXT("returnNode"), Node));
 		else if (Cast<UMounteaDialogueGraphNode_OpenChildGraph>(Node))
 			OutNodeData.Add(FDialogueNodeData(TEXT("openChildGraphNode"), Node));
+		else if (Cast<UMounteaDialogueGraphNode_Delay>(Node))
+			OutNodeData.Add(FDialogueNodeData(TEXT("delayNode"), Node));
 		else
 			EditorLOG_WARNING(TEXT("[GatherNodesFromGraph] Unknown node type: %s"), *Node->GetClass()->GetName());
 	}
@@ -1722,11 +2160,41 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateEdgesJson(const UMounte
 
 			const TSharedPtr<FJsonObject> EdgeObject = MakeShareable(new FJsonObject);
 
-			FString EdgeId = FString::Printf(TEXT("reactflow__edge-%s-%s"), *Node->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower), *ChildNode->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
-			EdgeObject->SetStringField((TEXT("id")), EdgeId);
-			EdgeObject->SetStringField("source", Node->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
-			EdgeObject->SetStringField("target", ChildNode->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
-			EdgeObject->SetStringField("type", "customEdge");
+			const FString edgeId = FString::Printf(TEXT("reactflow__edge-%s-%s"),
+				*Node->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower),
+				*ChildNode->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
+			EdgeObject->SetStringField(TEXT("id"), edgeId);
+			EdgeObject->SetStringField(TEXT("source"), Node->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
+			EdgeObject->SetStringField(TEXT("target"), ChildNode->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
+			EdgeObject->SetStringField(TEXT("type"), TEXT("customEdge"));
+
+			// Write edge conditions into data.conditions
+			const UMounteaDialogueGraphEdge* const* edgePtr = Node->Edges.Find(ChildNode);
+			if (edgePtr && *edgePtr)
+			{
+				const FMounteaDialogueEdgeConditions& conds = (*edgePtr)->EdgeConditions;
+
+				TSharedPtr<FJsonObject> condObject = MakeShareable(new FJsonObject);
+				condObject->SetStringField(TEXT("mode"),
+					conds.Mode == EConditionEvaluationMode::Any ? TEXT("any") : TEXT("all"));
+
+				TArray<TSharedPtr<FJsonValue>> rulesArray;
+				for (const FMounteaDialogueCondition& rule : conds.Rules)
+				{
+					if (!rule.ConditionClass)
+						continue;
+					TSharedPtr<FJsonObject> ruleObj = MakeShareable(new FJsonObject);
+					ruleObj->SetStringField(TEXT("name"), rule.ConditionClass->GetConditionName());
+					ruleObj->SetStringField(TEXT("id"), rule.ConditionClass->GetConditionGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
+					ruleObj->SetBoolField(TEXT("negate"), rule.bNegate);
+					rulesArray.Add(MakeShareable(new FJsonValueObject(ruleObj)));
+				}
+				condObject->SetArrayField(TEXT("rules"), rulesArray);
+
+				TSharedPtr<FJsonObject> dataObject = MakeShareable(new FJsonObject);
+				dataObject->SetObjectField(TEXT("conditions"), condObject);
+				EdgeObject->SetObjectField(TEXT("data"), dataObject);
+			}
 
 			EdgesArray.Add(MakeShareable(new FJsonValueObject(EdgeObject)));
 		}
@@ -1959,7 +2427,7 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateCategoriesJson(const UM
 		TSharedPtr<FJsonObject> CategoryObject = MakeShareable(new FJsonObject);
 
 		FString TagString = Tag.ToString();
-		const FString Prefix = TEXT("MounteaDialogue.Categories.");
+		const FString Prefix = TEXT("Mountea_Dialogue.Categories.");
 		
 		if (TagString.StartsWith(Prefix))
 		{
@@ -2063,7 +2531,7 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateParticipantsJson(const 
 		if (DialogueRow->CompatibleTags.Num() > 0)
 		{
 			Category = DialogueRow->CompatibleTags.First().GetTagName().ToString();
-			const FString Prefix = TEXT("MounteaDialogue.Categories.");
+			const FString Prefix = TEXT("Mountea_Dialogue.Categories.");
 			if (Category.StartsWith(Prefix))
 			{
 				Category = Category.RightChop(Prefix.Len());
@@ -2136,10 +2604,11 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateDialogueRowsJson(const 
 		{
 			TSharedPtr<FJsonObject> RowObject = MakeShareable(new FJsonObject);
 
-			RowObject->SetStringField((TEXT("id")), RowData.RowGUID.ToString(EGuidFormats::DigitsWithHyphensLower));
-			RowObject->SetStringField("text", RowData.RowText.ToString());
-			RowObject->SetStringField("audioPath", GetRelativeAudioPath(RowData.RowSound, GraphFolder));
-			RowObject->SetStringField("nodeId", NodeData.Node->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
+			RowObject->SetStringField(TEXT("id"), RowData.RowGUID.ToString(EGuidFormats::DigitsWithHyphensLower));
+			RowObject->SetStringField(TEXT("text"), RowData.RowText.ToString());
+			RowObject->SetNumberField(TEXT("duration"), RowData.RowDuration);
+			RowObject->SetStringField(TEXT("audioPath"), GetRelativeAudioPath(RowData.RowSound, GraphFolder));
+			RowObject->SetStringField(TEXT("nodeId"), NodeData.Node->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
 
 			DialogueRowsArray.Add(MakeShareable(new FJsonValueObject(RowObject)));
 		}
@@ -2152,11 +2621,55 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateDialogueRowsJson(const 
 	return OutputString;
 }
 
+FString UMounteaDialogueSystemImportExportHelpers::CreateStringTableJson(const UMounteaDialogueGraph* graph)
+{
+	if (!graph)
+		return FString();
+
+	TSharedPtr<FJsonObject> root = MakeShareable(new FJsonObject);
+	root->SetNumberField(TEXT("version"), 2);
+	root->SetStringField(TEXT("format"), TEXT("stringTable.v2"));
+	root->SetStringField(TEXT("dialogueId"), graph->GetGraphGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
+	root->SetStringField(TEXT("defaultLocale"), TEXT("en"));
+
+	TArray<TSharedPtr<FJsonValue>> localesArray;
+	localesArray.Add(MakeShareable(new FJsonValueString(TEXT("en"))));
+	root->SetArrayField(TEXT("locales"), localesArray);
+
+	TSharedPtr<FJsonObject> entries = MakeShareable(new FJsonObject);
+
+	for (const UMounteaDialogueGraphNode* node : graph->GetAllNodes())
+	{
+		const UMounteaDialogueGraphNode_DialogueNodeBase* dialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(node);
+		if (!dialogueNode || !dialogueNode->GetDataTable())
+			continue;
+
+		const FDialogueRow* row = dialogueNode->GetDataTable()->FindRow<FDialogueRow>(dialogueNode->GetRowName(), TEXT(""));
+		if (!row)
+			continue;
+
+		for (const FDialogueRowData& rowData : row->DialogueRowData)
+		{
+			const FString key = rowData.RowGUID.ToString(EGuidFormats::DigitsWithHyphensLower);
+			TSharedPtr<FJsonObject> localeMap = MakeShareable(new FJsonObject);
+			localeMap->SetStringField(TEXT("en"), rowData.RowText.ToString());
+			entries->SetObjectField(key, localeMap);
+		}
+	}
+
+	root->SetObjectField(TEXT("entries"), entries);
+
+	FString output;
+	TSharedRef<TJsonWriter<>> writer = TJsonWriterFactory<>::Create(&output);
+	FJsonSerializer::Serialize(root.ToSharedRef(), writer);
+	return output;
+}
+
 void UMounteaDialogueSystemImportExportHelpers::ShowNotification(const FText& Message, const float Duration, const FString& BrushName, const FSimpleDelegate& Hyperlink, const FText& HyperlinkText)
 {
 	FNotificationInfo Info(Message);
 	Info.ExpireDuration = Duration;
-	Info.Image = FAppStyle::GetBrush(*BrushName);
+	Info.Image = FMounteaDialogueGraphEditorStyle::GetBrush(*BrushName);
 	if (Hyperlink.IsBound())
 	{
 		Info.Hyperlink = Hyperlink;

@@ -68,6 +68,18 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator")
 	FString GetDecoratorDocumentationLink() const;
+
+	/**
+	 * Returns the stable GUID for this decorator instance.
+	 * Set from the Dialoguer import ID so instances can be tracked across reimports.
+	 */
+	UFUNCTION(BlueprintPure, Category="Mountea|Dialogue|Decorator",
+		meta=(CustomTag="MounteaK2Getter"))
+	FGuid GetDecoratorGUID() const;
+
+	/** Stable per-instance GUID. Auto-generated on creation; overwritten on import with the Dialoguer id. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Decorator", AdvancedDisplay)
+	FGuid DecoratorGUID;
 	virtual FString GetDecoratorDocumentationLink_Implementation() const
 	{
 		return TEXT("https://mountea.tools/docs/DialogueSystem/DialogueDecorators/DialogueDecorator");

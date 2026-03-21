@@ -182,11 +182,20 @@ struct FDialogueParticipant : public FTableRowBase
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Participant")
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Participant",
+		meta=(NoResetToDefault))
 	FName ParticipantName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
+		meta=(NoResetToDefault),
+		meta=(Categories="Mountea_Dialogue"))
 	FGameplayTag ParticipantCategoryTag;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
+		meta=(NoResetToDefault))
+	TSoftObjectPtr<UTexture2D> ParticipantIcon;
+	
 };
 
 #undef LOCTEXT_NAMESPACE

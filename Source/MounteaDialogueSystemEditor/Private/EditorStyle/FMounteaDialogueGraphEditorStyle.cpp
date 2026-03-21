@@ -176,7 +176,7 @@ void FMounteaDialogueGraphEditorStyle::Create()
 
 	StyleSet->Set("MDSStyleSet.Config", new IMAGE_BRUSH(TEXT("configIcon"), Icon40x40));
 
-	StyleSet->Set("MDSStyleSet.DialogueSystemIcon", new IMAGE_BRUSH(TEXT("DialogueSystem_Icon"), Icon16x16));
+	StyleSet->Set("MDSStyleSet.DialogueSystemIcon", new IMAGE_BRUSH(TEXT("DialogueGraph"), Icon16x16));
 
 	StyleSet->Set("MDSStyleSet.Tutorial", new IMAGE_BRUSH(TEXT("tutorialPage_icon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Folder", new IMAGE_BRUSH(TEXT("FolderIcon"), Icon40x40));

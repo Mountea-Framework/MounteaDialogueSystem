@@ -28,6 +28,11 @@ public:
 		return DelayDuration;
 	}
 
+	inline void SetDelayDuration(const int32 NewDuration)
+	{
+		DelayDuration = FMath::Max(1, NewDuration);
+	}
+
 protected:
 
 	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault,Units = "s", UIMin = 0.01, ClampMin = 0.01))
