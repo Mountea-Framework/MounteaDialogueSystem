@@ -149,7 +149,9 @@ public:
 	 * Those Decorators are instanced and exist only as "triggers".
 	 * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
 	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue", NoClear, meta=(NoResetToDefault))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Decorators",
+		meta=(NoResetToDefault),
+		meta=(ShowOnlyInnerProperties))
 	TArray<FMounteaDialogueDecorator> NodeDecorators;
 
 #pragma endregion

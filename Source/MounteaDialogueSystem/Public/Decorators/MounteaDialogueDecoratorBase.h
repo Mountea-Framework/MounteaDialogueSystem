@@ -29,7 +29,8 @@ enum class EDecoratorState : uint8
  * Decorators are instanced and exist only as "triggers".
  * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
  */
-UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea, Dialogue"))
+UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), 
+	AutoExpandCategories=("Mountea, Dialogue"), HideCategories=("Private"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecoratorBase : public UObject, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()
@@ -76,10 +77,7 @@ public:
 	UFUNCTION(BlueprintPure, Category="Mountea|Dialogue|Decorator",
 		meta=(CustomTag="MounteaK2Getter"))
 	FGuid GetDecoratorGUID() const;
-
-	/** Stable per-instance GUID. Auto-generated on creation; overwritten on import with the Dialoguer id. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Decorator", AdvancedDisplay)
-	FGuid DecoratorGUID;
+	
 	virtual FString GetDecoratorDocumentationLink_Implementation() const
 	{
 		return TEXT("https://mountea.tools/docs/DialogueSystem/DialogueDecorators/DialogueDecorator");
@@ -245,25 +243,32 @@ public:
 	
 #pragma endregion
 	
-protected:
+public:	
 
-	UPROPERTY(BlueprintReadOnly, Category="Private")
+	UPROPERTY(BlueprintReadOnly, Category="Private",
+		meta=(NoResetToDefault))
 	FText DecoratorName;
 
-	UPROPERTY(BlueprintReadOnly, Category="Private")
+	UPROPERTY(BlueprintReadOnly, Category="Private",
+		meta=(NoResetToDefault))
 	TSet<TSoftClassPtr<UMounteaDialogueGraphNode>> BlacklistedNodes;
 
 	UPROPERTY()
-	EDecoratorState	DecoratorState	=	EDecoratorState::Uninitialized;
+	EDecoratorState	DecoratorState = EDecoratorState::Uninitialized;
 
 	UPROPERTY()
-	TObjectPtr<UWorld>	OwningWorld	=	nullptr;
+	TObjectPtr<UWorld> OwningWorld	= nullptr;
 	
 	UPROPERTY()
-	TScriptInterface<IMounteaDialogueParticipantInterface>	OwnerParticipant	=	nullptr;
+	TScriptInterface<IMounteaDialogueParticipantInterface> OwnerParticipant = nullptr;
 	
-	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue|Decorator", AdvancedDisplay)
-	TScriptInterface<IMounteaDialogueManagerInterface>		OwningManager		=	nullptr;
+	UPROPERTY(BlueprintReadOnly, Category="Private", AdvancedDisplay,
+		meta=(NoResetToDefault))
+	TScriptInterface<IMounteaDialogueManagerInterface> OwningManager = nullptr;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Private", AdvancedDisplay,
+		meta=(NoResetToDefault))
+	FGuid DecoratorGUID;
 };
 
 
@@ -298,8 +303,12 @@ public:
 	 * Those Decorators are instanced and exist only as "triggers".
 	 * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "Mountea|Dialogue", meta=(NoResetToDefault, AllowAbstract = "false", BlueprintBaseOnly = "true"))
-	TObjectPtr<UMounteaDialogueDecoratorBase>				DecoratorType		= nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, NoClear,
+		Category="Decorator",
+		meta=(NoResetToDefault),
+		meta=(ShowInnerProperties),
+		meta=(AllowAbstract="false"))
+	TObjectPtr<UMounteaDialogueDecoratorBase> DecoratorType = nullptr;
 
 public:
 

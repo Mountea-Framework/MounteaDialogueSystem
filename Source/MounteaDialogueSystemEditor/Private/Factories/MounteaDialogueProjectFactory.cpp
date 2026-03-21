@@ -93,6 +93,8 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 	{
 		TEXT("participants.json"),
 		TEXT("categories.json"),
+		TEXT("decorators.json"),
+		TEXT("conditions.json"),
 	};
 
 	// ── 4. Import each nested .mnteadlg ───────────────────────────────────────

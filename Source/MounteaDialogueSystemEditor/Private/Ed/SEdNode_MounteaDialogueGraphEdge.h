@@ -31,6 +31,7 @@ protected:
 	FSlateColor GetEdgeColor() const;
 	FSlateColor GetEdgeActionBackgroundColor() const;
 	FSlateColor GetEdgeActionIconColor() const;
+	bool HasValidConditions() const;
 
 private:
 	TSharedPtr<STextEntryPopup> TextEntryWidget;

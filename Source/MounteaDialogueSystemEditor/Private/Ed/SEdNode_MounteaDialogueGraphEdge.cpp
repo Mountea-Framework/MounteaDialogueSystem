@@ -11,6 +11,7 @@
 
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
+#include "Edges/MounteaDialogueGraphEdge.h"
 
 #define LOCTEXT_NAMESPACE "SMounteaDialogueGraphEdge"
 
@@ -121,10 +122,10 @@ void SEdNode_MounteaDialogueGraphEdge::UpdateGraphNode()
 						[
 							SNew(SImage)
 							.Image(FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Icon.BulletPoint")))
-							.ColorAndOpacity(FLinearColor::White)
+							.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphEdge::GetEdgeActionIconColor)
 						]
 						+ SOverlay::Slot()
-						.Padding(FMargin(2.0f))
+						.Padding(FMargin(1.0f))
 						[
 							SNew(SImage)
 							.Image(FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Icon.BulletPoint")))
@@ -218,15 +219,31 @@ FSlateColor SEdNode_MounteaDialogueGraphEdge::GetEdgeActionBackgroundColor() con
 FSlateColor SEdNode_MounteaDialogueGraphEdge::GetEdgeActionIconColor() const
 {
 	FLinearColor iconColor = FLinearColor::White;
+	if (HasValidConditions())
+		iconColor = FMounteaDialogueGraphVisualTokens::GetPrimaryAccent();
+
 	if (IsHovered())
-	{
 		iconColor.A = 1.0f;
-	}
 	else
-	{
 		iconColor.A = 0.90f;
-	}
+
 	return iconColor;
+}
+
+bool SEdNode_MounteaDialogueGraphEdge::HasValidConditions() const
+{
+	const UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(GraphNode);
+	if (!edgeNode || !edgeNode->MounteaDialogueGraphEdge)
+		return false;
+
+	const FMounteaDialogueEdgeConditions edgeConditions = edgeNode->MounteaDialogueGraphEdge->GetEdgeConditions();
+	for (const FMounteaDialogueCondition& condition : edgeConditions.Rules)
+	{
+		if (IsValid(condition.ConditionClass))
+			return true;
+	}
+
+	return false;
 }
 
 #undef LOCTEXT_NAMESPACE

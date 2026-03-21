@@ -16,6 +16,7 @@
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
+#include "Edges/MounteaDialogueGraphEdge.h"
 #include "Ed/SEdNode_MounteaDialogueGraphNode.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Framework/Notifications/NotificationManager.h"
@@ -594,7 +595,27 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 
 						if (ParentOutputPin)
 						{
-							ParentOutputPin->MakeLinkTo(CurrentNodeInputPin);
+							// Reuse the existing imported edge (with its conditions) so they survive
+							// the RebuildMounteaDialogueGraph call that follows CreateEdGraph.
+							// A direct pin link would cause NormalizeEdgeNodes to create a new blank
+							// UMounteaDialogueGraphEdge, discarding any imported conditions.
+							UMounteaDialogueGraphEdge* existingEdge = ParentDialogueNode->Edges.FindRef(DialogueNode);
+							if (existingEdge)
+							{
+								UEdNode_MounteaDialogueGraphEdge* edgeNode = MounteaDialogueGraph->CreateEdgeNode(ParentEdNode, CurrentNode);
+								if (edgeNode)
+								{
+									edgeNode->MounteaDialogueGraphEdge = existingEdge;
+									edgeNode->CreateNewGuid();
+									edgeNode->NodePosX = (ParentEdNode->NodePosX + CurrentNode->NodePosX) * 0.5f;
+									edgeNode->NodePosY = (ParentEdNode->NodePosY + CurrentNode->NodePosY) * 0.5f;
+									edgeNode->SetFlags(RF_Transactional);
+									existingEdge->SetFlags(RF_Transactional);
+									MounteaDialogueGraph->AddNode(edgeNode, true, false);
+								}
+							}
+							else
+								ParentOutputPin->MakeLinkTo(CurrentNodeInputPin);
 						}
 						else
 						{

@@ -82,6 +82,27 @@ public:
 
 private:
 
+	// ── Phase 0: Decorator / Condition Blueprint class creation ──────────────────
+
+	// Parses decorators.json definitions (each entry has id, name, type, properties[]).
+	// For each unique definition GUID, finds or creates a Blueprint subclass of
+	// UMounteaDialogueDecoratorBase under <ProjectPackagePath>/Decorators/.
+	// Returns a definition-GUID → generated UClass* map for use during node population.
+	static TMap<FGuid, UClass*> CreateDecoratorBlueprints(
+		const FString& Json,
+		const FString& ProjectPackagePath);
+
+	// Same for conditions.json → UMounteaDialogueConditionBase subclasses.
+	// Assets land under <ProjectPackagePath>/Conditions/.
+	static TMap<FGuid, UClass*> CreateConditionBlueprints(
+		const FString& Json,
+		const FString& ProjectPackagePath);
+
+	// Finds an already-created Blueprint class by CDO GUID (pass 1: loaded classes,
+	// pass 2: asset registry at PackagePath/Name). Returns nullptr if not found.
+	static UClass* FindExistingDecoratorClass(const FGuid& DefinitionGUID, const FString& Name, const FString& PackagePath);
+	static UClass* FindExistingConditionClass(const FGuid& DefinitionGUID, const FString& Name, const FString& PackagePath);
+
 	// ── Phase 1: Pre-graph asset creation ───────────────────────────────────────
 
 	// Parses participants.json, writes gameplay tags to the plugin INI, and returns
@@ -132,9 +153,11 @@ private:
 	// Creates all node objects and fills their properties. Builds OutSpawnedNodes for the
 	// subsequent ReturnToNode resolution pass.
 	static bool PopulateNodes(UMounteaDialogueGraph* Graph, const FString& Json,
-		TMap<FGuid, UMounteaDialogueGraphNode*>& OutSpawnedNodes);
+		TMap<FGuid, UMounteaDialogueGraphNode*>& OutSpawnedNodes,
+		const TMap<FGuid, UClass*>& DecoratorClasses);
 
-	static bool PopulateEdges(UMounteaDialogueGraph* Graph, const FString& Json);
+	static bool PopulateEdges(UMounteaDialogueGraph* Graph, const FString& Json,
+		const TMap<FGuid, UClass*>& ConditionClasses);
 
 	// Resolves ReturnToNode.SelectedNode after all nodes have been created.
 	static void ResolveReturnToNodeTargets(
@@ -165,7 +188,7 @@ private:
 	// ── Utilities ─────────────────────────────────────────────────────────────────
 
 	static FString BytesToString(const uint8* Bytes, int32 Count);
-	static void PopulateNodeData(UMounteaDialogueGraphNode* Node, const TSharedPtr<FJsonObject>& JsonObject);
+	static void PopulateNodeData(UMounteaDialogueGraphNode* Node, const TSharedPtr<FJsonObject>& JsonObject, const TMap<FGuid, UClass*>& DecoratorClasses);
 	static UStringTable* CreateStringTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName, TFunction<void(UStringTable*)> PopulateFunction);
 
 	template <typename RowType>

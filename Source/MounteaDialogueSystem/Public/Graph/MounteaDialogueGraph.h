@@ -55,7 +55,9 @@ protected:
 	 * This array should contain an instance of each decorator used in the graph.
 	 * The order of the decorators in this array determines the order in which they will be applied to the nodes.
 	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue", NoClear, meta=(NoResetToDefault))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Decorators",
+		meta=(NoResetToDefault),
+		meta=(ShowOnlyInnerProperties))
 	TArray<FMounteaDialogueDecorator> GraphDecorators;
 
 	/**
@@ -65,7 +67,9 @@ protected:
 	 * This array should contain an instance of each decorator used in the graph.
 	 * The order of the decorators in this array determines the order in which they will be applied to the nodes.
 	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,  Category = "Mountea|Dialogue", NoClear, meta=(NoResetToDefault))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Decorators",
+		meta=(NoResetToDefault),
+		meta=(ShowOnlyInnerProperties))
 	TArray<FMounteaDialogueDecorator> GraphScopeDecorators;
 
 	/**

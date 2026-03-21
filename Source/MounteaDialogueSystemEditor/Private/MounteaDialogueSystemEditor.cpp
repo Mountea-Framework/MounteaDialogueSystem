@@ -147,7 +147,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 				}
 
 				FSlateImageBrush* DialogueDecoratorSetClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueDecorator"), TEXT(".png")), FVector2D(128.f, 128.f));
-				FSlateImageBrush* DialogueDecoratorDataSetClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueDecorator_Small"), TEXT(".png")), FVector2D(16.f, 16.f));
+				FSlateImageBrush* DialogueDecoratorDataSetClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueDecorator"), TEXT(".png")), FVector2D(16.f, 16.f));
 				if (DialogueDecoratorSetClassThumb && DialogueDecoratorDataSetClassIcon)
 				{
 					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueDecoratorBase", DialogueDecoratorSetClassThumb);
@@ -192,6 +192,14 @@ void FMounteaDialogueSystemEditor::StartupModule()
 				{
 					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueGraphNode", DialogueGraphNodeClassThumb);
 					DialogueTreeSet->Set("ClassIcon.MounteaDialogueGraphNode", DialogueGraphNodeClassIcon);
+				}
+				
+				FSlateImageBrush* DialogueEdgeConditionClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/NodeCondition"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueEdgeConditionClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/NodeCondition"), TEXT(".png")), FVector2D(16.f, 16.f));
+				if (DialogueEdgeConditionClassThumb && DialogueEdgeConditionClassIcon)
+				{
+					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueConditionBase", DialogueEdgeConditionClassThumb);
+					DialogueTreeSet->Set("ClassIcon.MounteaDialogueConditionBase", DialogueEdgeConditionClassIcon);
 				}
 
 				//Register the created style

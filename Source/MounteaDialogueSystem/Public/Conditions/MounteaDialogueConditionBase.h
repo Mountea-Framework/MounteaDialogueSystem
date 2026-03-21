@@ -35,6 +35,7 @@ enum class EConditionEvaluationMode : uint8
 UCLASS(Blueprintable, BlueprintType, EditInlineNew,
 	ClassGroup=("Mountea|Dialogue"),
 	AutoExpandCategories=("Mountea", "Dialogue"),
+	HideCategories=("Private"),
 	meta=(DisplayName="Mountea Dialogue Condition Base"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueConditionBase : public UObject
 {
@@ -98,7 +99,7 @@ public:
 private:
 	
 	/** Stable per-instance GUID. Auto-generated on creation; overwritten on import with the Dialoguer id. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Condition", 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Private", 
 		AdvancedDisplay,
 		meta=(NoResetToDefault),
 		meta=(AllowPrivateAccess))
@@ -137,13 +138,13 @@ struct MOUNTEADIALOGUESYSTEM_API FMounteaDialogueEdgeConditions
 	GENERATED_BODY()
 
 	/** Ordered list of conditions. Empty list means the edge is always traversable. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Conditions",
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Conditions",
 		meta=(NoResetToDefault),
 		meta=(ShowOnlyInnerProperties))
 	TArray<FMounteaDialogueCondition> Rules;
 
 	/** Whether all or any conditions must pass. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Conditions",
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Conditions",
 		meta=(NoResetToDefault))
 	EConditionEvaluationMode Mode = EConditionEvaluationMode::All;
 };

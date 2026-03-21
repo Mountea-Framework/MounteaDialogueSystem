@@ -29,6 +29,7 @@
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
+#include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Framework/Notifications/NotificationManager.h"
@@ -48,6 +49,12 @@
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 #include "ImportConfig/MounteaDialogueImportConfig.h"
+
+#include "Kismet2/KismetEditorUtilities.h"
+#include "Kismet2/BlueprintEditorUtils.h"
+#include "EdGraphSchema_K2.h"
+#include "Engine/Blueprint.h"
+#include "Engine/BlueprintGeneratedClass.h"
 
 #include "Interfaces/IPluginManager.h"
 
@@ -538,8 +545,250 @@ bool UMounteaDialogueSystemImportExportHelpers::ValidateExtractedContent(const T
 	return true;
 }
 
+
+UClass* UMounteaDialogueSystemImportExportHelpers::FindExistingDecoratorClass(const FGuid& DefinitionGUID, const FString& Name, const FString& PackagePath)
+{
+	// Pass 1: already-loaded classes (fast path — covers both C++ and previously loaded Blueprints)
+	for (TObjectIterator<UClass> it; it; ++it)
+	{
+		if (!it->IsChildOf(UMounteaDialogueDecoratorBase::StaticClass())) continue;
+		if (it->HasAnyClassFlags(CLASS_Abstract)) continue;
+		const UMounteaDialogueDecoratorBase* cdo = it->GetDefaultObject<UMounteaDialogueDecoratorBase>();
+		if (cdo && cdo->DecoratorGUID == DefinitionGUID)
+			return *it;
+	}
+
+	// Pass 2: asset registry (handles Blueprint assets that are not yet loaded)
+	FAssetRegistryModule& reg = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	const FSoftObjectPath assetPath(FString::Printf(TEXT("%s/%s.%s"), *PackagePath, *Name, *Name));
+	const FAssetData assetData = reg.Get().GetAssetByObjectPath(assetPath);
+	if (assetData.IsValid())
+	{
+		if (UBlueprint* bp = Cast<UBlueprint>(assetData.GetAsset()))
+		{
+			if (bp->GeneratedClass)
+				return bp->GeneratedClass;
+		}
+	}
+
+	return nullptr;
+}
+
+UClass* UMounteaDialogueSystemImportExportHelpers::FindExistingConditionClass(const FGuid& DefinitionGUID, const FString& Name, const FString& PackagePath)
+{
+	for (TObjectIterator<UClass> it; it; ++it)
+	{
+		if (!it->IsChildOf(UMounteaDialogueConditionBase::StaticClass())) continue;
+		if (it->HasAnyClassFlags(CLASS_Abstract)) continue;
+		const UMounteaDialogueConditionBase* cdo = it->GetDefaultObject<UMounteaDialogueConditionBase>();
+		if (cdo && cdo->GetConditionGUID() == DefinitionGUID)
+			return *it;
+	}
+
+	FAssetRegistryModule& reg = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	const FSoftObjectPath assetPath(FString::Printf(TEXT("%s/%s.%s"), *PackagePath, *Name, *Name));
+	const FAssetData assetData = reg.Get().GetAssetByObjectPath(assetPath);
+	if (assetData.IsValid())
+	{
+		if (UBlueprint* bp = Cast<UBlueprint>(assetData.GetAsset()))
+		{
+			if (bp->GeneratedClass)
+				return bp->GeneratedClass;
+		}
+	}
+
+	return nullptr;
+}
+
+static UClass* AddBlueprintPropertiesFromJson(UBlueprint* Blueprint, const TArray<TSharedPtr<FJsonValue>>* PropsArray)
+{
+	if (!PropsArray)
+		return nullptr;
+
+	for (const auto& propVal : *PropsArray)
+	{
+		const TSharedPtr<FJsonObject> propObj = propVal->AsObject();
+		if (!propObj.IsValid())
+			continue;
+
+		FString propName, propType;
+		propObj->TryGetStringField(TEXT("name"), propName);
+		propObj->TryGetStringField(TEXT("type"), propType);
+		if (propName.IsEmpty() || propType.IsEmpty())
+			continue;
+
+		FEdGraphPinType pinType;
+		if      (propType == TEXT("string")) pinType.PinCategory = UEdGraphSchema_K2::PC_String;
+		else if (propType == TEXT("bool"))   pinType.PinCategory = UEdGraphSchema_K2::PC_Boolean;
+		else if (propType == TEXT("int"))    pinType.PinCategory = UEdGraphSchema_K2::PC_Int;
+		else if (propType == TEXT("float"))  { pinType.PinCategory = UEdGraphSchema_K2::PC_Real; pinType.PinSubCategory = UEdGraphSchema_K2::PC_Float; }
+		else continue;
+
+		FBlueprintEditorUtils::AddMemberVariable(Blueprint, FName(*propName), pinType);
+	}
+
+	return nullptr;
+}
+
+TMap<FGuid, UClass*> UMounteaDialogueSystemImportExportHelpers::CreateDecoratorBlueprints(const FString& Json, const FString& ProjectPackagePath)
+{
+	TMap<FGuid, UClass*> result;
+
+	TArray<TSharedPtr<FJsonValue>> jsonArray;
+	TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(Json);
+	if (!FJsonSerializer::Deserialize(reader, jsonArray))
+		return result;
+
+	const FString decoratorsPath = ProjectPackagePath / TEXT("Decorators");
+
+	for (const auto& val : jsonArray)
+	{
+		TSharedPtr<FJsonObject> obj = val->AsObject();
+		if (!obj.IsValid())
+			continue;
+
+		FString idStr, name;
+		obj->TryGetStringField(TEXT("id"), idStr);
+		obj->TryGetStringField(TEXT("name"), name);
+		if (idStr.IsEmpty() || name.IsEmpty())
+			continue;
+
+		const FGuid definitionGuid = FGuid(idStr);
+		if (result.Contains(definitionGuid))
+			continue;
+
+		// Find existing class (by GUID, then by asset path)
+		UClass* existingClass = FindExistingDecoratorClass(definitionGuid, name, decoratorsPath);
+		if (existingClass)
+		{
+			result.Add(definitionGuid, existingClass);
+			continue;
+		}
+
+		// Create new Blueprint subclass
+		UPackage* package = CreatePackage(*FString::Printf(TEXT("%s/%s"), *decoratorsPath, *name));
+		if (!package)
+			continue;
+
+		UBlueprint* bp = FKismetEditorUtilities::CreateBlueprint(
+			UMounteaDialogueDecoratorBase::StaticClass(),
+			package,
+			FName(*name),
+			BPTYPE_Normal,
+			UBlueprint::StaticClass(),
+			UBlueprintGeneratedClass::StaticClass());
+
+		if (!bp || !bp->GeneratedClass)
+			continue;
+
+		// Add member variables for each property
+		const TArray<TSharedPtr<FJsonValue>>* propsArray;
+		if (obj->TryGetArrayField(TEXT("properties"), propsArray))
+			AddBlueprintPropertiesFromJson(bp, propsArray);
+
+		FKismetEditorUtilities::CompileBlueprint(bp);
+
+		if (UMounteaDialogueDecoratorBase* cdo = bp->GeneratedClass->GetDefaultObject<UMounteaDialogueDecoratorBase>())
+		{
+			cdo->DecoratorGUID = definitionGuid;
+			cdo->DecoratorName = FText::FromString(name);
+		}
+
+		FAssetRegistryModule::AssetCreated(bp);
+		bp->MarkPackageDirty();
+		SaveAsset(bp);
+
+		result.Add(definitionGuid, bp->GeneratedClass);
+	}
+
+	return result;
+}
+
+TMap<FGuid, UClass*> UMounteaDialogueSystemImportExportHelpers::CreateConditionBlueprints(const FString& Json, const FString& ProjectPackagePath)
+{
+	TMap<FGuid, UClass*> result;
+
+	TArray<TSharedPtr<FJsonValue>> jsonArray;
+	TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(Json);
+	if (!FJsonSerializer::Deserialize(reader, jsonArray))
+		return result;
+
+	const FString conditionsPath = ProjectPackagePath / TEXT("Conditions");
+
+	for (const auto& val : jsonArray)
+	{
+		TSharedPtr<FJsonObject> obj = val->AsObject();
+		if (!obj.IsValid())
+			continue;
+
+		FString idStr, name;
+		obj->TryGetStringField(TEXT("id"), idStr);
+		obj->TryGetStringField(TEXT("name"), name);
+		if (idStr.IsEmpty() || name.IsEmpty())
+			continue;
+
+		const FGuid definitionGuid = FGuid(idStr);
+		if (result.Contains(definitionGuid))
+			continue;
+
+		UClass* existingClass = FindExistingConditionClass(definitionGuid, name, conditionsPath);
+		if (existingClass)
+		{
+			result.Add(definitionGuid, existingClass);
+			continue;
+		}
+
+		UPackage* package = CreatePackage(*FString::Printf(TEXT("%s/%s"), *conditionsPath, *name));
+		if (!package)
+			continue;
+
+		UBlueprint* bp = FKismetEditorUtilities::CreateBlueprint(
+			UMounteaDialogueConditionBase::StaticClass(),
+			package,
+			FName(*name),
+			BPTYPE_Normal,
+			UBlueprint::StaticClass(),
+			UBlueprintGeneratedClass::StaticClass());
+
+		if (!bp || !bp->GeneratedClass)
+			continue;
+
+		const TArray<TSharedPtr<FJsonValue>>* propsArray;
+		if (obj->TryGetArrayField(TEXT("properties"), propsArray))
+			AddBlueprintPropertiesFromJson(bp, propsArray);
+
+		FKismetEditorUtilities::CompileBlueprint(bp);
+
+		if (UMounteaDialogueConditionBase* cdo = bp->GeneratedClass->GetDefaultObject<UMounteaDialogueConditionBase>())
+		{
+			cdo->SetConditionGUID(definitionGuid);
+			cdo->ConditionName = FName(*name);
+		}
+
+		FAssetRegistryModule::AssetCreated(bp);
+		bp->MarkPackageDirty();
+		SaveAsset(bp);
+
+		result.Add(definitionGuid, bp->GeneratedClass);
+	}
+
+	return result;
+}
+
 bool UMounteaDialogueSystemImportExportHelpers::PopulateGraphFromExtractedFiles(UMounteaDialogueGraph* Graph, const TMap<FString, FString>& ExtractedFiles, const FString& SourceFilePath)
 {
+	// ── Phase 0: Decorator / Condition Blueprint classes ──────────────────────────
+
+	const FString projectPackagePath = FPackageName::GetLongPackagePath(Graph->GetOuter()->GetPathName());
+
+	TMap<FGuid, UClass*> decoratorClasses;
+	if (ExtractedFiles.Contains(TEXT("decorators.json")))
+		decoratorClasses = CreateDecoratorBlueprints(ExtractedFiles[TEXT("decorators.json")], projectPackagePath);
+
+	TMap<FGuid, UClass*> conditionClasses;
+	if (ExtractedFiles.Contains(TEXT("conditions.json")))
+		conditionClasses = CreateConditionBlueprints(ExtractedFiles[TEXT("conditions.json")], projectPackagePath);
+
 	// ── Phase 1: Pre-graph assets ─────────────────────────────────────────────────
 
 	if (!PopulateDialogueData(Graph, SourceFilePath, ExtractedFiles))
@@ -575,10 +824,10 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateGraphFromExtractedFiles(
 	// ── Phase 2: Graph population ─────────────────────────────────────────────────
 
 	TMap<FGuid, UMounteaDialogueGraphNode*> spawnedNodes;
-	if (!PopulateNodes(Graph, ExtractedFiles["nodes.json"], spawnedNodes))
+	if (!PopulateNodes(Graph, ExtractedFiles["nodes.json"], spawnedNodes, decoratorClasses))
 		return false;
 
-	if (!PopulateEdges(Graph, ExtractedFiles["edges.json"]))
+	if (!PopulateEdges(Graph, ExtractedFiles["edges.json"], conditionClasses))
 		return false;
 
 	ResolveReturnToNodeTargets(Graph, spawnedNodes);
@@ -1076,7 +1325,7 @@ UClass* UMounteaDialogueSystemImportExportHelpers::FindDecoratorClassByName(cons
 	return nullptr;
 }
 
-bool UMounteaDialogueSystemImportExportHelpers::PopulateNodes(UMounteaDialogueGraph* Graph, const FString& Json, TMap<FGuid, UMounteaDialogueGraphNode*>& OutSpawnedNodes)
+bool UMounteaDialogueSystemImportExportHelpers::PopulateNodes(UMounteaDialogueGraph* Graph, const FString& Json, TMap<FGuid, UMounteaDialogueGraphNode*>& OutSpawnedNodes, const TMap<FGuid, UClass*>& DecoratorClasses)
 {
 	if (!IsValid(Graph) || !Graph->GetOutermost()->IsValidLowLevel())
 	{
@@ -1121,7 +1370,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateNodes(UMounteaDialogueGr
 	{
 		if (Graph->GetStartNode())
 		{
-			PopulateNodeData(Graph->GetStartNode(), startNodes[0]->AsObject());
+			PopulateNodeData(Graph->GetStartNode(), startNodes[0]->AsObject(), DecoratorClasses);
 			OutSpawnedNodes.Add(Graph->GetStartNode()->GetNodeGUID(), Graph->GetStartNode());
 		}
 		else
@@ -1129,7 +1378,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateNodes(UMounteaDialogueGr
 			if (UMounteaDialogueGraphNode_StartNode* newStart = Graph->ConstructDialogueNode<UMounteaDialogueGraphNode_StartNode>())
 			{
 				Graph->StartNode = newStart;
-				PopulateNodeData(newStart, startNodes[0]->AsObject());
+				PopulateNodeData(newStart, startNodes[0]->AsObject(), DecoratorClasses);
 				OutSpawnedNodes.Add(newStart->GetNodeGUID(), newStart);
 			}
 		}
@@ -1143,7 +1392,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateNodes(UMounteaDialogueGr
 			if (!newNode)
 				continue;
 
-			PopulateNodeData(newNode, nodeValue->AsObject());
+			PopulateNodeData(newNode, nodeValue->AsObject(), DecoratorClasses);
 			Graph->AllNodes.Add(newNode);
 			OutSpawnedNodes.Add(newNode->GetNodeGUID(), newNode);
 		}
@@ -1190,7 +1439,7 @@ void UMounteaDialogueSystemImportExportHelpers::ResolveReturnToNodeTargets(UMoun
 	}
 }
 
-void UMounteaDialogueSystemImportExportHelpers::PopulateNodeData(UMounteaDialogueGraphNode* Node, const TSharedPtr<FJsonObject>& JsonObject)
+void UMounteaDialogueSystemImportExportHelpers::PopulateNodeData(UMounteaDialogueGraphNode* Node, const TSharedPtr<FJsonObject>& JsonObject, const TMap<FGuid, UClass*>& DecoratorClasses)
 {
 	if (!Node || !JsonObject.IsValid())
 		return;
@@ -1226,7 +1475,7 @@ void UMounteaDialogueSystemImportExportHelpers::PopulateNodeData(UMounteaDialogu
 			delayNode->SetDelayDuration(FMath::RoundToInt(delayDuration));
 	}
 
-	// Decorators
+	// Decorators — resolve by definition GUID (preferred) then by name fallback
 	const TArray<TSharedPtr<FJsonValue>>* decoratorsArray;
 	if (dataObject->TryGetArrayField(TEXT("decorators"), decoratorsArray))
 	{
@@ -1241,17 +1490,45 @@ void UMounteaDialogueSystemImportExportHelpers::PopulateNodeData(UMounteaDialogu
 			decorObj->TryGetStringField(TEXT("name"), decorName);
 			decorObj->TryGetStringField(TEXT("id"), decorIdStr);
 
-			UClass* decorClass = FindDecoratorClassByName(decorName);
+			// Try GUID-based lookup first (works for Blueprint classes created during Phase 0)
+			UClass* decorClass = nullptr;
+			if (!decorIdStr.IsEmpty())
+				decorClass = DecoratorClasses.FindRef(FGuid(decorIdStr));
+
+			// Fallback: name-based search for C++ decorators and old-format round-trips
+			if (!decorClass)
+				decorClass = FindDecoratorClassByName(decorName);
+
 			if (!decorClass)
 			{
-				EditorLOG_WARNING(TEXT("[PopulateNodeData] No UE decorator class for '%s' — skipped"), *decorName);
+				EditorLOG_WARNING(TEXT("[PopulateNodeData] No UE decorator class for '%s' (%s) — skipped"), *decorName, *decorIdStr);
 				continue;
 			}
 
 			FMounteaDialogueDecorator decorInst;
 			decorInst.DecoratorType = NewObject<UMounteaDialogueDecoratorBase>(Node, decorClass);
-			if (decorInst.DecoratorType && !decorIdStr.IsEmpty())
-				decorInst.DecoratorType->DecoratorGUID = FGuid(decorIdStr);
+
+			if (decorInst.DecoratorType)
+			{
+				// Fresh per-instance GUID (definition GUID lives on the class CDO)
+				decorInst.DecoratorType->DecoratorGUID = FGuid::NewGuid();
+
+				// Apply exported property values
+				const TSharedPtr<FJsonObject>* valuesPtr;
+				if (decorObj->TryGetObjectField(TEXT("values"), valuesPtr))
+				{
+					for (const auto& kvp : (*valuesPtr)->Values)
+					{
+						FProperty* prop = decorInst.DecoratorType->GetClass()->FindPropertyByName(FName(*kvp.Key));
+						if (prop)
+						{
+							FString valueStr;
+							kvp.Value->TryGetString(valueStr);
+							prop->ImportText_InContainer(*valueStr, decorInst.DecoratorType, decorInst.DecoratorType, PPF_None);
+						}
+					}
+				}
+			}
 
 			Node->NodeDecorators.Add(decorInst);
 		}
@@ -1300,7 +1577,7 @@ void UMounteaDialogueSystemImportExportHelpers::PopulateNodeData(UMounteaDialogu
 	}
 }
 
-bool UMounteaDialogueSystemImportExportHelpers::PopulateEdges(UMounteaDialogueGraph* Graph, const FString& Json)
+bool UMounteaDialogueSystemImportExportHelpers::PopulateEdges(UMounteaDialogueGraph* Graph, const FString& Json, const TMap<FGuid, UClass*>& ConditionClasses)
 {
 	if (!Graph)
 	{
@@ -1349,6 +1626,27 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateEdges(UMounteaDialogueGr
 			SourceNode->Edges.Add(TargetNode, NewEdge);
 			TargetNode->ParentNodes.AddUnique(SourceNode);
 
+			// For reimport: update the EdNode's edge reference so that conditions set below
+			// survive the RebuildMounteaDialogueGraph call that follows PopulateGraphFromExtractedFiles.
+			// Without this, Clear() empties Node->Edges and RebuildMounteaDialogueGraph restores the
+			// OLD blank edges that the EdNodes reference.
+			if (UEdGraph_MounteaDialogueGraph* edGraph = Cast<UEdGraph_MounteaDialogueGraph>(Graph->EdGraph))
+			{
+				for (UEdGraphNode* edNode : edGraph->Nodes)
+				{
+					UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(edNode);
+					if (!edgeNode || !edgeNode->MounteaDialogueGraphEdge)
+						continue;
+					const UMounteaDialogueGraphEdge* oldEdge = edgeNode->MounteaDialogueGraphEdge;
+					if (oldEdge->StartNode && oldEdge->StartNode->GetNodeGUID() == SourceNode->GetNodeGUID()
+						&& oldEdge->EndNode && oldEdge->EndNode->GetNodeGUID() == TargetNode->GetNodeGUID())
+					{
+						edgeNode->MounteaDialogueGraphEdge = NewEdge;
+						break;
+					}
+				}
+			}
+
 			// Parse optional edge conditions
 			const TSharedPtr<FJsonObject>* dataObjPtr;
 			if (EdgeObject->TryGetObjectField(TEXT("data"), dataObjPtr))
@@ -1378,12 +1676,20 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateEdges(UMounteaDialogueGr
 							ruleObj->TryGetStringField(TEXT("id"), condIdStr);
 							ruleObj->TryGetBoolField(TEXT("negate"), bNegate);
 
-							UClass* condClass = FindConditionClassByName(condName);
+							// Try GUID-based lookup first (Blueprint classes created in Phase 0)
+							UClass* condClass = nullptr;
+							if (!condIdStr.IsEmpty())
+								condClass = ConditionClasses.FindRef(FGuid(condIdStr));
+
+							// Fallback: name-based search for C++ conditions and old-format round-trips
+							if (!condClass)
+								condClass = FindConditionClassByName(condName);
+
 							if (!condClass)
 							{
 								EditorLOG_WARNING(
-									TEXT("[PopulateEdges] No UE condition class for '%s' — using base class as placeholder"),
-									*condName);
+									TEXT("[PopulateEdges] No UE condition class for '%s' (%s) — using base class as placeholder"),
+									*condName, *condIdStr);
 								condClass = UMounteaDialogueConditionBase::StaticClass();
 							}
 
@@ -1397,6 +1703,22 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateEdges(UMounteaDialogueGr
 									condInst.ConditionClass->ConditionName = FName(*condName);
 								if (!condIdStr.IsEmpty())
 									condInst.ConditionClass->SetConditionGUID(FGuid(condIdStr));
+
+								// Apply exported property values
+								const TSharedPtr<FJsonObject>* valuesPtr;
+								if (ruleObj->TryGetObjectField(TEXT("values"), valuesPtr))
+								{
+									for (const auto& kvp : (*valuesPtr)->Values)
+									{
+										FProperty* prop = condInst.ConditionClass->GetClass()->FindPropertyByName(FName(*kvp.Key));
+										if (prop)
+										{
+											FString valueStr;
+											kvp.Value->TryGetString(valueStr);
+											prop->ImportText_InContainer(*valueStr, condInst.ConditionClass, condInst.ConditionClass, PPF_None);
+										}
+									}
+								}
 							}
 
 							NewEdge->EdgeConditions.Rules.Add(condInst);
@@ -2059,6 +2381,43 @@ void UMounteaDialogueSystemImportExportHelpers::AddNodeData(const TSharedPtr<FJs
 {
 	const TSharedPtr<FJsonObject> DataObject = MakeShareable(new FJsonObject);
 	DataObject->SetStringField("title", Node->NodeTitle.ToString());
+
+	// Export node decorators — id and name read from the CLASS CDO so they match the
+	// definition GUID and human-readable Dialoguer name set during Blueprint creation.
+	// (The instance constructor overwrites these fields, so the instance must not be used.)
+	if (!Node->NodeDecorators.IsEmpty())
+	{
+		TArray<TSharedPtr<FJsonValue>> decoratorsArray;
+		for (const FMounteaDialogueDecorator& decor : Node->NodeDecorators)
+		{
+			if (!decor.DecoratorType)
+				continue;
+
+			const UMounteaDialogueDecoratorBase* classCDO =
+				decor.DecoratorType->GetClass()->GetDefaultObject<UMounteaDialogueDecoratorBase>();
+
+			TSharedPtr<FJsonObject> decorObj = MakeShareable(new FJsonObject);
+			decorObj->SetStringField(TEXT("id"),   classCDO->DecoratorGUID.ToString(EGuidFormats::DigitsWithHyphensLower));
+			decorObj->SetStringField(TEXT("name"), classCDO->DecoratorName.ToString());
+
+			TSharedPtr<FJsonObject> valuesObj = MakeShareable(new FJsonObject);
+			for (TFieldIterator<FProperty> propIt(decor.DecoratorType->GetClass()); propIt; ++propIt)
+			{
+				FProperty* prop = *propIt;
+				if (!prop->HasAnyPropertyFlags(CPF_BlueprintVisible))
+					continue;
+				if (prop->GetOwnerClass() == UMounteaDialogueDecoratorBase::StaticClass())
+					continue; // skip base-class properties
+				FString exportStr;
+				prop->ExportTextItem_InContainer(exportStr, decor.DecoratorType, decor.DecoratorType, nullptr, PPF_None);
+				valuesObj->SetStringField(prop->GetName(), exportStr);
+			}
+			decorObj->SetObjectField(TEXT("values"), valuesObj);
+			decoratorsArray.Add(MakeShareable(new FJsonValueObject(decorObj)));
+		}
+		if (!decoratorsArray.IsEmpty())
+			DataObject->SetArrayField(TEXT("decorators"), decoratorsArray);
+	}
 
 	TSharedPtr<FJsonObject> AdditionalInfoObject = MakeShareable(new FJsonObject);
 
