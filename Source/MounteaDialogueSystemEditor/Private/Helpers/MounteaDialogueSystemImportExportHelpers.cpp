@@ -57,6 +57,9 @@
 #include "Engine/BlueprintGeneratedClass.h"
 
 #include "Interfaces/IPluginManager.h"
+#include "IImageWrapper.h"
+#include "IImageWrapperModule.h"
+#include "Engine/TextureDefines.h"
 
 #include "UObject/SavePackage.h"
 #include "Widgets/Notifications/SNotificationList.h"
@@ -366,12 +369,14 @@ bool UMounteaDialogueSystemImportExportHelpers::ExportDialogueGraph(const UMount
 
 	const FString ExportDirectory = FPaths::GetPath(FilePath);
 	TArray<FString> ExportedAudioFiles;
+	TMap<FString, FString> ThumbnailFiles;
+	GatherThumbnailFiles(Graph, ThumbnailFiles);
 	bool bSuccess = false;
 
 	if (ExportAudioFiles(AudioFiles, ExportDirectory, ExportedAudioFiles))
 	{
-		bSuccess = PackToMNTEADLG(JsonFiles, ExportedAudioFiles, FilePath);
-		
+		bSuccess = PackToMNTEADLG(JsonFiles, ExportedAudioFiles, ThumbnailFiles, FilePath);
+
 		if (!bSuccess)
 		{
 			EditorLOG_ERROR(TEXT("[ExportDialogueGraph] Failed to pack files into MNTEADLG"));
@@ -381,10 +386,14 @@ bool UMounteaDialogueSystemImportExportHelpers::ExportDialogueGraph(const UMount
 	{
 		EditorLOG_ERROR(TEXT("[ExportDialogueGraph] Failed to export audio files"));
 	}
-	
+
+	// Clean up temp thumbnail files
+	for (const auto& thumb : ThumbnailFiles)
+		IFileManager::Get().Delete(*thumb.Value);
+
 	FString AudioDirectory = ExportDirectory;
 	AudioDirectory.Append(TEXT("/audio"));
-	
+
 	TSet<FString> AudioDirectories;
 	for (const FString& ExportedAudioFile : ExportedAudioFiles)
 	{
@@ -1053,6 +1062,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueData(UMounteaDia
 		FDialogueImportSourceData importSourceData;
 		importSourceData.DialogueAssetPath = GraphPath;
 		importSourceData.DialogueSourcePath = SourceFilePath;
+		importSourceData.ImportedAt = FDateTime::Now();
 		importConfig->WriteToConfig(Graph->GetGraphGUID(), importSourceData);
 
 		importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
@@ -1200,6 +1210,16 @@ bool UMounteaDialogueSystemImportExportHelpers::FillParticipantsDataTable(const 
 		const FString* fullTagPtr = ParticipantTagMap.Find(name);
 		if (fullTagPtr)
 			newRow.ParticipantCategoryTag = UGameplayTagsManager::Get().RequestGameplayTag(FName(**fullTagPtr), false);
+
+		FString participantImageName;
+		participant->TryGetStringField(TEXT("participantImage"), participantImageName);
+		if (!participantImageName.IsEmpty())
+		{
+			const FString dialoguePackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
+			const FString textureSoftPath = FString::Printf(TEXT("%s/thumbnails/%s.%s"),
+				*dialoguePackagePath, *participantImageName, *participantImageName);
+			newRow.ParticipantIcon = TSoftObjectPtr<UTexture2D>(FSoftObjectPath(textureSoftPath));
+		}
 
 		ParticipantsTable->AddRow(FName(*name), newRow);
 	}
@@ -2254,6 +2274,8 @@ bool UMounteaDialogueSystemImportExportHelpers::GatherAssetsFromGraph(const UMou
 	OutJsonFiles.Add(TEXT("dialogueData.json"), CreateDialogueDataJson(Graph));
 	OutJsonFiles.Add(TEXT("participants.json"), CreateParticipantsJson(Graph));
 	OutJsonFiles.Add(TEXT("dialogueRows.json"), CreateDialogueRowsJson(AllNodeData, Graph));
+	OutJsonFiles.Add(TEXT("decorators.json"), CreateDecoratorsJson(Graph));
+	OutJsonFiles.Add(TEXT("conditions.json"), CreateConditionsJson(Graph));
 
 	const FString stringTableJson = CreateStringTableJson(Graph);
 	if (!stringTableJson.IsEmpty())
@@ -2546,6 +2568,24 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateEdgesJson(const UMounte
 					ruleObj->SetStringField(TEXT("name"), rule.ConditionClass->GetConditionName());
 					ruleObj->SetStringField(TEXT("id"), rule.ConditionClass->GetConditionGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
 					ruleObj->SetBoolField(TEXT("negate"), rule.bNegate);
+
+					// Export Blueprint-defined property values so they survive the round-trip
+					TSharedPtr<FJsonObject> valuesObj = MakeShareable(new FJsonObject);
+					UClass* condClass = rule.ConditionClass->GetClass();
+					for (TFieldIterator<FProperty> propIt(condClass); propIt; ++propIt)
+					{
+						FProperty* prop = *propIt;
+						if (!prop->HasAnyPropertyFlags(CPF_BlueprintVisible))
+							continue;
+						if (prop->GetOwnerClass() == UMounteaDialogueConditionBase::StaticClass())
+							continue;
+						FString exportStr;
+						prop->ExportTextItem_InContainer(exportStr, rule.ConditionClass, rule.ConditionClass, nullptr, PPF_None);
+						valuesObj->SetStringField(prop->GetName(), exportStr);
+					}
+					if (valuesObj->Values.Num() > 0)
+						ruleObj->SetObjectField(TEXT("values"), valuesObj);
+
 					rulesArray.Add(MakeShareable(new FJsonValueObject(ruleObj)));
 				}
 				condObject->SetArrayField(TEXT("rules"), rulesArray);
@@ -2666,17 +2706,18 @@ void UMounteaDialogueSystemImportExportHelpers::CreateWAVFile(const TArray<uint8
 	FMemory::Memcpy(OutWAVData.GetData() + sizeof(WAVHeader), InPCMData.GetData(), InPCMData.Num());
 }
 
-bool UMounteaDialogueSystemImportExportHelpers::PackToMNTEADLG(const TMap<FString, FString>& JsonFiles, const TArray<FString>& ExportedAudioFiles, const FString& OutputPath)
+bool UMounteaDialogueSystemImportExportHelpers::PackToMNTEADLG(const TMap<FString, FString>& JsonFiles, const TArray<FString>& ExportedAudioFiles, const TMap<FString, FString>& ThumbnailFiles, const FString& OutputPath)
 {
 	FString ZipFilePath = FPaths::ChangeExtension(OutputPath, TEXT("mnteadlg"));
-	
-	struct zip_t* zip = zip_open(TCHAR_TO_UTF8(*ZipFilePath), ZIP_DEFAULT_COMPRESSION_LEVEL, 'w');
+
+	// Use stored mode (0) to match Dialoguer's output format; deflate causes read errors in Dialoguer's zip parser
+	struct zip_t* zip = zip_open(TCHAR_TO_UTF8(*ZipFilePath), 0, 'w');
 	if (!zip)
 	{
 		EditorLOG_ERROR(TEXT("[PackToMNTEADLG] Failed to create zip file: %s"), *ZipFilePath);
 		return false;
 	}
-	
+
 	for (const auto& JsonFile : JsonFiles)
 	{
 		if (zip_entry_open(zip, TCHAR_TO_UTF8(*JsonFile.Key)) < 0)
@@ -2697,6 +2738,39 @@ bool UMounteaDialogueSystemImportExportHelpers::PackToMNTEADLG(const TMap<FStrin
 		zip_entry_close(zip);
 	}
 
+	// Pack thumbnail PNG files under Thumbnails/
+	if (!ThumbnailFiles.IsEmpty())
+	{
+		if (zip_entry_open(zip, "Thumbnails/") < 0)
+		{
+			EditorLOG_WARNING(TEXT("[PackToMNTEADLG] Failed to add 'Thumbnails' directory to zip"));
+		}
+		else
+			zip_entry_close(zip);
+
+		for (const auto& thumb : ThumbnailFiles)
+		{
+			const FString zipPath = FString::Printf(TEXT("Thumbnails/%s"), *FPaths::GetCleanFilename(thumb.Key));
+			TArray<uint8> thumbData;
+			if (!FFileHelper::LoadFileToArray(thumbData, *thumb.Value))
+			{
+				EditorLOG_WARNING(TEXT("[PackToMNTEADLG] Failed to read thumbnail file: %s"), *thumb.Value);
+				continue;
+			}
+
+			if (zip_entry_open(zip, TCHAR_TO_UTF8(*zipPath)) < 0)
+			{
+				EditorLOG_WARNING(TEXT("[PackToMNTEADLG] Failed to open zip entry for thumbnail: %s"), *zipPath);
+				continue;
+			}
+
+			if (zip_entry_write(zip, thumbData.GetData(), thumbData.Num()) < 0)
+				EditorLOG_WARNING(TEXT("[PackToMNTEADLG] Failed to write thumbnail to zip: %s"), *zipPath);
+
+			zip_entry_close(zip);
+		}
+	}
+
 	// Always add an empty 'audio' directory
 	if (zip_entry_open(zip, "audio/") < 0)
 	{
@@ -2705,7 +2779,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PackToMNTEADLG(const TMap<FStrin
 		return false;
 	}
 	zip_entry_close(zip);
-	
+
 	for (const FString& AudioFile : ExportedAudioFiles)
 	{
 		FString AudioFileName = FPaths::GetCleanFilename(AudioFile);
@@ -2739,7 +2813,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PackToMNTEADLG(const TMap<FStrin
 	}
 
 	zip_close(zip);
-	
+
 	return true;
 }
 
@@ -2779,41 +2853,43 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateCategoriesJson(const UM
 		}
 	}
 
+	// Derive category entries from the participant tags.
+	// Tag format: "Mountea_Dialogue.<FullPath>.<ParticipantLeaf>"
+	// Strip the "Mountea_Dialogue." root prefix; then everything except the last
+	// dot-segment is the category fullPath. The last segment of fullPath is the name.
+	const FString RootPrefix = TEXT("Mountea_Dialogue.");
+	TSet<FString> seenFullPaths;
 	TArray<TSharedPtr<FJsonValue>> CategoriesArray;
 
 	for (const FGameplayTag& Tag : AllCategories)
 	{
-		TSharedPtr<FJsonObject> CategoryObject = MakeShareable(new FJsonObject);
+		FString tagStr = Tag.ToString();
+		if (tagStr.StartsWith(RootPrefix))
+			tagStr = tagStr.RightChop(RootPrefix.Len());
 
-		FString TagString = Tag.ToString();
-		const FString Prefix = TEXT("Mountea_Dialogue.Categories.");
-		
-		if (TagString.StartsWith(Prefix))
+		// Drop the last segment (the participant/leaf name), keep the rest as fullPath
+		TArray<FString> parts;
+		tagStr.ParseIntoArray(parts, TEXT("."));
+		if (parts.Num() < 2)
+			continue; // no category above the leaf
+
+		parts.Pop(); // remove participant leaf
+
+		FString fullPath;
+		for (int32 i = 0; i < parts.Num(); ++i)
 		{
-			FString CategoryPath = TagString.RightChop(Prefix.Len());
-			TArray<FString> CategoryParts;
-			CategoryPath.ParseIntoArray(CategoryParts, TEXT("."));
-
-			if (CategoryParts.Num() > 0)
-			{
-				FString Name = CategoryParts.Last();
-				
-				FString Parent;
-				for (int32 i = 0; i < CategoryParts.Num() - 1; ++i)
-				{
-					if (!Parent.IsEmpty())
-					{
-						Parent += TEXT(".");
-					}
-					Parent += CategoryParts[i];
-				}
-
-				CategoryObject->SetStringField("name", Name);
-				CategoryObject->SetStringField("parent", Parent);
-
-				CategoriesArray.Add(MakeShareable(new FJsonValueObject(CategoryObject)));
-			}
+			if (i > 0) fullPath += TEXT(".");
+			fullPath += parts[i];
 		}
+
+		if (seenFullPaths.Contains(fullPath))
+			continue;
+		seenFullPaths.Add(fullPath);
+
+		TSharedPtr<FJsonObject> CategoryObject = MakeShareable(new FJsonObject);
+		CategoryObject->SetStringField(TEXT("name"), parts.Last());
+		CategoryObject->SetStringField(TEXT("fullPath"), fullPath);
+		CategoriesArray.Add(MakeShareable(new FJsonValueObject(CategoryObject)));
 	}
 	
 	CategoriesArray.Sort([](const TSharedPtr<FJsonValue>& A, const TSharedPtr<FJsonValue>& B) {
@@ -2886,32 +2962,62 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateParticipantsJson(const 
 			continue;
 		}
 
-		FString Category;
+		// Derive fullPath: strip "Mountea_Dialogue." root prefix, then drop the last segment
+		// (the participant leaf name). E.g. "Mountea_Dialogue.NPC.Merchant.Waldermar" → "NPC.Merchant".
+		FString FullPath;
 		if (DialogueRow->CompatibleTags.Num() > 0)
 		{
-			Category = DialogueRow->CompatibleTags.First().GetTagName().ToString();
-			const FString Prefix = TEXT("Mountea_Dialogue.Categories.");
-			if (Category.StartsWith(Prefix))
+			FString tagStr = DialogueRow->CompatibleTags.First().GetTagName().ToString();
+			const FString RootPfx = TEXT("Mountea_Dialogue.");
+			if (tagStr.StartsWith(RootPfx))
+				tagStr = tagStr.RightChop(RootPfx.Len());
+
+			TArray<FString> parts;
+			tagStr.ParseIntoArray(parts, TEXT("."));
+			if (parts.Num() > 1)
 			{
-				Category = Category.RightChop(Prefix.Len());
+				parts.Pop(); // drop participant leaf
+				for (int32 i = 0; i < parts.Num(); ++i)
+				{
+					if (i > 0) FullPath += TEXT(".");
+					FullPath += parts[i];
+				}
 			}
 		}
 
 		const FString Name = DialogueRow->DialogueParticipant.ToString();
 
-		if (!Category.IsEmpty() && !Name.IsEmpty())
+		if (!FullPath.IsEmpty() && !Name.IsEmpty())
 		{
-			UniqueParticipants.Add(TPair<FString, FString>(Name, Category));
+			UniqueParticipants.Add(TPair<FString, FString>(Name, FullPath));
 		}
 	}
+
+	// Load the participants DataTable so we can export the icon (participantImage) field
+	const FString dtPackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
+	const FString dtAssetPath = FString::Printf(TEXT("%s/DT_%s_Participants.DT_%s_Participants"),
+		*dtPackagePath, *Graph->GetName(), *Graph->GetName());
+	FAssetRegistryModule& assetReg = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	UDataTable* participantsDT = Cast<UDataTable>(
+		assetReg.Get().GetAssetByObjectPath(FSoftObjectPath(dtAssetPath)).GetAsset());
 
 	TArray<TSharedPtr<FJsonValue>> ParticipantsArray;
 
 	for (const auto& Participant : UniqueParticipants)
 	{
 		TSharedPtr<FJsonObject> ParticipantObject = MakeShareable(new FJsonObject);
-		ParticipantObject->SetStringField("name", Participant.Key);
-		ParticipantObject->SetStringField("category", Participant.Value);
+		ParticipantObject->SetStringField(TEXT("name"), Participant.Key);
+		ParticipantObject->SetStringField(TEXT("fullPath"), Participant.Value);
+
+		if (participantsDT)
+		{
+			const FDialogueParticipant* row = participantsDT->FindRow<FDialogueParticipant>(FName(*Participant.Key), TEXT(""));
+			if (row && !row->ParticipantIcon.IsNull())
+				ParticipantObject->SetStringField(TEXT("participantImage"), FPaths::GetBaseFilename(row->ParticipantIcon.ToString()));
+			else
+				ParticipantObject->SetField(TEXT("participantImage"), MakeShareable(new FJsonValueNull()));
+		}
+
 		ParticipantsArray.Add(MakeShareable(new FJsonValueObject(ParticipantObject)));
 	}
 
@@ -3061,6 +3167,395 @@ FString UMounteaDialogueSystemImportExportHelpers::GetRelativeAudioPath(const US
 	}
 
 	return RelativeAudioPath;
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::CreateDecoratorsJson(const UMounteaDialogueGraph* Graph)
+{
+	if (!Graph)
+		return TEXT("[]");
+
+	TSet<FGuid> seenGuids;
+	TArray<TSharedPtr<FJsonValue>> decoratorsArray;
+
+	for (const UMounteaDialogueGraphNode* node : Graph->GetAllNodes())
+	{
+		if (!node)
+			continue;
+		for (const FMounteaDialogueDecorator& decor : node->NodeDecorators)
+		{
+			if (!decor.DecoratorType)
+				continue;
+
+			const UMounteaDialogueDecoratorBase* classCDO =
+				decor.DecoratorType->GetClass()->GetDefaultObject<UMounteaDialogueDecoratorBase>();
+			if (!classCDO || !classCDO->DecoratorGUID.IsValid())
+				continue;
+			if (seenGuids.Contains(classCDO->DecoratorGUID))
+				continue;
+			seenGuids.Add(classCDO->DecoratorGUID);
+
+			TSharedPtr<FJsonObject> decorObj = MakeShareable(new FJsonObject);
+			decorObj->SetStringField(TEXT("id"), classCDO->DecoratorGUID.ToString(EGuidFormats::DigitsWithHyphensLower));
+			decorObj->SetStringField(TEXT("name"), classCDO->DecoratorName.ToString());
+			decorObj->SetStringField(TEXT("type"), TEXT(""));
+
+			// List Blueprint-defined properties so Dialoguer can reconstruct the schema
+			TArray<TSharedPtr<FJsonValue>> propsArray;
+			for (TFieldIterator<FProperty> propIt(decor.DecoratorType->GetClass()); propIt; ++propIt)
+			{
+				FProperty* prop = *propIt;
+				if (!prop->HasAnyPropertyFlags(CPF_BlueprintVisible))
+					continue;
+				if (prop->GetOwnerClass() == UMounteaDialogueDecoratorBase::StaticClass())
+					continue;
+
+				TSharedPtr<FJsonObject> propObj = MakeShareable(new FJsonObject);
+				propObj->SetStringField(TEXT("name"), prop->GetName());
+				propObj->SetStringField(TEXT("type"), prop->GetCPPType());
+				propsArray.Add(MakeShareable(new FJsonValueObject(propObj)));
+			}
+			decorObj->SetArrayField(TEXT("properties"), propsArray);
+
+			decoratorsArray.Add(MakeShareable(new FJsonValueObject(decorObj)));
+		}
+	}
+
+	FString outputString;
+	TSharedRef<TJsonWriter<>> writer = TJsonWriterFactory<>::Create(&outputString);
+	FJsonSerializer::Serialize(decoratorsArray, writer);
+	return outputString;
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::CreateConditionsJson(const UMounteaDialogueGraph* Graph)
+{
+	if (!Graph)
+		return TEXT("[]");
+
+	TSet<FGuid> seenGuids;
+	TArray<TSharedPtr<FJsonValue>> conditionsArray;
+
+	for (const UMounteaDialogueGraphNode* node : Graph->GetAllNodes())
+	{
+		if (!node)
+			continue;
+		for (const auto& edgePair : node->Edges)
+		{
+			const UMounteaDialogueGraphEdge* edge = edgePair.Value;
+			if (!edge)
+				continue;
+			for (const FMounteaDialogueCondition& rule : edge->EdgeConditions.Rules)
+			{
+				if (!rule.ConditionClass)
+					continue;
+
+				const UMounteaDialogueConditionBase* classCDO =
+					rule.ConditionClass->GetClass()->GetDefaultObject<UMounteaDialogueConditionBase>();
+				if (!classCDO)
+					continue;
+
+				const FGuid defGuid = classCDO->GetConditionGUID();
+				if (!defGuid.IsValid() || seenGuids.Contains(defGuid))
+					continue;
+				seenGuids.Add(defGuid);
+
+				TSharedPtr<FJsonObject> condObj = MakeShareable(new FJsonObject);
+				condObj->SetStringField(TEXT("id"), defGuid.ToString(EGuidFormats::DigitsWithHyphensLower));
+				condObj->SetStringField(TEXT("name"), classCDO->GetConditionName());
+
+				// List Blueprint-defined properties
+				TArray<TSharedPtr<FJsonValue>> propsArray;
+				for (TFieldIterator<FProperty> propIt(rule.ConditionClass->GetClass()); propIt; ++propIt)
+				{
+					FProperty* prop = *propIt;
+					if (!prop->HasAnyPropertyFlags(CPF_BlueprintVisible))
+						continue;
+					if (prop->GetOwnerClass() == UMounteaDialogueConditionBase::StaticClass())
+						continue;
+
+					TSharedPtr<FJsonObject> propObj = MakeShareable(new FJsonObject);
+					propObj->SetStringField(TEXT("name"), prop->GetName());
+					propObj->SetStringField(TEXT("type"), prop->GetCPPType());
+					propsArray.Add(MakeShareable(new FJsonValueObject(propObj)));
+				}
+				condObj->SetArrayField(TEXT("properties"), propsArray);
+
+				conditionsArray.Add(MakeShareable(new FJsonValueObject(condObj)));
+			}
+		}
+	}
+
+	FString outputString;
+	TSharedRef<TJsonWriter<>> writer = TJsonWriterFactory<>::Create(&outputString);
+	FJsonSerializer::Serialize(conditionsArray, writer);
+	return outputString;
+}
+
+bool UMounteaDialogueSystemImportExportHelpers::GatherThumbnailFiles(const UMounteaDialogueGraph* Graph, TMap<FString, FString>& OutThumbnailFiles)
+{
+	if (!Graph)
+		return false;
+
+	const FString dtPackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
+	const FString dtAssetPath = FString::Printf(TEXT("%s/DT_%s_Participants.DT_%s_Participants"),
+		*dtPackagePath, *Graph->GetName(), *Graph->GetName());
+
+	FAssetRegistryModule& assetReg = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	UDataTable* participantsDT = Cast<UDataTable>(
+		assetReg.Get().GetAssetByObjectPath(FSoftObjectPath(dtAssetPath)).GetAsset());
+	if (!participantsDT)
+		return false;
+
+	IImageWrapperModule& imageWrapperModule = FModuleManager::LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
+
+	for (const TPair<FName, uint8*>& rowPair : participantsDT->GetRowMap())
+	{
+		const FDialogueParticipant* row = reinterpret_cast<const FDialogueParticipant*>(rowPair.Value);
+		if (!row || row->ParticipantIcon.IsNull())
+			continue;
+
+		UTexture2D* texture = row->ParticipantIcon.LoadSynchronous();
+		if (!texture)
+			continue;
+
+		// Read the raw source PNG data from the texture's bulk data
+		const FTextureSource& texSource = texture->Source;
+		if (!texSource.IsValid())
+			continue;
+
+		TArray64<uint8> sourceData;
+		if (!const_cast<FTextureSource&>(texSource).GetMipData(sourceData, 0))
+			continue;
+
+		// Map texture source format to the image wrapper's RGB format and bit depth
+		ERGBFormat rgbFormat = ERGBFormat::BGRA;
+		int32 bitDepth = 8;
+		const ETextureSourceFormat srcFmt = texSource.GetFormat();
+		switch (srcFmt)
+		{
+			case TSF_RGBA8_DEPRECATED:  rgbFormat = ERGBFormat::RGBA; bitDepth = 8;  break;
+			case TSF_RGBA16:			rgbFormat = ERGBFormat::RGBA; bitDepth = 16; break;
+			case TSF_RGBA16F:			rgbFormat = ERGBFormat::RGBA; bitDepth = 16; break;
+			case TSF_G8:				rgbFormat = ERGBFormat::Gray; bitDepth = 8;  break;
+			case TSF_G16:				rgbFormat = ERGBFormat::Gray; bitDepth = 16; break;
+			default:					rgbFormat = ERGBFormat::BGRA; bitDepth = 8;  break; // TSF_BGRA8, TSF_BGRE8, etc.
+		}
+
+		// Re-encode as PNG
+		TSharedPtr<IImageWrapper> wrapper = imageWrapperModule.CreateImageWrapper(EImageFormat::PNG);
+		const int32 sizeX = texSource.GetSizeX();
+		const int32 sizeY = texSource.GetSizeY();
+		wrapper->SetRaw(sourceData.GetData(), sourceData.Num(), sizeX, sizeY, rgbFormat, bitDepth);
+		const TArray64<uint8>& pngData = wrapper->GetCompressed();
+
+		// Write to temp file
+		const FString assetName = FPaths::GetBaseFilename(texture->GetPathName());
+		const FString tempPath = FPaths::CreateTempFilename(*FPaths::ProjectIntermediateDir(), *assetName, TEXT(".png"));
+		if (FFileHelper::SaveArrayToFile(pngData, *tempPath))
+			OutThumbnailFiles.Add(FString::Printf(TEXT("%s.png"), *assetName), tempPath);
+	}
+
+	return true;
+}
+
+bool UMounteaDialogueSystemImportExportHelpers::ExportProject(const TArray<UMounteaDialogueGraph*>& Graphs, const FString& FilePath)
+{
+	if (Graphs.IsEmpty())
+	{
+		EditorLOG_ERROR(TEXT("[ExportProject] No graphs provided"));
+		return false;
+	}
+
+	// Temp dir for intermediate .mnteadlg archives
+	const FString tempDir = FPaths::CreateTempFilename(*FPaths::ProjectIntermediateDir(), TEXT("MNTEAProjExport"), TEXT(""));
+	IFileManager::Get().MakeDirectory(*tempDir, true);
+
+	// project-level aggregated JSON arrays (deduplicated by first-seen entry)
+	TSet<FString> seenCategoryNames;
+	TSet<FString> seenParticipantNames;
+	TSet<FString> seenDecoratorGuids;
+	TSet<FString> seenConditionGuids;
+	TArray<TSharedPtr<FJsonValue>> allCategories;
+	TArray<TSharedPtr<FJsonValue>> allParticipants;
+	TArray<TSharedPtr<FJsonValue>> allDecorators;
+	TArray<TSharedPtr<FJsonValue>> allConditions;
+	TMap<FString, FString> dialogueArchives; // "dialogues/<name>.mnteadlg" → temp path
+	TMap<FString, FString> allThumbnails;
+
+	auto mergeArray = [](const FString& jsonStr, TArray<TSharedPtr<FJsonValue>>& target, TSet<FString>& seenKeys, const FString& keyField)
+	{
+		TArray<TSharedPtr<FJsonValue>> parsed;
+		TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(jsonStr);
+		if (!FJsonSerializer::Deserialize(reader, parsed))
+			return;
+		for (const TSharedPtr<FJsonValue>& val : parsed)
+		{
+			const TSharedPtr<FJsonObject>* obj;
+			if (!val->TryGetObject(obj))
+				continue;
+			FString key;
+			if (!(*obj)->TryGetStringField(keyField, key))
+				continue;
+			if (seenKeys.Contains(key))
+				continue;
+			seenKeys.Add(key);
+			target.Add(val);
+		}
+	};
+
+	for (UMounteaDialogueGraph* graph : Graphs)
+	{
+		if (!graph)
+			continue;
+
+		TMap<FString, FString> jsonFiles;
+		TArray<FString> audioFiles;
+		if (!GatherAssetsFromGraph(graph, jsonFiles, audioFiles))
+		{
+			EditorLOG_WARNING(TEXT("[ExportProject] Failed to gather assets for graph '%s' — skipped"), *graph->GetName());
+			continue;
+		}
+
+		TMap<FString, FString> thumbFiles;
+		GatherThumbnailFiles(graph, thumbFiles);
+		for (const auto& t : thumbFiles)
+			if (!allThumbnails.Contains(t.Key))
+				allThumbnails.Add(t.Key, t.Value);
+
+		// Merge project-level JSON arrays
+		if (jsonFiles.Contains(TEXT("categories.json")))
+			mergeArray(jsonFiles[TEXT("categories.json")], allCategories, seenCategoryNames, TEXT("name"));
+		if (jsonFiles.Contains(TEXT("participants.json")))
+			mergeArray(jsonFiles[TEXT("participants.json")], allParticipants, seenParticipantNames, TEXT("name"));
+		if (jsonFiles.Contains(TEXT("decorators.json")))
+			mergeArray(jsonFiles[TEXT("decorators.json")], allDecorators, seenDecoratorGuids, TEXT("id"));
+		if (jsonFiles.Contains(TEXT("conditions.json")))
+			mergeArray(jsonFiles[TEXT("conditions.json")], allConditions, seenConditionGuids, TEXT("id"));
+
+		// Pack this graph as a temp .mnteadlg
+		const FString tempArchivePath = FString::Printf(TEXT("%s/%s.mnteadlg"), *tempDir, *graph->GetName());
+		TArray<FString> exportedAudio;
+		ExportAudioFiles(audioFiles, tempDir, exportedAudio);
+		if (PackToMNTEADLG(jsonFiles, exportedAudio, thumbFiles, tempArchivePath))
+			dialogueArchives.Add(FString::Printf(TEXT("dialogues/%s.mnteadlg"), *graph->GetName()), tempArchivePath);
+		else
+			EditorLOG_WARNING(TEXT("[ExportProject] Failed to pack dialogue '%s'"), *graph->GetName());
+
+		for (const FString& f : exportedAudio)
+			IFileManager::Get().Delete(*f);
+	}
+
+	// Build project-level JSON strings
+	auto arrayToString = [](const TArray<TSharedPtr<FJsonValue>>& arr) -> FString
+	{
+		FString out;
+		TSharedRef<TJsonWriter<>> w = TJsonWriterFactory<>::Create(&out);
+		FJsonSerializer::Serialize(arr, w);
+		return out;
+	};
+
+	// Infer project name from file path
+	const FString projectName = FPaths::GetBaseFilename(FilePath);
+	TSharedPtr<FJsonObject> projectDataObj = MakeShareable(new FJsonObject);
+	projectDataObj->SetStringField(TEXT("projectName"), projectName);
+	projectDataObj->SetStringField(TEXT("projectGuid"), FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphensLower));
+	FString projectDataStr;
+	TSharedRef<TJsonWriter<>> pdWriter = TJsonWriterFactory<>::Create(&projectDataStr);
+	FJsonSerializer::Serialize(projectDataObj.ToSharedRef(), pdWriter);
+
+	TMap<FString, FString> projectJsonFiles;
+	projectJsonFiles.Add(TEXT("projectData.json"), projectDataStr);
+	projectJsonFiles.Add(TEXT("categories.json"), arrayToString(allCategories));
+	projectJsonFiles.Add(TEXT("participants.json"), arrayToString(allParticipants));
+	projectJsonFiles.Add(TEXT("decorators.json"), arrayToString(allDecorators));
+	projectJsonFiles.Add(TEXT("conditions.json"), arrayToString(allConditions));
+
+	const bool bSuccess = PackToMNTEADLGPROJ(projectJsonFiles, dialogueArchives, allThumbnails, FilePath);
+
+	// Clean up temp files
+	for (const auto& arch : dialogueArchives)
+		IFileManager::Get().Delete(*arch.Value);
+	for (const auto& t : allThumbnails)
+		IFileManager::Get().Delete(*t.Value);
+	IFileManager::Get().DeleteDirectory(*tempDir, false, true);
+
+	return bSuccess;
+}
+
+bool UMounteaDialogueSystemImportExportHelpers::PackToMNTEADLGPROJ(
+	const TMap<FString, FString>& ProjectJsonFiles,
+	const TMap<FString, FString>& DialogueArchives,
+	const TMap<FString, FString>& ThumbnailFiles,
+	const FString& OutputPath)
+{
+	FString zipPath = FPaths::ChangeExtension(OutputPath, TEXT("mnteadlgproj"));
+
+	struct zip_t* zip = zip_open(TCHAR_TO_UTF8(*zipPath), 0, 'w');
+	if (!zip)
+	{
+		EditorLOG_ERROR(TEXT("[PackToMNTEADLGPROJ] Failed to create zip file: %s"), *zipPath);
+		return false;
+	}
+
+	// Write root-level JSON files
+	for (const auto& jsonFile : ProjectJsonFiles)
+	{
+		if (zip_entry_open(zip, TCHAR_TO_UTF8(*jsonFile.Key)) < 0)
+		{
+			EditorLOG_ERROR(TEXT("[PackToMNTEADLGPROJ] Failed to open entry: %s"), *jsonFile.Key);
+			zip_close(zip);
+			return false;
+		}
+		zip_entry_write(zip, TCHAR_TO_UTF8(*jsonFile.Value), jsonFile.Value.Len());
+		zip_entry_close(zip);
+	}
+
+	// Write project-level thumbnails
+	if (!ThumbnailFiles.IsEmpty())
+	{
+		if (zip_entry_open(zip, "Thumbnails/") >= 0)
+			zip_entry_close(zip);
+
+		for (const auto& thumb : ThumbnailFiles)
+		{
+			const FString zipThumbPath = FString::Printf(TEXT("Thumbnails/%s"), *FPaths::GetCleanFilename(thumb.Key));
+			TArray<uint8> thumbData;
+			if (!FFileHelper::LoadFileToArray(thumbData, *thumb.Value))
+			{
+				EditorLOG_WARNING(TEXT("[PackToMNTEADLGPROJ] Failed to read thumbnail: %s"), *thumb.Value);
+				continue;
+			}
+			if (zip_entry_open(zip, TCHAR_TO_UTF8(*zipThumbPath)) >= 0)
+			{
+				zip_entry_write(zip, thumbData.GetData(), thumbData.Num());
+				zip_entry_close(zip);
+			}
+		}
+	}
+
+	// Write dialogue archives under dialogues/
+	if (zip_entry_open(zip, "dialogues/") >= 0)
+		zip_entry_close(zip);
+
+	for (const auto& arch : DialogueArchives)
+	{
+		// arch.Key is already "dialogues/<name>.mnteadlg"
+		TArray<uint8> archData;
+		if (!FFileHelper::LoadFileToArray(archData, *arch.Value))
+		{
+			EditorLOG_WARNING(TEXT("[PackToMNTEADLGPROJ] Failed to read dialogue archive: %s"), *arch.Value);
+			continue;
+		}
+		if (zip_entry_open(zip, TCHAR_TO_UTF8(*arch.Key)) < 0)
+		{
+			EditorLOG_WARNING(TEXT("[PackToMNTEADLGPROJ] Failed to open entry: %s"), *arch.Key);
+			continue;
+		}
+		zip_entry_write(zip, archData.GetData(), archData.Num());
+		zip_entry_close(zip);
+	}
+
+	zip_close(zip);
+	return true;
 }
 
 #undef LOCTEXT_NAMESPACE

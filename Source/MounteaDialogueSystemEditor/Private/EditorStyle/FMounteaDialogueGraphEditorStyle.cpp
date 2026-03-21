@@ -119,6 +119,7 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.Node.Flat.Pill", new FSlateRoundedBoxBrush(FLinearColor::White, FVector4(999.f, 999.f, 999.f, 999.f)));
 	StyleSet->Set("MDSStyleSet.Node.Flat.Tag", new FSlateRoundedBoxBrush(FLinearColor::White, FVector4(6.f, 6.f, 6.f, 6.f)));
 	StyleSet->Set("MDSStyleSet.Node.Flat.Circle", new FSlateRoundedBoxBrush(FLinearColor::White, FVector4(999.f, 999.f, 999.f, 999.f)));
+	StyleSet->Set("MDSStyleSet.Edge.SelectionRing", new FSlateRoundedBoxBrush(FLinearColor::White, FVector4(999.f, 999.f, 999.f, 999.f)));
 
 	StyleSet->Set("MDSStyleSet.Icon.OK", new IMAGE_BRUSH(TEXT("OKIcon"), Icon16x16));
 	StyleSet->Set("MDSStyleSet.Icon.Error", new IMAGE_BRUSH(TEXT("ErrorIcon"), Icon16x16));

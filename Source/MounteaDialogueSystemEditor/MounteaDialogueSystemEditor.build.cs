@@ -77,6 +77,7 @@ public class MounteaDialogueSystemEditor : ModuleRules
 				"MounteaDialogueSystemDeveloper", 
 				
 				"WorkspaceMenuStructure",
+				"ImageWrapper",
 			}
 		);
 	}

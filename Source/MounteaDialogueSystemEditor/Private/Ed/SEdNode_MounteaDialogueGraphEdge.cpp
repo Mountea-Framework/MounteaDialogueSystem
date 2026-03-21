@@ -3,6 +3,7 @@
 #include "ConnectionDrawingPolicy.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "EditorStyle/MounteaDialogueGraphVisualTokens.h"
+#include "Styling/CoreStyle.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Images/SImage.h"
@@ -65,6 +66,11 @@ bool SEdNode_MounteaDialogueGraphEdge::RequiresSecondPassLayout() const
 	return true;
 }
 
+const FSlateBrush* SEdNode_MounteaDialogueGraphEdge::GetShadowBrush(bool bSelected) const
+{
+	return FCoreStyle::Get().GetBrush(TEXT("NoBrush"));
+}
+
 void SEdNode_MounteaDialogueGraphEdge::PerformSecondPassLayout(const TMap<UObject*, TSharedRef<SNode>>& NodeToWidgetLookup) const
 {
 	UEdNode_MounteaDialogueGraphEdge* EdgeNode = CastChecked<UEdNode_MounteaDialogueGraphEdge>(GraphNode);
@@ -114,25 +120,41 @@ void SEdNode_MounteaDialogueGraphEdge::UpdateGraphNode()
 				.OnMouseButtonDown(this, &SEdNode_MounteaDialogueGraphEdge::OnMouseButtonDown)
 				[
 					SNew(SBox)
-					.WidthOverride(30.0f)
-					.HeightOverride(30.0f)
+					.WidthOverride(38.0f)
+					.HeightOverride(38.0f)
 					[
 						SNew(SOverlay)
+						+ SOverlay::Slot()
+						.Padding(FMargin(-5.0f))
+						[
+							SNew(SImage)
+							.Image(FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Edge.SelectionRing")))
+							.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphEdge::GetEdgeSelectionOverlayColor)
+							.Visibility(this, &SEdNode_MounteaDialogueGraphEdge::GetEdgeSelectionRingVisibility)
+						]
 						+ SOverlay::Slot()
 						[
 							SNew(SImage)
 							.Image(FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Icon.BulletPoint")))
-							.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphEdge::GetEdgeActionIconColor)
+							.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphEdge::GetEdgeOuterRingColor)
 						]
 						+ SOverlay::Slot()
-						.Padding(FMargin(1.0f))
+						.Padding(FMargin(FMounteaDialogueGraphVisualTokens::GetEdgeSelectionRingInset()))
+						[
+							SNew(SImage)
+							.Image(FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Edge.SelectionRing")))
+							.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphEdge::GetEdgeSelectionRingColor)
+							.Visibility(this, &SEdNode_MounteaDialogueGraphEdge::GetEdgeSelectionRingVisibility)
+						]
+						+ SOverlay::Slot()
+						.Padding(FMargin(FMounteaDialogueGraphVisualTokens::GetEdgeSelectionRingPadding()))
 						[
 							SNew(SImage)
 							.Image(FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Icon.BulletPoint")))
 							.ColorAndOpacity(this, &SEdNode_MounteaDialogueGraphEdge::GetEdgeActionBackgroundColor)
 						]
 						+ SOverlay::Slot()
-						.Padding(FMargin(5.0f))
+						.Padding(FMargin(6.0f))
 						[
 							SNew(SImage)
 							.Image(FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Edge.MidpointIcon")))
@@ -147,9 +169,7 @@ void SEdNode_MounteaDialogueGraphEdge::UpdateGraphNode()
 FReply SEdNode_MounteaDialogueGraphEdge::OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
 	if (!GraphNode || !GetOwnerPanel())
-	{
 		return FReply::Unhandled();
-	}
 
 	GetOwnerPanel()->SelectionManager.ClickedOnNode(GraphNode, MouseEvent);
 	return FReply::Handled();
@@ -204,14 +224,10 @@ FSlateColor SEdNode_MounteaDialogueGraphEdge::GetEdgeActionBackgroundColor() con
 	bubbleColor.A = 1.0f;
 
 	if (IsHovered())
-	{
 		bubbleColor = bubbleColor + FLinearColor(0.08f, 0.08f, 0.08f, 0.0f);
-	}
 
 	if (IsSelectedExclusively())
-	{
 		bubbleColor = bubbleColor + FLinearColor(0.08f, 0.08f, 0.08f, 0.0f);
-	}
 
 	return bubbleColor;
 }
@@ -228,6 +244,47 @@ FSlateColor SEdNode_MounteaDialogueGraphEdge::GetEdgeActionIconColor() const
 		iconColor.A = 0.90f;
 
 	return iconColor;
+}
+
+FSlateColor SEdNode_MounteaDialogueGraphEdge::GetEdgeOuterRingColor() const
+{
+	if (IsEdgeSelected())
+		return FMounteaDialogueGraphVisualTokens::GetEdgeSelectionRing();
+
+	return GetEdgeActionIconColor();
+}
+
+FSlateColor SEdNode_MounteaDialogueGraphEdge::GetEdgeSelectionRingColor() const
+{
+	if (IsHovered())
+		return FMounteaDialogueGraphVisualTokens::GetEdgeSelectionRingHovered();
+
+	return FMounteaDialogueGraphVisualTokens::GetEdgeSelectionRing();
+}
+
+FSlateColor SEdNode_MounteaDialogueGraphEdge::GetEdgeSelectionOverlayColor() const
+{
+	if (IsHovered())
+		return FMounteaDialogueGraphVisualTokens::GetEdgeSelectionOverlayHovered();
+
+	return FMounteaDialogueGraphVisualTokens::GetEdgeSelectionOverlay();
+}
+
+EVisibility SEdNode_MounteaDialogueGraphEdge::GetEdgeSelectionRingVisibility() const
+{
+	return IsEdgeSelected() ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
+bool SEdNode_MounteaDialogueGraphEdge::IsEdgeSelected() const
+{
+	if (IsSelectedExclusively())
+		return true;
+
+	const TSharedPtr<SGraphPanel> ownerPanel = GetOwnerPanel();
+	if (!ownerPanel.IsValid() || !GraphNode)
+		return false;
+
+	return ownerPanel->SelectionManager.IsNodeSelected(GraphNode);
 }
 
 bool SEdNode_MounteaDialogueGraphEdge::HasValidConditions() const

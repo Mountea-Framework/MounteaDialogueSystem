@@ -54,7 +54,14 @@ struct FDialogueImportSourceData
 	UPROPERTY(VisibleAnywhere, meta=(NoResetToDefault), Category="Import")
 	FString DialogueSourcePath;
 
-	// TODO: Maybe add FDate as well?
+	// Timestamp of the last successful import
+	UPROPERTY(VisibleAnywhere, meta=(NoResetToDefault), Category="Import")
+	FDateTime ImportedAt;
+
+	// True when this dialogue was imported as part of a .mnteadlgproj (not a standalone .mnteadlg)
+	UPROPERTY(VisibleAnywhere, meta=(NoResetToDefault), Category="Import")
+	bool bIsProjectImport = false;
+
 	// Asset Path x Source Data
 	UPROPERTY(VisibleAnywhere, meta=(NoResetToDefault), Category="Import")
 	TMap<FString,FDialogueImportData> ImportData;

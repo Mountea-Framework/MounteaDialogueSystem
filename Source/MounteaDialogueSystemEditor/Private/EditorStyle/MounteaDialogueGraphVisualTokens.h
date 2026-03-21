@@ -24,10 +24,15 @@ struct FMounteaDialogueGraphVisualTokens
 	static FLinearColor GetPrimaryAccent();
 	static FLinearColor GetSelectionRing();
 	static FLinearColor GetWireColor();
+	static FLinearColor GetEdgeSelectionRing();
+	static FLinearColor GetEdgeSelectionRingHovered();
+	static FLinearColor GetEdgeSelectionOverlay();
+	static FLinearColor GetEdgeSelectionOverlayHovered();
+	static float GetEdgeSelectionRingInset();
+	static float GetEdgeSelectionRingPadding();
 
 	static FLinearColor GetNodeAccentColor(const UMounteaDialogueGraphNode* Node);
 	static FLinearColor GetNodeHeaderForeground(const UMounteaDialogueGraphNode* Node);
 
 	static FVector2D GetNodeSizeHint(const UMounteaDialogueGraphNode* Node);
 };
-

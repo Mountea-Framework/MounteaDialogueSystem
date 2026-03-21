@@ -63,6 +63,44 @@ FLinearColor FMounteaDialogueGraphVisualTokens::GetWireColor()
 	return HexToLinearColor(TEXT("#ededed"));
 }
 
+FLinearColor FMounteaDialogueGraphVisualTokens::GetEdgeSelectionRing()
+{
+	FLinearColor selectionColor = HexToLinearColor(TEXT("#f97316"));
+	selectionColor.A = 1.0f;
+	return selectionColor;
+}
+
+FLinearColor FMounteaDialogueGraphVisualTokens::GetEdgeSelectionRingHovered()
+{
+	FLinearColor selectionColor = HexToLinearColor(TEXT("#fbbf24"));
+	selectionColor.A = 1.0f;
+	return selectionColor;
+}
+
+FLinearColor FMounteaDialogueGraphVisualTokens::GetEdgeSelectionOverlay()
+{
+	FLinearColor overlayColor = HexToLinearColor(TEXT("#f97316"));
+	overlayColor.A = 0.26f;
+	return overlayColor;
+}
+
+FLinearColor FMounteaDialogueGraphVisualTokens::GetEdgeSelectionOverlayHovered()
+{
+	FLinearColor overlayColor = HexToLinearColor(TEXT("#fb923c"));
+	overlayColor.A = 0.34f;
+	return overlayColor;
+}
+
+float FMounteaDialogueGraphVisualTokens::GetEdgeSelectionRingInset()
+{
+	return -2.0f;
+}
+
+float FMounteaDialogueGraphVisualTokens::GetEdgeSelectionRingPadding()
+{
+	return 2.0f;
+}
+
 FLinearColor FMounteaDialogueGraphVisualTokens::GetNodeAccentColor(const UMounteaDialogueGraphNode* Node)
 {
 	if (!Node)

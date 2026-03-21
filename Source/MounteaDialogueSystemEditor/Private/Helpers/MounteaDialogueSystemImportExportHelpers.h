@@ -64,8 +64,9 @@ public:
 	// Core import logic — accepts already-extracted files so callers can inject project-level data
 	static bool ImportDialogueGraphFromFiles(TMap<FString, FString>& ExtractedFiles, const FString& SourceFilePath, UObject* InParent, FName Name, EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph, FString& OutMessage);
 
-	// Main export function
+	// Main export functions
 	static bool ExportDialogueGraph(const UMounteaDialogueGraph* Graph, const FString& FilePath);
+	static bool ExportProject(const TArray<UMounteaDialogueGraph*>& Graphs, const FString& FilePath);
 
 	// Helper functions for import process
 	static bool IsZipFile(const TArray<uint8>& FileData);
@@ -198,7 +199,9 @@ private:
 	// Helper functions for export process
 	static bool GatherAssetsFromGraph(const UMounteaDialogueGraph* Graph, TMap<FString, FString>& OutJsonFiles, TArray<FString>& OutAudioFiles);
 	static bool ExportAudioFiles(const TArray<FString>& AudioFiles, const FString& ExportPath, TArray<FString>& OutExportedFiles);
-	static bool PackToMNTEADLG(const TMap<FString, FString>& JsonFiles, const TArray<FString>& ExportedAudioFiles, const FString& OutputPath);
+	static bool GatherThumbnailFiles(const UMounteaDialogueGraph* Graph, TMap<FString, FString>& OutThumbnailFiles);
+	static bool PackToMNTEADLG(const TMap<FString, FString>& JsonFiles, const TArray<FString>& ExportedAudioFiles, const TMap<FString, FString>& ThumbnailFiles, const FString& OutputPath);
+	static bool PackToMNTEADLGPROJ(const TMap<FString, FString>& ProjectJsonFiles, const TMap<FString, FString>& DialogueArchives, const TMap<FString, FString>& ThumbnailFiles, const FString& OutputPath);
 
 	// Helper functions for gathering specific parts of the graph
 	static void GatherNodesFromGraph(const UMounteaDialogueGraph* Graph, TArray<FDialogueNodeData>& OutNodeData);
@@ -238,4 +241,6 @@ private:
 	static FString CreateDialogueDataJson(const UMounteaDialogueGraph* Graph);
 	static FString CreateParticipantsJson(const UMounteaDialogueGraph* Graph);
 	static FString CreateDialogueRowsJson(const TArray<FDialogueNodeData>& AllNodeData, const UMounteaDialogueGraph* Graph);
+	static FString CreateDecoratorsJson(const UMounteaDialogueGraph* Graph);
+	static FString CreateConditionsJson(const UMounteaDialogueGraph* Graph);
 };

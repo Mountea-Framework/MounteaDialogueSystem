@@ -20,6 +20,7 @@ public:
 
 	virtual bool RequiresSecondPassLayout() const override;
 	virtual void PerformSecondPassLayout(const TMap< UObject*, TSharedRef<SNode> >& NodeToWidgetLookup) const override;
+	virtual const FSlateBrush* GetShadowBrush(bool bSelected) const override;
 
 	virtual void UpdateGraphNode() override;
 	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
@@ -31,6 +32,11 @@ protected:
 	FSlateColor GetEdgeColor() const;
 	FSlateColor GetEdgeActionBackgroundColor() const;
 	FSlateColor GetEdgeActionIconColor() const;
+	FSlateColor GetEdgeOuterRingColor() const;
+	FSlateColor GetEdgeSelectionRingColor() const;
+	FSlateColor GetEdgeSelectionOverlayColor() const;
+	EVisibility GetEdgeSelectionRingVisibility() const;
+	bool IsEdgeSelected() const;
 	bool HasValidConditions() const;
 
 private:

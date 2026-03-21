@@ -86,7 +86,8 @@ public:
 	 * Overwrites the stable GUID for this instance.
 	 * Called by the import pipeline to restore the original Dialoguer id.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Condition")
+	UFUNCTION(BlueprintCallable, Category="Condition",
+		meta=(CustomTag="MounteaK2Setter"))
 	void SetConditionGUID(const FGuid& NewGUID);
 
 public:

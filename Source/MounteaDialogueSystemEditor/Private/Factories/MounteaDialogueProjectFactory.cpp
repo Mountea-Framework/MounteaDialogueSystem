@@ -166,13 +166,16 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 			importedDialogues.Add(dialogueName);
 			importedGraphsByGuid.Add(importedGraph->GetGraphGUID(), importedGraph);
 
-			// Store the .mnteadlgproj path (not the temp path) so reimport works later
+			// PopulateDialogueData (inside ImportDialogueGraphFromFiles) already wrote DialogueAssetPath,
+			// DialogueSourcePath, and ImportedAt. We only need to mark this as a project import and
+			// update the source path to point to the .mnteadlgproj (not the individual temp .mnteadlg).
 			UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
 			if (importConfig)
 			{
 				FDialogueImportSourceData& sourceData =
 					importConfig->ImportHistory.FindOrAdd(importedGraph->GetGraphGUID());
 				sourceData.DialogueSourcePath = Filename;
+				sourceData.bIsProjectImport = true;
 
 				importConfig->SaveConfig(CPF_Config, *importConfig->GetDefaultConfigFilename());
 			}
