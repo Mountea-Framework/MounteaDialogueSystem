@@ -97,7 +97,10 @@ protected:
 #pragma region GraphArrange
 	
 	UPROPERTY(config, EditDefaultsOnly, Category = "AutoArrange")
-	float OptimalDistance;
+	float OptimalHorizontalDistance;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "AutoArrange")
+	float OptimalVerticalDistance;
 	
 	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
 	EAutoLayoutStrategyType AutoLayoutStrategy;
@@ -172,8 +175,11 @@ public:
 	EAutoLayoutStrategyType GetAutoLayoutStrategy() const
 	{ return AutoLayoutStrategy; };
 
-	float GetOptimalDistance() const
-	{ return OptimalDistance; };
+	float GetOptimalHorizontalDistance() const
+	{ return OptimalHorizontalDistance; };
+
+	float GetOptimalVerticalDistance() const
+	{ return OptimalVerticalDistance; };
 
 	int32 GetMaxIteration() const
 	{ return MaxIteration; };

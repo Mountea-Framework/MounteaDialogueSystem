@@ -13,8 +13,9 @@
 UMounteaDialogueGraphLayoutStrategy::UMounteaDialogueGraphLayoutStrategy()
 {
 	Settings = nullptr;
-	MaxIteration = 50;
-	OptimalDistance = 150;
+	MaxIteration = 100;
+	OptimalHorizontalDistance = 300;
+	OptimalVerticalDistance = 200;
 }
 
 UMounteaDialogueGraphLayoutStrategy::~UMounteaDialogueGraphLayoutStrategy()

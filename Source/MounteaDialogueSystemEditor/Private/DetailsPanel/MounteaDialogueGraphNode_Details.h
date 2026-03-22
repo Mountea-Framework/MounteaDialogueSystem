@@ -6,6 +6,7 @@
 #include "Helpers/MounteaDialogueBase_CustomRowHelper.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 
+class SComboButton;
 class SScrollBox;
 
 class FMounteaDialogueGraphNode_Details : public IDetailCustomization
@@ -34,7 +35,7 @@ public:
 
 #pragma region ReturnNodePreview
 	void ResetPreviewingNode();
-	
+
 	FSlateColor GetPreviewingNodeBackgroundColor() const;
 	FText GetPreviewingNodeTitle() const;
 	FReply OnPreviewingNodeDoubleClicked(const FGeometry& Geometry, const FPointerEvent& PointerEvent);
@@ -42,7 +43,17 @@ public:
 	void OnPreviewingNodeMouseLeave(const FPointerEvent& PointerEvent);
 	void MakePreviewNode();
 	void MakeInvalidPreviewNode();
-#pragma endregion 
+#pragma endregion
+
+#pragma region NodePicker
+	void RefreshEligibleNodes();
+	TSharedRef<SWidget> MakeNodePickerWidget();
+	TSharedRef<SWidget> MakeNodePickerButtonContent();
+	TSharedRef<SWidget> GetNodePickerMenuContent();
+	void OnPickerNodeSelected(UMounteaDialogueGraphNode* Node);
+	FText GetPickerCurrentNodeTitle() const;
+	FSlateColor GetPickerCurrentNodeColor() const;
+#pragma endregion
 	
 	// IDetailCustomization interface
 	/** Called when details should be customized */
@@ -53,8 +64,9 @@ private:
 	TSharedPtr<SScrollBox> PreviewRows;
 	TSharedPtr<SButton> DocumentationButton;
 	TSharedPtr<SImage> DocumentationImage;
+	TSharedPtr<SComboButton> NodePickerComboButton;
+	TArray<UMounteaDialogueGraphNode*> CachedEligibleNodes;
 
-	
 	FButtonStyle DocumentationButtonStyle;
 	IDetailLayoutBuilder* SavedLayoutBuilder = nullptr;
 

@@ -13,8 +13,9 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAl
 
 	bFirstPassOnly = false;
 	bRandomInit = false;
-	OptimalDistance = 100.f;
-	MaxIteration = 50;
+	OptimalHorizontalDistance = 300.f;
+	OptimalVerticalDistance = 200.f;
+	MaxIteration = 100;
 	InitTemperature = 10.f;
 	CoolDownRate = 10.f;
 

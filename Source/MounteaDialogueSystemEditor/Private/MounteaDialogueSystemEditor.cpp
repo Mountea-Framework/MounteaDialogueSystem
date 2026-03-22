@@ -33,6 +33,7 @@
 #include "ToolMenus.h"
 #include "WorkspaceMenuStructure.h"
 #include "WorkspaceMenuStructureModule.h"
+#include "AssetActions/MounteaDialogueConditionAssetAction.h"
 
 #include "AssetActions/MounteaDialogueConfigurationAssetAction.h"
 #include "AssetActions/MounteaDialogueDataTableAssetAction.h"
@@ -109,6 +110,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		AssetActions.Add(MakeShared<FMounteaDialogueDataTableAssetAction>());
 		AssetActions.Add(MakeShared<UMounteaDialogueConfigurationAssetAction>());
 		AssetActions.Add(MakeShared<FMounteaDialogueNodeAssetAction>());
+		AssetActions.Add(MakeShared<FMounteaDialogueConditionAssetAction>());
 
 		for (const auto& Itr : AssetActions)
 		{

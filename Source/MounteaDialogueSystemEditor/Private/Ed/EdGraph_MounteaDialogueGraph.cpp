@@ -182,7 +182,9 @@ void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 
 			dialogueGraph->AllNodes.Add(mounteaDialogueGraphNode);
 
-			editorNode->SetDialogueNodeIndex( dialogueGraph->AllNodes.Find(editorNode->DialogueGraphNode) );
+			const int32 nodeIdx = dialogueGraph->AllNodes.Find(editorNode->DialogueGraphNode);
+			editorNode->SetDialogueNodeIndex(nodeIdx);
+			editorNode->DialogueGraphNode->SetNodeIndex(nodeIdx);
 			editorNode->UpdatePosition();
 			
 			for (int PinIdx = 0; PinIdx < editorNode->Pins.Num(); ++PinIdx)
@@ -478,7 +480,9 @@ void UEdGraph_MounteaDialogueGraph::SyncTopology()
 
 			Graph->AllNodes.Add(MounteaDialogueGraphNode);
 
-			EdNode->SetDialogueNodeIndex(Graph->AllNodes.Find(EdNode->DialogueGraphNode));
+			const int32 nodeIdx = Graph->AllNodes.Find(EdNode->DialogueGraphNode);
+			EdNode->SetDialogueNodeIndex(nodeIdx);
+			EdNode->DialogueGraphNode->SetNodeIndex(nodeIdx);
 			EdNode->UpdatePosition();
 
 			for (int PinIdx = 0; PinIdx < EdNode->Pins.Num(); ++PinIdx)
@@ -597,7 +601,9 @@ void UEdGraph_MounteaDialogueGraph::RegisterNode(UEdNode_MounteaDialogueGraphNod
 
 	NodeMap.Add(node, EdNode);
 	Graph->AllNodes.Add(node);
-	EdNode->SetDialogueNodeIndex(Graph->AllNodes.Find(node));
+	const int32 nodeIdx = Graph->AllNodes.Find(node);
+	EdNode->SetDialogueNodeIndex(nodeIdx);
+	node->SetNodeIndex(nodeIdx);
 	EdNode->UpdatePosition();
 
 	node->Graph = Graph;

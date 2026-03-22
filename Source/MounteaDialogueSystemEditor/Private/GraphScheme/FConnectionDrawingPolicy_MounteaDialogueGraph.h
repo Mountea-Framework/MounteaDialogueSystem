@@ -25,7 +25,7 @@ public:
 	
 protected:
 	void DrawBezierSplineWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params);
-	static void CalculateBezierControlPoints(const FVector2D& StartPoint, const FVector2D& EndPoint, FVector2D& OutControlPointA, FVector2D& OutControlPointB);
+	static void CalculateBezierControlPoints(const FVector2D& StartPoint, const FVector2D& EndPoint, float InZoomFactor, FVector2D& OutControlPointA, FVector2D& OutControlPointB);
 
 	UEdGraph* GraphObj;
 	TMap<UEdGraphNode*, int32> NodeWidgetMap;

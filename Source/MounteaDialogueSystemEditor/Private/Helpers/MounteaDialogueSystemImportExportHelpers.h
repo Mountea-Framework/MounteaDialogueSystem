@@ -86,6 +86,8 @@ public:
 
 private:
 
+	// ── Phase 0: Decorator / Condition Blueprint class creation ──────────────────
+
 	// Parses decorators.json definitions (each entry has id, name, type, properties[]).
 	// For each unique definition GUID, finds or creates a Blueprint subclass of
 	// UMounteaDialogueDecoratorBase under <ProjectPackagePath>/Decorators/.
@@ -157,6 +159,8 @@ private:
 		IAudioEditorModule& AudioEditorModule,
 		FAssetRegistryModule& AssetRegistryModule);
 
+	// ── Phase 2: Graph population ────────────────────────────────────────────────
+
 	static bool PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& SourceFilePath, const TMap<FString, FString>& ExtractedFiles);
 	static bool PopulateCategories(UMounteaDialogueGraph* Graph, const FString& Json);
 
@@ -191,6 +195,8 @@ private:
 		UMounteaDialogueGraphEdge* Edge,
 		const TSharedPtr<FJsonObject>& EdgeObject,
 		const TMap<FGuid, UClass*>& ConditionClasses);
+
+	// ── Phase 3: Fill data tables ─────────────────────────────────────────────────
 
 	// Empties and repopulates DT_*_Participants from participants.json.
 	static bool FillParticipantsDataTable(
@@ -227,6 +233,8 @@ private:
 		UStringTable* NodesStringTable,
 		const TMap<FString, FString>& RowIdToTextKey,
 		const TMap<FGuid, USoundWave*>& AudioMap);
+
+	// ── Utilities ─────────────────────────────────────────────────────────────────
 
 	static FString BytesToString(const uint8* Bytes, int32 Count);
 	static void PopulateNodeData(UMounteaDialogueGraphNode* Node, const TSharedPtr<FJsonObject>& JsonObject, const TMap<FGuid, UClass*>& DecoratorClasses);

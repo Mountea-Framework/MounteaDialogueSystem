@@ -21,6 +21,8 @@ namespace MDSGraphWireTokens
 	constexpr float VerticalControlFactor = 0.56f;
 	constexpr float LowVerticalThreshold = 36.0f;
 	constexpr float FlatCurveControlFactor = 0.45f;
+	// ZoomFactor threshold — approximate mapping: Zoom-4≈0.5, Zoom-5≈0.375, Zoom-6≈0.25
+	constexpr float FlatLineZoomThreshold = 0.28f;  // Zoom -6 and beyond: draw straight lines
 }
 
 namespace MDSGraphWireHelpers
@@ -128,7 +130,7 @@ FVector2D FConnectionDrawingPolicy_MounteaDialogueGraph::ComputeSplineTangent(co
 {
 	FVector2D controlPointA;
 	FVector2D controlPointB;
-	CalculateBezierControlPoints(Start, End, controlPointA, controlPointB);
+	CalculateBezierControlPoints(Start, End, ZoomFactor, controlPointA, controlPointB);
 	return controlPointA - Start;
 }
 
@@ -211,7 +213,7 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawBezierSplineWithArrow(co
 {
 	FVector2D controlPointA;
 	FVector2D controlPointB;
-	CalculateBezierControlPoints(StartPoint, EndPoint, controlPointA, controlPointB);
+	CalculateBezierControlPoints(StartPoint, EndPoint, ZoomFactor, controlPointA, controlPointB);
 
 	FVector2D arrowDirection = (EndPoint - controlPointB).GetSafeNormal();
 	if (arrowDirection.IsNearlyZero())
@@ -262,7 +264,7 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawBezierSplineWithArrow(co
 	return;
 }
 
-void FConnectionDrawingPolicy_MounteaDialogueGraph::CalculateBezierControlPoints(const FVector2D& StartPoint, const FVector2D& EndPoint, FVector2D& OutControlPointA, FVector2D& OutControlPointB)
+void FConnectionDrawingPolicy_MounteaDialogueGraph::CalculateBezierControlPoints(const FVector2D& StartPoint, const FVector2D& EndPoint, float InZoomFactor, FVector2D& OutControlPointA, FVector2D& OutControlPointB)
 {
 	const FVector2D delta = EndPoint - StartPoint;
 	const float absDeltaX = FMath::Abs(delta.X);
@@ -270,10 +272,23 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::CalculateBezierControlPoints
 	const float signX = (delta.X >= 0.0f) ? 1.0f : -1.0f;
 	const float signY = (delta.Y >= 0.0f) ? 1.0f : -1.0f;
 
+	// Zoom -6 and beyond: straight lines avoid the branch-switching inconsistency that
+	// comes from the fixed LowVerticalThreshold pixel value changing meaning at extreme zoom.
+	if (InZoomFactor < MDSGraphWireTokens::FlatLineZoomThreshold)
+	{
+		OutControlPointA = StartPoint + delta * (1.0f / 3.0f);
+		OutControlPointB = StartPoint + delta * (2.0f / 3.0f);
+		return;
+	}
+
+	const float totalDist = delta.Size();
+	const float effectiveMin = FMath::Min(MDSGraphWireTokens::MinimumControlDistance, totalDist * 0.45f);
+	const float effectiveMax = MDSGraphWireTokens::MaximumControlDistance;
+
 	const bool isMostlyHorizontal = absDeltaY < MDSGraphWireTokens::LowVerticalThreshold && absDeltaX > MDSGraphWireTokens::LowVerticalThreshold;
 	if (isMostlyHorizontal)
 	{
-		const float flatControlDistance = FMath::Clamp(absDeltaX * MDSGraphWireTokens::FlatCurveControlFactor, 56.0f, 220.0f);
+		const float flatControlDistance = FMath::Clamp(absDeltaX * MDSGraphWireTokens::FlatCurveControlFactor, effectiveMin, effectiveMax);
 		OutControlPointA = StartPoint + FVector2D(signX * flatControlDistance, 0.0f);
 		OutControlPointB = EndPoint - FVector2D(signX * flatControlDistance, 0.0f);
 		return;
@@ -281,10 +296,10 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::CalculateBezierControlPoints
 
 	const float verticalControlDistance = FMath::Clamp(
 		(absDeltaY * MDSGraphWireTokens::VerticalControlFactor) + (absDeltaX * 0.08f),
-		MDSGraphWireTokens::MinimumControlDistance,
-		MDSGraphWireTokens::MaximumControlDistance
+		effectiveMin,
+		effectiveMax
 	);
-	const float horizontalControlDistance = FMath::Clamp(absDeltaX * MDSGraphWireTokens::HorizontalControlFactor, 0.0f, 96.0f);
+	const float horizontalControlDistance = FMath::Clamp(absDeltaX * MDSGraphWireTokens::HorizontalControlFactor, 0.0f, FMath::Min(96.0f, totalDist * 0.225f));
 
 	OutControlPointA = StartPoint + FVector2D(signX * horizontalControlDistance, signY * verticalControlDistance);
 	OutControlPointB = EndPoint - FVector2D(signX * horizontalControlDistance * 0.55f, signY * verticalControlDistance);
