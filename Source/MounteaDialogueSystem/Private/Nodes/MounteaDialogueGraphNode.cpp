@@ -188,9 +188,7 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators()
 	for (auto Itr : NodeDecorators)
 	{
 		if (Itr.DecoratorType != nullptr)
-		{
 			TempReturn.AddUnique(Itr);
-		}
 	}	
 	Return = TempReturn;
 	return Return;

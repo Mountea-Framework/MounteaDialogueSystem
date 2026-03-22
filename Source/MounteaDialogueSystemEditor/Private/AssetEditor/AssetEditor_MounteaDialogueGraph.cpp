@@ -419,7 +419,10 @@ void FAssetEditor_MounteaDialogueGraph::BindCommands()
 
 void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 {
-	if (EditingGraph->EdGraph == nullptr)
+	const bool bNeedsRebuild = EditingGraph->EdGraph == nullptr
+		|| EditingGraph->EdGraph->Nodes.IsEmpty();
+
+	if (bNeedsRebuild)
 	{
 		EditingGraph->EdGraph = CastChecked<UEdGraph_MounteaDialogueGraph>(
 			FBlueprintEditorUtils::CreateNewGraph(EditingGraph, NAME_None, UEdGraph_MounteaDialogueGraph::StaticClass(),

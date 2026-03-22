@@ -469,7 +469,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateAndSaveGraph(UMounteaDia
 	if (Graph->EdGraph)
 	{
 		if (UEdGraph_MounteaDialogueGraph* edGraph = Cast<UEdGraph_MounteaDialogueGraph>(Graph->EdGraph))
-			edGraph->RebuildMounteaDialogueGraph();
+			edGraph->Nodes.Empty();
 	}
 
 	SaveAsset(Graph);
