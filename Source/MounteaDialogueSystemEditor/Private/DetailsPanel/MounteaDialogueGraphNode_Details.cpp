@@ -15,6 +15,7 @@
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
+#include "Slate/SMounteaDialogueNodeHeader.h"
 #include "Widgets/Input/SComboButton.h"
 #include "Widgets/Layout/SScaleBox.h"
 #include "Widgets/Layout/SScrollBox.h"
@@ -261,7 +262,6 @@ void FMounteaDialogueGraphNode_Details::MakePreviewNode()
 	}
 
 	const FLinearColor previewAccent = GetPreviewingNodeBackgroundColor().GetSpecifiedColor();
-	const FLinearColor headerForeground = FMounteaDialogueGraphVisualTokens::GetNodeHeaderForeground(EditingDialogueNode->SelectedNode);
 	const FLinearColor bodyForeground = FMounteaDialogueGraphVisualTokens::GetCardForeground();
 	const FLinearColor bodyBackground = FMounteaDialogueGraphVisualTokens::GetCardBackground();
 
@@ -292,31 +292,10 @@ void FMounteaDialogueGraphNode_Details::MakePreviewNode()
 			+ SOverlay::Slot()
 			.VAlign(VAlign_Top)
 			[
-				SNew(SBorder)
-				.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.Flat.RoundTop"))
-				.Padding(FMargin(10.f, 6.f, 10.f, 6.f))
-				.BorderBackgroundColor(previewAccent)
-				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
-					.VAlign(VAlign_Center)
-					[
-						SNew(SImage)
-						.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.Icon.Return"))
-						.ColorAndOpacity(headerForeground)
-					]
-					+ SHorizontalBox::Slot()
-					.FillWidth(1.f)
-					.VAlign(VAlign_Center)
-					.Padding(FMargin(6.f, 0.f, 0.f, 0.f))
-					[
-						SNew(STextBlock)
-						.Text(this, &FMounteaDialogueGraphNode_Details::GetPreviewingNodeTitle)
-						.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitle.Small")
-						.ColorAndOpacity(headerForeground)
-					]
-				]
+				SMounteaDialogueNodeHeader::FromNode(
+					EditingDialogueNode->SelectedNode,
+					"MDSStyleSet.Node.Flat.RoundTop",
+					10.f, 6.f)
 			]
 
 			+ SOverlay::Slot()
@@ -419,53 +398,40 @@ void FMounteaDialogueGraphNode_Details::RefreshEligibleNodes()
 	}
 }
 
-FText FMounteaDialogueGraphNode_Details::GetPickerCurrentNodeTitle() const
-{
-	const UMounteaDialogueGraphNode_ReturnToNode* ReturnNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(EditingNode);
-	if (!ReturnNode || !ReturnNode->SelectedNode)
-		return LOCTEXT("NodePicker_None", "— select a node —");
-	return ReturnNode->SelectedNode->GetNodeTitle();
-}
-
-FSlateColor FMounteaDialogueGraphNode_Details::GetPickerCurrentNodeColor() const
-{
-	const UMounteaDialogueGraphNode_ReturnToNode* ReturnNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(EditingNode);
-	if (!ReturnNode || !ReturnNode->SelectedNode)
-		return FLinearColor(0.25f, 0.25f, 0.25f, 1.f);
-	return FMounteaDialogueGraphVisualTokens::GetNodeAccentColor(ReturnNode->SelectedNode);
-}
-
 TSharedRef<SWidget> FMounteaDialogueGraphNode_Details::MakeNodePickerButtonContent()
 {
-	return SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.VAlign(VAlign_Center)
-		[
-			SNew(SBorder)
-			.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.Flat.RoundAll"))
-			.BorderBackgroundColor(this, &Self::GetPickerCurrentNodeColor)
-			.Padding(FMargin(0.f))
-			[
-				SNew(SBox)
-				.WidthOverride(10.f)
-				.HeightOverride(20.f)
-			]
-		]
-		+ SHorizontalBox::Slot()
-		.FillWidth(1.f)
-		.VAlign(VAlign_Center)
-		.Padding(FMargin(6.f, 0.f, 0.f, 0.f))
+	const UMounteaDialogueGraphNode_ReturnToNode* ReturnNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(EditingNode);
+	const UMounteaDialogueGraphNode* Selected = ReturnNode ? ReturnNode->SelectedNode.Get() : nullptr;
+
+	if (Selected)
+	{
+		return SMounteaDialogueNodeHeader::FromNode(Selected, "MDSStyleSet.Node.Flat.RoundAll", 8.f, 4.f);
+	}
+
+	// No selection: plain placeholder text
+	return SNew(SBox)
+		.Padding(FMargin(4.f, 2.f))
 		[
 			SNew(STextBlock)
-			.Text(this, &Self::GetPickerCurrentNodeTitle)
+			.Text(LOCTEXT("NodePicker_None", "— select a node —"))
 			.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitle.Small")
+			.ColorAndOpacity(FLinearColor(0.6f, 0.6f, 0.6f, 1.f))
 		];
 }
 
 TSharedRef<SWidget> FMounteaDialogueGraphNode_Details::GetNodePickerMenuContent()
 {
 	RefreshEligibleNodes();
+
+	// Static: FSlateRoundedBoxBrush instances MUST outlive the widgets that reference them.
+	// A local FButtonStyle goes out of scope when this function returns, causing a crash on
+	// the next Slate paint pass. Static ensures the brushes live for the module's lifetime.
+	static const FButtonStyle PickerItemStyle = FButtonStyle()
+		.SetNormal(  FSlateRoundedBoxBrush(FLinearColor::Transparent,           6.f) )
+		.SetHovered( FSlateRoundedBoxBrush(FLinearColor(1.f, 1.f, 1.f, 0.12f), 6.f) )
+		.SetPressed( FSlateRoundedBoxBrush(FLinearColor(1.f, 1.f, 1.f, 0.20f), 6.f) )
+		.SetNormalPadding( FMargin(0.f) )
+		.SetPressedPadding( FMargin(0.f) );
 
 	TSharedRef<SScrollBox> List = SNew(SScrollBox);
 
@@ -482,62 +448,56 @@ TSharedRef<SWidget> FMounteaDialogueGraphNode_Details::GetNodePickerMenuContent(
 
 	for (UMounteaDialogueGraphNode* Node : CachedEligibleNodes)
 	{
-		const FLinearColor accentColor = FMounteaDialogueGraphVisualTokens::GetNodeAccentColor(Node);
-		const FLinearColor fgColor     = FMounteaDialogueGraphVisualTokens::GetCardForeground();
-		const FText title              = Node->GetNodeTitle();
-		const FText typeName           = Node->GetInternalName();
+		const FLinearColor accentColor  = FMounteaDialogueGraphVisualTokens::GetNodeAccentColor(Node);
+		const FLinearColor bodyFg       = FMounteaDialogueGraphVisualTokens::GetCardForeground();
+		const FLinearColor bodyBg       = FMounteaDialogueGraphVisualTokens::GetCardBackground();
+		const FText        typeName     = Node->GetInternalName();
 
 		List->AddSlot()
-		.Padding(FMargin(2.f, 1.f))
+		.Padding(FMargin(2.f, 2.f))
 		[
 			SNew(SButton)
-			.ButtonStyle(FCoreStyle::Get(), "NoBorder")
+			.ButtonStyle(&PickerItemStyle)
 			.OnClicked_Lambda([this, Node]() -> FReply
 			{
 				OnPickerNodeSelected(Node);
 				return FReply::Handled();
 			})
 			[
+				// Mini card: accent 1px border, rounded corners
 				SNew(SBorder)
 				.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.Flat.RoundAll"))
-				.BorderBackgroundColor(FMounteaDialogueGraphVisualTokens::GetCardBackground())
-				.Padding(0.f)
+				.BorderBackgroundColor(accentColor)
+				.Padding(1.f)
 				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
+					SNew(SOverlay)
+
+					// Card body background
+					+ SOverlay::Slot()
 					[
 						SNew(SBorder)
 						.BorderImage(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Node.Flat.RoundAll"))
-						.BorderBackgroundColor(accentColor)
-						.Padding(0.f)
-						[
-							SNew(SBox)
-							.WidthOverride(8.f)
-						]
+						.Visibility(EVisibility::SelfHitTestInvisible)
+						.BorderBackgroundColor(bodyBg)
 					]
-					+ SHorizontalBox::Slot()
-					.FillWidth(1.f)
-					.VAlign(VAlign_Center)
-					.Padding(FMargin(8.f, 4.f))
+
+					// Accent header (icon + title), top corners rounded
+					+ SOverlay::Slot()
+					.VAlign(VAlign_Top)
 					[
-						SNew(SVerticalBox)
-						+ SVerticalBox::Slot()
-						.AutoHeight()
-						[
-							SNew(STextBlock)
-							.Text(title)
-							.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTitle.Small")
-							.ColorAndOpacity(fgColor)
-						]
-						+ SVerticalBox::Slot()
-						.AutoHeight()
-						[
-							SNew(STextBlock)
-							.Text(typeName)
-							.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTag")
-							.ColorAndOpacity(fgColor.CopyWithNewOpacity(0.5f))
-						]
+						SMounteaDialogueNodeHeader::FromNode(Node, "MDSStyleSet.Node.Flat.RoundTop", 8.f, 4.f)
+					]
+
+					// Node type name in the card body
+					+ SOverlay::Slot()
+					.Padding(FMargin(8.f, 30.f, 8.f, 6.f))
+					.VAlign(VAlign_Fill)
+					[
+						SNew(STextBlock)
+						.Text(typeName)
+						.TextStyle(FMounteaDialogueGraphEditorStyle::Get(), "MDSStyleSet.NodeTag")
+						.ColorAndOpacity(bodyFg.CopyWithNewOpacity(0.65f))
+						.AutoWrapText(true)
 					]
 				]
 			]

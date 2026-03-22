@@ -51,8 +51,6 @@ public:
 	TSharedRef<SWidget> MakeNodePickerButtonContent();
 	TSharedRef<SWidget> GetNodePickerMenuContent();
 	void OnPickerNodeSelected(UMounteaDialogueGraphNode* Node);
-	FText GetPickerCurrentNodeTitle() const;
-	FSlateColor GetPickerCurrentNodeColor() const;
 #pragma endregion
 	
 	// IDetailCustomization interface

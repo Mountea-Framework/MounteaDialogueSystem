@@ -10,9 +10,13 @@
 // For more information, visit: https://mountea.tools
 
 #include "EditorStyle/MounteaDialogueGraphVisualTokens.h"
+#include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 
 #include "Nodes/MounteaDialogueGraphNode.h"
+#include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
+#include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
 #include "Nodes/MounteaDialogueGraphNode_Delay.h"
+#include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
 #include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
@@ -123,6 +127,27 @@ FLinearColor FMounteaDialogueGraphVisualTokens::GetNodeHeaderForeground(const UM
 #else
 	return FLinearColor::White;
 #endif
+}
+
+const FSlateBrush* FMounteaDialogueGraphVisualTokens::GetNodeIconBrush(const UMounteaDialogueGraphNode* Node)
+{
+	if (!Node)
+		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Small"));
+	if (Node->IsA<UMounteaDialogueGraphNode_StartNode>())
+		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Start"));
+	if (Node->IsA<UMounteaDialogueGraphNode_Delay>())
+		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Delay"));
+	if (Node->IsA<UMounteaDialogueGraphNode_AnswerNode>())
+		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Answer"));
+	if (Node->IsA<UMounteaDialogueGraphNode_LeadNode>())
+		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Lead"));
+	if (Node->IsA<UMounteaDialogueGraphNode_CompleteNode>())
+		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Complete"));
+	if (Node->IsA<UMounteaDialogueGraphNode_ReturnToNode>())
+		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Return"));
+	if (Node->IsA<UMounteaDialogueGraphNode_OpenChildGraph>())
+		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.OpenChildGraph"));
+	return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Small"));
 }
 
 FVector2D FMounteaDialogueGraphVisualTokens::GetNodeSizeHint(const UMounteaDialogueGraphNode* Node)

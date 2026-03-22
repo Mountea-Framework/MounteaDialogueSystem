@@ -116,6 +116,7 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.Node.TextHardEdges", new BOX_BRUSH( TEXT("TextHardCorners") , FMargin(16.f/64.f, 25.f/64.f, 16.f/64.f, 16.f/64.f) ));
 	StyleSet->Set("MDSStyleSet.Node.Flat.RoundAll", new FSlateRoundedBoxBrush(FLinearColor::White, FVector4(12.f, 12.f, 12.f, 12.f)));
 	StyleSet->Set("MDSStyleSet.Node.Flat.RoundTop", new FSlateRoundedBoxBrush(FLinearColor::White, FVector4(12.f, 12.f, 0.f, 0.f)));
+	StyleSet->Set("MDSStyleSet.Node.Flat.RoundLeft", new FSlateRoundedBoxBrush(FLinearColor::White, FVector4(12.f, 0.f, 0.f, 12.f)));
 	StyleSet->Set("MDSStyleSet.Node.Flat.Pill", new FSlateRoundedBoxBrush(FLinearColor::White, FVector4(999.f, 999.f, 999.f, 999.f)));
 	StyleSet->Set("MDSStyleSet.Node.Flat.Tag", new FSlateRoundedBoxBrush(FLinearColor::White, FVector4(6.f, 6.f, 6.f, 6.f)));
 	StyleSet->Set("MDSStyleSet.Node.Flat.Circle", new FSlateRoundedBoxBrush(FLinearColor::White, FVector4(999.f, 999.f, 999.f, 999.f)));
