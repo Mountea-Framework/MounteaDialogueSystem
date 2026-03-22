@@ -24,6 +24,11 @@
 #include "Helpers/MounteaDialogueSystemImportExportHelpers.h"
 #include "ImportConfig/MounteaDialogueImportConfig.h"
 
+#include "Editor.h"
+#include "Helpers/MounteaDialogueGraphEditorHelpers.h"
+#include "Misc/MessageDialog.h"
+#include "Subsystems/AssetEditorSubsystem.h"
+
 #define LOCTEXT_NAMESPACE "MounteaDialogueProjectFactory"
 
 UMounteaDialogueProjectFactory::UMounteaDialogueProjectFactory()
@@ -105,6 +110,49 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 		projectFolder = FString::Printf(TEXT("%s/%s"), *packageRoot, *projectName);
 	}
 
+	// ── 3b. Check for open graph editors ─────────────────────────────────────
+	// Scan all nested dialogues in the archive and collect any that already exist as
+	// UAssets and are currently open in the editor. If any are open, ask the user
+	// before proceeding — reimport mutates those assets and the open editor would
+	// interfere. If the user declines, abort the entire import.
+	if (GEditor)
+	{
+		const TArray<UMounteaDialogueGraph*> AffectedGraphs =
+			UMounteaDialogueSystemImportExportHelpers::FindGraphsToBeReimported(extractedFiles);
+
+		TArray<UMounteaDialogueGraph*> OpenGraphs;
+		if (UAssetEditorSubsystem* AES = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>())
+		{
+			for (UMounteaDialogueGraph* Graph : AffectedGraphs)
+				if (AES->FindEditorForAsset(Graph, false))
+					OpenGraphs.Add(Graph);
+		}
+
+		if (!OpenGraphs.IsEmpty())
+		{
+			FString GraphNames;
+			for (UMounteaDialogueGraph* Graph : OpenGraphs)
+				GraphNames += FString::Printf(TEXT("\n  \u2022 %s"), *Graph->GetName());
+
+			const EAppReturnType::Type Response = FMessageDialog::Open(
+				EAppMsgType::YesNo,
+				FText::Format(
+					LOCTEXT("OpenEditorsDetected",
+						"The following dialogue graph(s) are currently open and must be closed before reimport:{0}\n\nClose them and proceed with the import?"),
+					FText::FromString(GraphNames)));
+
+			if (Response != EAppReturnType::Yes)
+			{
+				bOutOperationCanceled = true;
+				return nullptr;
+			}
+
+			if (UAssetEditorSubsystem* AES = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>())
+				for (UMounteaDialogueGraph* Graph : OpenGraphs)
+					AES->CloseAllEditorsForAsset(Graph);
+		}
+	}
+
 	// Project-level files to inject into each dialogue if the nested archive is missing them.
 	// Dialoguer exports these at the project level; standalone .mnteadlg files include them
 	// directly. We inject them so the shared import pipeline sees a complete set.
@@ -119,7 +167,7 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 	// ── 4. Import each nested .mnteadlg ───────────────────────────────────────
 	TArray<FString> importedDialogues;
 	TArray<FGuid> importedDialogueGuids;
-	TMap<FGuid, UMounteaDialogueGraph*> importedGraphsByGuid; // for cross-dialogue OpenChildGraph resolution
+	TMap<FGuid, UMounteaDialogueGraph*> importedGraphsByGuid;
 
 	for (const auto& entry : extractedFiles)
 	{
@@ -137,8 +185,7 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 			EditorLOG_WARNING(TEXT("[ProjectFactory] Temp file missing for '%s'"), *entry.Key);
 			continue;
 		}
-
-		// Load and validate the nested archive
+		
 		TArray<uint8> dialogueData;
 		if (!FFileHelper::LoadFileToArray(dialogueData, *tempPath))
 		{
@@ -162,8 +209,7 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 			IFileManager::Get().Delete(*tempPath);
 			continue;
 		}
-
-		// Inject project-level files that the nested archive may not contain
+		
 		for (const FString& projectFile : projectLevelFiles)
 		{
 			if (!dialogueFiles.Contains(projectFile) && extractedFiles.Contains(projectFile))

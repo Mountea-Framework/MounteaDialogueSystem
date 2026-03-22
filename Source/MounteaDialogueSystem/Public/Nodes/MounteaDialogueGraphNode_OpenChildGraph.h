@@ -35,7 +35,7 @@ public:
 	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 
 	/** Soft reference to the dialogue graph which should be opened in a future implementation pass. */
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly,
+	UPROPERTY(SaveGame, Category="Open Graph", EditAnywhere, BlueprintReadOnly,
 		meta=(NoResetToDefault),
 		meta=(DisplayThumbnail="false"),
 		meta=(ForceShowEngineContent, ForceShowPluginContent))

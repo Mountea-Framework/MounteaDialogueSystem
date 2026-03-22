@@ -578,8 +578,7 @@ void FMounteaDialogueGraphNode_Details::CustomizeDetails(IDetailLayoutBuilder& D
 	if (DetailBuilder.GetBaseClass()->IsChildOf(UEdNode_MounteaDialogueGraphNode::StaticClass()) == false)
 	{ return; };
 	
-	SavedLayoutBuilder = &DetailBuilder;
-	HidePropertiesWithMetadata(DetailBuilder, EditingNode, TEXT("HideInGraph"));
+	SavedLayoutBuilder = &DetailBuilder;	
 
 	DocumentationButtonStyle = FMounteaDialogueGraphEditorStyle::GetWidgetStyle<FButtonStyle>(TEXT("MDSStyleSet.Buttons.Style"));
 
@@ -692,6 +691,8 @@ void FMounteaDialogueGraphNode_Details::CustomizeDetails(IDetailLayoutBuilder& D
 	
 	DetailBuilder.EditCategory("Decorators", FText::GetEmpty(), ECategoryPriority::Uncommon).InitiallyCollapsed(true);
 	DetailBuilder.EditCategory("Defaults", FText::GetEmpty(), ECategoryPriority::Uncommon).InitiallyCollapsed(true);
+	
+	HidePropertiesWithMetadata(DetailBuilder, EditingNode, TEXT("HiddenInGraph"));
 }
 
 #undef LOCTEXT_NAMESPACE

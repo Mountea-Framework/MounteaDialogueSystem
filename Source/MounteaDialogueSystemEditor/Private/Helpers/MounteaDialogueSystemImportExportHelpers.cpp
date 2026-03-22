@@ -449,6 +449,60 @@ UMounteaDialogueGraph* UMounteaDialogueSystemImportExportHelpers::LookupExisting
 	return nullptr;
 }
 
+TArray<UMounteaDialogueGraph*> UMounteaDialogueSystemImportExportHelpers::FindGraphsToBeReimported(const TMap<FString, FString>& ExtractedProjectFiles)
+{
+	TArray<UMounteaDialogueGraph*> Result;
+
+	for (const auto& Entry : ExtractedProjectFiles)
+	{
+		if (!Entry.Key.StartsWith(TEXT("dialogues/")) || !Entry.Key.EndsWith(TEXT(".mnteadlg")))
+			continue;
+
+		const FString& TempPath = Entry.Value;
+		if (TempPath.IsEmpty() || !FPaths::FileExists(TempPath))
+			continue;
+
+		TArray<uint8> DialogueData;
+		if (!FFileHelper::LoadFileToArray(DialogueData, *TempPath))
+			continue;
+
+		if (!IsZipFile(DialogueData))
+			continue;
+
+		TMap<FString, FString> DialogueFiles;
+		if (!ExtractFilesFromZip(DialogueData, DialogueFiles))
+			continue;
+
+		// Pull out dialogueData.json (plain text — no temp file) and clean up any binary
+		// temp files (audio, thumbnails) that the inner extraction may have created.
+		FString DialogueDataJson;
+		DialogueFiles.RemoveAndCopyValue(TEXT("dialogueData.json"), DialogueDataJson);
+
+		for (const auto& InnerEntry : DialogueFiles)
+			if (FPaths::FileExists(InnerEntry.Value))
+				IFileManager::Get().Delete(*InnerEntry.Value);
+
+		if (DialogueDataJson.IsEmpty())
+			continue;
+
+		TSharedPtr<FJsonObject> JsonObj;
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(DialogueDataJson);
+		if (!FJsonSerializer::Deserialize(Reader, JsonObj) || !JsonObj.IsValid())
+			continue;
+
+		FString GuidStr;
+		FGuid Guid;
+		if (!JsonObj->TryGetStringField(TEXT("dialogueGuid"), GuidStr) || !FGuid::Parse(GuidStr, Guid))
+			continue;
+
+		UMounteaDialogueGraph* ExistingGraph = LookupExistingGraphByGuid(Guid);
+		if (ExistingGraph)
+			Result.AddUnique(ExistingGraph);
+	}
+
+	return Result;
+}
+
 bool UMounteaDialogueSystemImportExportHelpers::PopulateAndSaveGraph(UMounteaDialogueGraph* Graph, TMap<FString, FString>& ExtractedFiles, const FString& SourceFilePath, FString& OutMessage)
 {
 	if (!ValidateExtractedContent(ExtractedFiles))
@@ -469,7 +523,14 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateAndSaveGraph(UMounteaDia
 	if (Graph->EdGraph)
 	{
 		if (UEdGraph_MounteaDialogueGraph* edGraph = Cast<UEdGraph_MounteaDialogueGraph>(Graph->EdGraph))
+		{
+			// On reimport, EdGraph->Nodes still holds the OLD visual nodes that reference the
+			// pre-reimport runtime nodes. Calling RebuildMounteaDialogueGraph here would read
+			// those old visual nodes and overwrite AllNodes (which has the new imported nodes).
+			// Instead, clear the visual nodes so CreateEdGraph can rebuild them correctly from
+			// AllNodes the next time the graph editor is opened.
 			edGraph->Nodes.Empty();
+		}
 	}
 
 	SaveAsset(Graph);
