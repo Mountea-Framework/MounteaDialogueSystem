@@ -23,7 +23,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNodeStateChanged, const UMounteaD
  * Contains information about Parent and Children Nodes.
  */
 UCLASS(Abstract, BlueprintType, Blueprintable, ClassGroup=("Mountea|Dialogue"), 
-	AutoExpandCategories=("Mountea","Dialogue","Mountea|Dialogue"))
+	AutoExpandCategories=(Dialogue, Previews, Decorators),
+	AutoCollapseCategories=(Defaults))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject, public IMounteaDialogueGraphNodeInterface, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()

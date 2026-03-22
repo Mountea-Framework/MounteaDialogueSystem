@@ -304,21 +304,27 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		}
 	}
 
-	// Load import config
+	// Load import config — migrate from legacy path if needed
 	{
-		const FString GameDirectory = FPaths::ProjectDir();
-		const FString UpdatedConfigFile = GameDirectory + "/Config/MounteaDialogueImportConfig.ini";
-
+		const FString CanonicalConfigFile = UMounteaDialogueImportConfig::GetImportConfigFilePath();
+		const FString LegacyConfigFile    = FPaths::ProjectDir() / TEXT("Config/MounteaDialogueImportConfig.ini");
 		UMounteaDialogueImportConfig* ImportConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
 
-		if (FPaths::FileExists(UpdatedConfigFile))
+		IPlatformFile::GetPlatformPhysical().CreateDirectoryTree(*FPaths::GetPath(CanonicalConfigFile));
+
+		if (!FPaths::FileExists(CanonicalConfigFile) && FPaths::FileExists(LegacyConfigFile))
 		{
-			ImportConfig->LoadConfig(nullptr, *UpdatedConfigFile);
+			// One-time migration: copy old file to new location, then remove the old one
+			IFileManager::Get().Copy(*CanonicalConfigFile, *LegacyConfigFile);
+			IFileManager::Get().Delete(*LegacyConfigFile);
+			UE_LOG(LogTemp, Log, TEXT("[MounteaDialogue] Migrated import config from '%s' to '%s'"),
+				*LegacyConfigFile, *CanonicalConfigFile);
 		}
+
+		if (FPaths::FileExists(CanonicalConfigFile))
+			ImportConfig->LoadConfig(nullptr, *CanonicalConfigFile);
 		else
-		{
-			ImportConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
-		}
+			ImportConfig->SaveConfig(CPF_Config, *CanonicalConfigFile);
 	}
 
 	// Force GameplayTags

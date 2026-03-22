@@ -229,9 +229,13 @@ bool UMounteaDialogueSystemImportExportHelpers::IsReimport(const FString& Filena
 	else
 		return false;
 
-	const UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
+	const FString configFilePath = UMounteaDialogueImportConfig::GetImportConfigFilePath();
+	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
 	if (!importConfig)
 		return false;
+
+	if (FPaths::FileExists(configFilePath))
+		importConfig->LoadConfig(nullptr, *configFilePath);
 
 	return importConfig->ImportHistory.Contains(dialogueGuid);
 }
@@ -288,16 +292,18 @@ bool UMounteaDialogueSystemImportExportHelpers::CanReimport(UObject* ObjectRedir
 
 void UMounteaDialogueSystemImportExportHelpers::UpdateGraphImportDataConfig(const UMounteaDialogueGraph* Graph, const FString& JsonName, const FString& Json, const FString& PackagePath, const FString& AssetName)
 {
-	const FString GameDirectory = FPaths::ProjectDir();
-	const FString UpdatedConfigFile = GameDirectory + "/Config/MounteaDialogueImportConfig.ini";
+	const FString UpdatedConfigFile = UMounteaDialogueImportConfig::GetImportConfigFilePath();
 
 	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
 
 	if (FPaths::FileExists(UpdatedConfigFile))
 		importConfig->LoadConfig(nullptr, *UpdatedConfigFile);
 	else
+	{
+		IPlatformFile::GetPlatformPhysical().CreateDirectoryTree(*FPaths::GetPath(UpdatedConfigFile));
 		importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
-	
+	}
+
 	if (importConfig)
 	{
 		if (FDialogueImportSourceData* dialogueConfig = importConfig->ImportHistory.Find(Graph->GetGraphGUID()))
@@ -376,6 +382,12 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraphFromFiles(TMa
 	// 3a. Reimport path: existing graph found with matching GUID
 	if (existingGraph && existingGraph->GetGraphGUID() == importedGuid)
 	{
+		// GetAsset() from the asset registry may return a partially-loaded object.
+		// SavePackage will crash with "cannot be saved as it has only been partially loaded"
+		// unless the package is fully resident before we modify and re-save it.
+		if (UPackage* existingPackage = existingGraph->GetOutermost())
+			existingPackage->FullyLoad();
+
 		existingGraph->ClearGraph();
 		bSuccess = PopulateAndSaveGraph(existingGraph, extractedFiles, sourceFilePath, outMessage);
 		if (bSuccess)
@@ -418,27 +430,54 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraphFromFiles(TMa
 
 UMounteaDialogueGraph* UMounteaDialogueSystemImportExportHelpers::LookupExistingGraphByGuid(const FGuid& ImportedGuid)
 {
-	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
-	if (!importConfig || !importConfig->ImportHistory.Contains(ImportedGuid))
+	if (!ImportedGuid.IsValid())
 		return nullptr;
 
-	const FString& assetPath = importConfig->ImportHistory[ImportedGuid].DialogueAssetPath;
-	const FString assetDir = FPaths::GetPath(assetPath);
+	FAssetRegistryModule& reg = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-	FAssetRegistryModule& assetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-	FARFilter filter;
-	filter.bRecursivePaths = false;
-	filter.PackagePaths.Add(FName(*assetDir));
-	filter.ClassPaths.Add(UMounteaDialogueGraph::StaticClass()->GetClassPathName());
-
-	TArray<FAssetData> assetDataList;
-	assetRegistryModule.Get().GetAssets(filter, assetDataList);
-
-	for (const FAssetData& assetData : assetDataList)
+	// Primary: query the asset registry by the GraphGUID tag (AssetRegistrySearchable).
+	// This requires no asset loads and no config file — it uses the serialized tag index.
+	// The tag value is the GUID string in the same format FGuid::ToString() produces.
 	{
-		UMounteaDialogueGraph* graph = Cast<UMounteaDialogueGraph>(assetData.GetAsset());
-		if (graph && graph->GetGraphGUID() == ImportedGuid)
-			return graph;
+		FARFilter filter;
+		filter.bRecursivePaths = true;
+		filter.PackagePaths.Add(FName(TEXT("/Game")));
+		filter.ClassPaths.Add(UMounteaDialogueGraph::StaticClass()->GetClassPathName());
+		filter.TagsAndValues.Add(FName(TEXT("GraphGUID")), ImportedGuid.ToString(EGuidFormats::Digits));
+
+		TArray<FAssetData> results;
+		reg.Get().GetAssets(filter, results);
+		if (results.Num() > 0)
+		{
+			UMounteaDialogueGraph* graph = Cast<UMounteaDialogueGraph>(results[0].GetAsset());
+			if (graph && graph->GetGraphGUID() == ImportedGuid)
+				return graph;
+		}
+	}
+
+	// Secondary: fast path via the stored DialogueAssetPath in the import config.
+	// Handles assets imported before AssetRegistrySearchable was added.
+	{
+		const FString configFilePath = UMounteaDialogueImportConfig::GetImportConfigFilePath();
+		UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
+		if (importConfig && FPaths::FileExists(configFilePath))
+			importConfig->LoadConfig(nullptr, *configFilePath);
+
+		if (importConfig && importConfig->ImportHistory.Contains(ImportedGuid))
+		{
+			const FString& assetPath = importConfig->ImportHistory[ImportedGuid].DialogueAssetPath;
+			if (!assetPath.IsEmpty())
+			{
+				const FString assetObjectPath = FString::Printf(TEXT("%s.%s"), *assetPath, *FPaths::GetBaseFilename(assetPath));
+				const FAssetData directAsset = reg.Get().GetAssetByObjectPath(FSoftObjectPath(assetObjectPath));
+				if (directAsset.IsValid())
+				{
+					UMounteaDialogueGraph* graph = Cast<UMounteaDialogueGraph>(directAsset.GetAsset());
+					if (graph && graph->GetGraphGUID() == ImportedGuid)
+						return graph;
+				}
+			}
+		}
 	}
 
 	return nullptr;
@@ -944,6 +983,19 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateGraphFromExtractedFiles(
 	if (!CreateGraphStringTables(Graph, assetTools, ExtractedFiles, stringTableLookup, rowIdToTextKey, stDialogueRows, stNodes))
 		return false;
 
+	// Record both string tables in the import config so reimport can track them.
+	// The underlying source for both is stringTable.json (or nodes.json/dialogueRows.json for
+	// the node-title table). We store stringTable.json as the canonical source for both.
+	if (ExtractedFiles.Contains(TEXT("stringTable.json")))
+	{
+		const FString stPackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
+		const FString& stJson = ExtractedFiles[TEXT("stringTable.json")];
+		UpdateGraphImportDataConfig(Graph, TEXT("stringTable.json"), stJson, stPackagePath,
+			FString::Printf(TEXT("ST_%s_DialogueRows"), *Graph->GetName()));
+		UpdateGraphImportDataConfig(Graph, TEXT("stringTable.json"), stJson, stPackagePath,
+			FString::Printf(TEXT("ST_%s_Nodes"), *Graph->GetName()));
+	}
+
 	UDataTable* dtParticipants = nullptr;
 	UDataTable* dtDialogueRows = nullptr;
 	if (!CreateGraphDataTables(Graph, assetTools, dtParticipants, dtDialogueRows))
@@ -1191,15 +1243,17 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueData(UMounteaDia
 		Graph->SourceData.Add(NewSourceData);
 	}
 
-	const FString GameDirectory = FPaths::ProjectDir();
-	const FString UpdatedConfigFile = GameDirectory + "/Config/MounteaDialogueImportConfig.ini";
+	const FString UpdatedConfigFile = UMounteaDialogueImportConfig::GetImportConfigFilePath();
 
 	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
 
 	if (FPaths::FileExists(UpdatedConfigFile))
 		importConfig->LoadConfig(nullptr, *UpdatedConfigFile);
 	else
+	{
+		IPlatformFile::GetPlatformPhysical().CreateDirectoryTree(*FPaths::GetPath(UpdatedConfigFile));
 		importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
+	}
 
 	const FString PackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
 	const FString AssetName = *Graph->GetName();
@@ -2425,15 +2479,25 @@ void UMounteaDialogueSystemImportExportHelpers::SaveAsset(UObject* Asset)
 	if (!Asset)
 		return;
 
+	UPackage* package = Asset->GetOutermost();
+	if (!package)
+		return;
+
+	// Ensure the package is fully loaded before saving.
+	// Assets looked up via the asset registry can be partially loaded; saving them triggers
+	// "cannot be saved as it has only been partially loaded" and a debug break.
+	if (package->HasAnyPackageFlags(PKG_FilterEditorOnly) == false)
+		package->FullyLoad();
+
 	Asset->MarkPackageDirty();
 	FAssetRegistryModule::AssetCreated(Asset);
-	const FString PackageName = Asset->GetOutermost()->GetName();
+	const FString PackageName = package->GetName();
 	const FString PackageFileName = FPackageName::LongPackageNameToFilename(PackageName, FPackageName::GetAssetPackageExtension());
 	FSavePackageArgs saveArgs;
 	{
 		saveArgs.TopLevelFlags = RF_Public | RF_Standalone;
 	}
-	UPackage::SavePackage(Asset->GetOutermost(), Asset, *PackageFileName, saveArgs);
+	UPackage::SavePackage(package, Asset, *PackageFileName, saveArgs);
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::GatherAssetsFromGraph(const UMounteaDialogueGraph* Graph, TMap<FString, FString>& OutJsonFiles, TArray<FString>& OutAudioFiles)

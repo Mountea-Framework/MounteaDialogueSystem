@@ -13,7 +13,7 @@
  * Provides ability to return from Dialogue Node to different one.
  * Useful when dialogue branching disallows pin connections.
  */
-UCLASS( ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"))
+UCLASS( ClassGroup=("Mountea|Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_ReturnToNode : public UMounteaDialogueGraphNode
 {
 	GENERATED_BODY()

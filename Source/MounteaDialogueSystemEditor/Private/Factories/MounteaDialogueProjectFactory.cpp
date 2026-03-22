@@ -150,12 +150,16 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 				dialogueFiles.Add(projectFile, extractedFiles[projectFile]);
 		}
 
-		// Create the target package and a blank graph object, then import into it
+		// Determine where a *new* graph would land if no existing one is found.
+		// ImportDialogueGraphFromFiles will first check ImportHistory via LookupExistingGraphByGuid;
+		// if a previously-imported graph with the same GUID exists it will be reimported in-place
+		// and this package will simply be GC'd. We must NOT pre-create the UMounteaDialogueGraph
+		// here — passing a blank object (with a fresh random GUID) would bypass the GUID check and
+		// always fall through to the "create new" branch, ignoring existing assets entirely.
 		const FString dialoguePackagePath = FString::Printf(TEXT("%s/Dialogues"), *projectFolder);
 		UPackage* dialogueParent = CreatePackage(*FString::Printf(TEXT("%s/%s"), *dialoguePackagePath, *dialogueName));
 
-		UMounteaDialogueGraph* importedGraph = NewObject<UMounteaDialogueGraph>(
-			dialogueParent, UMounteaDialogueGraph::StaticClass(), FName(*dialogueName), Flags | RF_Transactional);
+		UMounteaDialogueGraph* importedGraph = nullptr;
 
 		FString importMessage;
 		const bool bSuccess = UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraphFromFiles(
@@ -177,7 +181,9 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 				sourceData.DialogueSourcePath = Filename;
 				sourceData.bIsProjectImport = true;
 
-				importConfig->SaveConfig(CPF_Config, *importConfig->GetDefaultConfigFilename());
+				const FString configPath = UMounteaDialogueImportConfig::GetImportConfigFilePath();
+				IPlatformFile::GetPlatformPhysical().CreateDirectoryTree(*FPaths::GetPath(configPath));
+				importConfig->SaveConfig(CPF_Config, *configPath);
 			}
 		}
 		else

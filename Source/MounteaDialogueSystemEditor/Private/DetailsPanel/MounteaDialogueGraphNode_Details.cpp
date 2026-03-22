@@ -11,6 +11,7 @@
 #include "EditorStyle/MounteaDialogueGraphVisualTokens.h"
 #include "Helpers/MounteaDialogueGraphColors.h"
 #include "Helpers/MounteaDialogueGraphEditorUtilities.h"
+#include "DetailsPanel/Widgets/SMounteaDialoguePreviewCard.h"
 #include "Nodes/MounteaDialogueGraphNode_Delay.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
@@ -87,53 +88,31 @@ void FMounteaDialogueGraphNode_Details::MakePreviewsScrollBox(TArray<FText>& Fro
 	{
 		PreviewRows->AddSlot()
 		[
-			SNew(SBorder)
-			.Padding(FMargin(1.f))
-			.BorderImage(this, &FMounteaDialogueGraphNode_Details::GetPreviewsBrush)
-			.BorderBackgroundColor(MounteaDialogueGraphColors::Previews::Invalid)
-			[
-				SNew(SBox)
-				.Padding(FMargin(2.5f))
-				[
-					SNew(STextBlock)
-					.Text(LOCTEXT("FMounteaDialogueGraphNode_Details_Previews_Invalid", "invalid data selected"))
-					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
-					.AutoWrapText(true)
-					.Justification(ETextJustify::Center)
-					.AutoWrapText(true)
-					.ColorAndOpacity(this, &FMounteaDialogueGraphNode_Details::GetPreviewsTextColor)
-				]
-			]
+			SNew(SMounteaDialoguePreviewCard)
+			.RowIndex(0)
+			.RowText(LOCTEXT("FMounteaDialogueGraphNode_Details_Previews_Invalid", "invalid data selected"))
+			.InitiallyExpanded(true)
 		];
 
 		return;
 	}
-	for (auto Itr : FromTexts)
+
+	int32 rowIndex = 0;
+	for (const FText& previewText : FromTexts)
 	{
 		PreviewRows->AddSlot()
 		[
 			SNew(SBox)
-			.Padding(FMargin(4.f))
+			.Padding(FMargin(0.f, 0.f, 0.f, 6.f))
 			[
-				SNew(SBorder)
-				.Padding(FMargin(2.f))
-				.BorderImage(this, &FMounteaDialogueGraphNode_Details::GetPreviewsBrush)
-				.BorderBackgroundColor(this, &FMounteaDialogueGraphNode_Details::GetPreviewsBackgroundColor)
-				[
-					SNew(SBox)
-					.Padding(FMargin(2.5f))
-					[
-						SNew(STextBlock)
-						.Text(Itr)
-						.Font(FCoreStyle::GetDefaultFontStyle("Regular", 10))
-						.AutoWrapText(true)
-						.Justification(ETextJustify::Left)
-						.AutoWrapText(true)
-						.ColorAndOpacity(this, &FMounteaDialogueGraphNode_Details::GetPreviewsTextColor)
-					]
-				]
+				SNew(SMounteaDialoguePreviewCard)
+				.RowIndex(rowIndex)
+				.RowText(previewText)
+				.InitiallyExpanded(rowIndex == 0)
 			]
 		];
+
+		rowIndex++;
 	}
 }
 
@@ -682,6 +661,9 @@ void FMounteaDialogueGraphNode_Details::CustomizeDetails(IDetailLayoutBuilder& D
 	DetailBuilder.HideCategory("Hidden");
 	DetailBuilder.HideCategory("Hide");
 	DetailBuilder.HideCategory("Editor");
+	
+	DetailBuilder.EditCategory("Decorators", FText::GetEmpty(), ECategoryPriority::Uncommon).InitiallyCollapsed(true);
+	DetailBuilder.EditCategory("Defaults", FText::GetEmpty(), ECategoryPriority::Uncommon).InitiallyCollapsed(true);
 }
 
 #undef LOCTEXT_NAMESPACE

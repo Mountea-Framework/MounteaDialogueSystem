@@ -9,6 +9,10 @@ UMounteaDialogueImportConfig::UMounteaDialogueImportConfig(const FObjectInitiali
 {
 	CategoryName = TEXT("Mountea Framework");
 	SectionName = TEXT("Mountea Dialogue System (Import)");
+
+	const FString configPath = GetImportConfigFilePath();
+	if (FPaths::FileExists(configPath))
+		LoadConfig(nullptr, *configPath);
 }
 
 bool UMounteaDialogueImportConfig::IsReimport(const FGuid& GraphGuid) const

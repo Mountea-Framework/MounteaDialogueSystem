@@ -84,8 +84,8 @@ protected:
 	*❗ Unique identifier for this Dialogue Graph instance.
 	*❔ Can be used for debugging and tracing purposes.
 	*/
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Defaults", 
-		meta=(NoResetToDefault))
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Defaults",
+		meta=(NoResetToDefault), AssetRegistrySearchable)
 	FGuid GraphGUID;
 
 public:

@@ -18,7 +18,7 @@
  * Provides DataTable and Row options that define the Dialogue data which will be displayed in UI.
  */
 UCLASS(Abstract, ClassGroup=("Mountea|Dialogue"), 
-	AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"))
+	AutoExpandCategories=("Previews"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_DialogueNodeBase : public UMounteaDialogueGraphNode, public IMounteaDialogueSpeechDataInterface
 {
 	GENERATED_BODY()
