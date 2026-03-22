@@ -30,28 +30,6 @@ UMounteaDialogueGraphNode_LeadNode::UMounteaDialogueGraphNode_LeadNode()
 	bUseGameplayTags = true;
 }
 
-void UMounteaDialogueGraphNode_LeadNode::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
-{
-	if (!bUseGameplayTags)
-	{
-		// Switch Active Participant to NPC
-		if (Manager.GetInterface())
-		{
-			if (const auto TempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
-			{
-				TempContext->SetActiveDialogueParticipant(TempContext->GetDialogueParticipant());
-			}
-		}
-	}
-
-	Super::PreProcessNode_Implementation(Manager);
-}
-
-void UMounteaDialogueGraphNode_LeadNode::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
-{
-	Super::ProcessNode_Implementation(Manager);
-}
-
 #if WITH_EDITOR
 
 FText UMounteaDialogueGraphNode_LeadNode::GetDescription_Implementation() const

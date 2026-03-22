@@ -15,7 +15,8 @@
  * Same functionality as Node being left with no branching.
  * Does help performance, however, is not required.
  */
-UCLASS(Abstract, ClassGroup=("Mountea|Dialogue"), DisplayName="Auto Complete Node", meta=(ToolTip="Mountea Dialogue Tree: Auto Complete Node"))
+UCLASS(Abstract, ClassGroup=("Mountea|Dialogue"), DisplayName="Auto Complete Node", 
+	meta=(ToolTip="Mountea Dialogue Tree: Auto Complete Node"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_AutoCompleteNode : public UMounteaDialogueGraphNode_CompleteNode
 {
 	GENERATED_BODY()

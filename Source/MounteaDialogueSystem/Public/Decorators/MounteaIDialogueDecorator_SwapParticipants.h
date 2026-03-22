@@ -15,7 +15,9 @@ class IMounteaDialogueManagerInterface;
  *
  * Implements native support swap Dialogue Participants, like switching whether the Player or NPC is the Active one.
  */
-UCLASS( BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue"), DisplayName="Swap Participants")
+UCLASS( BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), 
+	AutoExpandCategories=("Mountea","Dialogue"), 
+	DisplayName="Swap Participants")
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecorator_SwapParticipants : public UMounteaDialogueDecoratorBase
 {
 	GENERATED_BODY()

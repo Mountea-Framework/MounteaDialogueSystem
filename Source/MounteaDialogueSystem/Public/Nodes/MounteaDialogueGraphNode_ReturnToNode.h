@@ -30,29 +30,37 @@ public:
 	 * Defines how long it takes before the actual Jump happens.
 	 * Short delay time can avoid cutting audio and can provide time for Client-sided actions.
 	 */
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault,Units = "s", UIMin = 0.01, ClampMin = 0.01))
+	UPROPERTY(SaveGame, Category="Return", EditAnywhere, BlueprintReadOnly, 
+		meta=(Units = "s", UIMin = 0.01, ClampMin = 0.01),
+		meta=(NoResetToDefault))
 	float DelayDuration;
 
 	/**
 	 * Shows list of Node Indexes.
 	 * This is not very user friendly, however, to combat this Preview is generated with ability to click on it and get focused on selected Node.
 	 */
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames"))
+	UPROPERTY(SaveGame, Category="Return", EditAnywhere, BlueprintReadOnly, 
+		meta=(GetOptions ="GetRowNames"),
+		meta=(NoResetToDefault))
 	FString SelectedNodeIndex;
 
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(EditCondition ="SelectedNode!=nullptr"))
+	UPROPERTY(SaveGame, Category="Return", EditAnywhere, BlueprintReadOnly, 
+		meta=(EditCondition ="SelectedNode!=nullptr"),
+		meta=(NoResetToDefault))
 	uint8 bAutoCompleteSelectedNode : 1;
 
 	/**
 	 * Dialogue Node to which this Node leads to.
 	 */
-	UPROPERTY(SaveGame, Category="Private", VisibleAnywhere, BlueprintReadOnly, meta=(NoResetToDefault, DisplayThumbnail="false"))
+	UPROPERTY(SaveGame, Category="Private", VisibleAnywhere, BlueprintReadOnly, 
+		meta=(NoResetToDefault, DisplayThumbnail="false"))
 	TObjectPtr<UMounteaDialogueGraphNode> SelectedNode;
 
 	/**
 	 * Filters OUT all nodes by that class.
 	 */
-	UPROPERTY(SaveGame, Category="Editor", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault))
+	UPROPERTY(SaveGame, Category="Editor", EditAnywhere, BlueprintReadOnly, 
+		meta=(GetOptions ="GetRowNames", NoResetToDefault))
 	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedNodesFilter;
 
 #if WITH_EDITORONLY_DATA

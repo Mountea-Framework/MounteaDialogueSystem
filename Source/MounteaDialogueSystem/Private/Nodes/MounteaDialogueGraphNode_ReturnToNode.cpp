@@ -9,13 +9,16 @@
 #include "TimerManager.h"
 #include "Algo/AnyOf.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
+#include "Nodes/MounteaDialogueGraphNode_Delay.h"
+#include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_ReturnToNode"
 
-UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode() : DelayDuration(0.1f),
-																				   bAutoCompleteSelectedNode(false),
-																				   SelectedNode(nullptr)
+UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode() : 
+	DelayDuration(0.1f),
+	bAutoCompleteSelectedNode(false),
+	SelectedNode(nullptr)
 {
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeTitle", "Return To Node");
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeInternalTitle", "Return To Node");
@@ -26,8 +29,7 @@ UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode()
 
 	bAllowOutputNodes = false;
 
-	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeTooltip",
-							  "* Provides ability to return from Dialogue Node to different one.\n* Useful when dialogue branching disallows pin connections.");
+	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeTooltip", "* Provides ability to return from Dialogue Node to different one.\n* Useful when dialogue branching disallows pin connections.");
 #endif
 
 	bAutoStarts = true;
@@ -37,8 +39,9 @@ UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode()
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode::StaticClass());
 
 	// Disable those Node Classes
-	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_ReturnToNode::StaticClass());
+	AllowedNodesFilter.Add(StaticClass());
 	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_CompleteNode::StaticClass());
+	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_Delay::StaticClass());
 	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
 }
 
@@ -51,9 +54,7 @@ void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode_Implementation(const TS
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle_Delay, TimerDelegate_TypeWriterUpdateInterval, DelayDuration, false);
 	}
 	else
-	{
 		OnDelayDurationExpired(Manager);
-	}
 	
 	Super::ProcessNode_Implementation(Manager);
 }
@@ -124,7 +125,7 @@ TArray<FString> UMounteaDialogueGraphNode_ReturnToNode::GetRowNames() const
 				}
 			);
 		},
-		[](int32 Index)
+		[](const int32 Index)
 		{
 			return FString::FromInt(Index);
 		}
@@ -196,9 +197,7 @@ void UMounteaDialogueGraphNode_ReturnToNode::PostEditChangeProperty(FPropertyCha
 	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_ReturnToNode, SelectedNodeIndex))
 	{
 		if (SelectedNodeIndex.IsEmpty())
-		{
 			SelectedNode = nullptr;
-		}
 		else
 		{
 			const int32 Index = FCString::Atoi((TEXT("%s"), *SelectedNodeIndex));

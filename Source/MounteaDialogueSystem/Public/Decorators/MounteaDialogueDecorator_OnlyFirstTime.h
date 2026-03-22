@@ -22,7 +22,9 @@ class IMounteaDialogueManagerInterface;
  *
  * For proper usage, save Dialogue Participants when saving game!
  */
-UCLASS( Abstract, BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue"), DisplayName="Only First Time Base")
+UCLASS( Abstract, BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), 
+	AutoExpandCategories=("Mountea","Dialogue"), 
+	DisplayName="Only First Time Base")
 class MOUNTEADIALOGUESYSTEM_API  UMounteaDialogueDecorator_OnlyFirstTime : public UMounteaDialogueDecoratorBase
 {
 	GENERATED_BODY()

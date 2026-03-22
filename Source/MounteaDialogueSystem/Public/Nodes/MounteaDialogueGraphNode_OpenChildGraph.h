@@ -22,7 +22,8 @@ class UMounteaDialogueGraph;
  *
  * Placeholder node used to represent transition into another dialogue graph.
  */
-UCLASS(ClassGroup=("Mountea|Dialogue"), NotBlueprintable, DisplayName="Open Child Graph", meta=(ToolTip="Mountea Dialogue Tree: Open Child Graph Node"))
+UCLASS(ClassGroup=("Mountea|Dialogue"), NotBlueprintable, DisplayName="Open Child Graph", 
+	meta=(ToolTip="Mountea Dialogue Tree: Open Child Graph Node"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_OpenChildGraph : public UMounteaDialogueGraphNode
 {
 	GENERATED_BODY()

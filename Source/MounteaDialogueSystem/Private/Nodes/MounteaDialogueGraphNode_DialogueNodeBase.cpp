@@ -51,20 +51,29 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode_Implementation(cons
 
 void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	if (bUseGameplayTags)
+	if (bUseGameplayTags && Manager.GetInterface())
 	{
-		// Switch Participants based on Tags
-		if (Manager.GetInterface())
+		if (const auto tempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
 		{
-			if (const auto TempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
-			{
-				const TScriptInterface<IMounteaDialogueParticipantInterface> BestMatchingParticipant = UMounteaDialogueSystemBFC::SwitchActiveParticipant(TempContext);
-				UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(TempContext, BestMatchingParticipant);
-			}
+			const TScriptInterface<IMounteaDialogueParticipantInterface> BestMatchingParticipant = UMounteaDialogueSystemBFC::SwitchActiveParticipant(tempContext);
+			UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(tempContext, BestMatchingParticipant);
 		}
 	}
 
 	Super::PreProcessNode_Implementation(Manager);
+}
+
+FDialogueRow UMounteaDialogueGraphNode_DialogueNodeBase::GetSpeechData_Implementation() const
+{
+	const FString searchContext;
+	const auto returnValue = DataTable->FindRow<FDialogueRow>(RowName, searchContext);
+	return returnValue != nullptr ? *returnValue : FDialogueRow::Invalid();
+}
+
+bool UMounteaDialogueGraphNode_DialogueNodeBase::SetSpeechData_Implementation(const FDialogueRow& NewSpeechData)
+{
+	LOG_ERROR(TEXT("[SetSpeechData] Dialogue Graph Node doesn't support direct Row override!"))
+	return false;
 }
 
 UDataTable* UMounteaDialogueGraphNode_DialogueNodeBase::GetDataTable() const
@@ -75,35 +84,22 @@ UDataTable* UMounteaDialogueGraphNode_DialogueNodeBase::GetDataTable() const
 bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNodeRuntime_Implementation() const
 {
 	if (DataTable == nullptr)
-	{
 		return false;
-	}
 
 	if (RowName.IsNone())
-	{
 		return false;
-	}
 
 	if (MaxChildrenNodes > -1 && ChildrenNodes.Num() > MaxChildrenNodes)
-	{
 		return false;
-	}
 
 	const FString Context;
 	const FDialogueRow* SelectedRow = DataTable->FindRow<FDialogueRow>(RowName, Context);
 
 	if (SelectedRow == nullptr)
-	{
 		return false;
-	}
 
-	if (SelectedRow)
-	{
-		if (SelectedRow->DialogueRowData.Num() == 0)
-		{
-			return false;
-		}
-	}
+	if (SelectedRow && SelectedRow->DialogueRowData.Num() == 0)
+		return false;
 	
 	return true;
 }
@@ -251,9 +247,7 @@ TArray<FText> UMounteaDialogueGraphNode_DialogueNodeBase::GetPreviews() const
 		}
 	}
 	else
-	{
 		ReturnValues.Empty();
-	}
 
 	return ReturnValues;
 }

@@ -34,7 +34,6 @@ enum class EMounteaDialogueLoggingVerbosity : uint8
 };
 ENUM_CLASS_FLAGS(EMounteaDialogueLoggingVerbosity)
 
-
 UENUM(BlueprintType)
 enum class EDialogueManagerType : uint8
 {

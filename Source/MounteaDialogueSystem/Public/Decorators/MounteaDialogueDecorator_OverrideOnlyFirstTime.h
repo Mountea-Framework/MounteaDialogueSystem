@@ -17,7 +17,9 @@ class UDataTable;
  *
  * For proper usage, save Dialogue Participants when saving game!
  */
-UCLASS(  BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue"), DisplayName="Override Only First Time")
+UCLASS(  BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"),
+	AutoExpandCategories=("Mountea","Dialogue"), 
+	DisplayName="Override Only First Time")
 class MOUNTEADIALOGUESYSTEM_API  UMounteaDialogueDecorator_OverrideOnlyFirstTime : public UMounteaDialogueDecorator_OnlyFirstTime
 {
 	GENERATED_BODY()

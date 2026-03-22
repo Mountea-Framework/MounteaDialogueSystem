@@ -31,27 +31,6 @@ UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 	bUseGameplayTags = true;
 }
 
-void UMounteaDialogueGraphNode_AnswerNode::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
-{
-	if (!bUseGameplayTags)
-	{
-		if (Manager.GetInterface())
-		{
-			if (const auto TempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
-			{
-				UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(TempContext, TempContext->GetDialoguePlayerParticipant());
-			}
-		}
-	}
-
-	Super::PreProcessNode_Implementation(Manager);
-}
-
-void UMounteaDialogueGraphNode_AnswerNode::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
-{
-	Super::ProcessNode_Implementation(Manager);
-}
-
 #if WITH_EDITOR
 
 FText UMounteaDialogueGraphNode_AnswerNode::GetDescription_Implementation() const

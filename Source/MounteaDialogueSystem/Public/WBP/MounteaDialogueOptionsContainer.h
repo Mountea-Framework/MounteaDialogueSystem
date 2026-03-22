@@ -57,13 +57,15 @@ protected:
 	/**
 	 * The class type of the dialogue option widget. Must Implement 'MounteaDialogueOptionInterface'.
 	 */
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Mountea|Dialogue", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueOptionInterface", NoResetToDefault))
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Mountea|Dialogue", 
+		meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueOptionInterface", NoResetToDefault))
 	TSoftClassPtr<UUserWidget> DialogueOptionClass;
 
 	/**
 	 * The parent dialogue widget. Must implement 'MounteaDialogueWBPInterface'.
 	 */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface", NoResetToDefault))
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue", 
+		meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface", NoResetToDefault))
 	TObjectPtr<UUserWidget> ParentDialogueWidget;
 
 	/**
