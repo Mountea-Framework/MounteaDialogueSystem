@@ -53,7 +53,8 @@ public:
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", 
 		meta=(DisplayThumbnail=false),
-		meta=(NoResetToDefault))
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	TArray<UMounteaDialogueGraphNode*> ParentNodes;
 	
 	/**
@@ -63,7 +64,8 @@ public:
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", 
 		meta=(DisplayThumbnail=false),
-		meta=(NoResetToDefault))
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	TArray<UMounteaDialogueGraphNode*> ChildrenNodes;
 	
 	/**
@@ -73,7 +75,8 @@ public:
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", 
 		meta=(DisplayThumbnail=false),
-		meta=(NoResetToDefault))
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	TMap<UMounteaDialogueGraphNode*, UMounteaDialogueGraphEdge*> Edges;
 	
 	/**
@@ -81,7 +84,8 @@ public:
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", 
 		meta=(DisplayThumbnail=false),
-		meta=(NoResetToDefault))
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	TObjectPtr<UMounteaDialogueGraph> Graph;
 	
 	/**
@@ -89,12 +93,14 @@ public:
 	 * This variable will be deleted.
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private",
-		meta=(NoResetToDefault))
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	int32 NodeIndex = INDEX_NONE;
 
 	/** Execution order within Parent's scope */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private",
-		meta=(NoResetToDefault))
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	int32 ExecutionOrder = INDEX_NONE;
 
 protected:
@@ -117,7 +123,8 @@ private:
 	 */
 	UPROPERTY(VisibleAnywhere, Category = "Private", 
 		AdvancedDisplay,
-		meta=(NoResetToDefault))
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	TObjectPtr<UWorld> OwningWorld;
 	
 public:
@@ -150,7 +157,8 @@ public:
 	 *❔ Can be used to enforce a maximum number of connections for certain types of nodes.
 	 */
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Private",
-		meta=(NoResetToDefault))
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	int32 MaxChildrenNodes = -1;
 	
 	/**
@@ -167,7 +175,8 @@ public:
 	 * If global settings are changed, inversion behaviour stays the same, so keep this in mined when changing this setting for nodes!
 	 */
 	UPROPERTY(SaveGame, EditDefaultsOnly, BlueprintReadOnly, Category = "Private",
-		meta=(NoResetToDefault))
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	uint8 bInvertSkipRowSetting : 1;
 
 	/**
@@ -470,12 +479,14 @@ public:
 
 	// User friendly node type name
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor",
-		meta=(NoResetToDefault))
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	FText NodeTypeName;
 
 	// Display title of the Node
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor",
-		meta=(NoResetToDefault))
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	FText NodeTitle;
 	
 	FIntPoint NodePosition;

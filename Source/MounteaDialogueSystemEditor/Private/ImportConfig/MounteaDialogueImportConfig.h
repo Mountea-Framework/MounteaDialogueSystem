@@ -23,13 +23,20 @@ public:
 
 	UMounteaDialogueImportConfig(const FObjectInitializer& ObjectInitializer);
 
+	/** Canonical path: <ProjectDir>/Config/Import/MounteaDialogueImportConfig.json */
 	static FString GetImportConfigFilePath()
 	{
-		return FPaths::ProjectDir() / TEXT("Config/Import/MounteaDialogueImportConfig.ini");
+		return FPaths::ProjectDir() / TEXT("Config/Import/MounteaDialogueImportConfig.json");
 	}
 
 	bool IsReimport(const FGuid& GraphGuid) const;
 	FString WriteToConfig(const FGuid& DialogueGuid, const FDialogueImportSourceData& NewSourceData);
+
+	/** Serialize ImportHistory to JSON and write to GetImportConfigFilePath(). */
+	void SaveToFile();
+
+	/** Read GetImportConfigFilePath() and deserialize into ImportHistory. */
+	void LoadFromFile();
 	
 public:
 

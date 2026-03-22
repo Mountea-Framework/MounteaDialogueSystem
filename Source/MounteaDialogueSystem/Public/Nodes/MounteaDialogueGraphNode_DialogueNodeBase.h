@@ -88,7 +88,8 @@ public:
 	 * Shows read-only Texts with localization of selected Dialogue Row.
 	 */
 	UPROPERTY(Transient, VisibleAnywhere, Category="Base", 
-		meta=(MultiLine=true, ShowOnlyInnerProperties))
+		meta=(MultiLine=true, ShowOnlyInnerProperties),
+		meta=(HiddenInGraph))
 	TArray<FText> Preview;
 
 	FSimpleDelegate PreviewsUpdated;

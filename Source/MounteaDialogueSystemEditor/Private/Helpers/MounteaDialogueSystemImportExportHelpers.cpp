@@ -229,13 +229,9 @@ bool UMounteaDialogueSystemImportExportHelpers::IsReimport(const FString& Filena
 	else
 		return false;
 
-	const FString configFilePath = UMounteaDialogueImportConfig::GetImportConfigFilePath();
 	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
 	if (!importConfig)
 		return false;
-
-	if (FPaths::FileExists(configFilePath))
-		importConfig->LoadConfig(nullptr, *configFilePath);
 
 	return importConfig->ImportHistory.Contains(dialogueGuid);
 }
@@ -292,17 +288,7 @@ bool UMounteaDialogueSystemImportExportHelpers::CanReimport(UObject* ObjectRedir
 
 void UMounteaDialogueSystemImportExportHelpers::UpdateGraphImportDataConfig(const UMounteaDialogueGraph* Graph, const FString& JsonName, const FString& Json, const FString& PackagePath, const FString& AssetName)
 {
-	const FString UpdatedConfigFile = UMounteaDialogueImportConfig::GetImportConfigFilePath();
-
 	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
-
-	if (FPaths::FileExists(UpdatedConfigFile))
-		importConfig->LoadConfig(nullptr, *UpdatedConfigFile);
-	else
-	{
-		IPlatformFile::GetPlatformPhysical().CreateDirectoryTree(*FPaths::GetPath(UpdatedConfigFile));
-		importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
-	}
 
 	if (importConfig)
 	{
@@ -310,7 +296,7 @@ void UMounteaDialogueSystemImportExportHelpers::UpdateGraphImportDataConfig(cons
 		{
 			TMap<FString, FDialogueImportData>& currentData = dialogueConfig->ImportData;
 			currentData.Add(FString::Printf(TEXT("%s/%s"), *PackagePath, *AssetName), FDialogueImportData(JsonName, Json));
-			importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
+			importConfig->SaveToFile();
 		}
 	}
 }
@@ -458,10 +444,7 @@ UMounteaDialogueGraph* UMounteaDialogueSystemImportExportHelpers::LookupExisting
 	// Secondary: fast path via the stored DialogueAssetPath in the import config.
 	// Handles assets imported before AssetRegistrySearchable was added.
 	{
-		const FString configFilePath = UMounteaDialogueImportConfig::GetImportConfigFilePath();
 		UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
-		if (importConfig && FPaths::FileExists(configFilePath))
-			importConfig->LoadConfig(nullptr, *configFilePath);
 
 		if (importConfig && importConfig->ImportHistory.Contains(ImportedGuid))
 		{
@@ -1243,17 +1226,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueData(UMounteaDia
 		Graph->SourceData.Add(NewSourceData);
 	}
 
-	const FString UpdatedConfigFile = UMounteaDialogueImportConfig::GetImportConfigFilePath();
-
 	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
-
-	if (FPaths::FileExists(UpdatedConfigFile))
-		importConfig->LoadConfig(nullptr, *UpdatedConfigFile);
-	else
-	{
-		IPlatformFile::GetPlatformPhysical().CreateDirectoryTree(*FPaths::GetPath(UpdatedConfigFile));
-		importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
-	}
 
 	const FString PackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
 	const FString AssetName = *Graph->GetName();
@@ -1266,8 +1239,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueData(UMounteaDia
 		importSourceData.DialogueSourcePath = SourceFilePath;
 		importSourceData.ImportedAt = FDateTime::Now();
 		importConfig->WriteToConfig(Graph->GetGraphGUID(), importSourceData);
-
-		importConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
+		importConfig->SaveToFile();
 	}
 
 	return true;

@@ -41,7 +41,8 @@ public:
 	 */
 	UPROPERTY(SaveGame, Category="Return", EditAnywhere, BlueprintReadOnly, 
 		meta=(GetOptions ="GetRowNames"),
-		meta=(NoResetToDefault))
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	FString SelectedNodeIndex;
 
 	UPROPERTY(SaveGame, Category="Return", EditAnywhere, BlueprintReadOnly, 
@@ -53,14 +54,16 @@ public:
 	 * Dialogue Node to which this Node leads to.
 	 */
 	UPROPERTY(SaveGame, Category="Private", VisibleAnywhere, BlueprintReadOnly, 
-		meta=(NoResetToDefault, DisplayThumbnail="false"))
+		meta=(NoResetToDefault, DisplayThumbnail="false"),
+		meta=(HiddenInGraph))
 	TObjectPtr<UMounteaDialogueGraphNode> SelectedNode;
 
 	/**
 	 * Filters OUT all nodes by that class.
 	 */
 	UPROPERTY(SaveGame, Category="Editor", EditAnywhere, BlueprintReadOnly, 
-		meta=(GetOptions ="GetRowNames", NoResetToDefault))
+		meta=(GetOptions ="GetRowNames", NoResetToDefault),
+		meta=(HiddenInGraph))
 	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedNodesFilter;
 
 #if WITH_EDITORONLY_DATA

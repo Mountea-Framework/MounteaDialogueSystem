@@ -181,9 +181,7 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 				sourceData.DialogueSourcePath = Filename;
 				sourceData.bIsProjectImport = true;
 
-				const FString configPath = UMounteaDialogueImportConfig::GetImportConfigFilePath();
-				IPlatformFile::GetPlatformPhysical().CreateDirectoryTree(*FPaths::GetPath(configPath));
-				importConfig->SaveConfig(CPF_Config, *configPath);
+				importConfig->SaveToFile();
 			}
 		}
 		else

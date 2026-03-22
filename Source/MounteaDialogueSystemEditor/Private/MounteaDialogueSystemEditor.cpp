@@ -5,6 +5,7 @@
 #include "AssetToolsModule.h"
 #include "ContentBrowserModule.h"
 #include "FileHelpers.h"
+#include "HAL/FileManager.h"
 #include "GameplayTagsManager.h"
 #include "HttpModule.h"
 #include "IContentBrowserSingleton.h"
@@ -304,27 +305,27 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		}
 	}
 
-	// Load import config — migrate from legacy path if needed
+	// Load import config — migrate from legacy INI path if needed, then load JSON
 	{
-		const FString CanonicalConfigFile = UMounteaDialogueImportConfig::GetImportConfigFilePath();
-		const FString LegacyConfigFile    = FPaths::ProjectDir() / TEXT("Config/MounteaDialogueImportConfig.ini");
+		const FString JsonConfigFile   = UMounteaDialogueImportConfig::GetImportConfigFilePath();
+		const FString LegacyConfigFile = FPaths::ProjectDir() / TEXT("Config/MounteaDialogueImportConfig.ini");
 		UMounteaDialogueImportConfig* ImportConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
 
-		IPlatformFile::GetPlatformPhysical().CreateDirectoryTree(*FPaths::GetPath(CanonicalConfigFile));
-
-		if (!FPaths::FileExists(CanonicalConfigFile) && FPaths::FileExists(LegacyConfigFile))
+		if (!FPaths::FileExists(JsonConfigFile) && FPaths::FileExists(LegacyConfigFile))
 		{
-			// One-time migration: copy old file to new location, then remove the old one
-			IFileManager::Get().Copy(*CanonicalConfigFile, *LegacyConfigFile);
+			// One-time migration: load the old INI into memory, save as JSON, delete the old file
+			ImportConfig->LoadConfig(nullptr, *LegacyConfigFile);
+			ImportConfig->SaveToFile();
 			IFileManager::Get().Delete(*LegacyConfigFile);
 			UE_LOG(LogTemp, Log, TEXT("[MounteaDialogue] Migrated import config from '%s' to '%s'"),
-				*LegacyConfigFile, *CanonicalConfigFile);
+				*LegacyConfigFile, *JsonConfigFile);
 		}
-
-		if (FPaths::FileExists(CanonicalConfigFile))
-			ImportConfig->LoadConfig(nullptr, *CanonicalConfigFile);
 		else
-			ImportConfig->SaveConfig(CPF_Config, *CanonicalConfigFile);
+		{
+			// Normal startup: refresh from JSON (constructor already called LoadFromFile,
+			// but do it again to pick up any changes made outside the editor)
+			ImportConfig->LoadFromFile();
+		}
 	}
 
 	// Force GameplayTags

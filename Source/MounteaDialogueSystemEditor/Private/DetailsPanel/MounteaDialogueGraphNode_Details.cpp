@@ -17,13 +17,43 @@
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 #include "Slate/SMounteaDialogueNodeHeader.h"
+#include "UObject/UnrealType.h"
 #include "Widgets/Input/SComboButton.h"
 #include "Widgets/Layout/SScaleBox.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "ScopedTransaction.h"
 #include "Graph/MounteaDialogueGraph.h"
+#include "PropertyHandle.h"
 
 #define LOCTEXT_NAMESPACE "FMounteaDialogueGraphNode_Details"
+
+namespace
+{
+	void HidePropertiesWithMetadata(IDetailLayoutBuilder& DetailBuilder, const UObject* EditingObject, const FName MetadataKey)
+	{
+		if (!EditingObject)
+			return;
+
+		const UClass* editingClass = EditingObject->GetClass();
+		if (!editingClass)
+			return;
+
+		for (TFieldIterator<FProperty> propertyIt(editingClass, EFieldIteratorFlags::IncludeSuper); propertyIt; ++propertyIt)
+		{
+			const FProperty* property = *propertyIt;
+			if (!property)
+				continue;
+			if (!property->HasMetaData(MetadataKey))
+				continue;
+
+			TSharedRef<IPropertyHandle> propertyHandle = DetailBuilder.GetProperty(property->GetFName(), editingClass);
+			if (!propertyHandle->IsValidHandle())
+				continue;
+
+			DetailBuilder.HideProperty(propertyHandle);
+		}
+	}
+}
 
 FReply FMounteaDialogueGraphNode_Details::OnDocumentationClicked() const
 {
@@ -549,6 +579,7 @@ void FMounteaDialogueGraphNode_Details::CustomizeDetails(IDetailLayoutBuilder& D
 	{ return; };
 	
 	SavedLayoutBuilder = &DetailBuilder;
+	HidePropertiesWithMetadata(DetailBuilder, EditingNode, TEXT("HideInGraph"));
 
 	DocumentationButtonStyle = FMounteaDialogueGraphEditorStyle::GetWidgetStyle<FButtonStyle>(TEXT("MDSStyleSet.Buttons.Style"));
 
@@ -583,7 +614,7 @@ void FMounteaDialogueGraphNode_Details::CustomizeDetails(IDetailLayoutBuilder& D
 			]
 		]
 	];
-
+	
 	if (UMounteaDialogueGraphNode_DialogueNodeBase* EditingDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(EditingNode) )
 	{
 		EditingDialogueNode->PreviewsUpdated.BindSP(this, &FMounteaDialogueGraphNode_Details::ResetTexts);
@@ -638,9 +669,6 @@ void FMounteaDialogueGraphNode_Details::CustomizeDetails(IDetailLayoutBuilder& D
 		[
 			PreviewNode.ToSharedRef()
 		];
-
-		DetailBuilder.HideProperty(GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_ReturnToNode, SelectedNode));
-		DetailBuilder.HideProperty(GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_ReturnToNode, SelectedNodeIndex));
 	}
 
 	if (UMounteaDialogueGraphNode_StartNode* EditingDialogueNode = Cast<UMounteaDialogueGraphNode_StartNode>(EditingNode) )
@@ -652,7 +680,7 @@ void FMounteaDialogueGraphNode_Details::CustomizeDetails(IDetailLayoutBuilder& D
 
 	if (UMounteaDialogueGraphNode_Delay* EditingDialogueNode = Cast<UMounteaDialogueGraphNode_Delay>(EditingNode) )
 	{
-		DetailBuilder.HideProperty(GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_StartNode, bAutoStarts));
+		DetailBuilder.HideProperty(GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_Delay, bAutoStarts));
 	}
 
 	// Hide those categories in Graph Editor
