@@ -233,7 +233,7 @@ bool UMounteaDialogueSystemImportExportHelpers::IsReimport(const FString& Filena
 	if (!importConfig)
 		return false;
 
-	return importConfig->ImportHistory.Contains(dialogueGuid);
+	return importConfig->IsDialogueImported(dialogueGuid);
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::ReimportDialogueGraph(const FString& FilePath, UObject* ObjectRedirector, UMounteaDialogueGraph*& OutGraph, FString& OutMessage)
@@ -286,20 +286,6 @@ bool UMounteaDialogueSystemImportExportHelpers::CanReimport(UObject* ObjectRedir
 	return true;
 }
 
-void UMounteaDialogueSystemImportExportHelpers::UpdateGraphImportDataConfig(const UMounteaDialogueGraph* Graph, const FString& JsonName, const FString& Json, const FString& PackagePath, const FString& AssetName)
-{
-	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
-
-	if (importConfig)
-	{
-		if (FDialogueImportSourceData* dialogueConfig = importConfig->ImportHistory.Find(Graph->GetGraphGUID()))
-		{
-			TMap<FString, FDialogueImportData>& currentData = dialogueConfig->ImportData;
-			currentData.Add(FString::Printf(TEXT("%s/%s"), *PackagePath, *AssetName), FDialogueImportData(JsonName, Json));
-			importConfig->SaveToFile();
-		}
-	}
-}
 
 bool UMounteaDialogueSystemImportExportHelpers::ImportDialogueGraph(const FString& FilePath, UObject* InParent, const FName Name, const EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph, FString& OutMessage)
 {
@@ -446,19 +432,16 @@ UMounteaDialogueGraph* UMounteaDialogueSystemImportExportHelpers::LookupExisting
 	{
 		UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
 
-		if (importConfig && importConfig->ImportHistory.Contains(ImportedGuid))
+		FString assetPath;
+		if (importConfig && importConfig->LookupDialogueAssetPath(ImportedGuid, assetPath))
 		{
-			const FString& assetPath = importConfig->ImportHistory[ImportedGuid].DialogueAssetPath;
-			if (!assetPath.IsEmpty())
+			const FString assetObjectPath = FString::Printf(TEXT("%s.%s"), *assetPath, *FPaths::GetBaseFilename(assetPath));
+			const FAssetData directAsset = reg.Get().GetAssetByObjectPath(FSoftObjectPath(assetObjectPath));
+			if (directAsset.IsValid())
 			{
-				const FString assetObjectPath = FString::Printf(TEXT("%s.%s"), *assetPath, *FPaths::GetBaseFilename(assetPath));
-				const FAssetData directAsset = reg.Get().GetAssetByObjectPath(FSoftObjectPath(assetObjectPath));
-				if (directAsset.IsValid())
-				{
-					UMounteaDialogueGraph* graph = Cast<UMounteaDialogueGraph>(directAsset.GetAsset());
-					if (graph && graph->GetGraphGUID() == ImportedGuid)
-						return graph;
-				}
+				UMounteaDialogueGraph* graph = Cast<UMounteaDialogueGraph>(directAsset.GetAsset());
+				if (graph && graph->GetGraphGUID() == ImportedGuid)
+					return graph;
 			}
 		}
 	}
@@ -966,19 +949,6 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateGraphFromExtractedFiles(
 	if (!CreateGraphStringTables(Graph, assetTools, ExtractedFiles, stringTableLookup, rowIdToTextKey, stDialogueRows, stNodes))
 		return false;
 
-	// Record both string tables in the import config so reimport can track them.
-	// The underlying source for both is stringTable.json (or nodes.json/dialogueRows.json for
-	// the node-title table). We store stringTable.json as the canonical source for both.
-	if (ExtractedFiles.Contains(TEXT("stringTable.json")))
-	{
-		const FString stPackagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
-		const FString& stJson = ExtractedFiles[TEXT("stringTable.json")];
-		UpdateGraphImportDataConfig(Graph, TEXT("stringTable.json"), stJson, stPackagePath,
-			FString::Printf(TEXT("ST_%s_DialogueRows"), *Graph->GetName()));
-		UpdateGraphImportDataConfig(Graph, TEXT("stringTable.json"), stJson, stPackagePath,
-			FString::Printf(TEXT("ST_%s_Nodes"), *Graph->GetName()));
-	}
-
 	UDataTable* dtParticipants = nullptr;
 	UDataTable* dtDialogueRows = nullptr;
 	if (!CreateGraphDataTables(Graph, assetTools, dtParticipants, dtDialogueRows))
@@ -1234,11 +1204,7 @@ bool UMounteaDialogueSystemImportExportHelpers::PopulateDialogueData(UMounteaDia
 	
 	if (importConfig)
 	{
-		FDialogueImportSourceData importSourceData;
-		importSourceData.DialogueAssetPath = GraphPath;
-		importSourceData.DialogueSourcePath = SourceFilePath;
-		importSourceData.ImportedAt = FDateTime::Now();
-		importConfig->WriteToConfig(Graph->GetGraphGUID(), importSourceData);
+		importConfig->RecordDialogueImport(Graph->GetGraphGUID(), GraphPath, SourceFilePath, false);
 		importConfig->SaveToFile();
 	}
 
@@ -1397,10 +1363,6 @@ bool UMounteaDialogueSystemImportExportHelpers::FillParticipantsDataTable(const 
 
 		ParticipantsTable->AddRow(FName(*name), newRow);
 	}
-
-	const FString packagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
-	const FString assetName = FString::Printf(TEXT("DT_%s_Participants"), *Graph->GetName());
-	UpdateGraphImportDataConfig(Graph, TEXT("participants.json"), ParticipantsJson, packagePath, assetName);
 
 	SaveAsset(ParticipantsTable);
 	return true;
@@ -2192,10 +2154,6 @@ bool UMounteaDialogueSystemImportExportHelpers::FillDialogueRowsDataTable(UMount
 			RowIdToTextKey,
 			AudioMap);
 	}
-
-	const FString packagePath = FPackageName::GetLongPackagePath(Graph->GetPathName());
-	const FString dtName = FString::Printf(TEXT("DT_%s_DialogueRows"), *Graph->GetName());
-	UpdateGraphImportDataConfig(Graph, TEXT("dialogueRows.json"), dialogueRowsJson, packagePath, dtName);
 
 	SaveAsset(DialogueRowsTable);
 	return true;

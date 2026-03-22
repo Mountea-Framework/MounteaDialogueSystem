@@ -130,7 +130,8 @@ protected:
 	 * ❔ Each unique dialogue Participant should be using different Tag, if generic, then use something like `Dialogue.NPC`
 	 */
 	UPROPERTY(SaveGame, Category="Private", BlueprintReadOnly, 
-		meta=(NoResetToDefault))
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	uint8 bUseGameplayTags : 1;
 
 #if WITH_EDITOR

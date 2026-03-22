@@ -59,8 +59,6 @@ public:
 	 */
 	static void ResolveOpenChildGraphTargets(UMounteaDialogueGraph* Graph, const TMap<FGuid, UMounteaDialogueGraph*>& KnownGraphs);
 
-	static void UpdateGraphImportDataConfig(const UMounteaDialogueGraph* Graph, const FString& JsonName, const FString& Json, const FString& PackagePath, const FString& AssetName);
-
 	// Main import function — loads/extracts then delegates to ImportDialogueGraphFromFiles
 	static bool ImportDialogueGraph(const FString& FilePath, UObject* InParent, FName Name, EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph, FString& OutMessage);
 

@@ -75,16 +75,35 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 
 	// ── 3. Parse projectData.json ──────────────────────────────────────────────
 	FString projectName = InName.ToString();
+	FGuid projectGuid;
 	if (extractedFiles.Contains(TEXT("projectData.json")))
 	{
 		TSharedPtr<FJsonObject> projectData;
 		TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(extractedFiles[TEXT("projectData.json")]);
 		if (FJsonSerializer::Deserialize(reader, projectData) && projectData.IsValid())
+		{
 			projectData->TryGetStringField(TEXT("projectName"), projectName);
+			FString projectGuidStr;
+			if (projectData->TryGetStringField(TEXT("projectGuid"), projectGuidStr))
+				FGuid::Parse(projectGuidStr, projectGuid);
+		}
 	}
 
-	const FString packageRoot = FPackageName::GetLongPackagePath(InParent->GetPathName());
-	const FString projectFolder = FString::Printf(TEXT("%s/%s"), *packageRoot, *projectName);
+	// Determine the project folder: reuse the stored one on reimport (prevents duplicate folders),
+	// fall back to computing a new folder from the current drop location.
+	FString projectFolder;
+	UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
+	if (importConfig && projectGuid.IsValid() &&
+		importConfig->LookupProjectFolder(projectGuid, projectFolder))
+	{
+		// Existing project — reimport in place.
+	}
+	else
+	{
+		// First import — place under the drop location.
+		const FString packageRoot = FPackageName::GetLongPackagePath(InParent->GetPathName());
+		projectFolder = FString::Printf(TEXT("%s/%s"), *packageRoot, *projectName);
+	}
 
 	// Project-level files to inject into each dialogue if the nested archive is missing them.
 	// Dialoguer exports these at the project level; standalone .mnteadlg files include them
@@ -99,6 +118,7 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 
 	// ── 4. Import each nested .mnteadlg ───────────────────────────────────────
 	TArray<FString> importedDialogues;
+	TArray<FGuid> importedDialogueGuids;
 	TMap<FGuid, UMounteaDialogueGraph*> importedGraphsByGuid; // for cross-dialogue OpenChildGraph resolution
 
 	for (const auto& entry : extractedFiles)
@@ -114,7 +134,7 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 		const FString& tempPath = entry.Value;
 		if (tempPath.IsEmpty() || !FPaths::FileExists(tempPath))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[ProjectFactory] Temp file missing for '%s'"), *entry.Key);
+			EditorLOG_WARNING(TEXT("[ProjectFactory] Temp file missing for '%s'"), *entry.Key);
 			continue;
 		}
 
@@ -122,14 +142,14 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 		TArray<uint8> dialogueData;
 		if (!FFileHelper::LoadFileToArray(dialogueData, *tempPath))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[ProjectFactory] Failed to load nested archive: %s"), *entry.Key);
+			EditorLOG_WARNING(TEXT("[ProjectFactory] Failed to load nested archive: %s"), *entry.Key);
 			IFileManager::Get().Delete(*tempPath);
 			continue;
 		}
 
 		if (!UMounteaDialogueSystemImportExportHelpers::IsZipFile(dialogueData))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[ProjectFactory] Nested file is not a valid archive: %s"), *entry.Key);
+			EditorLOG_WARNING(TEXT("[ProjectFactory] Nested file is not a valid archive: %s"), *entry.Key);
 			IFileManager::Get().Delete(*tempPath);
 			continue;
 		}
@@ -138,7 +158,7 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 		TMap<FString, FString> dialogueFiles;
 		if (!UMounteaDialogueSystemImportExportHelpers::ExtractFilesFromZip(dialogueData, dialogueFiles))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[ProjectFactory] Failed to extract nested archive: %s"), *entry.Key);
+			EditorLOG_WARNING(TEXT("[ProjectFactory] Failed to extract nested archive: %s"), *entry.Key);
 			IFileManager::Get().Delete(*tempPath);
 			continue;
 		}
@@ -151,7 +171,7 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 		}
 
 		// Determine where a *new* graph would land if no existing one is found.
-		// ImportDialogueGraphFromFiles will first check ImportHistory via LookupExistingGraphByGuid;
+		// ImportDialogueGraphFromFiles first checks DialogueHistory via LookupExistingGraphByGuid;
 		// if a previously-imported graph with the same GUID exists it will be reimported in-place
 		// and this package will simply be GC'd. We must NOT pre-create the UMounteaDialogueGraph
 		// here — passing a blank object (with a fresh random GUID) would bypass the GUID check and
@@ -168,25 +188,23 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 		if (bSuccess && importedGraph)
 		{
 			importedDialogues.Add(dialogueName);
-			importedGraphsByGuid.Add(importedGraph->GetGraphGUID(), importedGraph);
+			const FGuid graphGuid = importedGraph->GetGraphGUID();
+			importedGraphsByGuid.Add(graphGuid, importedGraph);
+			importedDialogueGuids.Add(graphGuid);
 
-			// PopulateDialogueData (inside ImportDialogueGraphFromFiles) already wrote DialogueAssetPath,
-			// DialogueSourcePath, and ImportedAt. We only need to mark this as a project import and
-			// update the source path to point to the .mnteadlgproj (not the individual temp .mnteadlg).
-			UMounteaDialogueImportConfig* importConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
+			// PopulateDialogueData already recorded the dialogue asset path and source.
+			// Patch the source path to the .mnteadlgproj and mark as project import.
 			if (importConfig)
 			{
-				FDialogueImportSourceData& sourceData =
-					importConfig->ImportHistory.FindOrAdd(importedGraph->GetGraphGUID());
-				sourceData.DialogueSourcePath = Filename;
-				sourceData.bIsProjectImport = true;
-
+				const FString PackagePath = FPackageName::GetLongPackagePath(importedGraph->GetPathName());
+				const FString GraphPath = FString::Printf(TEXT("%s/%s"), *PackagePath, *importedGraph->GetName());
+				importConfig->RecordDialogueImport(graphGuid, GraphPath, Filename, true);
 				importConfig->SaveToFile();
 			}
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[ProjectFactory] Failed to import dialogue '%s': %s"),
+			EditorLOG_WARNING(TEXT("[ProjectFactory] Failed to import dialogue '%s': %s"),
 				*dialogueName, *importMessage);
 		}
 
@@ -200,9 +218,17 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 		UMounteaDialogueSystemImportExportHelpers::ResolveOpenChildGraphTargets(
 			graphPair.Value, importedGraphsByGuid);
 
-	// ── 5b. Import project-level thumbnails ────────────────────────────────────
+	// ── 5b. Record the project-level import (creates or updates ProjectHistory) ──
+	if (importConfig && projectGuid.IsValid())
+	{
+		importConfig->RecordProjectImport(projectGuid, projectName, Filename,
+			projectFolder, importedDialogueGuids);
+		importConfig->SaveToFile();
+	}
+
+	// ── 5c. Import project-level thumbnails ────────────────────────────────────
 	// Thumbnails/*.png live in the outer project archive (not in individual .mnteadlg files).
-	// Import them into a shared thumbnails folder under the project root.
+	// Import them into the Thumbnails folder under the resolved project root.
 	UMounteaDialogueSystemImportExportHelpers::CreateTextureAssets(extractedFiles, projectFolder);
 
 	// ── 6. Summary notification ────────────────────────────────────────────────
