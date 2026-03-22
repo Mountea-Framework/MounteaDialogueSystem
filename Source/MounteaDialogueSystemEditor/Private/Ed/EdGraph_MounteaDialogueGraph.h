@@ -33,6 +33,16 @@ public:
 
 	virtual bool Modify(bool bAlwaysMarkDirty) override;
 	virtual void PostEditUndo() override;
+	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
+
+	// Delta operations — update only what changed, no full rebuild
+	void RegisterNode(UEdNode_MounteaDialogueGraphNode* EdNode);
+	void UnregisterNode(UMounteaDialogueGraphNode* Node);
+	void RegisterEdge(UEdNode_MounteaDialogueGraphEdge* EdEdge);
+	void UnregisterEdge(UMounteaDialogueGraphEdge* Edge);
+
+	// Bulk sync for undo/redo — clear and rebuild without NormalizeEdgeNodes
+	void SyncTopology();
 
 	TWeakPtr<FAssetEditor_MounteaDialogueGraph> GetDialogueEditorPtr() const
 	{ return DialogueEditorPtr; };
@@ -54,23 +64,27 @@ public:
 
 	void UpdateFocusedInstance(const FPIEInstanceData& InstanceId);
 	void AssignExecutionOrder();
+	void ResetExecutionOrders() const;
 
 protected:
 
 	void Clear();
-	void SortNodes(UMounteaDialogueGraphNode* RootNode);
+	void SortNodes(UMounteaDialogueGraphNode* RootNode);	
 	
-	void ResetExecutionOrders() const;
 	static UMounteaDialogueGraphNode* GetParentNode(const UMounteaDialogueGraphNode& Node);
 	
 	static void AssignNodeToLayer(UMounteaDialogueGraphNode* Node, int32 LayerIndex, TMap<int32, TArray<UMounteaDialogueGraphNode*>>& LayeredNodes);
 
 private:
 
+	UPROPERTY()
 	TArray<UMounteaDialogueGraphNode*> CachedGraphData;
 
 	/** Pointer back to the Dialogue editor that owns us */
 	TWeakPtr<FAssetEditor_MounteaDialogueGraph> DialogueEditorPtr;
+
+	/** Suppresses delta-sync callbacks during full RebuildMounteaDialogueGraph / SyncTopology */
+	bool bSuppressDeltaSync = false;
 
 public:
 	

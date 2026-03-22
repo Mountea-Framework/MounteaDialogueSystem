@@ -80,9 +80,7 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(
 	CreateCommandList();
 
 	if (!ToolbarBuilder.IsValid())
-	{
 		ToolbarBuilder = MakeShareable(new FAssetEditorToolbarMounteaDialogueGraph(SharedThis(this)));
-	}
 
 	BindCommands();
 	CreateInternalWidgets();
@@ -94,13 +92,7 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(
 		const bool bGraphNormalized = dialogueEdGraph->NormalizeEdgeNodes(true, migratedLinks, removedDuplicateEdges);
 
 		if (migratedLinks > 0 || removedDuplicateEdges > 0)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[InitMounteaDialogueGraphAssetEditor] Migrated %d direct link(s), removed %d duplicate edge node(s)."), migratedLinks, removedDuplicateEdges);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Log, TEXT("[InitMounteaDialogueGraphAssetEditor] Edge normalization skipped (already normalized)."));
-		}
+			EditorLOG_INFO(TEXT("[InitMounteaDialogueGraphAssetEditor] Migrated %d direct link(s), removed %d duplicate edge node(s)."), migratedLinks, removedDuplicateEdges);
 
 		if (bGraphNormalized && EditingGraph)
 		{
@@ -112,6 +104,13 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(
 	RebuildMounteaDialogueGraph();
 	if (ViewportWidget.IsValid())
 		ViewportWidget->NotifyGraphChanged();
+
+	// Clear any dirty state accumulated during init — edge migration and structural rebuild
+	// are transparent repairs, not user edits. If the user makes a real change the normal
+	// dirty tracking will kick in from that point onward.
+	if (EditingGraph)
+		if (UPackage* pkg = EditingGraph->GetOutermost())
+			pkg->SetDirtyFlag(false);
 
 	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
 
@@ -281,9 +280,7 @@ FString FAssetEditor_MounteaDialogueGraph::GetDocumentationLink() const
 void FAssetEditor_MounteaDialogueGraph::SaveAsset_Execute()
 {
 	if (EditingGraph != nullptr)
-	{
 		RebuildMounteaDialogueGraph();
-	}
 
 	FAssetEditorToolkit::SaveAsset_Execute();
 }
@@ -317,8 +314,10 @@ FString FAssetEditor_MounteaDialogueGraph::GetReferencerName() const
 
 void FAssetEditor_MounteaDialogueGraph::SetDialogueBeingEdited(UMounteaDialogueGraph* NewDialogue)
 {
-	if (NewDialogue == nullptr) return;
-	if (NewDialogue == EditingGraph) return;
+	if (NewDialogue == nullptr) 
+		return;
+	if (NewDialogue == EditingGraph) 
+		return;
 
 	UMounteaDialogueGraph* Previous = EditingGraph;
 	EditingGraph = NewDialogue;
@@ -564,7 +563,7 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 
 				if (!CurrentNodeInputPin)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Current node has no input pin: %s"), *CurrentNode->GetName());
+					EditorLOG_INFO(TEXT("Current node has no input pin: %s"), *CurrentNode->GetName());
 					continue;
 				}
 
@@ -619,13 +618,12 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 						}
 						else
 						{
-							UE_LOG(LogTemp, Warning, TEXT("Parent node has no output pin: %s"),
-									*ParentEdNode->GetName());
+							EditorLOG_INFO(TEXT("Parent node has no output pin: %s"), *ParentEdNode->GetName());
 						}
 					}
 					else
 					{
-						UE_LOG(LogTemp, Warning, TEXT("Could not find EdNode for parent dialogue node"));
+						EditorLOG_INFO(TEXT("Could not find EdNode for parent dialogue node"));
 					}
 				}
 			}
@@ -903,8 +901,6 @@ void FAssetEditor_MounteaDialogueGraph::DeleteSelectedNodes()
 		GraphOwner->PostEditChange();
 		GraphOwner->MarkPackageDirty();
 	}
-
-	RebuildMounteaDialogueGraph();
 }
 
 bool FAssetEditor_MounteaDialogueGraph::CanDeleteNodes()
@@ -1107,8 +1103,6 @@ void FAssetEditor_MounteaDialogueGraph::PasteNodesHere(const FVector2D& Location
 		GraphOwner->PostEditChange();
 		GraphOwner->MarkPackageDirty();
 	}
-
-	RebuildMounteaDialogueGraph();
 }
 
 bool FAssetEditor_MounteaDialogueGraph::CanPasteNodes()
@@ -1252,9 +1246,7 @@ void FAssetEditor_MounteaDialogueGraph::ValidateGraph()
 
 	const UMounteaDialogueGraph* MounteaGraph = EdGraph->GetMounteaDialogueGraph();
 	check(MounteaGraph != nullptr);
-	
-	RebuildMounteaDialogueGraph();
-	
+
 	FDataValidationContext ValidationContext;
 	if (MounteaGraph->ValidateGraph(ValidationContext, true) == false)
 	{
@@ -1370,13 +1362,18 @@ void FAssetEditor_MounteaDialogueGraph::OnFinishedChangingProperties(const FProp
 		return;
 
 	EditingGraph->EdGraph->GetSchema()->ForceVisualizationCacheClear();
-	RebuildMounteaDialogueGraph();
+
+	// Property-only change — topology is unchanged; only refresh execution order and visuals.
+	UEdGraph_MounteaDialogueGraph* mounteaGraphEditor = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
+	if (mounteaGraphEditor)
+	{
+		mounteaGraphEditor->ResetExecutionOrders();
+		mounteaGraphEditor->AssignExecutionOrder();
+	}
 
 	TSharedPtr<SGraphEditor> currentGraphEditor = GetCurrGraphEditor();
 	if (!currentGraphEditor.IsValid())
 		return;
-
-	UEdGraph_MounteaDialogueGraph* mounteaGraphEditor = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
 	if (!mounteaGraphEditor)
 	{
 		currentGraphEditor->NotifyGraphChanged();
@@ -1401,9 +1398,7 @@ TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Viewport(const 
 		.Label(LOCTEXT("ViewportTab_Title", "Viewport"));
 
 	if (ViewportWidget.IsValid())
-	{
 		SpawnedTab->SetContent(ViewportWidget.ToSharedRef());
-	}
 
 	return SpawnedTab;
 }

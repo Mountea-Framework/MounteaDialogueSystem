@@ -15,7 +15,10 @@ class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
 class UMounteaDialogueConditionBase;
 class UMounteaDialogueDecoratorBase;
+class UMounteaDialogueGraphEdge;
 class IAssetTools;
+class IAudioEditorModule;
+class FAssetRegistryModule;
 
 // Define a struct to hold node data
 struct FDialogueNodeData
@@ -83,8 +86,6 @@ public:
 
 private:
 
-	// ── Phase 0: Decorator / Condition Blueprint class creation ──────────────────
-
 	// Parses decorators.json definitions (each entry has id, name, type, properties[]).
 	// For each unique definition GUID, finds or creates a Blueprint subclass of
 	// UMounteaDialogueDecoratorBase under <ProjectPackagePath>/Decorators/.
@@ -146,7 +147,15 @@ private:
 		const TMap<FString, FString>& ExtractedFiles,
 		UObject* InParent);
 
-	// ── Phase 2: Graph population ────────────────────────────────────────────────
+	// Imports or re-imports one audio file at TempPath into the UE content system.
+	// Returns the imported USoundWave, or nullptr on failure.
+	static USoundWave* ImportSingleAudioAsset(
+		const FString& TempPath,
+		const FString& FullPackagePath,
+		const FString& AssetName,
+		const FString& SearchPackagePath,
+		IAudioEditorModule& AudioEditorModule,
+		FAssetRegistryModule& AssetRegistryModule);
 
 	static bool PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& SourceFilePath, const TMap<FString, FString>& ExtractedFiles);
 	static bool PopulateCategories(UMounteaDialogueGraph* Graph, const FString& Json);
@@ -165,7 +174,23 @@ private:
 		UMounteaDialogueGraph* Graph,
 		const TMap<FGuid, UMounteaDialogueGraphNode*>& SpawnedNodesByGuid);
 
-	// ── Phase 3: Fill data tables ─────────────────────────────────────────────────
+	// Searches import config history then asset registry for an existing graph with ImportedGuid.
+	// Returns nullptr if not found.
+	static UMounteaDialogueGraph* LookupExistingGraphByGuid(const FGuid& ImportedGuid);
+
+	// Validates, populates, rebuilds and saves Graph from ExtractedFiles.
+	// Returns false and sets OutMessage on any failure.
+	static bool PopulateAndSaveGraph(
+		UMounteaDialogueGraph* Graph,
+		TMap<FString, FString>& ExtractedFiles,
+		const FString& SourceFilePath,
+		FString& OutMessage);
+
+	// Parses "data.conditions" from EdgeObject and fills Edge->EdgeConditions.
+	static void ParseEdgeConditions(
+		UMounteaDialogueGraphEdge* Edge,
+		const TSharedPtr<FJsonObject>& EdgeObject,
+		const TMap<FGuid, UClass*>& ConditionClasses);
 
 	// Empties and repopulates DT_*_Participants from participants.json.
 	static bool FillParticipantsDataTable(
@@ -186,10 +211,41 @@ private:
 		const TMap<FString, FString>& RowIdToTextKey,
 		const TMap<FGuid, USoundWave*>& AudioMap);
 
-	// ── Utilities ─────────────────────────────────────────────────────────────────
+	// Builds a nodeId → participantName map from the parsed nodes JSON array.
+	static TMap<FString, FString> BuildNodeParticipantMap(
+		const TArray<TSharedPtr<FJsonValue>>& NodesArray);
+
+	// Creates FDialogueRow entries for one node's rows, links matching graph nodes, and adds them to DialogueRowsTable.
+	static void ProcessDialogueRowGroup(
+		UMounteaDialogueGraph* Graph,
+		const FString& NodeId,
+		const FString& ParticipantName,
+		const TArray<TSharedPtr<FJsonObject>>& Rows,
+		UDataTable* ParticipantsTable,
+		UDataTable* DialogueRowsTable,
+		UStringTable* DialogueRowsStringTable,
+		UStringTable* NodesStringTable,
+		const TMap<FString, FString>& RowIdToTextKey,
+		const TMap<FGuid, USoundWave*>& AudioMap);
 
 	static FString BytesToString(const uint8* Bytes, int32 Count);
 	static void PopulateNodeData(UMounteaDialogueGraphNode* Node, const TSharedPtr<FJsonObject>& JsonObject, const TMap<FGuid, UClass*>& DecoratorClasses);
+
+	// Parses the "decorators" array from DataObject and appends resolved instances to Node->NodeDecorators.
+	static void PopulateNodeDecorators(
+		UMounteaDialogueGraphNode* Node,
+		const TSharedPtr<FJsonObject>& DataObject,
+		const TMap<FGuid, UClass*>& DecoratorClasses);
+
+	// Deserialises JsonStr as a JSON array and appends entries (deduplicated by KeyField) to Target.
+	static void MergeJsonArrayInto(
+		const FString& JsonStr,
+		TArray<TSharedPtr<FJsonValue>>& Target,
+		TSet<FString>& SeenKeys,
+		const FString& KeyField);
+
+	// Serialises a JSON array to a compact string.
+	static FString SerializeJsonArray(const TArray<TSharedPtr<FJsonValue>>& Array);
 	static UStringTable* CreateStringTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName, TFunction<void(UStringTable*)> PopulateFunction);
 
 	template <typename RowType>

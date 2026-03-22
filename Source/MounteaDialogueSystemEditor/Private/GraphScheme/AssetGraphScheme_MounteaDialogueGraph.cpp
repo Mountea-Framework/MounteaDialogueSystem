@@ -423,8 +423,7 @@ bool UAssetGraphScheme_MounteaDialogueGraph::TryCreateConnection(UEdGraphPin* A,
 			return false;
 	}
 
-	Super::TryCreateConnection(outputNode->GetOutputPin(), inputNode->GetInputPin());
-	return true;
+	return CreateAutomaticConversionNodeAndConnections(outputNode->GetOutputPin(), inputNode->GetInputPin());
 }
 
 bool UAssetGraphScheme_MounteaDialogueGraph::CreateAutomaticConversionNodeAndConnections(UEdGraphPin* A, UEdGraphPin* B) const

@@ -4,6 +4,7 @@
 #include "EdNode_MounteaDialogueGraphEdge.h"
 
 #include "EdNode_MounteaDialogueGraphNode.h"
+#include "EdGraph_MounteaDialogueGraph.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
 
 void UEdNode_MounteaDialogueGraphEdge::SetEdge(UMounteaDialogueGraphEdge* Edge)
@@ -39,6 +40,15 @@ void UEdNode_MounteaDialogueGraphEdge::PinConnectionListChanged(UEdGraphPin* Pin
 		}
 
 		DestroyNode();
+	}
+	else
+	{
+		// Both pins connected — register the edge with the runtime graph
+		if (Pins.Num() >= 2 && Pins[0]->LinkedTo.Num() > 0 && Pins[1]->LinkedTo.Num() > 0)
+		{
+			if (UEdGraph_MounteaDialogueGraph* mounteaGraph = Cast<UEdGraph_MounteaDialogueGraph>(GetGraph()))
+				mounteaGraph->RegisterEdge(this);
+		}
 	}
 }
 
