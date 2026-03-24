@@ -308,8 +308,11 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSubwayWireWithArrow(cons
 			if (panel.IsValid())
 			{
 				const FVector2D localMid = screenMid - FVector2D(panel->GetCachedGeometry().AbsolutePosition);
-				edgeNode->CachedSplineMidpointGraph = panel->PanelCoordToGraphCoord(localMid);
+				const FVector2D graphMid = panel->PanelCoordToGraphCoord(localMid);
+				edgeNode->CachedSplineMidpointGraph = graphMid;
 				edgeNode->bHasCachedSplineMidpoint  = true;
+				edgeNode->NodePosX = graphMid.X - 19.0f;
+				edgeNode->NodePosY = graphMid.Y - 19.0f;
 			}
 		}
 	}

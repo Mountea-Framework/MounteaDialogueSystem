@@ -90,13 +90,9 @@ void FMDSPathDrawer::DrawSubwayWire(const FVector2D& Start, const FVector2D& Sta
 				DrawSimpleRadius(End,   EndDir,    90 * (-FMath::Sign(distanceOrtho)), newEnd,   newEndDir,   true);
 			}
 			else if (directionOffset > 2.0f * GetIntersectionOffset(45, false))
-			{
 				DrawSimpleRadius(End, EndDir, -45 * directionAngle, newEnd, newEndDir, true);
-			}
 			else
-			{
 				DrawSimpleRadius(End, EndDir, -90 * directionAngle, newEnd, newEndDir, true);
-			}
 		}
 	}
 	else
@@ -152,19 +148,13 @@ void FMDSPathDrawer::DrawManhattanWire(const FVector2D& Start, const FVector2D& 
 			return;
 		}
 		else if (!bForwardDirection && (FMath::Abs(distanceOrtho) < 4.0f * GetRadiusOffset()))
-		{
 			DrawUTurn(Start, StartDir, static_cast<float>(directionAngle), newStart, newStartDir, false);
-		}
 		else if (FMath::Abs(End.Y - Start.Y) < 2.0f * GetRadiusOffset())
-		{
 			DrawCorrectionOrtho(End, EndDir, distanceOrtho, newEnd, newEndDir, true);
-		}
 		else if (FMath::Abs(End.X - Start.X) < 2.0f * GetRadiusOffset()
 			&& FMath::IsNearlyEqual(StartDir.Y, 1.0f, KINDA_SMALL_NUMBER)
 			&& FMath::IsNearlyEqual(EndDir.Y, 1.0f, KINDA_SMALL_NUMBER))
-		{
 			DrawCorrectionOrtho(End, EndDir, distanceOrtho, newEnd, newEndDir, true);
-		}
 		else
 		{
 			if (distanceStraight < 2.0f * GetRadiusOffset())
