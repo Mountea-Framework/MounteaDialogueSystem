@@ -7,7 +7,7 @@
 #include "ConnectionDrawingPolicy.h"
 
 class FMDSPathDrawer;
-class SGraphPanel;
+class FArrangedChildren;
 
 class FConnectionDrawingPolicy_MounteaDialogueGraph : public FKismetConnectionDrawingPolicy
 {
@@ -32,6 +32,6 @@ protected:
 	UEdGraph* GraphObj;
 	TMap<UEdGraphNode*, int32> NodeWidgetMap;
 	TSet<UEdGraphNode*> SelectedEdgeNodes;
-	TWeakPtr<SGraphPanel> CachedGraphPanel;
+	const FArrangedChildren* CachedArrangedNodes = nullptr;
 	
 };

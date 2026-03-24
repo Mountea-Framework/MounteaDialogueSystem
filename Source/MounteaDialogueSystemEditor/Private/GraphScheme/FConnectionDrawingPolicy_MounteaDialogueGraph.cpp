@@ -93,11 +93,7 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Draw(TMap<TSharedRef<SWidget
 		}
 	}
 
-	if (ArrangedNodes.Num() > 0)
-	{
-		TSharedRef<SGraphNode> firstNode = StaticCastSharedRef<SGraphNode>(ArrangedNodes[0].Widget);
-		CachedGraphPanel = firstNode->GetOwnerPanel();
-	}
+	CachedArrangedNodes = &ArrangedNodes;
 
 	FConnectionDrawingPolicy::Draw(InPinGeometries, ArrangedNodes);
 }
@@ -296,23 +292,18 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSubwayWireWithArrow(cons
 		}
 	}
 
-	if (Params.AssociatedPin2)
+	if (Params.AssociatedPin2 && CachedArrangedNodes)
 	{
 		if (UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(Params.AssociatedPin2->GetOwningNode()))
 		{
-			FVector2D screenMid = drawer.GetArcLengthMidpoint();
-			if (screenMid.IsZero())
-				screenMid = (wireStart + wireEnd) * 0.5f;
-
-			const TSharedPtr<SGraphPanel> panel = CachedGraphPanel.Pin();
-			if (panel.IsValid())
+			if (UEdNode_MounteaDialogueGraphNode* endNode = edgeNode->GetEndNode())
 			{
-				const FVector2D localMid = screenMid - FVector2D(panel->GetCachedGeometry().AbsolutePosition);
-				const FVector2D graphMid = panel->PanelCoordToGraphCoord(localMid);
-				edgeNode->CachedSplineMidpointGraph = graphMid;
-				edgeNode->bHasCachedSplineMidpoint  = true;
-				edgeNode->NodePosX = graphMid.X - 19.0f;
-				edgeNode->NodePosY = graphMid.Y - 19.0f;
+				if (const int32* nodeIdx = NodeWidgetMap.Find(endNode))
+				{
+					const float endWidth = (*CachedArrangedNodes)[*nodeIdx].Widget->GetDesiredSize().X;
+					edgeNode->NodePosX = endNode->NodePosX + endWidth * 0.5f - 19.0f;
+					edgeNode->NodePosY = endNode->NodePosY - 38.0f;
+				}
 			}
 		}
 	}

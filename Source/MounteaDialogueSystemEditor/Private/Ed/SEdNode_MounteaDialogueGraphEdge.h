@@ -27,8 +27,6 @@ public:
 	virtual void UpdateGraphNode() override;
 	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 
-	void PositionBetweenTwoNodesWithOffset(const FGeometry& StartGeom, const FGeometry& EndGeom, int32 NodeIndex, int32 MaxNodes) const;
-
 protected:
 	FSlateColor GetEdgeColor() const;
 	FSlateColor GetEdgeActionBackgroundColor() const;
@@ -43,7 +41,6 @@ protected:
 private:
 	TSharedPtr<STextEntryPopup> TextEntryWidget;
 
-	mutable FVector2D CachedStartNodeSize;
 	mutable FVector2D CachedEndNodeSize;
 	
 };

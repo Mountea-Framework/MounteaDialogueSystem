@@ -45,6 +45,4 @@ public:
 	UEdNode_MounteaDialogueGraphNode* GetStartNode();
 	UEdNode_MounteaDialogueGraphNode* GetEndNode();
 
-	FVector2D CachedSplineMidpointGraph;
-	bool bHasCachedSplineMidpoint = false;
 };

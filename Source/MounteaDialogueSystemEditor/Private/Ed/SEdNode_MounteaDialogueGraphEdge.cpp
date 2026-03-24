@@ -1,6 +1,5 @@
 #include "SEdNode_MounteaDialogueGraphEdge.h"
 
-#include "ConnectionDrawingPolicy.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "EditorStyle/MounteaDialogueGraphVisualTokens.h"
 #include "Styling/CoreStyle.h"
@@ -37,56 +36,36 @@ void SEdNode_MounteaDialogueGraphEdge::PerformSecondPassLayout(const TMap<UObjec
 {
 	UEdNode_MounteaDialogueGraphEdge* EdgeNode = CastChecked<UEdNode_MounteaDialogueGraphEdge>(GraphNode);
 
-	FGeometry StartGeom;
-	FGeometry EndGeom;
-
-	UEdNode_MounteaDialogueGraphNode* Start = EdgeNode->GetStartNode();
 	UEdNode_MounteaDialogueGraphNode* End = EdgeNode->GetEndNode();
-	if (Start != nullptr && End != nullptr)
-	{
-		const TSharedRef<SNode>* pFromWidget = NodeToWidgetLookup.Find(Start);
-		const TSharedRef<SNode>* pToWidget   = NodeToWidgetLookup.Find(End);
-		if (pFromWidget != nullptr && pToWidget != nullptr)
-		{
-			CachedStartNodeSize = (*pFromWidget)->GetDesiredSize();
-			CachedEndNodeSize   = (*pToWidget)->GetDesiredSize();
+	if (!End)
+		return;
 
-			StartGeom = FGeometry(FVector2D(Start->NodePosX, Start->NodePosY), FVector2D::ZeroVector, CachedStartNodeSize, 1.0f);
-			EndGeom   = FGeometry(FVector2D(End->NodePosX,   End->NodePosY),   FVector2D::ZeroVector, CachedEndNodeSize,   1.0f);
+	const TSharedRef<SNode>* pToWidget = NodeToWidgetLookup.Find(End);
+	if (!pToWidget)
+		return;
 
-			PositionBetweenTwoNodesWithOffset(StartGeom, EndGeom, 0, 1);
-			EdgeNode->bHasCachedSplineMidpoint = false;
-		}
-	}
+	CachedEndNodeSize = (*pToWidget)->GetDesiredSize();
+	GraphNode->NodePosX = End->NodePosX + CachedEndNodeSize.X * 0.5f - 19.0f;
+	GraphNode->NodePosY = End->NodePosY - 38.0f;
 }
 
 void SEdNode_MounteaDialogueGraphEdge::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
 	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
+	if (CachedEndNodeSize.IsZero())
+		return;
+
 	UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(GraphNode);
 	if (!edgeNode)
 		return;
 
-	if (edgeNode->bHasCachedSplineMidpoint)
-	{
-		const FVector2D halfSize = GetDesiredSize() * 0.5f;
-		GraphNode->NodePosX = edgeNode->CachedSplineMidpointGraph.X - halfSize.X;
-		GraphNode->NodePosY = edgeNode->CachedSplineMidpointGraph.Y - halfSize.Y;
-		return;
-	}
-
-	if (CachedStartNodeSize.IsZero() || CachedEndNodeSize.IsZero())
+	UEdNode_MounteaDialogueGraphNode* end = edgeNode->GetEndNode();
+	if (!end)
 		return;
 
-	UEdNode_MounteaDialogueGraphNode* start = edgeNode->GetStartNode();
-	UEdNode_MounteaDialogueGraphNode* end   = edgeNode->GetEndNode();
-	if (!start || !end)
-		return;
-
-	const FGeometry startGeom(FVector2D(start->NodePosX, start->NodePosY), FVector2D::ZeroVector, CachedStartNodeSize, 1.0f);
-	const FGeometry endGeom  (FVector2D(end->NodePosX,   end->NodePosY),   FVector2D::ZeroVector, CachedEndNodeSize,   1.0f);
-	PositionBetweenTwoNodesWithOffset(startGeom, endGeom, 0, 1);
+	GraphNode->NodePosX = end->NodePosX + CachedEndNodeSize.X * 0.5f - 19.0f;
+	GraphNode->NodePosY = end->NodePosY - 38.0f;
 }
 
 void SEdNode_MounteaDialogueGraphEdge::UpdateGraphNode()
@@ -167,30 +146,6 @@ FReply SEdNode_MounteaDialogueGraphEdge::OnMouseButtonDown(const FGeometry& MyGe
 	return FReply::Handled();
 }
 
-void SEdNode_MounteaDialogueGraphEdge::PositionBetweenTwoNodesWithOffset(const FGeometry& StartGeom, const FGeometry& EndGeom, int32 NodeIndex, int32 MaxNodes) const
-{
-	const FVector2D startCenter = FGeometryHelper::CenterOf(StartGeom);
-	const FVector2D endCenter   = FGeometryHelper::CenterOf(EndGeom);
-
-	const FVector2D startAnchorGraph(startCenter.X, startCenter.Y + StartGeom.GetLocalSize().Y * 0.5f);
-	const FVector2D endAnchorGraph  (endCenter.X,   endCenter.Y   - EndGeom.GetLocalSize().Y   * 0.5f);
-
-	const FVector2D newCenter = (startAnchorGraph + endAnchorGraph) * 0.5f;
-
-	const FVector2D desiredSize = GetDesiredSize();
-	FVector2D deltaNormal = (endAnchorGraph - startAnchorGraph).GetSafeNormal();
-	if (deltaNormal.IsNearlyZero())
-		deltaNormal = FVector2D(1.0f, 0.0f);
-
-	const float multiNodeStep   = 1.2f;
-	const float multiNodeStart  = -((MaxNodes - 1) * multiNodeStep) / 2.0f;
-	const float multiNodeOffset = multiNodeStart + (NodeIndex * multiNodeStep);
-
-	const FVector2D newCorner = newCenter - (0.5f * desiredSize) + (deltaNormal * multiNodeOffset * desiredSize.Size());
-
-	GraphNode->NodePosX = newCorner.X;
-	GraphNode->NodePosY = newCorner.Y;
-}
 
 FSlateColor SEdNode_MounteaDialogueGraphEdge::GetEdgeColor() const
 {
