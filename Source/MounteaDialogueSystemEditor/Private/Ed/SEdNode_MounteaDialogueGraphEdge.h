@@ -43,7 +43,7 @@ protected:
 private:
 	TSharedPtr<STextEntryPopup> TextEntryWidget;
 
-	mutable TWeakPtr<SNode> CachedStartWidget;
-	mutable TWeakPtr<SNode> CachedEndWidget;
+	mutable FVector2D CachedStartNodeSize;
+	mutable FVector2D CachedEndNodeSize;
 	
 };

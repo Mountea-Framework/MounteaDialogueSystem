@@ -1,7 +1,6 @@
 #include "SEdNode_MounteaDialogueGraphEdge.h"
 
 #include "ConnectionDrawingPolicy.h"
-#include "GraphScheme/FConnectionDrawingPolicy_MounteaDialogueGraph.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "EditorStyle/MounteaDialogueGraphVisualTokens.h"
 #include "Styling/CoreStyle.h"
@@ -17,21 +16,6 @@
 
 #define LOCTEXT_NAMESPACE "SMounteaDialogueGraphEdge"
 
-namespace
-{
-	FVector2D EvaluateBezierPoint(const FVector2D& StartPoint, const FVector2D& ControlPointA, const FVector2D& ControlPointB, const FVector2D& EndPoint, const float T)
-	{
-		const float oneMinusT        = 1.0f - T;
-		const float oneMinusTSquared = oneMinusT * oneMinusT;
-		const float oneMinusTCubed   = oneMinusTSquared * oneMinusT;
-		const float tSquared         = T * T;
-		const float tCubed           = tSquared * T;
-		return (oneMinusTCubed * StartPoint) +
-			(3.0f * oneMinusTSquared * T * ControlPointA) +
-			(3.0f * oneMinusT * tSquared * ControlPointB) +
-			(tCubed * EndPoint);
-	}
-}
 
 void SEdNode_MounteaDialogueGraphEdge::Construct(const FArguments& InArgs, UEdNode_MounteaDialogueGraphEdge* InNode)
 {
@@ -64,28 +48,35 @@ void SEdNode_MounteaDialogueGraphEdge::PerformSecondPassLayout(const TMap<UObjec
 		const TSharedRef<SNode>* pToWidget   = NodeToWidgetLookup.Find(End);
 		if (pFromWidget != nullptr && pToWidget != nullptr)
 		{
-			CachedStartWidget = *pFromWidget;
-			CachedEndWidget   = *pToWidget;
+			CachedStartNodeSize = (*pFromWidget)->GetDesiredSize();
+			CachedEndNodeSize   = (*pToWidget)->GetDesiredSize();
 
-			StartGeom = FGeometry(FVector2D(Start->NodePosX, Start->NodePosY), FVector2D::ZeroVector, (*pFromWidget)->GetDesiredSize(), 1.0f);
-			EndGeom   = FGeometry(FVector2D(End->NodePosX,   End->NodePosY),   FVector2D::ZeroVector, (*pToWidget)->GetDesiredSize(),   1.0f);
+			StartGeom = FGeometry(FVector2D(Start->NodePosX, Start->NodePosY), FVector2D::ZeroVector, CachedStartNodeSize, 1.0f);
+			EndGeom   = FGeometry(FVector2D(End->NodePosX,   End->NodePosY),   FVector2D::ZeroVector, CachedEndNodeSize,   1.0f);
+
+			PositionBetweenTwoNodesWithOffset(StartGeom, EndGeom, 0, 1);
+			EdgeNode->bHasCachedSplineMidpoint = false;
 		}
 	}
-
-	PositionBetweenTwoNodesWithOffset(StartGeom, EndGeom, 0, 1);
 }
 
 void SEdNode_MounteaDialogueGraphEdge::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
 	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
-	const TSharedPtr<SNode> fromWidget = CachedStartWidget.Pin();
-	const TSharedPtr<SNode> toWidget   = CachedEndWidget.Pin();
-	if (!fromWidget || !toWidget)
-		return;
-
 	UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(GraphNode);
 	if (!edgeNode)
+		return;
+
+	if (edgeNode->bHasCachedSplineMidpoint)
+	{
+		const FVector2D halfSize = GetDesiredSize() * 0.5f;
+		GraphNode->NodePosX = edgeNode->CachedSplineMidpointGraph.X - halfSize.X;
+		GraphNode->NodePosY = edgeNode->CachedSplineMidpointGraph.Y - halfSize.Y;
+		return;
+	}
+
+	if (CachedStartNodeSize.IsZero() || CachedEndNodeSize.IsZero())
 		return;
 
 	UEdNode_MounteaDialogueGraphNode* start = edgeNode->GetStartNode();
@@ -93,8 +84,8 @@ void SEdNode_MounteaDialogueGraphEdge::Tick(const FGeometry& AllottedGeometry, c
 	if (!start || !end)
 		return;
 
-	const FGeometry startGeom(FVector2D(start->NodePosX, start->NodePosY), FVector2D::ZeroVector, fromWidget->GetDesiredSize(), 1.0f);
-	const FGeometry endGeom  (FVector2D(end->NodePosX,   end->NodePosY),   FVector2D::ZeroVector, toWidget->GetDesiredSize(),   1.0f);
+	const FGeometry startGeom(FVector2D(start->NodePosX, start->NodePosY), FVector2D::ZeroVector, CachedStartNodeSize, 1.0f);
+	const FGeometry endGeom  (FVector2D(end->NodePosX,   end->NodePosY),   FVector2D::ZeroVector, CachedEndNodeSize,   1.0f);
 	PositionBetweenTwoNodesWithOffset(startGeom, endGeom, 0, 1);
 }
 
@@ -181,17 +172,13 @@ void SEdNode_MounteaDialogueGraphEdge::PositionBetweenTwoNodesWithOffset(const F
 	const FVector2D startCenter = FGeometryHelper::CenterOf(StartGeom);
 	const FVector2D endCenter   = FGeometryHelper::CenterOf(EndGeom);
 
-	const FVector2D startAnchorPoint(startCenter.X, startCenter.Y + StartGeom.GetLocalSize().Y * 0.5f);
-	const FVector2D endAnchorPoint  (endCenter.X,   endCenter.Y   - EndGeom.GetLocalSize().Y   * 0.5f);
+	const FVector2D startAnchorGraph(startCenter.X, startCenter.Y + StartGeom.GetLocalSize().Y * 0.5f);
+	const FVector2D endAnchorGraph  (endCenter.X,   endCenter.Y   - EndGeom.GetLocalSize().Y   * 0.5f);
 
-	FVector2D controlPointA;
-	FVector2D controlPointB;
-	const float zoom = GetOwnerPanel().IsValid() ? GetOwnerPanel()->GetZoomAmount() : 1.0f;
-	FConnectionDrawingPolicy_MounteaDialogueGraph::CalculateBezierControlPoints(startAnchorPoint, endAnchorPoint, zoom, controlPointA, controlPointB);
+	const FVector2D newCenter = (startAnchorGraph + endAnchorGraph) * 0.5f;
 
-	const FVector2D newCenter     = EvaluateBezierPoint(startAnchorPoint, controlPointA, controlPointB, endAnchorPoint, 0.5f);
-	const FVector2D desiredSize   = GetDesiredSize();
-	FVector2D deltaNormal = (endAnchorPoint - startAnchorPoint).GetSafeNormal();
+	const FVector2D desiredSize = GetDesiredSize();
+	FVector2D deltaNormal = (endAnchorGraph - startAnchorGraph).GetSafeNormal();
 	if (deltaNormal.IsNearlyZero())
 		deltaNormal = FVector2D(1.0f, 0.0f);
 

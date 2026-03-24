@@ -6,6 +6,9 @@
 #include "BlueprintConnectionDrawingPolicy.h"
 #include "ConnectionDrawingPolicy.h"
 
+class FMDSPathDrawer;
+class SGraphPanel;
+
 class FConnectionDrawingPolicy_MounteaDialogueGraph : public FKismetConnectionDrawingPolicy
 {
 
@@ -23,13 +26,12 @@ public:
 	virtual void DetermineLinkGeometry(FArrangedChildren& ArrangedNodes, TSharedRef<SWidget>& OutputPinWidget, UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FArrangedWidget*& StartWidgetGeometry, FArrangedWidget*& EndWidgetGeometry) override;
 	// End of FConnectionDrawingPolicy interface
 	
-	static void CalculateBezierControlPoints(const FVector2D& StartPoint, const FVector2D& EndPoint, float InZoomFactor, FVector2D& OutControlPointA, FVector2D& OutControlPointB);
-
 protected:
-	void DrawBezierSplineWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params);
+	void DrawSubwayWireWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params);
 
 	UEdGraph* GraphObj;
 	TMap<UEdGraphNode*, int32> NodeWidgetMap;
 	TSet<UEdGraphNode*> SelectedEdgeNodes;
+	TWeakPtr<SGraphPanel> CachedGraphPanel;
 	
 };

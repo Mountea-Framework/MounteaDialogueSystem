@@ -2,6 +2,7 @@
 
 #include "FConnectionDrawingPolicy_MounteaDialogueGraph.h"
 
+#include "FMDSPathDrawer.h"
 #include "SGraphPanel.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
@@ -13,36 +14,14 @@
 
 namespace MDSGraphWireTokens
 {
-	constexpr float WireThickness = 2.0f;
-	constexpr float ConnectorVisualRadius = 0.1f;
-	constexpr float EdgeBubbleRadius = 16.0f;
-	constexpr float EdgeBubbleIconSize = 16.0f;
-	constexpr float MinimumControlDistance = 42.0f;
-	constexpr float MaximumControlDistance = 220.0f;
-	constexpr float HorizontalControlFactor = 0.22f;
-	constexpr float VerticalControlFactor = 0.56f;
-	constexpr float LowVerticalThreshold = 36.0f;
-	constexpr float FlatCurveControlFactor = 0.45f;
-	// ZoomFactor threshold — approximate mapping: Zoom-4≈0.5, Zoom-5≈0.375, Zoom-6≈0.25
-	constexpr float FlatLineZoomThreshold = 0.28f;  // Zoom -6 and beyond: draw straight lines
+	constexpr float WireThickness       = 2.0f;
+	constexpr float WireStubOffset      = 16.0f;
+	constexpr float MinDistanceForStyle = 24.0f;
+	constexpr float WireGridSize        = 1.0f;
 }
 
 namespace MDSGraphWireHelpers
 {
-	static FVector2D EvaluateCubicBezierPoint(const FVector2D& StartPoint, const FVector2D& ControlPointA, const FVector2D& ControlPointB, const FVector2D& EndPoint, const float T)
-	{
-		const float oneMinusT = 1.0f - T;
-		const float oneMinusTSquared = oneMinusT * oneMinusT;
-		const float oneMinusTCubed = oneMinusTSquared * oneMinusT;
-		const float tSquared = T * T;
-		const float tCubed = tSquared * T;
-
-		return (oneMinusTCubed * StartPoint) +
-			(3.0f * oneMinusTSquared * T * ControlPointA) +
-			(3.0f * oneMinusT * tSquared * ControlPointB) +
-			(tCubed * EndPoint);
-	}
-
 	static bool IsDirectNodeToNodeConnection(const FConnectionParams& Params)
 	{
 		if (!Params.AssociatedPin1 || !Params.AssociatedPin2)
@@ -63,13 +42,11 @@ FConnectionDrawingPolicy_MounteaDialogueGraph::FConnectionDrawingPolicy_MounteaD
 	  , GraphObj(InGraphObj)
 {
 	ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.SimpleArrow"));
-	
 	ArrowRadius = ArrowImage ? ArrowImage->ImageSize * ZoomFactor * 0.5f : FVector2D(0.f);
 	MidpointImage = nullptr;
 	MidpointRadius = FVector2D::ZeroVector;
 	HoverDeemphasisDarkFraction = 0.8f;
-
-	BubbleImage = FAppStyle::GetBrush( TEXT("Graph.Arrow") );
+	BubbleImage = FAppStyle::GetBrush(TEXT("Graph.Arrow"));
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FConnectionParams& Params)
@@ -108,12 +85,18 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Draw(TMap<TSharedRef<SWidget
 		TSharedRef<SGraphNode> childNode = StaticCastSharedRef<SGraphNode>(ArrangedNodes[nodeIndex].Widget);
 		NodeWidgetMap.Add(childNode->GetNodeObj(), nodeIndex);
 
-		if (Cast<UEdNode_MounteaDialogueGraphEdge>(childNode->GetNodeObj()))
+		if (UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(childNode->GetNodeObj()))
 		{
 			const TSharedPtr<SGraphPanel> panel = childNode->GetOwnerPanel();
-			if (panel.IsValid() && panel->SelectionManager.IsNodeSelected(childNode->GetNodeObj()))
-				SelectedEdgeNodes.Add(childNode->GetNodeObj());
+			if (panel.IsValid() && panel->SelectionManager.IsNodeSelected(edgeNode))
+				SelectedEdgeNodes.Add(edgeNode);
 		}
+	}
+
+	if (ArrangedNodes.Num() > 0)
+	{
+		TSharedRef<SGraphNode> firstNode = StaticCastSharedRef<SGraphNode>(ArrangedNodes[0].Widget);
+		CachedGraphPanel = firstNode->GetOwnerPanel();
 	}
 
 	FConnectionDrawingPolicy::Draw(InPinGeometries, ArrangedNodes);
@@ -127,29 +110,26 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FG
 	const FVector2D startPoint  = FGeometryHelper::FindClosestPointOnGeom(StartGeom, seedPoint);
 	const FVector2D endPoint    = FGeometryHelper::FindClosestPointOnGeom(EndGeom, seedPoint);
 
-	DrawBezierSplineWithArrow(startPoint, endPoint, Params);
+	DrawSubwayWireWithArrow(startPoint, endPoint, Params);
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)
 {
-	DrawBezierSplineWithArrow(StartPoint, EndPoint, Params);
+	DrawSubwayWireWithArrow(StartPoint, EndPoint, Params);
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawPreviewConnector(const FGeometry& PinGeometry, const FVector2D& StartPoint, const FVector2D& EndPoint, UEdGraphPin* Pin)
 {
 	FConnectionParams previewParams;
-	previewParams.WireColor = FMounteaDialogueGraphVisualTokens::GetWireColor();
+	previewParams.WireColor     = FMounteaDialogueGraphVisualTokens::GetWireColor();
 	previewParams.WireThickness = MDSGraphWireTokens::WireThickness;
-	previewParams.bDrawBubbles = false;
-	DrawBezierSplineWithArrow(StartPoint, EndPoint, previewParams);
+	previewParams.bDrawBubbles  = false;
+	DrawSubwayWireWithArrow(StartPoint, EndPoint, previewParams);
 }
 
 FVector2D FConnectionDrawingPolicy_MounteaDialogueGraph::ComputeSplineTangent(const FVector2D& Start, const FVector2D& End) const
 {
-	FVector2D controlPointA;
-	FVector2D controlPointB;
-	CalculateBezierControlPoints(Start, End, ZoomFactor, controlPointA, controlPointB);
-	return controlPointA - Start;
+	return FVector2D(0.0f, MDSGraphWireTokens::WireStubOffset * ZoomFactor);
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineLinkGeometry(FArrangedChildren& ArrangedNodes, TSharedRef<SWidget>& OutputPinWidget, UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FArrangedWidget*& StartWidgetGeometry, FArrangedWidget*& EndWidgetGeometry)
@@ -227,42 +207,49 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineLinkGeometry(FArran
 	}
 }
 
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawBezierSplineWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSubwayWireWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)
 {
-	FVector2D controlPointA;
-	FVector2D controlPointB;
-	CalculateBezierControlPoints(StartPoint, EndPoint, ZoomFactor, controlPointA, controlPointB);
+	const float stubOffset = MDSGraphWireTokens::WireStubOffset * ZoomFactor;
+	const float gridStep   = MDSGraphWireTokens::WireGridSize   * ZoomFactor;
 
-	FVector2D arrowDirection = (EndPoint - controlPointB).GetSafeNormal();
-	if (arrowDirection.IsNearlyZero())
-		arrowDirection = FVector2D(0.0f, 1.0f);
+	auto snapToGrid = [gridStep](const FVector2D& V) -> FVector2D
+	{
+		return FVector2D(
+			FMath::RoundToFloat(V.X / gridStep) * gridStep,
+			FMath::RoundToFloat(V.Y / gridStep) * gridStep
+		);
+	};
 
-	const float connectorInset = MDSGraphWireTokens::ConnectorVisualRadius * ZoomFactor;
-	const FVector2D targetTipPoint = EndPoint - (arrowDirection * connectorInset);
+	FVector2D wireStart = snapToGrid(StartPoint + FVector2D(0.0f,  stubOffset));
+	FVector2D wireEnd   = snapToGrid(EndPoint   - FVector2D(0.0f,  stubOffset));
 
-	const float rawArrowInset = ArrowImage ? (ArrowImage->ImageSize.X * ZoomFactor * 0.50f) : 8.0f;
-	const float maxArrowInset = FVector2D::Distance(StartPoint, EndPoint) * 0.45f;
-	const float arrowInset = FMath::Min(rawArrowInset, maxArrowInset);
-	const FVector2D splineEnd = targetTipPoint;
-	const FVector2D adjustedControlPointB = controlPointB - (arrowDirection * (arrowInset * 0.15f));
+	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
+		StartPoint, FVector2D::ZeroVector, wireStart, FVector2D::ZeroVector,
+		Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
 
-	FSlateDrawElement::MakeCubicBezierSpline(
-		DrawElementsList,
-		WireLayerID,
-		FPaintGeometry(),
-		StartPoint,
-		controlPointA,
-		adjustedControlPointB,
-		splineEnd,
-		Params.WireThickness,
-		ESlateDrawEffect::None,
-		Params.WireColor
-	);
+	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
+		wireEnd, FVector2D::ZeroVector, EndPoint, FVector2D::ZeroVector,
+		Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+
+	FMDSPathDrawer drawer(WireLayerID, ZoomFactor, DrawElementsList, Params);
+
+	const float dist = FVector2D::Distance(wireStart, wireEnd);
+	if (dist < MDSGraphWireTokens::MinDistanceForStyle * ZoomFactor)
+	{
+		FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
+			wireStart, FVector2D::ZeroVector, wireEnd, FVector2D::ZeroVector,
+			Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+	}
+	else
+	{
+		drawer.DrawSubwayWire(wireStart, FVector2D(0.0f, 1.0f), wireEnd, FVector2D(0.0f, 1.0f));
+	}
 
 	if (ArrowImage)
 	{
+		const FVector2D arrowDirection    = FVector2D(0.0f, 1.0f);
 		const FVector2D arrowSize         = ArrowImage->ImageSize * ZoomFactor;
-		const FVector2D arrowCenter       = targetTipPoint - (arrowDirection * (arrowSize.X * 0.50f));
+		const FVector2D arrowCenter       = EndPoint - (arrowDirection * (arrowSize.X * 0.50f));
 		const FVector2D arrowDrawPosition = arrowCenter - (arrowSize * 0.5f);
 		const float arrowAngle            = FMath::Atan2(arrowDirection.Y, arrowDirection.X);
 
@@ -288,11 +275,15 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawBezierSplineWithArrow(co
 		const FVector2D dotSize(dotRadius * 2.0f, dotRadius * 2.0f);
 		const FSlateBrush* dotBrush = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Icon.BulletPoint"));
 
+		const TArray<TPair<FVector2D, FVector2D>> dotSegments = {
+			{ StartPoint, wireStart },
+			{ wireEnd,    EndPoint  }
+		};
+
 		for (int32 i = 0; i < dotCount; ++i)
 		{
-			const float t = FMath::Frac(time * speed + static_cast<float>(i) / static_cast<float>(dotCount));
-			const FVector2D dotCenter = MDSGraphWireHelpers::EvaluateCubicBezierPoint(
-				StartPoint, controlPointA, adjustedControlPointB, splineEnd, t);
+			const float t         = FMath::Frac(time * speed + static_cast<float>(i) / static_cast<float>(dotCount));
+			const FVector2D dotCenter = FMath::Lerp(StartPoint, EndPoint, t);
 
 			FSlateDrawElement::MakeBox(
 				DrawElementsList,
@@ -304,45 +295,22 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawBezierSplineWithArrow(co
 			);
 		}
 	}
-}
 
-void FConnectionDrawingPolicy_MounteaDialogueGraph::CalculateBezierControlPoints(const FVector2D& StartPoint, const FVector2D& EndPoint, float InZoomFactor, FVector2D& OutControlPointA, FVector2D& OutControlPointB)
-{
-	const FVector2D delta = EndPoint - StartPoint;
-	const float absDeltaX = FMath::Abs(delta.X);
-	const float absDeltaY = FMath::Abs(delta.Y);
-	const float signX = (delta.X >= 0.0f) ? 1.0f : -1.0f;
-	const float signY = (delta.Y >= 0.0f) ? 1.0f : -1.0f;
-
-	// Zoom -6 and beyond: straight lines avoid the branch-switching inconsistency that
-	// comes from the fixed LowVerticalThreshold pixel value changing meaning at extreme zoom.
-	if (InZoomFactor < MDSGraphWireTokens::FlatLineZoomThreshold)
+	if (Params.AssociatedPin2)
 	{
-		OutControlPointA = StartPoint + delta * (1.0f / 3.0f);
-		OutControlPointB = StartPoint + delta * (2.0f / 3.0f);
-		return;
+		if (UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(Params.AssociatedPin2->GetOwningNode()))
+		{
+			FVector2D screenMid = drawer.GetArcLengthMidpoint();
+			if (screenMid.IsZero())
+				screenMid = (wireStart + wireEnd) * 0.5f;
+
+			const TSharedPtr<SGraphPanel> panel = CachedGraphPanel.Pin();
+			if (panel.IsValid())
+			{
+				const FVector2D localMid = screenMid - FVector2D(panel->GetCachedGeometry().AbsolutePosition);
+				edgeNode->CachedSplineMidpointGraph = panel->PanelCoordToGraphCoord(localMid);
+				edgeNode->bHasCachedSplineMidpoint  = true;
+			}
+		}
 	}
-
-	const float totalDist = delta.Size();
-	const float effectiveMin = FMath::Min(MDSGraphWireTokens::MinimumControlDistance, totalDist * 0.45f);
-	const float effectiveMax = MDSGraphWireTokens::MaximumControlDistance;
-
-	const bool isMostlyHorizontal = absDeltaY < MDSGraphWireTokens::LowVerticalThreshold && absDeltaX > MDSGraphWireTokens::LowVerticalThreshold;
-	if (isMostlyHorizontal)
-	{
-		const float flatControlDistance = FMath::Clamp(absDeltaX * MDSGraphWireTokens::FlatCurveControlFactor, effectiveMin, effectiveMax);
-		OutControlPointA = StartPoint + FVector2D(signX * flatControlDistance, 0.0f);
-		OutControlPointB = EndPoint - FVector2D(signX * flatControlDistance, 0.0f);
-		return;
-	}
-
-	const float verticalControlDistance = FMath::Clamp(
-		(absDeltaY * MDSGraphWireTokens::VerticalControlFactor) + (absDeltaX * 0.08f),
-		effectiveMin,
-		effectiveMax
-	);
-	const float horizontalControlDistance = FMath::Clamp(absDeltaX * MDSGraphWireTokens::HorizontalControlFactor, 0.0f, FMath::Min(96.0f, totalDist * 0.225f));
-
-	OutControlPointA = StartPoint + FVector2D(signX * horizontalControlDistance, signY * verticalControlDistance);
-	OutControlPointB = EndPoint - FVector2D(signX * horizontalControlDistance * 0.55f, signY * verticalControlDistance);
 }
