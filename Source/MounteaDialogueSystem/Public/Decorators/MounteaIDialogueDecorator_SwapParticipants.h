@@ -32,7 +32,8 @@ public:
 
 protected:
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category="Settings")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category="Settings",
+		meta=(Categories="Mountea_Dialogue,Dialogue"))
 	FGameplayTag NewParticipantTag;
 	
 private:

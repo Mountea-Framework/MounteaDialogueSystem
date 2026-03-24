@@ -110,46 +110,41 @@ UObject* UMounteaDialogueProjectFactory::FactoryCreateFile(UClass* InClass, UObj
 		projectFolder = FString::Printf(TEXT("%s/%s"), *packageRoot, *projectName);
 	}
 
-	// ── 3b. Check for open graph editors ─────────────────────────────────────
-	// Scan all nested dialogues in the archive and collect any that already exist as
-	// UAssets and are currently open in the editor. If any are open, ask the user
-	// before proceeding — reimport mutates those assets and the open editor would
-	// interfere. If the user declines, abort the entire import.
 	if (GEditor)
 	{
-		const TArray<UMounteaDialogueGraph*> AffectedGraphs =
+		const TArray<UMounteaDialogueGraph*> affectedGraphs =
 			UMounteaDialogueSystemImportExportHelpers::FindGraphsToBeReimported(extractedFiles);
 
-		TArray<UMounteaDialogueGraph*> OpenGraphs;
-		if (UAssetEditorSubsystem* AES = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>())
+		TArray<UMounteaDialogueGraph*> openGraphs;
+		if (UAssetEditorSubsystem* aes = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>())
 		{
-			for (UMounteaDialogueGraph* Graph : AffectedGraphs)
-				if (AES->FindEditorForAsset(Graph, false))
-					OpenGraphs.Add(Graph);
+			for (UMounteaDialogueGraph* graph : affectedGraphs)
+				if (aes->FindEditorForAsset(graph, false))
+					openGraphs.Add(graph);
 		}
 
-		if (!OpenGraphs.IsEmpty())
+		if (!openGraphs.IsEmpty())
 		{
-			FString GraphNames;
-			for (UMounteaDialogueGraph* Graph : OpenGraphs)
-				GraphNames += FString::Printf(TEXT("\n  \u2022 %s"), *Graph->GetName());
+			FString graphNames;
+			for (UMounteaDialogueGraph* graph : openGraphs)
+				graphNames += FString::Printf(TEXT("\n  \u2022 %s"), *graph->GetName());
 
-			const EAppReturnType::Type Response = FMessageDialog::Open(
+			const EAppReturnType::Type response = FMessageDialog::Open(
 				EAppMsgType::YesNo,
 				FText::Format(
 					LOCTEXT("OpenEditorsDetected",
 						"The following dialogue graph(s) are currently open and must be closed before reimport:{0}\n\nClose them and proceed with the import?"),
-					FText::FromString(GraphNames)));
+					FText::FromString(graphNames)));
 
-			if (Response != EAppReturnType::Yes)
+			if (response != EAppReturnType::Yes)
 			{
 				bOutOperationCanceled = true;
 				return nullptr;
 			}
 
-			if (UAssetEditorSubsystem* AES = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>())
-				for (UMounteaDialogueGraph* Graph : OpenGraphs)
-					AES->CloseAllEditorsForAsset(Graph);
+			if (UAssetEditorSubsystem* aes = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>())
+				for (UMounteaDialogueGraph* graph : openGraphs)
+					aes->CloseAllEditorsForAsset(graph);
 		}
 	}
 

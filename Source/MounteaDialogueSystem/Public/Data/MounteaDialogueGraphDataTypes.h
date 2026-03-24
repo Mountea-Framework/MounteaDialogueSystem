@@ -188,7 +188,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
 		meta=(NoResetToDefault),
-		meta=(Categories="Mountea_Dialogue"))
+		meta=(Categories="Mountea_Dialogue,Dialogue"))
 	FGameplayTag ParticipantCategoryTag;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
@@ -221,8 +221,10 @@ public:
 	 * 
 	 * ❗ This Text should not be displayed as option to be selected, for that use 'DialogueRow.RowTitle' value
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true, MultiLine=true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
+		meta=(ExposeOnSpawn=true, MultiLine=true))
 	FText RowText;
+	
 	/**
 	 * Row Sound.
 	 * 
@@ -350,7 +352,9 @@ public:
 	 * ❗ New feature in version 1.0.5.X.
 	 * ❔ Each unique dialogue Participant should be using different Tag, if generic, then use something like `Dialogue.NPC`
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", DisplayName="Compatible Participants Tags")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
+		DisplayName="Compatible Participants Tags",
+		meta=(Categories="Mountea_Dialogue,Dialogue"))
 	FGameplayTagContainer CompatibleTags;
 
 	/**

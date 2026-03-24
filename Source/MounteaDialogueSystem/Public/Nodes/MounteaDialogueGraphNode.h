@@ -134,7 +134,8 @@ public:
 	 * or to find specific Nodes.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Defaults",
-		meta=(NoResetToDefault))
+		meta=(NoResetToDefault),
+		meta=(Categories="Mountea_Dialogue,Dialogue"))
 	FGameplayTagContainer NodeGameplayTags;
 	
 	/**

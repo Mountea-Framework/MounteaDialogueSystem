@@ -8,6 +8,7 @@
 #include "SGraphNode.h"
 
 class UEdNode_MounteaDialogueGraphEdge;
+class UEdNode_MounteaDialogueGraphNode;
 class SToolTip;
 
 class SEdNode_MounteaDialogueGraphEdge : public SGraphNode
@@ -20,12 +21,12 @@ public:
 
 	virtual bool RequiresSecondPassLayout() const override;
 	virtual void PerformSecondPassLayout(const TMap< UObject*, TSharedRef<SNode> >& NodeToWidgetLookup) const override;
+	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 	virtual const FSlateBrush* GetShadowBrush(bool bSelected) const override;
 
 	virtual void UpdateGraphNode() override;
 	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 
-	// Calculate position for multiple nodes to be placed between a start and end point, by providing this nodes index and max expected nodes 
 	void PositionBetweenTwoNodesWithOffset(const FGeometry& StartGeom, const FGeometry& EndGeom, int32 NodeIndex, int32 MaxNodes) const;
 
 protected:
@@ -41,5 +42,8 @@ protected:
 
 private:
 	TSharedPtr<STextEntryPopup> TextEntryWidget;
+
+	mutable TWeakPtr<SNode> CachedStartWidget;
+	mutable TWeakPtr<SNode> CachedEndWidget;
 	
 };

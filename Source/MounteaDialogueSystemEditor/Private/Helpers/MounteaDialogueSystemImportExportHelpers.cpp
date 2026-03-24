@@ -451,56 +451,54 @@ UMounteaDialogueGraph* UMounteaDialogueSystemImportExportHelpers::LookupExisting
 
 TArray<UMounteaDialogueGraph*> UMounteaDialogueSystemImportExportHelpers::FindGraphsToBeReimported(const TMap<FString, FString>& ExtractedProjectFiles)
 {
-	TArray<UMounteaDialogueGraph*> Result;
+	TArray<UMounteaDialogueGraph*> result;
 
-	for (const auto& Entry : ExtractedProjectFiles)
+	for (const auto& entry : ExtractedProjectFiles)
 	{
-		if (!Entry.Key.StartsWith(TEXT("dialogues/")) || !Entry.Key.EndsWith(TEXT(".mnteadlg")))
+		if (!entry.Key.StartsWith(TEXT("dialogues/")) || !entry.Key.EndsWith(TEXT(".mnteadlg")))
 			continue;
 
-		const FString& TempPath = Entry.Value;
-		if (TempPath.IsEmpty() || !FPaths::FileExists(TempPath))
+		const FString& tempPath = entry.Value;
+		if (tempPath.IsEmpty() || !FPaths::FileExists(tempPath))
 			continue;
 
-		TArray<uint8> DialogueData;
-		if (!FFileHelper::LoadFileToArray(DialogueData, *TempPath))
+		TArray<uint8> dialogueData;
+		if (!FFileHelper::LoadFileToArray(dialogueData, *tempPath))
 			continue;
 
-		if (!IsZipFile(DialogueData))
+		if (!IsZipFile(dialogueData))
 			continue;
 
-		TMap<FString, FString> DialogueFiles;
-		if (!ExtractFilesFromZip(DialogueData, DialogueFiles))
+		TMap<FString, FString> dialogueFiles;
+		if (!ExtractFilesFromZip(dialogueData, dialogueFiles))
 			continue;
 
-		// Pull out dialogueData.json (plain text — no temp file) and clean up any binary
-		// temp files (audio, thumbnails) that the inner extraction may have created.
-		FString DialogueDataJson;
-		DialogueFiles.RemoveAndCopyValue(TEXT("dialogueData.json"), DialogueDataJson);
+		FString dialogueDataJson;
+		dialogueFiles.RemoveAndCopyValue(TEXT("dialogueData.json"), dialogueDataJson);
 
-		for (const auto& InnerEntry : DialogueFiles)
-			if (FPaths::FileExists(InnerEntry.Value))
-				IFileManager::Get().Delete(*InnerEntry.Value);
+		for (const auto& innerEntry : dialogueFiles)
+			if (FPaths::FileExists(innerEntry.Value))
+				IFileManager::Get().Delete(*innerEntry.Value);
 
-		if (DialogueDataJson.IsEmpty())
+		if (dialogueDataJson.IsEmpty())
 			continue;
 
-		TSharedPtr<FJsonObject> JsonObj;
-		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(DialogueDataJson);
-		if (!FJsonSerializer::Deserialize(Reader, JsonObj) || !JsonObj.IsValid())
+		TSharedPtr<FJsonObject> jsonObj;
+		TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(dialogueDataJson);
+		if (!FJsonSerializer::Deserialize(reader, jsonObj) || !jsonObj.IsValid())
 			continue;
 
-		FString GuidStr;
-		FGuid Guid;
-		if (!JsonObj->TryGetStringField(TEXT("dialogueGuid"), GuidStr) || !FGuid::Parse(GuidStr, Guid))
+		FString guidStr;
+		FGuid guid;
+		if (!jsonObj->TryGetStringField(TEXT("dialogueGuid"), guidStr) || !FGuid::Parse(guidStr, guid))
 			continue;
 
-		UMounteaDialogueGraph* ExistingGraph = LookupExistingGraphByGuid(Guid);
-		if (ExistingGraph)
-			Result.AddUnique(ExistingGraph);
+		UMounteaDialogueGraph* existingGraph = LookupExistingGraphByGuid(guid);
+		if (existingGraph)
+			result.AddUnique(existingGraph);
 	}
 
-	return Result;
+	return result;
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::PopulateAndSaveGraph(UMounteaDialogueGraph* Graph, TMap<FString, FString>& ExtractedFiles, const FString& SourceFilePath, FString& OutMessage)

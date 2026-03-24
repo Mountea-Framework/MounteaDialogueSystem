@@ -75,10 +75,6 @@ public:
 	static bool ValidateExtractedContent(const TMap<FString, FString>& ExtractedFiles);
 	static bool PopulateGraphFromExtractedFiles(UMounteaDialogueGraph* Graph, const TMap<FString, FString>& ExtractedFiles, const FString& SourceFilePath);
 
-	// Pre-import analysis: scans all nested .mnteadlg entries in an already-extracted project
-	// archive and returns every existing graph that would be overwritten by the import.
-	// Temp files created during the inner extraction are cleaned up before returning.
-	// Call this before starting the import loop to check for open editors.
 	static TArray<UMounteaDialogueGraph*> FindGraphsToBeReimported(const TMap<FString, FString>& ExtractedProjectFiles);
 
 	// Imports PNG files from the Thumbnails/ folder of the archive into UTexture2D assets.

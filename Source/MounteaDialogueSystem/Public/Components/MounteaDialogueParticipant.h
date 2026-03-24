@@ -145,12 +145,15 @@ protected:
 	 * Gameplay tag identifying this Participant.
 	 * Servers a purpose of being unique ID for Dialogues with multiple Participants.
 	 */
-	UPROPERTY(Replicated, SaveGame, EditAnywhere, Category="Mountea|Dialogue|Participant", meta=(NoResetToDefault))
+	UPROPERTY(Replicated, SaveGame, EditAnywhere, Category="Mountea|Dialogue|Participant", 
+		meta=(NoResetToDefault),
+		meta=(Categories="Mountea_Dialogue,Dialogue"))
 	FGameplayTag ParticipantTag;
 
 private:
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category="Mountea|Dialogue|Participant", meta=(AllowPrivateAccess))
+	UPROPERTY(Transient, BlueprintReadOnly, Category="Mountea|Dialogue|Participant", 
+		meta=(AllowPrivateAccess))
 	TScriptInterface<IMounteaDialogueManagerInterface> DialogueManager;
 
 #pragma endregion

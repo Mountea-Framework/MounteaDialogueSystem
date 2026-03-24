@@ -96,7 +96,7 @@ public:
 
 #endif
 
-protected:
+public:
 
 	/**
 	 * The data table containing the dialogue rows.

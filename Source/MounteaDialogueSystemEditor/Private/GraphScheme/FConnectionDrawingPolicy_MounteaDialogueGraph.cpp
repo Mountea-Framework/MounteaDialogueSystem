@@ -2,12 +2,14 @@
 
 #include "FConnectionDrawingPolicy_MounteaDialogueGraph.h"
 
+#include "SGraphPanel.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "EditorStyle/MounteaDialogueGraphVisualTokens.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Rendering/DrawElements.h"
+#include "Framework/Application/SlateApplication.h"
 
 namespace MDSGraphWireTokens
 {
@@ -74,47 +76,63 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineWiringStyle(UEdGrap
 {
 	Params.AssociatedPin1 = OutputPin;
 	Params.AssociatedPin2 = InputPin;
-	Params.WireThickness = MDSGraphWireTokens::WireThickness;
-	Params.WireColor = FMounteaDialogueGraphVisualTokens::GetWireColor();
+	Params.WireThickness  = MDSGraphWireTokens::WireThickness;
+	Params.WireColor      = FMounteaDialogueGraphVisualTokens::GetWireColor();
+	Params.bUserFlag1     = false;
+
+	if (InputPin)
+	{
+		if (UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(InputPin->GetOwningNode()))
+		{
+			if (SelectedEdgeNodes.Contains(edgeNode))
+			{
+				Params.WireColor     = FMounteaDialogueGraphVisualTokens::GetPrimaryAccent();
+				Params.WireThickness = MDSGraphWireTokens::WireThickness * 2.0f;
+				Params.bUserFlag1    = true;
+			}
+		}
+	}
 
 	const bool bDeemphasizeUnhoveredPins = HoveredPins.Num() > 0;
 	if (bDeemphasizeUnhoveredPins)
-		ApplyHoverDeemphasis(OutputPin, InputPin, /*inout*/ Params.WireThickness, /*inout*/ Params.WireColor);
+		ApplyHoverDeemphasis(OutputPin, InputPin, Params.WireThickness, Params.WireColor);
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& InPinGeometries, FArrangedChildren& ArrangedNodes)
 {
-	// Build an acceleration structure to quickly find geometry for the nodes
 	NodeWidgetMap.Empty();
-	for (int32 NodeIndex = 0; NodeIndex < ArrangedNodes.Num(); ++NodeIndex)
+	SelectedEdgeNodes.Empty();
+
+	for (int32 nodeIndex = 0; nodeIndex < ArrangedNodes.Num(); ++nodeIndex)
 	{
-		FArrangedWidget& CurWidget = ArrangedNodes[NodeIndex];
-		TSharedRef<SGraphNode> ChildNode = StaticCastSharedRef<SGraphNode>(CurWidget.Widget);
-		NodeWidgetMap.Add(ChildNode->GetNodeObj(), NodeIndex);
+		TSharedRef<SGraphNode> childNode = StaticCastSharedRef<SGraphNode>(ArrangedNodes[nodeIndex].Widget);
+		NodeWidgetMap.Add(childNode->GetNodeObj(), nodeIndex);
+
+		if (Cast<UEdNode_MounteaDialogueGraphEdge>(childNode->GetNodeObj()))
+		{
+			const TSharedPtr<SGraphPanel> panel = childNode->GetOwnerPanel();
+			if (panel.IsValid() && panel->SelectionManager.IsNodeSelected(childNode->GetNodeObj()))
+				SelectedEdgeNodes.Add(childNode->GetNodeObj());
+		}
 	}
 
-	// Now draw
 	FConnectionDrawingPolicy::Draw(InPinGeometries, ArrangedNodes);
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FGeometry& StartGeom, const FGeometry& EndGeom, const FConnectionParams& Params)
 {
 	const FVector2D startCenter = FGeometryHelper::CenterOf(StartGeom);
-	const FVector2D endCenter = FGeometryHelper::CenterOf(EndGeom);
-	const FVector2D seedPoint = (startCenter + endCenter) * 0.5f;
-	const FVector2D startPoint = FGeometryHelper::FindClosestPointOnGeom(StartGeom, seedPoint);
-	const FVector2D endPoint = FGeometryHelper::FindClosestPointOnGeom(EndGeom, seedPoint);
+	const FVector2D endCenter   = FGeometryHelper::CenterOf(EndGeom);
+	const FVector2D seedPoint   = (startCenter + endCenter) * 0.5f;
+	const FVector2D startPoint  = FGeometryHelper::FindClosestPointOnGeom(StartGeom, seedPoint);
+	const FVector2D endPoint    = FGeometryHelper::FindClosestPointOnGeom(EndGeom, seedPoint);
 
-	FConnectionParams adjustedParams = Params;
-	adjustedParams.WireThickness = MDSGraphWireTokens::WireThickness;
-	DrawBezierSplineWithArrow(startPoint, endPoint, adjustedParams);
+	DrawBezierSplineWithArrow(startPoint, endPoint, Params);
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)
 {
-	FConnectionParams adjustedParams = Params;
-	adjustedParams.WireThickness = MDSGraphWireTokens::WireThickness;
-	DrawBezierSplineWithArrow(StartPoint, EndPoint, adjustedParams);
+	DrawBezierSplineWithArrow(StartPoint, EndPoint, Params);
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawPreviewConnector(const FGeometry& PinGeometry, const FVector2D& StartPoint, const FVector2D& EndPoint, UEdGraphPin* Pin)
@@ -139,7 +157,7 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineLinkGeometry(FArran
 	StartWidgetGeometry = nullptr;
 	EndWidgetGeometry = nullptr;
 
-	const auto resolveGeometryFromPin = [this](UEdGraphPin* TargetPin) -> FArrangedWidget*
+	const auto resolveGeometryFromPin = [this](const UEdGraphPin* TargetPin) -> FArrangedWidget*
 	{
 		if (!TargetPin || !PinGeometries)
 			return nullptr;
@@ -153,7 +171,7 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineLinkGeometry(FArran
 		return nullptr;
 	};
 
-	const auto resolveGeometryFromNode = [this, &ArrangedNodes](UEdGraphNode* TargetNode) -> FArrangedWidget*
+	const auto resolveGeometryFromNode = [this, &ArrangedNodes](const UEdGraphNode* TargetNode) -> FArrangedWidget*
 	{
 		if (!TargetNode)
 			return nullptr;
@@ -241,27 +259,51 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawBezierSplineWithArrow(co
 		Params.WireColor
 	);
 
-	if (!ArrowImage)
-		return;
+	if (ArrowImage)
+	{
+		const FVector2D arrowSize         = ArrowImage->ImageSize * ZoomFactor;
+		const FVector2D arrowCenter       = targetTipPoint - (arrowDirection * (arrowSize.X * 0.50f));
+		const FVector2D arrowDrawPosition = arrowCenter - (arrowSize * 0.5f);
+		const float arrowAngle            = FMath::Atan2(arrowDirection.Y, arrowDirection.X);
 
-	const FVector2D arrowSize = ArrowImage->ImageSize * ZoomFactor;
-	const FVector2D arrowCenter = targetTipPoint - (arrowDirection * (arrowSize.X * 0.50f));
-	const FVector2D arrowDrawPosition = arrowCenter - (arrowSize * 0.5f);
-	const float arrowAngle = FMath::Atan2(arrowDirection.Y, arrowDirection.X);
+		FSlateDrawElement::MakeRotatedBox(
+			DrawElementsList,
+			ArrowLayerID,
+			FPaintGeometry(arrowDrawPosition, arrowSize, 1.0f),
+			ArrowImage,
+			ESlateDrawEffect::None,
+			arrowAngle,
+			TOptional<FVector2D>(),
+			FSlateDrawElement::RelativeToElement,
+			Params.WireColor
+		);
+	}
 
-	FSlateDrawElement::MakeRotatedBox(
-		DrawElementsList,
-		ArrowLayerID,
-		FPaintGeometry(arrowDrawPosition, arrowSize, 1.0f),
-		ArrowImage,
-		ESlateDrawEffect::None,
-		arrowAngle,
-		TOptional<FVector2D>(),
-		FSlateDrawElement::RelativeToElement,
-		Params.WireColor
-	);
+	if (Params.bUserFlag1)
+	{
+		const float time      = static_cast<float>(FSlateApplication::Get().GetCurrentTime());
+		const float speed     = 0.6f;
+		const int32 dotCount  = 4;
+		const float dotRadius = FMath::Clamp(5.0f * ZoomFactor, 2.0f, 8.0f);
+		const FVector2D dotSize(dotRadius * 2.0f, dotRadius * 2.0f);
+		const FSlateBrush* dotBrush = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Icon.BulletPoint"));
 
-	return;
+		for (int32 i = 0; i < dotCount; ++i)
+		{
+			const float t = FMath::Frac(time * speed + static_cast<float>(i) / static_cast<float>(dotCount));
+			const FVector2D dotCenter = MDSGraphWireHelpers::EvaluateCubicBezierPoint(
+				StartPoint, controlPointA, adjustedControlPointB, splineEnd, t);
+
+			FSlateDrawElement::MakeBox(
+				DrawElementsList,
+				ArrowLayerID,
+				FPaintGeometry(dotCenter - dotSize * 0.5f, dotSize, 1.0f),
+				dotBrush,
+				ESlateDrawEffect::None,
+				Params.WireColor
+			);
+		}
+	}
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::CalculateBezierControlPoints(const FVector2D& StartPoint, const FVector2D& EndPoint, float InZoomFactor, FVector2D& OutControlPointA, FVector2D& OutControlPointB)

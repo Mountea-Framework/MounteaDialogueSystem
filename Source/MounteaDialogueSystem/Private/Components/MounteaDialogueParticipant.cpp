@@ -47,9 +47,7 @@ void UMounteaDialogueParticipant::BeginPlay()
 	// Force replicate Owner to avoid setup issues with less experienced users
 	auto participantOwner = GetOwner();
 	if (IsValid(participantOwner) && !participantOwner->GetIsReplicated() && GetIsReplicated())
-	{
 		participantOwner->SetReplicates(GetIsReplicated());
-	}
 }
 
 void UMounteaDialogueParticipant::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

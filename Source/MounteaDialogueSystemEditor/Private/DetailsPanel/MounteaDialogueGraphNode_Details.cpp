@@ -24,6 +24,7 @@
 #include "ScopedTransaction.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "PropertyHandle.h"
+#include "Nodes/MounteaDialogueGraphNode_DialogueNode.h"
 
 #define LOCTEXT_NAMESPACE "FMounteaDialogueGraphNode_Details"
 

@@ -1,6 +1,7 @@
 #include "SEdNode_MounteaDialogueGraphEdge.h"
 
 #include "ConnectionDrawingPolicy.h"
+#include "GraphScheme/FConnectionDrawingPolicy_MounteaDialogueGraph.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "EditorStyle/MounteaDialogueGraphVisualTokens.h"
 #include "Styling/CoreStyle.h"
@@ -20,38 +21,15 @@ namespace
 {
 	FVector2D EvaluateBezierPoint(const FVector2D& StartPoint, const FVector2D& ControlPointA, const FVector2D& ControlPointB, const FVector2D& EndPoint, const float T)
 	{
-		const float oneMinusT = 1.0f - T;
+		const float oneMinusT        = 1.0f - T;
 		const float oneMinusTSquared = oneMinusT * oneMinusT;
-		const float oneMinusTCubed = oneMinusTSquared * oneMinusT;
-		const float tSquared = T * T;
-		const float tCubed = tSquared * T;
+		const float oneMinusTCubed   = oneMinusTSquared * oneMinusT;
+		const float tSquared         = T * T;
+		const float tCubed           = tSquared * T;
 		return (oneMinusTCubed * StartPoint) +
 			(3.0f * oneMinusTSquared * T * ControlPointA) +
 			(3.0f * oneMinusT * tSquared * ControlPointB) +
 			(tCubed * EndPoint);
-	}
-
-	void CalculateEdgeBezierControlPoints(const FVector2D& StartPoint, const FVector2D& EndPoint, FVector2D& OutControlPointA, FVector2D& OutControlPointB)
-	{
-		const FVector2D delta = EndPoint - StartPoint;
-		const float absDeltaX = FMath::Abs(delta.X);
-		const float absDeltaY = FMath::Abs(delta.Y);
-		const float signX = (delta.X >= 0.0f) ? 1.0f : -1.0f;
-		const float signY = (delta.Y >= 0.0f) ? 1.0f : -1.0f;
-
-		const bool isMostlyHorizontal = absDeltaY < 36.0f && absDeltaX > 36.0f;
-		if (isMostlyHorizontal)
-		{
-			const float flatControlDistance = FMath::Clamp(absDeltaX * 0.45f, 56.0f, 220.0f);
-			OutControlPointA = StartPoint + FVector2D(signX * flatControlDistance, 0.0f);
-			OutControlPointB = EndPoint - FVector2D(signX * flatControlDistance, 0.0f);
-			return;
-		}
-
-		const float verticalControlDistance = FMath::Clamp((absDeltaY * 0.56f) + (absDeltaX * 0.08f), 42.0f, 220.0f);
-		const float horizontalControlDistance = FMath::Clamp(absDeltaX * 0.22f, 0.0f, 96.0f);
-		OutControlPointA = StartPoint + FVector2D(signX * horizontalControlDistance, signY * verticalControlDistance);
-		OutControlPointB = EndPoint - FVector2D(signX * horizontalControlDistance * 0.55f, signY * verticalControlDistance);
 	}
 }
 
@@ -83,18 +61,41 @@ void SEdNode_MounteaDialogueGraphEdge::PerformSecondPassLayout(const TMap<UObjec
 	if (Start != nullptr && End != nullptr)
 	{
 		const TSharedRef<SNode>* pFromWidget = NodeToWidgetLookup.Find(Start);
-		const TSharedRef<SNode>* pToWidget = NodeToWidgetLookup.Find(End);
+		const TSharedRef<SNode>* pToWidget   = NodeToWidgetLookup.Find(End);
 		if (pFromWidget != nullptr && pToWidget != nullptr)
 		{
-			const TSharedRef<SNode>& FromWidget = *pFromWidget;
-			const TSharedRef<SNode>& ToWidget = *pToWidget;
+			CachedStartWidget = *pFromWidget;
+			CachedEndWidget   = *pToWidget;
 
-			StartGeom = FGeometry(FVector2D(Start->NodePosX, Start->NodePosY), FVector2D::ZeroVector, FromWidget->GetDesiredSize(), 1.0f);
-			EndGeom = FGeometry(FVector2D(End->NodePosX, End->NodePosY), FVector2D::ZeroVector, ToWidget->GetDesiredSize(), 1.0f);
+			StartGeom = FGeometry(FVector2D(Start->NodePosX, Start->NodePosY), FVector2D::ZeroVector, (*pFromWidget)->GetDesiredSize(), 1.0f);
+			EndGeom   = FGeometry(FVector2D(End->NodePosX,   End->NodePosY),   FVector2D::ZeroVector, (*pToWidget)->GetDesiredSize(),   1.0f);
 		}
 	}
 
 	PositionBetweenTwoNodesWithOffset(StartGeom, EndGeom, 0, 1);
+}
+
+void SEdNode_MounteaDialogueGraphEdge::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
+{
+	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
+
+	const TSharedPtr<SNode> fromWidget = CachedStartWidget.Pin();
+	const TSharedPtr<SNode> toWidget   = CachedEndWidget.Pin();
+	if (!fromWidget || !toWidget)
+		return;
+
+	UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(GraphNode);
+	if (!edgeNode)
+		return;
+
+	UEdNode_MounteaDialogueGraphNode* start = edgeNode->GetStartNode();
+	UEdNode_MounteaDialogueGraphNode* end   = edgeNode->GetEndNode();
+	if (!start || !end)
+		return;
+
+	const FGeometry startGeom(FVector2D(start->NodePosX, start->NodePosY), FVector2D::ZeroVector, fromWidget->GetDesiredSize(), 1.0f);
+	const FGeometry endGeom  (FVector2D(end->NodePosX,   end->NodePosY),   FVector2D::ZeroVector, toWidget->GetDesiredSize(),   1.0f);
+	PositionBetweenTwoNodesWithOffset(startGeom, endGeom, 0, 1);
 }
 
 void SEdNode_MounteaDialogueGraphEdge::UpdateGraphNode()
@@ -177,35 +178,28 @@ FReply SEdNode_MounteaDialogueGraphEdge::OnMouseButtonDown(const FGeometry& MyGe
 
 void SEdNode_MounteaDialogueGraphEdge::PositionBetweenTwoNodesWithOffset(const FGeometry& StartGeom, const FGeometry& EndGeom, int32 NodeIndex, int32 MaxNodes) const
 {
-	// Get a reasonable seed point (halfway between the boxes)
 	const FVector2D startCenter = FGeometryHelper::CenterOf(StartGeom);
-	const FVector2D endCenter = FGeometryHelper::CenterOf(EndGeom);
-	const FVector2D seedPoint = (startCenter + endCenter) * 0.5f;
+	const FVector2D endCenter   = FGeometryHelper::CenterOf(EndGeom);
 
-	// Find the (approximate) closest points between the two boxes
-	const FVector2D startAnchorPoint = FGeometryHelper::FindClosestPointOnGeom(StartGeom, seedPoint);
-	const FVector2D endAnchorPoint = FGeometryHelper::FindClosestPointOnGeom(EndGeom, seedPoint);
+	const FVector2D startAnchorPoint(startCenter.X, startCenter.Y + StartGeom.GetLocalSize().Y * 0.5f);
+	const FVector2D endAnchorPoint  (endCenter.X,   endCenter.Y   - EndGeom.GetLocalSize().Y   * 0.5f);
+
 	FVector2D controlPointA;
 	FVector2D controlPointB;
-	CalculateEdgeBezierControlPoints(startAnchorPoint, endAnchorPoint, controlPointA, controlPointB);
-	const FVector2D newCenter = EvaluateBezierPoint(startAnchorPoint, controlPointA, controlPointB, endAnchorPoint, 0.5f);
-	const FVector2D desiredNodeSize = GetDesiredSize();
+	const float zoom = GetOwnerPanel().IsValid() ? GetOwnerPanel()->GetZoomAmount() : 1.0f;
+	FConnectionDrawingPolicy_MounteaDialogueGraph::CalculateBezierControlPoints(startAnchorPoint, endAnchorPoint, zoom, controlPointA, controlPointB);
+
+	const FVector2D newCenter     = EvaluateBezierPoint(startAnchorPoint, controlPointA, controlPointB, endAnchorPoint, 0.5f);
+	const FVector2D desiredSize   = GetDesiredSize();
 	FVector2D deltaNormal = (endAnchorPoint - startAnchorPoint).GetSafeNormal();
 	if (deltaNormal.IsNearlyZero())
 		deltaNormal = FVector2D(1.0f, 0.0f);
-	
-	// Calculate node offset in the case of multiple transitions between the same two nodes
-	// MultiNodeOffset: the offset where 0 is the centre of the transition, -1 is 1 <size of node>
-	// towards the PrevStateNode and +1 is 1 <size of node> towards the NextStateNode.
 
-	const float mutliNodeSpace = 0.2f; // Space between multiple transition nodes (in units of <size of node> )
-	const float multiNodeStep = (1.f + mutliNodeSpace); //Step between node centres (Size of node + size of node spacer)
-
-	const float multiNodeStart = -((MaxNodes - 1) * multiNodeStep) / 2.f;
+	const float multiNodeStep   = 1.2f;
+	const float multiNodeStart  = -((MaxNodes - 1) * multiNodeStep) / 2.0f;
 	const float multiNodeOffset = multiNodeStart + (NodeIndex * multiNodeStep);
 
-	// Now we need to adjust the new center by the node size, zoom factor and multi node offset
-	const FVector2D newCorner = newCenter - (0.5f * desiredNodeSize) + (deltaNormal * multiNodeOffset * desiredNodeSize.Size());
+	const FVector2D newCorner = newCenter - (0.5f * desiredSize) + (deltaNormal * multiNodeOffset * desiredSize.Size());
 
 	GraphNode->NodePosX = newCorner.X;
 	GraphNode->NodePosY = newCorner.Y;
