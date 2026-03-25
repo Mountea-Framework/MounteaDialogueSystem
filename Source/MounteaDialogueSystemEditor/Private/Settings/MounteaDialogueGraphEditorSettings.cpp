@@ -2,6 +2,8 @@
 
 #include "MounteaDialogueGraphEditorSettings.h"
 
+#include "Helpers/MounteaDialogueGraphEditorHelpers.h"
+
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphEditorSettings"
 
 UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAllowAutoGameplayTagsCheck(true)
@@ -80,9 +82,7 @@ void UMounteaDialogueGraphEditorSettings::ReportLegacyVisualSettings() const
 		FString deprecatedValue;
 		if (GConfig->GetString(section, key, deprecatedValue, configFilename))
 		{
-			UE_LOG(
-				LogTemp,
-				Warning,
+			EditorLOG_WARNING(
 				TEXT("[MounteaDialogueGraphEditorSettings] Deprecated visual key '%s' found in '%s'. This value is ignored."),
 				key,
 				*configFilename

@@ -155,26 +155,15 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineLinkGeometry(FArran
 	};
 
 	FString geometryPath = TEXT("missing");
-	UEdNode_MounteaDialogueGraphEdge* edgeInputOwner = InputPin ? Cast<UEdNode_MounteaDialogueGraphEdge>(InputPin->GetOwningNode()) : nullptr;
-	if (edgeInputOwner)
+	if (UEdNode_MounteaDialogueGraphEdge* edgeInputOwner = InputPin ? Cast<UEdNode_MounteaDialogueGraphEdge>(InputPin->GetOwningNode()) : nullptr)
 	{
 		UEdNode_MounteaDialogueGraphNode* startNode = edgeInputOwner->GetStartNode();
 		UEdNode_MounteaDialogueGraphNode* endNode = edgeInputOwner->GetEndNode();
-		UEdGraphPin* startConnectorPin = startNode ? startNode->GetOutputPin() : nullptr;
-		UEdGraphPin* endConnectorPin = endNode ? endNode->GetInputPin() : nullptr;
 
-		StartWidgetGeometry = resolveGeometryFromPin(startConnectorPin);
-		EndWidgetGeometry = resolveGeometryFromPin(endConnectorPin);
-
+		StartWidgetGeometry = resolveGeometryFromNode(startNode);
+		EndWidgetGeometry = resolveGeometryFromNode(endNode);
 		if (StartWidgetGeometry && EndWidgetGeometry)
-			geometryPath = TEXT("pin");
-		else
-		{
-			StartWidgetGeometry = resolveGeometryFromNode(startNode);
-			EndWidgetGeometry = resolveGeometryFromNode(endNode);
-			if (StartWidgetGeometry && EndWidgetGeometry)
-				geometryPath = TEXT("node-fallback");
-		}
+			geometryPath = TEXT("node");
 	}
 	else
 	{
@@ -193,7 +182,7 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineLinkGeometry(FArran
 		const double now = FPlatformTime::Seconds();
 		if ((now - lastMissingGeometryLogTime) > 0.25)
 		{
-			UE_LOG(LogTemp, Verbose, TEXT("[DetermineLinkGeometry] Missing geometry (Path=%s, OutputNode=%s, InputNode=%s)."), *geometryPath, *outputNodeName, *inputNodeName);
+			EditorLOG_WARNING(TEXT("[DetermineLinkGeometry] Missing geometry (Path=%s, OutputNode=%s, InputNode=%s)."), *geometryPath, *outputNodeName, *inputNodeName);
 			lastMissingGeometryLogTime = now;
 		}
 	}

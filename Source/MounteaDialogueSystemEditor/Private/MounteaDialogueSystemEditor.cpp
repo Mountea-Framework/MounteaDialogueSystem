@@ -317,7 +317,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 			ImportConfig->LoadConfig(nullptr, *LegacyConfigFile);
 			ImportConfig->SaveToFile();
 			IFileManager::Get().Delete(*LegacyConfigFile);
-			UE_LOG(LogTemp, Log, TEXT("[MounteaDialogue] Migrated import config from '%s' to '%s'"),
+			EditorLOG_INFO(TEXT("[MounteaDialogue] Migrated import config from '%s' to '%s'"),
 				*LegacyConfigFile, *JsonConfigFile);
 		}
 		else

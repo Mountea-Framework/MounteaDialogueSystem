@@ -163,7 +163,7 @@ void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 	NormalizeEdgeNodes(false, migratedLinks, removedDuplicateEdges);
 
 	if (removedDuplicateEdges > 0)
-		UE_LOG(LogTemp, Warning, TEXT("[RebuildMounteaDialogueGraph] Removed %d duplicate edge node(s)."), removedDuplicateEdges);
+		EditorLOG_WARNING(TEXT("[RebuildMounteaDialogueGraph] Removed %d duplicate edge node(s)."), removedDuplicateEdges);
 
 	UMounteaDialogueGraph* dialogueGraph = GetMounteaDialogueGraph();
 
