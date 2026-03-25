@@ -9,6 +9,7 @@
 #include "SGraphPanel.h"
 #include "SNodePanel.h"
 
+#include "Consts/MounteaDialogueEditorConsts.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
@@ -45,8 +46,8 @@ void SEdNode_MounteaDialogueGraphEdge::PerformSecondPassLayout(const TMap<UObjec
 		return;
 
 	CachedEndNodeSize = (*pToWidget)->GetDesiredSize();
-	GraphNode->NodePosX = End->NodePosX + CachedEndNodeSize.X * 0.5f - 19.0f;
-	GraphNode->NodePosY = End->NodePosY - 38.0f;
+	GraphNode->NodePosX = End->NodePosX + CachedEndNodeSize.X * 0.5f - MounteaDialogueWireConsts::BubbleHalfSize;
+	GraphNode->NodePosY = End->NodePosY - MounteaDialogueWireConsts::BubbleYOffset;
 }
 
 void SEdNode_MounteaDialogueGraphEdge::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
@@ -64,8 +65,8 @@ void SEdNode_MounteaDialogueGraphEdge::Tick(const FGeometry& AllottedGeometry, c
 	if (!end)
 		return;
 
-	GraphNode->NodePosX = end->NodePosX + CachedEndNodeSize.X * 0.5f - 19.0f;
-	GraphNode->NodePosY = end->NodePosY - 38.0f;
+	GraphNode->NodePosX = end->NodePosX + CachedEndNodeSize.X * 0.5f - MounteaDialogueWireConsts::BubbleHalfSize;
+	GraphNode->NodePosY = end->NodePosY - MounteaDialogueWireConsts::BubbleYOffset;
 }
 
 void SEdNode_MounteaDialogueGraphEdge::UpdateGraphNode()
@@ -91,8 +92,8 @@ void SEdNode_MounteaDialogueGraphEdge::UpdateGraphNode()
 				.OnMouseButtonDown(this, &SEdNode_MounteaDialogueGraphEdge::OnMouseButtonDown)
 				[
 					SNew(SBox)
-					.WidthOverride(38.0f)
-					.HeightOverride(38.0f)
+					.WidthOverride(MounteaDialogueWireConsts::BubbleSize)
+					.HeightOverride(MounteaDialogueWireConsts::BubbleSize)
 					[
 						SNew(SOverlay)
 						+ SOverlay::Slot()

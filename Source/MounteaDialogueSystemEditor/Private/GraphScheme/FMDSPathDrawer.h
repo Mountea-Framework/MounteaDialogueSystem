@@ -13,6 +13,7 @@
 
 #include "CoreMinimal.h"
 #include "ConnectionDrawingPolicy.h"
+#include "Consts/MounteaDialogueEditorConsts.h"
 
 class FMDSPathDrawer
 {
@@ -51,7 +52,7 @@ private:
 	float ZoomFactor;
 	int32 MaxDepth;
 
-	static constexpr float RoundRadius = 10.0f;
+	static constexpr float RoundRadius = MounteaDialogueWireConsts::RoundRadius;
 
 	FSlateWindowElementList* DrawElements;
 	const FConnectionParams* Params;

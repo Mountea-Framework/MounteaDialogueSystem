@@ -19,3 +19,23 @@ namespace MounteaDialogueConsts
 	constexpr const wchar_t* Submenu_DialogueData =		TEXT("4. Dialogue Data");
 	constexpr const wchar_t* Submenu_NodeTemplates =	TEXT("5. Node Templates");
 }
+
+namespace MounteaDialogueWireConsts
+{
+	// Wire rendering
+	constexpr float WireThickness     = 2.0f;
+	constexpr float WireGridSize      = 1.0f;
+	constexpr float MinStyleDistance  = 24.0f;
+	constexpr float RoundRadius       = 10.0f;
+
+	// Edge bubble sizing
+	constexpr float BubbleSize        = 38.0f;
+	constexpr float BubbleHalfSize    = BubbleSize * 0.5f;
+	constexpr float BubbleClearance   = 16.0f;
+
+	// Stub length = bubble height + clearance below bubble before arrowhead
+	constexpr float WireStubOffset    = BubbleSize + BubbleClearance;
+
+	// Y offset applied when placing the bubble widget above the end node
+	constexpr float BubbleYOffset     = WireStubOffset;
+}
