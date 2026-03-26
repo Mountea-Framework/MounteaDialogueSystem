@@ -94,13 +94,10 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Draw(TMap<TSharedRef<SWidget
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FGeometry& StartGeom, const FGeometry& EndGeom, const FConnectionParams& Params)
 {
-	const FVector2D startCenter = FGeometryHelper::CenterOf(StartGeom);
-	const FVector2D endCenter   = FGeometryHelper::CenterOf(EndGeom);
-
-	// Always wire from the bottom-center of the source to the top-center of the destination.
-	// FindClosestPointOnGeom would return corners for off-axis connections, misaligning the bubble.
-	const FVector2D startPoint = FGeometryHelper::FindClosestPointOnGeom(StartGeom, FVector2D(startCenter.X, startCenter.Y + 99999.0));
-	const FVector2D endPoint   = FGeometryHelper::FindClosestPointOnGeom(EndGeom,   FVector2D(endCenter.X,   endCenter.Y   - 99999.0));
+	// Resolve exact top/bottom centers directly in absolute space.
+	// This avoids extreme-value closest-point queries that introduce visible X drift at deep zoom-out.
+	const FVector2D startPoint = StartGeom.LocalToAbsolute(FVector2D(StartGeom.GetLocalSize().X * 0.5f, StartGeom.GetLocalSize().Y));
+	const FVector2D endPoint   = EndGeom.LocalToAbsolute(FVector2D(EndGeom.GetLocalSize().X * 0.5f, 0.0f));
 
 	DrawSubwayWireWithArrow(startPoint, endPoint, Params);
 }
@@ -190,8 +187,12 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineLinkGeometry(FArran
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSubwayWireWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)
 {
-	const float stubOffset = MounteaDialogueWireConsts::WireStubOffset * ZoomFactor;
-	const float gridStep   = MounteaDialogueWireConsts::WireGridSize   * ZoomFactor;
+	// Keep wire construction numerically stable at extreme zoom-out levels.
+	const float safeZoom = FMath::Max(ZoomFactor, 0.25f);
+	const float stubOffset = MounteaDialogueWireConsts::WireStubOffset * safeZoom;
+	const float gridStep   = FMath::Max(MounteaDialogueWireConsts::WireGridSize * safeZoom, 0.1f);
+	const float minStyleDistance = FMath::Max(MounteaDialogueWireConsts::MinStyleDistance * safeZoom, 1.0f);
+	const bool bExtremeZoomOut = ZoomFactor < 0.35f;
 
 	auto snapToGrid = [gridStep](const FVector2D& V) -> FVector2D
 	{
@@ -201,8 +202,13 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSubwayWireWithArrow(cons
 		);
 	};
 
-	FVector2D wireStart = snapToGrid(StartPoint + FVector2D(0.0f,  stubOffset));
-	FVector2D wireEnd   = snapToGrid(EndPoint   - FVector2D(0.0f,  stubOffset));
+	FVector2D wireStart = StartPoint + FVector2D(0.0f, stubOffset);
+	FVector2D wireEnd   = EndPoint   - FVector2D(0.0f, stubOffset);
+	if (!bExtremeZoomOut)
+	{
+		wireStart = snapToGrid(wireStart);
+		wireEnd   = snapToGrid(wireEnd);
+	}
 
 	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
 		StartPoint, FVector2D::ZeroVector, wireStart, FVector2D::ZeroVector,
@@ -215,10 +221,44 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSubwayWireWithArrow(cons
 	FMDSPathDrawer drawer(WireLayerID, ZoomFactor, DrawElementsList, Params);
 
 	const float dist = FVector2D::Distance(wireStart, wireEnd);
-	if (dist < MounteaDialogueWireConsts::MinStyleDistance * ZoomFactor)
+	const bool bBackward = wireEnd.Y < wireStart.Y;
+
+	if (bExtremeZoomOut)
+	{
+		// At tiny zoom scales, use deterministic orthogonal routing to avoid zig-zag and drift.
+		const float midY = (wireStart.Y + wireEnd.Y) * 0.5f;
+		const FVector2D firstTurn(wireStart.X, midY);
+		const FVector2D secondTurn(wireEnd.X, midY);
+
+		FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
+			wireStart, FVector2D::ZeroVector, firstTurn, FVector2D::ZeroVector,
+			Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+
+		FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
+			firstTurn, FVector2D::ZeroVector, secondTurn, FVector2D::ZeroVector,
+			Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+
+		FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
+			secondTurn, FVector2D::ZeroVector, wireEnd, FVector2D::ZeroVector,
+			Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+	}
+	else if (dist < minStyleDistance)
 	{
 		FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
 			wireStart, FVector2D::ZeroVector, wireEnd, FVector2D::ZeroVector,
+			Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+	}
+	else if (bBackward)
+	{
+		const FVector2D delta = wireEnd - wireStart;
+		// Keep backward-link curvature gentle; aggressive tangents create visible hooks at deep zoom.
+		const float horizontalSpan = FMath::Abs(delta.X);
+		const float maxAllowedTangent = FVector2D::Distance(wireStart, wireEnd) * 0.35f;
+		const float tangentLen = FMath::Min(horizontalSpan * 0.35f, maxAllowedTangent);
+		const FVector2D tangent(FMath::Sign(delta.X) * tangentLen, 0.0f);
+
+		FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
+			wireStart, tangent, wireEnd, tangent,
 			Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
 	}
 	else
@@ -229,7 +269,11 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSubwayWireWithArrow(cons
 	if (ArrowImage)
 	{
 		const FVector2D arrowDirection    = FVector2D(0.0f, 1.0f);
-		const FVector2D arrowSize         = ArrowImage->ImageSize * ZoomFactor;
+		const FVector2D rawArrowSize      = ArrowImage->ImageSize * safeZoom;
+		const FVector2D arrowSize(
+			FMath::Max(rawArrowSize.X, 4.0f),
+			FMath::Max(rawArrowSize.Y, 4.0f)
+		);
 		const FVector2D arrowCenter       = EndPoint - (arrowDirection * (arrowSize.X * 0.50f));
 		const FVector2D arrowDrawPosition = arrowCenter - (arrowSize * 0.5f);
 		const float arrowAngle            = FMath::Atan2(arrowDirection.Y, arrowDirection.X);
