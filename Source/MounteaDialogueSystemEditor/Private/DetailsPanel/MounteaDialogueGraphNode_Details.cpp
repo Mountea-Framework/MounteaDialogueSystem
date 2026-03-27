@@ -620,9 +620,24 @@ void FMounteaDialogueGraphNode_Details::CustomizeDetails(IDetailLayoutBuilder& D
 		EditingDialogueNode->PreviewsUpdated.BindSP(this, &FMounteaDialogueGraphNode_Details::ResetTexts);
 
 		PreviewRows = SNew(SScrollBox).ToolTipText(LOCTEXT("FMounteaDialogueGraphNode_Details_PreviewsTootlip", "Localized preview of selected Node's Dialogue Data."));
-		TArray<FText> PreviewTexts = EditingDialogueNode->GetPreviews();
+		auto GetPreviewTextsLambda = [EditingDialogueNode]() -> TArray<FText>
+		{
+			if (!IsValid(EditingDialogueNode))
+				return TArray<FText>();
+			const auto dialogueData = IMounteaDialogueSpeechDataInterface::Execute_GetSpeechData(EditingDialogueNode);
+			if (!dialogueData.IsValid())
+				return TArray<FText>();
+			TArray<FText> previewTexts;
+			previewTexts.Reserve(dialogueData.DialogueRowData.Num());
+			for (const auto& dialogueRowData : dialogueData.DialogueRowData)
+			{
+				previewTexts.Add(dialogueRowData.RowText);
+			}
+			return previewTexts;
+		};
+		TArray<FText> previewTexts = GetPreviewTextsLambda();
 		
-		MakePreviewsScrollBox(PreviewTexts);
+		MakePreviewsScrollBox(previewTexts);
 	
 		IDetailCategoryBuilder& PreviewCategoryBuilder = DetailBuilder.EditCategory(TEXT("Previews"), FText::GetEmpty(), ECategoryPriority::Uncommon);
 		PreviewCategoryBuilder.AddCustomRow(LOCTEXT("MounteaDialogueGraphNode_Details_Preview", "Node Dialogue Preview"), false)
