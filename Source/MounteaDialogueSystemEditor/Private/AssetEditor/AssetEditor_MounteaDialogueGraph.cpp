@@ -22,6 +22,7 @@
 #include "Framework/Notifications/NotificationManager.h"
 #include "GraphScheme/AssetGraphScheme_MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
+#include "Helpers/MounteaDialogueNodeSpacingUtils.h"
 #include "Layout/AssetEditorTabs.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemEditorBFC.h"
@@ -1170,6 +1171,7 @@ void FAssetEditor_MounteaDialogueGraph::AutoArrange()
 	if (LayoutStrategy != nullptr)
 	{
 		LayoutStrategy->Layout(EdGraph);
+		MounteaDialogueNodeSpacingUtils::EnforceMinimumParentChildYSpacing(EdGraph, 12);
 		LayoutStrategy->ConditionalBeginDestroy();
 	}
 	else

@@ -13,6 +13,7 @@
 #include "EditorStyle/MounteaDialogueGraphVisualTokens.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Helpers/MounteaDialogueNodeSpacingUtils.h"
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
@@ -134,6 +135,18 @@ void SEdNode_MounteaDialogueGraphNode::OnMouseEnter(const FGeometry& MyGeometry,
 void SEdNode_MounteaDialogueGraphNode::OnMouseLeave(const FPointerEvent& MouseEvent)
 {
 	SGraphNode::OnMouseLeave(MouseEvent);
+}
+
+void SEdNode_MounteaDialogueGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
+{
+	FVector2D adjustedPosition = NewPosition;
+
+	const UEdNode_MounteaDialogueGraphNode* dialogueNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode);
+	float requiredTopY = 0.0f;
+	if (dialogueNode && MounteaDialogueNodeSpacingUtils::ComputeRequiredChildTopY(dialogueNode, requiredTopY))
+		adjustedPosition.Y = FMath::Max(adjustedPosition.Y, requiredTopY);
+
+	SGraphNode::MoveTo(adjustedPosition, NodeFilter, bMarkDirty);
 }
 
 void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()

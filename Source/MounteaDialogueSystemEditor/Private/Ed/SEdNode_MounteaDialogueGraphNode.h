@@ -19,6 +19,7 @@ public:
 
 	virtual void OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 	virtual void OnMouseLeave(const FPointerEvent& MouseEvent) override;
+	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty) override;
 
 	virtual void UpdateGraphNode() override;
 	virtual void CreatePinWidgets() override;
