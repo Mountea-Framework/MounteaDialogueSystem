@@ -39,3 +39,10 @@ namespace MounteaDialogueWireConsts
 	// Y offset applied when placing the bubble widget above the end node
 	constexpr float BubbleYOffset     = WireStubOffset;
 }
+
+namespace MounteaGraphLayoutStrategy
+{
+	constexpr int32 MaxIterations = 200;
+	constexpr int32 OptimalHorizontalDistance = 300;
+	constexpr int32 OptimalVerticalDistance = 200;
+}
