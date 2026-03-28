@@ -15,9 +15,43 @@
 #include "Sound/SoundBase.h"
 
 #if WITH_EDITOR
+#include "Engine/BlueprintGeneratedClass.h"
 #include "Engine/SCS_Node.h"
 #include "Engine/SimpleConstructionScript.h"
 #endif
+
+namespace
+{
+	template <typename TComponent>
+	void AddUniqueComponentPointer(TArray<TComponent*>& InOutComponents, TSet<const UObject*>& InOutSeen, TComponent* Candidate)
+	{
+		if (!IsValid(Candidate))
+			return;
+
+		if (InOutSeen.Contains(Candidate))
+			return;
+
+		InOutSeen.Add(Candidate);
+		InOutComponents.Add(Candidate);
+	}
+
+	UClass* ResolveTargetActorClass(const UActorComponent* Component)
+	{
+		if (!IsValid(Component))
+			return nullptr;
+
+		if (const AActor* ownerActor = Component->GetOwner())
+			return ownerActor->GetClass();
+
+		if (const AActor* outerClass = Cast<AActor>(Component->GetOuter()))
+			return outerClass->GetClass();
+
+		if (const UClass* outerClass = Cast<UClass>(Component->GetOuter()))
+			return outerClass->IsChildOf(AActor::StaticClass()) ? const_cast<UClass*>(outerClass) : nullptr;
+
+		return nullptr;
+	}
+}
 
 UMounteaDialogueParticipant::UMounteaDialogueParticipant()
 	: DefaultParticipantState(EDialogueParticipantState::EDPS_Enabled)
@@ -169,54 +203,82 @@ TArray<FName> UMounteaDialogueParticipant::GetAvailableParticipants() const
 	return returnValue.Array();
 }
 
-TArray<FName> UMounteaDialogueParticipant::GetAvailableAudioComponents() const
+TArray<FName> UMounteaDialogueParticipant::GetAvailableAudioComponentsNames() const
 {
-	TArray<FName> returnValue;
+	const TArray<UAudioComponent*> audioComponents = GetAvailableAudioComponents();
 
-	const AActor* target = Execute_GetOwningActor(this);
-	if (!IsValid(target))
+	TArray<FName> returnValue;
+	returnValue.Reserve(audioComponents.Num());
+
+	TSet<FName> uniqueNames;
+	uniqueNames.Reserve(audioComponents.Num());
+
+	for (const UAudioComponent* audioComponent : audioComponents)
+	{
+		if (!IsValid(audioComponent))
+		continue;
+
+		FString audioCompName = audioComponent->GetFName().ToString();
+		audioCompName.RemoveFromEnd(TEXT("_GEN_VARIABLE"));
+
+		const FName finalName(*audioCompName);
+		if (!uniqueNames.Contains(finalName))
+		{
+			uniqueNames.Add(finalName);
+			returnValue.Add(finalName);
+		}
+	}
+
+	return returnValue;
+}
+
+TArray<UAudioComponent*> UMounteaDialogueParticipant::GetAvailableAudioComponents() const
+{
+	TArray<UAudioComponent*> returnValue;
+	TSet<const UObject*> ceenComponents;
+
+	if (const AActor* ownerActor = GetOwner())
+	{
+		TArray<UAudioComponent*> instanceComponents;
+		ownerActor->GetComponents<UAudioComponent>(instanceComponents);
+		for (UAudioComponent* audioComponent : instanceComponents)
+		{
+			AddUniqueComponentPointer(returnValue, ceenComponents, audioComponent);
+		}
+	}
+
+	UClass* rargetClass = ResolveTargetActorClass(this);
+	if (!IsValid(rargetClass))
 		return returnValue;
 
-	TArray<UAudioComponent*> components;
-	target->GetComponents<UAudioComponent>(components);
+	if (AActor* actorCDO = rargetClass->GetDefaultObject<AActor>())
+	{
+		TArray<UAudioComponent*> defaultComponents;
+		actorCDO->GetComponents<UAudioComponent>(defaultComponents);
+		for (UAudioComponent* audioComponent : defaultComponents)
+		{
+			AddUniqueComponentPointer(returnValue, ceenComponents, audioComponent);
+		}
+	}
 
 #if WITH_EDITOR
-	if (UBlueprintGeneratedClass* bpClass = Cast<UBlueprintGeneratedClass>(target->GetClass()))
+	for (UBlueprintGeneratedClass* BPClass = Cast<UBlueprintGeneratedClass>(rargetClass); BPClass; BPClass = Cast<UBlueprintGeneratedClass>(BPClass->GetSuperClass()))
 	{
-		if (bpClass->SimpleConstructionScript)
+		if (!BPClass->SimpleConstructionScript)
+			continue;
+
+		const TArray<USCS_Node*>& scriptNodes = BPClass->SimpleConstructionScript->GetAllNodes();
+		for (const USCS_Node* scriptNode : scriptNodes)
 		{
-			const TArray<USCS_Node*>& nodes = bpClass->SimpleConstructionScript->GetAllNodes();
+			if (!scriptNode)
+				continue;
 
-			for (const auto& node : nodes)
-			{
-				if (!node) 
-					continue;
-
-				const auto componentTemplate = node->GetActualComponentTemplate(bpClass);
-				if (!IsValid(componentTemplate))
-					continue;
-				
-				const auto audioComponent = Cast<UAudioComponent>(componentTemplate);
-				if (!IsValid(audioComponent))
-					continue;
-				components.Add(audioComponent);
-			}
+			UActorComponent* componentTemplate = scriptNode->GetActualComponentTemplate(BPClass);
+			UAudioComponent* audioTemplate = Cast<UAudioComponent>(componentTemplate);
+			AddUniqueComponentPointer(returnValue, ceenComponents, audioTemplate);
 		}
 	}
 #endif
-
-	returnValue.Reserve(components.Num());
-
-	Algo::Transform(
-		components,
-		returnValue,
-		[](const UAudioComponent* comp)
-		{
-			FString name = comp->GetFName().ToString();
-			name.RemoveFromEnd(TEXT("_GEN_VARIABLE"));
-			return FName(*name);
-		}
-	);
 
 	return returnValue;
 }
@@ -466,7 +528,6 @@ void UMounteaDialogueParticipant::OnRep_ParticipantState()
 	
 	UpdateParticipantTick();
 }
-
 
 void UMounteaDialogueParticipant::SetDialogueGraph_Server_Implementation(UMounteaDialogueGraph* NewGraph)
 {

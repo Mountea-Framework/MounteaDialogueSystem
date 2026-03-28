@@ -19,7 +19,7 @@ class UMounteaDialogueGraphNode_DialogueNodeBase;
  */
 UCLASS(ClassGroup=(Mountea), Blueprintable, 
 	hideCategories=(Collision, AssetUserData, Cooking, Activation, Rendering, Sockets), 
-	AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"), 
+	AutoExpandCategories=("Mountea", "Dialogue"), 
 	meta=(BlueprintSpawnableComponent, DisplayName = "Mountea Dialogue Participant"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueParticipant : public UActorComponent, public IMounteaDialogueParticipantInterface, public IMounteaDialogueTickableObject
 {
@@ -143,7 +143,7 @@ protected:
 	 */
 	UPROPERTY(EditAnywhere, Category="Dialogue|Participant", 
 		meta=(NoResetToDefault),
-		meta=(GetOptions="GetAvailableAudioComponents"))
+		meta=(GetOptions="GetAvailableAudioComponentsNames"))
 	FName AudioComponentIdentification;
 	
 	/**
@@ -184,7 +184,10 @@ public:
 	TArray<FName> GetAvailableParticipants() const;
 	
 	UFUNCTION()
-	TArray<FName> GetAvailableAudioComponents() const;
+	TArray<FName> GetAvailableAudioComponentsNames() const;
+
+	UFUNCTION()
+	TArray<UAudioComponent*> GetAvailableAudioComponents() const;
 
 #pragma region EventVariables
 	
@@ -292,7 +295,10 @@ public:
 
 	virtual FGameplayTag GetParticipantTag_Implementation() const override
 	{ return ParticipantTag; };
-	
+
+	virtual int32 GetParticipantType_Implementation() const override
+	{ return ParticipantData ? ParticipantData->ParticipantType : 0; };
+
 	virtual void ProcessDialogueCommand_Implementation(const FString& Command, UObject* Payload) override
 	{ ParticipantCommandRequested.Broadcast(Command, Payload); };
 
