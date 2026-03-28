@@ -29,9 +29,10 @@ class UMounteaDialogueManager;
  * @see FMounteaDialogueContextPayload
  * @see UMounteaDialogueWorldSubsystem
  */
-UCLASS(ClassGroup=(Mountea),
-	HideCategories=("Cooking","Collision","Activation","Rendering","Sockets"),
-	meta=(DisplayName="Mountea Dialogue Session"))
+UCLASS(ClassGroup=(Mountea), Blueprintable, 
+	hideCategories=(Collision, AssetUserData, Cooking, Activation, Rendering, Sockets), 
+	AutoExpandCategories=("Mountea", "Dialogue"), 
+	meta=(BlueprintSpawnableComponent, DisplayName = "Mountea Dialogue Session"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSession : public UActorComponent
 {
 	GENERATED_BODY()
