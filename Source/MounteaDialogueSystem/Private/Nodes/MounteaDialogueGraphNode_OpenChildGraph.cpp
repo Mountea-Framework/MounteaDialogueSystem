@@ -11,8 +11,10 @@
 
 #include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
 
+#include "Data/MounteaDialogueContext.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Misc/DataValidation.h"
 
@@ -42,12 +44,55 @@ void UMounteaDialogueGraphNode_OpenChildGraph::ProcessNode_Implementation(const 
 
 	if (!Manager || !Manager.GetObject())
 	{
-		LOG_WARNING(TEXT("[Open Child Graph Node] Invalid Dialogue Manager, node cannot finalize processing."));
+		LOG_WARNING(TEXT("[Open Child Graph Node] Invalid Dialogue Manager."));
 		return;
 	}
 
-	LOG_WARNING(TEXT("[Open Child Graph Node] Not implemented yet. Node will finalize as terminal placeholder."));
-	Manager->Execute_NodeProcessed(Manager.GetObject());
+	if (!TargetDialogue.IsValid())
+	{
+		LOG_ERROR(TEXT("[Open Child Graph Node] No target dialogue assigned on node '%s'. Terminating."), *GetName());
+		Manager->Execute_NodeProcessed(Manager.GetObject());
+		return;
+	}
+
+	UMounteaDialogueGraph* childGraph = TargetDialogue.LoadSynchronous();
+	if (!IsValid(childGraph))
+	{
+		LOG_ERROR(TEXT("[Open Child Graph Node] Failed to load target dialogue on node '%s'. Terminating."), *GetName());
+		Manager->Execute_NodeProcessed(Manager.GetObject());
+		return;
+	}
+
+	UMounteaDialogueContext* context = Manager->Execute_GetDialogueContext(Manager.GetObject());
+	if (!IsValid(context))
+	{
+		LOG_ERROR(TEXT("[Open Child Graph Node] Invalid Dialogue Context."));
+		Manager->Execute_NodeProcessed(Manager.GetObject());
+		return;
+	}
+
+	UMounteaDialogueGraphNode* startNode = childGraph->GetStartNode();
+	if (!IsValid(startNode))
+	{
+		LOG_ERROR(TEXT("[Open Child Graph Node] Target dialogue '%s' has no start node."), *childGraph->GetName());
+		Manager->Execute_NodeProcessed(Manager.GetObject());
+		return;
+	}
+
+	UMounteaDialogueGraphNode* firstNode = UMounteaDialogueSystemBFC::GetFirstChildNode(startNode);
+	if (!IsValid(firstNode))
+	{
+		LOG_ERROR(TEXT("[Open Child Graph Node] Target dialogue '%s' start node has no children."), *childGraph->GetName());
+		Manager->Execute_NodeProcessed(Manager.GetObject());
+		return;
+	}
+
+	TArray<UMounteaDialogueGraphNode*> allowedChildren = UMounteaDialogueSystemBFC::GetAllowedChildNodes(firstNode);
+	context->SetDialogueContext(firstNode, allowedChildren);
+	context->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetSpeechData(firstNode));
+	context->UpdateActiveDialogueRowDataIndex(0);
+
+	Manager->Execute_PrepareNode(Manager.GetObject());
 }
 
 #if WITH_EDITOR
