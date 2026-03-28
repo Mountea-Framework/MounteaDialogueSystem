@@ -37,7 +37,7 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode_Implementation(cons
 			GetWorld()->GetTimerManager().ClearTimer(Manager->GetDialogueRowTimerHandle());
 
 			const FDialogueRow DialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(Context->ActiveNode);
-			if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.DialogueRowData.IsValidIndex(Context->GetActiveDialogueRowDataIndex()))
+	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.RowData.IsValidIndex(Context->GetActiveDialogueRowDataIndex()))
 			{
 				Context->UpdateActiveDialogueRow(DialogueRow);
 				Context->UpdateActiveDialogueRowDataIndex(Context->ActiveDialogueRowDataIndex);
@@ -98,7 +98,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNodeRuntime_Implementat
 	if (SelectedRow == nullptr)
 		return false;
 
-	if (SelectedRow && SelectedRow->DialogueRowData.Num() == 0)
+	if (SelectedRow && SelectedRow->RowData.Num() == 0)
 		return false;
 	
 	return true;
@@ -189,7 +189,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(FDataValidationCon
 
 	if (SelectedRow)
 	{
-		if (SelectedRow->DialogueRowData.Num() == 0)
+	if (SelectedRow->RowData.Num() == 0)
 		{
 			bResult = false;
 
@@ -241,7 +241,7 @@ TArray<FText> UMounteaDialogueGraphNode_DialogueNodeBase::GetPreviews() const
 	const auto Row = UMounteaDialogueSystemBFC::GetDialogueRow( this );
 	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(Row))
 	{
-		for (auto Itr : Row.DialogueRowData)
+	for (auto Itr : Row.RowData)
 		{
 			ReturnValues.Add( Itr.RowText );
 		}

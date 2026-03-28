@@ -68,4 +68,21 @@ public:
 	{
 		return ContextPayload;
 	}
+
+	/**
+	 * Server-only. Writes a new payload, increments ContextVersion, marks the property dirty
+	 * for push-model replication, and calls NotifyLocalManagers for the listen-server host path.
+	 *
+	 * @param NewPayload  The fully constructed payload to write.
+	 */
+	void WriteContextPayload(FMounteaDialogueContextPayload NewPayload);
+
+private:
+
+	/**
+	 * Iterates all managers registered in UMounteaDialogueWorldSubsystem and calls
+	 * OnContextPayloadUpdated on those whose owning actor is locally controlled.
+	 * Used on the listen-server host because OnRep does not fire on the server side.
+	 */
+	void NotifyLocalManagers() const;
 };

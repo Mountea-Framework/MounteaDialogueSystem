@@ -10,7 +10,11 @@
 // For more information, visit: https://mountea.tools
 
 #include "Components/MounteaDialogueSession.h"
+#include "Components/MounteaDialogueManager.h"
+#include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Net/UnrealNetwork.h"
+#include "Net/Core/PushModel/PushModel.h"
+#include "Subsystem/MounteaDialogueWorldSubsystem.h"
 
 UMounteaDialogueSession::UMounteaDialogueSession()
 {
@@ -27,10 +31,50 @@ void UMounteaDialogueSession::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(UMounteaDialogueSession, ContextPayload);
+	FDoRepLifetimeParams Params;
+	Params.bIsPushBased = true;
+	DOREPLIFETIME_WITH_PARAMS_FAST(UMounteaDialogueSession, ContextPayload, Params);
 }
 
 void UMounteaDialogueSession::OnRep_ContextPayload()
 {
-	// Stage 2 implementation: iterate registered managers and call OnContextPayloadUpdated
+	NotifyLocalManagers();
+}
+
+void UMounteaDialogueSession::WriteContextPayload(FMounteaDialogueContextPayload NewPayload)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority())
+		return;
+
+	NewPayload.ContextVersion = ContextPayload.ContextVersion + 1;
+	ContextPayload = MoveTemp(NewPayload);
+	MARK_PROPERTY_DIRTY_FROM_NAME(UMounteaDialogueSession, ContextPayload, this);
+
+	NotifyLocalManagers();
+}
+
+void UMounteaDialogueSession::NotifyLocalManagers() const
+{
+	UWorld* world = GetWorld();
+	if (!world)
+		return;
+
+	UMounteaDialogueWorldSubsystem* subsystem = world->GetSubsystem<UMounteaDialogueWorldSubsystem>();
+	if (!subsystem)
+		return;
+
+	for (UMounteaDialogueManager* manager : subsystem->GetRegisteredManagers())
+	{
+		if (!IsValid(manager))
+			continue;
+
+		const AActor* ownerActor = manager->GetOwner();
+		if (!IsValid(ownerActor))
+			continue;
+
+		if (!UMounteaDialogueSystemBFC::IsLocalPlayer(ownerActor))
+			continue;
+
+		manager->OnContextPayloadUpdated(ContextPayload);
+	}
 }

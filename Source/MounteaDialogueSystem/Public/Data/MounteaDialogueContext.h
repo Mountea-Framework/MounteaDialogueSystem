@@ -24,7 +24,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueContextUpdatedFromBlueprint
  * 
  * In Dialogue Manager Component is used as Transient object, which is nullified once Dialogue ends and is never saved.
  */
-UCLASS()
+UCLASS(Transient)
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueContext : public UObject
 {
 	GENERATED_BODY()
@@ -39,7 +39,7 @@ public:
 	 * ❔ Answer Node sets this value to Player Participant.
 	 * ❗ Might be invalid
 	 */
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TScriptInterface<IMounteaDialogueParticipantInterface> ActiveDialogueParticipant;
 	
 	/**
@@ -48,26 +48,26 @@ public:
 	 * This is the Participant who represent the Player.
 	 * ❗ Might be invalid
 	 */
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TScriptInterface<IMounteaDialogueParticipantInterface> PlayerDialogueParticipant;
 
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant;
 
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipants;
 	
 	/**
 	 * Pointer to the Node which is currently active.
 	 * ❗ Might be null
 	 */
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TObjectPtr<UMounteaDialogueGraphNode> ActiveNode = nullptr;
 
 	/**
 	 * Keeps info about the Previous Active Node.
 	 */
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	FGuid PreviousActiveNode = FGuid::NewGuid();
 	
 	/**
@@ -77,22 +77,22 @@ public:
 	 * ❔ Filter is done by 'CanStartNode', which can have its own logic and can be driven by Decorators as well.
 	 * ❗ Might be empty
 	 */
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	TArray<TObjectPtr<UMounteaDialogueGraphNode>> AllowedChildNodes;
 
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	FDataTableRowHandle ActiveDialogueTableHandle;
 	
 	/**
 	 * Active Dialogue Row from Active Node. 
 	 */
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	FDialogueRow ActiveDialogueRow;
 	
 	/**
 	 * Index of currently used Dialogue Row Data row.
 	 */
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	int32 ActiveDialogueRowDataIndex = 0;
 	
 	/**
@@ -104,7 +104,7 @@ public:
 	TArray<FDialogueTraversePath> TraversedPath;
 
 	// Should be the last command provided on auth. side. Could be outdated on clients! Use with caution!
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
 	FString LastWidgetCommand;
 
 public:
@@ -270,11 +270,6 @@ public:
 	virtual bool RemoveDialogueParticipantsBP(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& NewParticipants);
 	
 	FDialogueContextUpdatedFromBlueprint DialogueContextUpdatedFromBlueprint;
-
-private:
-
-	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual bool IsSupportedForNetworking() const override {return true;};
 
 public:
 

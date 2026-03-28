@@ -57,5 +57,12 @@ public:
 	virtual FText GetNodeCategory_Implementation() const override;
 	virtual FString GetNodeDocumentationLink_Implementation() const override
 	{ return TEXT("https://mountea.tools/docs/DialogueSystem/DialogueNodes/OpenChildGraphNode/"); };
+
+	virtual bool ValidateNode(FDataValidationContext& Context, const bool RichFormat) const override;
+	
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+
+private:
+	bool ValidateTargetDialogueReference(FDataValidationContext& Context, const bool RichFormat) const;
 #endif
 };

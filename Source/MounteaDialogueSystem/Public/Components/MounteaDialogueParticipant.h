@@ -44,7 +44,8 @@ public:
 	 * 
 	 * @return The found audio component, or nullptr if not found.
  	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", 
+		meta=(CustomTag="MounteaK2Getter"))
 	UAudioComponent* FindAudioComponent() const;
 	
 	/**
@@ -53,7 +54,8 @@ public:
 	 * @param Arg The Name to search for.
 	 * @return The found audio component, or nullptr if not found.
  	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", 
+		meta=(CustomTag="MounteaK2Getter"))
 	UAudioComponent* FindAudioComponentByName(const FName& Arg) const;
 	
 	/**
@@ -62,7 +64,8 @@ public:
 	 * @param Arg The tag to search for.
 	 * @return The found audio component, or nullptr if not found.
  	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", 
+		meta=(CustomTag="MounteaK2Getter"))
 	UAudioComponent* FindAudioComponentByTag(const FName& Arg) const;
 	
 	virtual void PlayParticipantVoice_Implementation(USoundBase* ParticipantVoice) override;
@@ -123,7 +126,8 @@ protected:
 	* ❗ In order to start Dialogue, this value must not be Disabled.
 	* ❔ Can be updated using SetDialogueParticipantState function.
 	*/
-	UPROPERTY(ReplicatedUsing=OnRep_ParticipantState, Transient, VisibleAnywhere,  Category="Dialogue|Participant",  meta=(NoResetToDefault))
+	UPROPERTY(ReplicatedUsing=OnRep_ParticipantState, Transient, VisibleAnywhere,  Category="Dialogue|Participant",
+		meta=(NoResetToDefault))
 	EDialogueParticipantState ParticipantState;
 
 	/**
@@ -146,7 +150,8 @@ protected:
 	 * Audio Component for Dialogue Participant Voice.
 	 * ❗ Is populated by FindAudioComponent is called.
 	 */
-	UPROPERTY(SaveGame, VisibleAnywhere, Category="Dialogue|Participant", AdvancedDisplay, meta=(DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Dialogue|Participant", AdvancedDisplay, 
+		meta=(DisplayThumbnail=false, NoResetToDefault))
 	TObjectPtr<UAudioComponent> AudioComponent = nullptr;
 	
 	/**
@@ -155,14 +160,16 @@ protected:
 	 * If this value is selected, this Participant's Dialogue will start from Selected Node, if valid!
 	 * Otherwise it will start from Start Node of the Graph.
 	 */
-	UPROPERTY(Replicated, SaveGame, VisibleAnywhere, Category="Dialogue|Participant", AdvancedDisplay, meta=(DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(Replicated, SaveGame, VisibleAnywhere, Category="Dialogue|Participant", AdvancedDisplay, 
+		meta=(DisplayThumbnail=false, NoResetToDefault))
 	TObjectPtr<UMounteaDialogueGraphNode> StartingNode = nullptr;
 
 	/**
 	 * Contains mapped list of Traversed Nodes by GUIDs.
 	 * To update Performance, this Path is updated only once Dialogue has finished. Temporary Path is stored in Dialogue Context.
 	 */
-	UPROPERTY(Replicated, SaveGame, VisibleAnywhere, Category="Dialogue|Participant", AdvancedDisplay, meta=(NoResetToDefault))
+	UPROPERTY(Replicated, SaveGame, VisibleAnywhere, Category="Dialogue|Participant", AdvancedDisplay, 
+		meta=(NoResetToDefault))
 	TArray<FDialogueTraversePath> TraversedPath;
 
 private:

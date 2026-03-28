@@ -11,10 +11,13 @@ class IMounteaDialogueManagerInterface;
 struct FMounteaDialogueContextReplicatedStruct;
 
 /**
- * Component that enables network synchronization for Mountea Dialogue Managers and Participants.
- * Handles RPC routing through PlayerController's network connection and manages dialogue manager registration and updates to participants.
+ * @deprecated Use server-authoritative RPCs on UMounteaDialogueManager instead.
+ * RPC routing through PlayerController is replaced by direct Server Reliable RPCs on the manager component.
+ * This component will be removed in a future version.
  */
-UCLASS(ClassGroup=(Mountea), Blueprintable, AutoExpandCategories=("Mountea","Dialogue","Mountea|Dialogue"),  meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Dialogue Sync"))
+UCLASS(ClassGroup=(Mountea), Blueprintable, AutoExpandCategories=("Mountea","Dialogue","Mountea|Dialogue"),
+	meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Net Sync (Deprecated)",
+		DeprecatedNode, DeprecationMessage="NetSync is replaced by direct Server RPCs on UMounteaDialogueManager. Remove this component."))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDialogueNetSync : public UActorComponent
 {
 	GENERATED_BODY()

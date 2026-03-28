@@ -4,8 +4,6 @@
 
 #include "TimerManager.h"
 #include "Blueprint/GameViewportSubsystem.h"
-#include "Components/MounteaDialogueDialogueNetSync.h"
-
 #include "Graph/MounteaDialogueGraph.h"
 
 #include "Data/MounteaDialogueContext.h"
@@ -45,41 +43,24 @@ void UMounteaDialogueManager::BeginPlay()
 	
 	ManagerState = Execute_GetDefaultManagerState(this);
 	
-	if (IsAuthority())
+	if (GetWorld())
 	{
-		if (GetWorld())
-		{
-			auto dialogueSubsystem = GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>();
-			dialogueSubsystem->RegisterManager(this);
-		}
-		else 
-			LOG_ERROR(TEXT("[BeginPlay] No World Found!"))
+		auto* dialogueSubsystem = GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>();
+		dialogueSubsystem->RegisterManager(this);
 	}
-	
-	CalculateManagerType();
-	
+	else
+		LOG_ERROR(TEXT("[BeginPlay] No World Found!"))
+
 	// Force replicate Owner to avoid setup issues with less experienced users
 	const auto owningActor = GetOwner();
 	if (IsValid(owningActor) && !owningActor->GetIsReplicated() && GetIsReplicated())
 		GetOwner()->SetReplicates(true);
-	
-	if (IsAuthority())
+
+	if (UMounteaDialogueSystemBFC::IsServer(GetOwner()))
 		OnDialogueStartRequestedResult.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueStartRequestReceived);
 
 	OnDialogueFailed.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueFailed);
 
-	// Binding Broadcasting Events
-	if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
-	{
-		OnDialogueStarted.AddUniqueDynamic(this, &UMounteaDialogueManager::RequestBroadcastContext);
-		OnDialogueClosed.AddUniqueDynamic(this, &UMounteaDialogueManager::RequestBroadcastContext);
-	
-		OnDialogueNodeSelected.AddUniqueDynamic(this, &UMounteaDialogueManager::RequestBroadcastContext);
-		OnDialogueNodeFinished.AddUniqueDynamic(this, &UMounteaDialogueManager::RequestBroadcastContext);
-
-		OnDialogueRowStarted.AddUniqueDynamic(this, &UMounteaDialogueManager::RequestBroadcastContext);
-		OnDialogueRowFinished.AddUniqueDynamic(this, &UMounteaDialogueManager::RequestBroadcastContext);
-	}
 }
 
 void UMounteaDialogueManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -95,16 +76,13 @@ void UMounteaDialogueManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	OnDialogueRowStarted.Clear();
 	OnDialogueRowFinished.Clear();
 
-	if (IsAuthority())
+	if (GetWorld())
 	{
-		if (GetWorld())
-		{
-			auto dialogueSubsystem = GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>();
-			dialogueSubsystem->UnregisterManager(this);
-		}
-		else 
-			LOG_ERROR(TEXT("[EndPlay] No World Found!"))
+		auto* dialogueSubsystem = GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>();
+		dialogueSubsystem->UnregisterManager(this);
 	}
+	else
+		LOG_ERROR(TEXT("[EndPlay] No World Found!"))
 }
 
 AActor* UMounteaDialogueManager::GetOwningActor_Implementation() const
@@ -117,7 +95,6 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UMounteaDialogueManager, ManagerState);
-	DOREPLIFETIME(UMounteaDialogueManager, TransientDialogueContext);
 }
 
 
@@ -132,7 +109,7 @@ MounteaDialogueManagerHelpers::FDialogueRowDataInfo MounteaDialogueManagerHelper
 	const FDialogueRow dialogueRow = DialogueContext->GetActiveDialogueRow();
 	Info.bIsActiveRowValid = UMounteaDialogueSystemBFC::IsDialogueRowValid(dialogueRow);
 
-	const TArray<FDialogueRowData> rowDataArray = DialogueContext->GetActiveDialogueRow().DialogueRowData;
+	const TArray<FDialogueRowData> rowDataArray = DialogueContext->GetActiveDialogueRow().RowData;
 	
 	Info.bDialogueRowDataValid = rowDataArray.IsValidIndex(Info.IncreasedIndex);
 
@@ -154,26 +131,15 @@ void UMounteaDialogueManager::SetManagerState(const EDialogueManagerState NewSta
 		LOG_INFO(TEXT("[Set Manager State] New State `%s` is same as current State. Update aborted."), *(UMounteaDialogueSystemBFC::GetEnumFriendlyName(NewState)))
 		return;
 	}
-	
-	if (!IsAuthority())
+
+	if (!UMounteaDialogueSystemBFC::IsServer(GetOwner()))
 	{
-		switch (DialogueManagerType)
-		{
-			case EDialogueManagerType::EDMT_PlayerDialogue:
-				SetManagerState_Server(NewState);
-				break;
-			case EDialogueManagerType::EDMT_EnvironmentDialogue:
-				SetManagerState_Environment(NewState);
-				break;
-			case EDialogueManagerType::Default:
-				break;
-		}
+		SetManagerState_Server(NewState);
+		return;
 	}
-	else
-	{
-		ManagerState = NewState; // State can only be changed on server side!
-		ProcessStateUpdated();
-	}
+
+	ManagerState = NewState;
+	ProcessStateUpdated();
 }
 
 void UMounteaDialogueManager::OnRep_ManagerState()
@@ -184,35 +150,16 @@ void UMounteaDialogueManager::OnRep_ManagerState()
 
 void UMounteaDialogueManager::ProcessStateUpdated()
 {
-	if (IsAuthority() && !UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
-	{
+	if (UMounteaDialogueSystemBFC::IsServer(GetOwner()) && !UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
 		return;
-	}
 
-	// Await the Context
-	if (ManagerState == EDialogueManagerState::EDMS_Active && (!IsValid(DialogueContext)))
-	{
-		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &UMounteaDialogueManager::ProcessStateUpdated);
-		return;
-	}
-	
 	OnDialogueManagerStateChanged.Broadcast(ManagerState);
 
 	switch (ManagerState)
 	{
 		case EDialogueManagerState::EDMS_Disabled:
 		case EDialogueManagerState::EDMS_Enabled:
-			{
-				switch (DialogueManagerType)
-				{
-					case EDialogueManagerType::EDMT_PlayerDialogue:
-						Execute_CloseDialogue(this);
-						break;
-					case EDialogueManagerType::EDMT_EnvironmentDialogue:
-						CloseDialogue_Environment();
-						break;
-				}
-			}
+			Execute_CloseDialogue(this);
 			break;
 		case EDialogueManagerState::EDMS_Active:
 			Execute_StartDialogue(this);
@@ -220,200 +167,48 @@ void UMounteaDialogueManager::ProcessStateUpdated()
 	}
 }
 
-void UMounteaDialogueManager::OnRep_DialogueContext()
+
+void UMounteaDialogueManager::OnContextPayloadUpdated(const FMounteaDialogueContextPayload& Payload)
 {
 	if (!IsValid(DialogueContext))
 		DialogueContext = NewObject<UMounteaDialogueContext>(this);
-		
-	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> participants = TransientDialogueContext.DialogueParticipants;
 
-	*DialogueContext += TransientDialogueContext;
-	
-	NotifyParticipants(participants);
+	// Rebuild participant references directly from payload
+	DialogueContext->ActiveDialogueParticipant = Payload.ActiveDialogueParticipant;
+	DialogueContext->PlayerDialogueParticipant = Payload.PlayerDialogueParticipant;
+	DialogueContext->DialogueParticipant = Payload.DialogueParticipant;
+	DialogueContext->DialogueParticipants = Payload.DialogueParticipants;
 
-	FTimerHandle TimerHandle_ResetContext;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_ResetContext, [this]()
+	// Resolve node pointers from GUIDs using the active participant's graph
+	UMounteaDialogueGraph* activeGraph = nullptr;
+	const TScriptInterface<IMounteaDialogueParticipantInterface> graphSource =
+		Payload.DialogueParticipant.GetObject() ? Payload.DialogueParticipant : Payload.ActiveDialogueParticipant;
+	if (graphSource.GetObject() && graphSource.GetInterface())
+		activeGraph = graphSource->Execute_GetDialogueGraph(graphSource.GetObject());
+
+	if (activeGraph)
 	{
-		TransientDialogueContext.Reset();
-	}, 0.2f, false);
-
-	FTimerHandle TimerHandle_UpdateWorldWidget;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_UpdateWorldWidget, [this]()
+		DialogueContext->ActiveNode = UMounteaDialogueSystemBFC::FindNodeByGUID(activeGraph, Payload.ActiveNodeGUID);
+		DialogueContext->PreviousActiveNode = Payload.PreviousNodeGUID;
+		DialogueContext->AllowedChildNodes = UMounteaDialogueSystemBFC::FindNodesByGUID(activeGraph, Payload.AllowedChildNodeGUIDs);
+	}
+	else
 	{
-		if (IsValid(DialogueContext))
-			ProcessWorldWidgetUpdate(DialogueContext->LastWidgetCommand);
-	}, 0.1f, false);
-}
-
-UMounteaDialogueDialogueNetSync* UMounteaDialogueManager::GetSyncComponent() const
-{
-	if (!IsValid(DialogueInstigator))
-		return nullptr;
-	
-	int32 searchDepth = 0;
-	APlayerController* playerController = UMounteaDialogueSystemBFC::FindPlayerController(Cast<AActor>(DialogueInstigator), searchDepth);
-	if (!IsValid(playerController))
-		return nullptr;
-
-	auto netSync = playerController->FindComponentByClass<UMounteaDialogueDialogueNetSync>();
-	if (!IsValid(netSync))
-		return nullptr;
-
-	return netSync;
-}
-
-void UMounteaDialogueManager::RequestStartDialogue_Environment(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants)
-{
-	if (auto netSync = GetSyncComponent())
-		netSync->ReceiveStartRequest(this, DialogueInitiator, InitialParticipants);
-}
-
-void UMounteaDialogueManager::RequestCloseDialogue_Environmental()
-{
-	if (auto syncComp = GetSyncComponent())
-		syncComp->ReceiveCloseRequest(this);
-}
-
-void UMounteaDialogueManager::SetManagerState_Environment(const EDialogueManagerState NewState)
-{
-	if (auto netSync = GetSyncComponent())
-		netSync->ReceiveSetState(this, NewState);
-}
-
-void UMounteaDialogueManager::RequestBroadcastContext_Environment(const FMounteaDialogueContextReplicatedStruct& Context)
-{
-	if (auto netSync = GetSyncComponent())
-		netSync->ReceiveBroadcastContextRequest(this, Context);
-}
-
-void UMounteaDialogueManager::CloseDialogue_Environment()
-{
-	if (auto netSync = GetSyncComponent())
-		netSync->ReceiveCloseDialogue(this);
-}
-
-bool UMounteaDialogueManager::SetupPlayerDialogue(TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages) const
-{
-	int searchDepth = 0;
-	APawn* playerPawn = UMounteaDialogueSystemBFC::FindPlayerPawn(GetOwner(), searchDepth);
-	if (!playerPawn)
-	{
-		ErrorMessages.Add(NSLOCTEXT("RequestStartDialogue", "NoPawn", "Unable to find Player Pawn!"));
-		return false;
+		DialogueContext->ActiveNode = nullptr;
+		DialogueContext->PreviousActiveNode = FGuid();
+		DialogueContext->AllowedChildNodes.Empty();
 	}
 
-	bool bPlayerParticipantFound = true;
-	const TScriptInterface<IMounteaDialogueParticipantInterface> playerParticipant = 
-		UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(playerPawn, bPlayerParticipantFound);
-    
-	if (!bPlayerParticipantFound || !playerParticipant.GetObject())
-	{
-		ErrorMessages.Add(NSLOCTEXT("RequestStartDialogue", "InvalidPawn", "Player Pawn doesn't have `Dialogue Participant` component or doesn't implement the `IMounteaDialogueParticipantInterface`!"));
-		return false;
-	}
+	DialogueContext->ActiveDialogueRow = Payload.ActiveDialogueRow;
+	DialogueContext->ActiveDialogueRowDataIndex = Payload.ActiveDialogueRowDataIndex;
+	DialogueContext->LastWidgetCommand = Payload.LastWidgetCommand;
 
-	DialogueParticipants.Add(playerParticipant);
-	return true;
-}
+	OnDialogueContextUpdated.Broadcast(DialogueContext);
 
-bool UMounteaDialogueManager::SetupEnvironmentDialogue(AActor* DialogueInitiator, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages)
-{
-	int searchDepth = 0;
-	APlayerController* playerController = UMounteaDialogueSystemBFC::FindPlayerController(DialogueInitiator, searchDepth);
-	if (!playerController)
-	{
-		ErrorMessages.Add(NSLOCTEXT("RequestStartDialogue", "NoPawn", "Unable to find Player Controller!"));
-		return false;
-	}
-	
-	UMounteaDialogueDialogueNetSync* netSync = playerController->FindComponentByClass<UMounteaDialogueDialogueNetSync>();
-	if (!netSync)
-	{
-		ErrorMessages.Add(NSLOCTEXT("RequestStartDialogue", "NoNetSync", "Unable to find NetSync component on Player Controller!"));
-		return false;
-	}
+	NotifyParticipants(Payload.DialogueParticipants);
 
-	return true;
-}
-
-bool UMounteaDialogueManager::ValidateMainParticipant(AActor* MainParticipant, TScriptInterface<IMounteaDialogueParticipantInterface>& OutParticipant, TArray<FText>& ErrorMessages)
-{
-	bool bFound = true;
-	OutParticipant = UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(MainParticipant, bFound);
-    
-	if (!bFound || !OutParticipant.GetObject())
-	{
-		ErrorMessages.Add(NSLOCTEXT("RequestStartDialogue", "InvalidParticipant", "Main Participant doesn't have `Dialogue Participant` component or doesn't implement the `IMounteaDialogueParticipantInterface`!"));
-		return false;
-	}
-
-	if (!OutParticipant->Execute_CanStartDialogue(OutParticipant.GetObject()))
-	{
-		ErrorMessages.Add(NSLOCTEXT("RequestStartDialogue", "ParticipantCannotStart", "Main Participant Cannot Start Dialogue!"));
-		return false;
-	}
-
-	return true;
-}
-
-void UMounteaDialogueManager::GatherOtherParticipants(const TArray<TObjectPtr<UObject>>& OtherParticipants, TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& OutParticipants)
-{
-	for (const auto& Participant : OtherParticipants)
-	{
-		if (!IsValid(Participant))
-			continue;
-
-		bool bFound = true;
-		const auto NewParticipant = UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(Participant, bFound);
-		if (bFound && NewParticipant->Execute_CanParticipateInDialogue(NewParticipant.GetObject()))
-			OutParticipants.Add(NewParticipant);
-	}
-}
-
-void UMounteaDialogueManager::SyncContext(const FMounteaDialogueContextReplicatedStruct& Context)
-{
-	switch (DialogueManagerType)
-	{
-		case EDialogueManagerType::EDMT_PlayerDialogue:
-			{
-				if (!IsAuthority())
-					RequestBroadcastContext_Server(FMounteaDialogueContextReplicatedStruct(Context));
-				else
-					ProcessContextUpdated(FMounteaDialogueContextReplicatedStruct(Context));
-			}
-			break;
-		case EDialogueManagerType::EDMT_EnvironmentDialogue:
-			{
-				if (!IsAuthority())
-					RequestBroadcastContext_Environment(FMounteaDialogueContextReplicatedStruct(Context));
-				else
-					ProcessContextUpdated(FMounteaDialogueContextReplicatedStruct(Context));
-			}
-			break;
-	}
-}
-
-void UMounteaDialogueManager::RequestBroadcastContext(UMounteaDialogueContext* Context)
-{
-	SyncContext(FMounteaDialogueContextReplicatedStruct(Context));
-}
-
-void UMounteaDialogueManager::RequestBroadcastContext_Server_Implementation(const FMounteaDialogueContextReplicatedStruct& Context)
-{
-	ProcessContextUpdated(Context);
-}
-
-void UMounteaDialogueManager::ProcessContextUpdated(const FMounteaDialogueContextReplicatedStruct& Context)
-{
-	TransientDialogueContext = FMounteaDialogueContextReplicatedStruct(Context);
-	MARK_PROPERTY_DIRTY_FROM_NAME(UMounteaDialogueManager, TransientDialogueContext, this);
-	*DialogueContext += TransientDialogueContext;
-
-	FTimerHandle TimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
-	{
-		NotifyParticipants(TransientDialogueContext.DialogueParticipants);
-	}, 0.1f, false);
+	if (!Payload.LastWidgetCommand.IsEmpty())
+		ProcessWorldWidgetUpdate(Payload.LastWidgetCommand);
 }
 
 void UMounteaDialogueManager::NotifyParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants)
@@ -428,40 +223,9 @@ void UMounteaDialogueManager::NotifyParticipants(const TArray<TScriptInterface<I
 	}
 }
 
-void UMounteaDialogueManager::CalculateManagerType()
+void UMounteaDialogueManager::SyncContext(const FMounteaDialogueContextReplicatedStruct& Context)
 {
-	auto ownerActor = GetOwner();
-	if (!IsValid(ownerActor))
-		DialogueManagerType = EDialogueManagerType::Default;
-
-	auto ownerClass = ownerActor->GetClass();
-	
-	if (ownerClass->IsChildOf(APawn::StaticClass()) || 
-		ownerClass->IsChildOf(APlayerState::StaticClass()) || 
-		ownerClass->IsChildOf(APlayerController::StaticClass()))
-	{
-		DialogueManagerType = EDialogueManagerType::EDMT_PlayerDialogue;
-		return;
-	}
-
-	DialogueManagerType = EDialogueManagerType::EDMT_EnvironmentDialogue;
-}
-
-bool UMounteaDialogueManager::IsAuthority() const
-{
-	AActor* Owner = GetOwner();
-	if (!Owner || !Owner->GetWorld())
-		return false;
-    
-	const ENetMode NetMode = Owner->GetWorld()->GetNetMode();
-	
-	if (NetMode == NM_Standalone)
-		return true;
-	
-	if (Owner->HasAuthority())
-		return true;
-        
-	return false;
+	// Deprecated: context sync now handled by FMounteaDialogueContextPayload via UMounteaDialogueSession.
 }
 
 void UMounteaDialogueManager::DialogueFailed(const FString& ErrorMessage)
@@ -488,9 +252,9 @@ void UMounteaDialogueManager::SetDefaultManagerState(const EDialogueManagerState
 		return;
 	}
 	
-	if (!IsAuthority())
-		SetManagerState_Server(NewState);
-	
+	if (!UMounteaDialogueSystemBFC::IsServer(GetOwner()))
+		SetDefaultManagerState_Server(NewState);
+
 	DefaultManagerState = NewState;
 }
 
@@ -517,166 +281,88 @@ UMounteaDialogueContext* UMounteaDialogueManager::GetDialogueContext_Implementat
 void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewContext)
 {
 	if (NewContext == DialogueContext) return;
-	
-	if (!IsAuthority())
-		SetDialogueContext_Server(NewContext);
 
 	DialogueContext = NewContext;
 
-	TransientDialogueContext = FMounteaDialogueContextReplicatedStruct(DialogueContext);
-
 	OnDialogueContextUpdated.Broadcast(NewContext);
-}
-
-void UMounteaDialogueManager::SetDialogueContext_Server_Implementation(UMounteaDialogueContext* NewContext)
-{
-	SetDialogueContext(NewContext);
 }
 
 void UMounteaDialogueManager::UpdateDialogueContext_Implementation(UMounteaDialogueContext* NewContext)
 {
 	if (NewContext == DialogueContext) return;
-	
-	if (!IsAuthority())
-		UpdateDialogueContext_Server(NewContext);
 
 	(*DialogueContext) += NewContext;
 
 	OnDialogueContextUpdated.Broadcast(NewContext);
 }
 
-void UMounteaDialogueManager::UpdateDialogueContext_Server_Implementation(UMounteaDialogueContext* NewContext)
-{
-	Execute_UpdateDialogueContext(this, NewContext);
-}
-
-// TODO: let's find a middle-point between Server authority and reducing double-runs at some point (what steps should be done on Server only?)
 void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants)
 {
-	bool bSatisfied = true;
-	TArray<FText> errorMessages;
-	errorMessages.Add(FText::FromString("[Request Start Dialogue]"));
-
-	if (!DialogueInitiator)
+	if (!Execute_CanStartDialogue(this))
 	{
-		errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "MissingInitiator", "`DialogueInitiator` is not valid!"));
-		bSatisfied = false;
+		OnDialogueFailed.Broadcast(TEXT("[RequestStartDialogue] Cannot start dialogue — manager is not enabled!"));
+		return;
 	}
 
 	if (!InitialParticipants.MainParticipant)
 	{
-		errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "MissingParticipant", "`MainParticipant` is not valid!"));
-		bSatisfied = false;
+		OnDialogueFailed.Broadcast(TEXT("[RequestStartDialogue] MainParticipant is not valid!"));
+		return;
 	}
 
-	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> dialogueParticipants;
-	TScriptInterface<IMounteaDialogueParticipantInterface> mainParticipant;
+	DialogueInstigator = DialogueInitiator;
 
-	if (!Execute_CanStartDialogue(this))
+	FDialogueStartRequest request;
+	request.MainParticipantActor = TSoftObjectPtr<AActor>(InitialParticipants.MainParticipant);
+	for (const auto& other : InitialParticipants.OtherParticipants)
 	{
-		errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "CannotStart", "Cannot Start Dialogue!"));
-		bSatisfied = false;
+		if (AActor* otherActor = Cast<AActor>(other))
+			request.OtherParticipantActors.Add(TSoftObjectPtr<AActor>(otherActor));
 	}
 
-	if (ValidateMainParticipant(InitialParticipants.MainParticipant, mainParticipant, errorMessages))
+	if (!UMounteaDialogueSystemBFC::IsServer(GetOwner()))
 	{
-		dialogueParticipants.Add(mainParticipant);
-		GatherOtherParticipants(InitialParticipants.OtherParticipants, dialogueParticipants);
-	}
-	else
-		bSatisfied = false;
-
-	bool bSetupSuccess = false;
-	switch (DialogueManagerType)
-	{
-		case EDialogueManagerType::EDMT_PlayerDialogue:
-			bSetupSuccess = SetupPlayerDialogue(dialogueParticipants, errorMessages);
-			break;
-		case EDialogueManagerType::EDMT_EnvironmentDialogue:
-			bSetupSuccess = SetupEnvironmentDialogue(DialogueInitiator, dialogueParticipants, errorMessages);
-			break;
-		default:
-			errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "WrongManager", "This Manager Type is not valid!"));
-			bSetupSuccess = false;
-			break;
-	}
-	bSatisfied &= bSetupSuccess;
-
-	for (const auto& dialogueParticipant : dialogueParticipants)
-	{
-		const UObject* dialogueParticipantObject = dialogueParticipant.GetObject();
-		if (!dialogueParticipantObject)
-		{
-			errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "EmptyParticipant", "Dialogue Participant is not Valid!"));
-			bSatisfied = false;
-		}
-		else if (!dialogueParticipant->Execute_CanParticipateInDialogue(dialogueParticipantObject))
-		{
-			const FText message = FText::Format(NSLOCTEXT("RequestStartDialogue", "ParticipantCannotStart", "Dialogue Participant {0} cannot Participate in Dialogue!"), FText::FromString(dialogueParticipantObject->GetName()));
-			errorMessages.Add(message);
-			bSatisfied = false;
-		}
+		RequestStartDialogue_Server(request);
+		return;
 	}
 
-	if (bSatisfied)
-	{
-		if (IsAuthority())
-			SetDialogueContext(UMounteaDialogueSystemBFC::CreateDialogueContext(this, mainParticipant, dialogueParticipants));
-		errorMessages.Add(NSLOCTEXT("RequestStartDialogue", "OK", "OK"));
-	}
-	const FText finalErrorMessage = FText::Join(FText::FromString("\n"), errorMessages);
-	
-	if (bSatisfied)
-	{
-		DialogueInstigator = DialogueInitiator;
-		
-		// Request Start on Server
-		switch (DialogueManagerType)
-		{
-			case EDialogueManagerType::EDMT_PlayerDialogue:
-				if (!IsAuthority())
-					RequestStartDialogue_Server(DialogueInitiator, InitialParticipants);
-				break;
-			case EDialogueManagerType::EDMT_EnvironmentDialogue:
-				if (!IsAuthority())
-					RequestStartDialogue_Environment(DialogueInitiator, InitialParticipants);
-				break;
-		}
-
-		OnDialogueStartRequestedResult.Broadcast(bSatisfied, finalErrorMessage.ToString());
-	}
-	else
-		OnDialogueFailed.Broadcast(finalErrorMessage.ToString());
+	// Server path: delegate to subsystem
+	if (auto* subsystem = GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>())
+		subsystem->HandleStartRequest(this, request);
 }
 
-void UMounteaDialogueManager::RequestStartDialogue_Server_Implementation(AActor* DialogueInitiator,const FDialogueParticipants& InitialParticipants)
+void UMounteaDialogueManager::RequestStartDialogue_Server_Implementation(const FDialogueStartRequest& Request)
 {
-	Execute_RequestStartDialogue(this, DialogueInitiator, InitialParticipants);
+	if (auto* subsystem = GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>())
+		subsystem->HandleStartRequest(this, Request);
+}
+
+void UMounteaDialogueManager::RequestSelectNode_Server_Implementation(FGuid SessionGUID, FGuid NodeGUID)
+{
+	Execute_SelectNode(this, NodeGUID);
+}
+
+void UMounteaDialogueManager::RequestSkipRow_Server_Implementation(FGuid SessionGUID)
+{
+	Execute_SkipDialogueRow(this);
+}
+
+void UMounteaDialogueManager::RequestCloseDialogue_Server_Implementation(FGuid SessionGUID)
+{
+	Execute_RequestCloseDialogue(this);
 }
 
 void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 {
-	if (IsAuthority())
-		SetManagerState(DefaultManagerState);
-
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
-	
-	// Let's close Dialogue by changing state
-	switch (DialogueManagerType)
+
+	if (!UMounteaDialogueSystemBFC::IsServer(GetOwner()))
 	{
-		case EDialogueManagerType::EDMT_PlayerDialogue:
-			{
-				if (!IsAuthority())
-					SetManagerState(DefaultManagerState);
-			}
-			break;
-		case EDialogueManagerType::EDMT_EnvironmentDialogue:
-			{
-				if (!IsAuthority())
-					RequestCloseDialogue_Environmental();
-			}
-			break;
+		RequestCloseDialogue_Server(FGuid());
+		return;
 	}
+
+	SetManagerState(DefaultManagerState);
 }
 
 void UMounteaDialogueManager::StartParticipants()
@@ -701,18 +387,10 @@ void UMounteaDialogueManager::StartParticipants()
 	}
 }
 
-void UMounteaDialogueManager::StartParticipants_Server_Implementation()
-{
-	StartParticipants();
-}
-
 void UMounteaDialogueManager::StopParticipants() const
 {
 	if (!IsValid(DialogueContext))
 		return;
-
-	if (!IsAuthority())
-		StopParticipants_Server();
 
 	for (const auto& dialogueParticipant : DialogueContext->DialogueParticipants)
 	{
@@ -733,11 +411,6 @@ void UMounteaDialogueManager::StopParticipants() const
 	}
 }
 
-void UMounteaDialogueManager::StopParticipants_Server_Implementation() const
-{
-	StopParticipants();
-}
-
 void UMounteaDialogueManager::DialogueStartRequestReceived(const bool bResult, const FString& ResultMessage)
 {
 	if (bResult)
@@ -755,24 +428,13 @@ void UMounteaDialogueManager::DialogueStartRequestReceived(const bool bResult, c
 
 void UMounteaDialogueManager::StartDialogue_Implementation()
 {
-	// TODO: this might lead to infinite loop! Implement safety check
-	if (!IsAuthority() && !UMounteaDialogueSystemBFC::IsContextValid(DialogueContext))
-	{
-		FTimerHandle TimerHandle_AwaitContext;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle_AwaitContext, [this]()
-		{
-			Execute_StartDialogue(this);
-		}, 0.1f, false);
-		return;
-	}
-	
 	StartParticipants();
 		
 	FString resultMessage;
 	if (!Execute_CreateDialogueUI(this, resultMessage))
 		LOG_WARNING(TEXT("[Create Dialogue UI] %s"), *(resultMessage))
 
-	if (!IsAuthority())
+	if (UMounteaDialogueSystemBFC::ShouldExecuteCosmetics(GetOwner()))
 		OnDialogueStarted.Broadcast(DialogueContext);
 	
 	Execute_PrepareNode(this);
@@ -788,7 +450,7 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 
 	SetDialogueContext(nullptr);
 	
-	if (!IsAuthority())
+	if (UMounteaDialogueSystemBFC::ShouldExecuteCosmetics(GetOwner()))
 		OnDialogueClosed.Broadcast(DialogueContext);
 
 	DialogueInstigator = nullptr;
@@ -801,9 +463,6 @@ void UMounteaDialogueManager::CleanupDialogue_Implementation()
 	if (!UMounteaDialogueSystemBFC::IsContextValid(DialogueContext))
 		return;
 	
-	if (!IsAuthority())
-		CleanupDialogue_Server();
-
 	auto dialogueGraph = DialogueContext->ActiveNode ? DialogueContext->ActiveNode->Graph : nullptr;
 	if (IsValid(dialogueGraph))
 	{
@@ -1004,7 +663,7 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 	if (!Execute_UpdateDialogueUI(this, resultMessage, MounteaDialogueWidgetCommands::ShowDialogueRow))
 		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
 
-	if (DialogueContext->GetActiveDialogueRow().DialogueRowData.IsValidIndex(DialogueContext->GetActiveDialogueRowDataIndex()) == false)
+	if (DialogueContext->GetActiveDialogueRow().RowData.IsValidIndex(DialogueContext->GetActiveDialogueRowDataIndex()) == false)
 	{
 		OnDialogueFailed.Broadcast(TEXT("[Process Dialogue Row] Trying to Access Invalid Dialogue Row data!"));
 		return;
@@ -1012,7 +671,7 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 
 	const int32 activeIndex = DialogueContext->GetActiveDialogueRowDataIndex();
 	const auto Row = DialogueContext->GetActiveDialogueRow();
-	bool bValidRowData = Row.DialogueRowData.IsValidIndex(activeIndex);
+	bool bValidRowData = Row.RowData.IsValidIndex(activeIndex);
 
 	if (!bValidRowData)
 	{
@@ -1021,7 +680,7 @@ void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
 		return;
 	}
 	
-	const FDialogueRowData RowData = Row.DialogueRowData[activeIndex];
+	const FDialogueRowData RowData = Row.RowData[activeIndex];
 	bValidRowData = UMounteaDialogueSystemBFC::IsDialogueRowDataValid(RowData);
 
 	if (!bValidRowData)
@@ -1133,32 +792,22 @@ void UMounteaDialogueManager::SkipDialogueRow_Implementation()
 
 void UMounteaDialogueManager::UpdateWorldDialogueUI_Implementation(const FString& Command)
 {
-	if (!IsAuthority())
-	{
+	if (UMounteaDialogueSystemBFC::ShouldExecuteCosmetics(GetOwner()))
 		ProcessWorldWidgetUpdate(Command);
-	}
-	else
-	{
-		if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
-			ProcessWorldWidgetUpdate(Command);
-	}
 }
 
 void UMounteaDialogueManager::ProcessWorldWidgetUpdate(const FString& Command)
 {
-	if (!IsAuthority())
-	{
-		if (LastDialogueCommand == Command)
-			return;
-		
-		for (const auto& dialogueObject : DialogueObjects)
-		{
-			if (dialogueObject)
-				IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, this, Command);
-		}
+	if (LastDialogueCommand == Command)
+		return;
 
-		LastDialogueCommand = Command;
+	for (const auto& dialogueObject : DialogueObjects)
+	{
+		if (dialogueObject)
+			IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, this, Command);
 	}
+
+	LastDialogueCommand = Command;
 }
 
 bool UMounteaDialogueManager::AddDialogueUIObject_Implementation(UObject* NewDialogueObject)

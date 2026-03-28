@@ -69,13 +69,6 @@ public:
 	FGuid ActiveGraphGUID;
 
 	/**
-	 * Stack of parent graph states saved when entering sub-graphs via OpenChildGraph.
-	 * Popped when a sub-graph completes to restore the parent context.
-	 */
-	UPROPERTY(BlueprintReadOnly, Category="Context")
-	TArray<FDialogueGraphStackEntry> GraphStack;
-
-	/**
 	 * The participant that is currently speaking or acting.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category="Context")
@@ -109,7 +102,7 @@ public:
 	FDialogueRow ActiveDialogueRow;
 
 	/**
-	 * Index into ActiveDialogueRow.DialogueRowData for the line currently being played.
+	 * Index into ActiveDialogueRow.RowData for the line currently being played.
 	 * Advances as each line of the row completes.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category="Context")
@@ -144,7 +137,6 @@ public:
 		PreviousNodeGUID.Invalidate();
 		AllowedChildNodeGUIDs.Empty();
 		ActiveGraphGUID.Invalidate();
-		GraphStack.Empty();
 		ActiveDialogueParticipant = nullptr;
 		PlayerDialogueParticipant = nullptr;
 		DialogueParticipant = nullptr;

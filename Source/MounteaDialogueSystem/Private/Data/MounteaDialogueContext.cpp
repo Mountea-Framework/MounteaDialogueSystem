@@ -33,7 +33,7 @@ FString UMounteaDialogueContext::ToString() const
 	activeRow.Append(ActiveDialogueRow.RowTitle.ToString());
 
 	FString activeRowData = FString("Active Row Data: ");
-	activeRowData.Append(FString::Printf(TEXT("%d"), ActiveDialogueRow.DialogueRowData.Num()));
+	activeRowData.Append(FString::Printf(TEXT("%d"), ActiveDialogueRow.RowData.Num()));
 
 	FString lastWidgetCommand = FString("Last Widget Context: ");
 	lastWidgetCommand.Append(FString::Printf(TEXT("%s"), *LastWidgetCommand));
@@ -309,22 +309,6 @@ bool UMounteaDialogueContext::RemoveDialogueParticipantsBP(const TArray<TScriptI
 	return false;
 }
 
-void UMounteaDialogueContext::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
-	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueParticipant);
-	DOREPLIFETIME(UMounteaDialogueContext, PlayerDialogueParticipant);
-	DOREPLIFETIME(UMounteaDialogueContext, DialogueParticipant);
-	DOREPLIFETIME(UMounteaDialogueContext, DialogueParticipants);
-	DOREPLIFETIME(UMounteaDialogueContext, ActiveNode);
-	DOREPLIFETIME(UMounteaDialogueContext, PreviousActiveNode);
-	DOREPLIFETIME(UMounteaDialogueContext, AllowedChildNodes);
-	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueTableHandle);
-	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueRow);
-	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueRowDataIndex);
-	DOREPLIFETIME(UMounteaDialogueContext, LastWidgetCommand);
-}
 
 UMounteaDialogueContext* UMounteaDialogueContext::operator += (const UMounteaDialogueContext* Other)
 {

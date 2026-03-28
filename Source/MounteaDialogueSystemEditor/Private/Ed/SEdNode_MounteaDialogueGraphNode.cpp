@@ -331,7 +331,7 @@ FText SEdNode_MounteaDialogueGraphNode::GetPreviewText() const
 	FDialogueRow dialogueRow;
 	if (TryGetDialogueRow(edNode, dialogueRow))
 	{
-		const TArray<FDialogueRowData> dialogueRows = dialogueRow.DialogueRowData;
+		const TArray<FDialogueRowData> dialogueRows = dialogueRow.RowData;
 		for (const FDialogueRowData& dialogueRowData : dialogueRows)
 		{
 			if (!dialogueRowData.RowText.IsEmpty())
@@ -352,7 +352,7 @@ int32 SEdNode_MounteaDialogueGraphNode::GetDialogueRowCount() const
 	if (!TryGetDialogueRow(edNode, dialogueRow))
 		return 0;
 
-	return dialogueRow.DialogueRowData.Num();
+	return dialogueRow.RowData.Num();
 }
 
 FText SEdNode_MounteaDialogueGraphNode::GetRowsMetaText() const

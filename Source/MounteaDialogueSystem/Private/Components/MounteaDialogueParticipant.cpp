@@ -90,14 +90,10 @@ UAudioComponent* UMounteaDialogueParticipant::FindAudioComponent() const
 	if (AudioComponent != nullptr) return AudioComponent;
 	
 	if (const auto Return = FindAudioComponentByName(AudioComponentIdentification))
-	{
 		return Return;
-	}
 
 	if (const auto Return = FindAudioComponentByTag(AudioComponentIdentification))
-	{
 		return Return;
-	}
 
 	LOG_INFO(TEXT("[FindAudioComponent] No Audio Component found with by Identification (%s)\nFirst Audio Component will be used instead. To override this behaviour implement 'FindAudioComponent' event."), *AudioComponentIdentification.ToString())
 
@@ -576,6 +572,11 @@ void UMounteaDialogueParticipant::PostEditChangeProperty(struct FPropertyChanged
 				}				
 			}
 		}
+	}
+	
+	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueParticipant, AudioComponentIdentification))
+	{
+		AudioComponent = FindAudioComponent();
 	}
 }
 

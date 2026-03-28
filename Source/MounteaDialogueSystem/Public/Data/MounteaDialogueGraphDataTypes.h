@@ -433,7 +433,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
 		meta=(TitleProperty="RowText"),
 		meta=(ShowOnlyInnerProperties))
-	TArray<FDialogueRowData> DialogueRowData;
+	TArray<FDialogueRowData> RowData;
+
+	/**
+	 * Legacy serialized field kept for one migration pass.
+	 * Older assets stored this as a Set under this exact name.
+	 */
+	UPROPERTY(NotReplicated, 
+		meta=(DeprecatedProperty, DeprecationMessage="Use RowData array instead"))
+	TSet<FDialogueRowData> DialogueRowData;
 	
 	/**
 	 * Additional Row Data
@@ -466,7 +474,7 @@ public:
 	FDialogueRow(const int32 NewUIRowID, const FText& InText, const FText& InParticipant,
 				const TArray<FDialogueRowData>& InData, UDialogueAdditionalData* NewData, const FGameplayTagContainer& InCompatibleTags)
 		: CompatibleTags(InCompatibleTags), UIRowID(NewUIRowID), DialogueParticipant(InParticipant),
-		RowTitle(InText), DialogueRowData(InData), DialogueRowAdditionalData(NewData)
+		RowTitle(InText), RowData(InData), DialogueRowAdditionalData(NewData)
 	{
 		RowGUID = FGuid::NewGuid();
 	}
@@ -477,7 +485,7 @@ public:
 	{
 		DialogueParticipant = Other.DialogueParticipant;
 		RowTitle = Other.RowTitle;
-		DialogueRowData = Other.DialogueRowData;
+		RowData = Other.RowData;
 		UIRowID = Other.UIRowID;
 		DialogueRowAdditionalData = Other.DialogueRowAdditionalData;
 		RowGUID = FGuid::NewGuid();
@@ -505,7 +513,7 @@ public:
 	{
 		return
 		RowGUID.IsValid() &&
-		DialogueRowData.Num() > 0;
+		RowData.Num() > 0;
 	}
 
 	bool IsNearlyEqual(const FDialogueRow& Other) const
@@ -517,9 +525,9 @@ public:
 			return true;
 		}
 
-		if (RowTitle.EqualTo(Other.RowTitle) && DialogueRowData.Num() > 0 && Other.DialogueRowData.Num() > 0)
+		if (RowTitle.EqualTo(Other.RowTitle) && RowData.Num() > 0 && Other.RowData.Num() > 0)
 		{
-			if (DialogueRowData[0] == Other.DialogueRowData[0])
+			if (RowData[0] == Other.RowData[0])
 				return true;
 		}
 
@@ -532,9 +540,28 @@ public:
 	{
 		FDialogueRow Row;
 		Row.RowGUID.Invalidate();
+		Row.RowData.Empty();
 		Row.DialogueRowData.Empty();
 		return Row;
 	}
+
+	void PostSerialize(const FArchive& Ar)
+	{
+		if (Ar.IsLoading() && RowData.Num() == 0 && DialogueRowData.Num() > 0)
+		{
+			RowData = DialogueRowData.Array();
+			DialogueRowData.Empty();
+		}
+	}
+};
+
+template<>
+struct TStructOpsTypeTraits<FDialogueRow> : public TStructOpsTypeTraitsBase2<FDialogueRow>
+{
+	enum
+	{
+		WithPostSerialize = true
+	};
 };
 
 #undef LOCTEXT_NAMESPACE
@@ -644,56 +671,6 @@ public:
 };
 
 /**
- * Snapshot of a parent graph state saved when entering a sub-graph via OpenChildGraph.
- * Restored when the sub-graph completes via PopGraphStack.
- */
-USTRUCT(BlueprintType)
-struct FDialogueGraphStackEntry
-{
-	GENERATED_BODY()
-
-public:
-
-	/**
-	 * GUID of the parent graph being suspended.
-	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|GraphStack")
-	FGuid ParentGraphGUID;
-
-	/**
-	 * GUID of the node to return to in the parent graph after the child graph completes.
-	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|GraphStack")
-	FGuid ReturnNodeGUID;
-
-	/**
-	 * GUID of the node that was active in the parent graph when the child was opened.
-	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|GraphStack")
-	FGuid SavedActiveNodeGUID;
-
-	/**
-	 * Allowed child node GUIDs that were available in the parent graph at suspension time.
-	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|GraphStack")
-	TArray<FGuid> SavedAllowedChildNodeGUIDs;
-
-	bool operator==(const FDialogueGraphStackEntry& Other) const
-	{
-		return ParentGraphGUID == Other.ParentGraphGUID && SavedActiveNodeGUID == Other.SavedActiveNodeGUID;
-	}
-
-	friend FArchive& operator<<(FArchive& Ar, FDialogueGraphStackEntry& Entry)
-	{
-		Ar << Entry.ParentGraphGUID;
-		Ar << Entry.ReturnNodeGUID;
-		Ar << Entry.SavedActiveNodeGUID;
-		Ar << Entry.SavedAllowedChildNodeGUIDs;
-		return Ar;
-	}
-};
-
-/**
  * A lightweight request struct passed to the server when initiating a dialogue.
  * Uses soft object references to avoid passing raw actor pointers across RPCs.
  */
@@ -728,7 +705,9 @@ public:
 	}
 };
 
-USTRUCT()
+// Deprecated: context replication now handled by FMounteaDialogueContextPayload on UMounteaDialogueSession.
+// Will be removed in a future version.
+USTRUCT(meta=(DeprecatedNode, DeprecationMessage="Use FMounteaDialogueContextPayload instead."))
 struct FMounteaDialogueContextReplicatedStruct
 {
 	GENERATED_BODY()

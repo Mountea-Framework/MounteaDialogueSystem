@@ -17,6 +17,8 @@
 
 class UMounteaDialogueSession;
 class UMounteaDialogueManager;
+struct FDialogueStartRequest;
+class IMounteaDialogueParticipantInterface;
 
 /**
  * UMounteaDialogueWorldSubsystem manages active dialogue sessions and registered managers
@@ -69,6 +71,47 @@ public:
 	{
 		return ActiveSessions;
 	}
+
+	/**
+	 * Handles an incoming start request forwarded from a manager's server RPC.
+	 * Resolves participants, validates them, creates context, and triggers dialogue start.
+	 * Must be called on the server.
+	 *
+	 * @param Manager  The manager that initiated the request.
+	 * @param Request  The packed start request with soft actor references.
+	 */
+	void HandleStartRequest(UMounteaDialogueManager* Manager, const FDialogueStartRequest& Request);
+
+	/**
+	 * Starts an environment (NPC-NPC or monologue) dialogue directly on the server.
+	 * No RPC — environment managers are server-side only.
+	 *
+	 * @param Manager  The environment manager that owns this dialogue.
+	 * @param Request  The packed start request.
+	 */
+	void RequestStartEnvironmentDialogue(UMounteaDialogueManager* Manager, const FDialogueStartRequest& Request);
+
+private:
+
+	/**
+	 * Resolves soft actor references in Request into typed participant interfaces.
+	 * Determines player participant from manager's owner chain.
+	 *
+	 * @param Manager                The calling manager (used to identify player participant).
+	 * @param Request                Start request with soft actor refs.
+	 * @param OutPlayerParticipant   Resolved player participant (null for environment dialogue).
+	 * @param OutMainParticipant     Resolved primary NPC participant.
+	 * @param OutAllParticipants     All resolved participants combined.
+	 * @param OutErrors              Collected validation error messages.
+	 * @return true if all required participants resolved and validated successfully.
+	 */
+	bool ResolveParticipants(
+		UMounteaDialogueManager* Manager,
+		const FDialogueStartRequest& Request,
+		TScriptInterface<IMounteaDialogueParticipantInterface>& OutPlayerParticipant,
+		TScriptInterface<IMounteaDialogueParticipantInterface>& OutMainParticipant,
+		TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& OutAllParticipants,
+		TArray<FText>& OutErrors) const;
 
 private:
 

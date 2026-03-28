@@ -4,10 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Data/MounteaDialogueContextPayload.h"
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "MounteaDialogueManager.generated.h"
-
-class UMounteaDialogueDialogueNetSync;
 
 /**
  *  Mountea Dialogue Manager Component
@@ -67,22 +66,12 @@ public:
 protected:
 
 	void ProcessStateUpdated();
-	void ProcessContextUpdated(const FMounteaDialogueContextReplicatedStruct& Context);
-	UFUNCTION()
-	void RequestBroadcastContext(UMounteaDialogueContext* Context);
-	UFUNCTION(Server, Reliable)
-	void RequestBroadcastContext_Server(const FMounteaDialogueContextReplicatedStruct& Context);
 	UFUNCTION()
 	void DialogueFailed(const FString& ErrorMessage);
 
 	void StartParticipants();
-	UFUNCTION(Server, Reliable)
-	void StartParticipants_Server();
 	void StopParticipants() const;
-	UFUNCTION(Server, Reliable)
-	void StopParticipants_Server() const;
 	void NotifyParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
-	void CalculateManagerType();
 	
 public:
 
@@ -138,44 +127,54 @@ public:
 
 	virtual void SyncContext(const FMounteaDialogueContextReplicatedStruct& Context) override;
 
+	/**
+	 * Called by UMounteaDialogueSession (via OnRep or NotifyLocalManagers) when the replicated
+	 * context payload is updated. Rebuilds the local UMounteaDialogueContext read-only view
+	 * and fires the existing context-updated delegates.
+	 *
+	 * @param Payload  The latest payload received from the session.
+	 */
+	void OnContextPayloadUpdated(const FMounteaDialogueContextPayload& Payload);
+
 private:
 
 	UFUNCTION(Server, Reliable)
 	void SetManagerState_Server(const EDialogueManagerState NewState);
 	UFUNCTION(Server, Unreliable)
 	void SetDefaultManagerState_Server(const EDialogueManagerState NewState);
+
+	/**
+	 * Routes a dialogue start request to the server.
+	 * Server validates participants and allocates a UMounteaDialogueSession via the world subsystem.
+	 */
 	UFUNCTION(Server, Reliable)
-	void SetDialogueContext_Server(UMounteaDialogueContext* NewContext);
+	void RequestStartDialogue_Server(const FDialogueStartRequest& Request);
+
+	/**
+	 * Routes a node selection to the server for validation and graph advancement.
+	 */
 	UFUNCTION(Server, Reliable)
-	void UpdateDialogueContext_Server(UMounteaDialogueContext* NewContext);
+	void RequestSelectNode_Server(FGuid SessionGUID, FGuid NodeGUID);
+
+	/**
+	 * Routes a row skip request to the server.
+	 */
 	UFUNCTION(Server, Reliable)
-	void RequestStartDialogue_Server(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
+	void RequestSkipRow_Server(FGuid SessionGUID);
+
+	/**
+	 * Routes a dialogue close request to the server.
+	 */
+	UFUNCTION(Server, Reliable)
+	void RequestCloseDialogue_Server(FGuid SessionGUID);
+
 	UFUNCTION(Server, Reliable)
 	void CleanupDialogue_Server();
 	
 	UFUNCTION()
 	void OnRep_ManagerState();
-	UFUNCTION()
-	void OnRep_DialogueContext();
 
-	UMounteaDialogueDialogueNetSync* GetSyncComponent() const;
-
-	void RequestStartDialogue_Environment(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
-	void RequestCloseDialogue_Environmental();
-	void SetManagerState_Environment(const EDialogueManagerState NewState);
-	void RequestBroadcastContext_Environment(const FMounteaDialogueContextReplicatedStruct& Context);
-	void CloseDialogue_Environment();
-
-	bool SetupPlayerDialogue(TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages) const;
-	bool SetupEnvironmentDialogue(AActor* DialogueInitiator, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages);
-	static bool ValidateMainParticipant(AActor* MainParticipant, TScriptInterface<IMounteaDialogueParticipantInterface>& OutParticipant, TArray<FText>& ErrorMessages);
-	static void GatherOtherParticipants(const TArray<TObjectPtr<UObject>>& OtherParticipants, TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& OutParticipants);
-	
 	void ProcessWorldWidgetUpdate(const FString& Command);
-
-public:
-	
-	bool IsAuthority() const;
 
 public:
 
@@ -353,12 +352,6 @@ protected:
 
 	UPROPERTY(Transient)
 	FString LastDialogueCommand;
-
-private:
-
-	// Replication helper to move Dialogue Context round
-	UPROPERTY(Transient, ReplicatedUsing=OnRep_DialogueContext)
-	FMounteaDialogueContextReplicatedStruct TransientDialogueContext;
 
 protected:
 	

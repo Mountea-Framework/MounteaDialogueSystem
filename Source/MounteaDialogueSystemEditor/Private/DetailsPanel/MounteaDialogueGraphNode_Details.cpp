@@ -628,8 +628,8 @@ void FMounteaDialogueGraphNode_Details::CustomizeDetails(IDetailLayoutBuilder& D
 			if (!dialogueData.IsValid())
 				return TArray<FText>();
 			TArray<FText> previewTexts;
-			previewTexts.Reserve(dialogueData.DialogueRowData.Num());
-			for (const auto& dialogueRowData : dialogueData.DialogueRowData)
+			previewTexts.Reserve(dialogueData.RowData.Num());
+			for (const auto& dialogueRowData : dialogueData.RowData)
 			{
 				previewTexts.Add(dialogueRowData.RowText);
 			}

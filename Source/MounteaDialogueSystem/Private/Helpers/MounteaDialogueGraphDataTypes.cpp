@@ -16,7 +16,7 @@ FString FDialogueRow::ToString() const
 	Result += FString::Printf(TEXT(", UIRowID: %d"), UIRowID);
 	Result += FString::Printf(TEXT(", RowGUID: %s"), *RowGUID.ToString(EGuidFormats::DigitsWithHyphensLower));
 
-	Result += FString::Printf(TEXT(", DialogueRowData Count: %d"), DialogueRowData.Num());
+	Result += FString::Printf(TEXT(", DialogueRowData Count: %d"), RowData.Num());
 
 	return Result;
 }

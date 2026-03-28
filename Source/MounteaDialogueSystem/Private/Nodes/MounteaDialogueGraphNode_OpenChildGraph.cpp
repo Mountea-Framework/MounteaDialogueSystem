@@ -11,8 +11,10 @@
 
 #include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
 
+#include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
+#include "Misc/DataValidation.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_OpenChildGraph"
 
@@ -58,6 +60,99 @@ FText UMounteaDialogueGraphNode_OpenChildGraph::GetDescription_Implementation() 
 FText UMounteaDialogueGraphNode_OpenChildGraph::GetNodeCategory_Implementation() const
 {
 	return LOCTEXT("MounteaDialogueGraphNode_OpenChildGraph_Category", "Utility Nodes");
+}
+
+bool UMounteaDialogueGraphNode_OpenChildGraph::ValidateTargetDialogueReference(FDataValidationContext& Context, const bool RichFormat) const
+{
+	if (!IsValid(Graph))
+		return true;
+
+	UMounteaDialogueGraph* parentGraph = Graph;
+	UMounteaDialogueGraph* rootTargetGraph = TargetDialogue.LoadSynchronous();
+	if (!IsValid(rootTargetGraph))
+		return true;
+
+	TSet<const UMounteaDialogueGraph*> visitedGraphs;
+	TArray<UMounteaDialogueGraph*> graphsToVisit;
+	graphsToVisit.Add(rootTargetGraph);
+
+	while (graphsToVisit.Num() > 0)
+	{
+		UMounteaDialogueGraph* currentGraph = graphsToVisit.Pop(EAllowShrinking::No);
+		if (!IsValid(currentGraph) || visitedGraphs.Contains(currentGraph))
+			continue;
+		visitedGraphs.Add(currentGraph);
+
+		const TArray<UMounteaDialogueGraphNode*> currentNodes = currentGraph->GetAllNodes();
+		for (const auto* Node : currentNodes)
+		{
+			const auto* OpenChildNode = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(Node);
+			if (!IsValid(OpenChildNode))
+				continue;
+
+			UMounteaDialogueGraph* nextGraph = OpenChildNode->TargetDialogue.LoadSynchronous();
+			if (!IsValid(nextGraph))
+				continue;
+
+			if (nextGraph == parentGraph)
+			{
+				const FString currentGraphName = parentGraph->GetName();
+				const FString targetGraphName = rootTargetGraph->GetName();
+				const FString richTextReturn =
+				FString(TEXT("* ")).
+				Append(TEXT("<RichTextBlock.Bold>")).
+				Append(NodeTitle.ToString()).
+				Append(TEXT("</>: Invalid child graph reference. Target graph ")).
+				Append(TEXT("<RichTextBlock.Bold>")).
+				Append(targetGraphName).
+				Append(TEXT("</> creates a recursive reference back to parent graph ")).
+				Append(TEXT("<RichTextBlock.Bold>")).
+				Append(currentGraphName).
+				Append(TEXT("</>."));
+
+				const FString textReturn =
+				FString(NodeTitle.ToString()).
+				Append(TEXT(": Invalid child graph reference. Target graph ")).
+				Append(targetGraphName).
+				Append(TEXT(" creates a recursive reference back to parent graph ")).
+				Append(currentGraphName).
+				Append(TEXT("."));
+
+				Context.AddError(FText::FromString(RichFormat ? richTextReturn : textReturn));
+				return false;
+			}
+
+			if (!visitedGraphs.Contains(nextGraph))
+				graphsToVisit.Add(nextGraph);
+		}
+	}
+
+	return true;
+}
+
+bool UMounteaDialogueGraphNode_OpenChildGraph::ValidateNode(FDataValidationContext& Context, const bool RichFormat) const
+{
+	bool bSatisfied = Super::ValidateNode(Context, RichFormat);
+	return ValidateTargetDialogueReference(Context, RichFormat) && bSatisfied;
+}
+
+void UMounteaDialogueGraphNode_OpenChildGraph::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	
+	if (PropertyChangedEvent.Property
+		&& PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_OpenChildGraph, TargetDialogue))
+	{
+		if (IsValid(TargetDialogue.LoadSynchronous()))
+		{
+			FDataValidationContext validationContext;
+			if (!ValidateTargetDialogueReference(validationContext, false))
+			{
+				TargetDialogue = nullptr;
+				LOG_ERROR(TEXT("[Open Child Graph Node] Invalid child graph reference on node '%s'. Target graph would create recursive graph dependency."), *GetName());
+			}
+		}
+	}
 }
 
 #endif

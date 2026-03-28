@@ -20,7 +20,6 @@ bool FMounteaDialogueContextPayload::NetSerialize(FArchive& Ar, UPackageMap* Map
 	Ar << PreviousNodeGUID;
 	Ar << AllowedChildNodeGUIDs;
 	Ar << ActiveGraphGUID;
-	Ar << GraphStack;
 	Ar << ActiveDialogueParticipant;
 	Ar << PlayerDialogueParticipant;
 	Ar << DialogueParticipant;
@@ -34,14 +33,14 @@ bool FMounteaDialogueContextPayload::NetSerialize(FArchive& Ar, UPackageMap* Map
 
 	// TArray<FDialogueRowData> — each item serialized field-by-field due to UObject refs
 	{
-		int32 dataCount = ActiveDialogueRow.DialogueRowData.Num();
+	int32 dataCount = ActiveDialogueRow.RowData.Num();
 		Ar << dataCount;
 		if (Ar.IsLoading())
-			ActiveDialogueRow.DialogueRowData.SetNum(dataCount);
+	ActiveDialogueRow.RowData.SetNum(dataCount);
 
 		for (int32 i = 0; i < dataCount; i++)
 		{
-			FDialogueRowData& dialogueRowData = ActiveDialogueRow.DialogueRowData[i];
+		FDialogueRowData& dialogueRowData = ActiveDialogueRow.RowData[i];
 			Ar << dialogueRowData.RowText;
 
 			UObject* soundAsset = dialogueRowData.RowSound;

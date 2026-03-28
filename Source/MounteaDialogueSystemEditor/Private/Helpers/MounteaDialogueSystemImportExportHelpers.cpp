@@ -2302,7 +2302,7 @@ void UMounteaDialogueSystemImportExportHelpers::ProcessDialogueRowGroup(
 		if (foundSound && *foundSound)
 			rowData.RowSound = *foundSound;
 
-		newRow.DialogueRowData.Add(rowData);
+		newRow.RowData.Add(rowData);
 	}
 
 	TArray<FDialogueRow*> existingRows;
@@ -2566,7 +2566,7 @@ bool UMounteaDialogueSystemImportExportHelpers::GatherAudioFiles(const UMounteaD
 		if (!DialogueRow)
 			continue;
 
-		for (const FDialogueRowData& RowData : DialogueRow->DialogueRowData)
+		for (const FDialogueRowData& RowData : DialogueRow->RowData)
 		{
 			if (RowData.RowSound)
 			{
@@ -2714,7 +2714,7 @@ void UMounteaDialogueSystemImportExportHelpers::AddDialogueNodeData(const TShare
 	const FString GraphFolder = FPaths::GetPath(DialogueNode->Graph->GetPathName());
 
 	TArray<TSharedPtr<FJsonValue>> DialogueRowsArray;
-	for (const auto& RowData : DialogueRowRef->DialogueRowData)
+	for (const auto& RowData : DialogueRowRef->RowData)
 	{
 		const TSharedPtr<FJsonObject> RowObject = MakeShareable(new FJsonObject);
 		RowObject->SetStringField((TEXT("id")), RowData.RowGUID.ToString(EGuidFormats::DigitsWithHyphensLower));
@@ -3195,7 +3195,7 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateDialogueRowsJson(const 
 		if (!DialogueRow)
 			continue;
 
-		for (const FDialogueRowData& RowData : DialogueRow->DialogueRowData)
+		for (const FDialogueRowData& RowData : DialogueRow->RowData)
 		{
 			TSharedPtr<FJsonObject> RowObject = MakeShareable(new FJsonObject);
 
@@ -3243,7 +3243,7 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateStringTableJson(const U
 		if (!row)
 			continue;
 
-		for (const FDialogueRowData& rowData : row->DialogueRowData)
+		for (const FDialogueRowData& rowData : row->RowData)
 		{
 			const FString key = rowData.RowGUID.ToString(EGuidFormats::DigitsWithHyphensLower);
 			TSharedPtr<FJsonObject> localeMap = MakeShareable(new FJsonObject);

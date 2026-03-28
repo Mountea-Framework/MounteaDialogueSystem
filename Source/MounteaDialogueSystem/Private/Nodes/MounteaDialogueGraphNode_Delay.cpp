@@ -78,7 +78,7 @@ void UMounteaDialogueGraphNode_Delay::OnDelayDurationExpired(const TScriptInterf
 			
 		Context->SetDialogueContext(Context->DialogueParticipant, dialogueNodeToStart, UMounteaDialogueSystemBFC::GetAllowedChildNodes(dialogueNodeToStart));
 
-		Context->ActiveDialogueRowDataIndex = 	UMounteaDialogueSystemBFC::GetDialogueRow(dialogueNodeToStart).DialogueRowData.Num() - 1; // Force-set the last row
+			Context->ActiveDialogueRowDataIndex = 	UMounteaDialogueSystemBFC::GetDialogueRow(dialogueNodeToStart).RowData.Num() - 1; // Force-set the last row
 		FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
 		newDialogueTableHandle.DataTable = dialogueNodeToStart->GetDataTable();
 		newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();

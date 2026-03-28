@@ -550,12 +550,12 @@ FDialogueRowData UMounteaDialogueSystemBFC::GetActiveDialogueData(const UMountea
 
 	const int32 activeIndex = Context->GetActiveDialogueRowDataIndex();
 	const auto Row = Context->GetActiveDialogueRow();
-	bResult = Row.DialogueRowData.IsValidIndex(activeIndex);
+	bResult = Row.RowData.IsValidIndex(activeIndex);
 
 	if (!bResult)
 		return FDialogueRowData();
 	
-	const FDialogueRowData rowData = Row.DialogueRowData[activeIndex];
+	const FDialogueRowData rowData = Row.RowData[activeIndex];
 	bResult = IsDialogueRowDataValid(rowData);
 
 	return bResult ? rowData : FDialogueRowData();
@@ -882,7 +882,7 @@ ERowExecutionMode UMounteaDialogueSystemBFC::GetActiveRowExecutionMode(UMounteaD
 	if (!activeRow.IsValid())
 		return result;
 
-	const TArray<FDialogueRowData> rowDataArray = activeRow.DialogueRowData;
+	const TArray<FDialogueRowData> rowDataArray = activeRow.RowData;
 	if (!rowDataArray.IsValidIndex(RowIndex))
 		return result;
 
