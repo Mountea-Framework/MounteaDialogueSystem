@@ -188,10 +188,9 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineLinkGeometry(FArran
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSubwayWireWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)
 {
 	// Keep wire construction numerically stable at extreme zoom-out levels.
-	const float safeZoom = FMath::Max(ZoomFactor, 0.25f);
-	const float stubOffset = MounteaDialogueWireConsts::WireStubOffset * safeZoom;
-	const float gridStep   = FMath::Max(MounteaDialogueWireConsts::WireGridSize * safeZoom, 0.1f);
-	const float minStyleDistance = FMath::Max(MounteaDialogueWireConsts::MinStyleDistance * safeZoom, 1.0f);
+	const float stubOffset = MounteaDialogueWireConsts::WireStubOffset * ZoomFactor;
+	const float gridStep   = FMath::Max(MounteaDialogueWireConsts::WireGridSize * ZoomFactor, 0.1f);
+	const float minStyleDistance = FMath::Max(MounteaDialogueWireConsts::MinStyleDistance * ZoomFactor, 1.0f);
 	const bool bExtremeZoomOut = ZoomFactor < 0.35f;
 
 	auto snapToGrid = [gridStep](const FVector2D& V) -> FVector2D
@@ -218,11 +217,6 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSubwayWireWithArrow(cons
 		wireEnd, FVector2D::ZeroVector, EndPoint, FVector2D::ZeroVector,
 		Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
 
-	FMDSPathDrawer drawer(WireLayerID, ZoomFactor, DrawElementsList, Params);
-
-	const float dist = FVector2D::Distance(wireStart, wireEnd);
-	const bool bBackward = wireEnd.Y < wireStart.Y;
-
 	if (bExtremeZoomOut)
 	{
 		// At tiny zoom scales, use deterministic orthogonal routing to avoid zig-zag and drift.
@@ -242,34 +236,41 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSubwayWireWithArrow(cons
 			secondTurn, FVector2D::ZeroVector, wireEnd, FVector2D::ZeroVector,
 			Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
 	}
-	else if (dist < minStyleDistance)
-	{
-		FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
-			wireStart, FVector2D::ZeroVector, wireEnd, FVector2D::ZeroVector,
-			Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
-	}
-	else if (bBackward)
-	{
-		const FVector2D delta = wireEnd - wireStart;
-		// Keep backward-link curvature gentle; aggressive tangents create visible hooks at deep zoom.
-		const float horizontalSpan = FMath::Abs(delta.X);
-		const float maxAllowedTangent = FVector2D::Distance(wireStart, wireEnd) * 0.35f;
-		const float tangentLen = FMath::Min(horizontalSpan * 0.35f, maxAllowedTangent);
-		const FVector2D tangent(FMath::Sign(delta.X) * tangentLen, 0.0f);
-
-		FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
-			wireStart, tangent, wireEnd, tangent,
-			Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
-	}
 	else
 	{
-		drawer.DrawSubwayWire(wireStart, FVector2D(0.0f, 1.0f), wireEnd, FVector2D(0.0f, 1.0f));
+		const float dist = FVector2D::Distance(wireStart, wireEnd);
+		const bool bBackward = wireEnd.Y < wireStart.Y;
+
+		if (dist < minStyleDistance)
+		{
+			FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
+				wireStart, FVector2D::ZeroVector, wireEnd, FVector2D::ZeroVector,
+				Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+		}
+		else if (bBackward)
+		{
+			const FVector2D delta = wireEnd - wireStart;
+			// Keep backward-link curvature gentle; aggressive tangents create visible hooks at deep zoom.
+			const float horizontalSpan = FMath::Abs(delta.X);
+			const float maxAllowedTangent = FVector2D::Distance(wireStart, wireEnd) * 0.35f;
+			const float tangentLen = FMath::Min(horizontalSpan * 0.35f, maxAllowedTangent);
+			const FVector2D tangent(FMath::Sign(delta.X) * tangentLen, 0.0f);
+
+			FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
+				wireStart, tangent, wireEnd, tangent,
+				Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+		}
+		else
+		{
+			FMDSPathDrawer drawer(WireLayerID, ZoomFactor, DrawElementsList, Params);
+			drawer.DrawSubwayWire(wireStart, FVector2D(0.0f, 1.0f), wireEnd, FVector2D(0.0f, 1.0f));
+		}
 	}
 
 	if (ArrowImage)
 	{
 		const FVector2D arrowDirection    = FVector2D(0.0f, 1.0f);
-		const FVector2D rawArrowSize      = ArrowImage->ImageSize * safeZoom;
+		const FVector2D rawArrowSize      = ArrowImage->ImageSize * ZoomFactor;
 		const FVector2D arrowSize(
 			FMath::Max(rawArrowSize.X, 4.0f),
 			FMath::Max(rawArrowSize.Y, 4.0f)
