@@ -137,8 +137,8 @@ public:
 	
 	/**
 	 * Evaluates the Decorator.
-	 * Called for each Node it is attached to.
-	 * Could enhance Node's 'CanStartNode'. Example would be: BP_RequireItem decorator, which would return true if Player has specific Item in inventory. Otherwise it returns false and its Node is not available in Selection of Answers.
+	 * Called for informational purposes — does NOT gate node traversal.
+	 * Use edge conditions (UMounteaDialogueConditionBase) to control whether a child node is reachable.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator")
 	bool EvaluateDecorator();

@@ -38,10 +38,10 @@ ENUM_CLASS_FLAGS(EMounteaDialogueLoggingVerbosity)
 UENUM(BlueprintType)
 enum class EDialogueManagerType : uint8
 {
-	EDMT_PlayerDialogue UMETA(DisplayName="Player (Active) Dialogue"),
-	EDMT_EnvironmentDialogue UMETA(DisplayName="Environment (Passive) Dialogue"),
+	EDMT_PlayerDialogue 		UMETA(DisplayName="Player (Active) Dialogue"),
+	EDMT_EnvironmentDialogue 	UMETA(DisplayName="Environment (Passive) Dialogue"),
 
-	Default UMETA(hidden)
+	Default 					UMETA(hidden)
 };
 
 /**
@@ -52,11 +52,11 @@ enum class EDialogueManagerType : uint8
 UENUM(BlueprintType)
 enum class EDialogueManagerState : uint8
 {
-	EDMS_Disabled UMETA(DisplayName="Disabled", Tooltip="Disabled. Dialogue cannot start."),
-	EDMS_Enabled UMETA(DisplayName="Enabled", Tooltip="Enabled. Dialogue can start."),
-	EDMS_Active UMETA(DisplayName="Active", Tooltip="Active. Is in Diaologue."),
+	EDMS_Disabled 	UMETA(DisplayName="Disabled", Tooltip="Disabled. Dialogue cannot start."),
+	EDMS_Enabled 	UMETA(DisplayName="Enabled", Tooltip="Enabled. Dialogue can start."),
+	EDMS_Active 	UMETA(DisplayName="Active", Tooltip="Active. Is in Diaologue."),
 
-	Default UMETA(hidden)
+	Default 		UMETA(hidden)
 };
 
 /**
@@ -67,11 +67,11 @@ enum class EDialogueManagerState : uint8
 UENUM(BlueprintType)
 enum class EDialogueParticipantState : uint8
 {
-	EDPS_Disabled UMETA(DisplayName="Disabled", Tooltip="Disabled. Dialogue cannot start."),
-	EDPS_Enabled UMETA(DisplayName="Enabled", Tooltip="Enabled. Dialogue can start."),
-	EDPS_Active UMETA(DisplayName="Active", Tooltip="Active. Is in Diaologue."),
+	EDPS_Disabled 	UMETA(DisplayName="Disabled", Tooltip="Disabled. Dialogue cannot start."),
+	EDPS_Enabled 	UMETA(DisplayName="Enabled", Tooltip="Enabled. Dialogue can start."),
+	EDPS_Active 	UMETA(DisplayName="Active", Tooltip="Active. Is in Diaologue."),
 
-	Default UMETA(hidden)
+	Default 		UMETA(hidden)
 };
 
 /**
@@ -82,13 +82,13 @@ enum class EDialogueParticipantState : uint8
 UENUM(BlueprintType)
 enum class ERowDurationMode : uint8
 {
-	ERDM_Manual UMETA(DisplayName="Manual", Tooltip="Row won't start automatically and will wait for `NextDialogueRow` request.", hidden),
-	ERDM_Duration UMETA(DisplayName="Duration", Tooltip="Uses either duration of 'Row Sound' or value from 'Duration'."),
-	EDRM_Override UMETA(DisplayName="Override", Tooltip="Uses 'Duration Override' value."),
-	EDRM_Add UMETA(DisplayName="Add Time", Tooltip="Adds 'Duration Override' value to 'Duration'."),
-	ERDM_AutoCalculate UMETA(DisplayName="Calculate", Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds."),
+	ERDM_Manual 		UMETA(DisplayName="Manual", Tooltip="Row won't start automatically and will wait for `NextDialogueRow` request.", hidden),
+	ERDM_Duration 		UMETA(DisplayName="Duration", Tooltip="Uses either duration of 'Row Sound' or value from 'Duration'."),
+	EDRM_Override 		UMETA(DisplayName="Override", Tooltip="Uses 'Duration Override' value."),
+	EDRM_Add 			UMETA(DisplayName="Add Time", Tooltip="Adds 'Duration Override' value to 'Duration'."),
+	ERDM_AutoCalculate 	UMETA(DisplayName="Calculate", Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds."),
 
-	Default UMETA(hidden)
+	Default 			UMETA(hidden)
 };
 
 /**
@@ -97,11 +97,11 @@ enum class ERowDurationMode : uint8
 UENUM(BlueprintType)
 enum class ERowExecutionMode : uint8
 {
-	EREM_Automatic UMETA(DisplayName="Automatic", Tooltip="Next row will be executed if any is present."),
-	EREM_AwaitInput UMETA(DisplayName="Await Input", Tooltip="Next row will be executed once request is triggered."),
-	EREM_Stopping UMETA(DisplayName="Stopping", Tooltip="Row will stop execution of whole Node and will finish both."),
+	EREM_Automatic 		UMETA(DisplayName="Automatic", Tooltip="Next row will be executed if any is present."),
+	EREM_AwaitInput 	UMETA(DisplayName="Await Input", Tooltip="Next row will be executed once request is triggered."),
+	EREM_Stopping 		UMETA(DisplayName="Stopping", Tooltip="Row will stop execution of whole Node and will finish both."),
 
-	Default UMETA(hidden)
+	Default 			UMETA(hidden)
 };
 
 /**
@@ -112,8 +112,8 @@ enum class ERowExecutionMode : uint8
 UENUM(BlueprintType)
 enum class EMounteaInputMode : uint8
 {
-	EIM_UIOnly UMETA(DisplayName="UI Only"),
-	EIM_UIAndGame UMETA(DisplayName="UI & Game")
+	EIM_UIOnly 			UMETA(DisplayName="UI Only"),
+	EIM_UIAndGame 		UMETA(DisplayName="UI & Game")
 };
 
 /**
@@ -192,6 +192,22 @@ public:
 	};
 };
 
+/**
+ * Defines the role of a participant in a dialogue session.
+ * Used as a bitmask — a single participant may hold multiple roles simultaneously.
+ *
+ * Example: An NPC who is also the session host could be both NPC and Environment.
+ */
+UENUM(BlueprintType, meta=(Bitflags, UseEnumValuesAsMaskValuesInEditor="true"))
+enum class EDialogueParticipantType : uint8
+{
+	None		= 0			UMETA(Hidden),
+	Player		= 1 << 0	UMETA(DisplayName="Player"),
+	NPC			= 1 << 1	UMETA(DisplayName="NPC"),
+	Environment	= 1 << 2	UMETA(DisplayName="Environment"),
+};
+ENUM_CLASS_FLAGS(EDialogueParticipantType)
+
 #define LOCTEXT_NAMESPACE "DialogueParticipant"
 
 USTRUCT(BlueprintType)
@@ -200,7 +216,7 @@ struct FDialogueParticipant : public FTableRowBase
 	GENERATED_BODY()
 
 public:
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Participant",
 		meta=(NoResetToDefault))
 	FName ParticipantName;
@@ -209,11 +225,21 @@ public:
 		meta=(NoResetToDefault),
 		meta=(Categories="Mountea_Dialogue,Dialogue"))
 	FGameplayTag ParticipantCategoryTag;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
 		meta=(NoResetToDefault))
 	TSoftObjectPtr<UTexture2D> ParticipantIcon;
-	
+
+	/**
+	 * Role bitmask for this participant.
+	 * Used at runtime to determine how the participant interacts with dialogue flow
+	 * (e.g. whether it drives player input, auto-advances, owns the graph, etc.).
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Participant",
+		meta=(Bitmask, BitmaskEnum="/Script/MounteaDialogueSystem.EDialogueParticipantType"),
+		meta=(NoResetToDefault))
+	int32 ParticipantType = 0;
+
 };
 
 #undef LOCTEXT_NAMESPACE

@@ -196,7 +196,7 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators()
 
 bool UMounteaDialogueGraphNode::CanStartNode_Implementation() const
 {
-	return EvaluateDecorators();
+	return true;
 }
 
 bool UMounteaDialogueGraphNode::EvaluateDecorators_Implementation() const
