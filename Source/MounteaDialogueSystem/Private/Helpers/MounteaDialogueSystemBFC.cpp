@@ -10,6 +10,7 @@
 
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
+#include "Interfaces/Nodes/MounteaDialogueSpeechDataInterface.h"
 
 #include "Components/AudioComponent.h"
 #include "Data/MounteaDialogueContext.h"
@@ -549,12 +550,12 @@ FDialogueRowData UMounteaDialogueSystemBFC::GetActiveDialogueData(const UMountea
 
 	const int32 activeIndex = Context->GetActiveDialogueRowDataIndex();
 	const auto Row = Context->GetActiveDialogueRow();
-	bResult = Row.DialogueRowData.Array().IsValidIndex(activeIndex);
+	bResult = Row.DialogueRowData.IsValidIndex(activeIndex);
 
 	if (!bResult)
 		return FDialogueRowData();
 	
-	const FDialogueRowData rowData = Row.DialogueRowData.Array()[activeIndex];
+	const FDialogueRowData rowData = Row.DialogueRowData[activeIndex];
 	bResult = IsDialogueRowDataValid(rowData);
 
 	return bResult ? rowData : FDialogueRowData();
@@ -881,7 +882,7 @@ ERowExecutionMode UMounteaDialogueSystemBFC::GetActiveRowExecutionMode(UMounteaD
 	if (!activeRow.IsValid())
 		return result;
 
-	const TArray<FDialogueRowData> rowDataArray = activeRow.DialogueRowData.Array();
+	const TArray<FDialogueRowData> rowDataArray = activeRow.DialogueRowData;
 	if (!rowDataArray.IsValidIndex(RowIndex))
 		return result;
 
@@ -927,4 +928,39 @@ UActorComponent* UMounteaDialogueSystemBFC::GetSingleComponentByInterface(const 
 
 	bResult = true;
 	return TempComps[0];
+}
+
+bool UMounteaDialogueSystemBFC::IsServer(const AActor* Owner)
+{
+	if (!Owner) return false;
+	const UWorld* world = Owner->GetWorld();
+	if (!world) return false;
+	return world->GetNetMode() != NM_Client;
+}
+
+bool UMounteaDialogueSystemBFC::IsLocalPlayer(const AActor* Owner)
+{
+	if (!Owner) return false;
+	const APawn* pawn = Cast<APawn>(Owner);
+	if (pawn) return pawn->IsLocallyControlled();
+	return Owner->HasLocalNetOwner();
+}
+
+bool UMounteaDialogueSystemBFC::ShouldExecuteCosmetics(const AActor* Owner)
+{
+	return IsLocalPlayer(Owner);
+}
+
+FDialogueRow UMounteaDialogueSystemBFC::GetSpeechData(UMounteaDialogueGraphNode* Node)
+{
+	if (!Node) return FDialogueRow();
+	if (!Node->GetClass()->ImplementsInterface(UMounteaDialogueSpeechDataInterface::StaticClass()))
+		return FDialogueRow();
+	return IMounteaDialogueSpeechDataInterface::Execute_GetSpeechData(Node);
+}
+
+bool UMounteaDialogueSystemBFC::NodeHasSpeechData(UMounteaDialogueGraphNode* Node)
+{
+	if (!Node) return false;
+	return Node->GetClass()->ImplementsInterface(UMounteaDialogueSpeechDataInterface::StaticClass());
 }

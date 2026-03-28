@@ -9,6 +9,7 @@
 
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
+#include "Interfaces/Nodes/MounteaDialogueSpeechDataInterface.h"
 
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Blueprint/UserWidget.h"
@@ -393,6 +394,65 @@ public:
 		meta=(CustomTag="MounteaK2Getter"))
 	static TArray<TSubclassOf<UMounteaDialogueGraphNode>> GetAllowedInputClasses(UMounteaDialogueGraphNode* Target);
 	
+	// --- Authority helpers ------------------------------
+
+	/**
+	 * Returns true if the given actor is on the server or standalone (not a remote client).
+	 * Use this to gate server-authoritative state mutations.
+	 *
+	 * @param Owner  Actor whose net role is checked.
+	 * @return  True when running on the authoritative server or in standalone.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Validate"))
+	static bool IsServer(const AActor* Owner);
+
+	/**
+	 * Returns true if the given actor is locally controlled by the owning client.
+	 * Use this to gate cosmetic and UI operations.
+	 *
+	 * @param Owner  Actor whose local control is checked.
+	 * @return  True for the locally controlled actor on standalone and listen server.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Validate"))
+	static bool IsLocalPlayer(const AActor* Owner);
+
+	/**
+	 * Returns true when cosmetic and UI operations should execute for this actor.
+	 * Equivalent to IsLocalPlayer. Never use !IsServer for this purpose.
+	 *
+	 * @param Owner  Actor to check.
+	 * @return  True when the actor is locally controlled.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Validate"))
+	static bool ShouldExecuteCosmetics(const AActor* Owner);
+
+	// --- Speech data helpers ----------------------------
+
+	/**
+	 * Returns the FDialogueRow from a node if it implements IMounteaDialogueSpeechDataInterface.
+	 * Returns a default FDialogueRow for non-speech nodes (Delay, OpenChildGraph, etc.).
+	 *
+	 * @param Node  Node to query.
+	 * @return  The speech data row, or an empty default if the node carries no speech.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Getter"))
+	static FDialogueRow GetSpeechData(UMounteaDialogueGraphNode* Node);
+
+	/**
+	 * Returns true if the given node implements IMounteaDialogueSpeechDataInterface
+	 * and therefore carries dialogue speech data.
+	 *
+	 * @param Node  Node to check.
+	 * @return  True when the node has speech data accessible via the speech interface.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Validate"))
+	static bool NodeHasSpeechData(UMounteaDialogueGraphNode* Node);
+
 	// --- Template functions ------------------------------
 	
 	template <typename NodeType>
