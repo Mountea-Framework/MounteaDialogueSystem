@@ -4,6 +4,7 @@
 #include "Components/MounteaDialogueParticipant.h"
 
 #include "Components/AudioComponent.h"
+
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
@@ -12,6 +13,11 @@
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Settings/MounteaDialogueSystemSettings.h"
 #include "Sound/SoundBase.h"
+
+#if WITH_EDITOR
+#include "Engine/SCS_Node.h"
+#include "Engine/SimpleConstructionScript.h"
+#endif
 
 UMounteaDialogueParticipant::UMounteaDialogueParticipant()
 	: DefaultParticipantState(EDialogueParticipantState::EDPS_Enabled)
@@ -143,6 +149,80 @@ void UMounteaDialogueParticipant::SkipParticipantVoice_Implementation(USoundBase
 		AudioComponent->StopDelayed(UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->GetSkipFadeDuration());
 		AudioComponent->SetSound(nullptr);
 	}
+}
+
+TArray<FName> UMounteaDialogueParticipant::GetAvailableParticipants() const
+{
+	const auto dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+	if (!IsValid(dialogueSettings))
+		return {};
+	const auto dialogueConfig = dialogueSettings->GetDialogueConfiguration().LoadSynchronous();
+	if (!IsValid(dialogueConfig))
+		return {};
+	if (dialogueConfig->DialogueParticipantsTables.Num() == 0)
+		return {};
+	TSet<FName> returnValue;
+	returnValue.Reserve(dialogueConfig->DialogueParticipantsTables.Num() * 4);
+	for (const auto& participantsTable : dialogueConfig->DialogueParticipantsTables)
+	{
+		if (!IsValid(participantsTable.LoadSynchronous()))
+			continue;
+		returnValue.Append(participantsTable.LoadSynchronous()->GetRowNames());
+	}	
+	
+	return returnValue.Array();
+}
+
+TArray<FName> UMounteaDialogueParticipant::GetAvailableAudioComponents() const
+{
+	TArray<FName> returnValue;
+
+	const AActor* target = Execute_GetOwningActor(this);
+	if (!IsValid(target))
+		return returnValue;
+
+	TArray<UAudioComponent*> components;
+	target->GetComponents<UAudioComponent>(components);
+
+#if WITH_EDITOR
+	if (UBlueprintGeneratedClass* bpClass = Cast<UBlueprintGeneratedClass>(target->GetClass()))
+	{
+		if (bpClass->SimpleConstructionScript)
+		{
+			const TArray<USCS_Node*>& nodes = bpClass->SimpleConstructionScript->GetAllNodes();
+
+			for (const auto& node : nodes)
+			{
+				if (!node) 
+					continue;
+
+				const auto componentTemplate = node->GetActualComponentTemplate(bpClass);
+				if (!IsValid(componentTemplate))
+					continue;
+				
+				const auto audioComponent = Cast<UAudioComponent>(componentTemplate);
+				if (!IsValid(audioComponent))
+					continue;
+				components.Add(audioComponent);
+			}
+		}
+	}
+#endif
+
+	returnValue.Reserve(components.Num());
+
+	Algo::Transform(
+		components,
+		returnValue,
+		[](const UAudioComponent* comp)
+		{
+			FString name = comp->GetFName().ToString();
+			name.RemoveFromEnd(TEXT("_GEN_VARIABLE"));
+			return FName(*name);
+		}
+	);
+
+	return returnValue;
 }
 
 bool UMounteaDialogueParticipant::CanStartDialogue_Implementation() const
@@ -456,6 +536,47 @@ int32 UMounteaDialogueParticipant::GetCurrentPIEInstanceID() const
 		}
 	}
 	return -1;
+}
+
+#endif
+
+#if WITH_EDITOR
+
+void UMounteaDialogueParticipant::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	
+	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueParticipant, ParticipantRow))
+	{
+		if (!ParticipantRow.IsNone())
+		{
+			const auto dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+			if (IsValid(dialogueSettings))
+			{
+				const auto dialogueConfig = dialogueSettings->GetDialogueConfiguration().LoadSynchronous();
+				if (IsValid(dialogueConfig))
+				{
+					const auto dialogueParticipantsTables = dialogueConfig->DialogueParticipantsTables;
+					if (dialogueParticipantsTables.Num() > 0)
+					{
+						for (const auto& dialogueParticipantsTable : dialogueParticipantsTables)
+						{
+							if (IsValid(dialogueParticipantsTable.LoadSynchronous()))
+							{
+								FString searchContext;
+								const auto dialogueParticipantRow = dialogueParticipantsTable->FindRow<FDialogueParticipant>(ParticipantRow, searchContext);
+								ParticipantData = dialogueParticipantRow;
+					
+								if (ParticipantData != nullptr)
+									ParticipantTag = ParticipantData->ParticipantCategoryTag;
+								break;
+							}
+						}
+					}				
+				}				
+			}
+		}
+	}
 }
 
 #endif

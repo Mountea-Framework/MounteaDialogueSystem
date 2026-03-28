@@ -26,7 +26,6 @@ FWidgetDialogueRow::FWidgetDialogueRow(const FDialogueRow& SourceRow, const FDia
 	, DialogueRowBody(SourceRowData.RowText)
 	, RowDuration(UMounteaDialogueSystemBFC::GetRowDuration(SourceRowData))
 	, UIRowID(SourceRow.UIRowID)
-	, RowOptionalIcon(SourceRow.RowOptionalIcon)
 	, RowGuid(SourceRowData.RowGUID)
 {
 }

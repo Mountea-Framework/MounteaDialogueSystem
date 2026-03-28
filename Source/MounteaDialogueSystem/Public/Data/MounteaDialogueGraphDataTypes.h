@@ -17,6 +17,7 @@
 class UMounteaDialogueContext;
 class IMounteaDialogueParticipantInterface;
 class UMounteaDialogueGraphNode;
+class UMounteaDialogueGraph;
 class USoundBase;
 class UTexture;
 class UDataAsset;
@@ -129,7 +130,9 @@ struct FMounteaSubtitlesSettings
 	 * Default:
 	 * * Color: White
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles", meta=(DisplayName="Color and Oppacity"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles", 
+		meta=(DisplayName="Color and Oppacity"),
+		meta=(NoResetToDefault))
 	FSlateColor FontColor;
 	/**
 	 * Slate Font Info settings.
@@ -139,21 +142,35 @@ struct FMounteaSubtitlesSettings
 	 * * Typeface: 'Regular'
 	 * * Outline: 1
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles", meta=(ForceShowEngineContent))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles", 
+		meta=(ForceShowEngineContent),
+		meta=(NoResetToDefault))
 	FSlateFontInfo SubtitlesFont;
+	
 	/**
 	 * Shadow Offset Settings.
 	 * Defines shadow offset on X and Y axis.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles",
+		meta=(NoResetToDefault))
 	FVector2D ShadowOffset;
+	
 	/**
 	 * Shadow Color Settings.
 	 * Default:
 	 * * Color: Black
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles",
+		meta=(NoResetToDefault))
 	FLinearColor ShadowColor;
+
+	/**
+	 * Optional icon associated with this subtitle style.
+	 * Replaces the per-row RowOptionalIcon that was previously stored on FDialogueRow.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles",
+		meta=(NoResetToDefault))
+	TSoftObjectPtr<UTexture2D> RowOptionalIcon = nullptr;
 
 	/**
 	 * Settings GUID.
@@ -163,7 +180,9 @@ struct FMounteaSubtitlesSettings
 	 * 
 	 * Invalid settings are ignored!
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Subtitles", meta=(IgnoreForMemberInitializationTest))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Subtitles", 
+		meta=(IgnoreForMemberInitializationTest),
+		meta=(NoResetToDefault))
 	FGuid SettingsGUID;
 
 public:
@@ -212,6 +231,7 @@ struct FDialogueRowData
 	GENERATED_BODY()
 
 public:
+	
 	/**
 	 * Row Text.
 	 * 
@@ -236,6 +256,7 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
 	TObjectPtr<USoundBase> RowSound = nullptr;
+	
 	/**
 	 * Row Duration Mode
 	 * 
@@ -244,6 +265,7 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
 	ERowDurationMode RowDurationMode;
+	
 	/**
 	 * Row Duration
 	 * 
@@ -253,6 +275,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
 		meta=(EditCondition="RowSound==nullptr", UIMin=0.f, ClampMin=0.f, ExposeOnSpawn = true))
 	float RowDuration;
+	
 	/**
 	 * Row Duration Override
 	 * 
@@ -263,12 +286,14 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
 	float RowDurationOverride;
+	
 	/**
 	 * If set to true this Row will stop the whole Node execution and next row won't start.
 	 * Default is false.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
 	ERowExecutionMode RowExecutionBehaviour;
+	
 	/**
 	 * Row GUID.
 	 * 
@@ -346,6 +371,7 @@ struct FDialogueRow : public FTableRowBase
 	GENERATED_BODY()
 
 public:
+	
 	/**
 	 * List of GameplayTags which distinguish participants. 
 	 * 
@@ -369,17 +395,9 @@ public:
 	 * * Max: 255
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
-		meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true, DisplayName="Row Type ID"))
+		meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true),
+		meta=(DisplayName="Row Type ID"))
 	int32 UIRowID = 0;
-	
-	/**
-	 * Optional Row Icon.
-	 * 
-	 * ❗ Optional value.
-	 * ❔ Could be used to mark special dialogue options, like "Open Store" or "Leave conversation" with special icon.
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
-	TObjectPtr<UTexture> RowOptionalIcon = nullptr;
 	
 	/**
 	 * Name of the Dialogue Participant.
@@ -400,20 +418,22 @@ public:
 	FText RowTitle;
 	
 	/**
-	 * List of Dialogue Row Data. Not replicated, must be found locally for each Client from replicated Active Node!
-	 * 
+	 * List of Dialogue Row Data.
+	 *
 	 * ❔ Each Dialogue Row can contain multiple of those, where each Data Row represents:
 	 * * What Sound should be played
 	 * * What text should be displayed
-	 * 
+	 *
 	 * This provides easy way to have multiple dialogue lines per single Node.
 	 * As example, Player asks NPC what happened to its family. And each sentence could be its own Dialogue Row Data input.
 	 * This makes UI easier to read and sounds more managable.
-	 * 
+	 *
 	 * Each Data Row has its Duration, which could be based on the Sound, directly set, calculated on generic formula or added atop of the sound duration.
 	 */
-	UPROPERTY(NotReplicated, EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(TitleProperty="RowText"))
-	TSet<FDialogueRowData> DialogueRowData;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
+		meta=(TitleProperty="RowText"),
+		meta=(ShowOnlyInnerProperties))
+	TArray<FDialogueRowData> DialogueRowData;
 	
 	/**
 	 * Additional Row Data
@@ -422,7 +442,8 @@ public:
 	 * This data could be used for Decorators or UI in general.
 	 * Any Data Asset can be used here and no logic is tied to this attribute.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(AllowAbstract=false))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
+		meta=(AllowAbstract=false))
 	TObjectPtr<UDialogueAdditionalData> DialogueRowAdditionalData = nullptr;
 	
 	/**
@@ -430,30 +451,21 @@ public:
 	 * 
 	 * Unique Key when searching and binding this Row.
 	 */
-	UPROPERTY(/*Transient, */VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, 
+		meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate))
 	FGuid RowGUID;
 	
-	/**
-	 * ❗ WIP
-	 * Title Settings Override.
-	 * 
-	 * ❔ Provides ability to override this Row Title using direct settings rather than 'UIRowID'.
-	 * ❗ No logic is implemented yet
-	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay)
-	FMounteaSubtitlesSettings TitleSettingsOverride;
-
 public:
 	FDialogueRow()
-		: CompatibleTags(), RowOptionalIcon(nullptr),
+		: CompatibleTags(),
 		DialogueParticipant(LOCTEXT("FDialogueRow_Participant", "Dialogue Participant")), RowTitle(LOCTEXT("FDialogueRow_Title", "Selectable Option"))
 	{
 		RowGUID = FGuid::NewGuid();
 	};
 
-	FDialogueRow(const int32 NewUIRowID, UTexture* InRowIcon, const FText& InText, const FText& InParticipant,
-				const TSet<FDialogueRowData>& InData, UDialogueAdditionalData* NewData, const FGameplayTagContainer& InCompatibleTags)
-		: CompatibleTags(InCompatibleTags), UIRowID(NewUIRowID), RowOptionalIcon(InRowIcon), DialogueParticipant(InParticipant),
+	FDialogueRow(const int32 NewUIRowID, const FText& InText, const FText& InParticipant,
+				const TArray<FDialogueRowData>& InData, UDialogueAdditionalData* NewData, const FGameplayTagContainer& InCompatibleTags)
+		: CompatibleTags(InCompatibleTags), UIRowID(NewUIRowID), DialogueParticipant(InParticipant),
 		RowTitle(InText), DialogueRowData(InData), DialogueRowAdditionalData(NewData)
 	{
 		RowGUID = FGuid::NewGuid();
@@ -463,11 +475,9 @@ public:
 	
 	inline FDialogueRow& operator=(const FDialogueRow& Other)
 	{
-		RowOptionalIcon = Other.RowOptionalIcon;
 		DialogueParticipant = Other.DialogueParticipant;
 		RowTitle = Other.RowTitle;
 		DialogueRowData = Other.DialogueRowData;
-		TitleSettingsOverride = Other.TitleSettingsOverride;
 		UIRowID = Other.UIRowID;
 		DialogueRowAdditionalData = Other.DialogueRowAdditionalData;
 		RowGUID = FGuid::NewGuid();
@@ -509,13 +519,8 @@ public:
 
 		if (RowTitle.EqualTo(Other.RowTitle) && DialogueRowData.Num() > 0 && Other.DialogueRowData.Num() > 0)
 		{
-			const FDialogueRowData ThisFirstRowData = DialogueRowData.Array()[0];
-			const FDialogueRowData OtherFirstRowData = Other.DialogueRowData.Array()[0];
-
-			if (ThisFirstRowData == OtherFirstRowData)
-			{
+			if (DialogueRowData[0] == Other.DialogueRowData[0])
 				return true;
-			}
 		}
 
 		return false;
@@ -635,6 +640,91 @@ public:
 	TPair<FGuid, FGuid> GetGuidPair() const
 	{
 		return TPair<FGuid, FGuid>(NodeGuid, GraphGuid);
+	}
+};
+
+/**
+ * Snapshot of a parent graph state saved when entering a sub-graph via OpenChildGraph.
+ * Restored when the sub-graph completes via PopGraphStack.
+ */
+USTRUCT(BlueprintType)
+struct FDialogueGraphStackEntry
+{
+	GENERATED_BODY()
+
+public:
+
+	/**
+	 * GUID of the parent graph being suspended.
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|GraphStack")
+	FGuid ParentGraphGUID;
+
+	/**
+	 * GUID of the node to return to in the parent graph after the child graph completes.
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|GraphStack")
+	FGuid ReturnNodeGUID;
+
+	/**
+	 * GUID of the node that was active in the parent graph when the child was opened.
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|GraphStack")
+	FGuid SavedActiveNodeGUID;
+
+	/**
+	 * Allowed child node GUIDs that were available in the parent graph at suspension time.
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|GraphStack")
+	TArray<FGuid> SavedAllowedChildNodeGUIDs;
+
+	bool operator==(const FDialogueGraphStackEntry& Other) const
+	{
+		return ParentGraphGUID == Other.ParentGraphGUID && SavedActiveNodeGUID == Other.SavedActiveNodeGUID;
+	}
+
+	friend FArchive& operator<<(FArchive& Ar, FDialogueGraphStackEntry& Entry)
+	{
+		Ar << Entry.ParentGraphGUID;
+		Ar << Entry.ReturnNodeGUID;
+		Ar << Entry.SavedActiveNodeGUID;
+		Ar << Entry.SavedAllowedChildNodeGUIDs;
+		return Ar;
+	}
+};
+
+/**
+ * A lightweight request struct passed to the server when initiating a dialogue.
+ * Uses soft object references to avoid passing raw actor pointers across RPCs.
+ */
+USTRUCT(BlueprintType)
+struct FDialogueStartRequest
+{
+	GENERATED_BODY()
+
+public:
+
+	/**
+	 * The primary participant actor — typically the NPC initiating or owning the dialogue graph.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Request")
+	TSoftObjectPtr<AActor> MainParticipantActor;
+
+	/**
+	 * Additional participants in the conversation.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Request")
+	TArray<TSoftObjectPtr<AActor>> OtherParticipantActors;
+
+	/**
+	 * The dialogue graph asset to run for this session.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Request")
+	TSoftObjectPtr<UMounteaDialogueGraph> DialogueGraph;
+
+	bool IsValid() const
+	{
+		return !MainParticipantActor.IsNull() && !DialogueGraph.IsNull();
 	}
 };
 

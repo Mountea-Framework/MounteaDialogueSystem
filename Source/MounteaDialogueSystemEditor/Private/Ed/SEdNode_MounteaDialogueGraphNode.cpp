@@ -331,7 +331,7 @@ FText SEdNode_MounteaDialogueGraphNode::GetPreviewText() const
 	FDialogueRow dialogueRow;
 	if (TryGetDialogueRow(edNode, dialogueRow))
 	{
-		const TArray<FDialogueRowData> dialogueRows = dialogueRow.DialogueRowData.Array();
+		const TArray<FDialogueRowData> dialogueRows = dialogueRow.DialogueRowData;
 		for (const FDialogueRowData& dialogueRowData : dialogueRows)
 		{
 			if (!dialogueRowData.RowText.IsEmpty())

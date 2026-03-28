@@ -37,6 +37,15 @@ public:
 	UMounteaDialogueConfiguration();
 
 public:
+	
+	/**
+	 * A DataTable asset that holds information about the dialogue participants in the Mountea Dialogue System.
+	 *
+	 * The asset must conform to the row structure specified by the `DialogueParticipant` structure to ensure proper data handling.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "🗣 Participants", 
+		meta=(RequiredAssetDataTags = "RowStructure=/Script/MounteaDialogueSystem.DialogueParticipant"))
+	TArray<TSoftObjectPtr<UDataTable>> DialogueParticipantsTables;
 
 	/**
 	 * User Widget class to be set as default one if requested.

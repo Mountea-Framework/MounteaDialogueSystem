@@ -29,6 +29,7 @@ public:
 protected:
 	
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
 
@@ -165,10 +166,10 @@ private:
 	void RequestBroadcastContext_Environment(const FMounteaDialogueContextReplicatedStruct& Context);
 	void CloseDialogue_Environment();
 
-	bool SetupPlayerDialogue(TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages) const;
-	bool SetupEnvironmentDialogue(AActor* DialogueInitiator, const TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages);
+	bool SetupPlayerDialogue(TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages) const;
+	bool SetupEnvironmentDialogue(AActor* DialogueInitiator, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants, TArray<FText>& ErrorMessages);
 	static bool ValidateMainParticipant(AActor* MainParticipant, TScriptInterface<IMounteaDialogueParticipantInterface>& OutParticipant, TArray<FText>& ErrorMessages);
-	static void GatherOtherParticipants(const TArray<TObjectPtr<UObject>>& OtherParticipants, TSet<TScriptInterface<IMounteaDialogueParticipantInterface>>& OutParticipants);
+	static void GatherOtherParticipants(const TArray<TObjectPtr<UObject>>& OtherParticipants, TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& OutParticipants);
 	
 	void ProcessWorldWidgetUpdate(const FString& Command);
 

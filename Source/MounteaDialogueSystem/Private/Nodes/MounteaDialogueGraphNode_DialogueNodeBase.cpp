@@ -37,7 +37,7 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode_Implementation(cons
 			GetWorld()->GetTimerManager().ClearTimer(Manager->GetDialogueRowTimerHandle());
 
 			const FDialogueRow DialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(Context->ActiveNode);
-			if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.DialogueRowData.Array().IsValidIndex(Context->GetActiveDialogueRowDataIndex()))
+			if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.DialogueRowData.IsValidIndex(Context->GetActiveDialogueRowDataIndex()))
 			{
 				Context->UpdateActiveDialogueRow(DialogueRow);
 				Context->UpdateActiveDialogueRowDataIndex(Context->ActiveDialogueRowDataIndex);
@@ -241,7 +241,7 @@ TArray<FText> UMounteaDialogueGraphNode_DialogueNodeBase::GetPreviews() const
 	const auto Row = UMounteaDialogueSystemBFC::GetDialogueRow( this );
 	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(Row))
 	{
-		for (auto Itr : Row.DialogueRowData.Array())
+		for (auto Itr : Row.DialogueRowData)
 		{
 			ReturnValues.Add( Itr.RowText );
 		}

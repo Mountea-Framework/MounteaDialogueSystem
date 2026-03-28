@@ -16,15 +16,6 @@ FString FDialogueRow::ToString() const
 	Result += FString::Printf(TEXT(", UIRowID: %d"), UIRowID);
 	Result += FString::Printf(TEXT(", RowGUID: %s"), *RowGUID.ToString(EGuidFormats::DigitsWithHyphensLower));
 
-	if (RowOptionalIcon)
-	{
-		Result += TEXT(", RowOptionalIcon: Yes");
-	}
-	else
-	{
-		Result += TEXT(", RowOptionalIcon: No");
-	}
-
 	Result += FString::Printf(TEXT(", DialogueRowData Count: %d"), DialogueRowData.Num());
 
 	return Result;
