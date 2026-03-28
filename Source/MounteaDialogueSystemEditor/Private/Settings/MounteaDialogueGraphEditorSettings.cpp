@@ -2,6 +2,7 @@
 
 #include "MounteaDialogueGraphEditorSettings.h"
 
+#include "Consts/MounteaDialogueEditorConsts.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphEditorSettings"
@@ -15,9 +16,9 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAl
 
 	bFirstPassOnly = false;
 	bRandomInit = false;
-	OptimalHorizontalDistance = 300.f;
-	OptimalVerticalDistance = 200.f;
-	MaxIteration = 100;
+	OptimalHorizontalDistance = MounteaGraphLayoutStrategy::OptimalHorizontalDistance;
+	OptimalVerticalDistance = MounteaGraphLayoutStrategy::OptimalVerticalDistance;
+	MaxIteration = MounteaGraphLayoutStrategy::MaxIterations;
 	InitTemperature = 10.f;
 	CoolDownRate = 10.f;
 

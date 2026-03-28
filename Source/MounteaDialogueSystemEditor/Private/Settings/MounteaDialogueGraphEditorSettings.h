@@ -12,9 +12,9 @@ UENUM(BlueprintType)
 enum class EAutoLayoutStrategyType : uint8
 {
 	EALS_Tree				UMETA(DisplayName="Tree"),
-	EALS_ForceDirected	UMETA(DisplayName="Force Directed"),
+	EALS_ForceDirected		UMETA(DisplayName="Force Directed"),
 
-	Default						UMETA(Hidden)
+	Default					UMETA(Hidden)
 };
 
 #pragma endregion 
