@@ -75,21 +75,8 @@ public:
 	TScriptInterface<IMounteaDialogueParticipantInterface> ActiveDialogueParticipant;
 
 	/**
-	 * The participant representing the player in this session.
-	 * May be null for NPC-NPC or monologue sessions.
-	 */
-	UPROPERTY(BlueprintReadOnly, Category="Context")
-	TScriptInterface<IMounteaDialogueParticipantInterface> PlayerDialogueParticipant;
-
-	/**
-	 * The primary NPC participant.
-	 * May be null for Player-Player sessions.
-	 */
-	UPROPERTY(BlueprintReadOnly, Category="Context")
-	TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant;
-
-	/**
-	 * All participants registered for this session, including player and NPCs.
+	 * All participants registered for this session.
+	 * Use UMounteaDialogueSystemBFC::GetParticipantByType to find players, NPCs, etc.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category="Context")
 	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipants;
@@ -138,8 +125,6 @@ public:
 		AllowedChildNodeGUIDs.Empty();
 		ActiveGraphGUID.Invalidate();
 		ActiveDialogueParticipant = nullptr;
-		PlayerDialogueParticipant = nullptr;
-		DialogueParticipant = nullptr;
 		DialogueParticipants.Empty();
 		ActiveDialogueRow = FDialogueRow();
 		ActiveDialogueRowDataIndex = 0;

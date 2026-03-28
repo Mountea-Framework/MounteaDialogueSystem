@@ -21,8 +21,6 @@ bool FMounteaDialogueContextPayload::NetSerialize(FArchive& Ar, UPackageMap* Map
 	Ar << AllowedChildNodeGUIDs;
 	Ar << ActiveGraphGUID;
 	Ar << ActiveDialogueParticipant;
-	Ar << PlayerDialogueParticipant;
-	Ar << DialogueParticipant;
 	Ar << DialogueParticipants;
 
 	// FDialogueRow — field-by-field

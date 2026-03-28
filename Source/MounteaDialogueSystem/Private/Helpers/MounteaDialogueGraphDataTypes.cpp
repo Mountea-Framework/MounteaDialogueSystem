@@ -36,8 +36,8 @@ FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct
 
 FMounteaDialogueContextReplicatedStruct::FMounteaDialogueContextReplicatedStruct(UMounteaDialogueContext* Source)
 	: ActiveDialogueParticipant(Source ? Source->ActiveDialogueParticipant : nullptr)
-	, PlayerDialogueParticipant(Source ? Source->PlayerDialogueParticipant : nullptr)
-	, DialogueParticipant(Source ? Source->DialogueParticipant : nullptr)
+	, PlayerDialogueParticipant(nullptr)
+	, DialogueParticipant(nullptr)
 	, ActiveNodeGuid(Source ? ( Source->ActiveNode ? Source->ActiveNode->GetNodeGUID() : FGuid() ) : FGuid())
 	, PreviousActiveNodeGuid( Source ? Source->PreviousActiveNode : FGuid() )
 	, AllowedChildNodes(Source ? UMounteaDialogueSystemBFC::NodesToGuids(Source->AllowedChildNodes) : TArray<FGuid>())

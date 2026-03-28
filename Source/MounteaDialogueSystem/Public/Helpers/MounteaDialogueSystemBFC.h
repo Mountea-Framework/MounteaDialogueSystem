@@ -453,6 +453,27 @@ public:
 		meta=(CustomTag="MounteaK2Validate"))
 	static bool NodeHasSpeechData(UMounteaDialogueGraphNode* Node);
 
+	/**
+	 * Finds the first participant in the array whose type bitmask includes the requested type.
+	 * Returns null if no match found.
+	 *
+	 * @param Participants  Array to search.
+	 * @param Type          The type bit to test.
+	 */
+	static TScriptInterface<IMounteaDialogueParticipantInterface> GetParticipantByType(
+		const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants,
+		EDialogueParticipantType Type);
+
+	/**
+	 * Finds the first participant in the array that owns a non-null dialogue graph.
+	 * Used when a call site needs the graph-owning participant without knowing its type.
+	 * Returns null if none found.
+	 *
+	 * @param Participants  Array to search.
+	 */
+	static TScriptInterface<IMounteaDialogueParticipantInterface> GetGraphOwnerParticipant(
+		const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
+
 	// --- Template functions ------------------------------
 	
 	template <typename NodeType>

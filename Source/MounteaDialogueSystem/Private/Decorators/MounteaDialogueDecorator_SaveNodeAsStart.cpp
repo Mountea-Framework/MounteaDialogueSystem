@@ -68,8 +68,9 @@ void UMounteaDialogueDecorator_SaveNodeAsStart::ExecuteDecorator_Implementation(
 
 	if (Context)
 	{
-		const auto Participant = Context->GetDialogueParticipant();
-		Participant->Execute_SaveStartingNode(Participant.GetObject(), GetOwningNode());
+		const auto Participant = UMounteaDialogueSystemBFC::GetGraphOwnerParticipant(Context->DialogueParticipants);
+		if (Participant.GetObject())
+			Participant->Execute_SaveStartingNode(Participant.GetObject(), GetOwningNode());
 	}
 }
 

@@ -140,11 +140,13 @@ bool UMounteaDialogueSystemBFC::ExecuteDecorators(const UObject* WorldContextObj
 	if (DialogueContext == nullptr)
 		return false;
 
-	if (DialogueContext->DialogueParticipant.GetInterface() == nullptr || DialogueContext->DialogueParticipant.GetObject() == nullptr)
+	const TScriptInterface<IMounteaDialogueParticipantInterface> graphOwner =
+		GetGraphOwnerParticipant(DialogueContext->DialogueParticipants);
+	if (!graphOwner.GetObject() || !graphOwner.GetInterface())
 		return false;
 
-	UObject* participantObject = DialogueContext->DialogueParticipant.GetObject();
-	if (DialogueContext->DialogueParticipant->Execute_GetDialogueGraph(participantObject) == nullptr)
+	UObject* participantObject = graphOwner.GetObject();
+	if (graphOwner->Execute_GetDialogueGraph(participantObject) == nullptr)
 		return false;
 
 	const auto ActiveNode = DialogueContext->GetActiveNode();
@@ -157,7 +159,7 @@ bool UMounteaDialogueSystemBFC::ExecuteDecorators(const UObject* WorldContextObj
 
 	AllDecorators.Append(DialogueContext->GetActiveNode()->GetNodeDecorators());
 	if (ActiveNode->DoesInheritDecorators())
-		AllDecorators.Append(DialogueContext->DialogueParticipant->Execute_GetDialogueGraph(participantObject)->GetGraphDecorators());
+		AllDecorators.Append(graphOwner->Execute_GetDialogueGraph(participantObject)->GetGraphDecorators());
 		
 	for (auto Itr : AllDecorators)
 		Itr.ExecuteDecorator();
@@ -229,19 +231,16 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC
 	if (!IsValid(Context))
 		return nullptr;
 
-	if (IsValid(Context->ActiveNode))
+	if (IsValid(Context->ActiveNode) && NodeHasSpeechData(Context->ActiveNode))
 	{
-		if (const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Context->ActiveNode))
+		const FDialogueRow Row = GetSpeechData(Context->ActiveNode);
+		const auto Predicate = [&Row](const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant)
 		{
-			const FDialogueRow Row = GetDialogueRow(DialogueNode);
-			const auto Predicate = [&Row](const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant)
-			{
-				return Row.CompatibleTags.HasTagExact(Participant->Execute_GetParticipantTag(Participant.GetObject()));
-			};
-	
-			if (const TScriptInterface<IMounteaDialogueParticipantInterface>* MatchingParticipant = Context->GetDialogueParticipants().FindByPredicate(Predicate))
-				return *MatchingParticipant;
-		}
+			return Row.CompatibleTags.HasTagExact(Participant->Execute_GetParticipantTag(Participant.GetObject()));
+		};
+
+		if (const TScriptInterface<IMounteaDialogueParticipantInterface>* MatchingParticipant = Context->GetDialogueParticipants().FindByPredicate(Predicate))
+			return *MatchingParticipant;
 	}
 
 	LOG_WARNING(TEXT("[FindBestMatchingParticipant] Unable to find Dialogue Participant based on Gameplay Tags, returning first (index 0) Participant from Dialogue Context!"))
@@ -417,13 +416,7 @@ UMounteaDialogueContext* UMounteaDialogueSystemBFC::CreateDialogueContext(UObjec
 	auto newActiveNode = GetStartingNode(MainParticipant, dialogueGraph);
 	auto allowedChildNodes = GetAllowedChildNodes(newActiveNode);
 
-	auto newActiveDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(newActiveNode);
-	FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
-	newDialogueTableHandle.DataTable = newActiveDialogueNode ? newActiveDialogueNode->GetDataTable() : nullptr;
-	newDialogueTableHandle.RowName = newActiveDialogueNode ? newActiveDialogueNode->GetRowName() : NAME_None;
-
-	newDialogueContext->SetDialogueContext(MainParticipant, newActiveNode, allowedChildNodes);
-	newDialogueContext->UpdateActiveDialogueTable(newActiveDialogueNode ? newDialogueTableHandle : FDataTableRowHandle());
+	newDialogueContext->SetDialogueContext(newActiveNode, allowedChildNodes);
 	newDialogueContext->AddDialogueParticipants(DialogueParticipants);
 	UpdateMatchingDialogueParticipant(newDialogueContext, SwitchActiveParticipant(newDialogueContext));
 
@@ -432,16 +425,8 @@ UMounteaDialogueContext* UMounteaDialogueSystemBFC::CreateDialogueContext(UObjec
 
 UMounteaDialogueContext* UMounteaDialogueSystemBFC::CreateDialogueContext(UObject* NewOwner, const FMounteaDialogueContextReplicatedStruct& NewData)
 {
-	if (!IsValid(NewOwner))
-	{
-		LOG_WARNING(TEXT("[Create Dialogue Context] Invalid Owner for Dialogue Context!"))
-		return nullptr;
-	}
-
-	UMounteaDialogueContext* newDialogueContext = NewObject<UMounteaDialogueContext>(NewOwner);
-	(*newDialogueContext) += NewData;
-	
-	return newDialogueContext;
+	// Deprecated: context replication now uses FMounteaDialogueContextPayload via UMounteaDialogueSession.
+	return nullptr;
 }
 
 AActor* UMounteaDialogueSystemBFC::GetDialogueManagerLocalOwner(const UObject* Manager)
@@ -963,4 +948,31 @@ bool UMounteaDialogueSystemBFC::NodeHasSpeechData(UMounteaDialogueGraphNode* Nod
 {
 	if (!Node) return false;
 	return Node->GetClass()->ImplementsInterface(UMounteaDialogueSpeechDataInterface::StaticClass());
+}
+
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC::GetParticipantByType(
+	const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants,
+	EDialogueParticipantType Type)
+{
+	const int32 typeMask = static_cast<int32>(Type);
+	for (const auto& participant : Participants)
+	{
+		if (!participant.GetObject()) continue;
+		const int32 participantType = IMounteaDialogueParticipantInterface::Execute_GetParticipantType(participant.GetObject());
+		if ((participantType & typeMask) != 0)
+			return participant;
+	}
+	return nullptr;
+}
+
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueSystemBFC::GetGraphOwnerParticipant(
+	const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants)
+{
+	for (const auto& participant : Participants)
+	{
+		if (!participant.GetObject() || !participant.GetInterface()) continue;
+		if (participant->Execute_GetDialogueGraph(participant.GetObject()) != nullptr)
+			return participant;
+	}
+	return nullptr;
 }

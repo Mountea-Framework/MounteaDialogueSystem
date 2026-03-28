@@ -65,15 +65,8 @@ void UMounteaDialogueGraphNode_ReturnToNode::OnDelayDurationExpired(const TScrip
 	{
 		if (const auto Context = MounteaDialogueManagerInterface->Execute_GetDialogueContext(MounteaDialogueManagerInterface.GetObject()))
 		{
-			auto dialogueNodeToStart = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(SelectedNode);
-			
-			Context->SetDialogueContext(Context->DialogueParticipant, SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
-			
-			FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
-			newDialogueTableHandle.DataTable = dialogueNodeToStart->GetDataTable();
-			newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();
-			Context->UpdateActiveDialogueTable(dialogueNodeToStart ? newDialogueTableHandle : FDataTableRowHandle());
-			Context->UpdateActiveDialogueRow( UMounteaDialogueSystemBFC::FindDialogueRow(newDialogueTableHandle.DataTable, newDialogueTableHandle.RowName) );
+			Context->SetDialogueContext(SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
+			Context->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetSpeechData(SelectedNode));
 			Context->ActiveDialogueRowDataIndex = 0;
 
 			MounteaDialogueManagerInterface->Execute_PrepareNode(MounteaDialogueManagerInterface.GetObject());

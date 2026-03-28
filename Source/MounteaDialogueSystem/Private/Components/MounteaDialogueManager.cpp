@@ -175,14 +175,12 @@ void UMounteaDialogueManager::OnContextPayloadUpdated(const FMounteaDialogueCont
 
 	// Rebuild participant references directly from payload
 	DialogueContext->ActiveDialogueParticipant = Payload.ActiveDialogueParticipant;
-	DialogueContext->PlayerDialogueParticipant = Payload.PlayerDialogueParticipant;
-	DialogueContext->DialogueParticipant = Payload.DialogueParticipant;
 	DialogueContext->DialogueParticipants = Payload.DialogueParticipants;
 
-	// Resolve node pointers from GUIDs using the active participant's graph
+	// Resolve node pointers from GUIDs using the graph-owner participant
 	UMounteaDialogueGraph* activeGraph = nullptr;
 	const TScriptInterface<IMounteaDialogueParticipantInterface> graphSource =
-		Payload.DialogueParticipant.GetObject() ? Payload.DialogueParticipant : Payload.ActiveDialogueParticipant;
+		UMounteaDialogueSystemBFC::GetGraphOwnerParticipant(Payload.DialogueParticipants);
 	if (graphSource.GetObject() && graphSource.GetInterface())
 		activeGraph = graphSource->Execute_GetDialogueGraph(graphSource.GetObject());
 
@@ -559,25 +557,15 @@ void UMounteaDialogueManager::NodeProcessed_Implementation()
 	
 	if (newActiveNode != nullptr)
 	{
-		auto newActiveDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(newActiveNode);
 		auto allowedChildNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(newActiveNode);
 		UMounteaDialogueSystemBFC::SortNodes(allowedChildNodes);
-		
-		if (const auto selectedDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(newActiveNode))
-		{
-			FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
-			newDialogueTableHandle.DataTable = selectedDialogueNode->GetDataTable();
-			newDialogueTableHandle.RowName = selectedDialogueNode->GetRowName();
-		
-			DialogueContext->UpdateActiveDialogueTable(newActiveNode ? newDialogueTableHandle : FDataTableRowHandle());
-		}
-	
-		DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, newActiveNode, allowedChildNodes);
-		DialogueContext->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode));
+
+		DialogueContext->SetDialogueContext(newActiveNode, allowedChildNodes);
+		DialogueContext->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetSpeechData(newActiveNode));
 		DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 		const auto newActiveParticipant = UMounteaDialogueSystemBFC::SwitchActiveParticipant(DialogueContext);
 		UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(DialogueContext, newActiveParticipant);
-		
+
 		OnDialogueNodeSelected.Broadcast(DialogueContext);
 
 		Execute_PrepareNode(this);
@@ -617,17 +605,8 @@ void UMounteaDialogueManager::SelectNode_Implementation(const FGuid& NodeGuid)
 	auto allowedChildNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(selectedNode);
 	UMounteaDialogueSystemBFC::SortNodes(allowedChildNodes);
 
-	if (const auto selectedDialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(selectedNode))
-	{
-		FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
-		newDialogueTableHandle.DataTable = selectedDialogueNode->GetDataTable();
-		newDialogueTableHandle.RowName = selectedDialogueNode->GetRowName();
-		
-		DialogueContext->UpdateActiveDialogueTable(selectedNode ? newDialogueTableHandle : FDataTableRowHandle());
-	}
-	
-	DialogueContext->SetDialogueContext(DialogueContext->DialogueParticipant, selectedNode, allowedChildNodes);
-	DialogueContext->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetDialogueRow(DialogueContext->ActiveNode));
+	DialogueContext->SetDialogueContext(selectedNode, allowedChildNodes);
+	DialogueContext->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetSpeechData(selectedNode));
 	DialogueContext->UpdateActiveDialogueRowDataIndex(0);
 	const auto newActiveParticipant = UMounteaDialogueSystemBFC::SwitchActiveParticipant(DialogueContext);
 	UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(DialogueContext, newActiveParticipant);

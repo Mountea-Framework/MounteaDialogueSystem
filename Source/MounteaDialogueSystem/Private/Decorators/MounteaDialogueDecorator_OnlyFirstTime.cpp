@@ -99,7 +99,7 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::IsFirstTime() const
 	
 	TScriptInterface<IMounteaDialogueParticipantInterface> ParticipantInterface = GetOwnerParticipant();
 	if (!ParticipantInterface.GetObject())
-		ParticipantInterface = Context->GetDialogueParticipant();
+		ParticipantInterface = UMounteaDialogueSystemBFC::GetGraphOwnerParticipant(Context->DialogueParticipants);
 	
 	if (UMounteaDialogueSystemBFC::HasNodeBeenTraversed(GetOwningNode(), ParticipantInterface)) return false;
 	if (UMounteaDialogueSystemBFC::HasNodeBeenTraversedV2(GetOwningNode(), Context)) return false;

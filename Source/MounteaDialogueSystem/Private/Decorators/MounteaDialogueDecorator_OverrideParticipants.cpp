@@ -77,14 +77,10 @@ void UMounteaDialogueDecorator_OverrideParticipants::ExecuteDecorator_Implementa
 	if (!Context|| !OwningManager.GetInterface() || !UMounteaDialogueSystemBFC::IsContextValid(Context) ) return;
 	
 	if (bOverridePlayerParticipant)
-	{
-		Context->UpdateDialoguePlayerParticipant(Override_PlayerParticipantInterface);
-	}
+		Context->AddDialogueParticipant(Override_PlayerParticipantInterface);
 
 	if (bOverrideDialogueParticipant)
-	{
-		Context->UpdateDialogueParticipant(Override_ParticipantInterface);
-	}
+		Context->AddDialogueParticipant(Override_ParticipantInterface);
 	
 	if (bOverrideActiveParticipant)
 	{

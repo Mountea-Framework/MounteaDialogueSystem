@@ -66,9 +66,6 @@ void UMounteaDialogueWorldSubsystem::HandleStartRequest(UMounteaDialogueManager*
 		return;
 	}
 
-	if (playerParticipant.GetObject())
-		newContext->UpdateDialoguePlayerParticipant(playerParticipant);
-
 	Manager->SetDialogueContext(newContext);
 
 	Manager->GetDialogueStartRequestedResultEventHandle().Broadcast(true, TEXT("OK"));
