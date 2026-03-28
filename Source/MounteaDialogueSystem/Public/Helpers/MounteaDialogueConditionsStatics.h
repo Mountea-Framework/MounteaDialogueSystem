@@ -12,6 +12,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Interfaces/Core/MounteaDialogueConditionContextInterface.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "MounteaDialogueConditionsStatics.generated.h"
 
@@ -29,16 +30,15 @@ public:
 	
 	/**
 	 * Evaluates whether this condition is satisfied.
-	 * Override in subclasses to implement custom logic.
 	 *
 	 * @param Condition Condition to evaluate.
-	 * @param Context  Arbitrary context object (e.g. dialogue manager or participant).
+	 * @param Context  Condition context exposing traversal history, active participant, and session GUID.
 	 * @return True if the condition passes; false otherwise.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mountea|Inventory & Equipment|Attachments|Helpers",
 		meta=(CustomTag="MounteaK2Validate"),
 		DisplayName="Evaluate Condition")
-	static bool EvaluateCondition(UMounteaDialogueConditionBase* Condition, UObject* Context);
+	static bool EvaluateCondition(UMounteaDialogueConditionBase* Condition, const TScriptInterface<IMounteaDialogueConditionContextInterface>& Context);
 	
 	/**
 	 * Returns the human-readable name of this condition.

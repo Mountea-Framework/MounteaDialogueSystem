@@ -12,6 +12,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Interfaces/Core/MounteaDialogueConditionContextInterface.h"
 #include "UObject/Object.h"
 #include "MounteaDialogueConditionBase.generated.h"
 
@@ -51,12 +52,12 @@ public:
 	 * Evaluates whether this condition is satisfied.
 	 * Override in subclasses to implement custom logic.
 	 *
-	 * @param Context  Arbitrary context object (e.g. dialogue manager or participant).
+	 * @param Context  Condition context exposing traversal history, active participant, and session GUID.
 	 * @return True if the condition passes; false otherwise.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category="Condition")
-	bool EvaluateCondition(UObject* Context) const;
-	virtual bool EvaluateCondition_Implementation(UObject* Context) const;
+	bool EvaluateCondition(const TScriptInterface<IMounteaDialogueConditionContextInterface>& Context) const;
+	virtual bool EvaluateCondition_Implementation(const TScriptInterface<IMounteaDialogueConditionContextInterface>& Context) const;
 
 	/**
 	 * Returns the human-readable name of this condition.

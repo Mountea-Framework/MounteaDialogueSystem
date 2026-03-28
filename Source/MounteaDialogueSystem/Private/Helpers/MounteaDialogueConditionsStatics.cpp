@@ -16,7 +16,7 @@
 #include "Helpers/MounteaDialogueSystemConsts.h"
 
 
-bool UMounteaDialogueConditionsStatics::EvaluateCondition(UMounteaDialogueConditionBase* Condition, UObject* Context)
+bool UMounteaDialogueConditionsStatics::EvaluateCondition(UMounteaDialogueConditionBase* Condition, const TScriptInterface<IMounteaDialogueConditionContextInterface>& Context)
 {
 	return IsValid(Condition) ? Condition->EvaluateCondition(Context) : false;
 }

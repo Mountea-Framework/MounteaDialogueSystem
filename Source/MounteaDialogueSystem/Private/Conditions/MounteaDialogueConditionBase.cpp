@@ -19,7 +19,7 @@ UMounteaDialogueConditionBase::UMounteaDialogueConditionBase()
 		ConditionGUID = FGuid::NewGuid();
 }
 
-bool UMounteaDialogueConditionBase::EvaluateCondition_Implementation(UObject* Context) const
+bool UMounteaDialogueConditionBase::EvaluateCondition_Implementation(const TScriptInterface<IMounteaDialogueConditionContextInterface>& Context) const
 {
 	return true;
 }
