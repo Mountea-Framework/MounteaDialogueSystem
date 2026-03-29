@@ -63,9 +63,12 @@ void UMounteaDialogueTraversalStatics::SortNodes(TArray<UMounteaDialogueGraphNod
 		return !IsValid(Node);
 	});
 	
-	SortedNodes.Sort([](const UMounteaDialogueGraphNode& A, const UMounteaDialogueGraphNode& B)
+	SortedNodes.Sort([](const UMounteaDialogueGraphNode* A, const UMounteaDialogueGraphNode* B)
 	{
-		return A.ExecutionOrder < B.ExecutionOrder;
+		if (!IsValid(A) || !IsValid(B))
+			return IsValid(A);
+
+		return A->ExecutionOrder < B->ExecutionOrder;
 	});
 }
 
