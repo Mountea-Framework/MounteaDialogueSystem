@@ -12,6 +12,7 @@
 enum class EDialogueManagerState : uint8;
 class UMounteaDialogueGraph;
 class IMounteaDialogueParticipantInterface;
+class AActor;
 
 /**
  * This library contains implementations of Dialogue Manager Functions.
@@ -97,6 +98,15 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
 	static EDialogueManagerType GetDialogueManagerType(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Validate"))
+	static bool IsServer(const AActor* Owner);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Validate"))
+	static bool IsLocalPlayer(const AActor* Owner);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Validate"))
+	static bool ShouldExecuteCosmetics(const AActor* Owner);
 
 	static UMounteaDialogueGraph* ResolveGraphByGuid(
 		const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants,

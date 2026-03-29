@@ -11,6 +11,8 @@
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
 class UAudioComponent;
+class APawn;
+class APlayerController;
 enum class EDialogueParticipantState : uint8;
 struct FDialogueParticipant;
 
@@ -255,4 +257,11 @@ public:
 	static const FDialogueParticipant* FindParticipantDataRow(const FName& ParticipantRow, FGameplayTag* OutParticipantTag = nullptr);
 	UFUNCTION()
 	static TArray<FName> GetDialogueParticipantRowNames();
+
+	static TScriptInterface<IMounteaDialogueParticipantInterface> GetGraphOwnerParticipant(
+		const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
+
+	static TScriptInterface<IMounteaDialogueParticipantInterface> FindDialogueParticipantInterface(UObject* ParticipantActor, bool& bResult);
+	static APawn* FindPlayerPawn(AActor* ForActor, int32& SearchDepth);
+	static APlayerController* FindPlayerController(AActor* ForActor, int32& SearchDepth);
 };

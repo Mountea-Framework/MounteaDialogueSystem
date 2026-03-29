@@ -19,6 +19,7 @@
 
 class UMounteaDialogueWorldSubsystem;
 class UMounteaDialogueManager;
+class UMounteaDialogueGraphNode;
 
 /**
  * UMounteaDialogueSession is the server-authoritative state machine for a single active dialogue.
@@ -82,7 +83,7 @@ public:
 	 * Persists traversed-path data for all participants in the current payload and
 	 * clears session-side manager ownership.
 	 */
-	void FinalizeSession(const TArray<FDialogueTraversePath>& TraversedPath);
+	void FinalizeSession();
 
 	/**
 	 * Server-only. Writes a new payload, increments ContextVersion, marks the property dirty
@@ -91,6 +92,18 @@ public:
 	 * @param NewPayload  The fully constructed payload to write.
 	 */
 	void WriteContextPayload(FMounteaDialogueContextPayload NewPayload);
+
+	void SetRoleOverride(EDialogueParticipantType Role, const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant);
+	TScriptInterface<IMounteaDialogueParticipantInterface> GetRoleOverride(EDialogueParticipantType Role) const;
+
+	bool HandleSelectNode(UMounteaDialogueManager* Manager, const FGuid& SessionGUID, const FGuid& NodeGUID);
+	bool HandleSkipDialogueRow(UMounteaDialogueManager* Manager, const FGuid& SessionGUID);
+	bool HandleNodeProcessed(UMounteaDialogueManager* Manager, const FGuid& SessionGUID);
+	bool HandleDialogueRowProcessed(UMounteaDialogueManager* Manager, const FGuid& SessionGUID, bool bForceFinish);
+	bool HandleProcessDialogueRow(UMounteaDialogueManager* Manager, const FGuid& SessionGUID);
+	bool HandlePrepareNode(UMounteaDialogueManager* Manager, const FGuid& SessionGUID);
+	bool HandleNodePrepared(UMounteaDialogueManager* Manager, const FGuid& SessionGUID);
+	bool HandleProcessNode(UMounteaDialogueManager* Manager, const FGuid& SessionGUID);
 
 	// ~IMounteaDialogueConditionContextInterface
 	/**
@@ -121,7 +134,12 @@ private:
 	 * Client path notifies only managers whose owners are locally controlled.
 	 */
 	void NotifyLocalManagers() const;
+	void AddTraversedNode(const UMounteaDialogueGraphNode* TraversedNode);
+	bool IsSessionRequestValid(UMounteaDialogueManager* Manager, const FGuid& SessionGUID, const TCHAR* ActionName) const;
+	bool SyncPayloadFromManagerContext(UMounteaDialogueManager* Manager);
 
 	TWeakObjectPtr<UMounteaDialogueManager> AuthoritativeManager;
+	TMap<int32, TScriptInterface<IMounteaDialogueParticipantInterface>> RoleOverrides;
+	TArray<FDialogueTraversePath> SessionTraversedPath;
 	int32 LastDeliveredContextVersion = 0;
 };

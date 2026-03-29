@@ -126,8 +126,6 @@ void UMounteaDialogueGraphNode::TickMounteaEvent_Implementation(UObject* SelfRef
 void UMounteaDialogueGraphNode::InitializeNode_Implementation(UWorld* InWorld)
 {
 	SetNewWorld(InWorld);
-
-	if (Graph) SetNodeIndex(Graph->AllNodes.Find(this));
 	
 	OnNodeStateChanged.Broadcast(this);
 }
@@ -225,12 +223,6 @@ bool UMounteaDialogueGraphNode::EvaluateDecorators_Implementation() const
 	}
 
 	return bSatisfied;
-}
-
-void UMounteaDialogueGraphNode::SetNodeIndex(const int32 NewIndex)
-{
-	check(NewIndex>INDEX_NONE);
-	NodeIndex = NewIndex;
 }
 
 FText UMounteaDialogueGraphNode::GetNodeTitle_Implementation() const
@@ -494,10 +486,10 @@ FText UMounteaDialogueGraphNode::GetDefaultTooltipBody() const
 	
 	const FText Implements = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_ImplementsTooltip", "Implements Decorators: {0}"), ImplementsNumber);
 	
-	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0} ({1})\n\n{2}\n{3}\nNode Execution Order: {4}\nNode Index: {5}"),
+	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0} ({1})\n\n{2}\n{3}\nNode Execution Order: {4}"),
 		NodeTypeName,
 		FText::FromString(NodeGUID.ToString(EGuidFormats::DigitsWithHyphensLower)),
-		Inherits, Implements, ExecutionOrder, NodeIndex);
+		Inherits, Implements, ExecutionOrder);
 }
 
 #endif

@@ -134,8 +134,6 @@ public:
 	virtual int32 GetDialogueWidgetZOrder_Implementation() const override;
 	virtual void SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder) override;
 
-	virtual void SyncContext(const FMounteaDialogueContextReplicatedStruct& Context) override;
-
 	/**
 	 * Called by UMounteaDialogueSession (via OnRep or NotifyLocalManagers) when the replicated
 	 * context payload is updated. Rebuilds the local UMounteaDialogueContext read-only view
@@ -144,7 +142,6 @@ public:
 	 * @param Payload  The latest payload received from the session.
 	 */
 	void OnContextPayloadUpdated(const FMounteaDialogueContextPayload& Payload);
-	void SyncPayloadFromContext();
 
 private:
 
@@ -172,6 +169,12 @@ private:
 	UFUNCTION(Server, Reliable)
 	void RequestSkipRow_Server(FGuid SessionGUID);
 
+	UFUNCTION(Server, Reliable)
+	void RequestNodeProcessed_Server(FGuid SessionGUID);
+
+	UFUNCTION(Server, Reliable)
+	void RequestDialogueRowProcessed_Server(FGuid SessionGUID, bool bForceFinish);
+
 	/**
 	 * Routes a dialogue close request to the server.
 	 */
@@ -185,13 +188,6 @@ private:
 	void OnRep_ManagerState();
 
 	void ProcessWorldWidgetUpdate(const FString& Command);
-
-	/**
-	 * Builds an FMounteaDialogueContextPayload from the current local DialogueContext state
-	 * and writes it to the active UMounteaDialogueSession. Server-only.
-	 * Used to propagate mid-traversal state (new active node, row index, active participant) to clients.
-	 */
-	void WritePayloadFromContext();
 
 public:
 
@@ -370,9 +366,7 @@ protected:
 	UPROPERTY(Transient)
 	FString LastDialogueCommand;
 
-	bool bPendingClientPrepare = false;
 	bool bParticipantsStarted = false;
-	FGuid LastPreparedSessionGUID;
 
 protected:
 	

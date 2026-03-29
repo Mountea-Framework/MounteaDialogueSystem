@@ -11,11 +11,10 @@
 
 #include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
 
-#include "Components/MounteaDialogueManager.h"
 #include "Data/MounteaDialogueContext.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Helpers/MounteaDialogueTraversalStatics.h"
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Misc/DataValidation.h"
 
@@ -80,7 +79,7 @@ void UMounteaDialogueGraphNode_OpenChildGraph::ProcessNode_Implementation(const 
 		return;
 	}
 
-	UMounteaDialogueGraphNode* firstNode = UMounteaDialogueSystemBFC::GetFirstChildNode(startNode);
+	UMounteaDialogueGraphNode* firstNode = UMounteaDialogueTraversalStatics::GetFirstChildNode(startNode);
 	if (!IsValid(firstNode))
 	{
 		LOG_ERROR(TEXT("[Open Child Graph Node] Target dialogue '%s' start node has no children."), *childGraph->GetName());
@@ -88,12 +87,10 @@ void UMounteaDialogueGraphNode_OpenChildGraph::ProcessNode_Implementation(const 
 		return;
 	}
 
-	TArray<UMounteaDialogueGraphNode*> allowedChildren = UMounteaDialogueSystemBFC::GetAllowedChildNodesFiltered(firstNode, context);
+	TArray<UMounteaDialogueGraphNode*> allowedChildren = UMounteaDialogueTraversalStatics::GetAllowedChildNodesFiltered(firstNode, context);
 	context->SetDialogueContext(firstNode, allowedChildren);
-	context->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetSpeechData(firstNode));
+	context->UpdateActiveDialogueRow(UMounteaDialogueTraversalStatics::GetSpeechData(firstNode));
 	context->UpdateActiveDialogueRowDataIndex(0);
-	if (UMounteaDialogueManager* managerComponent = Cast<UMounteaDialogueManager>(Manager.GetObject()))
-		managerComponent->SyncPayloadFromContext();
 
 	Manager->Execute_PrepareNode(Manager.GetObject());
 }

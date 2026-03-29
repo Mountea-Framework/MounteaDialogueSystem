@@ -16,6 +16,7 @@
 #include "Data/MounteaDialogueContextPayload.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
 #include "GameFramework/GameStateBase.h"
+#include "Helpers/MounteaDialogueParticipantStatics.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 
@@ -170,7 +171,7 @@ bool UMounteaDialogueWorldSubsystem::ResolveParticipants(
 	}
 
 	bool bFound = false;
-	OutMainParticipant = UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(mainActor, bFound);
+	OutMainParticipant = UMounteaDialogueParticipantStatics::FindDialogueParticipantInterface(mainActor, bFound);
 	if (!bFound || !OutMainParticipant.GetObject())
 	{
 		OutErrors.Add(NSLOCTEXT("ResolveParticipants", "NoMainParticipant", "MainParticipantActor does not implement IMounteaDialogueParticipantInterface!"));
@@ -190,10 +191,10 @@ bool UMounteaDialogueWorldSubsystem::ResolveParticipants(
 	if (IsValid(ownerActor))
 	{
 		int searchDepth = 0;
-		if (APawn* playerPawn = UMounteaDialogueSystemBFC::FindPlayerPawn(ownerActor, searchDepth))
+		if (APawn* playerPawn = UMounteaDialogueParticipantStatics::FindPlayerPawn(ownerActor, searchDepth))
 		{
 			bool bPlayerFound = false;
-			OutPlayerParticipant = UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(playerPawn, bPlayerFound);
+			OutPlayerParticipant = UMounteaDialogueParticipantStatics::FindDialogueParticipantInterface(playerPawn, bPlayerFound);
 			if (bPlayerFound && OutPlayerParticipant.GetObject() && OutPlayerParticipant->Execute_CanParticipateInDialogue(OutPlayerParticipant.GetObject()))
 				OutAllParticipants.AddUnique(OutPlayerParticipant);
 			else
@@ -208,7 +209,7 @@ bool UMounteaDialogueWorldSubsystem::ResolveParticipants(
 		if (!IsValid(otherActor)) continue;
 
 		bool bOtherFound = false;
-		auto otherParticipant = UMounteaDialogueSystemBFC::FindDialogueParticipantInterface(otherActor, bOtherFound);
+		auto otherParticipant = UMounteaDialogueParticipantStatics::FindDialogueParticipantInterface(otherActor, bOtherFound);
 		if (bOtherFound && otherParticipant.GetObject() && otherParticipant->Execute_CanParticipateInDialogue(otherParticipant.GetObject()))
 			OutAllParticipants.AddUnique(otherParticipant);
 	}

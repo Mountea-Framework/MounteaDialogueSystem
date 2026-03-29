@@ -394,8 +394,6 @@ public:
 	void SkipDialogueRow();
 	virtual void SkipDialogueRow_Implementation() = 0;
 
-	virtual void SyncContext(const FMounteaDialogueContextReplicatedStruct& Context) = 0;
-
 public:
 
 	virtual FDialogueStartRequested& GetDialogueStartRequestedEventHandle() = 0;

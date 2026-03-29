@@ -279,14 +279,4 @@ public:
 	{ 
 		return SessionGUID; 
 	};
-
-public:
-
-	UMounteaDialogueContext* operator += (const UMounteaDialogueContext* Other);
-	UMounteaDialogueContext* operator+=(const TObjectPtr<UMounteaDialogueContext>& Other)
-	{
-		if (!Other) 
-			return this;
-		return (*this) += Other.Get();
-	}
 };

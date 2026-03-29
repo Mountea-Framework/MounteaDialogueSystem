@@ -3,7 +3,11 @@
 
 #include "Decorators/MounteaDialogueDecorator_OverrideParticipants.h"
 
-#include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Components/MounteaDialogueSession.h"
+#include "Helpers/MounteaDialogueContextStatics.h"
+#include "Helpers/MounteaDialogueTraversalStatics.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
+#include "Subsystem/MounteaDialogueWorldSubsystem.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_OverrideParticipants"
 
@@ -71,20 +75,36 @@ void UMounteaDialogueDecorator_OverrideParticipants::ExecuteDecorator_Implementa
 	if (!OwningManager) return;
 	
 	// Let's return BP Updatable Context rather than Raw
-	Context = OwningManager->Execute_GetDialogueContext(OwningManager.GetObject());
+	Context = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(OwningManager.GetObject());
 
 	// We assume Context and Manager are already valid, but safety is safety
-	if (!Context|| !OwningManager.GetInterface() || !UMounteaDialogueSystemBFC::IsContextValid(Context) ) return;
+	if (!Context || !OwningManager.GetInterface() || !UMounteaDialogueContextStatics::IsContextValid(Context))
+		return;
+
+	UMounteaDialogueSession* session = nullptr;
+	if (UWorld* world = OwningManager.GetObject() ? OwningManager.GetObject()->GetWorld() : nullptr)
+	{
+		if (UMounteaDialogueWorldSubsystem* subsystem = world->GetSubsystem<UMounteaDialogueWorldSubsystem>())
+			session = subsystem->GetGameStateSession();
+	}
 	
 	if (bOverridePlayerParticipant)
+	{
 		Context->AddDialogueParticipant(Override_PlayerParticipantInterface);
+		if (session)
+			session->SetRoleOverride(EDialogueParticipantType::Player, Override_PlayerParticipantInterface);
+	}
 
 	if (bOverrideDialogueParticipant)
+	{
 		Context->AddDialogueParticipant(Override_ParticipantInterface);
+		if (session)
+			session->SetRoleOverride(EDialogueParticipantType::NPC, Override_ParticipantInterface);
+	}
 	
 	if (bOverrideActiveParticipant)
 	{
-		UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(Context, Override_ActiveParticipantInterface);
+		UMounteaDialogueTraversalStatics::UpdateMatchingDialogueParticipant(Context, Override_ActiveParticipantInterface);
 	}
 }
 

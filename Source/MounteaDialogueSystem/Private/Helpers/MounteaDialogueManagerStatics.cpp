@@ -2,6 +2,7 @@
 
 #include "Helpers/MounteaDialogueManagerStatics.h"
 
+#include "GameFramework/Pawn.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 #include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
@@ -81,6 +82,32 @@ EDialogueManagerState UMounteaDialogueManagerStatics::GetDefaultDialogueManagerS
 EDialogueManagerType UMounteaDialogueManagerStatics::GetDialogueManagerType(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
 {
 	return Target.GetObject() ? Target->GetDialogueManagerType() : EDialogueManagerType::Default;
+}
+
+bool UMounteaDialogueManagerStatics::IsServer(const AActor* Owner)
+{
+	if (!IsValid(Owner))
+		return false;
+
+	const UWorld* world = Owner->GetWorld();
+	return IsValid(world) && world->GetNetMode() != NM_Client;
+}
+
+bool UMounteaDialogueManagerStatics::IsLocalPlayer(const AActor* Owner)
+{
+	if (!IsValid(Owner))
+		return false;
+
+	const APawn* pawn = Cast<APawn>(Owner);
+	if (IsValid(pawn))
+		return pawn->IsLocallyControlled();
+
+	return Owner->HasLocalNetOwner();
+}
+
+bool UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(const AActor* Owner)
+{
+	return IsLocalPlayer(Owner);
 }
 
 bool UMounteaDialogueManagerStatics::AddDialogueUIObject(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, UObject* NewDialogueObject)

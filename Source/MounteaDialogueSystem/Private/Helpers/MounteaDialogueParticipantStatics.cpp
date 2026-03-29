@@ -3,6 +3,9 @@
 
 #include "Helpers/MounteaDialogueParticipantStatics.h"
 
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerState.h"
 #include "Settings/MounteaDialogueConfiguration.h"
 #include "Settings/MounteaDialogueSystemSettings.h"
 
@@ -176,4 +179,93 @@ TArray<FName> UMounteaDialogueParticipantStatics::GetDialogueParticipantRowNames
 		return left.LexicalLess(right);
 	});
 	return sortedParticipants;
+}
+
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueParticipantStatics::GetGraphOwnerParticipant(
+	const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants)
+{
+	for (const auto& participant : Participants)
+	{
+		if (!participant.GetObject() || !participant.GetInterface())
+			continue;
+
+		if (participant->Execute_GetDialogueGraph(participant.GetObject()) != nullptr)
+			return participant;
+	}
+
+	return nullptr;
+}
+
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueParticipantStatics::FindDialogueParticipantInterface(UObject* ParticipantActor, bool& bResult)
+{
+	bResult = false;
+
+	if (!ParticipantActor)
+		return nullptr;
+
+	TScriptInterface<IMounteaDialogueParticipantInterface> resultValue;
+	if (ParticipantActor->Implements<UMounteaDialogueParticipantInterface>())
+	{
+		resultValue = ParticipantActor;
+		bResult = true;
+		return resultValue;
+	}
+
+	AActor* dialogueParticipantActor = Cast<AActor>(ParticipantActor);
+	if (!IsValid(dialogueParticipantActor))
+		return nullptr;
+
+	TArray<UActorComponent*> actorComponents = dialogueParticipantActor->GetComponentsByInterface(UMounteaDialogueParticipantInterface::StaticClass());
+	if (actorComponents.Num() == 0)
+		return nullptr;
+
+	resultValue = actorComponents[0];
+	bResult = true;
+	return resultValue;
+}
+
+APawn* UMounteaDialogueParticipantStatics::FindPlayerPawn(AActor* ForActor, int32& SearchDepth)
+{
+	SearchDepth++;
+	if (SearchDepth >= 8)
+		return nullptr;
+
+	if (APawn* playerPawn = Cast<APawn>(ForActor))
+		return playerPawn;
+
+	if (APlayerState* playerState = Cast<APlayerState>(ForActor))
+		return playerState->GetPawn();
+
+	if (APlayerController* playerController = Cast<APlayerController>(ForActor))
+	{
+		if (playerController->IsLocalPlayerController())
+			return playerController->GetPawn();
+		return FindPlayerPawn(playerController->PlayerState, SearchDepth);
+	}
+
+	if (AActor* ownerActor = ForActor ? ForActor->GetOwner() : nullptr)
+		return FindPlayerPawn(ownerActor, SearchDepth);
+
+	return nullptr;
+}
+
+APlayerController* UMounteaDialogueParticipantStatics::FindPlayerController(AActor* ForActor, int32& SearchDepth)
+{
+	SearchDepth++;
+	if (SearchDepth >= 8)
+		return nullptr;
+
+	if (APlayerController* playerController = Cast<APlayerController>(ForActor))
+		return playerController;
+
+	if (APlayerState* playerState = Cast<APlayerState>(ForActor))
+		return playerState->GetPlayerController();
+
+	if (APawn* actorPawn = Cast<APawn>(ForActor))
+		return Cast<APlayerController>(actorPawn->GetController());
+
+	if (AActor* ownerActor = ForActor ? ForActor->GetOwner() : nullptr)
+		return FindPlayerController(ownerActor, SearchDepth);
+
+	return nullptr;
 }

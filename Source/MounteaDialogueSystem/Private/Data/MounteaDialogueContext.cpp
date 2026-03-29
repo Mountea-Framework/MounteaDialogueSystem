@@ -272,29 +272,3 @@ bool UMounteaDialogueContext::RemoveDialogueParticipantsBP(const TArray<TScriptI
 }
 
 
-UMounteaDialogueContext* UMounteaDialogueContext::operator += (const UMounteaDialogueContext* Other)
-{
-	if (!Other) return this;
-	
-	if (Other->SessionGUID != SessionGUID)
-		SessionGUID = Other->SessionGUID;
-	if (Other->DialogueParticipants != DialogueParticipants)
-		DialogueParticipants = Other->DialogueParticipants;
-	if (Other->AllowedChildNodes != AllowedChildNodes)
-		AllowedChildNodes = Other->AllowedChildNodes;
-	if (Other->ActiveNode != ActiveNode)
-		ActiveNode = Other->ActiveNode;
-	if (Other->ActiveDialogueParticipant != ActiveDialogueParticipant)
-		ActiveDialogueParticipant = Other->ActiveDialogueParticipant;
-	if (Other->ActiveDialogueTableHandle != ActiveDialogueTableHandle)
-		ActiveDialogueTableHandle = Other->ActiveDialogueTableHandle;
-	if (Other->ActiveDialogueRow != ActiveDialogueRow)
-		ActiveDialogueRow = Other->ActiveDialogueRow;
-	if (Other->ActiveDialogueRowDataIndex != ActiveDialogueRowDataIndex)
-		ActiveDialogueRowDataIndex = Other->ActiveDialogueRowDataIndex;
-	if (Other->LastWidgetCommand != LastWidgetCommand)
-		LastWidgetCommand = Other->LastWidgetCommand;
-	
-	return this;
-}
-

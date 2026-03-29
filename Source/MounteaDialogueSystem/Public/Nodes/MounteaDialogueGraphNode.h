@@ -88,15 +88,6 @@ public:
 		meta=(HiddenInGraph))
 	TObjectPtr<UMounteaDialogueGraph> Graph;
 	
-	/**
-	 * Temporary NodeIndex.
-	 * This variable will be deleted.
-	 */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private",
-		meta=(NoResetToDefault),
-		meta=(HiddenInGraph))
-	int32 NodeIndex = INDEX_NONE;
-
 	/** Execution order within Parent's scope */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private",
 		meta=(NoResetToDefault),
@@ -290,23 +281,6 @@ public:
 	int32 GetMaxChildNodes() const
 	{ return MaxChildrenNodes; };
 
-
-	/**
-	 * Gets the index of the node within the dialogue graph.
-	 *
-	 * @return The index of the node.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", 
-		meta=(CustomTag="MounteaK2Getter"))
-	FORCEINLINE int32 GetNodeIndex() const
-	{ return NodeIndex; };
-	
-	/**
-	 * Sets the index of this dialogue node in the dialogue graph.
-	 *
-	 * @param NewIndex The new index to set.
-	 */
-	void SetNodeIndex(const int32 NewIndex);
 
 	/**
 	 * Gets the GUID of the node.
