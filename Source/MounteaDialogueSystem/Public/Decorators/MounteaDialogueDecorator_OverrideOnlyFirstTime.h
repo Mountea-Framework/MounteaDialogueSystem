@@ -19,7 +19,8 @@ class UDataTable;
  */
 UCLASS(  BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"),
 	AutoExpandCategories=("Mountea","Dialogue"), 
-	DisplayName="Override Only First Time")
+	DisplayName="Override Only First Time",
+	meta=(DeprecatedNode, DeprecationMessage="Deprecated. Use edge condition 'Only First Time' for traversal gating and separate row override logic for first-visit behavior."))
 class MOUNTEADIALOGUESYSTEM_API  UMounteaDialogueDecorator_OverrideOnlyFirstTime : public UMounteaDialogueDecorator_OnlyFirstTime
 {
 	GENERATED_BODY()

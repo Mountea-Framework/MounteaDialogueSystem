@@ -24,7 +24,8 @@ class IMounteaDialogueManagerInterface;
  */
 UCLASS( Abstract, BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), 
 	AutoExpandCategories=("Mountea","Dialogue"), 
-	DisplayName="Only First Time Base")
+	DisplayName="Only First Time Base",
+	meta=(DeprecatedNode, DeprecationMessage="Deprecated. Use edge condition 'Only First Time' on incoming edges for traversal gating."))
 class MOUNTEADIALOGUESYSTEM_API  UMounteaDialogueDecorator_OnlyFirstTime : public UMounteaDialogueDecoratorBase
 {
 	GENERATED_BODY()
