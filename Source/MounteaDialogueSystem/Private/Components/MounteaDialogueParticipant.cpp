@@ -7,6 +7,7 @@
 
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Helpers/MounteaDialogueParticipantStatics.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -121,17 +122,19 @@ void UMounteaDialogueParticipant::InitializeParticipant_Implementation(const TSc
 
 UAudioComponent* UMounteaDialogueParticipant::FindAudioComponent() const
 {
-	if (AudioComponent != nullptr) return AudioComponent;
+	if (IsValid(AudioComponent)) 
+		return AudioComponent;
 	
-	if (const auto Return = FindAudioComponentByName(AudioComponentIdentification))
-		return Return;
+	if (const auto audioComponent = FindAudioComponentByName(AudioComponentIdentification))
+		return audioComponent;
 
-	if (const auto Return = FindAudioComponentByTag(AudioComponentIdentification))
-		return Return;
+	if (const auto audioComponent = FindAudioComponentByTag(AudioComponentIdentification))
+		return audioComponent;
 
 	LOG_INFO(TEXT("[FindAudioComponent] No Audio Component found with by Identification (%s)\nFirst Audio Component will be used instead. To override this behaviour implement 'FindAudioComponent' event."), *AudioComponentIdentification.ToString())
 
-	if (!GetOwner()) return nullptr;
+	if (!GetOwner()) 
+		return nullptr;
 
 	UAudioComponent* firstFoundAudioComp = GetOwner()->FindComponentByClass<UAudioComponent>();
 	return firstFoundAudioComp;
@@ -139,14 +142,16 @@ UAudioComponent* UMounteaDialogueParticipant::FindAudioComponent() const
 
 UAudioComponent* UMounteaDialogueParticipant::FindAudioComponentByName(const FName& Arg) const
 {
-	if (GetOwner() == nullptr) return nullptr;
+	if (GetOwner() == nullptr) 
+		return nullptr;
 
 	return UMounteaDialogueSystemBFC::FindAudioComponentByName(GetOwner(), Arg);
 }
 
 UAudioComponent* UMounteaDialogueParticipant::FindAudioComponentByTag(const FName& Arg) const
 {
-	if (GetOwner() == nullptr) return nullptr;
+	if (GetOwner() == nullptr) 
+		return nullptr;
 
 	return UMounteaDialogueSystemBFC::FindAudioComponentByTag(GetOwner(), Arg);
 }
@@ -285,7 +290,7 @@ TArray<UAudioComponent*> UMounteaDialogueParticipant::GetAvailableAudioComponent
 
 bool UMounteaDialogueParticipant::CanStartDialogue_Implementation() const
 {
-	return ParticipantState == EDialogueParticipantState::EDPS_Enabled &&
+	return Execute_CanParticipateInDialogue(this) &&
 		(IsValid(DialogueGraph) && DialogueGraph->CanStartDialogueGraph());
 }
 
@@ -296,8 +301,10 @@ bool UMounteaDialogueParticipant::CanParticipateInDialogue_Implementation() cons
 
 void UMounteaDialogueParticipant::SaveStartingNode_Implementation(UMounteaDialogueGraphNode* NewStartingNode)
 {
-	if (!DialogueGraph) return;
-	if (!DialogueGraph->GetAllNodes().Contains(NewStartingNode)) return;
+	if (!DialogueGraph) 
+		return;
+	if (!DialogueGraph->GetAllNodes().Contains(NewStartingNode)) 
+		return;
 
 	StartingNode = NewStartingNode;
 
@@ -306,9 +313,11 @@ void UMounteaDialogueParticipant::SaveStartingNode_Implementation(UMounteaDialog
 
 void UMounteaDialogueParticipant::SetDialogueGraph_Implementation(UMounteaDialogueGraph* NewDialogueGraph)
 {
-	if (ParticipantState == EDialogueParticipantState::EDPS_Active) return;
+	if (ParticipantState == EDialogueParticipantState::EDPS_Active) 
+		return;
 
-	if (NewDialogueGraph == DialogueGraph) return;
+	if (NewDialogueGraph == DialogueGraph) 
+		return;
 
 	if (!GetOwner())
 	{
@@ -316,7 +325,7 @@ void UMounteaDialogueParticipant::SetDialogueGraph_Implementation(UMounteaDialog
 		return;
 	}
 
-	if (DialogueGraph)
+	if (IsValid(DialogueGraph))
 	{
 #if WITH_EDITORONLY_DATA
 		UnregisterFromPIEInstance();
@@ -326,7 +335,7 @@ void UMounteaDialogueParticipant::SetDialogueGraph_Implementation(UMounteaDialog
 		
 	DialogueGraph = NewDialogueGraph;
 	
-	if (DialogueGraph)
+	if (IsValid(DialogueGraph))
 	{
 		DialogueGraph->InitializeGraph();
 #if WITH_EDITORONLY_DATA
@@ -343,7 +352,9 @@ void UMounteaDialogueParticipant::SetDialogueGraph_Implementation(UMounteaDialog
 }
 
 EDialogueParticipantState UMounteaDialogueParticipant::GetParticipantState_Implementation() const
-{ return  ParticipantState; };
+{
+	return  ParticipantState;
+};
 
 void UMounteaDialogueParticipant::SetParticipantState_Implementation(const EDialogueParticipantState NewState)
 {
@@ -360,9 +371,7 @@ void UMounteaDialogueParticipant::SetParticipantState_Implementation(const EDial
 	}
 	
 	if (!GetOwner()->HasAuthority())
-	{
 		SetParticipantState_Server(NewState);
-	}
 	else
 	{
 		ParticipantState = NewState;
@@ -411,7 +420,8 @@ void UMounteaDialogueParticipant::SetDefaultParticipantState_Implementation(cons
 
 void UMounteaDialogueParticipant::SetAudioComponent_Implementation(UAudioComponent* NewAudioComponent)
 {
-	if (AudioComponent == NewAudioComponent) return;
+	if (AudioComponent == NewAudioComponent) 
+		return;
 	
 	if (!GetOwner())
 	{
@@ -437,22 +447,22 @@ void UMounteaDialogueParticipant::SetAudioComponent_Implementation(UAudioCompone
 //TODO: instead of the Actor handling this logic realtime, make FRunnable queue and let data be calculated async way
 void UMounteaDialogueParticipant::SaveTraversedPath_Implementation(TArray<FDialogueTraversePath>& InPath)
 {
-	TMap<TPair<FGuid, FGuid>, int32> PathMap;
-	PathMap.Reserve(TraversedPath.Num() + InPath.Num());
+	TMap<TPair<FGuid, FGuid>, int32> pathMap;
+	pathMap.Reserve(TraversedPath.Num() + InPath.Num());
 	
 	for (const auto& Path : TraversedPath)
 	{
-		PathMap.Add(Path.GetGuidPair(), Path.TraverseCount);
+		pathMap.Add(Path.GetGuidPair(), Path.TraverseCount);
 	}
 
 	for (const auto& Path : InPath)
 	{
-		int32& Count = PathMap.FindOrAdd(Path.GetGuidPair());
-		Count += Path.TraverseCount;
+		int32& traversedCount = pathMap.FindOrAdd(Path.GetGuidPair());
+		traversedCount += Path.TraverseCount;
 	}
 	
-	TraversedPath.Empty(PathMap.Num());
-	for (const auto& Pair : PathMap)
+	TraversedPath.Empty(pathMap.Num());
+	for (const auto& Pair : pathMap)
 	{
 		TraversedPath.Add(FDialogueTraversePath(Pair.Key.Key, Pair.Key.Value, Pair.Value));
 	}
@@ -553,10 +563,10 @@ void UMounteaDialogueParticipant::GetLifetimeReplicatedProps(TArray<FLifetimePro
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION(UMounteaDialogueParticipant, DialogueGraph, COND_AutonomousOnly);
-	DOREPLIFETIME_CONDITION(UMounteaDialogueParticipant, DefaultParticipantState, COND_AutonomousOnly);
-	DOREPLIFETIME_CONDITION(UMounteaDialogueParticipant, TraversedPath, COND_AutonomousOnly);
-	DOREPLIFETIME_CONDITION(UMounteaDialogueParticipant, StartingNode, COND_AutonomousOnly);
+	DOREPLIFETIME_CONDITION(UMounteaDialogueParticipant, DialogueGraph,				COND_AutonomousOnly);
+	DOREPLIFETIME_CONDITION(UMounteaDialogueParticipant, DefaultParticipantState,	COND_AutonomousOnly);
+	DOREPLIFETIME_CONDITION(UMounteaDialogueParticipant, TraversedPath,				COND_AutonomousOnly);
+	DOREPLIFETIME_CONDITION(UMounteaDialogueParticipant, StartingNode,				COND_AutonomousOnly);
 	
 	DOREPLIFETIME(UMounteaDialogueParticipant, ParticipantState);
 	DOREPLIFETIME(UMounteaDialogueParticipant, ParticipantTag);
@@ -566,7 +576,7 @@ void UMounteaDialogueParticipant::GetLifetimeReplicatedProps(TArray<FLifetimePro
 
 void UMounteaDialogueParticipant::RegisterWithPIEInstance()
 {
-	if (DialogueGraph)
+	if (IsValid(DialogueGraph))
 	{
 		const int32 PIEInstanceID = GetCurrentPIEInstanceID();
 		DialogueGraph->InitializePIEInstance(this, PIEInstanceID, true);
@@ -575,7 +585,7 @@ void UMounteaDialogueParticipant::RegisterWithPIEInstance()
 
 void UMounteaDialogueParticipant::UnregisterFromPIEInstance()
 {
-	if (DialogueGraph)
+	if (IsValid(DialogueGraph))
 	{
 		const int32 PIEInstanceID = GetCurrentPIEInstanceID();
 		DialogueGraph->InitializePIEInstance(this, PIEInstanceID, false);
@@ -605,34 +615,8 @@ void UMounteaDialogueParticipant::PostEditChangeProperty(struct FPropertyChanged
 	
 	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueParticipant, ParticipantRow))
 	{
-		if (!ParticipantRow.IsNone())
-		{
-			const auto dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
-			if (IsValid(dialogueSettings))
-			{
-				const auto dialogueConfig = dialogueSettings->GetDialogueConfiguration().LoadSynchronous();
-				if (IsValid(dialogueConfig))
-				{
-					const auto dialogueParticipantsTables = dialogueConfig->DialogueParticipantsTables;
-					if (dialogueParticipantsTables.Num() > 0)
-					{
-						for (const auto& dialogueParticipantsTable : dialogueParticipantsTables)
-						{
-							if (IsValid(dialogueParticipantsTable.LoadSynchronous()))
-							{
-								FString searchContext;
-								const auto dialogueParticipantRow = dialogueParticipantsTable->FindRow<FDialogueParticipant>(ParticipantRow, searchContext);
-								ParticipantData = dialogueParticipantRow;
-					
-								if (ParticipantData != nullptr)
-									ParticipantTag = ParticipantData->ParticipantCategoryTag;
-								break;
-							}
-						}
-					}				
-				}				
-			}
-		}
+		const FDialogueParticipant* foundParticipantData = UMounteaDialogueParticipantStatics::FindParticipantDataRow(ParticipantRow, &ParticipantTag);
+		ParticipantData = const_cast<FDialogueParticipant*>(foundParticipantData);
 	}
 	
 	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueParticipant, AudioComponentIdentification))

@@ -176,6 +176,13 @@ private:
 
 	void ProcessWorldWidgetUpdate(const FString& Command);
 
+	/**
+	 * Builds an FMounteaDialogueContextPayload from the current local DialogueContext state
+	 * and writes it to the active UMounteaDialogueSession. Server-only.
+	 * Used to propagate mid-traversal state (new active node, row index, active participant) to clients.
+	 */
+	void WritePayloadFromContext();
+
 public:
 
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")

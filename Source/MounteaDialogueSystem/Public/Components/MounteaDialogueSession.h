@@ -14,6 +14,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Data/MounteaDialogueContextPayload.h"
+#include "Interfaces/Core/MounteaDialogueConditionContextInterface.h"
 #include "MounteaDialogueSession.generated.h"
 
 class UMounteaDialogueWorldSubsystem;
@@ -33,7 +34,7 @@ UCLASS(ClassGroup=(Mountea), Blueprintable,
 	hideCategories=(Collision, AssetUserData, Cooking, Activation, Rendering, Sockets), 
 	AutoExpandCategories=("Mountea", "Dialogue"), 
 	meta=(BlueprintSpawnableComponent, DisplayName = "Mountea Dialogue Session"))
-class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSession : public UActorComponent
+class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSession : public UActorComponent, public IMounteaDialogueConditionContextInterface
 {
 	GENERATED_BODY()
 
@@ -77,6 +78,28 @@ public:
 	 * @param NewPayload  The fully constructed payload to write.
 	 */
 	void WriteContextPayload(FMounteaDialogueContextPayload NewPayload);
+
+	// ~IMounteaDialogueConditionContextInterface
+	/**
+	 * Returns traversed path from all registered participants.
+	 * Aggregated at session level for edge condition evaluation.
+	 * The per-session accumulator is deferred to TraversedPath migration (Stage 5).
+	 */
+	virtual TArray<FDialogueTraversePath> GetConditionTraversedPath_Implementation() const override;
+
+	/**
+	 * Returns the participant currently active in this session.
+	 */
+	virtual TScriptInterface<IMounteaDialogueParticipantInterface> GetConditionActiveParticipant_Implementation() const override
+	{ return ContextPayload.ActiveDialogueParticipant; };
+
+	/**
+	 * Returns the real session GUID. Unlike the local context bridge which returns FGuid(),
+	 * the session is the authoritative source.
+	 */
+	virtual FGuid GetConditionSessionGUID_Implementation() const override
+	{ return ContextPayload.SessionGUID; };
+	// ~IMounteaDialogueConditionContextInterface
 
 private:
 

@@ -13,7 +13,9 @@
 #include "Components/MounteaDialogueManager.h"
 #include "Components/MounteaDialogueSession.h"
 #include "Data/MounteaDialogueContext.h"
+#include "Data/MounteaDialogueContextPayload.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
+#include "GameFramework/GameStateBase.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 
@@ -42,9 +44,16 @@ void UMounteaDialogueWorldSubsystem::UnregisterManager(UMounteaDialogueManager* 
 	RegisteredManagers.Remove(Manager);
 }
 
+UMounteaDialogueSession* UMounteaDialogueWorldSubsystem::GetGameStateSession() const
+{
+	AGameStateBase* gameState = GetWorld() ? GetWorld()->GetGameState() : nullptr;
+	return gameState ? gameState->FindComponentByClass<UMounteaDialogueSession>() : nullptr;
+}
+
 void UMounteaDialogueWorldSubsystem::HandleStartRequest(UMounteaDialogueManager* Manager, const FDialogueStartRequest& Request)
 {
-	if (!Manager) return;
+	if (!Manager) 
+		return;
 
 	TScriptInterface<IMounteaDialogueParticipantInterface> playerParticipant;
 	TScriptInterface<IMounteaDialogueParticipantInterface> mainParticipant;
@@ -59,15 +68,45 @@ void UMounteaDialogueWorldSubsystem::HandleStartRequest(UMounteaDialogueManager*
 		return;
 	}
 
-	UMounteaDialogueContext* newContext = UMounteaDialogueSystemBFC::CreateDialogueContext(Manager, mainParticipant, allParticipants);
-	if (!newContext)
+	UMounteaDialogueSession* session = GetGameStateSession();
+	if (!session)
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[HandleStartRequest] No UMounteaDialogueSession found on GameState. Add the component to your GameState Blueprint."));
+		return;
+	}
+
+	// Build local context to resolve starting node, allowed children, and active participant.
+	// This object is temporary — the canonical state lives in the session payload.
+	UMounteaDialogueContext* tempContext = UMounteaDialogueSystemBFC::CreateDialogueContext(Manager, mainParticipant, allParticipants);
+	if (!tempContext)
 	{
 		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[HandleStartRequest] Failed to create Dialogue Context!"));
 		return;
 	}
 
-	Manager->SetDialogueContext(newContext);
+	// Lift resolved state into the replicated payload.
+	FMounteaDialogueContextPayload payload;
+	payload.SessionGUID = FGuid::NewGuid();
+	payload.DialogueParticipants = tempContext->DialogueParticipants;
+	payload.ActiveDialogueParticipant = tempContext->ActiveDialogueParticipant;
 
+	if (IsValid(tempContext->ActiveNode))
+	{
+		payload.ActiveNodeGUID = tempContext->ActiveNode->GetNodeGUID();
+		for (const auto& child : tempContext->AllowedChildNodes)
+			if (IsValid(child)) payload.AllowedChildNodeGUIDs.Add(child->GetNodeGUID());
+		payload.ActiveDialogueRow = UMounteaDialogueSystemBFC::GetSpeechData(tempContext->ActiveNode);
+	}
+	payload.ActiveDialogueRowDataIndex = 0;
+
+	// WriteContextPayload replicates to clients and notifies the server-side manager via NotifyLocalManagers.
+	// This guarantees context is live on the server before the state transition below fires PrepareNode.
+	session->WriteContextPayload(MoveTemp(payload));
+
+	ActiveSessions.AddUnique(session);
+
+	// State transition happens after payload is written — server context is guaranteed valid by the time
+	// StartDialogue → PrepareNode runs via DialogueStartRequestReceived.
 	Manager->GetDialogueStartRequestedResultEventHandle().Broadcast(true, TEXT("OK"));
 }
 

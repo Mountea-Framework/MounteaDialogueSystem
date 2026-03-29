@@ -12,6 +12,7 @@
 #include "Components/MounteaDialogueSession.h"
 #include "Components/MounteaDialogueManager.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 #include "Net/UnrealNetwork.h"
 #include "Net/Core/PushModel/PushModel.h"
 #include "Subsystem/MounteaDialogueWorldSubsystem.h"
@@ -51,6 +52,25 @@ void UMounteaDialogueSession::WriteContextPayload(FMounteaDialogueContextPayload
 	MARK_PROPERTY_DIRTY_FROM_NAME(UMounteaDialogueSession, ContextPayload, this);
 
 	NotifyLocalManagers();
+}
+
+TArray<FDialogueTraversePath> UMounteaDialogueSession::GetConditionTraversedPath_Implementation() const
+{
+	// Aggregate traversal paths from all session participants.
+	// Once TraversedPath is migrated to UMounteaDialogueParticipant (Stage 5),
+	// this will be the canonical source. For now participants accumulate their own histories.
+	TArray<FDialogueTraversePath> result;
+	for (const auto& participant : ContextPayload.DialogueParticipants)
+	{
+		if (!participant.GetObject() || !participant.GetInterface())
+			continue;
+		const TArray<FDialogueTraversePath> participantPath = participant->Execute_GetTraversedPath(participant.GetObject());
+		for (const auto& entry : participantPath)
+		{
+			result.AddUnique(entry);
+		}
+	}
+	return result;
 }
 
 void UMounteaDialogueSession::NotifyLocalManagers() const
