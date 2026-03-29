@@ -593,7 +593,7 @@ void UMounteaDialogueManager::NodeProcessed_Implementation()
 	DialogueContext->ActiveNode->CleanupNode();
 	
 	// TODO: This is extremely similar to NodeSelected!
-	TArray<UMounteaDialogueGraphNode*> allowedChildrenNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(DialogueContext->ActiveNode);
+	TArray<UMounteaDialogueGraphNode*> allowedChildrenNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodesFiltered(DialogueContext->ActiveNode, DialogueContext);
 	UMounteaDialogueSystemBFC::SortNodes(allowedChildrenNodes);
 	
 	// If there are only Complete Nodes left or no DialogueNodes left, just shut it down
@@ -611,7 +611,7 @@ void UMounteaDialogueManager::NodeProcessed_Implementation()
 	
 	if (newActiveNode != nullptr)
 	{
-		auto allowedChildNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(newActiveNode);
+		auto allowedChildNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodesFiltered(newActiveNode, DialogueContext);
 		UMounteaDialogueSystemBFC::SortNodes(allowedChildNodes);
 
 		DialogueContext->SetDialogueContext(newActiveNode, allowedChildNodes);
@@ -667,7 +667,7 @@ void UMounteaDialogueManager::SelectNode_Implementation(const FGuid& NodeGuid)
 	}
 
 	// Straight up set dialogue row from Node and index to 0
-	auto allowedChildNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(selectedNode);
+	auto allowedChildNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodesFiltered(selectedNode, DialogueContext);
 	UMounteaDialogueSystemBFC::SortNodes(allowedChildNodes);
 
 	DialogueContext->SetDialogueContext(selectedNode, allowedChildNodes);

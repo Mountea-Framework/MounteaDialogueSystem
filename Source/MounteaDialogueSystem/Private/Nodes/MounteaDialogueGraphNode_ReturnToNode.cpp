@@ -65,7 +65,7 @@ void UMounteaDialogueGraphNode_ReturnToNode::OnDelayDurationExpired(const TScrip
 	{
 		if (const auto Context = MounteaDialogueManagerInterface->Execute_GetDialogueContext(MounteaDialogueManagerInterface.GetObject()))
 		{
-			Context->SetDialogueContext(SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
+			Context->SetDialogueContext(SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodesFiltered(SelectedNode, Context));
 			Context->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetSpeechData(SelectedNode));
 			Context->ActiveDialogueRowDataIndex = 0;
 

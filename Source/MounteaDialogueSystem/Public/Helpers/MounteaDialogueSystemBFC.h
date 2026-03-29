@@ -7,6 +7,7 @@
 
 #include "Data/MounteaDialogueGraphDataTypes.h"
 
+#include "Interfaces/Core/MounteaDialogueConditionContextInterface.h"
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 #include "Interfaces/Nodes/MounteaDialogueSpeechDataInterface.h"
@@ -200,11 +201,25 @@ public:
 	/**
 	 * Returns all Allowed Child Nodes for given Parent Node
 	 *❗Might return empty array❗
-	 * 
+	 *
 	 * @param ParentNode	Node to get all Children From
-	 */ 
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="diaogue, child, nodes"), meta=(CustomTag="MounteaK2Getter"))
 	static TArray<UMounteaDialogueGraphNode*> GetAllowedChildNodes(const UMounteaDialogueGraphNode* ParentNode);
+
+	/**
+	 * Returns all Allowed Child Nodes for a given Parent Node after filtering out edges whose conditions fail.
+	 *❗Might return empty array❗
+	 *
+	 * @param ParentNode       Node to get filtered children from.
+	 * @param ConditionContext  Context used to evaluate per-edge conditions.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(Keywords="dialogue, child, nodes, filter, condition"),
+		meta=(CustomTag="MounteaK2Getter"))
+	static TArray<UMounteaDialogueGraphNode*> GetAllowedChildNodesFiltered(
+		const UMounteaDialogueGraphNode* ParentNode,
+		const TScriptInterface<IMounteaDialogueConditionContextInterface>& ConditionContext);
 	
 	/**
 	 * Returns whether Dialogue Row is valid or not.

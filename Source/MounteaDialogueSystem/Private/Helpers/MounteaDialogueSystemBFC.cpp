@@ -6,7 +6,9 @@
 #include "Algo/ForEach.h"
 #include "Kismet/KismetSystemLibrary.h"
 
+#include "Edges/MounteaDialogueGraphEdge.h"
 #include "Graph/MounteaDialogueGraph.h"
+#include "Helpers/MounteaDialogueConditionsStatics.h"
 
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
@@ -313,6 +315,28 @@ TArray<UMounteaDialogueGraphNode*> UMounteaDialogueSystemBFC::GetAllowedChildNod
 	{
 		if (Itr && Itr->CanStartNode())
 			ReturnNodes.Add(Itr);
+	}
+
+	return ReturnNodes;
+}
+
+TArray<UMounteaDialogueGraphNode*> UMounteaDialogueSystemBFC::GetAllowedChildNodesFiltered(const UMounteaDialogueGraphNode* ParentNode, const TScriptInterface<IMounteaDialogueConditionContextInterface>& ConditionContext)
+{
+	TArray<UMounteaDialogueGraphNode*> ReturnNodes;
+
+	if (!ParentNode)
+		return ReturnNodes;
+
+	for (UMounteaDialogueGraphNode* child : ParentNode->GetChildrenNodes())
+	{
+		if (!child || !child->CanStartNode())
+			continue;
+
+		const UMounteaDialogueGraphEdge* const* edgePtr = ParentNode->Edges.Find(child);
+		const UMounteaDialogueGraphEdge* edge = edgePtr ? *edgePtr : nullptr;
+
+		if (UMounteaDialogueConditionsStatics::EvaluateEdgeConditions(edge, ConditionContext))
+			ReturnNodes.Add(child);
 	}
 
 	return ReturnNodes;

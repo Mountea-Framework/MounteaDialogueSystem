@@ -13,6 +13,7 @@
 #include "Helpers/MounteaDialogueConditionsStatics.h"
 
 #include "Conditions/MounteaDialogueConditionBase.h"
+#include "Edges/MounteaDialogueGraphEdge.h"
 #include "Helpers/MounteaDialogueSystemConsts.h"
 
 
@@ -29,4 +30,33 @@ FString UMounteaDialogueConditionsStatics::GetConditionName(UMounteaDialogueCond
 FString UMounteaDialogueConditionsStatics::GetConditionDocumentationLink(UMounteaDialogueConditionBase* Condition)
 {
 	return IsValid(Condition) ? Condition->GetConditionDocumentationLink() : MounteaDialogueSystemConsts::DialogueDocumentationLink;
+}
+
+bool UMounteaDialogueConditionsStatics::EvaluateEdgeConditions(const UMounteaDialogueGraphEdge* Edge, const TScriptInterface<IMounteaDialogueConditionContextInterface>& Context)
+{
+	if (!IsValid(Edge))
+		return true;
+
+	const FMounteaDialogueEdgeConditions& conds = Edge->GetEdgeConditions();
+	if (conds.Rules.IsEmpty())
+		return true;
+
+	const bool bAll = (conds.Mode == EConditionEvaluationMode::All);
+	for (const FMounteaDialogueCondition& rule : conds.Rules)
+	{
+		if (!IsValid(rule.ConditionClass))
+			continue;
+
+		bool bResult = rule.ConditionClass->EvaluateCondition(Context);
+		if (rule.bNegate)
+			bResult = !bResult;
+
+		if (bAll && !bResult)
+			return false;
+
+		if (!bAll && bResult)
+			return true;
+	}
+
+	return bAll;
 }

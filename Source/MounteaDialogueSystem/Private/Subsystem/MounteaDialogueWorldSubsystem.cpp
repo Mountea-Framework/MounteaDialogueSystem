@@ -93,7 +93,8 @@ void UMounteaDialogueWorldSubsystem::HandleStartRequest(UMounteaDialogueManager*
 	if (IsValid(tempContext->ActiveNode))
 	{
 		payload.ActiveNodeGUID = tempContext->ActiveNode->GetNodeGUID();
-		for (const auto& child : tempContext->AllowedChildNodes)
+		const TArray<UMounteaDialogueGraphNode*> filteredChildren = UMounteaDialogueSystemBFC::GetAllowedChildNodesFiltered(tempContext->ActiveNode, tempContext);
+		for (const auto& child : filteredChildren)
 			if (IsValid(child)) payload.AllowedChildNodeGUIDs.Add(child->GetNodeGUID());
 		payload.ActiveDialogueRow = UMounteaDialogueSystemBFC::GetSpeechData(tempContext->ActiveNode);
 	}

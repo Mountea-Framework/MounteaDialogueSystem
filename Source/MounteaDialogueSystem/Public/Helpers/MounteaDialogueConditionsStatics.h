@@ -17,6 +17,7 @@
 #include "MounteaDialogueConditionsStatics.generated.h"
 
 class UMounteaDialogueConditionBase;
+class UMounteaDialogueGraphEdge;
 
 /**
  * 
@@ -55,4 +56,19 @@ public:
 		meta=(CustomTag="MounteaK2Getter"),
 		DisplayName="Get Condition Documentation Link")
 	static FString GetConditionDocumentationLink(UMounteaDialogueConditionBase* Condition);
+
+	/**
+	 * Evaluates all conditions on a dialogue graph edge.
+	 * Returns true if the edge is traversable: no conditions, all pass (All mode), or any passes (Any mode).
+	 *
+	 * @param Edge     The edge whose conditions are evaluated. A null edge is treated as unconditional (returns true).
+	 * @param Context  Condition context exposing traversal history, active participant, and session GUID.
+	 * @return True if the edge may be traversed; false if blocked by conditions.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Validate"),
+		DisplayName="Evaluate Edge Conditions")
+	static bool EvaluateEdgeConditions(
+		const UMounteaDialogueGraphEdge* Edge,
+		const TScriptInterface<IMounteaDialogueConditionContextInterface>& Context);
 };

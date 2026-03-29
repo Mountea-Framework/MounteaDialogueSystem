@@ -87,7 +87,7 @@ void UMounteaDialogueGraphNode_OpenChildGraph::ProcessNode_Implementation(const 
 		return;
 	}
 
-	TArray<UMounteaDialogueGraphNode*> allowedChildren = UMounteaDialogueSystemBFC::GetAllowedChildNodes(firstNode);
+	TArray<UMounteaDialogueGraphNode*> allowedChildren = UMounteaDialogueSystemBFC::GetAllowedChildNodesFiltered(firstNode, context);
 	context->SetDialogueContext(firstNode, allowedChildren);
 	context->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetSpeechData(firstNode));
 	context->UpdateActiveDialogueRowDataIndex(0);
