@@ -4,6 +4,8 @@
 
 #include "Algo/AnyOf.h"
 #include "Data/MounteaDialogueContext.h"
+#include "Decorators/MounteaDialogueDecorator_OnlyFirstTime.h"
+#include "Decorators/MounteaDialogueDecorator_OverrideOnlyFirstTime.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
@@ -438,6 +440,29 @@ bool UMounteaDialogueGraphNode::ValidateNode(FDataValidationContext& Context, co
 
 		for (auto Itr : GetNodeDecorators())
 		{
+			if (Itr.DecoratorType
+				&& (Itr.DecoratorType->IsA<UMounteaDialogueDecorator_OnlyFirstTime>()
+					|| Itr.DecoratorType->IsA<UMounteaDialogueDecorator_OverrideOnlyFirstTime>()))
+			{
+				const FString RichTextWarning =
+				FString(TEXT("* ")).
+				Append(TEXT("<RichTextBlock.Bold>")).
+				Append(NodeTitle.ToString()).
+				Append(TEXT("</>: Decorator ")).
+				Append(TEXT("<RichTextBlock.Bold>")).
+				Append(Itr.DecoratorType->GetClass()->GetDisplayNameText().ToString()).
+				Append(TEXT("</> is deprecated. Use incoming edge condition ")).
+				Append(TEXT("<RichTextBlock.Bold>Only First Time</> for traversal gating. Use condition negation for repeat-path branches."));
+
+				const FString TextWarning =
+				FString(NodeTitle.ToString()).
+				Append(TEXT(": Decorator ")).
+				Append(Itr.DecoratorType->GetClass()->GetDisplayNameText().ToString()).
+				Append(TEXT(" is deprecated. Use incoming edge condition Only First Time for traversal gating. Use condition negation for repeat-path branches."));
+
+				Context.AddWarning(FText::FromString(RichFormat ? RichTextWarning : TextWarning));
+			}
+
 			TArray<FText> DecoratorErrors;
 			if (Itr.ValidateDecorator(DecoratorErrors) == false)
 			{
