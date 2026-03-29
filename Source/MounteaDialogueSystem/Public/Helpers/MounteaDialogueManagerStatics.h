@@ -10,6 +10,8 @@
 #include "MounteaDialogueManagerStatics.generated.h"
 
 enum class EDialogueManagerState : uint8;
+class UMounteaDialogueGraph;
+class IMounteaDialogueParticipantInterface;
 
 /**
  * This library contains implementations of Dialogue Manager Functions.
@@ -95,6 +97,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Getter"))
 	static EDialogueManagerType GetDialogueManagerType(const TScriptInterface<IMounteaDialogueManagerInterface>& Target);
+
+	static UMounteaDialogueGraph* ResolveGraphByGuid(
+		const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants,
+		const FGuid& GraphGuid);
 
 	// --- Dialogue functions ------------------------------
 

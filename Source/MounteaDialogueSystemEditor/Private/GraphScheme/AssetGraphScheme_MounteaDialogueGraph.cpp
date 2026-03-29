@@ -7,6 +7,7 @@
 #include "Graph/MounteaDialogueGraph.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
+#include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
 #include "ToolMenu.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
@@ -373,6 +374,18 @@ const FPinConnectionResponse UAssetGraphScheme_MounteaDialogueGraph::CanCreateCo
 	if (EdNode_A == nullptr || EdNode_B == nullptr)
 	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinError", "Not a valid UMounteaDialogueGraphEdNode"));
+	}
+
+	const auto* OpenChildA = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(EdNode_A->DialogueGraphNode);
+	if (OpenChildA && OpenChildA->TargetDialogue.IsNull())
+	{
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("OpenChildGraphMissingTargetA", "Open Child Graph is missing Target Dialogue."));
+	}
+
+	const auto* OpenChildB = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(EdNode_B->DialogueGraphNode);
+	if (OpenChildB && OpenChildB->TargetDialogue.IsNull())
+	{
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("OpenChildGraphMissingTargetB", "Open Child Graph is missing Target Dialogue."));
 	}
 
 	FText ErrorMessage;

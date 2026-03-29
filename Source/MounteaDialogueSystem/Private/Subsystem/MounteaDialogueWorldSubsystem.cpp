@@ -28,6 +28,9 @@ void UMounteaDialogueWorldSubsystem::Deinitialize()
 {
 	RegisteredManagers.Empty();
 	ActiveSessions.Empty();
+	ActiveManager.Reset();
+	ActiveSessionGUID.Invalidate();
+	bDialogueLockActive = false;
 
 	Super::Deinitialize();
 }
@@ -41,6 +44,10 @@ void UMounteaDialogueWorldSubsystem::RegisterManager(UMounteaDialogueManager* Ma
 void UMounteaDialogueWorldSubsystem::UnregisterManager(UMounteaDialogueManager* Manager)
 {
 	if (!Manager) return;
+
+	if (ActiveManager.Get() == Manager)
+		ReleaseDialogueLock(Manager, ActiveSessionGUID);
+
 	RegisteredManagers.Remove(Manager);
 }
 
@@ -55,6 +62,22 @@ void UMounteaDialogueWorldSubsystem::HandleStartRequest(UMounteaDialogueManager*
 	if (!Manager) 
 		return;
 
+	if (!TryAcquireDialogueLock(Manager))
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[HandleStartRequest] Another dialogue is already active. Only one active dialogue is supported."));
+		return;
+	}
+
+	bool bLockAcquired = true;
+	const auto ReleaseLockIfNeeded = [this, &bLockAcquired, Manager]()
+	{
+		if (!bLockAcquired)
+			return;
+
+		ReleaseDialogueLock(Manager);
+		bLockAcquired = false;
+	};
+
 	TScriptInterface<IMounteaDialogueParticipantInterface> playerParticipant;
 	TScriptInterface<IMounteaDialogueParticipantInterface> mainParticipant;
 	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> allParticipants;
@@ -65,6 +88,7 @@ void UMounteaDialogueWorldSubsystem::HandleStartRequest(UMounteaDialogueManager*
 	{
 		const FText combined = FText::Join(FText::FromString(TEXT("\n")), errors);
 		Manager->GetDialogueFailedEventHandle().Broadcast(combined.ToString());
+		ReleaseLockIfNeeded();
 		return;
 	}
 
@@ -72,8 +96,11 @@ void UMounteaDialogueWorldSubsystem::HandleStartRequest(UMounteaDialogueManager*
 	if (!session)
 	{
 		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[HandleStartRequest] No UMounteaDialogueSession found on GameState. Add the component to your GameState Blueprint."));
+		ReleaseLockIfNeeded();
 		return;
 	}
+
+	session->SetAuthoritativeManager(Manager);
 
 	// Build local context to resolve starting node, allowed children, and active participant.
 	// This object is temporary — the canonical state lives in the session payload.
@@ -81,18 +108,21 @@ void UMounteaDialogueWorldSubsystem::HandleStartRequest(UMounteaDialogueManager*
 	if (!tempContext)
 	{
 		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[HandleStartRequest] Failed to create Dialogue Context!"));
+		ReleaseLockIfNeeded();
 		return;
 	}
 
 	// Lift resolved state into the replicated payload.
 	FMounteaDialogueContextPayload payload;
 	payload.SessionGUID = FGuid::NewGuid();
+	ActiveSessionGUID = payload.SessionGUID;
 	payload.DialogueParticipants = tempContext->DialogueParticipants;
 	payload.ActiveDialogueParticipant = tempContext->ActiveDialogueParticipant;
 
 	if (IsValid(tempContext->ActiveNode))
 	{
 		payload.ActiveNodeGUID = tempContext->ActiveNode->GetNodeGUID();
+		payload.ActiveGraphGUID = tempContext->ActiveNode->GetGraphGUID();
 		const TArray<UMounteaDialogueGraphNode*> filteredChildren = UMounteaDialogueSystemBFC::GetAllowedChildNodesFiltered(tempContext->ActiveNode, tempContext);
 		for (const auto& child : filteredChildren)
 			if (IsValid(child)) payload.AllowedChildNodeGUIDs.Add(child->GetNodeGUID());
@@ -109,6 +139,7 @@ void UMounteaDialogueWorldSubsystem::HandleStartRequest(UMounteaDialogueManager*
 	// State transition happens after payload is written — server context is guaranteed valid by the time
 	// StartDialogue → PrepareNode runs via DialogueStartRequestReceived.
 	Manager->GetDialogueStartRequestedResultEventHandle().Broadcast(true, TEXT("OK"));
+	bLockAcquired = false;
 }
 
 void UMounteaDialogueWorldSubsystem::RequestStartEnvironmentDialogue(UMounteaDialogueManager* Manager, const FDialogueStartRequest& Request)
@@ -183,4 +214,45 @@ bool UMounteaDialogueWorldSubsystem::ResolveParticipants(
 	}
 
 	return true;
+}
+
+bool UMounteaDialogueWorldSubsystem::TryAcquireDialogueLock(UMounteaDialogueManager* Manager)
+{
+	if (!IsValid(Manager))
+		return false;
+
+	if (!bDialogueLockActive)
+	{
+		bDialogueLockActive = true;
+		ActiveManager = Manager;
+		ActiveSessionGUID.Invalidate();
+		return true;
+	}
+
+	if (!ActiveManager.IsValid())
+	{
+		bDialogueLockActive = false;
+		return TryAcquireDialogueLock(Manager);
+	}
+
+	return false;
+}
+
+void UMounteaDialogueWorldSubsystem::ReleaseDialogueLock(UMounteaDialogueManager* Manager, const FGuid& SessionGUID)
+{
+	if (!bDialogueLockActive)
+		return;
+
+	if (IsValid(Manager) && ActiveManager.IsValid() && ActiveManager.Get() != Manager)
+		return;
+
+	if (SessionGUID.IsValid() && ActiveSessionGUID.IsValid() && SessionGUID != ActiveSessionGUID)
+		return;
+
+	bDialogueLockActive = false;
+	ActiveManager.Reset();
+	ActiveSessionGUID.Invalidate();
+
+	if (UMounteaDialogueSession* session = GetGameStateSession())
+		ActiveSessions.Remove(session);
 }

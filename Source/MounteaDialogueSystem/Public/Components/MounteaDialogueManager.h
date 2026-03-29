@@ -1,4 +1,13 @@
-// All rights reserved Dominik Pavlicek 2023
+// Copyright (C) 2026 Dominik (Pavlicek) Morse. All rights reserved.
+//
+// Developed for the Mountea Framework as a free tool. This solution is provided
+// for use and sharing without charge. Redistribution is allowed under the following conditions:
+//
+// - You may use this solution in commercial products, provided the product is not
+//   this solution itself (or unless significant modifications have been made to the solution).
+// - You may not resell or redistribute the original, unmodified solution.
+//
+// For more information, visit: https://mountea.tools
 
 #pragma once
 
@@ -70,7 +79,7 @@ protected:
 	void DialogueFailed(const FString& ErrorMessage);
 
 	void StartParticipants();
-	void StopParticipants() const;
+	void StopParticipants();
 	void NotifyParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
 	
 public:
@@ -135,6 +144,7 @@ public:
 	 * @param Payload  The latest payload received from the session.
 	 */
 	void OnContextPayloadUpdated(const FMounteaDialogueContextPayload& Payload);
+	void SyncPayloadFromContext();
 
 private:
 
@@ -359,6 +369,10 @@ protected:
 
 	UPROPERTY(Transient)
 	FString LastDialogueCommand;
+
+	bool bPendingClientPrepare = false;
+	bool bParticipantsStarted = false;
+	FGuid LastPreparedSessionGUID;
 
 protected:
 	

@@ -1,4 +1,4 @@
-// Copyright (C) 2025 Dominik (Pavlicek) Morse. All rights reserved.
+// Copyright (C) 2026 Dominik (Pavlicek) Morse. All rights reserved.
 //
 // Developed for the Mountea Framework as a free tool. This solution is provided
 // for use and sharing without charge. Redistribution is allowed under the following conditions:
@@ -11,6 +11,7 @@
 
 #include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
 
+#include "Components/MounteaDialogueManager.h"
 #include "Data/MounteaDialogueContext.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
@@ -30,7 +31,7 @@ UMounteaDialogueGraphNode_OpenChildGraph::UMounteaDialogueGraphNode_OpenChildGra
 	EditorNodeColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("06b6d4")));
 	EditorHeaderForegroundColour = FLinearColor::White;
 	bAllowOutputNodes = false;
-	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_OpenChildGraph_Tooltip", "* Placeholder node for opening another dialogue graph.\n* Runtime behavior is currently terminal-safe and non-destructive.");
+	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_OpenChildGraph_Tooltip", "Transfers traversal into the selected child dialogue graph.");
 #endif
 
 	bAutoStarts = true;
@@ -91,6 +92,8 @@ void UMounteaDialogueGraphNode_OpenChildGraph::ProcessNode_Implementation(const 
 	context->SetDialogueContext(firstNode, allowedChildren);
 	context->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetSpeechData(firstNode));
 	context->UpdateActiveDialogueRowDataIndex(0);
+	if (UMounteaDialogueManager* managerComponent = Cast<UMounteaDialogueManager>(Manager.GetObject()))
+		managerComponent->SyncPayloadFromContext();
 
 	Manager->Execute_PrepareNode(Manager.GetObject());
 }
@@ -178,6 +181,23 @@ bool UMounteaDialogueGraphNode_OpenChildGraph::ValidateTargetDialogueReference(F
 bool UMounteaDialogueGraphNode_OpenChildGraph::ValidateNode(FDataValidationContext& Context, const bool RichFormat) const
 {
 	bool bSatisfied = Super::ValidateNode(Context, RichFormat);
+
+	if (TargetDialogue.IsNull())
+	{
+		const FString richTextReturn =
+			FString(TEXT("* "))
+			.Append(TEXT("<RichTextBlock.Bold>"))
+			.Append(NodeTitle.ToString())
+			.Append(TEXT("</>: Target Dialogue is not set."));
+
+		const FString textReturn =
+			FString(NodeTitle.ToString())
+			.Append(TEXT(": Target Dialogue is not set."));
+
+		Context.AddError(FText::FromString(RichFormat ? richTextReturn : textReturn));
+		bSatisfied = false;
+	}
+
 	return ValidateTargetDialogueReference(Context, RichFormat) && bSatisfied;
 }
 

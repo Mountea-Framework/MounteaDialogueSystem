@@ -20,7 +20,7 @@ class UMounteaDialogueGraph;
 /**
  * Mountea Dialogue Open Child Graph Node
  *
- * Placeholder node used to represent transition into another dialogue graph.
+ * Utility node that transitions runtime traversal into another dialogue graph.
  */
 UCLASS(ClassGroup=("Mountea|Dialogue"), NotBlueprintable, DisplayName="Open Child Graph", 
 	meta=(ToolTip="Mountea Dialogue Tree: Open Child Graph Node"))
@@ -34,7 +34,7 @@ public:
 
 	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 
-	/** Soft reference to the dialogue graph which should be opened in a future implementation pass. */
+	/** Soft reference to the dialogue graph that will be opened when this node is processed. */
 	UPROPERTY(SaveGame, Category="Open Graph", EditAnywhere, BlueprintReadOnly,
 		meta=(NoResetToDefault),
 		meta=(DisplayThumbnail="false"),

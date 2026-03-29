@@ -101,6 +101,12 @@ public:
 	 */
 	void RequestStartEnvironmentDialogue(UMounteaDialogueManager* Manager, const FDialogueStartRequest& Request);
 
+	/**
+	 * Releases the single-dialogue lock if the caller matches the active lock owner.
+	 * Server-only.
+	 */
+	void ReleaseDialogueLock(UMounteaDialogueManager* Manager, const FGuid& SessionGUID = FGuid());
+
 private:
 
 	/**
@@ -123,6 +129,8 @@ private:
 		TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& OutAllParticipants,
 		TArray<FText>& OutErrors) const;
 
+	bool TryAcquireDialogueLock(UMounteaDialogueManager* Manager);
+
 private:
 
 	/**
@@ -136,4 +144,13 @@ private:
 	 */
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UMounteaDialogueSession>> ActiveSessions;
+
+	UPROPERTY(Transient)
+	TWeakObjectPtr<UMounteaDialogueManager> ActiveManager;
+
+	UPROPERTY(Transient)
+	FGuid ActiveSessionGUID;
+
+	UPROPERTY(Transient)
+	bool bDialogueLockActive = false;
 };

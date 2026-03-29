@@ -72,8 +72,21 @@ public:
 	}
 
 	/**
+	 * Sets the server-authoritative manager that owns the active session flow.
+	 * The server notify path targets this manager directly to avoid local-player filtering issues.
+	 */
+	void SetAuthoritativeManager(UMounteaDialogueManager* Manager);
+
+	/**
+	 * Server-only session finalize hook.
+	 * Persists traversed-path data for all participants in the current payload and
+	 * clears session-side manager ownership.
+	 */
+	void FinalizeSession(const TArray<FDialogueTraversePath>& TraversedPath);
+
+	/**
 	 * Server-only. Writes a new payload, increments ContextVersion, marks the property dirty
-	 * for push-model replication, and calls NotifyLocalManagers for the listen-server host path.
+	 * for push-model replication, and dispatches to the authoritative server manager.
 	 *
 	 * @param NewPayload  The fully constructed payload to write.
 	 */
@@ -94,8 +107,7 @@ public:
 	{ return ContextPayload.ActiveDialogueParticipant; };
 
 	/**
-	 * Returns the real session GUID. Unlike the local context bridge which returns FGuid(),
-	 * the session is the authoritative source.
+	 * Returns the real session GUID from the authoritative payload.
 	 */
 	virtual FGuid GetConditionSessionGUID_Implementation() const override
 	{ return ContextPayload.SessionGUID; };
@@ -104,9 +116,12 @@ public:
 private:
 
 	/**
-	 * Iterates all managers registered in UMounteaDialogueWorldSubsystem and calls
-	 * OnContextPayloadUpdated on those whose owning actor is locally controlled.
-	 * Used on the listen-server host because OnRep does not fire on the server side.
+	 * Dispatches the latest payload to managers.
+	 * Server path targets the authoritative manager directly.
+	 * Client path notifies only managers whose owners are locally controlled.
 	 */
 	void NotifyLocalManagers() const;
+
+	TWeakObjectPtr<UMounteaDialogueManager> AuthoritativeManager;
+	int32 LastDeliveredContextVersion = 0;
 };

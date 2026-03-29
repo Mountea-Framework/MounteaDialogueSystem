@@ -1,4 +1,13 @@
-// All rights reserved Dominik Pavlicek 2023
+// Copyright (C) 2026 Dominik (Pavlicek) Morse. All rights reserved.
+//
+// Developed for the Mountea Framework as a free tool. This solution is provided
+// for use and sharing without charge. Redistribution is allowed under the following conditions:
+//
+// - You may use this solution in commercial products, provided the product is not
+//   this solution itself (or unless significant modifications have been made to the solution).
+// - You may not resell or redistribute the original, unmodified solution.
+//
+// For more information, visit: https://mountea.tools
 
 #pragma once
 
@@ -31,6 +40,9 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueContext : public UObject, public
 	GENERATED_BODY()
 
 public:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue")
+	FGuid SessionGUID;
 
 	/**
 	 * Active Dialogue Participant Interface reference.
@@ -111,9 +123,13 @@ public:
 	virtual bool IsValid() const;
 
 	TScriptInterface<IMounteaDialogueParticipantInterface> GetActiveDialogueParticipant() const
-	{ return ActiveDialogueParticipant; };
+	{ 
+		return ActiveDialogueParticipant; 
+	};
 	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> GetDialogueParticipants() const
-	{ return DialogueParticipants; }
+	{ 
+		return DialogueParticipants; 
+	}
 	
 	/**
 	 * Returns the Active Node object.
@@ -122,7 +138,9 @@ public:
 	 * @return Active Node if any specified
 	 */
 	UMounteaDialogueGraphNode* GetActiveNode() const
-	{ return ActiveNode; };
+	{ 
+		return ActiveNode;
+	 };
 	
 	/**
 	 * Returns lsit of Children Nodes from Active Node.
@@ -131,10 +149,14 @@ public:
 	 * @return List of allowed Children Nodes 
 	 */
 	TArray<UMounteaDialogueGraphNode*> GetChildrenNodes() const
-	{ return AllowedChildNodes; };
+	{ 
+		return AllowedChildNodes; 
+	};
 
 	FDataTableRowHandle GetActiveDataTable() const
-	{ return ActiveDialogueTableHandle; };
+	{ 
+		return ActiveDialogueTableHandle; 
+	};
 	
 	/**
 	 * Returns Active Dialogue Row if any.
@@ -143,7 +165,9 @@ public:
 	 * @return Active Dialogue Row if any 
 	 */
 	FDialogueRow GetActiveDialogueRow() const
-	{ return ActiveDialogueRow; };
+	{ 
+		return ActiveDialogueRow; 
+	};
 	
 	/**
 	 *Returns the Active Dialogue Row Data Index.
@@ -151,7 +175,9 @@ public:
 	 * @return Active Row Index 
 	 */
 	int32 GetActiveDialogueRowDataIndex() const
-	{ return ActiveDialogueRowDataIndex; };
+	{ 
+		return ActiveDialogueRowDataIndex; 
+	};
 	
 	/**
 	 * Returns the map of nodes traversed during this dialogue instance.
@@ -159,7 +185,9 @@ public:
 	 * @return The map of nodes traversed during this dialogue instance.
 	 */
 	TArray<FDialogueTraversePath> GetTraversedPath() const
-	{ return TraversedPath; };
+	{ 
+		return TraversedPath; 
+	};
 	
 	virtual void SetDialogueContext(UMounteaDialogueGraphNode* NewActiveNode, TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes);
 	virtual void UpdateActiveDialogueNode(UMounteaDialogueGraphNode* NewActiveNode);
@@ -240,18 +268,25 @@ public:
 public:
 
 	virtual TArray<FDialogueTraversePath> GetConditionTraversedPath_Implementation() const override
-	{ return TraversedPath; };
+	{ 
+		return TraversedPath; 
+	};
 	virtual TScriptInterface<IMounteaDialogueParticipantInterface> GetConditionActiveParticipant_Implementation() const override
-	{ return ActiveDialogueParticipant; };
+	{ 
+		return ActiveDialogueParticipant; 
+	};
 	virtual FGuid GetConditionSessionGUID_Implementation() const override
-	{ return FGuid(); };
+	{ 
+		return SessionGUID; 
+	};
 
 public:
 
 	UMounteaDialogueContext* operator += (const UMounteaDialogueContext* Other);
 	UMounteaDialogueContext* operator+=(const TObjectPtr<UMounteaDialogueContext>& Other)
 	{
-		if (!Other) return this;
+		if (!Other) 
+			return this;
 		return (*this) += Other.Get();
 	}
 };

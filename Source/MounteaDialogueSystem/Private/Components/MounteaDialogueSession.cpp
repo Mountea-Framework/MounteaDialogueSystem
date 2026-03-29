@@ -11,6 +11,7 @@
 
 #include "Components/MounteaDialogueSession.h"
 #include "Components/MounteaDialogueManager.h"
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 #include "Net/UnrealNetwork.h"
@@ -39,6 +40,17 @@ void UMounteaDialogueSession::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 
 void UMounteaDialogueSession::OnRep_ContextPayload()
 {
+	const int32 newVersion = ContextPayload.ContextVersion;
+	if (newVersion <= LastDeliveredContextVersion)
+	{
+		LOG_WARNING(TEXT("[Dialogue Session] Ignoring stale payload version %d (last delivered: %d)."), newVersion, LastDeliveredContextVersion)
+		return;
+	}
+
+	if (LastDeliveredContextVersion > 0 && newVersion > LastDeliveredContextVersion + 1)
+		LOG_WARNING(TEXT("[Dialogue Session] Payload versions jumped from %d to %d."), LastDeliveredContextVersion, newVersion)
+
+	LastDeliveredContextVersion = newVersion;
 	NotifyLocalManagers();
 }
 
@@ -50,8 +62,34 @@ void UMounteaDialogueSession::WriteContextPayload(FMounteaDialogueContextPayload
 	NewPayload.ContextVersion = ContextPayload.ContextVersion + 1;
 	ContextPayload = MoveTemp(NewPayload);
 	MARK_PROPERTY_DIRTY_FROM_NAME(UMounteaDialogueSession, ContextPayload, this);
+	LastDeliveredContextVersion = ContextPayload.ContextVersion;
 
 	NotifyLocalManagers();
+}
+
+void UMounteaDialogueSession::SetAuthoritativeManager(UMounteaDialogueManager* Manager)
+{
+	AuthoritativeManager = Manager;
+}
+
+void UMounteaDialogueSession::FinalizeSession(const TArray<FDialogueTraversePath>& TraversedPath)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority())
+		return;
+
+	if (TraversedPath.Num() > 0)
+	{
+		for (const auto& participant : ContextPayload.DialogueParticipants)
+		{
+			if (!participant.GetObject() || !participant.GetInterface())
+				continue;
+
+			TArray<FDialogueTraversePath> participantPath = TraversedPath;
+			UMounteaDialogueSystemBFC::SaveTraversePathToParticipant(participantPath, participant);
+		}
+	}
+
+	AuthoritativeManager.Reset();
 }
 
 TArray<FDialogueTraversePath> UMounteaDialogueSession::GetConditionTraversedPath_Implementation() const
@@ -82,6 +120,18 @@ void UMounteaDialogueSession::NotifyLocalManagers() const
 	UMounteaDialogueWorldSubsystem* subsystem = world->GetSubsystem<UMounteaDialogueWorldSubsystem>();
 	if (!subsystem)
 		return;
+
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		if (IsValid(AuthoritativeManager.Get()))
+		{
+			AuthoritativeManager->OnContextPayloadUpdated(ContextPayload);
+			return;
+		}
+
+		LOG_WARNING(TEXT("[Dialogue Session] Missing authoritative manager while dispatching payload version %d."), ContextPayload.ContextVersion)
+		return;
+	}
 
 	for (UMounteaDialogueManager* manager : subsystem->GetRegisteredManagers())
 	{

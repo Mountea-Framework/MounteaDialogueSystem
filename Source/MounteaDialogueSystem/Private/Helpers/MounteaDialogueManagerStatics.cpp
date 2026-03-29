@@ -2,6 +2,57 @@
 
 #include "Helpers/MounteaDialogueManagerStatics.h"
 
+#include "Graph/MounteaDialogueGraph.h"
+#include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
+#include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
+
+UMounteaDialogueGraph* UMounteaDialogueManagerStatics::ResolveGraphByGuid(
+	const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants,
+	const FGuid& GraphGuid)
+{
+	if (!GraphGuid.IsValid())
+		return nullptr;
+
+	TArray<UMounteaDialogueGraph*> graphsToVisit;
+	TSet<const UMounteaDialogueGraph*> visitedGraphs;
+
+	for (const auto& participant : Participants)
+	{
+		if (!participant.GetObject() || !participant.GetInterface())
+			continue;
+
+		UMounteaDialogueGraph* participantGraph = participant->Execute_GetDialogueGraph(participant.GetObject());
+		if (IsValid(participantGraph))
+			graphsToVisit.AddUnique(participantGraph);
+	}
+
+	while (graphsToVisit.Num() > 0)
+	{
+		UMounteaDialogueGraph* currentGraph = graphsToVisit.Pop(EAllowShrinking::No);
+		if (!IsValid(currentGraph) || visitedGraphs.Contains(currentGraph))
+			continue;
+
+		visitedGraphs.Add(currentGraph);
+
+		if (currentGraph->GetGraphGUID() == GraphGuid)
+			return currentGraph;
+
+		const TArray<UMounteaDialogueGraphNode*> allNodes = currentGraph->GetAllNodes();
+		for (const auto* node : allNodes)
+		{
+			const auto* openChildNode = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(node);
+			if (!IsValid(openChildNode))
+				continue;
+
+			UMounteaDialogueGraph* childGraph = openChildNode->TargetDialogue.LoadSynchronous();
+			if (IsValid(childGraph) && !visitedGraphs.Contains(childGraph))
+				graphsToVisit.AddUnique(childGraph);
+		}
+	}
+
+	return nullptr;
+}
+
 AActor* UMounteaDialogueManagerStatics::GetOwningActor(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
 {
 	return Target.GetObject() ? Target->Execute_GetOwningActor(Target.GetObject()) : nullptr;

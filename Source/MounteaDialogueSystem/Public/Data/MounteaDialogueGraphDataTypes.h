@@ -269,7 +269,7 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
 		meta=(ExposeOnSpawn=true, MultiLine=true),
-		meta=(NoReseToDefaults))
+		meta=(NoResetToDefault))
 	FText RowText;
 	
 	/**
@@ -283,7 +283,7 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
 		meta=(ExposeOnSpawn=true),
-		meta=(NoReseToDefaults))
+		meta=(NoResetToDefault))
 	TObjectPtr<USoundBase> RowSound = nullptr;
 	
 	/**
@@ -294,7 +294,7 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
 		meta=(ExposeOnSpawn=true),
-		meta=(NoReseToDefaults))
+		meta=(NoResetToDefault))
 	ERowDurationMode RowDurationMode;
 	
 	/**
@@ -305,7 +305,7 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
 		meta=(EditCondition="RowSound==nullptr", UIMin=0.f, ClampMin=0.f, ExposeOnSpawn = true),
-		meta=(NoReseToDefaults))
+		meta=(NoResetToDefault))
 	float RowDuration;
 	
 	/**
@@ -318,7 +318,7 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
 		meta=(ExposeOnSpawn=true),
-		meta=(NoReseToDefaults))
+		meta=(NoResetToDefault))
 	float RowDurationOverride;
 	
 	/**
@@ -327,7 +327,7 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
 		meta=(ExposeOnSpawn=true),
-		meta=(NoReseToDefaults))
+		meta=(NoResetToDefault))
 	ERowExecutionMode RowExecutionBehaviour;
 	
 	/**
@@ -337,7 +337,7 @@ public:
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, 
 		meta=(IgnoreForMemberInitializationTest),
-		meta=(NoReseToDefaults))
+		meta=(NoResetToDefault))
 	FGuid RowGUID = FGuid::NewGuid();
 
 public:
@@ -418,7 +418,8 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
 		DisplayName="Compatible Participants Tags",
-		meta=(Categories="Mountea_Dialogue,Dialogue"))
+		meta=(Categories="Mountea_Dialogue,Dialogue"),
+		meta=(NoResetToDefault))
 	FGameplayTagContainer CompatibleTags;
 
 	/**
@@ -434,7 +435,8 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
 		meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true),
-		meta=(DisplayName="Row Type ID"))
+		meta=(DisplayName="Row Type ID"),
+		meta=(NoResetToDefault))
 	int32 UIRowID = 0;
 	
 	UPROPERTY(NotReplicated, 
@@ -449,8 +451,8 @@ public:
 	 * ❔ Each row might have different participant tied to it, so there can be three-way dialogues, where one player talks to 2 NPCs
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
-		meta=(NoReseToDefaults),
-		meta=(GetOptions="MounteaDialogueSystem.MounteaDialogueParticipantStatics.GetDialogueParticipantRowNames"))
+		meta=(GetOptions="MounteaDialogueSystem.MounteaDialogueParticipantStatics.GetDialogueParticipantRowNames"),
+		meta=(NoResetToDefault))
 	FName DialogueParticipantName;
 	
 	/**
@@ -459,7 +461,7 @@ public:
 	 * ❔ This should summarize what is this row about, let's say "Accept offering" is a title for "Thank you very much, kind sir, it would be pleasure to join you on your adventure!".
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
-		meta=(NoReseToDefaults))
+		meta=(NoResetToDefault))
 	FText RowTitle;
 	
 	/**
@@ -478,7 +480,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
 		meta=(TitleProperty="RowText"),
 		meta=(ShowOnlyInnerProperties),
-		meta=(NoReseToDefaults))
+		meta=(NoResetToDefault))
 	TArray<FDialogueRowData> RowData;
 
 	/**
@@ -498,7 +500,7 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
 		meta=(AllowAbstract=false),
-		meta=(NoReseToDefaults))
+		meta=(NoResetToDefault))
 	TObjectPtr<UDialogueAdditionalData> DialogueRowAdditionalData = nullptr;
 	
 	/**
@@ -508,7 +510,7 @@ public:
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, 
 		meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate),
-		meta=(NoReseToDefaults))
+		meta=(NoResetToDefault))
 	FGuid RowGUID;
 	
 public:
@@ -651,7 +653,7 @@ struct FUIRowID
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
 		meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true),
-		meta=(NoReseToDefaults))
+		meta=(NoResetToDefault))
 	int32 UIRowID = 0;
 
 	/**
@@ -661,7 +663,7 @@ struct FUIRowID
 	 * This allows customization of the user interface rows by linking to a specific `UUserWidget` subclass.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
-		meta=(NoReseToDefaults))
+		meta=(NoResetToDefault))
 	TSubclassOf<UUserWidget> RowWidgetClass;
 
 public:

@@ -1,4 +1,13 @@
-// All rights reserved Dominik Pavlicek 2023
+// Copyright (C) 2026 Dominik (Pavlicek) Morse. All rights reserved.
+//
+// Developed for the Mountea Framework as a free tool. This solution is provided
+// for use and sharing without charge. Redistribution is allowed under the following conditions:
+//
+// - You may use this solution in commercial products, provided the product is not
+//   this solution itself (or unless significant modifications have been made to the solution).
+// - You may not resell or redistribute the original, unmodified solution.
+//
+// For more information, visit: https://mountea.tools
 
 #include "Components/MounteaDialogueManager.h"
 
@@ -10,6 +19,7 @@
 #include "Data/MounteaDialogueGraphDataTypes.h"
 #include "GameFramework/PlayerState.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Helpers/MounteaDialogueManagerStatics.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/HUD/MounteaDialogueWBPInterface.h"
 #include "Kismet/GameplayStatics.h"
@@ -176,14 +186,18 @@ void UMounteaDialogueManager::OnContextPayloadUpdated(const FMounteaDialogueCont
 		DialogueContext = NewObject<UMounteaDialogueContext>(this);
 
 	// Rebuild participant references directly from payload
+	DialogueContext->SessionGUID = Payload.SessionGUID;
 	DialogueContext->ActiveDialogueParticipant = Payload.ActiveDialogueParticipant;
 	DialogueContext->DialogueParticipants = Payload.DialogueParticipants;
 
-	UMounteaDialogueGraph* activeGraph = nullptr;
-	const TScriptInterface<IMounteaDialogueParticipantInterface> graphSource =
-		UMounteaDialogueSystemBFC::GetGraphOwnerParticipant(Payload.DialogueParticipants);
-	if (graphSource.GetObject() && graphSource.GetInterface())
-		activeGraph = graphSource->Execute_GetDialogueGraph(graphSource.GetObject());
+	UMounteaDialogueGraph* activeGraph = UMounteaDialogueManagerStatics::ResolveGraphByGuid(Payload.DialogueParticipants, Payload.ActiveGraphGUID);
+	if (!activeGraph)
+	{
+		const TScriptInterface<IMounteaDialogueParticipantInterface> graphSource =
+			UMounteaDialogueSystemBFC::GetGraphOwnerParticipant(Payload.DialogueParticipants);
+		if (graphSource.GetObject() && graphSource.GetInterface())
+			activeGraph = graphSource->Execute_GetDialogueGraph(graphSource.GetObject());
+	}
 
 	if (activeGraph)
 	{
@@ -209,16 +223,21 @@ void UMounteaDialogueManager::OnContextPayloadUpdated(const FMounteaDialogueCont
 	if (!Payload.LastWidgetCommand.IsEmpty())
 		ProcessWorldWidgetUpdate(Payload.LastWidgetCommand);
 
-	// Client-side deferred start: if the initial payload arrives after state was already set to Active
-	// (i.e. the replication order was state-first, payload-second), kick off the traversal loop now.
-	// ContextVersion == 1 identifies the initial payload written by HandleStartRequest.
-	// The server never uses this path — it calls PrepareNode directly from StartDialogue_Implementation.
-	if (!UMounteaDialogueSystemBFC::IsServer(GetOwner())
-		&& Payload.ContextVersion == 1
-		&& ManagerState == EDialogueManagerState::EDMS_Active
-		&& IsValid(DialogueContext) && IsValid(DialogueContext->ActiveNode))
+	if (!UMounteaDialogueSystemBFC::IsServer(GetOwner()))
 	{
-		Execute_PrepareNode(this);
+		if (Payload.SessionGUID.IsValid() && Payload.SessionGUID != LastPreparedSessionGUID)
+			bPendingClientPrepare = true;
+
+		if (bPendingClientPrepare
+			&& Payload.SessionGUID.IsValid()
+			&& ManagerState == EDialogueManagerState::EDMS_Active
+			&& IsValid(DialogueContext)
+			&& IsValid(DialogueContext->ActiveNode))
+		{
+			bPendingClientPrepare = false;
+			LastPreparedSessionGUID = Payload.SessionGUID;
+			Execute_PrepareNode(this);
+		}
 	}
 }
 
@@ -237,6 +256,11 @@ void UMounteaDialogueManager::NotifyParticipants(const TArray<TScriptInterface<I
 void UMounteaDialogueManager::SyncContext(const FMounteaDialogueContextReplicatedStruct& Context)
 {
 	// Deprecated: context sync now handled by FMounteaDialogueContextPayload via UMounteaDialogueSession.
+}
+
+void UMounteaDialogueManager::SyncPayloadFromContext()
+{
+	WritePayloadFromContext();
 }
 
 void UMounteaDialogueManager::WritePayloadFromContext()
@@ -260,6 +284,12 @@ void UMounteaDialogueManager::WritePayloadFromContext()
 	{
 		newPayload.PreviousNodeGUID = newPayload.ActiveNodeGUID;
 		newPayload.ActiveNodeGUID = DialogueContext->ActiveNode->GetNodeGUID();
+		newPayload.ActiveGraphGUID = DialogueContext->ActiveNode->GetGraphGUID();
+	}
+	else
+	{
+		newPayload.ActiveNodeGUID.Invalidate();
+		newPayload.ActiveGraphGUID.Invalidate();
 	}
 
 	newPayload.AllowedChildNodeGUIDs.Reset();
@@ -330,6 +360,8 @@ void UMounteaDialogueManager::SetDialogueContext(UMounteaDialogueContext* NewCon
 		return;
 
 	DialogueContext = NewContext;
+	if (!IsValid(DialogueContext))
+		bParticipantsStarted = false;
 
 	OnDialogueContextUpdated.Broadcast(NewContext);
 }
@@ -415,6 +447,9 @@ void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 
 void UMounteaDialogueManager::StartParticipants()
 {
+	if (bParticipantsStarted)
+		return;
+
 	if (!IsValid(DialogueContext))
 		return;
 	
@@ -434,12 +469,20 @@ void UMounteaDialogueManager::StartParticipants()
 		dialogueParticipant->Execute_InitializeParticipant(dialogueParticipant.GetObject(), this);
 		dialogueParticipant->GetOnDialogueStartedEventHandle().Broadcast();
 	}
+
+	bParticipantsStarted = true;
 }
 
-void UMounteaDialogueManager::StopParticipants() const
+void UMounteaDialogueManager::StopParticipants()
 {
-	if (!IsValid(DialogueContext))
+	if (!bParticipantsStarted)
 		return;
+
+	if (!IsValid(DialogueContext))
+	{
+		bParticipantsStarted = false;
+		return;
+	}
 
 	for (const auto& dialogueParticipant : DialogueContext->DialogueParticipants)
 	{
@@ -453,12 +496,12 @@ void UMounteaDialogueManager::StopParticipants() const
 			// Register ticks for participants, no need to define Parent as Participants are the most paren ones
 			tickableObject->Execute_UnregisterTick(tickableObject.GetObject(), nullptr);
 		}
-		
-		UMounteaDialogueSystemBFC::SaveTraversePathToParticipant(DialogueContext->TraversedPath, dialogueParticipant);
-		
+
 		dialogueParticipant->Execute_SetParticipantState(participantObject, dialogueParticipant->Execute_GetDefaultParticipantState(participantObject));
 		dialogueParticipant->GetOnDialogueEndedEventHandle().Broadcast();
 	}
+
+	bParticipantsStarted = false;
 }
 
 void UMounteaDialogueManager::DialogueStartRequestReceived(const bool bResult, const FString& ResultMessage)
@@ -466,12 +509,17 @@ void UMounteaDialogueManager::DialogueStartRequestReceived(const bool bResult, c
 	if (bResult)
 	{
 		SetManagerState(EDialogueManagerState::EDMS_Active);
-		StartParticipants();
 	}
 	else
 	{
+		if (UMounteaDialogueSystemBFC::IsServer(GetOwner()))
+		{
+			auto* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>() : nullptr;
+			if (subsystem)
+				subsystem->ReleaseDialogueLock(this, IsValid(DialogueContext) ? DialogueContext->SessionGUID : FGuid());
+		}
+
 		SetManagerState(DefaultManagerState);
-		StopParticipants();
 		OnDialogueFailed.Broadcast(ResultMessage);
 	}
 }
@@ -487,15 +535,48 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 	if (UMounteaDialogueSystemBFC::ShouldExecuteCosmetics(GetOwner()))
 		OnDialogueStarted.Broadcast(DialogueContext);
 
-	// Server: context was written to session before Broadcast(true) fired, so it's guaranteed valid here.
-	// Client: context may not have arrived yet via OnRep_ContextPayload. OnContextPayloadUpdated will
-	// trigger PrepareNode when the initial payload (ContextVersion == 1) arrives while state is Active.
 	if (UMounteaDialogueSystemBFC::IsServer(GetOwner()))
+	{
 		Execute_PrepareNode(this);
+		return;
+	}
+
+	if (IsValid(DialogueContext)
+		&& IsValid(DialogueContext->ActiveNode)
+		&& DialogueContext->SessionGUID.IsValid()
+		&& (bPendingClientPrepare || LastPreparedSessionGUID != DialogueContext->SessionGUID))
+	{
+		bPendingClientPrepare = false;
+		LastPreparedSessionGUID = DialogueContext->SessionGUID;
+		Execute_PrepareNode(this);
+	}
+	else
+	{
+		bPendingClientPrepare = true;
+	}
 }
 
 void UMounteaDialogueManager::CloseDialogue_Implementation()
 {
+	if (UMounteaDialogueSystemBFC::IsServer(GetOwner()))
+	{
+		const FGuid closingSessionGuid = IsValid(DialogueContext) ? DialogueContext->SessionGUID : FGuid();
+		auto* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>() : nullptr;
+		if (subsystem)
+		{
+			if (UMounteaDialogueSession* session = subsystem->GetGameStateSession())
+			{
+				if (IsValid(DialogueContext))
+					session->FinalizeSession(DialogueContext->TraversedPath);
+			}
+
+			subsystem->ReleaseDialogueLock(this, closingSessionGuid);
+		}
+
+		if (IsValid(DialogueContext))
+			DialogueContext->TraversedPath.Empty();
+	}
+
 	StopParticipants();
 	
 	Execute_CloseDialogueUI(this);
@@ -503,6 +584,7 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 	Execute_CleanupDialogue(this);
 
 	SetDialogueContext(nullptr);
+	bPendingClientPrepare = false;
 	
 	if (UMounteaDialogueSystemBFC::ShouldExecuteCosmetics(GetOwner()))
 		OnDialogueClosed.Broadcast(DialogueContext);
@@ -819,6 +901,12 @@ void UMounteaDialogueManager::DialogueRowProcessed_Implementation(const bool bFo
 
 void UMounteaDialogueManager::SkipDialogueRow_Implementation()
 {
+	if (!UMounteaDialogueSystemBFC::IsServer(GetOwner()))
+	{
+		RequestSkipRow_Server(FGuid());
+		return;
+	}
+
 	if (!IsValid(DialogueContext))
 	{
 		OnDialogueFailed.Broadcast(TEXT("[Skip Dialogue Row] Invalid Dialogue Context!"));

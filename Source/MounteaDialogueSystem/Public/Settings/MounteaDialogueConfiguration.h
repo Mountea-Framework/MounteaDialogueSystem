@@ -44,7 +44,8 @@ public:
 	 * The asset must conform to the row structure specified by the `DialogueParticipant` structure to ensure proper data handling.
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "🗣 Participants", 
-		meta=(RequiredAssetDataTags = "RowStructure=/Script/MounteaDialogueSystem.DialogueParticipant"))
+		meta=(RequiredAssetDataTags = "RowStructure=/Script/MounteaDialogueSystem.DialogueParticipant"),
+		meta=(NoResetToDefault))
 	TArray<TSoftObjectPtr<UDataTable>> DialogueParticipantsTables;
 
 	/**
