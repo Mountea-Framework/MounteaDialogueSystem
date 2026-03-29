@@ -21,7 +21,7 @@ FWidgetDialogueRow::FWidgetDialogueRow()
 }
 
 FWidgetDialogueRow::FWidgetDialogueRow(const FDialogueRow& SourceRow, const FDialogueRowData& SourceRowData)
-	: DialogueRowParticipantName(SourceRow.DialogueParticipant)
+	: DialogueRowParticipantName(!SourceRow.DialogueParticipantName.IsNone() ? FText::FromName(SourceRow.DialogueParticipantName) : SourceRow.DialogueParticipant)
 	, DialogueRowTitle(SourceRow.RowTitle)
 	, DialogueRowBody(SourceRowData.RowText)
 	, RowDuration(UMounteaDialogueSystemBFC::GetRowDuration(SourceRowData))

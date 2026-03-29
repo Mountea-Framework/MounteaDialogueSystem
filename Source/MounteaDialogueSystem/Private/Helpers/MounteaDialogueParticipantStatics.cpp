@@ -3,6 +3,9 @@
 
 #include "Helpers/MounteaDialogueParticipantStatics.h"
 
+#include "Settings/MounteaDialogueConfiguration.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
+
 bool UMounteaDialogueParticipantStatics::CanStartDialogue(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
 {
 	return Target.GetObject() ? Target->Execute_CanStartDialogue(Target.GetObject()) : false;
@@ -111,4 +114,66 @@ TArray<FDialogueTraversePath> UMounteaDialogueParticipantStatics::GetTraversedPa
 void UMounteaDialogueParticipantStatics::ProcessDialogueCommand(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const FString& Command, UObject* Payload)
 {
 	if (Target.GetObject()) Target->Execute_ProcessDialogueCommand(Target.GetObject(), Command, Payload);
+}
+
+const FDialogueParticipant* UMounteaDialogueParticipantStatics::FindParticipantDataRow(const FName& ParticipantRow, FGameplayTag* OutParticipantTag)
+{
+	if (ParticipantRow.IsNone())
+		return nullptr;
+
+	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+	if (!IsValid(dialogueSettings))
+		return nullptr;
+
+	const UMounteaDialogueConfiguration* dialogueConfig = dialogueSettings->GetDialogueConfiguration().LoadSynchronous();
+	if (!IsValid(dialogueConfig))
+		return nullptr;
+
+	for (const TSoftObjectPtr<UDataTable>& dialogueParticipantsTable : dialogueConfig->DialogueParticipantsTables)
+	{
+		const UDataTable* participantsTable = dialogueParticipantsTable.LoadSynchronous();
+		if (!IsValid(participantsTable))
+			continue;
+
+		const FDialogueParticipant* dialogueParticipantRow = participantsTable->FindRow<FDialogueParticipant>(ParticipantRow, TEXT(""));
+		if (!dialogueParticipantRow)
+			continue;
+
+		if (OutParticipantTag != nullptr)
+			*OutParticipantTag = dialogueParticipantRow->ParticipantCategoryTag;
+
+		return dialogueParticipantRow;
+	}
+
+	return nullptr;
+}
+
+TArray<FName> UMounteaDialogueParticipantStatics::GetDialogueParticipantRowNames()
+{
+	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+	if (!IsValid(dialogueSettings))
+		return {};
+
+	const UMounteaDialogueConfiguration* dialogueConfig = dialogueSettings->GetDialogueConfiguration().LoadSynchronous();
+	if (!IsValid(dialogueConfig))
+		return {};
+
+	TSet<FName> uniqueParticipants;
+	uniqueParticipants.Reserve(dialogueConfig->DialogueParticipantsTables.Num() * 4);
+
+	for (const TSoftObjectPtr<UDataTable>& participantsTablePtr : dialogueConfig->DialogueParticipantsTables)
+	{
+		const UDataTable* participantsTable = participantsTablePtr.LoadSynchronous();
+		if (!IsValid(participantsTable))
+			continue;
+
+		uniqueParticipants.Append(participantsTable->GetRowNames());
+	}
+
+	TArray<FName> sortedParticipants = uniqueParticipants.Array();
+	sortedParticipants.Sort([](const FName& left, const FName& right)
+	{
+		return left.LexicalLess(right);
+	});
+	return sortedParticipants;
 }

@@ -268,7 +268,8 @@ public:
 	 * ❗ This Text should not be displayed as option to be selected, for that use 'DialogueRow.RowTitle' value
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
-		meta=(ExposeOnSpawn=true, MultiLine=true))
+		meta=(ExposeOnSpawn=true, MultiLine=true),
+		meta=(NoReseToDefaults))
 	FText RowText;
 	
 	/**
@@ -280,7 +281,9 @@ public:
 	 * ❗ Is not directly used in any C++ code
 	 * ❔ Could be used with 'DP_PlayDialogueSound' or as Sound Value for any better way of handling synced animations and sounds (to get more info how to do that, join the Support Discord)
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
+		meta=(ExposeOnSpawn=true),
+		meta=(NoReseToDefaults))
 	TObjectPtr<USoundBase> RowSound = nullptr;
 	
 	/**
@@ -289,7 +292,9 @@ public:
 	 * ❗ Recommended value
 	 * ❔ Determines how the 'Row Duration' is calculated.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
+		meta=(ExposeOnSpawn=true),
+		meta=(NoReseToDefaults))
 	ERowDurationMode RowDurationMode;
 	
 	/**
@@ -299,7 +304,8 @@ public:
 	 * ❔ Determines for how long the UI will display this Row Data.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
-		meta=(EditCondition="RowSound==nullptr", UIMin=0.f, ClampMin=0.f, ExposeOnSpawn = true))
+		meta=(EditCondition="RowSound==nullptr", UIMin=0.f, ClampMin=0.f, ExposeOnSpawn = true),
+		meta=(NoReseToDefaults))
 	float RowDuration;
 	
 	/**
@@ -310,14 +316,18 @@ public:
 	 * 
 	 * ❗ No validation applied here, so using value of -4684 will result in weird behaviour.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
+		meta=(ExposeOnSpawn=true),
+		meta=(NoReseToDefaults))
 	float RowDurationOverride;
 	
 	/**
 	 * If set to true this Row will stop the whole Node execution and next row won't start.
 	 * Default is false.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
+		meta=(ExposeOnSpawn=true),
+		meta=(NoReseToDefaults))
 	ERowExecutionMode RowExecutionBehaviour;
 	
 	/**
@@ -325,7 +335,9 @@ public:
 	 * 
 	 * Unique Key when searching and binding this Row.
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, meta=(IgnoreForMemberInitializationTest))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, 
+		meta=(IgnoreForMemberInitializationTest),
+		meta=(NoReseToDefaults))
 	FGuid RowGUID = FGuid::NewGuid();
 
 public:
@@ -392,7 +404,7 @@ public:
  * Contains name of Participant and Row Data.
  */
 USTRUCT(BlueprintType)
-struct FDialogueRow : public FTableRowBase
+struct MOUNTEADIALOGUESYSTEM_API FDialogueRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -425,6 +437,10 @@ public:
 		meta=(DisplayName="Row Type ID"))
 	int32 UIRowID = 0;
 	
+	UPROPERTY(NotReplicated, 
+		meta=(DeprecatedProperty, DeprecationMessage="Use DialogueParticipantName instead"))
+	FText DialogueParticipant;
+	
 	/**
 	 * Name of the Dialogue Participant.
 	 * 
@@ -432,15 +448,18 @@ public:
 	 * If left empty, Dialogue will ignore it and use its default Participant name.
 	 * ❔ Each row might have different participant tied to it, so there can be three-way dialogues, where one player talks to 2 NPCs
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
-	FText DialogueParticipant;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
+		meta=(NoReseToDefaults),
+		meta=(GetOptions="MounteaDialogueSystem.MounteaDialogueParticipantStatics.GetDialogueParticipantRowNames"))
+	FName DialogueParticipantName;
 	
 	/**
 	 * Title of the Dialogue Row.
 	 * 
 	 * ❔ This should summarize what is this row about, let's say "Accept offering" is a title for "Thank you very much, kind sir, it would be pleasure to join you on your adventure!".
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
+		meta=(NoReseToDefaults))
 	FText RowTitle;
 	
 	/**
@@ -458,7 +477,8 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
 		meta=(TitleProperty="RowText"),
-		meta=(ShowOnlyInnerProperties))
+		meta=(ShowOnlyInnerProperties),
+		meta=(NoReseToDefaults))
 	TArray<FDialogueRowData> RowData;
 
 	/**
@@ -477,7 +497,8 @@ public:
 	 * Any Data Asset can be used here and no logic is tied to this attribute.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
-		meta=(AllowAbstract=false))
+		meta=(AllowAbstract=false),
+		meta=(NoReseToDefaults))
 	TObjectPtr<UDialogueAdditionalData> DialogueRowAdditionalData = nullptr;
 	
 	/**
@@ -486,20 +507,22 @@ public:
 	 * Unique Key when searching and binding this Row.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, 
-		meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate))
+		meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate),
+		meta=(NoReseToDefaults))
 	FGuid RowGUID;
 	
 public:
 	FDialogueRow()
 		: CompatibleTags(),
-		DialogueParticipant(LOCTEXT("FDialogueRow_Participant", "Dialogue Participant")), RowTitle(LOCTEXT("FDialogueRow_Title", "Selectable Option"))
+		DialogueParticipantName(NAME_None), RowTitle(LOCTEXT("FDialogueRow_Title", "Selectable Option"))
 	{
 		RowGUID = FGuid::NewGuid();
 	};
 
 	FDialogueRow(const int32 NewUIRowID, const FText& InText, const FText& InParticipant,
 				const TArray<FDialogueRowData>& InData, UDialogueAdditionalData* NewData, const FGameplayTagContainer& InCompatibleTags)
-		: CompatibleTags(InCompatibleTags), UIRowID(NewUIRowID), DialogueParticipant(InParticipant),
+		: CompatibleTags(InCompatibleTags), UIRowID(NewUIRowID), DialogueParticipant(FText::GetEmpty()),
+		DialogueParticipantName(InParticipant.IsEmpty() ? NAME_None : FName(*InParticipant.ToString())),
 		RowTitle(InText), RowData(InData), DialogueRowAdditionalData(NewData)
 	{
 		RowGUID = FGuid::NewGuid();
@@ -510,6 +533,7 @@ public:
 	inline FDialogueRow& operator=(const FDialogueRow& Other)
 	{
 		DialogueParticipant = Other.DialogueParticipant;
+		DialogueParticipantName = Other.DialogueParticipantName;
 		RowTitle = Other.RowTitle;
 		RowData = Other.RowData;
 		UIRowID = Other.UIRowID;
@@ -544,12 +568,13 @@ public:
 
 	bool IsNearlyEqual(const FDialogueRow& Other) const
 	{
+		const FName thisParticipantName = !DialogueParticipantName.IsNone() ? DialogueParticipantName : FName(*DialogueParticipant.ToString());
+		const FName otherParticipantName = !Other.DialogueParticipantName.IsNone() ? Other.DialogueParticipantName : FName(*Other.DialogueParticipant.ToString());
+
 		if (RowTitle.EqualTo(Other.RowTitle) &&
 		CompatibleTags.HasAllExact(Other.CompatibleTags) &&
-		DialogueParticipant.EqualTo(Other.DialogueParticipant))
-		{
+		thisParticipantName == otherParticipantName)
 			return true;
-		}
 
 		if (RowTitle.EqualTo(Other.RowTitle) && RowData.Num() > 0 && Other.RowData.Num() > 0)
 		{
@@ -561,6 +586,9 @@ public:
 	}
 
 	FString ToString() const;
+
+	virtual void OnPostDataImport(const UDataTable* InDataTable, const FName InRowName, TArray<FString>& OutCollectedImportProblems) override;
+	virtual void OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName) override;
 	
 	static FDialogueRow Invalid()
 	{
@@ -578,7 +606,20 @@ public:
 			RowData = DialogueRowData.Array();
 			DialogueRowData.Empty();
 		}
+		
+		if (Ar.IsLoading() && !DialogueParticipant.IsEmpty() && DialogueParticipantName.IsNone())
+		{
+			DialogueParticipantName = FName(*DialogueParticipant.ToString());
+			DialogueParticipant = FText::GetEmpty();
+		}
+
+		if (Ar.IsLoading() && DialogueParticipant.IsEmpty() && !DialogueParticipantName.IsNone())
+		{
+			DialogueParticipant = FText::FromName(DialogueParticipantName);
+		}
 	}
+
+	void UpdateFromDialogueParticipantName();
 };
 
 template<>
@@ -593,7 +634,9 @@ struct TStructOpsTypeTraits<FDialogueRow> : public TStructOpsTypeTraitsBase2<FDi
 #undef LOCTEXT_NAMESPACE
 
 /**
- * 
+ * UI Row Identifier
+ *
+ * Represents a unique identifier for a UI row element.
  */
 USTRUCT(BlueprintType)
 struct FUIRowID
@@ -601,14 +644,24 @@ struct FUIRowID
 	GENERATED_BODY()
 
 	/**
-	 * 
+	 * UI Row Identifier
+	 *
+	 * Represents a unique identifier for a user interface row in the dialogue graph.
+	 * This identifier is clamped between 0 and 255..
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
+		meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true),
+		meta=(NoReseToDefaults))
 	int32 UIRowID = 0;
+
 	/**
-	 * 
+	 * Row Widget Class
+	 *
+	 * Specifies the widget class to be used for representing rows within the dialogue system.
+	 * This allows customization of the user interface rows by linking to a specific `UUserWidget` subclass.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
+		meta=(NoReseToDefaults))
 	TSubclassOf<UUserWidget> RowWidgetClass;
 
 public:
@@ -631,7 +684,9 @@ public:
 };
 
 /**
- * 
+ * Dialogue Traverse Path
+ *
+ * Represents a path taken during the traversal of a dialogue tree.
  */
 USTRUCT(BlueprintType)
 struct FDialogueTraversePath
@@ -652,13 +707,16 @@ public:
 		, TraverseCount(FMath::Max(0, InTraverseCount))
 	{}
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath",
+		meta=(NoResetToDefault))
 	FGuid NodeGuid;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath",
+		meta=(NoResetToDefault))
 	FGuid GraphGuid;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath",
+		meta=(NoResetToDefault))
 	int32 TraverseCount;
 
 	bool operator==(const FDialogueTraversePath& Other) const
@@ -674,9 +732,7 @@ public:
 	FDialogueTraversePath& operator+=(const FDialogueTraversePath& Other)
 	{
 		if (NodeGuid == Other.NodeGuid && GraphGuid == Other.GraphGuid)
-		{
 			TraverseCount += Other.TraverseCount;
-		}
 		return *this;
 	}
 
@@ -731,6 +787,7 @@ public:
 	}
 };
 
+#pragma region deprecated
 // Deprecated: context replication now handled by FMounteaDialogueContextPayload on UMounteaDialogueSession.
 // Will be removed in a future version.
 USTRUCT(meta=(DeprecatedNode, DeprecationMessage="Use FMounteaDialogueContextPayload instead."))
@@ -793,3 +850,4 @@ struct TStructOpsTypeTraits<FMounteaDialogueContextReplicatedStruct> : public TS
 		WithNetSerializer = true
 	};
 };
+#pragma endregion 

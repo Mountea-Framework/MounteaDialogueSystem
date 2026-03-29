@@ -216,8 +216,9 @@ public:
 	{
 		FGuid InvalidGuid;
 		InvalidGuid.Invalidate();
-		
-		return Row.RowGUID != InvalidGuid && Row.DialogueParticipant.IsEmpty() == false && Row.RowData.Num() > 0;
+
+		const bool bHasParticipant = !Row.DialogueParticipantName.IsNone() || !Row.DialogueParticipant.IsEmpty();
+		return Row.RowGUID != InvalidGuid && bHasParticipant && Row.RowData.Num() > 0;
 	}
 
 	/**

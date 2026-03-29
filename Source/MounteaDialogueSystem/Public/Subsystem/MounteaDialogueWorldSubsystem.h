@@ -46,6 +46,8 @@ public:
 	 *
 	 * @param Manager  Manager component to register.
 	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|World Subsystem",
+		meta=(CustomTag="MounteaK2Setter"))
 	void RegisterManager(UMounteaDialogueManager* Manager);
 
 	/**
@@ -54,6 +56,8 @@ public:
 	 *
 	 * @param Manager  Manager component to unregister.
 	 */
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|World Subsystem",
+		meta=(CustomTag="MounteaK2Setter"))
 	void UnregisterManager(UMounteaDialogueManager* Manager);
 
 	/**
@@ -71,6 +75,12 @@ public:
 	{
 		return ActiveSessions;
 	}
+
+	/**
+	 * Finds the UMounteaDialogueSession component on the current AGameState.
+	 * Returns null if the component is not present — project must add it to their GameState BP.
+	 */
+	UMounteaDialogueSession* GetGameStateSession() const;
 
 	/**
 	 * Handles an incoming start request forwarded from a manager's server RPC.

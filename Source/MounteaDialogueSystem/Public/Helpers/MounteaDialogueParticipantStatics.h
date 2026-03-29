@@ -12,6 +12,7 @@ class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
 class UAudioComponent;
 enum class EDialogueParticipantState : uint8;
+struct FDialogueParticipant;
 
 /**
  * This library contains implementations of Dialogue Participant Functions.
@@ -248,4 +249,10 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
 	static void ProcessDialogueCommand(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const FString& Command, UObject* Payload);
+
+	// --- Helper functions ------------------------------
+	
+	static const FDialogueParticipant* FindParticipantDataRow(const FName& ParticipantRow, FGameplayTag* OutParticipantTag = nullptr);
+	UFUNCTION()
+	static TArray<FName> GetDialogueParticipantRowNames();
 };

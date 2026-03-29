@@ -396,6 +396,12 @@ TArray<FText> SEdNode_MounteaDialogueGraphNode::GetParticipantChipTexts() const
 		if (chips.Num() > 0)
 			return chips;
 
+		if (!dialogueRow.DialogueParticipantName.IsNone())
+		{
+			chips.Add(FText::FromName(dialogueRow.DialogueParticipantName));
+			return chips;
+		}
+
 		if (!dialogueRow.DialogueParticipant.IsEmpty())
 		{
 			chips.Add(dialogueRow.DialogueParticipant);

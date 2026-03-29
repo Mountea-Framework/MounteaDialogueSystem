@@ -450,6 +450,27 @@ void FMounteaDialogueSystemEditor::StartupModule()
 
 void FMounteaDialogueSystemEditor::ShutdownModule()
 {
+	// Property customizations cleanup
+	{
+		if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
+		{
+			FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+			for (const FName& ClassLayoutName : RegisteredCustomClassLayouts)
+			{
+				PropertyModule.UnregisterCustomClassLayout(ClassLayoutName);
+			}
+
+			for (const FName& PropertyLayoutName : RegisteredCustomPropertyTypeLayout)
+			{
+				PropertyModule.UnregisterCustomPropertyTypeLayout(PropertyLayoutName);
+			}
+
+			RegisteredCustomClassLayouts.Reset();
+			RegisteredCustomPropertyTypeLayout.Reset();
+		}
+	}
+
 	// Thumbnails and Icons
 	{
 		FSlateStyleRegistry::UnRegisterSlateStyle(DialogueTreeSet->GetStyleSetName());

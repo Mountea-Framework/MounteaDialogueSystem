@@ -26,7 +26,7 @@ bool FMounteaDialogueContextPayload::NetSerialize(FArchive& Ar, UPackageMap* Map
 	// FDialogueRow — field-by-field
 	ActiveDialogueRow.CompatibleTags.NetSerialize(Ar, Map, bOutSuccess);
 	Ar << ActiveDialogueRow.UIRowID;
-	Ar << ActiveDialogueRow.DialogueParticipant;
+	Ar << ActiveDialogueRow.DialogueParticipantName;
 	Ar << ActiveDialogueRow.RowTitle;
 
 	// TArray<FDialogueRowData> — each item serialized field-by-field due to UObject refs

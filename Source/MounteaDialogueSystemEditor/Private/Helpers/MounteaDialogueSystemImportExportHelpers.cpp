@@ -2283,7 +2283,7 @@ void UMounteaDialogueSystemImportExportHelpers::ProcessDialogueRowGroup(
 
 	FDialogueRow newRow;
 	newRow.RowGUID = FGuid(NodeId);
-	newRow.DialogueParticipant = FText::FromString(participant->ParticipantName.ToString());
+	newRow.DialogueParticipantName = participant->ParticipantName;
 	newRow.CompatibleTags.AddTag(participant->ParticipantCategoryTag);
 	newRow.RowTitle = FText::FromStringTable(NodesStringTable->GetStringTableId(), NodeId);
 
@@ -2309,7 +2309,7 @@ void UMounteaDialogueSystemImportExportHelpers::ProcessDialogueRowGroup(
 	FString tmp;
 	DialogueRowsTable->GetAllRows(tmp, existingRows);
 
-	FString rowName = newRow.DialogueParticipant.ToString();
+	FString rowName = newRow.DialogueParticipantName.ToString();
 	rowName.Append(TEXT("_")).Append(FString::FromInt(existingRows.Num()));
 	DialogueRowsTable->AddRow(FName(*rowName), newRow);
 
@@ -2707,7 +2707,7 @@ void UMounteaDialogueSystemImportExportHelpers::AddDialogueNodeData(const TShare
 	AdditionalInfoObject->SetStringField("displayName", DialogueRowRef->RowTitle.ToString());
 
 	TSharedPtr<FJsonObject> ParticipantObject = MakeShareable(new FJsonObject);
-	ParticipantObject->SetStringField("name", DialogueRowRef->DialogueParticipant.ToString());
+	ParticipantObject->SetStringField("name", !DialogueRowRef->DialogueParticipantName.IsNone() ? DialogueRowRef->DialogueParticipantName.ToString() : DialogueRowRef->DialogueParticipant.ToString());
 	ParticipantObject->SetStringField("category", DialogueRowRef->CompatibleTags.First().ToString());
 	AdditionalInfoObject->SetObjectField("participant", ParticipantObject);
 
@@ -3125,7 +3125,7 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateParticipantsJson(const 
 			}
 		}
 
-		const FString Name = DialogueRow->DialogueParticipant.ToString();
+		const FString Name = !DialogueRow->DialogueParticipantName.IsNone() ? DialogueRow->DialogueParticipantName.ToString() : DialogueRow->DialogueParticipant.ToString();
 
 		if (!FullPath.IsEmpty() && !Name.IsEmpty())
 			UniqueParticipants.Add(TPair<FString, FString>(Name, FullPath));
