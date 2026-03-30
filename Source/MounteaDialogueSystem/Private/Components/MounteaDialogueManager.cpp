@@ -31,6 +31,7 @@
 #include "Settings/MounteaDialogueSystemSettings.h"
 #include "Components/MounteaDialogueSession.h"
 #include "GameFramework/GameStateBase.h"
+#include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Subsystem/MounteaDialogueWorldSubsystem.h"
 
 UMounteaDialogueManager::UMounteaDialogueManager()
@@ -141,7 +142,7 @@ void UMounteaDialogueManager::SetManagerState(const EDialogueManagerState NewSta
 {
 	if (NewState == ManagerState)
 	{
-		LOG_INFO(TEXT("[Set Manager State] New State `%s` is same as current State. Update aborted."), *(UMounteaDialogueManagerStatics::GetEnumFriendlyName(NewState)))
+		LOG_INFO(TEXT("[Set Manager State] New State `%s` is same as current State. Update aborted."), *(UMounteaDialogueSystemBFC::GetEnumFriendlyName(NewState)))
 		return;
 	}
 
@@ -260,7 +261,7 @@ void UMounteaDialogueManager::SetDefaultManagerState(const EDialogueManagerState
 {
 	if (NewState == DefaultManagerState)
 	{
-		LOG_WARNING(TEXT("[Set Default Manager State] New State `%s` is same as current State. Update aborted."), *(UMounteaDialogueManagerStatics::GetEnumFriendlyName(NewState)))
+		LOG_WARNING(TEXT("[Set Default Manager State] New State `%s` is same as current State. Update aborted."), *(UMounteaDialogueSystemBFC::GetEnumFriendlyName(NewState)))
 		return;
 	}
 	
@@ -324,11 +325,15 @@ void UMounteaDialogueManager::RequestStartDialogue_Implementation(AActor* Dialog
 	DialogueInstigator = DialogueInitiator;
 
 	FDialogueStartRequest request;
+	request.MainParticipantActorRef = InitialParticipants.MainParticipant;
 	request.MainParticipantActor = TSoftObjectPtr<AActor>(InitialParticipants.MainParticipant);
 	for (const auto& other : InitialParticipants.OtherParticipants)
 	{
 		if (AActor* otherActor = Cast<AActor>(other))
+		{
+			request.OtherParticipantActorRefs.Add(otherActor);
 			request.OtherParticipantActors.Add(TSoftObjectPtr<AActor>(otherActor));
+		}
 	}
 
 	if (!UMounteaDialogueManagerStatics::IsServer(GetOwner()))
