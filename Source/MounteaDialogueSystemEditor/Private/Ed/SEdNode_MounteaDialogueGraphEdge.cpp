@@ -36,6 +36,8 @@ const FSlateBrush* SEdNode_MounteaDialogueGraphEdge::GetShadowBrush(bool bSelect
 void SEdNode_MounteaDialogueGraphEdge::PerformSecondPassLayout(const TMap<UObject*, TSharedRef<SNode>>& NodeToWidgetLookup) const
 {
 	UEdNode_MounteaDialogueGraphEdge* EdgeNode = CastChecked<UEdNode_MounteaDialogueGraphEdge>(GraphNode);
+	if (!EdgeNode)
+		return;
 
 	UEdNode_MounteaDialogueGraphNode* End = EdgeNode->GetEndNode();
 	if (!End)

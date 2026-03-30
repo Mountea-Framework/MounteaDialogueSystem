@@ -98,7 +98,7 @@ void UMounteaDialogueOptionsContainer::SetDialogueOptionClass_Implementation(con
 		DialogueOptionClass = NewDialogueOptionClass;
 }
 
-void UMounteaDialogueOptionsContainer::AddNewDialogueOption_Implementation(UMounteaDialogueGraphNode_DialogueNodeBase* NewDialogueOption)
+void UMounteaDialogueOptionsContainer::AddNewDialogueOption_Implementation(UMounteaDialogueGraphNode* NewDialogueOption)
 {
 	if (!NewDialogueOption)
 	{
@@ -138,7 +138,7 @@ void UMounteaDialogueOptionsContainer::AddNewDialogueOption_Implementation(UMoun
 	DialogueOptions.Add(UMounteaDialogueHUDStatics::GetDialogueNodeGuid(NewDialogueOption), dialogueOptionWidget);
 }
 
-void UMounteaDialogueOptionsContainer::AddNewDialogueOptions_Implementation(const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& NewDialogueOptions)
+void UMounteaDialogueOptionsContainer::AddNewDialogueOptions_Implementation(const TArray<UMounteaDialogueGraphNode*>& NewDialogueOptions)
 {
 	for (const auto& Itr : NewDialogueOptions)
 	{
@@ -146,7 +146,7 @@ void UMounteaDialogueOptionsContainer::AddNewDialogueOptions_Implementation(cons
 	}
 }
 
-void UMounteaDialogueOptionsContainer::RemoveDialogueOption_Implementation(UMounteaDialogueGraphNode_DialogueNodeBase* DirtyDialogueOption)
+void UMounteaDialogueOptionsContainer::RemoveDialogueOption_Implementation(UMounteaDialogueGraphNode* DirtyDialogueOption)
 {
 	if (DirtyDialogueOption)
 	{
@@ -172,7 +172,7 @@ void UMounteaDialogueOptionsContainer::RemoveDialogueOption_Implementation(UMoun
 	DialogueOptions.Remove(UMounteaDialogueHUDStatics::GetDialogueNodeGuid(DirtyDialogueOption));
 }
 
-void UMounteaDialogueOptionsContainer::RemoveDialogueOptions_Implementation(const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& DirtyDialogueOptions)
+void UMounteaDialogueOptionsContainer::RemoveDialogueOptions_Implementation(const TArray<UMounteaDialogueGraphNode*>& DirtyDialogueOptions)
 {
 	for (const auto& Itr : DirtyDialogueOptions)
 	{

@@ -75,20 +75,16 @@ void UEdNode_MounteaDialogueGraphEdge::CreateConnections(UEdNode_MounteaDialogue
 
 UEdNode_MounteaDialogueGraphNode* UEdNode_MounteaDialogueGraphEdge::GetStartNode()
 {
-	if (Pins[0]->LinkedTo.Num() > 0)
-	{
+	if (Pins.IsValidIndex(0) && Pins[0]->LinkedTo.Num() > 0)
 		return Cast<UEdNode_MounteaDialogueGraphNode>(Pins[0]->LinkedTo[0]->GetOwningNode());
-	}
 	
 	return nullptr;
 }
 
 UEdNode_MounteaDialogueGraphNode* UEdNode_MounteaDialogueGraphEdge::GetEndNode()
 {
-	if (Pins[1]->LinkedTo.Num() > 0)
-	{
+	if (Pins.IsValidIndex(1) && Pins[1]->LinkedTo.Num() > 0)
 		return Cast<UEdNode_MounteaDialogueGraphNode>(Pins[1]->LinkedTo[0]->GetOwningNode());
-	}
 
 	return nullptr;
 }

@@ -147,4 +147,5 @@ private:
 	TMap<int32, TScriptInterface<IMounteaDialogueParticipantInterface>> RoleOverrides;
 	TArray<FDialogueTraversePath> SessionTraversedPath;
 	int32 LastDeliveredContextVersion = 0;
+	FGuid LastDeliveredSessionGUID;
 };

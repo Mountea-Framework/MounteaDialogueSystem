@@ -21,6 +21,7 @@ class UMounteaDialogueGraph;
 class USoundBase;
 class UTexture;
 class UDataAsset;
+class AActor;
 
 UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class EMounteaDialogueLoggingVerbosity : uint8
@@ -766,13 +767,29 @@ struct FDialogueStartRequest
 public:
 
 	/**
+	 * Preferred runtime actor reference for the primary participant.
+	 * This is network-safe for RPC usage and should be populated by callers.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Request")
+	TObjectPtr<AActor> MainParticipantActorRef = nullptr;
+
+	/**
 	 * The primary participant actor — typically the NPC initiating or owning the dialogue graph.
+	 * Legacy soft reference kept for compatibility fallback.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Request")
 	TSoftObjectPtr<AActor> MainParticipantActor;
 
 	/**
+	 * Preferred runtime actor references for additional participants.
+	 * This is network-safe for RPC usage and should be populated by callers.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Request")
+	TArray<TObjectPtr<AActor>> OtherParticipantActorRefs;
+
+	/**
 	 * Additional participants in the conversation.
+	 * Legacy soft references kept for compatibility fallback.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Request")
 	TArray<TSoftObjectPtr<AActor>> OtherParticipantActors;
@@ -786,7 +803,7 @@ public:
 
 	bool IsValid() const
 	{
-		return !MainParticipantActor.IsNull();
+		return ::IsValid(MainParticipantActorRef) || !MainParticipantActor.IsNull();
 	}
 };
 
