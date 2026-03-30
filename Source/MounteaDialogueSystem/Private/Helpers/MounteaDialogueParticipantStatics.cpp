@@ -3,11 +3,14 @@
 
 #include "Helpers/MounteaDialogueParticipantStatics.h"
 
+#include "Components/MounteaDialogueSession.h"
+#include "Components/ActorComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
 #include "Settings/MounteaDialogueConfiguration.h"
 #include "Settings/MounteaDialogueSystemSettings.h"
+#include "Subsystem/MounteaDialogueWorldSubsystem.h"
 
 bool UMounteaDialogueParticipantStatics::CanStartDialogue(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
 {
@@ -190,6 +193,68 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueParticipa
 			continue;
 
 		if (participant->Execute_GetDialogueGraph(participant.GetObject()) != nullptr)
+			return participant;
+	}
+
+	return nullptr;
+}
+
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueParticipantStatics::GetParticipantByType(
+	const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants,
+	const EDialogueParticipantType Type,
+	const UObject* WorldContextObject)
+{
+	const int32 typeMask = static_cast<int32>(Type);
+	if (typeMask == 0)
+		return nullptr;
+
+	UWorld* participantWorld = WorldContextObject ? WorldContextObject->GetWorld() : nullptr;
+	if (!participantWorld)
+	{
+		for (const auto& participant : Participants)
+		{
+			UObject* participantObject = participant.GetObject();
+			if (!participantObject)
+				continue;
+
+			if (const AActor* participantActor = Cast<AActor>(participantObject))
+			{
+				participantWorld = participantActor->GetWorld();
+				break;
+			}
+
+			if (const UActorComponent* participantComponent = Cast<UActorComponent>(participantObject))
+			{
+				participantWorld = participantComponent->GetWorld();
+				break;
+			}
+
+			participantWorld = participantObject->GetWorld();
+			if (participantWorld)
+				break;
+		}
+	}
+
+	if (participantWorld)
+	{
+		if (UMounteaDialogueWorldSubsystem* dialogueSubsystem = participantWorld->GetSubsystem<UMounteaDialogueWorldSubsystem>())
+		{
+			if (UMounteaDialogueSession* dialogueSession = dialogueSubsystem->GetGameStateSession())
+			{
+				const TScriptInterface<IMounteaDialogueParticipantInterface> sessionOverride = dialogueSession->GetRoleOverride(Type);
+				if (sessionOverride.GetObject() && sessionOverride.GetInterface())
+					return sessionOverride;
+			}
+		}
+	}
+
+	for (const auto& participant : Participants)
+	{
+		if (!participant.GetObject())
+			continue;
+
+		const int32 participantType = IMounteaDialogueParticipantInterface::Execute_GetParticipantType(participant.GetObject());
+		if ((participantType & typeMask) != 0)
 			return participant;
 	}
 

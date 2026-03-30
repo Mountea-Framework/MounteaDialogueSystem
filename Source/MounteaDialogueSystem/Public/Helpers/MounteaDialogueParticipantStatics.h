@@ -260,6 +260,10 @@ public:
 
 	static TScriptInterface<IMounteaDialogueParticipantInterface> GetGraphOwnerParticipant(
 		const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
+	static TScriptInterface<IMounteaDialogueParticipantInterface> GetParticipantByType(
+		const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants,
+		EDialogueParticipantType Type,
+		const UObject* WorldContextObject = nullptr);
 
 	static TScriptInterface<IMounteaDialogueParticipantInterface> FindDialogueParticipantInterface(UObject* ParticipantActor, bool& bResult);
 	static APawn* FindPlayerPawn(AActor* ForActor, int32& SearchDepth);

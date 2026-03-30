@@ -7,8 +7,9 @@
 
 #include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Helpers/MounteaDialogueManagerStatics.h"
 #include "Helpers/MounteaDialogueParticipantStatics.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Helpers/MounteaDialogueTraversalStatics.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
@@ -112,7 +113,7 @@ void UMounteaDialogueParticipant::InitializeParticipant_Implementation(const TSc
 			Itr->InitializeNode(GetWorld());
 	}
 	
-	TArray<FMounteaDialogueDecorator> Decorators = UMounteaDialogueSystemBFC::GetAllDialogueDecorators(DialogueGraph);
+	TArray<FMounteaDialogueDecorator> Decorators = UMounteaDialogueTraversalStatics::GetAllDialogueDecorators(DialogueGraph);
 	for (const auto& Itr : Decorators)
 	{
 		if (Itr.DecoratorType)
@@ -145,7 +146,15 @@ UAudioComponent* UMounteaDialogueParticipant::FindAudioComponentByName(const FNa
 	if (GetOwner() == nullptr) 
 		return nullptr;
 
-	return UMounteaDialogueSystemBFC::FindAudioComponentByName(GetOwner(), Arg);
+	TArray<UAudioComponent*> ownerComponents;
+	GetOwner()->GetComponents<UAudioComponent>(ownerComponents);
+	for (UAudioComponent* audioComponent : ownerComponents)
+	{
+		if (audioComponent && audioComponent->GetName().Equals(Arg.ToString()))
+			return audioComponent;
+	}
+
+	return nullptr;
 }
 
 UAudioComponent* UMounteaDialogueParticipant::FindAudioComponentByTag(const FName& Arg) const
@@ -153,12 +162,20 @@ UAudioComponent* UMounteaDialogueParticipant::FindAudioComponentByTag(const FNam
 	if (GetOwner() == nullptr) 
 		return nullptr;
 
-	return UMounteaDialogueSystemBFC::FindAudioComponentByTag(GetOwner(), Arg);
+	TArray<UAudioComponent*> ownerComponents;
+	GetOwner()->GetComponents<UAudioComponent>(ownerComponents);
+	for (UAudioComponent* audioComponent : ownerComponents)
+	{
+		if (audioComponent && audioComponent->ComponentHasTag(Arg))
+			return audioComponent;
+	}
+
+	return nullptr;
 }
 
 void UMounteaDialogueParticipant::PlayParticipantVoice_Implementation(USoundBase* ParticipantVoice)
 {
-	if(!UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
+	if(!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
 	{
 		LOG_INFO(TEXT("[PlayParticipantVoice] Voice cannot be played at Dedicated Server!"))
 		return;
@@ -173,7 +190,7 @@ void UMounteaDialogueParticipant::PlayParticipantVoice_Implementation(USoundBase
 
 void UMounteaDialogueParticipant::SkipParticipantVoice_Implementation(USoundBase* ParticipantVoice)
 {
-	if(!UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(GetWorld()))
+	if(!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
 	{
 		LOG_INFO(TEXT("[PlayParticipantVoice] Voice cannot be played at Dedicated Server!"))
 		return;
@@ -181,7 +198,9 @@ void UMounteaDialogueParticipant::SkipParticipantVoice_Implementation(USoundBase
 	
 	if (IsValid(AudioComponent))
 	{
-		AudioComponent->StopDelayed(UMounteaDialogueSystemBFC::GetDialogueSystemSettings_Internal()->GetSkipFadeDuration());
+		const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+		const float skipFadeDuration = dialogueSettings ? dialogueSettings->GetSkipFadeDuration() : 0.f;
+		AudioComponent->StopDelayed(skipFadeDuration);
 		AudioComponent->SetSound(nullptr);
 	}
 }
