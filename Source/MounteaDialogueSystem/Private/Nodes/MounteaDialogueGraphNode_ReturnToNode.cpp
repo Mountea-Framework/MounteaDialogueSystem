@@ -4,7 +4,8 @@
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 
 #include "Data/MounteaDialogueContext.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Helpers/MounteaDialogueTraversalStatics.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Misc/DataValidation.h"
 #include "TimerManager.h"
 #include "Algo/AnyOf.h"
@@ -63,13 +64,13 @@ void UMounteaDialogueGraphNode_ReturnToNode::OnDelayDurationExpired(const TScrip
 {
 	if (SelectedNode && MounteaDialogueManagerInterface)
 	{
-		if (const auto Context = MounteaDialogueManagerInterface->Execute_GetDialogueContext(MounteaDialogueManagerInterface.GetObject()))
+		if (UMounteaDialogueContext* Context = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(MounteaDialogueManagerInterface.GetObject()))
 		{
-			Context->SetDialogueContext(SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodesFiltered(SelectedNode, Context));
-			Context->UpdateActiveDialogueRow(UMounteaDialogueSystemBFC::GetSpeechData(SelectedNode));
+			Context->SetDialogueContext(SelectedNode, UMounteaDialogueTraversalStatics::GetAllowedChildNodesFiltered(SelectedNode, Context));
+			Context->UpdateActiveDialogueRow(UMounteaDialogueTraversalStatics::GetSpeechData(SelectedNode));
 			Context->ActiveDialogueRowDataIndex = 0;
 
-			MounteaDialogueManagerInterface->Execute_PrepareNode(MounteaDialogueManagerInterface.GetObject());
+			IMounteaDialogueManagerInterface::Execute_PrepareNode(MounteaDialogueManagerInterface.GetObject());
 
 			// TODO: Force to the new system
 			/*

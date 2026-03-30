@@ -4,7 +4,6 @@
 #include "Nodes/MounteaDialogueGraphNode_Delay.h"
 
 #include "Data/MounteaDialogueContext.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "TimerManager.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
@@ -73,18 +72,6 @@ void UMounteaDialogueGraphNode_Delay::OnDelayDurationExpired(const TScriptInterf
 	auto managerObject = MounteaDialogueManagerInterface.GetObject();
 	if (const auto Context = MounteaDialogueManagerInterface->Execute_GetDialogueContext(managerObject))
 	{
-		/*
-		auto dialogueNodeToStart = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(ChildrenNodes[0]);
-			
-		Context->SetDialogueContext(Context->DialogueParticipant, dialogueNodeToStart, UMounteaDialogueSystemBFC::GetAllowedChildNodes(dialogueNodeToStart));
-
-			Context->ActiveDialogueRowDataIndex = 	UMounteaDialogueSystemBFC::GetDialogueRow(dialogueNodeToStart).RowData.Num() - 1; // Force-set the last row
-		FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
-		newDialogueTableHandle.DataTable = dialogueNodeToStart->GetDataTable();
-		newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();
-		Context->UpdateActiveDialogueTable(dialogueNodeToStart ? newDialogueTableHandle : FDataTableRowHandle());
-		*/
-		
 		MounteaDialogueManagerInterface->Execute_NodeProcessed(managerObject);
 	}
 }

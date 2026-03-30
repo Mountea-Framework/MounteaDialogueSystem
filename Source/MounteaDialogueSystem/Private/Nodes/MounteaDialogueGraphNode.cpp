@@ -7,11 +7,41 @@
 #include "Decorators/MounteaDialogueDecorator_OnlyFirstTime.h"
 #include "Decorators/MounteaDialogueDecorator_OverrideOnlyFirstTime.h"
 #include "Graph/MounteaDialogueGraph.h"
+#include "Helpers/MounteaDialogueContextStatics.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Helpers/MounteaDialogueParticipantStatics.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Misc/DataValidation.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueNode"
+
+namespace MounteaDialogueNodeRuntime
+{
+	void ExecuteDecorators(const UMounteaDialogueContext* DialogueContext)
+	{
+		if (!IsValid(DialogueContext))
+			return;
+
+		const TScriptInterface<IMounteaDialogueParticipantInterface> graphOwner =
+			UMounteaDialogueParticipantStatics::GetGraphOwnerParticipant(DialogueContext->DialogueParticipants);
+		if (!graphOwner.GetObject() || !graphOwner.GetInterface())
+			return;
+
+		UObject* participantObject = graphOwner.GetObject();
+		const UMounteaDialogueGraph* dialogueGraph = graphOwner->Execute_GetDialogueGraph(participantObject);
+		const UMounteaDialogueGraphNode* activeNode = DialogueContext->GetActiveNode();
+		if (!IsValid(dialogueGraph) || !IsValid(activeNode))
+			return;
+
+		TArray<FMounteaDialogueDecorator> allDecorators;
+		allDecorators.Append(activeNode->GetNodeDecorators());
+		if (activeNode->DoesInheritDecorators())
+			allDecorators.Append(dialogueGraph->GetGraphDecorators());
+
+		for (const auto& decorator : allDecorators)
+			decorator.ExecuteDecorator();
+	}
+}
 
 UMounteaDialogueGraphNode::UMounteaDialogueGraphNode(): Graph(nullptr), OwningWorld(nullptr)
 {
@@ -134,24 +164,34 @@ void UMounteaDialogueGraphNode::InitializeNode_Implementation(UWorld* InWorld)
 
 void UMounteaDialogueGraphNode::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	const auto managerOwner = Manager->Execute_GetOwningActor(Manager.GetObject());
-	ensure(managerOwner);
+	const AActor* managerOwner = IMounteaDialogueManagerInterface::Execute_GetOwningActor(Manager.GetObject());
+	if (!IsValid(managerOwner))
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[PreProcessNode] Invalid owning Actor!"));
+		return;
+	}
 	
 	InitializeNode(managerOwner->GetWorld());
 	
 	Execute_RegisterTick(this, Graph);
+
+	UMounteaDialogueContext* dialogueContext = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(Manager.GetObject());
+	TScriptInterface<IMounteaDialogueParticipantInterface> activeParticipant = nullptr;
+	if (IsValid(dialogueContext))
+		activeParticipant = dialogueContext->ActiveDialogueParticipant;
 
 	for (const auto& nodeDecorator : NodeDecorators)
 	{
 		if (!IsValid(nodeDecorator.DecoratorType))
 			continue;
 
-		nodeDecorator.DecoratorType->InitializeDecorator(managerOwner->GetWorld(), 
-			Manager->Execute_GetDialogueContext(Manager.GetObject())->ActiveDialogueParticipant, 
+		nodeDecorator.DecoratorType->InitializeDecorator(
+			managerOwner->GetWorld(),
+			activeParticipant,
 			Manager);
 	}
 	
-	Manager->Execute_NodePrepared(Manager.GetObject());
+	IMounteaDialogueManagerInterface::Execute_NodePrepared(Manager.GetObject());
 }
 
 void UMounteaDialogueGraphNode::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
@@ -170,14 +210,14 @@ void UMounteaDialogueGraphNode::ProcessNode_Implementation(const TScriptInterfac
 		return;
 	}
 	
-	UMounteaDialogueContext* Context = Manager->Execute_GetDialogueContext(Manager.GetObject());
-	if (!Context || !UMounteaDialogueSystemBFC::IsContextValid(Context))
+	UMounteaDialogueContext* Context = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(Manager.GetObject());
+	if (!Context || !UMounteaDialogueContextStatics::IsContextValid(Context))
 	{
 		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid Dialogue Context!"));
 		return;
 	}
 	
-	UMounteaDialogueSystemBFC::ExecuteDecorators(this, Context);
+	MounteaDialogueNodeRuntime::ExecuteDecorators(Context);
 }
 
 TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators() const
@@ -291,8 +331,7 @@ bool UMounteaDialogueGraphNode::CanCreateConnection(UMounteaDialogueGraphNode* O
 	// Check allowed input classes (only applies for output pins)
 	if (Direction == EGPD_Output)
 	{
-		// Use centralized logic from the Dialogue System
-		const TArray<TSubclassOf<UMounteaDialogueGraphNode>> allowedClasses = UMounteaDialogueSystemBFC::GetAllowedInputClasses(this);
+		const TArray<TSubclassOf<UMounteaDialogueGraphNode>> allowedClasses = Execute_GetAllowedInputClasses(this);
 
 		const UClass* otherClass = Other->GetClass();
 

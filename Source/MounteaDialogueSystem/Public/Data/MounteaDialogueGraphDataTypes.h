@@ -778,14 +778,15 @@ public:
 	TArray<TSoftObjectPtr<AActor>> OtherParticipantActors;
 
 	/**
-	 * The dialogue graph asset to run for this session.
+	 * Optional dialogue graph override to run for this session.
+	 * If empty, the main participant's graph is used.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Request")
 	TSoftObjectPtr<UMounteaDialogueGraph> DialogueGraph;
 
 	bool IsValid() const
 	{
-		return !MainParticipantActor.IsNull() && !DialogueGraph.IsNull();
+		return !MainParticipantActor.IsNull();
 	}
 };
 

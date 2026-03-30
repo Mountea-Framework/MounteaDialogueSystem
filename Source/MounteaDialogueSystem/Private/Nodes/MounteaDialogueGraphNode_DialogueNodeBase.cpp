@@ -4,7 +4,8 @@
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 #include "TimerManager.h"
 #include "Data/MounteaDialogueContext.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Helpers/MounteaDialogueTraversalStatics.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Misc/DataValidation.h"
 #include "Nodes/MounteaDialogueGraphNode_Delay.h"
 
@@ -32,12 +33,12 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode_Implementation(cons
 {
 	if (Manager)
 	{
-		if (UMounteaDialogueContext* Context = Manager->Execute_GetDialogueContext(Manager.GetObject()))
+		if (UMounteaDialogueContext* Context = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(Manager.GetObject()))
 		{
 			GetWorld()->GetTimerManager().ClearTimer(Manager->GetDialogueRowTimerHandle());
 
-			const FDialogueRow DialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(Context->ActiveNode);
-	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.RowData.IsValidIndex(Context->GetActiveDialogueRowDataIndex()))
+			const FDialogueRow DialogueRow = UMounteaDialogueTraversalStatics::GetSpeechData(Context->ActiveNode);
+			if (UMounteaDialogueTraversalStatics::IsDialogueRowValid(DialogueRow) && DialogueRow.RowData.IsValidIndex(Context->GetActiveDialogueRowDataIndex()))
 			{
 				Context->UpdateActiveDialogueRow(DialogueRow);
 				Context->UpdateActiveDialogueRowDataIndex(Context->ActiveDialogueRowDataIndex);
@@ -53,10 +54,10 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode_Implementation(c
 {
 	if (bUseGameplayTags && Manager.GetInterface())
 	{
-		if (const auto tempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
+		if (UMounteaDialogueContext* tempContext = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(Manager.GetObject()))
 		{
-			const TScriptInterface<IMounteaDialogueParticipantInterface> BestMatchingParticipant = UMounteaDialogueSystemBFC::SwitchActiveParticipant(tempContext);
-			UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(tempContext, BestMatchingParticipant);
+			const TScriptInterface<IMounteaDialogueParticipantInterface> bestMatchingParticipant = UMounteaDialogueTraversalStatics::ResolveActiveParticipant(tempContext);
+			UMounteaDialogueTraversalStatics::UpdateMatchingDialogueParticipant(tempContext, bestMatchingParticipant);
 		}
 	}
 
@@ -238,10 +239,10 @@ TArray<FText> UMounteaDialogueGraphNode_DialogueNodeBase::GetPreviews() const
 {
 	TArray<FText> ReturnValues;
 	
-	const auto Row = UMounteaDialogueSystemBFC::GetDialogueRow( this );
-	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(Row))
+	const FDialogueRow Row = GetSpeechData_Implementation();
+	if (UMounteaDialogueTraversalStatics::IsDialogueRowValid(Row))
 	{
-	for (auto Itr : Row.RowData)
+		for (const auto& Itr : Row.RowData)
 		{
 			ReturnValues.Add( Itr.RowText );
 		}
