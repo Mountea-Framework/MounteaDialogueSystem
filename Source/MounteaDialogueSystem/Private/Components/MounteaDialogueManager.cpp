@@ -164,6 +164,16 @@ void UMounteaDialogueManager::SetManagerState(const EDialogueManagerState NewSta
 
 void UMounteaDialogueManager::OnRep_ManagerState()
 {
+	if (!UMounteaDialogueManagerStatics::IsServer(GetOwner()))
+	{
+		UMounteaDialogueWorldSubsystem* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>() : nullptr;
+		if (subsystem)
+		{
+			if (UMounteaDialogueSession* session = subsystem->GetGameStateSession())
+				session->TryDispatchPendingClientPayload();
+		}
+	}
+
 	OnDialogueManagerStateChanged.Broadcast(ManagerState);
 	ProcessStateUpdated();
 }
@@ -554,9 +564,14 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 {
 	StartParticipants();
 
-	FString resultMessage;
-	if (!Execute_CreateDialogueUI(this, resultMessage))
-		LOG_WARNING(TEXT("[Create Dialogue UI] %s"), *(resultMessage))
+	int32 searchDepth = 0;
+	APlayerController* localControllerCandidate = UMounteaDialogueParticipantStatics::FindPlayerController(GetOwner(), searchDepth);
+	if (IsValid(localControllerCandidate) && localControllerCandidate->IsLocalController())
+	{
+		FString resultMessage;
+		if (!Execute_CreateDialogueUI(this, resultMessage))
+			LOG_WARNING(TEXT("[Create Dialogue UI] %s"), *(resultMessage))
+	}
 
 	if (UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
 		OnDialogueStarted.Broadcast(DialogueContext);
@@ -568,6 +583,7 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 		{
 			if (UMounteaDialogueSession* session = subsystem->GetGameStateSession())
 			{
+				session->TryDispatchPendingClientPayload();
 				const FMounteaDialogueContextPayload& payload = session->GetContextPayload();
 				if (payload.IsValid())
 					ReconcileClientUIFromPayload(payload);
@@ -821,7 +837,9 @@ void UMounteaDialogueManager::SkipDialogueRow_Implementation()
 void UMounteaDialogueManager::UpdateWorldDialogueUI_Implementation(const FString& Command)
 {
 	if (UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
-		ProcessWorldWidgetUpdate(Command);
+		return;
+
+	ProcessWorldWidgetUpdate(Command);
 }
 
 void UMounteaDialogueManager::ProcessWorldWidgetUpdate(const FString& Command)
@@ -840,7 +858,7 @@ void UMounteaDialogueManager::ProcessWorldWidgetUpdate(const FString& Command)
 
 void UMounteaDialogueManager::ApplyReplicatedWidgetCommand(const FString& Command)
 {
-	if (!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
+	if (UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
 		return;
 
 	if (Command.IsEmpty())
@@ -865,8 +883,7 @@ bool UMounteaDialogueManager::IsCoreWidgetCommand(const FString& Command) const
 bool UMounteaDialogueManager::ShouldReplayPayloadCommand(const FMounteaDialogueContextPayload& Payload) const
 {
 	return !Payload.LastWidgetCommand.IsEmpty()
-		&& Payload.ContextVersion > LastAppliedPayloadCommandVersion
-		&& !IsCoreWidgetCommand(Payload.LastWidgetCommand);
+		&& Payload.ContextVersion > LastAppliedPayloadCommandVersion;
 }
 
 uint32 UMounteaDialogueManager::BuildAllowedChildrenHash(const TArray<FGuid>& AllowedChildren) const
@@ -906,9 +923,6 @@ void UMounteaDialogueManager::ResetClientSyncCaches(const FGuid& SessionGUID)
 void UMounteaDialogueManager::ReconcileClientAudioFromPayload(const FMounteaDialogueContextPayload& Payload, const bool bShouldPlayRowAudio)
 {
 	if (UMounteaDialogueManagerStatics::IsServer(GetOwner()))
-		return;
-
-	if (!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
 		return;
 
 	const TScriptInterface<IMounteaDialogueParticipantInterface> activeParticipant = Payload.ActiveDialogueParticipant;
@@ -952,8 +966,14 @@ void UMounteaDialogueManager::ReconcileClientAudioFromPayload(const FMounteaDial
 
 void UMounteaDialogueManager::ReconcileClientUIFromPayload(const FMounteaDialogueContextPayload& Payload)
 {
-	if (!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
+	if (GetWorld() && GetWorld()->GetNetMode() == NM_DedicatedServer)
 		return;
+
+	if (ManagerState == EDialogueManagerState::EDMS_Active && !IsValid(DialogueWidget))
+	{
+		FString resultMessage;
+		Execute_CreateDialogueUI(this, resultMessage);
+	}
 
 	if (ManagerState != EDialogueManagerState::EDMS_Active)
 	{
@@ -1148,8 +1168,19 @@ bool UMounteaDialogueManager::CreateDialogueUI_Implementation(FString& Message)
 			bSuccess = false;
 		}
 		else
+		{
 			Execute_SetDialogueWidget(this, newWidget);
+
+			// Ensure runtime visibility even if Blueprint command handling does not add it to viewport.
+			if (!newWidget->IsInViewport())
+			{
+				newWidget->AddToPlayerScreen(DialogueWidgetZOrder);
+			}
+		}
 	}
+
+	if (!bSuccess)
+		return false;
 
 	return Execute_UpdateDialogueUI(this, Message, MounteaDialogueWidgetCommands::CreateDialogueWidget);
 }
@@ -1159,10 +1190,11 @@ bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, 
 	if (IsValid(DialogueContext))
 		DialogueContext->LastWidgetCommand = Command;
 
+	if (GetWorld() && GetWorld()->GetNetMode() == NM_DedicatedServer)
+		return true;
+
 	if (DialogueWidget)
 		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidget, this, Command);
-	
-	LOG_ERROR(TEXT("[Update Dialogue UI] Command: %s"), *Command);
 
 	Execute_UpdateWorldDialogueUI(this, Command);
 	return true;
@@ -1170,6 +1202,9 @@ bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, 
 
 bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
 {
+	if (GetWorld() && GetWorld()->GetNetMode() == NM_DedicatedServer)
+		return true;
+
 	FString dialogueMessage;
 	const bool bSatisfied = Execute_UpdateDialogueUI(this, dialogueMessage, MounteaDialogueWidgetCommands::CloseDialogueWidget);
 

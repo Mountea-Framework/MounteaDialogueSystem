@@ -6,6 +6,7 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
+#include "Engine/World.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 #include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
@@ -113,10 +114,24 @@ bool UMounteaDialogueManagerStatics::IsLocalPlayer(const AActor* Owner)
 
 	if (const APlayerState* playerState = Cast<APlayerState>(Owner))
 	{
-		const AController* owningController = playerState->GetOwningController();
-		const bool isPawnControllerLocal = IsValid(owningController) && owningController->IsLocalController();
-		LOG_ERROR(TEXT("[Is Local] %s"), isPawnControllerLocal ? TEXT("true") : TEXT("false"))
-		return isPawnControllerLocal;
+		if (const APlayerController* directController = playerState->GetPlayerController())
+		{
+			if (directController->IsLocalController())
+				return true;
+		}
+
+		if (IsValid(world))
+		{
+			for (FConstPlayerControllerIterator It = world->GetPlayerControllerIterator(); It; ++It)
+			{
+				const APlayerController* playerController = It->Get();
+				if (!IsValid(playerController) || !playerController->IsLocalController())
+					continue;
+
+				if (playerController->PlayerState == playerState)
+					return true;
+			}
+		}
 	}
 
 	const APawn* pawn = Cast<APawn>(Owner);
@@ -127,7 +142,6 @@ bool UMounteaDialogueManagerStatics::IsLocalPlayer(const AActor* Owner)
 
 		const AController* pawnController = pawn->GetController();
 		const bool isPawnControllerLocal = IsValid(pawnController) && pawnController->IsLocalController();
-		LOG_ERROR(TEXT("[Is Local] %s"), isPawnControllerLocal ? TEXT("true") : TEXT("false"))
 		return isPawnControllerLocal;
 	}
 

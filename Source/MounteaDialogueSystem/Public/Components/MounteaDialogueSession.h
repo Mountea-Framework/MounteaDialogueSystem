@@ -74,6 +74,12 @@ public:
 	}
 
 	/**
+	 * Client-only retry path for payload delivery when OnRep fired before local manager registration.
+	 * Safe to call repeatedly; no-op if no pending payload exists.
+	 */
+	void TryDispatchPendingClientPayload();
+
+	/**
 	 * Sets the server-authoritative manager that owns the active session flow.
 	 * The server notify path targets this manager directly to avoid local-player filtering issues.
 	 */
@@ -148,4 +154,8 @@ private:
 	TArray<FDialogueTraversePath> SessionTraversedPath;
 	int32 LastDeliveredContextVersion = 0;
 	FGuid LastDeliveredSessionGUID;
+	FGuid PendingClientDispatchSessionGUID;
+	int32 PendingClientDispatchVersion = 0;
+	int32 LastPendingDispatchWarningVersion = 0;
+	bool bClientDispatchPending = false;
 };

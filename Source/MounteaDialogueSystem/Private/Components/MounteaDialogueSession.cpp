@@ -93,6 +93,50 @@ void UMounteaDialogueSession::WriteContextPayload(FMounteaDialogueContextPayload
 	NotifyLocalManagers();
 }
 
+void UMounteaDialogueSession::TryDispatchPendingClientPayload()
+{
+	if (GetOwner() && GetOwner()->HasAuthority())
+		return;
+
+	if (!bClientDispatchPending)
+		return;
+
+	UWorld* world = GetWorld();
+	if (!world)
+		return;
+
+	UMounteaDialogueWorldSubsystem* subsystem = world->GetSubsystem<UMounteaDialogueWorldSubsystem>();
+	if (!subsystem)
+		return;
+
+	for (UMounteaDialogueManager* manager : subsystem->GetRegisteredManagers())
+	{
+		if (!IsValid(manager))
+			continue;
+
+		const AActor* ownerActor = manager->GetOwner();
+		if (!IsValid(ownerActor))
+			continue;
+
+		if (!UMounteaDialogueManagerStatics::IsLocalPlayer(ownerActor))
+			continue;
+
+		manager->OnContextPayloadUpdated(ContextPayload);
+		bClientDispatchPending = false;
+		LastPendingDispatchWarningVersion = 0;
+		PendingClientDispatchVersion = 0;
+		PendingClientDispatchSessionGUID.Invalidate();
+		LOG_INFO(TEXT("[Dialogue Session] Delivered pending payload version %d to local manager '%s'."), ContextPayload.ContextVersion, *GetNameSafe(manager))
+		return;
+	}
+
+	if (LastPendingDispatchWarningVersion != PendingClientDispatchVersion)
+	{
+		LastPendingDispatchWarningVersion = PendingClientDispatchVersion;
+		LOG_WARNING(TEXT("[Dialogue Session] Pending payload version %d could not be delivered yet: no local manager registered."), PendingClientDispatchVersion)
+	}
+}
+
 void UMounteaDialogueSession::SetAuthoritativeManager(UMounteaDialogueManager* Manager)
 {
 	AuthoritativeManager = Manager;
@@ -246,7 +290,42 @@ void UMounteaDialogueSession::NotifyLocalManagers()
 			continue;
 
 		manager->OnContextPayloadUpdated(ContextPayload);
+		bClientDispatchPending = false;
+		LastPendingDispatchWarningVersion = 0;
+		PendingClientDispatchVersion = 0;
+		PendingClientDispatchSessionGUID.Invalidate();
+		return;
 	}
+
+	UMounteaDialogueManager* singleActiveManager = nullptr;
+	int32 activeManagerCount = 0;
+	for (UMounteaDialogueManager* manager : subsystem->GetRegisteredManagers())
+	{
+		if (!IsValid(manager))
+			continue;
+
+		if (IMounteaDialogueManagerInterface::Execute_GetManagerState(manager) != EDialogueManagerState::EDMS_Active)
+			continue;
+
+		activeManagerCount++;
+		if (!singleActiveManager)
+			singleActiveManager = manager;
+	}
+
+	if (activeManagerCount == 1 && IsValid(singleActiveManager))
+	{
+		singleActiveManager->OnContextPayloadUpdated(ContextPayload);
+		bClientDispatchPending = false;
+		LastPendingDispatchWarningVersion = 0;
+		PendingClientDispatchVersion = 0;
+		PendingClientDispatchSessionGUID.Invalidate();
+		LOG_INFO(TEXT("[Dialogue Session] Delivered payload version %d via single-active-manager fallback '%s'."), ContextPayload.ContextVersion, *GetNameSafe(singleActiveManager))
+		return;
+	}
+
+	bClientDispatchPending = true;
+	PendingClientDispatchSessionGUID = ContextPayload.SessionGUID;
+	PendingClientDispatchVersion = ContextPayload.ContextVersion;
 }
 
 bool UMounteaDialogueSession::IsSessionRequestValid(UMounteaDialogueManager* Manager, const FGuid& SessionGUID, const TCHAR* ActionName) const

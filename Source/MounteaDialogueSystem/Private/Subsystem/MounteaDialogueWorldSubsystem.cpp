@@ -41,6 +41,10 @@ void UMounteaDialogueWorldSubsystem::RegisterManager(UMounteaDialogueManager* Ma
 {
 	if (!Manager) return;
 	RegisteredManagers.AddUnique(Manager);
+
+	UMounteaDialogueSession* session = GetGameStateSession();
+	if (IsValid(session))
+		session->TryDispatchPendingClientPayload();
 }
 
 void UMounteaDialogueWorldSubsystem::UnregisterManager(UMounteaDialogueManager* Manager)
