@@ -190,7 +190,7 @@ TArray<FDialogueTraversePath> UMounteaDialogueSession::GetConditionTraversedPath
 	return result;
 }
 
-void UMounteaDialogueSession::NotifyLocalManagers() const
+void UMounteaDialogueSession::NotifyLocalManagers()
 {
 	UWorld* world = GetWorld();
 	if (!world)
@@ -205,6 +205,19 @@ void UMounteaDialogueSession::NotifyLocalManagers() const
 		if (IsValid(AuthoritativeManager.Get()))
 		{
 			AuthoritativeManager->OnContextPayloadUpdated(ContextPayload);
+			return;
+		}
+
+		for (UMounteaDialogueManager* manager : subsystem->GetRegisteredManagers())
+		{
+			if (!IsValid(manager))
+				continue;
+			if (!IsValid(manager->GetOwner()) || !manager->GetOwner()->HasAuthority())
+				continue;
+
+			AuthoritativeManager = manager;
+			LOG_WARNING(TEXT("[Dialogue Session] Recovered authoritative manager while dispatching payload version %d."), ContextPayload.ContextVersion)
+			manager->OnContextPayloadUpdated(ContextPayload);
 			return;
 		}
 
@@ -249,7 +262,13 @@ bool UMounteaDialogueSession::IsSessionRequestValid(UMounteaDialogueManager* Man
 		return false;
 	}
 
-	if (SessionGUID.IsValid() && SessionGUID != activeSessionGUID)
+	if (!SessionGUID.IsValid())
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(FString::Printf(TEXT("[%s] Invalid session GUID!"), ActionName));
+		return false;
+	}
+
+	if (SessionGUID != activeSessionGUID)
 	{
 		Manager->GetDialogueFailedEventHandle().Broadcast(FString::Printf(TEXT("[%s] Session mismatch!"), ActionName));
 		return false;
@@ -258,30 +277,26 @@ bool UMounteaDialogueSession::IsSessionRequestValid(UMounteaDialogueManager* Man
 	return true;
 }
 
-bool UMounteaDialogueSession::SyncPayloadFromManagerContext(UMounteaDialogueManager* Manager)
+void UMounteaDialogueSession::ApplyNodeSwitchPayload(const UMounteaDialogueContext* DialogueContext)
 {
-	if (!GetOwner() || !GetOwner()->HasAuthority())
-		return false;
-
-	if (!IsValid(Manager))
-		return false;
-
-	UMounteaDialogueContext* dialogueContext = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(Manager);
-	if (!IsValid(dialogueContext))
-		return false;
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !IsValid(DialogueContext))
+		return;
 
 	FMounteaDialogueContextPayload newPayload = ContextPayload;
 
-	if (dialogueContext->SessionGUID.IsValid())
-		newPayload.SessionGUID = dialogueContext->SessionGUID;
+	if (DialogueContext->SessionGUID.IsValid())
+		newPayload.SessionGUID = DialogueContext->SessionGUID;
 
-	newPayload.DialogueParticipants = dialogueContext->DialogueParticipants;
+	newPayload.DialogueParticipants = DialogueContext->DialogueParticipants;
+	newPayload.ActiveDialogueParticipant = DialogueContext->ActiveDialogueParticipant;
+	newPayload.ActiveDialogueRow = DialogueContext->ActiveDialogueRow;
+	newPayload.ActiveDialogueRowDataIndex = DialogueContext->ActiveDialogueRowDataIndex;
 
-	if (IsValid(dialogueContext->ActiveNode))
+	if (IsValid(DialogueContext->ActiveNode))
 	{
-		newPayload.PreviousNodeGUID = newPayload.ActiveNodeGUID;
-		newPayload.ActiveNodeGUID = dialogueContext->ActiveNode->GetNodeGUID();
-		newPayload.ActiveGraphGUID = dialogueContext->ActiveNode->GetGraphGUID();
+		newPayload.PreviousNodeGUID = ContextPayload.ActiveNodeGUID;
+		newPayload.ActiveNodeGUID = DialogueContext->ActiveNode->GetNodeGUID();
+		newPayload.ActiveGraphGUID = DialogueContext->ActiveNode->GetGraphGUID();
 	}
 	else
 	{
@@ -290,19 +305,88 @@ bool UMounteaDialogueSession::SyncPayloadFromManagerContext(UMounteaDialogueMana
 	}
 
 	newPayload.AllowedChildNodeGUIDs.Reset();
-	for (UMounteaDialogueGraphNode* childNode : dialogueContext->AllowedChildNodes)
+	for (UMounteaDialogueGraphNode* childNode : DialogueContext->AllowedChildNodes)
 	{
 		if (IsValid(childNode))
 			newPayload.AllowedChildNodeGUIDs.Add(childNode->GetNodeGUID());
 	}
 
-	newPayload.ActiveDialogueParticipant = dialogueContext->ActiveDialogueParticipant;
-	newPayload.ActiveDialogueRow = dialogueContext->ActiveDialogueRow;
-	newPayload.ActiveDialogueRowDataIndex = dialogueContext->ActiveDialogueRowDataIndex;
-	newPayload.LastWidgetCommand = dialogueContext->LastWidgetCommand;
+	WriteContextPayload(MoveTemp(newPayload));
+}
+
+void UMounteaDialogueSession::ApplyAllowedChildrenPayload(const UMounteaDialogueContext* DialogueContext)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !IsValid(DialogueContext))
+		return;
+
+	FMounteaDialogueContextPayload newPayload = ContextPayload;
+
+	if (DialogueContext->SessionGUID.IsValid())
+		newPayload.SessionGUID = DialogueContext->SessionGUID;
+
+	newPayload.DialogueParticipants = DialogueContext->DialogueParticipants;
+	newPayload.ActiveDialogueParticipant = DialogueContext->ActiveDialogueParticipant;
+	newPayload.ActiveDialogueRow = DialogueContext->ActiveDialogueRow;
+	newPayload.ActiveDialogueRowDataIndex = DialogueContext->ActiveDialogueRowDataIndex;
+
+	if (IsValid(DialogueContext->ActiveNode))
+	{
+		newPayload.ActiveNodeGUID = DialogueContext->ActiveNode->GetNodeGUID();
+		newPayload.ActiveGraphGUID = DialogueContext->ActiveNode->GetGraphGUID();
+	}
+
+	newPayload.PreviousNodeGUID = DialogueContext->PreviousActiveNode.IsValid()
+		? DialogueContext->PreviousActiveNode
+		: newPayload.PreviousNodeGUID;
+
+	newPayload.AllowedChildNodeGUIDs.Reset();
+	for (UMounteaDialogueGraphNode* childNode : DialogueContext->AllowedChildNodes)
+	{
+		if (IsValid(childNode))
+			newPayload.AllowedChildNodeGUIDs.Add(childNode->GetNodeGUID());
+	}
 
 	WriteContextPayload(MoveTemp(newPayload));
-	return true;
+}
+
+void UMounteaDialogueSession::ApplyRowStatePayload(const UMounteaDialogueContext* DialogueContext)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !IsValid(DialogueContext))
+		return;
+
+	FMounteaDialogueContextPayload newPayload = ContextPayload;
+
+	if (DialogueContext->SessionGUID.IsValid())
+		newPayload.SessionGUID = DialogueContext->SessionGUID;
+
+	newPayload.DialogueParticipants = DialogueContext->DialogueParticipants;
+	newPayload.ActiveDialogueParticipant = DialogueContext->ActiveDialogueParticipant;
+	newPayload.ActiveDialogueRow = DialogueContext->ActiveDialogueRow;
+	newPayload.ActiveDialogueRowDataIndex = DialogueContext->ActiveDialogueRowDataIndex;
+
+	WriteContextPayload(MoveTemp(newPayload));
+}
+
+void UMounteaDialogueSession::ApplyWidgetCommandPayload(const UMounteaDialogueContext* DialogueContext, const FString& WidgetCommand)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority())
+		return;
+
+	FMounteaDialogueContextPayload newPayload = ContextPayload;
+
+	if (IsValid(DialogueContext))
+	{
+		if (DialogueContext->SessionGUID.IsValid())
+			newPayload.SessionGUID = DialogueContext->SessionGUID;
+
+		newPayload.DialogueParticipants = DialogueContext->DialogueParticipants;
+		newPayload.ActiveDialogueParticipant = DialogueContext->ActiveDialogueParticipant;
+		newPayload.ActiveDialogueRow = DialogueContext->ActiveDialogueRow;
+		newPayload.ActiveDialogueRowDataIndex = DialogueContext->ActiveDialogueRowDataIndex;
+	}
+
+	newPayload.LastWidgetCommand = WidgetCommand;
+	WriteContextPayload(MoveTemp(newPayload));
 }
 
 bool UMounteaDialogueSession::HandleSelectNode(UMounteaDialogueManager* Manager, const FGuid& SessionGUID, const FGuid& NodeGUID)
@@ -344,12 +428,12 @@ bool UMounteaDialogueSession::HandleSelectNode(UMounteaDialogueManager* Manager,
 	const TScriptInterface<IMounteaDialogueParticipantInterface> newActiveParticipant = UMounteaDialogueTraversalStatics::ResolveActiveParticipant(dialogueContext);
 	UMounteaDialogueTraversalStatics::UpdateMatchingDialogueParticipant(dialogueContext, newActiveParticipant);
 
-	SyncPayloadFromManagerContext(Manager);
+	ApplyNodeSwitchPayload(dialogueContext);
 
 	FString resultMessage;
 	if (!IMounteaDialogueManagerInterface::Execute_UpdateDialogueUI(Manager, resultMessage, MounteaDialogueWidgetCommands::RemoveDialogueOptions))
 		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
-	SyncPayloadFromManagerContext(Manager);
+	ApplyWidgetCommandPayload(dialogueContext, dialogueContext->LastWidgetCommand);
 
 	Manager->GetDialogueNodeSelectedEventHandle().Broadcast(dialogueContext);
 	IMounteaDialogueManagerInterface::Execute_PrepareNode(Manager);
@@ -437,18 +521,18 @@ bool UMounteaDialogueSession::HandleNodeProcessed(UMounteaDialogueManager* Manag
 		UMounteaDialogueTraversalStatics::UpdateMatchingDialogueParticipant(dialogueContext, newActiveParticipant);
 
 		Manager->GetDialogueNodeSelectedEventHandle().Broadcast(dialogueContext);
-		SyncPayloadFromManagerContext(Manager);
+		ApplyNodeSwitchPayload(dialogueContext);
 		IMounteaDialogueManagerInterface::Execute_PrepareNode(Manager);
 		return true;
 	}
 
 	dialogueContext->AllowedChildNodes = allowedChildrenNodes;
-	SyncPayloadFromManagerContext(Manager);
+	ApplyAllowedChildrenPayload(dialogueContext);
 
 	FString resultMessage;
 	if (!IMounteaDialogueManagerInterface::Execute_UpdateDialogueUI(Manager, resultMessage, MounteaDialogueWidgetCommands::AddDialogueOptions))
 		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
-	SyncPayloadFromManagerContext(Manager);
+	ApplyWidgetCommandPayload(dialogueContext, dialogueContext->LastWidgetCommand);
 
 	return true;
 }
@@ -471,7 +555,7 @@ bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager
 	FString resultMessage;
 	if (!IMounteaDialogueManagerInterface::Execute_UpdateDialogueUI(Manager, resultMessage, MounteaDialogueWidgetCommands::HideDialogueRow))
 		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
-	SyncPayloadFromManagerContext(Manager);
+	ApplyWidgetCommandPayload(dialogueContext, dialogueContext->LastWidgetCommand);
 
 	UWorld* world = Manager->GetWorld();
 	if (!IsValid(world))
@@ -506,7 +590,7 @@ bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager
 		case ERowExecutionMode::EREM_AwaitInput:
 			dialogueContext->UpdateActiveDialogueRowDataIndex(nextIndex);
 			Manager->GetDialogueContextUpdatedEventHande().Broadcast(dialogueContext);
-			SyncPayloadFromManagerContext(Manager);
+			ApplyRowStatePayload(dialogueContext);
 			IMounteaDialogueManagerInterface::Execute_ProcessDialogueRow(Manager);
 			break;
 		case ERowExecutionMode::EREM_Stopping:
@@ -548,7 +632,7 @@ bool UMounteaDialogueSession::HandleProcessDialogueRow(UMounteaDialogueManager* 
 	FString resultMessage;
 	if (!IMounteaDialogueManagerInterface::Execute_UpdateDialogueUI(Manager, resultMessage, MounteaDialogueWidgetCommands::ShowDialogueRow))
 		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
-	SyncPayloadFromManagerContext(Manager);
+	ApplyWidgetCommandPayload(dialogueContext, dialogueContext->LastWidgetCommand);
 
 	const int32 activeIndex = dialogueContext->GetActiveDialogueRowDataIndex();
 	const FDialogueRow row = dialogueContext->GetActiveDialogueRow();
@@ -652,10 +736,11 @@ bool UMounteaDialogueSession::HandleProcessNode(UMounteaDialogueManager* Manager
 
 	if (dialogueContext->ActiveNode != processingNode)
 	{
-		SyncPayloadFromManagerContext(Manager);
+		ApplyNodeSwitchPayload(dialogueContext);
 		return true;
 	}
 
+	ApplyRowStatePayload(dialogueContext);
 	dialogueContext->ActiveDialogueParticipant->GetOnParticipantBecomeActiveEventHandle().Broadcast(true);
 	Manager->GetDialogueNodeStartedEventHandle().Broadcast(dialogueContext);
 	IMounteaDialogueManagerInterface::Execute_ProcessDialogueRow(Manager);

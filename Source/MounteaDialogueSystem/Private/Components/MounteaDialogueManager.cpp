@@ -23,7 +23,6 @@
 #include "Helpers/MounteaDialogueManagerStatics.h"
 #include "Helpers/MounteaDialogueParticipantStatics.h"
 #include "Helpers/MounteaDialogueTraversalStatics.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/HUD/MounteaDialogueWBPInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -33,7 +32,6 @@
 #include "Components/MounteaDialogueSession.h"
 #include "GameFramework/GameStateBase.h"
 #include "Subsystem/MounteaDialogueWorldSubsystem.h"
-
 
 UMounteaDialogueManager::UMounteaDialogueManager()
 	: DialogueWidgetZOrder(12)
@@ -143,7 +141,7 @@ void UMounteaDialogueManager::SetManagerState(const EDialogueManagerState NewSta
 {
 	if (NewState == ManagerState)
 	{
-		LOG_INFO(TEXT("[Set Manager State] New State `%s` is same as current State. Update aborted."), *(UMounteaDialogueSystemBFC::GetEnumFriendlyName(NewState)))
+		LOG_INFO(TEXT("[Set Manager State] New State `%s` is same as current State. Update aborted."), *(UMounteaDialogueManagerStatics::GetEnumFriendlyName(NewState)))
 		return;
 	}
 
@@ -262,7 +260,7 @@ void UMounteaDialogueManager::SetDefaultManagerState(const EDialogueManagerState
 {
 	if (NewState == DefaultManagerState)
 	{
-		LOG_WARNING(TEXT("[Set Default Manager State] New State `%s` is same as current State. Update aborted."), *(UMounteaDialogueSystemBFC::GetEnumFriendlyName(NewState)))
+		LOG_WARNING(TEXT("[Set Default Manager State] New State `%s` is same as current State. Update aborted."), *(UMounteaDialogueManagerStatics::GetEnumFriendlyName(NewState)))
 		return;
 	}
 	
@@ -436,7 +434,18 @@ void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 
 	if (!UMounteaDialogueManagerStatics::IsServer(GetOwner()))
 	{
-		RequestCloseDialogue_Server(FGuid());
+		FGuid sessionGuid = IsValid(DialogueContext) ? DialogueContext->SessionGUID : FGuid();
+		if (!sessionGuid.IsValid())
+		{
+			UMounteaDialogueWorldSubsystem* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>() : nullptr;
+			if (subsystem)
+			{
+				if (UMounteaDialogueSession* session = subsystem->GetGameStateSession())
+					sessionGuid = session->GetContextPayload().SessionGUID;
+			}
+		}
+
+		RequestCloseDialogue_Server(sessionGuid);
 		return;
 	}
 
@@ -664,7 +673,18 @@ void UMounteaDialogueManager::NodeProcessed_Implementation()
 		return;
 	}
 
-	RequestNodeProcessed_Server(sessionGuid);
+	UMounteaDialogueWorldSubsystem* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>() : nullptr;
+	if (!subsystem)
+		return;
+
+	UMounteaDialogueSession* session = subsystem->GetGameStateSession();
+	if (!session)
+	{
+		OnDialogueFailed.Broadcast(TEXT("[Node Processed] Missing Dialogue Session on GameState."));
+		return;
+	}
+
+	session->HandleNodeProcessed(this, sessionGuid);
 }
 
 void UMounteaDialogueManager::SelectNode_Implementation(const FGuid& NodeGuid)
@@ -677,7 +697,18 @@ void UMounteaDialogueManager::SelectNode_Implementation(const FGuid& NodeGuid)
 		return;
 	}
 
-	RequestSelectNode_Server(sessionGuid, NodeGuid);
+	UMounteaDialogueWorldSubsystem* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>() : nullptr;
+	if (!subsystem)
+		return;
+
+	UMounteaDialogueSession* session = subsystem->GetGameStateSession();
+	if (!session)
+	{
+		OnDialogueFailed.Broadcast(TEXT("[Select Node] Missing Dialogue Session on GameState."));
+		return;
+	}
+
+	session->HandleSelectNode(this, sessionGuid, NodeGuid);
 }
 
 void UMounteaDialogueManager::ProcessDialogueRow_Implementation()
@@ -715,7 +746,18 @@ void UMounteaDialogueManager::DialogueRowProcessed_Implementation(const bool bFo
 		return;
 	}
 
-	RequestDialogueRowProcessed_Server(sessionGuid, bForceFinish);
+	UMounteaDialogueWorldSubsystem* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>() : nullptr;
+	if (!subsystem)
+		return;
+
+	UMounteaDialogueSession* session = subsystem->GetGameStateSession();
+	if (!session)
+	{
+		OnDialogueFailed.Broadcast(TEXT("[Process Dialogue Row] Missing Dialogue Session on GameState."));
+		return;
+	}
+
+	session->HandleDialogueRowProcessed(this, sessionGuid, bForceFinish);
 }
 
 void UMounteaDialogueManager::SkipDialogueRow_Implementation()
@@ -728,7 +770,18 @@ void UMounteaDialogueManager::SkipDialogueRow_Implementation()
 		return;
 	}
 
-	RequestSkipRow_Server(sessionGuid);
+	UMounteaDialogueWorldSubsystem* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>() : nullptr;
+	if (!subsystem)
+		return;
+
+	UMounteaDialogueSession* session = subsystem->GetGameStateSession();
+	if (!session)
+	{
+		OnDialogueFailed.Broadcast(TEXT("[Skip Dialogue Row] Missing Dialogue Session on GameState."));
+		return;
+	}
+
+	session->HandleSkipDialogueRow(this, sessionGuid);
 }
 
 void UMounteaDialogueManager::UpdateWorldDialogueUI_Implementation(const FString& Command)
@@ -921,7 +974,11 @@ void UMounteaDialogueManager::ExecuteWidgetCommand_Implementation(const FString&
 
 TSubclassOf<UUserWidget> UMounteaDialogueManager::GetDialogueWidgetClass() const
 {
-	return DialogueWidgetClass != nullptr ? DialogueWidgetClass : UMounteaDialogueSystemBFC::GetDefaultDialogueWidget();
+	if (DialogueWidgetClass != nullptr)
+		return DialogueWidgetClass;
+
+	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+	return dialogueSettings ? dialogueSettings->GetDefaultDialogueWidget().LoadSynchronous() : nullptr;
 }
 
 void UMounteaDialogueManager::SetDialogueWidgetClass(const TSubclassOf<UUserWidget> NewWidgetClass)

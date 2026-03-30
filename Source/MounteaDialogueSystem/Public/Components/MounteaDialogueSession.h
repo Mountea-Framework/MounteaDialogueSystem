@@ -20,6 +20,7 @@
 class UMounteaDialogueWorldSubsystem;
 class UMounteaDialogueManager;
 class UMounteaDialogueGraphNode;
+class UMounteaDialogueContext;
 
 /**
  * UMounteaDialogueSession is the server-authoritative state machine for a single active dialogue.
@@ -134,10 +135,13 @@ private:
 	 * Server path targets the authoritative manager directly.
 	 * Client path notifies only managers whose owners are locally controlled.
 	 */
-	void NotifyLocalManagers() const;
+	void NotifyLocalManagers();
 	void AddTraversedNode(const UMounteaDialogueGraphNode* TraversedNode);
 	bool IsSessionRequestValid(UMounteaDialogueManager* Manager, const FGuid& SessionGUID, const TCHAR* ActionName) const;
-	bool SyncPayloadFromManagerContext(UMounteaDialogueManager* Manager);
+	void ApplyNodeSwitchPayload(const UMounteaDialogueContext* DialogueContext);
+	void ApplyAllowedChildrenPayload(const UMounteaDialogueContext* DialogueContext);
+	void ApplyRowStatePayload(const UMounteaDialogueContext* DialogueContext);
+	void ApplyWidgetCommandPayload(const UMounteaDialogueContext* DialogueContext, const FString& WidgetCommand);
 
 	TWeakObjectPtr<UMounteaDialogueManager> AuthoritativeManager;
 	TMap<int32, TScriptInterface<IMounteaDialogueParticipantInterface>> RoleOverrides;
