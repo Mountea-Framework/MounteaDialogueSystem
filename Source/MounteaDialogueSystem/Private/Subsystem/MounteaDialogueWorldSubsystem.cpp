@@ -16,8 +16,9 @@
 #include "Data/MounteaDialogueContextPayload.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
 #include "GameFramework/GameStateBase.h"
+#include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueParticipantStatics.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Helpers/MounteaDialogueTraversalStatics.h"
 #include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 
 void UMounteaDialogueWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -79,6 +80,13 @@ void UMounteaDialogueWorldSubsystem::HandleStartRequest(UMounteaDialogueManager*
 		bLockAcquired = false;
 	};
 
+	if (!Request.IsValid())
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[HandleStartRequest] Invalid start request. MainParticipantActor must be provided."));
+		ReleaseLockIfNeeded();
+		return;
+	}
+
 	TScriptInterface<IMounteaDialogueParticipantInterface> playerParticipant;
 	TScriptInterface<IMounteaDialogueParticipantInterface> mainParticipant;
 	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> allParticipants;
@@ -103,12 +111,44 @@ void UMounteaDialogueWorldSubsystem::HandleStartRequest(UMounteaDialogueManager*
 
 	session->SetAuthoritativeManager(Manager);
 
-	// Build local context to resolve starting node, allowed children, and active participant.
-	// This object is temporary — the canonical state lives in the session payload.
-	UMounteaDialogueContext* tempContext = UMounteaDialogueSystemBFC::CreateDialogueContext(Manager, mainParticipant, allParticipants);
-	if (!tempContext)
+	UMounteaDialogueGraph* resolvedGraph = nullptr;
+	const bool bUseGraphOverride = !Request.DialogueGraph.IsNull();
+	if (bUseGraphOverride)
 	{
-		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[HandleStartRequest] Failed to create Dialogue Context!"));
+		resolvedGraph = Request.DialogueGraph.LoadSynchronous();
+		if (!IsValid(resolvedGraph))
+		{
+			Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[HandleStartRequest] DialogueGraph override is set but failed to load."));
+			ReleaseLockIfNeeded();
+			return;
+		}
+	}
+	else
+	{
+		resolvedGraph = mainParticipant->Execute_GetDialogueGraph(mainParticipant.GetObject());
+	}
+
+	if (!IsValid(resolvedGraph))
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[HandleStartRequest] Unable to resolve active dialogue graph."));
+		ReleaseLockIfNeeded();
+		return;
+	}
+
+	UMounteaDialogueGraphNode* graphStartNode = resolvedGraph->GetStartNode();
+	if (!IsValid(graphStartNode))
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(
+			FString::Printf(TEXT("[HandleStartRequest] Dialogue graph '%s' has no start node."), *resolvedGraph->GetName()));
+		ReleaseLockIfNeeded();
+		return;
+	}
+
+	UMounteaDialogueGraphNode* firstRuntimeNode = UMounteaDialogueTraversalStatics::GetFirstChildNode(graphStartNode);
+	if (!IsValid(firstRuntimeNode))
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(
+			FString::Printf(TEXT("[HandleStartRequest] Dialogue graph '%s' start node has no valid child to begin from."), *resolvedGraph->GetName()));
 		ReleaseLockIfNeeded();
 		return;
 	}
@@ -117,19 +157,51 @@ void UMounteaDialogueWorldSubsystem::HandleStartRequest(UMounteaDialogueManager*
 	FMounteaDialogueContextPayload payload;
 	payload.SessionGUID = FGuid::NewGuid();
 	ActiveSessionGUID = payload.SessionGUID;
+
+	UMounteaDialogueContext* tempContext = NewObject<UMounteaDialogueContext>(Manager);
+	if (!IsValid(tempContext))
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[HandleStartRequest] Failed to create temporary context."));
+		ReleaseLockIfNeeded();
+		return;
+	}
+
+	tempContext->SessionGUID = payload.SessionGUID;
+	tempContext->DialogueParticipants = allParticipants;
+	tempContext->SetDialogueContext(firstRuntimeNode, TArray<UMounteaDialogueGraphNode*>());
+	tempContext->UpdateActiveDialogueRow(UMounteaDialogueTraversalStatics::GetSpeechData(firstRuntimeNode));
+	tempContext->UpdateActiveDialogueRowDataIndex(0);
+
+	TScriptInterface<IMounteaDialogueParticipantInterface> initialActiveParticipant = mainParticipant;
+	const TScriptInterface<IMounteaDialogueParticipantInterface> rolePreferredParticipant =
+		UMounteaDialogueParticipantStatics::GetParticipantByType(
+			allParticipants,
+			EDialogueParticipantType::NPC,
+			Manager);
+	if (rolePreferredParticipant.GetObject() && rolePreferredParticipant.GetInterface())
+		initialActiveParticipant = rolePreferredParticipant;
+
+	tempContext->SetActiveDialogueParticipant(initialActiveParticipant);
+	const TScriptInterface<IMounteaDialogueParticipantInterface> resolvedActiveParticipant =
+		UMounteaDialogueTraversalStatics::ResolveActiveParticipant(tempContext);
+	UMounteaDialogueTraversalStatics::UpdateMatchingDialogueParticipant(tempContext, resolvedActiveParticipant);
+
+	TArray<UMounteaDialogueGraphNode*> filteredChildren =
+		UMounteaDialogueTraversalStatics::GetAllowedChildNodesFiltered(firstRuntimeNode, tempContext);
+	UMounteaDialogueTraversalStatics::SortNodes(filteredChildren);
+	tempContext->UpdateAllowedChildrenNodes(filteredChildren);
+
 	payload.DialogueParticipants = tempContext->DialogueParticipants;
 	payload.ActiveDialogueParticipant = tempContext->ActiveDialogueParticipant;
-
-	if (IsValid(tempContext->ActiveNode))
+	payload.ActiveNodeGUID = firstRuntimeNode->GetNodeGUID();
+	payload.ActiveGraphGUID = firstRuntimeNode->GetGraphGUID();
+	for (const auto& child : filteredChildren)
 	{
-		payload.ActiveNodeGUID = tempContext->ActiveNode->GetNodeGUID();
-		payload.ActiveGraphGUID = tempContext->ActiveNode->GetGraphGUID();
-		const TArray<UMounteaDialogueGraphNode*> filteredChildren = UMounteaDialogueSystemBFC::GetAllowedChildNodesFiltered(tempContext->ActiveNode, tempContext);
-		for (const auto& child : filteredChildren)
-			if (IsValid(child)) payload.AllowedChildNodeGUIDs.Add(child->GetNodeGUID());
-		payload.ActiveDialogueRow = UMounteaDialogueSystemBFC::GetSpeechData(tempContext->ActiveNode);
+		if (IsValid(child))
+			payload.AllowedChildNodeGUIDs.Add(child->GetNodeGUID());
 	}
-	payload.ActiveDialogueRowDataIndex = 0;
+	payload.ActiveDialogueRow = tempContext->ActiveDialogueRow;
+	payload.ActiveDialogueRowDataIndex = tempContext->ActiveDialogueRowDataIndex;
 
 	// WriteContextPayload replicates to clients and notifies the server-side manager via NotifyLocalManagers.
 	// This guarantees context is live on the server before the state transition below fires PrepareNode.

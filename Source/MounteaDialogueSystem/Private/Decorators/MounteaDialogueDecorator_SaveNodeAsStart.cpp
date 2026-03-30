@@ -4,7 +4,8 @@
 #include "Decorators/MounteaDialogueDecorator_SaveNodeAsStart.h"
 
 #include "Data/MounteaDialogueContext.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Helpers/MounteaDialogueParticipantStatics.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 
@@ -64,11 +65,11 @@ void UMounteaDialogueDecorator_SaveNodeAsStart::ExecuteDecorator_Implementation(
 	if (!OwningManager) return;
 
 	// Let's return BP Updatable Context rather than Raw
-	Context = OwningManager->Execute_GetDialogueContext(OwningManager.GetObject());
+	Context = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(OwningManager.GetObject());
 
 	if (Context)
 	{
-		const auto Participant = UMounteaDialogueSystemBFC::GetGraphOwnerParticipant(Context->DialogueParticipants);
+		const auto Participant = UMounteaDialogueParticipantStatics::GetGraphOwnerParticipant(Context->DialogueParticipants);
 		if (Participant.GetObject())
 			Participant->Execute_SaveStartingNode(Participant.GetObject(), GetOwningNode());
 	}
