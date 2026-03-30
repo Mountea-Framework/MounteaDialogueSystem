@@ -10,18 +10,85 @@
 // For more information, visit: https://mountea.tools
 
 #include "Data/MounteaDialogueContextPayload.h"
+#include "GameFramework/Actor.h"
+#include "Helpers/MounteaDialogueParticipantStatics.h"
+#include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 #include "Net/UnrealNetwork.h"
 #include "Sound/SoundBase.h"
 
+static TScriptInterface<IMounteaDialogueParticipantInterface> ResolveParticipantFromActorInternal(AActor* ParticipantActor)
+{
+	bool bFoundParticipant = false;
+	TScriptInterface<IMounteaDialogueParticipantInterface> participantInterface =
+		UMounteaDialogueParticipantStatics::ResolveParticipantFromActor(ParticipantActor, bFoundParticipant);
+
+	if (!bFoundParticipant || !participantInterface.GetObject() || !participantInterface.GetInterface())
+		return nullptr;
+
+	return participantInterface;
+}
+
+static void SerializeParticipantInterface(
+	FArchive& Ar,
+	UPackageMap* Map,
+	TScriptInterface<IMounteaDialogueParticipantInterface>& Participant)
+{
+	UObject* participantActorObject = nullptr;
+	if (Ar.IsSaving() && Participant.GetObject() && Participant.GetInterface())
+	{
+		AActor* owningActor = IMounteaDialogueParticipantInterface::Execute_GetOwningActor(Participant.GetObject());
+		participantActorObject = owningActor;
+	}
+
+	Map->SerializeObject(Ar, AActor::StaticClass(), participantActorObject);
+
+	if (Ar.IsLoading())
+	{
+		Participant = ResolveParticipantFromActorInternal(Cast<AActor>(participantActorObject));
+	}
+}
+
+static void SerializeParticipantInterfaces(
+	FArchive& Ar,
+	UPackageMap* Map,
+	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants)
+{
+	int32 participantCount = Participants.Num();
+	Ar << participantCount;
+
+	if (Ar.IsLoading())
+		Participants.SetNum(participantCount);
+
+	for (int32 index = 0; index < participantCount; index++)
+	{
+		SerializeParticipantInterface(Ar, Map, Participants[index]);
+	}
+
+	if (Ar.IsLoading())
+	{
+		Participants.RemoveAll(
+			[](const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant)
+			{
+				return !Participant.GetObject() || !Participant.GetInterface();
+			});
+	}
+}
+
 bool FMounteaDialogueContextPayload::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess)
 {
+	if (!Map)
+	{
+		bOutSuccess = false;
+		return false;
+	}
+
 	Ar << SessionGUID;
 	Ar << ActiveNodeGUID;
 	Ar << PreviousNodeGUID;
 	Ar << AllowedChildNodeGUIDs;
 	Ar << ActiveGraphGUID;
-	Ar << ActiveDialogueParticipant;
-	Ar << DialogueParticipants;
+	SerializeParticipantInterface(Ar, Map, ActiveDialogueParticipant);
+	SerializeParticipantInterfaces(Ar, Map, DialogueParticipants);
 
 	// FDialogueRow — field-by-field
 	ActiveDialogueRow.CompatibleTags.NetSerialize(Ar, Map, bOutSuccess);

@@ -289,6 +289,11 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueParticipa
 	return resultValue;
 }
 
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueParticipantStatics::ResolveParticipantFromActor(AActor* ParticipantActor, bool& bResult)
+{
+	return FindDialogueParticipantInterface(ParticipantActor, bResult);
+}
+
 APawn* UMounteaDialogueParticipantStatics::FindPlayerPawn(AActor* ForActor, int32& SearchDepth)
 {
 	SearchDepth++;

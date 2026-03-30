@@ -124,9 +124,7 @@ void UMounteaDialogueWorldSubsystem::HandleStartRequest(UMounteaDialogueManager*
 		}
 	}
 	else
-	{
 		resolvedGraph = mainParticipant->Execute_GetDialogueGraph(mainParticipant.GetObject());
-	}
 
 	if (!IsValid(resolvedGraph))
 	{
@@ -233,9 +231,33 @@ bool UMounteaDialogueWorldSubsystem::ResolveParticipants(
 		OutErrors.Add(NSLOCTEXT("ResolveParticipants", "NoManager", "Manager could not be resolved!"));
 		return false;
 	}
+
+	const UWorld* managerWorld = Manager->GetWorld();
+	const auto ResolveRequestActor = [managerWorld](AActor* ActorRef, const TSoftObjectPtr<AActor>& SoftRef) -> AActor*
+	{
+		if (IsValid(ActorRef))
+		{
+			if (!managerWorld || ActorRef->GetWorld() == managerWorld)
+				return ActorRef;
+
+			LOG_WARNING(TEXT("[ResolveParticipants] Ignoring actor-ref '%s' from different world."), *GetNameSafe(ActorRef))
+		}
+
+		if (!SoftRef.IsNull())
+		{
+			AActor* softResolvedActor = SoftRef.Get();
+			if (IsValid(softResolvedActor) && (!managerWorld || softResolvedActor->GetWorld() == managerWorld))
+				return softResolvedActor;
+
+			if (IsValid(softResolvedActor))
+				LOG_WARNING(TEXT("[ResolveParticipants] Ignoring soft-ref actor '%s' from different world."), *GetNameSafe(softResolvedActor))
+		}
+
+		return nullptr;
+	};
 	
 	// Resolve main (NPC) participant
-	AActor* mainActor = Request.MainParticipantActor.Get();
+	AActor* mainActor = ResolveRequestActor(Request.MainParticipantActorRef, Request.MainParticipantActor);
 	if (!mainActor)
 	{
 		OutErrors.Add(NSLOCTEXT("ResolveParticipants", "NoMainActor", "MainParticipantActor could not be resolved!"));
@@ -275,10 +297,23 @@ bool UMounteaDialogueWorldSubsystem::ResolveParticipants(
 	}
 
 	// Resolve other participants
+	for (AActor* otherActorRef : Request.OtherParticipantActorRefs)
+	{
+		AActor* otherActor = ResolveRequestActor(otherActorRef, TSoftObjectPtr<AActor>());
+		if (!IsValid(otherActor))
+			continue;
+
+		bool bOtherFound = false;
+		auto otherParticipant = UMounteaDialogueParticipantStatics::FindDialogueParticipantInterface(otherActor, bOtherFound);
+		if (bOtherFound && otherParticipant.GetObject() && otherParticipant->Execute_CanParticipateInDialogue(otherParticipant.GetObject()))
+			OutAllParticipants.AddUnique(otherParticipant);
+	}
+
 	for (const auto& softRef : Request.OtherParticipantActors)
 	{
-		AActor* otherActor = softRef.Get();
-		if (!IsValid(otherActor)) continue;
+		AActor* otherActor = ResolveRequestActor(nullptr, softRef);
+		if (!IsValid(otherActor))
+			continue;
 
 		bool bOtherFound = false;
 		auto otherParticipant = UMounteaDialogueParticipantStatics::FindDialogueParticipantInterface(otherActor, bOtherFound);

@@ -266,6 +266,10 @@ public:
 		const UObject* WorldContextObject = nullptr);
 
 	static TScriptInterface<IMounteaDialogueParticipantInterface> FindDialogueParticipantInterface(UObject* ParticipantActor, bool& bResult);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	static TScriptInterface<IMounteaDialogueParticipantInterface> ResolveParticipantFromActor(AActor* ParticipantActor, bool& bResult);
+
 	static APawn* FindPlayerPawn(AActor* ForActor, int32& SearchDepth);
 	static APlayerController* FindPlayerController(AActor* ForActor, int32& SearchDepth);
 };

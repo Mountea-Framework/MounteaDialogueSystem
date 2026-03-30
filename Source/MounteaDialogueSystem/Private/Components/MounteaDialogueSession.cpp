@@ -49,12 +49,18 @@ void UMounteaDialogueSession::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 
 void UMounteaDialogueSession::OnRep_ContextPayload()
 {
-	const int32 newVersion = ContextPayload.ContextVersion;
-	if (newVersion <= LastDeliveredContextVersion)
-	{
-		LOG_WARNING(TEXT("[Dialogue Session] Ignoring stale payload version %d (last delivered: %d)."), newVersion, LastDeliveredContextVersion)
+	if (!ContextPayload.SessionGUID.IsValid())
 		return;
+
+	if (LastDeliveredSessionGUID != ContextPayload.SessionGUID)
+	{
+		LastDeliveredSessionGUID = ContextPayload.SessionGUID;
+		LastDeliveredContextVersion = 0;
 	}
+
+	const int32 newVersion = ContextPayload.ContextVersion;
+	if (newVersion <= 0 || newVersion <= LastDeliveredContextVersion)
+		return;
 
 	if (LastDeliveredContextVersion > 0 && newVersion > LastDeliveredContextVersion + 1)
 		LOG_WARNING(TEXT("[Dialogue Session] Payload versions jumped from %d to %d."), LastDeliveredContextVersion, newVersion)
@@ -81,6 +87,7 @@ void UMounteaDialogueSession::WriteContextPayload(FMounteaDialogueContextPayload
 	ContextPayload = MoveTemp(NewPayload);
 	MARK_PROPERTY_DIRTY_FROM_NAME(UMounteaDialogueSession, ContextPayload, this);
 	LastDeliveredContextVersion = ContextPayload.ContextVersion;
+	LastDeliveredSessionGUID = ContextPayload.SessionGUID;
 
 	NotifyLocalManagers();
 }
