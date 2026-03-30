@@ -236,6 +236,12 @@ bool UMounteaDialogueSession::IsSessionRequestValid(UMounteaDialogueManager* Man
 	if (!IsValid(Manager))
 		return false;
 
+	if (AuthoritativeManager.IsValid() && Manager != AuthoritativeManager.Get())
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(FString::Printf(TEXT("[%s] Manager is not authoritative!"), ActionName));
+		return false;
+	}
+
 	const FGuid activeSessionGUID = ContextPayload.SessionGUID;
 	if (!activeSessionGUID.IsValid())
 	{
@@ -653,5 +659,14 @@ bool UMounteaDialogueSession::HandleProcessNode(UMounteaDialogueManager* Manager
 	dialogueContext->ActiveDialogueParticipant->GetOnParticipantBecomeActiveEventHandle().Broadcast(true);
 	Manager->GetDialogueNodeStartedEventHandle().Broadcast(dialogueContext);
 	IMounteaDialogueManagerInterface::Execute_ProcessDialogueRow(Manager);
+	return true;
+}
+
+bool UMounteaDialogueSession::HandleCloseDialogue(UMounteaDialogueManager* Manager, const FGuid& SessionGUID)
+{
+	if (!IsSessionRequestValid(Manager, SessionGUID, TEXT("Close Dialogue")))
+		return false;
+
+	IMounteaDialogueManagerInterface::Execute_RequestCloseDialogue(Manager);
 	return true;
 }

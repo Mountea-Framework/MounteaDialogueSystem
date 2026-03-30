@@ -416,7 +416,18 @@ void UMounteaDialogueManager::RequestDialogueRowProcessed_Server_Implementation(
 
 void UMounteaDialogueManager::RequestCloseDialogue_Server_Implementation(FGuid SessionGUID)
 {
-	Execute_RequestCloseDialogue(this);
+	UMounteaDialogueWorldSubsystem* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>() : nullptr;
+	if (!subsystem)
+		return;
+
+	UMounteaDialogueSession* session = subsystem->GetGameStateSession();
+	if (!session)
+	{
+		OnDialogueFailed.Broadcast(TEXT("[Close Dialogue] Missing Dialogue Session on GameState."));
+		return;
+	}
+
+	session->HandleCloseDialogue(this, SessionGUID);
 }
 
 void UMounteaDialogueManager::RequestCloseDialogue_Implementation()

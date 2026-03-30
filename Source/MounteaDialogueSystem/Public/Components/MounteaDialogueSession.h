@@ -104,6 +104,7 @@ public:
 	bool HandlePrepareNode(UMounteaDialogueManager* Manager, const FGuid& SessionGUID);
 	bool HandleNodePrepared(UMounteaDialogueManager* Manager, const FGuid& SessionGUID);
 	bool HandleProcessNode(UMounteaDialogueManager* Manager, const FGuid& SessionGUID);
+	bool HandleCloseDialogue(UMounteaDialogueManager* Manager, const FGuid& SessionGUID);
 
 	// ~IMounteaDialogueConditionContextInterface
 	/**
