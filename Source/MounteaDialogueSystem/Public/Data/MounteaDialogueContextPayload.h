@@ -76,7 +76,7 @@ public:
 
 	/**
 	 * All participants registered for this session.
-	 * Use UMounteaDialogueSystemBFC::GetParticipantByType to find players, NPCs, etc.
+	 * Use UMounteaDialogueParticipantStatics::GetParticipantByType to find players, NPCs, etc.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category="Context")
 	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipants;

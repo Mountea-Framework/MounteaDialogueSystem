@@ -19,7 +19,9 @@
 
 class IMounteaDialogueParticipantInterface;
 class UMounteaDialogueContext;
+class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
+class UDataTable;
 
 UCLASS()
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueTraversalStatics : public UBlueprintFunctionLibrary
@@ -47,6 +49,10 @@ public:
 	static FDialogueRow GetSpeechData(UMounteaDialogueGraphNode* Node);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Getter"))
+	static FDialogueRow GetDialogueRow(const UDataTable* SourceTable, FName SourceName);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
 		meta=(CustomTag="MounteaK2Validate"))
 	static bool IsDialogueRowValid(const FDialogueRow& Row);
 
@@ -57,6 +63,22 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
 		meta=(CustomTag="MounteaK2Getter"))
 	static float GetRowDuration(const FDialogueRowData& Row);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Getter"))
+	static TArray<FMounteaDialogueDecorator> GetAllDialogueDecorators(const UMounteaDialogueGraph* FromGraph);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Validate"))
+	static bool HasNodeBeenTraversed(
+		const UMounteaDialogueGraphNode* Node,
+		const TArray<FDialogueTraversePath>& TraversedPath);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Getter"))
+	static TScriptInterface<IMounteaDialogueParticipantInterface> FindParticipantByTag(
+		const UMounteaDialogueContext* DialogueContext,
+		FGameplayTag SearchTag);
 
 	static TScriptInterface<IMounteaDialogueParticipantInterface> ResolveActiveParticipant(const UMounteaDialogueContext* DialogueContext);
 	static bool UpdateMatchingDialogueParticipant(

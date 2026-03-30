@@ -12,8 +12,11 @@
 #include "Helpers/MounteaDialogueTraversalStatics.h"
 
 #include "Data/MounteaDialogueContext.h"
+#include "Engine/DataTable.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
+#include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueConditionsStatics.h"
+#include "Helpers/MounteaDialogueParticipantStatics.h"
 #include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 #include "Interfaces/Nodes/MounteaDialogueSpeechDataInterface.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
@@ -80,6 +83,18 @@ FDialogueRow UMounteaDialogueTraversalStatics::GetSpeechData(UMounteaDialogueGra
 	return IMounteaDialogueSpeechDataInterface::Execute_GetSpeechData(Node);
 }
 
+FDialogueRow UMounteaDialogueTraversalStatics::GetDialogueRow(const UDataTable* SourceTable, FName SourceName)
+{
+	if (!SourceTable || SourceName.IsNone())
+		return FDialogueRow::Invalid();
+
+	const FString context;
+	if (const FDialogueRow* rowData = SourceTable->FindRow<FDialogueRow>(SourceName, context))
+		return *rowData;
+
+	return FDialogueRow::Invalid();
+}
+
 bool UMounteaDialogueTraversalStatics::IsDialogueRowValid(const FDialogueRow& Row)
 {
 	const bool bHasParticipant = !Row.DialogueParticipantName.IsNone() || !Row.DialogueParticipant.IsEmpty();
@@ -128,6 +143,63 @@ float UMounteaDialogueTraversalStatics::GetRowDuration(const FDialogueRowData& R
 	return FMath::Max(UE_KINDA_SMALL_NUMBER, returnValue);
 }
 
+TArray<FMounteaDialogueDecorator> UMounteaDialogueTraversalStatics::GetAllDialogueDecorators(const UMounteaDialogueGraph* FromGraph)
+{
+	TArray<FMounteaDialogueDecorator> returnValue;
+	if (!IsValid(FromGraph))
+		return returnValue;
+
+	returnValue.Append(FromGraph->GetGraphDecorators());
+	const TArray<UMounteaDialogueGraphNode*> allNodes = FromGraph->GetAllNodes();
+	for (UMounteaDialogueGraphNode* node : allNodes)
+	{
+		if (!IsValid(node))
+			continue;
+
+		returnValue.Append(node->GetNodeDecorators());
+	}
+
+	return returnValue;
+}
+
+bool UMounteaDialogueTraversalStatics::HasNodeBeenTraversed(
+	const UMounteaDialogueGraphNode* Node,
+	const TArray<FDialogueTraversePath>& TraversedPath)
+{
+	if (!IsValid(Node))
+		return false;
+
+	const FGuid nodeGuid = Node->GetNodeGUID();
+	const FGuid graphGuid = Node->GetGraphGUID();
+	if (!nodeGuid.IsValid() || !graphGuid.IsValid())
+		return false;
+
+	return TraversedPath.ContainsByPredicate(
+		[&](const FDialogueTraversePath& pathEntry)
+		{
+			return pathEntry.NodeGuid == nodeGuid && pathEntry.GraphGuid == graphGuid;
+		});
+}
+
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueTraversalStatics::FindParticipantByTag(
+	const UMounteaDialogueContext* DialogueContext,
+	FGameplayTag SearchTag)
+{
+	if (!IsValid(DialogueContext))
+		return nullptr;
+	if (!SearchTag.IsValid())
+		return nullptr;
+
+	const auto* participantRef = DialogueContext->DialogueParticipants.FindByPredicate(
+		[&](const TScriptInterface<IMounteaDialogueParticipantInterface>& participantInterface)
+		{
+			if (!participantInterface.GetObject())
+				return false;
+			return IMounteaDialogueParticipantInterface::Execute_GetParticipantTag(participantInterface.GetObject()) == SearchTag;
+		});
+	return participantRef ? *participantRef : nullptr;
+}
+
 TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueTraversalStatics::ResolveActiveParticipant(const UMounteaDialogueContext* DialogueContext)
 {
 	if (!IsValid(DialogueContext) || !IsValid(DialogueContext->ActiveNode))
@@ -143,7 +215,20 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueTraversal
 	activeTags.AppendTags(DialogueContext->ActiveNode->NodeGameplayTags);
 
 	if (activeTags.Num() == 0)
-		return IsValid(DialogueContext->ActiveDialogueParticipant.GetObject()) ? DialogueContext->ActiveDialogueParticipant : participants[0];
+	{
+		if (IsValid(DialogueContext->ActiveDialogueParticipant.GetObject()))
+			return DialogueContext->ActiveDialogueParticipant;
+
+		const TScriptInterface<IMounteaDialogueParticipantInterface> preferredNpc =
+			UMounteaDialogueParticipantStatics::GetParticipantByType(
+				participants,
+				EDialogueParticipantType::NPC,
+				DialogueContext);
+		if (preferredNpc.GetObject() && preferredNpc.GetInterface())
+			return preferredNpc;
+
+		return participants[0];
+	}
 
 	const auto* foundParticipant = participants.FindByPredicate(
 		[&](const TScriptInterface<IMounteaDialogueParticipantInterface>& participant)
@@ -154,9 +239,21 @@ TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueTraversal
 			return participantTag.MatchesAny(activeTags);
 		});
 
-	return (foundParticipant && *foundParticipant != DialogueContext->ActiveDialogueParticipant)
-		? *foundParticipant
-		: DialogueContext->ActiveDialogueParticipant;
+	if (foundParticipant && *foundParticipant != DialogueContext->ActiveDialogueParticipant)
+		return *foundParticipant;
+
+	if (IsValid(DialogueContext->ActiveDialogueParticipant.GetObject()))
+		return DialogueContext->ActiveDialogueParticipant;
+
+	const TScriptInterface<IMounteaDialogueParticipantInterface> preferredNpc =
+		UMounteaDialogueParticipantStatics::GetParticipantByType(
+			participants,
+			EDialogueParticipantType::NPC,
+			DialogueContext);
+	if (preferredNpc.GetObject() && preferredNpc.GetInterface())
+		return preferredNpc;
+
+	return participants[0];
 }
 
 bool UMounteaDialogueTraversalStatics::UpdateMatchingDialogueParticipant(
