@@ -175,7 +175,8 @@ UAudioComponent* UMounteaDialogueParticipant::FindAudioComponentByTag(const FNam
 
 void UMounteaDialogueParticipant::PlayParticipantVoice_Implementation(USoundBase* ParticipantVoice)
 {
-	if(!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
+	const UWorld* world = GetWorld();
+	if (!IsValid(world) || world->GetNetMode() == NM_DedicatedServer)
 	{
 		LOG_INFO(TEXT("[PlayParticipantVoice] Voice cannot be played at Dedicated Server!"))
 		return;
@@ -190,7 +191,8 @@ void UMounteaDialogueParticipant::PlayParticipantVoice_Implementation(USoundBase
 
 void UMounteaDialogueParticipant::SkipParticipantVoice_Implementation(USoundBase* ParticipantVoice)
 {
-	if(!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
+	const UWorld* world = GetWorld();
+	if (!IsValid(world) || world->GetNetMode() == NM_DedicatedServer)
 	{
 		LOG_INFO(TEXT("[PlayParticipantVoice] Voice cannot be played at Dedicated Server!"))
 		return;
