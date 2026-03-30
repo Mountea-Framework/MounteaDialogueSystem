@@ -98,7 +98,7 @@ void UMounteaDialogueContext::UpdateActiveDialogueRowDataIndex(const int32 NewIn
 
 void UMounteaDialogueContext::SetActiveDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant)
 {
-	if (NewParticipant != ActiveDialogueParticipant)
+	if (NewParticipant == ActiveDialogueParticipant)
 		return;
 
 	ActiveDialogueParticipant = NewParticipant;
