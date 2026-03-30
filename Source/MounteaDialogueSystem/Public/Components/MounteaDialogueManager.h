@@ -188,6 +188,13 @@ private:
 	void OnRep_ManagerState();
 
 	void ProcessWorldWidgetUpdate(const FString& Command);
+	void ApplyReplicatedWidgetCommand(const FString& Command);
+	void ReconcileClientUIFromPayload(const FMounteaDialogueContextPayload& Payload);
+	void ReconcileClientAudioFromPayload(const FMounteaDialogueContextPayload& Payload, bool bShouldPlayRowAudio);
+	bool IsCoreWidgetCommand(const FString& Command) const;
+	bool ShouldReplayPayloadCommand(const FMounteaDialogueContextPayload& Payload) const;
+	uint32 BuildAllowedChildrenHash(const TArray<FGuid>& AllowedChildren) const;
+	void ResetClientSyncCaches(const FGuid& SessionGUID);
 
 public:
 
@@ -367,6 +374,15 @@ protected:
 	FString LastDialogueCommand;
 
 	bool bParticipantsStarted = false;
+	int32 LastAppliedPayloadCommandVersion = 0;
+	FGuid LastClientSyncSessionGUID;
+	FGuid LastReconciledRowGUID;
+	int32 LastReconciledRowIndex = INDEX_NONE;
+	uint32 LastReconciledOptionsHash = 0;
+	FGuid LastPlayedAudioRowGUID;
+	int32 LastPlayedAudioRowIndex = INDEX_NONE;
+	bool bClientAudioPlaying = false;
+	uint8 LastReconciledViewMode = 0;
 
 protected:
 	

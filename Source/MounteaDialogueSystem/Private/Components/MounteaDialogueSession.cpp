@@ -62,7 +62,8 @@ void UMounteaDialogueSession::OnRep_ContextPayload()
 	if (newVersion <= 0 || newVersion <= LastDeliveredContextVersion)
 		return;
 
-	if (LastDeliveredContextVersion > 0 && newVersion > LastDeliveredContextVersion + 1)
+	const int32 versionGap = newVersion - LastDeliveredContextVersion;
+	if (LastDeliveredContextVersion > 0 && versionGap >= 10)
 		LOG_WARNING(TEXT("[Dialogue Session] Payload versions jumped from %d to %d."), LastDeliveredContextVersion, newVersion)
 
 	LastDeliveredContextVersion = newVersion;

@@ -34,6 +34,12 @@
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Subsystem/MounteaDialogueWorldSubsystem.h"
 
+static constexpr uint8 DialogueClientViewMode_None = 0;
+static constexpr uint8 DialogueClientViewMode_Row = 1;
+static constexpr uint8 DialogueClientViewMode_Options = 2;
+static constexpr uint8 DialogueClientViewMode_Neutral = 3;
+static constexpr uint8 DialogueClientViewMode_Closed = 4;
+
 UMounteaDialogueManager::UMounteaDialogueManager()
 	: DialogueWidgetZOrder(12)
 	, DefaultManagerState(EDialogueManagerState::EDMS_Enabled)
@@ -184,6 +190,9 @@ void UMounteaDialogueManager::ProcessStateUpdated()
 
 void UMounteaDialogueManager::OnContextPayloadUpdated(const FMounteaDialogueContextPayload& Payload)
 {
+	if (LastClientSyncSessionGUID != Payload.SessionGUID)
+		ResetClientSyncCaches(Payload.SessionGUID);
+
 	if (!IsValid(DialogueContext))
 		DialogueContext = NewObject<UMounteaDialogueContext>(this);
 
@@ -225,8 +234,13 @@ void UMounteaDialogueManager::OnContextPayloadUpdated(const FMounteaDialogueCont
 
 	NotifyParticipants(Payload.DialogueParticipants);
 
-	if (!Payload.LastWidgetCommand.IsEmpty())
-		ProcessWorldWidgetUpdate(Payload.LastWidgetCommand);
+	ReconcileClientUIFromPayload(Payload);
+
+	if (ShouldReplayPayloadCommand(Payload))
+	{
+		ApplyReplicatedWidgetCommand(Payload.LastWidgetCommand);
+		LastAppliedPayloadCommandVersion = Payload.ContextVersion;
+	}
 }
 
 void UMounteaDialogueManager::NotifyParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants)
@@ -547,6 +561,20 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 	if (UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
 		OnDialogueStarted.Broadcast(DialogueContext);
 
+	if (!UMounteaDialogueManagerStatics::IsServer(GetOwner()))
+	{
+		UMounteaDialogueWorldSubsystem* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>() : nullptr;
+		if (subsystem)
+		{
+			if (UMounteaDialogueSession* session = subsystem->GetGameStateSession())
+			{
+				const FMounteaDialogueContextPayload& payload = session->GetContextPayload();
+				if (payload.IsValid())
+					ReconcileClientUIFromPayload(payload);
+			}
+		}
+	}
+
 	if (UMounteaDialogueManagerStatics::IsServer(GetOwner()))
 	{
 		Execute_PrepareNode(this);
@@ -586,6 +614,7 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 		OnDialogueClosed.Broadcast(DialogueContext);
 
 	DialogueInstigator = nullptr;
+	ResetClientSyncCaches(FGuid());
 }
 
 void UMounteaDialogueManager::CleanupDialogue_Implementation()
@@ -809,6 +838,189 @@ void UMounteaDialogueManager::ProcessWorldWidgetUpdate(const FString& Command)
 	LastDialogueCommand = Command;
 }
 
+void UMounteaDialogueManager::ApplyReplicatedWidgetCommand(const FString& Command)
+{
+	if (!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
+		return;
+
+	if (Command.IsEmpty())
+		return;
+
+	if (IsValid(DialogueWidget))
+		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidget, this, Command);
+
+	ProcessWorldWidgetUpdate(Command);
+}
+
+bool UMounteaDialogueManager::IsCoreWidgetCommand(const FString& Command) const
+{
+	return Command == MounteaDialogueWidgetCommands::ShowDialogueRow
+		|| Command == MounteaDialogueWidgetCommands::HideDialogueRow
+		|| Command == MounteaDialogueWidgetCommands::AddDialogueOptions
+		|| Command == MounteaDialogueWidgetCommands::RemoveDialogueOptions
+		|| Command == MounteaDialogueWidgetCommands::CreateDialogueWidget
+		|| Command == MounteaDialogueWidgetCommands::CloseDialogueWidget;
+}
+
+bool UMounteaDialogueManager::ShouldReplayPayloadCommand(const FMounteaDialogueContextPayload& Payload) const
+{
+	return !Payload.LastWidgetCommand.IsEmpty()
+		&& Payload.ContextVersion > LastAppliedPayloadCommandVersion
+		&& !IsCoreWidgetCommand(Payload.LastWidgetCommand);
+}
+
+uint32 UMounteaDialogueManager::BuildAllowedChildrenHash(const TArray<FGuid>& AllowedChildren) const
+{
+	uint32 hash = 0;
+	for (const FGuid& childGuid : AllowedChildren)
+	{
+		hash = HashCombineFast(hash, GetTypeHash(childGuid));
+	}
+	return hash;
+}
+
+void UMounteaDialogueManager::ResetClientSyncCaches(const FGuid& SessionGUID)
+{
+	if (bClientAudioPlaying
+		&& !UMounteaDialogueManagerStatics::IsServer(GetOwner())
+		&& UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner())
+		&& IsValid(DialogueContext)
+		&& DialogueContext->ActiveDialogueParticipant.GetObject()
+		&& DialogueContext->ActiveDialogueParticipant.GetInterface())
+	{
+		UMounteaDialogueParticipantStatics::SkipParticipantVoice(DialogueContext->ActiveDialogueParticipant, nullptr);
+	}
+
+	LastClientSyncSessionGUID = SessionGUID;
+	LastAppliedPayloadCommandVersion = 0;
+	LastReconciledRowGUID.Invalidate();
+	LastReconciledRowIndex = INDEX_NONE;
+	LastReconciledOptionsHash = 0;
+	LastPlayedAudioRowGUID.Invalidate();
+	LastPlayedAudioRowIndex = INDEX_NONE;
+	bClientAudioPlaying = false;
+	LastReconciledViewMode = DialogueClientViewMode_None;
+	LastDialogueCommand.Empty();
+}
+
+void UMounteaDialogueManager::ReconcileClientAudioFromPayload(const FMounteaDialogueContextPayload& Payload, const bool bShouldPlayRowAudio)
+{
+	if (UMounteaDialogueManagerStatics::IsServer(GetOwner()))
+		return;
+
+	if (!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
+		return;
+
+	const TScriptInterface<IMounteaDialogueParticipantInterface> activeParticipant = Payload.ActiveDialogueParticipant;
+
+	if (!bShouldPlayRowAudio)
+	{
+		if (bClientAudioPlaying && activeParticipant.GetObject() && activeParticipant.GetInterface())
+			UMounteaDialogueParticipantStatics::SkipParticipantVoice(activeParticipant, nullptr);
+
+		bClientAudioPlaying = false;
+		LastPlayedAudioRowGUID.Invalidate();
+		LastPlayedAudioRowIndex = INDEX_NONE;
+		return;
+	}
+
+	if (!activeParticipant.GetObject() || !activeParticipant.GetInterface())
+		return;
+
+	if (!UMounteaDialogueTraversalStatics::IsDialogueRowValid(Payload.ActiveDialogueRow))
+		return;
+
+	if (!Payload.ActiveDialogueRow.RowData.IsValidIndex(Payload.ActiveDialogueRowDataIndex))
+		return;
+
+	const FDialogueRowData& rowData = Payload.ActiveDialogueRow.RowData[Payload.ActiveDialogueRowDataIndex];
+	if (!UMounteaDialogueTraversalStatics::IsDialogueRowDataValid(rowData))
+		return;
+
+	if (bClientAudioPlaying
+		&& LastPlayedAudioRowGUID == Payload.ActiveDialogueRow.RowGUID
+		&& LastPlayedAudioRowIndex == Payload.ActiveDialogueRowDataIndex)
+	{
+		return;
+	}
+
+	UMounteaDialogueParticipantStatics::PlayParticipantVoice(activeParticipant, rowData.RowSound);
+	LastPlayedAudioRowGUID = Payload.ActiveDialogueRow.RowGUID;
+	LastPlayedAudioRowIndex = Payload.ActiveDialogueRowDataIndex;
+	bClientAudioPlaying = true;
+}
+
+void UMounteaDialogueManager::ReconcileClientUIFromPayload(const FMounteaDialogueContextPayload& Payload)
+{
+	if (!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
+		return;
+
+	if (ManagerState != EDialogueManagerState::EDMS_Active)
+	{
+		if (LastReconciledViewMode != DialogueClientViewMode_Closed)
+			ApplyReplicatedWidgetCommand(MounteaDialogueWidgetCommands::CloseDialogueWidget);
+
+		LastReconciledViewMode = DialogueClientViewMode_Closed;
+		ReconcileClientAudioFromPayload(Payload, false);
+		return;
+	}
+
+	const bool bHasOptions = Payload.AllowedChildNodeGUIDs.Num() > 0;
+	const bool bCanRenderRow = UMounteaDialogueTraversalStatics::IsDialogueRowValid(Payload.ActiveDialogueRow)
+		&& Payload.ActiveDialogueRow.RowData.IsValidIndex(Payload.ActiveDialogueRowDataIndex)
+		&& UMounteaDialogueTraversalStatics::IsDialogueRowDataValid(Payload.ActiveDialogueRow.RowData[Payload.ActiveDialogueRowDataIndex]);
+
+	if (bHasOptions)
+	{
+		const uint32 optionsHash = BuildAllowedChildrenHash(Payload.AllowedChildNodeGUIDs);
+		const bool bNeedsRefresh = LastReconciledViewMode != DialogueClientViewMode_Options
+			|| LastReconciledOptionsHash != optionsHash;
+		if (bNeedsRefresh)
+		{
+			ApplyReplicatedWidgetCommand(MounteaDialogueWidgetCommands::HideDialogueRow);
+			ApplyReplicatedWidgetCommand(MounteaDialogueWidgetCommands::AddDialogueOptions);
+		}
+
+		LastReconciledOptionsHash = optionsHash;
+		LastReconciledRowGUID.Invalidate();
+		LastReconciledRowIndex = INDEX_NONE;
+		LastReconciledViewMode = DialogueClientViewMode_Options;
+		ReconcileClientAudioFromPayload(Payload, false);
+		return;
+	}
+
+	if (bCanRenderRow)
+	{
+		const bool bNeedsRefresh = LastReconciledViewMode != DialogueClientViewMode_Row
+			|| LastReconciledRowGUID != Payload.ActiveDialogueRow.RowGUID
+			|| LastReconciledRowIndex != Payload.ActiveDialogueRowDataIndex;
+		if (bNeedsRefresh)
+		{
+			ApplyReplicatedWidgetCommand(MounteaDialogueWidgetCommands::RemoveDialogueOptions);
+			ApplyReplicatedWidgetCommand(MounteaDialogueWidgetCommands::ShowDialogueRow);
+		}
+
+		LastReconciledRowGUID = Payload.ActiveDialogueRow.RowGUID;
+		LastReconciledRowIndex = Payload.ActiveDialogueRowDataIndex;
+		LastReconciledOptionsHash = 0;
+		LastReconciledViewMode = DialogueClientViewMode_Row;
+		ReconcileClientAudioFromPayload(Payload, true);
+		return;
+	}
+
+	if (LastReconciledViewMode != DialogueClientViewMode_Neutral)
+	{
+		ApplyReplicatedWidgetCommand(MounteaDialogueWidgetCommands::HideDialogueRow);
+		ApplyReplicatedWidgetCommand(MounteaDialogueWidgetCommands::RemoveDialogueOptions);
+	}
+
+	LastReconciledRowGUID.Invalidate();
+	LastReconciledRowIndex = INDEX_NONE;
+	LastReconciledOptionsHash = 0;
+	LastReconciledViewMode = DialogueClientViewMode_Neutral;
+	ReconcileClientAudioFromPayload(Payload, false);
+}
+
 bool UMounteaDialogueManager::AddDialogueUIObject_Implementation(UObject* NewDialogueObject)
 {
 	if (NewDialogueObject == nullptr)
@@ -949,6 +1161,8 @@ bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, 
 
 	if (DialogueWidget)
 		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidget, this, Command);
+	
+	LOG_ERROR(TEXT("[Update Dialogue UI] Command: %s"), *Command);
 
 	Execute_UpdateWorldDialogueUI(this, Command);
 	return true;
