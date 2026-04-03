@@ -9,7 +9,16 @@
 
 UMounteaDialogueParticipantUserInterfaceComponent::UMounteaDialogueParticipantUserInterfaceComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	bAutoActivate = true;
+	
+	SetIsReplicatedByDefault(false);
+	SetActiveFlag(true);
+
+	PrimaryComponentTick.bStartWithTickEnabled = false;
+
+	ComponentTags.Add(FName("Mountea"));
+	ComponentTags.Add(FName("Dialogue"));
+	ComponentTags.Add(FName("Participant Interface"));
 }
 
 void UMounteaDialogueParticipantUserInterfaceComponent::BeginPlay()

@@ -29,6 +29,20 @@ FString FormattedMessage = FString::Printf(Format, ##__VA_ARGS__); \
 PrintDialogueLog(ELogVerbosity::Error, FormattedMessage, FLinearColor(1.0f, 0.0f, 0.0f), 15.0f); \
 }
 
-#define LOG_INFO_KEY(Key, Format, ...) {}
-#define LOG_WARNING_KEY(Key, Format, ...) {}
-#define LOG_ERROR_KEY(Key, Format, ...) {}
+#define LOG_INFO_KEY(Key, Format, ...) \
+{ \
+FString FormattedMessage = FString::Printf(Format, ##__VA_ARGS__); \
+PrintDialogueLogKeyed(ELogVerbosity::Log, FormattedMessage, FLinearColor(0.0f, 1.0f, 0.0f), 5.0f, Key); \
+}
+
+#define LOG_WARNING_KEY(Key, Format, ...) \
+{ \
+FString FormattedMessage = FString::Printf(Format, ##__VA_ARGS__); \
+PrintDialogueLogKeyed(ELogVerbosity::Warning, FormattedMessage, FLinearColor(1.0f, 1.0f, 0.0f), 10.0f, Key); \
+}
+
+#define LOG_ERROR_KEY(Key, Format, ...) \
+{ \
+FString FormattedMessage = FString::Printf(Format, ##__VA_ARGS__); \
+PrintDialogueLogKeyed(ELogVerbosity::Error, FormattedMessage, FLinearColor(1.0f, 0.0f, 0.0f), 15.0f, Key); \
+}

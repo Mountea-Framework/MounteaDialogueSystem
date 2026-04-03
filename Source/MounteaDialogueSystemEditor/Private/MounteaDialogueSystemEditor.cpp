@@ -212,6 +212,14 @@ void FMounteaDialogueSystemEditor::StartupModule()
 					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueSession", DialogueSessionComponentClassThumb);
 					DialogueTreeSet->Set("ClassIcon.MounteaDialogueSession", DialogueSessionComponentClassIcon);
 				}
+				
+				FSlateImageBrush* DialogueParticipantInterfaceComponentClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/ParticipantInterfaceIcon"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueParticipantInterfaceComponentClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/ParticipantInterfaceIcon"), TEXT(".png")), FVector2D(16.f, 16.f));
+				if (DialogueParticipantInterfaceComponentClassThumb && DialogueParticipantInterfaceComponentClassIcon)
+				{
+					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueParticipantUserInterfaceComponent", DialogueParticipantInterfaceComponentClassThumb);
+					DialogueTreeSet->Set("ClassIcon.MounteaDialogueParticipantUserInterfaceComponent", DialogueParticipantInterfaceComponentClassIcon);
+				}
 
 				//Register the created style
 				FSlateStyleRegistry::RegisterSlateStyle(*DialogueTreeSet.Get());

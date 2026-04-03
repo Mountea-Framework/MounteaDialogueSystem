@@ -18,19 +18,14 @@
 #include "Data/MounteaDialogueContext.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
 #include "Helpers/MounteaDialogueContextStatics.h"
-#include "GameFramework/PlayerState.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueManagerStatics.h"
 #include "Helpers/MounteaDialogueParticipantStatics.h"
 #include "Helpers/MounteaDialogueTraversalStatics.h"
 #include "Interfaces/HUD/MounteaDialogueWBPInterface.h"
-#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
-#include "Net/Core/PushModel/PushModel.h"
-#include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 #include "Settings/MounteaDialogueSystemSettings.h"
 #include "Components/MounteaDialogueSession.h"
-#include "GameFramework/GameStateBase.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Subsystem/MounteaDialogueWorldSubsystem.h"
 
@@ -206,20 +201,6 @@ void UMounteaDialogueManager::ProcessStateUpdated()
 
 void UMounteaDialogueManager::OnContextPayloadUpdated(const FMounteaDialogueContextPayload& Payload)
 {
-	const FString payloadUpdateKey = FString::Printf(TEXT("Diag.Manager.PayloadUpdate.%s.%s.%d"),
-		UMounteaDialogueManagerStatics::IsServer(GetOwner()) ? TEXT("Server") : TEXT("Client"),
-		*Payload.SessionGUID.ToString(), Payload.ContextVersion);
-	LOG_ERROR_KEY(payloadUpdateKey, TEXT("[Diag][Manager][OnContextPayloadUpdated] Manager=%s Owner=%s Session=%s Version=%d State=%d Allowed=%d RowGUID=%s RowIndex=%d Cmd=%s"),
-		*GetNameSafe(this), *GetNameSafe(GetOwner()), *Payload.SessionGUID.ToString(), Payload.ContextVersion,
-		static_cast<int32>(ManagerState), Payload.AllowedChildNodeGUIDs.Num(),
-		*Payload.ActiveDialogueRow.RowGUID.ToString(), Payload.ActiveDialogueRowDataIndex, *Payload.LastWidgetCommand)
-	LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Manager.PayloadActiveNode.%s.%s.%d"),
-		UMounteaDialogueManagerStatics::IsServer(GetOwner()) ? TEXT("Server") : TEXT("Client"),
-		*Payload.SessionGUID.ToString(), Payload.ContextVersion), TEXT("[Diag][Manager][ActiveNode][Payload] Role=%s Session=%s Version=%d ActiveNodeGUID=%s ActiveGraphGUID=%s"),
-		UMounteaDialogueManagerStatics::IsServer(GetOwner()) ? TEXT("Server") : TEXT("Client"),
-		*Payload.SessionGUID.ToString(), Payload.ContextVersion,
-		*Payload.ActiveNodeGUID.ToString(), *Payload.ActiveGraphGUID.ToString())
-
 	if (LastClientSyncSessionGUID != Payload.SessionGUID)
 		ResetClientSyncCaches(Payload.SessionGUID);
 
@@ -258,14 +239,6 @@ void UMounteaDialogueManager::OnContextPayloadUpdated(const FMounteaDialogueCont
 	DialogueContext->ActiveDialogueRow = Payload.ActiveDialogueRow;
 	DialogueContext->ActiveDialogueRowDataIndex = Payload.ActiveDialogueRowDataIndex;
 	DialogueContext->LastWidgetCommand = Payload.LastWidgetCommand;
-	LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Manager.ResolvedActiveNode.%s.%s.%d"),
-		UMounteaDialogueManagerStatics::IsServer(GetOwner()) ? TEXT("Server") : TEXT("Client"),
-		*Payload.SessionGUID.ToString(), Payload.ContextVersion), TEXT("[Diag][Manager][ActiveNode][Resolved] Role=%s Session=%s Version=%d ActiveNode=%s ActiveNodeGUID=%s AllowedNodes=%d"),
-		UMounteaDialogueManagerStatics::IsServer(GetOwner()) ? TEXT("Server") : TEXT("Client"),
-		*Payload.SessionGUID.ToString(), Payload.ContextVersion,
-		*GetNameSafe(DialogueContext->ActiveNode),
-		DialogueContext->ActiveNode ? *DialogueContext->ActiveNode->GetNodeGUID().ToString() : TEXT("Invalid"),
-		DialogueContext->AllowedChildNodes.Num())
 
 	OnDialogueContextUpdated.Broadcast(DialogueContext);
 
@@ -463,9 +436,6 @@ void UMounteaDialogueManager::RequestNodeProcessed_Server_Implementation(FGuid S
 
 void UMounteaDialogueManager::RequestDialogueRowProcessed_Server_Implementation(FGuid SessionGUID, const bool bForceFinish)
 {
-	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Manager][RPC][RequestDialogueRowProcessed_Server] Manager=%s Owner=%s Session=%s ForceFinish=%s"),
-		*GetNameSafe(this), *GetNameSafe(GetOwner()), *SessionGUID.ToString(), bForceFinish ? TEXT("true") : TEXT("false"))
-
 	UMounteaDialogueWorldSubsystem* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>() : nullptr;
 	if (!subsystem)
 		return;
@@ -837,20 +807,12 @@ void UMounteaDialogueManager::DialogueRowProcessed_Implementation(const bool bFo
 {
 	// To avoid race conditions simply return if active
 	if (ManagerState != EDialogueManagerState::EDMS_Active)
-	{
-		LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Manager][DialogueRowProcessed] Ignored because state is not Active. Manager=%s State=%d"),
-			*GetNameSafe(this), static_cast<int32>(ManagerState))
 		return;
-	}
 
 	const FGuid sessionGuid = IsValid(DialogueContext) ? DialogueContext->SessionGUID : FGuid();
-	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Manager][DialogueRowProcessed] Enter Manager=%s Session=%s ForceFinish=%s IsServer=%s"),
-		*GetNameSafe(this), *sessionGuid.ToString(), bForceFinish ? TEXT("true") : TEXT("false"),
-		UMounteaDialogueManagerStatics::IsServer(GetOwner()) ? TEXT("true") : TEXT("false"))
 
 	if (!UMounteaDialogueManagerStatics::IsServer(GetOwner()))
 	{
-		LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Manager][DialogueRowProcessed] Client forwarding to server RPC. Session=%s"), *sessionGuid.ToString())
 		RequestDialogueRowProcessed_Server(sessionGuid, bForceFinish);
 		return;
 	}
@@ -1214,12 +1176,6 @@ void UMounteaDialogueManager::ReconcileClientUIFromPayload(const FMounteaDialogu
 		&& Payload.ActiveDialogueRow.RowData.IsValidIndex(Payload.ActiveDialogueRowDataIndex)
 		&& UMounteaDialogueTraversalStatics::IsDialogueRowDataValid(Payload.ActiveDialogueRow.RowData[Payload.ActiveDialogueRowDataIndex]);
 	const bool bShouldShowOptions = bHasOptions && !bCanRenderRow;
-	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Manager][Reconcile] Manager=%s Session=%s Version=%d State=%d CanRenderRow=%s HasOptions=%s ShowOptions=%s RowGUID=%s RowIndex=%d"),
-		*GetNameSafe(this), *Payload.SessionGUID.ToString(), Payload.ContextVersion, static_cast<int32>(ManagerState),
-		bCanRenderRow ? TEXT("true") : TEXT("false"),
-		bHasOptions ? TEXT("true") : TEXT("false"),
-		bShouldShowOptions ? TEXT("true") : TEXT("false"),
-		*Payload.ActiveDialogueRow.RowGUID.ToString(), Payload.ActiveDialogueRowDataIndex)
 
 	if (bCanRenderRow)
 	{
