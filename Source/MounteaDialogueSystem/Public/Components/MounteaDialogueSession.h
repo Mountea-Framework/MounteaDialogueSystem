@@ -158,4 +158,5 @@ private:
 	int32 PendingClientDispatchVersion = 0;
 	int32 LastPendingDispatchWarningVersion = 0;
 	bool bClientDispatchPending = false;
+	FTimerHandle PendingDispatchRetryTimer;
 };

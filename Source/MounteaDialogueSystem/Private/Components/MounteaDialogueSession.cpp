@@ -50,7 +50,10 @@ void UMounteaDialogueSession::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 void UMounteaDialogueSession::OnRep_ContextPayload()
 {
 	if (!ContextPayload.SessionGUID.IsValid())
+	{
+		LOG_ERROR_KEY(TEXT("Diag.Session.OnRep.Client.InvalidSession"), TEXT("[Diag][Session][OnRep] Invalid SessionGUID, payload ignored."))
 		return;
+	}
 
 	if (LastDeliveredSessionGUID != ContextPayload.SessionGUID)
 	{
@@ -60,13 +63,29 @@ void UMounteaDialogueSession::OnRep_ContextPayload()
 
 	const int32 newVersion = ContextPayload.ContextVersion;
 	if (newVersion <= 0 || newVersion <= LastDeliveredContextVersion)
+	{
+		const FString staleKey = FString::Printf(TEXT("Diag.Session.OnRep.Client.Stale.%s.%d.%d"),
+			*ContextPayload.SessionGUID.ToString(), newVersion, LastDeliveredContextVersion);
+		LOG_ERROR_KEY(staleKey, TEXT("[Diag][Session][OnRep] Stale/invalid version. New=%d Last=%d"), newVersion, LastDeliveredContextVersion)
+		if (bClientDispatchPending)
+			TryDispatchPendingClientPayload();
 		return;
+	}
 
 	const int32 versionGap = newVersion - LastDeliveredContextVersion;
 	if (LastDeliveredContextVersion > 0 && versionGap >= 10)
 		LOG_WARNING(TEXT("[Dialogue Session] Payload versions jumped from %d to %d."), LastDeliveredContextVersion, newVersion)
 
 	LastDeliveredContextVersion = newVersion;
+	const FString onRepDispatchKey = FString::Printf(TEXT("Diag.Session.OnRep.Client.Dispatch.%s.%d"),
+		*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion);
+	LOG_ERROR_KEY(onRepDispatchKey, TEXT("[Diag][Session][OnRep] Dispatching to local managers. Session=%s Version=%d LastDelivered=%d"),
+		*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion, LastDeliveredContextVersion)
+	LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.OnRep.Client.ActiveNode.%s.%d"),
+		*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion),
+		TEXT("[Diag][Session][OnRep][ClientActiveNode] Session=%s Version=%d ActiveNodeGUID=%s ActiveGraphGUID=%s"),
+		*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion,
+		*ContextPayload.ActiveNodeGUID.ToString(), *ContextPayload.ActiveGraphGUID.ToString())
 	NotifyLocalManagers();
 }
 
@@ -85,6 +104,10 @@ void UMounteaDialogueSession::WriteContextPayload(FMounteaDialogueContextPayload
 	}
 
 	NewPayload.ContextVersion = ContextPayload.ContextVersion + 1;
+	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][WritePayload][Server] Session=%s NextVersion=%d ActiveNodeGUID=%s ActiveGraphGUID=%s Allowed=%d RowGUID=%s RowIndex=%d"),
+		*NewPayload.SessionGUID.ToString(), NewPayload.ContextVersion, *NewPayload.ActiveNodeGUID.ToString(),
+		*NewPayload.ActiveGraphGUID.ToString(), NewPayload.AllowedChildNodeGUIDs.Num(),
+		*NewPayload.ActiveDialogueRow.RowGUID.ToString(), NewPayload.ActiveDialogueRowDataIndex)
 	ContextPayload = MoveTemp(NewPayload);
 	MARK_PROPERTY_DIRTY_FROM_NAME(UMounteaDialogueSession, ContextPayload, this);
 	LastDeliveredContextVersion = ContextPayload.ContextVersion;
@@ -98,12 +121,16 @@ void UMounteaDialogueSession::TryDispatchPendingClientPayload()
 	if (GetOwner() && GetOwner()->HasAuthority())
 		return;
 
-	if (!bClientDispatchPending)
-		return;
-
 	UWorld* world = GetWorld();
 	if (!world)
 		return;
+
+	if (!bClientDispatchPending)
+	{
+		if (world->GetTimerManager().IsTimerActive(PendingDispatchRetryTimer))
+			world->GetTimerManager().ClearTimer(PendingDispatchRetryTimer);
+		return;
+	}
 
 	UMounteaDialogueWorldSubsystem* subsystem = world->GetSubsystem<UMounteaDialogueWorldSubsystem>();
 	if (!subsystem)
@@ -118,14 +145,25 @@ void UMounteaDialogueSession::TryDispatchPendingClientPayload()
 		if (!IsValid(ownerActor))
 			continue;
 
-		if (!UMounteaDialogueManagerStatics::IsLocalPlayer(ownerActor))
+		const bool bIsLocal = UMounteaDialogueManagerStatics::IsLocalPlayer(ownerActor);
+		LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.PendingCandidate.%s.%s.%d"),
+			*GetNameSafe(manager), *ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion),
+			TEXT("[Diag][Session][TryDispatchPending] Candidate Manager=%s Owner=%s IsLocal=%s Session=%s Version=%d"),
+			*GetNameSafe(manager), *GetNameSafe(ownerActor), bIsLocal ? TEXT("true") : TEXT("false"),
+			*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion)
+		if (!bIsLocal)
 			continue;
 
+		LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.PendingDispatch.%s.%d"),
+			*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion), TEXT("[Diag][Session][TryDispatchPending] Delivering pending payload to Manager=%s Owner=%s Session=%s Version=%d"),
+			*GetNameSafe(manager), *GetNameSafe(ownerActor), *ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion)
 		manager->OnContextPayloadUpdated(ContextPayload);
 		bClientDispatchPending = false;
 		LastPendingDispatchWarningVersion = 0;
 		PendingClientDispatchVersion = 0;
 		PendingClientDispatchSessionGUID.Invalidate();
+		if (world->GetTimerManager().IsTimerActive(PendingDispatchRetryTimer))
+			world->GetTimerManager().ClearTimer(PendingDispatchRetryTimer);
 		LOG_INFO(TEXT("[Dialogue Session] Delivered pending payload version %d to local manager '%s'."), ContextPayload.ContextVersion, *GetNameSafe(manager))
 		return;
 	}
@@ -133,8 +171,14 @@ void UMounteaDialogueSession::TryDispatchPendingClientPayload()
 	if (LastPendingDispatchWarningVersion != PendingClientDispatchVersion)
 	{
 		LastPendingDispatchWarningVersion = PendingClientDispatchVersion;
+		LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.PendingMissing.%s.%d"),
+			*PendingClientDispatchSessionGUID.ToString(), PendingClientDispatchVersion), TEXT("[Diag][Session][TryDispatchPending] No local manager found for pending payload. Session=%s Version=%d"),
+			*PendingClientDispatchSessionGUID.ToString(), PendingClientDispatchVersion)
 		LOG_WARNING(TEXT("[Dialogue Session] Pending payload version %d could not be delivered yet: no local manager registered."), PendingClientDispatchVersion)
 	}
+
+	if (!world->GetTimerManager().IsTimerActive(PendingDispatchRetryTimer))
+		world->GetTimerManager().SetTimer(PendingDispatchRetryTimer, this, &UMounteaDialogueSession::TryDispatchPendingClientPayload, 0.25f, true);
 }
 
 void UMounteaDialogueSession::SetAuthoritativeManager(UMounteaDialogueManager* Manager)
@@ -256,6 +300,14 @@ void UMounteaDialogueSession::NotifyLocalManagers()
 	{
 		if (IsValid(AuthoritativeManager.Get()))
 		{
+			LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.Notify.ServerDispatch.%s.%d"),
+				*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion), TEXT("[Diag][Session][Notify] Server dispatch to AuthoritativeManager=%s Session=%s Version=%d"),
+				*GetNameSafe(AuthoritativeManager.Get()), *ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion)
+			LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.Notify.ServerActiveNode.%s.%d"),
+				*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion),
+				TEXT("[Diag][Session][Notify][ServerActiveNode] Session=%s Version=%d ActiveNodeGUID=%s ActiveGraphGUID=%s"),
+				*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion,
+				*ContextPayload.ActiveNodeGUID.ToString(), *ContextPayload.ActiveGraphGUID.ToString())
 			AuthoritativeManager->OnContextPayloadUpdated(ContextPayload);
 			return;
 		}
@@ -268,11 +320,17 @@ void UMounteaDialogueSession::NotifyLocalManagers()
 				continue;
 
 			AuthoritativeManager = manager;
+			LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.Notify.ServerRecovered.%s.%d"),
+				*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion), TEXT("[Diag][Session][Notify] Recovered authoritative manager=%s Session=%s Version=%d"),
+				*GetNameSafe(manager), *ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion)
 			LOG_WARNING(TEXT("[Dialogue Session] Recovered authoritative manager while dispatching payload version %d."), ContextPayload.ContextVersion)
 			manager->OnContextPayloadUpdated(ContextPayload);
 			return;
 		}
 
+		LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.Notify.ServerMissing.%s.%d"),
+			*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion), TEXT("[Diag][Session][Notify] Missing authoritative manager. Session=%s Version=%d"),
+			*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion)
 		LOG_WARNING(TEXT("[Dialogue Session] Missing authoritative manager while dispatching payload version %d."), ContextPayload.ContextVersion)
 		return;
 	}
@@ -286,58 +344,56 @@ void UMounteaDialogueSession::NotifyLocalManagers()
 		if (!IsValid(ownerActor))
 			continue;
 
-		if (!UMounteaDialogueManagerStatics::IsLocalPlayer(ownerActor))
+		const bool bIsLocal = UMounteaDialogueManagerStatics::IsLocalPlayer(ownerActor);
+		LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.Notify.ClientCandidate.%s.%s.%d"),
+			*GetNameSafe(manager), *ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion),
+			TEXT("[Diag][Session][Notify] Client candidate Manager=%s Owner=%s IsLocal=%s Session=%s Version=%d"),
+			*GetNameSafe(manager), *GetNameSafe(ownerActor), bIsLocal ? TEXT("true") : TEXT("false"),
+			*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion)
+		if (!bIsLocal)
 			continue;
 
+		LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.Notify.ClientDispatch.%s.%d"),
+			*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion), TEXT("[Diag][Session][Notify] Client dispatch to local Manager=%s Owner=%s Session=%s Version=%d"),
+			*GetNameSafe(manager), *GetNameSafe(ownerActor), *ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion)
 		manager->OnContextPayloadUpdated(ContextPayload);
 		bClientDispatchPending = false;
 		LastPendingDispatchWarningVersion = 0;
 		PendingClientDispatchVersion = 0;
 		PendingClientDispatchSessionGUID.Invalidate();
-		return;
-	}
-
-	UMounteaDialogueManager* singleActiveManager = nullptr;
-	int32 activeManagerCount = 0;
-	for (UMounteaDialogueManager* manager : subsystem->GetRegisteredManagers())
-	{
-		if (!IsValid(manager))
-			continue;
-
-		if (IMounteaDialogueManagerInterface::Execute_GetManagerState(manager) != EDialogueManagerState::EDMS_Active)
-			continue;
-
-		activeManagerCount++;
-		if (!singleActiveManager)
-			singleActiveManager = manager;
-	}
-
-	if (activeManagerCount == 1 && IsValid(singleActiveManager))
-	{
-		singleActiveManager->OnContextPayloadUpdated(ContextPayload);
-		bClientDispatchPending = false;
-		LastPendingDispatchWarningVersion = 0;
-		PendingClientDispatchVersion = 0;
-		PendingClientDispatchSessionGUID.Invalidate();
-		LOG_INFO(TEXT("[Dialogue Session] Delivered payload version %d via single-active-manager fallback '%s'."), ContextPayload.ContextVersion, *GetNameSafe(singleActiveManager))
+		if (world->GetTimerManager().IsTimerActive(PendingDispatchRetryTimer))
+			world->GetTimerManager().ClearTimer(PendingDispatchRetryTimer);
 		return;
 	}
 
 	bClientDispatchPending = true;
 	PendingClientDispatchSessionGUID = ContextPayload.SessionGUID;
 	PendingClientDispatchVersion = ContextPayload.ContextVersion;
+	LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.Notify.ClientPending.%s.%d"),
+		*PendingClientDispatchSessionGUID.ToString(), PendingClientDispatchVersion), TEXT("[Diag][Session][Notify] Client dispatch pending. Session=%s Version=%d"),
+		*PendingClientDispatchSessionGUID.ToString(), PendingClientDispatchVersion)
+	if (!world->GetTimerManager().IsTimerActive(PendingDispatchRetryTimer))
+		world->GetTimerManager().SetTimer(PendingDispatchRetryTimer, this, &UMounteaDialogueSession::TryDispatchPendingClientPayload, 0.25f, true);
 }
 
 bool UMounteaDialogueSession::IsSessionRequestValid(UMounteaDialogueManager* Manager, const FGuid& SessionGUID, const TCHAR* ActionName) const
 {
 	if (!GetOwner() || !GetOwner()->HasAuthority())
+	{
+		LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][Validate] %s rejected: no authority. Manager=%s"), ActionName, *GetNameSafe(Manager))
 		return false;
+	}
 
 	if (!IsValid(Manager))
+	{
+		LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][Validate] %s rejected: invalid manager."), ActionName)
 		return false;
+	}
 
 	if (AuthoritativeManager.IsValid() && Manager != AuthoritativeManager.Get())
 	{
+		LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][Validate] %s rejected: manager not authoritative. Manager=%s Auth=%s"),
+			ActionName, *GetNameSafe(Manager), *GetNameSafe(AuthoritativeManager.Get()))
 		Manager->GetDialogueFailedEventHandle().Broadcast(FString::Printf(TEXT("[%s] Manager is not authoritative!"), ActionName));
 		return false;
 	}
@@ -345,21 +401,29 @@ bool UMounteaDialogueSession::IsSessionRequestValid(UMounteaDialogueManager* Man
 	const FGuid activeSessionGUID = ContextPayload.SessionGUID;
 	if (!activeSessionGUID.IsValid())
 	{
+		LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][Validate] %s rejected: no active session. Manager=%s"), ActionName, *GetNameSafe(Manager))
 		Manager->GetDialogueFailedEventHandle().Broadcast(FString::Printf(TEXT("[%s] No active session!"), ActionName));
 		return false;
 	}
 
 	if (!SessionGUID.IsValid())
 	{
+		LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][Validate] %s rejected: invalid request GUID. Active=%s"),
+			ActionName, *activeSessionGUID.ToString())
 		Manager->GetDialogueFailedEventHandle().Broadcast(FString::Printf(TEXT("[%s] Invalid session GUID!"), ActionName));
 		return false;
 	}
 
 	if (SessionGUID != activeSessionGUID)
 	{
+		LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][Validate] %s rejected: mismatch. Requested=%s Active=%s Manager=%s"),
+			ActionName, *SessionGUID.ToString(), *activeSessionGUID.ToString(), *GetNameSafe(Manager))
 		Manager->GetDialogueFailedEventHandle().Broadcast(FString::Printf(TEXT("[%s] Session mismatch!"), ActionName));
 		return false;
 	}
+
+	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][Validate] %s accepted. Session=%s Manager=%s"),
+		ActionName, *SessionGUID.ToString(), *GetNameSafe(Manager))
 
 	return true;
 }
@@ -614,6 +678,8 @@ bool UMounteaDialogueSession::HandleNodeProcessed(UMounteaDialogueManager* Manag
 	}
 
 	dialogueContext->AllowedChildNodes = allowedChildrenNodes;
+	dialogueContext->UpdateActiveDialogueRow(FDialogueRow::Invalid());
+	dialogueContext->UpdateActiveDialogueRowDataIndex(0);
 	ApplyAllowedChildrenPayload(dialogueContext);
 
 	FString resultMessage;
@@ -626,6 +692,9 @@ bool UMounteaDialogueSession::HandleNodeProcessed(UMounteaDialogueManager* Manag
 
 bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager* Manager, const FGuid& SessionGUID, const bool bForceFinish)
 {
+	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][HandleDialogueRowProcessed] Enter Session=%s ForceFinish=%s Manager=%s"),
+		*SessionGUID.ToString(), bForceFinish ? TEXT("true") : TEXT("false"), *GetNameSafe(Manager))
+
 	if (!IsSessionRequestValid(Manager, SessionGUID, TEXT("Process Dialogue Row")))
 		return false;
 
@@ -638,11 +707,6 @@ bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager
 		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[Process Dialogue Row] Invalid Dialogue Context!"));
 		return false;
 	}
-
-	FString resultMessage;
-	if (!IMounteaDialogueManagerInterface::Execute_UpdateDialogueUI(Manager, resultMessage, MounteaDialogueWidgetCommands::HideDialogueRow))
-		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
-	ApplyWidgetCommandPayload(dialogueContext, dialogueContext->LastWidgetCommand);
 
 	UWorld* world = Manager->GetWorld();
 	if (!IsValid(world))
@@ -663,6 +727,12 @@ bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager
 		&& UMounteaDialogueTraversalStatics::IsDialogueRowDataValid(rowDataArray[nextIndex]);
 	const ERowExecutionMode nextRowExecutionMode = bDialogueRowDataValid ? rowDataArray[nextIndex].RowExecutionBehaviour : ERowExecutionMode::EREM_Automatic;
 	const ERowExecutionMode activeRowExecutionMode = rowDataArray.IsValidIndex(currentIndex) ? rowDataArray[currentIndex].RowExecutionBehaviour : ERowExecutionMode::EREM_Automatic;
+	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][HandleDialogueRowProcessed] RowState Current=%d Next=%d ActiveValid=%s NextValid=%s ActiveMode=%d NextMode=%d"),
+		currentIndex, nextIndex,
+		bIsActiveRowValid ? TEXT("true") : TEXT("false"),
+		bDialogueRowDataValid ? TEXT("true") : TEXT("false"),
+		static_cast<int32>(activeRowExecutionMode),
+		static_cast<int32>(nextRowExecutionMode))
 
 	if (activeRowExecutionMode == ERowExecutionMode::EREM_AwaitInput && !bForceFinish)
 		return true;
@@ -671,6 +741,11 @@ bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager
 
 	if (bIsActiveRowValid && bDialogueRowDataValid)
 	{
+		FString resultMessage;
+		if (!IMounteaDialogueManagerInterface::Execute_UpdateDialogueUI(Manager, resultMessage, MounteaDialogueWidgetCommands::HideDialogueRow))
+			LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
+		ApplyWidgetCommandPayload(dialogueContext, dialogueContext->LastWidgetCommand);
+
 		switch (nextRowExecutionMode)
 		{
 		case ERowExecutionMode::EREM_Automatic:
@@ -691,11 +766,15 @@ bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager
 	}
 
 	IMounteaDialogueManagerInterface::Execute_NodeProcessed(Manager);
+	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][HandleDialogueRowProcessed] No next row, moving to NodeProcessed."))
 	return true;
 }
 
 bool UMounteaDialogueSession::HandleProcessDialogueRow(UMounteaDialogueManager* Manager, const FGuid& SessionGUID)
 {
+	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][HandleProcessDialogueRow] Enter Session=%s Manager=%s"),
+		*SessionGUID.ToString(), *GetNameSafe(Manager))
+
 	if (!IsSessionRequestValid(Manager, SessionGUID, TEXT("Process Dialogue Row")))
 		return false;
 
@@ -751,6 +830,8 @@ bool UMounteaDialogueSession::HandleProcessDialogueRow(UMounteaDialogueManager* 
 		delegate,
 		UMounteaDialogueTraversalStatics::GetRowDuration(rowData),
 		false);
+	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][HandleProcessDialogueRow] Timer scheduled. Duration=%.3f RowIndex=%d RowGUID=%s"),
+		UMounteaDialogueTraversalStatics::GetRowDuration(rowData), activeIndex, *row.RowGUID.ToString())
 
 	return true;
 }
@@ -813,6 +894,8 @@ bool UMounteaDialogueSession::HandleProcessNode(UMounteaDialogueManager* Manager
 	}
 
 	UMounteaDialogueGraphNode* processingNode = dialogueContext->ActiveNode;
+	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][HandleProcessNode][Server] Session=%s ProcessingNodeGUID=%s NodeName=%s"),
+		*SessionGUID.ToString(), *processingNode->GetNodeGUID().ToString(), *processingNode->GetName())
 	processingNode->ProcessNode(Manager);
 
 	if (!IsValid(dialogueContext->ActiveNode))
@@ -823,6 +906,8 @@ bool UMounteaDialogueSession::HandleProcessNode(UMounteaDialogueManager* Manager
 
 	if (dialogueContext->ActiveNode != processingNode)
 	{
+		LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][HandleProcessNode][Server] Active node changed by node processing. NewNodeGUID=%s NewNodeName=%s"),
+			*dialogueContext->ActiveNode->GetNodeGUID().ToString(), *dialogueContext->ActiveNode->GetName())
 		ApplyNodeSwitchPayload(dialogueContext);
 		return true;
 	}
@@ -842,3 +927,5 @@ bool UMounteaDialogueSession::HandleCloseDialogue(UMounteaDialogueManager* Manag
 	IMounteaDialogueManagerInterface::Execute_RequestCloseDialogue(Manager);
 	return true;
 }
+
+

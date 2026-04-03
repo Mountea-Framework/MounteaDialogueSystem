@@ -58,6 +58,82 @@ UMounteaDialogueGraph* UMounteaDialogueManagerStatics::ResolveGraphByGuid(
 	return nullptr;
 }
 
+TScriptInterface<IMounteaDialogueManagerInterface> UMounteaDialogueManagerStatics::FindDialogueManagerInterface(UObject* ManagerActor, bool& bResult)
+{
+	bResult = false;
+
+	if (!ManagerActor)
+		return nullptr;
+
+	TScriptInterface<IMounteaDialogueManagerInterface> resultValue;
+	if (ManagerActor->Implements<UMounteaDialogueManagerInterface>())
+	{
+		resultValue = ManagerActor;
+		bResult = true;
+		return resultValue;
+	}
+
+	AActor* dialogueManagerActor = Cast<AActor>(ManagerActor);
+	if (!IsValid(dialogueManagerActor))
+		return nullptr;
+
+	TArray<UActorComponent*> actorComponents = dialogueManagerActor->GetComponentsByInterface(UMounteaDialogueManagerInterface::StaticClass());
+	if (!actorComponents.Num() == 0)
+	{
+		resultValue = actorComponents[0];
+		bResult = true;
+		return resultValue;
+	}
+	
+	return nullptr;
+}
+
+TScriptInterface<IMounteaDialogueManagerInterface> UMounteaDialogueManagerStatics::FindDialogueManagerInterface(AActor* CandidateActor, int& SearchDepth)
+{
+	if (!IsValid(CandidateActor))
+		return nullptr;
+
+	if (SearchDepth >= 4)
+		return nullptr;
+	
+	bool bLuckyShot = false;
+	auto returnvalue = FindDialogueManagerInterface(CandidateActor, bLuckyShot);
+	if (bLuckyShot)
+		return returnvalue;
+	
+	if (auto playerState = Cast<APlayerState>(CandidateActor))
+		return FindDialogueManagerInterface(playerState, bLuckyShot);
+	
+	if (const APlayerController* PlayerController = Cast<APlayerController>(CandidateActor))
+	{
+		if (APlayerState* playerState = PlayerController->PlayerState)
+		{
+			SearchDepth++;
+			return FindDialogueManagerInterface(playerState, SearchDepth);
+		}
+	}
+	
+	if (const AController* Controller = Cast<AController>(CandidateActor))
+	{
+		if (APlayerState* playerState = Controller->PlayerState)
+		{
+			SearchDepth++;
+			return FindDialogueManagerInterface(playerState, SearchDepth);
+		}
+	}
+	
+	if (const APawn* Pawn = Cast<APawn>(CandidateActor))
+	{
+		if (APlayerState* playerState = Pawn->GetPlayerState())
+		{
+			SearchDepth++;
+			return FindDialogueManagerInterface(playerState, SearchDepth);
+		}
+	}
+	
+	return nullptr;
+}
+
 AActor* UMounteaDialogueManagerStatics::GetOwningActor(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
 {
 	return Target.GetObject() ? Target->Execute_GetOwningActor(Target.GetObject()) : nullptr;

@@ -947,9 +947,14 @@ bool UMounteaDialogueSystemBFC::IsServer(const AActor* Owner)
 
 bool UMounteaDialogueSystemBFC::IsLocalPlayer(const AActor* Owner)
 {
-	if (!Owner) return false;
-	const APawn* pawn = Cast<APawn>(Owner);
-	if (pawn) return pawn->IsLocallyControlled();
+	if (!Owner) 
+		return false;
+	if (const APawn* pawn = Cast<APawn>(Owner)) 
+		return pawn->IsLocallyControlled();
+	if (const APlayerController* playerController = Cast<APlayerController>(Owner)) 
+		return playerController->IsLocalPlayerController();
+	if (const AController* actorController = Cast<AController>(Owner)) 
+		return actorController->IsLocalController();
 	return Owner->HasLocalNetOwner();
 }
 

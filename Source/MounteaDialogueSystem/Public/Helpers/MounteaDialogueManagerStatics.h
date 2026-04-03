@@ -55,6 +55,10 @@ public:
 	}
 
 public:
+	
+	static TScriptInterface<IMounteaDialogueManagerInterface> FindDialogueManagerInterface(UObject* ManagerActor, bool& bResult);
+	
+	static TScriptInterface<IMounteaDialogueManagerInterface> FindDialogueManagerInterface(AActor* CandidateActor, int& SearchDepth);
 
 	// --- Actor functions ------------------------------
 

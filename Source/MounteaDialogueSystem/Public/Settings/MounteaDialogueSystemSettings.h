@@ -57,6 +57,12 @@ protected:
 	UPROPERTY(config, EditDefaultsOnly, Category = "Logging", meta=(Bitmask, BitmaskEnum="/Script/MounteaDialogueSystem.EMounteaDialogueLoggingVerbosity"))
 	uint8 LogVerbosity;
 
+	UPROPERTY(config, EditDefaultsOnly, Category = "Networking")
+	bool bEnableClientPrediction = true;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "Networking", meta=(UIMin=0.05, ClampMin=0.05))
+	float ClientPredictionTimeoutSeconds = 0.75f;
+
 	/**
 	 * List of General Dialogue Settings.
 	 * Defines font, sizes etc. for all subtitles.
@@ -178,6 +184,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
 	float GetSkipDuration() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
+	bool IsClientPredictionEnabled() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
+	float GetClientPredictionTimeoutSeconds() const;
 	
 protected:
 

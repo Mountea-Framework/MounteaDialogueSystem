@@ -81,6 +81,9 @@ void UMounteaDialogueManager::BeginPlay()
 
 	OnDialogueFailed.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueFailed);
 
+	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+	bPredictionEnabled = dialogueSettings ? dialogueSettings->IsClientPredictionEnabled() : true;
+
 }
 
 void UMounteaDialogueManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -103,6 +106,8 @@ void UMounteaDialogueManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 	else
 		LOG_ERROR(TEXT("[EndPlay] No World Found!"))
+
+	ClearPredictionState();
 }
 
 AActor* UMounteaDialogueManager::GetOwningActor_Implementation() const
@@ -176,6 +181,7 @@ void UMounteaDialogueManager::OnRep_ManagerState()
 
 	OnDialogueManagerStateChanged.Broadcast(ManagerState);
 	ProcessStateUpdated();
+	ResolvePredictionFromManagerState();
 }
 
 void UMounteaDialogueManager::ProcessStateUpdated()
@@ -200,8 +206,24 @@ void UMounteaDialogueManager::ProcessStateUpdated()
 
 void UMounteaDialogueManager::OnContextPayloadUpdated(const FMounteaDialogueContextPayload& Payload)
 {
+	const FString payloadUpdateKey = FString::Printf(TEXT("Diag.Manager.PayloadUpdate.%s.%s.%d"),
+		UMounteaDialogueManagerStatics::IsServer(GetOwner()) ? TEXT("Server") : TEXT("Client"),
+		*Payload.SessionGUID.ToString(), Payload.ContextVersion);
+	LOG_ERROR_KEY(payloadUpdateKey, TEXT("[Diag][Manager][OnContextPayloadUpdated] Manager=%s Owner=%s Session=%s Version=%d State=%d Allowed=%d RowGUID=%s RowIndex=%d Cmd=%s"),
+		*GetNameSafe(this), *GetNameSafe(GetOwner()), *Payload.SessionGUID.ToString(), Payload.ContextVersion,
+		static_cast<int32>(ManagerState), Payload.AllowedChildNodeGUIDs.Num(),
+		*Payload.ActiveDialogueRow.RowGUID.ToString(), Payload.ActiveDialogueRowDataIndex, *Payload.LastWidgetCommand)
+	LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Manager.PayloadActiveNode.%s.%s.%d"),
+		UMounteaDialogueManagerStatics::IsServer(GetOwner()) ? TEXT("Server") : TEXT("Client"),
+		*Payload.SessionGUID.ToString(), Payload.ContextVersion), TEXT("[Diag][Manager][ActiveNode][Payload] Role=%s Session=%s Version=%d ActiveNodeGUID=%s ActiveGraphGUID=%s"),
+		UMounteaDialogueManagerStatics::IsServer(GetOwner()) ? TEXT("Server") : TEXT("Client"),
+		*Payload.SessionGUID.ToString(), Payload.ContextVersion,
+		*Payload.ActiveNodeGUID.ToString(), *Payload.ActiveGraphGUID.ToString())
+
 	if (LastClientSyncSessionGUID != Payload.SessionGUID)
 		ResetClientSyncCaches(Payload.SessionGUID);
+
+	LastReceivedPayloadVersion = Payload.ContextVersion;
 
 	if (!IsValid(DialogueContext))
 		DialogueContext = NewObject<UMounteaDialogueContext>(this);
@@ -236,6 +258,14 @@ void UMounteaDialogueManager::OnContextPayloadUpdated(const FMounteaDialogueCont
 	DialogueContext->ActiveDialogueRow = Payload.ActiveDialogueRow;
 	DialogueContext->ActiveDialogueRowDataIndex = Payload.ActiveDialogueRowDataIndex;
 	DialogueContext->LastWidgetCommand = Payload.LastWidgetCommand;
+	LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Manager.ResolvedActiveNode.%s.%s.%d"),
+		UMounteaDialogueManagerStatics::IsServer(GetOwner()) ? TEXT("Server") : TEXT("Client"),
+		*Payload.SessionGUID.ToString(), Payload.ContextVersion), TEXT("[Diag][Manager][ActiveNode][Resolved] Role=%s Session=%s Version=%d ActiveNode=%s ActiveNodeGUID=%s AllowedNodes=%d"),
+		UMounteaDialogueManagerStatics::IsServer(GetOwner()) ? TEXT("Server") : TEXT("Client"),
+		*Payload.SessionGUID.ToString(), Payload.ContextVersion,
+		*GetNameSafe(DialogueContext->ActiveNode),
+		DialogueContext->ActiveNode ? *DialogueContext->ActiveNode->GetNodeGUID().ToString() : TEXT("Invalid"),
+		DialogueContext->AllowedChildNodes.Num())
 
 	OnDialogueContextUpdated.Broadcast(DialogueContext);
 
@@ -251,6 +281,8 @@ void UMounteaDialogueManager::OnContextPayloadUpdated(const FMounteaDialogueCont
 		ApplyReplicatedWidgetCommand(Payload.LastWidgetCommand);
 		LastAppliedPayloadCommandVersion = Payload.ContextVersion;
 	}
+
+	ResolvePredictionFromPayload(Payload);
 }
 
 void UMounteaDialogueManager::NotifyParticipants(const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants)
@@ -268,6 +300,10 @@ void UMounteaDialogueManager::NotifyParticipants(const TArray<TScriptInterface<I
 void UMounteaDialogueManager::DialogueFailed(const FString& ErrorMessage)
 {
 	LOG_ERROR(TEXT("[Dialogue Failed] %s"), *ErrorMessage)
+
+	if (!UMounteaDialogueManagerStatics::IsServer(GetOwner()) && PendingPredictionType != EDialogueClientPredictionType::None)
+		RollbackPrediction(ErrorMessage);
+
 	SetManagerState(DefaultManagerState);
 }
 
@@ -427,6 +463,9 @@ void UMounteaDialogueManager::RequestNodeProcessed_Server_Implementation(FGuid S
 
 void UMounteaDialogueManager::RequestDialogueRowProcessed_Server_Implementation(FGuid SessionGUID, const bool bForceFinish)
 {
+	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Manager][RPC][RequestDialogueRowProcessed_Server] Manager=%s Owner=%s Session=%s ForceFinish=%s"),
+		*GetNameSafe(this), *GetNameSafe(GetOwner()), *SessionGUID.ToString(), bForceFinish ? TEXT("true") : TEXT("false"))
+
 	UMounteaDialogueWorldSubsystem* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>() : nullptr;
 	if (!subsystem)
 		return;
@@ -474,6 +513,7 @@ void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 			}
 		}
 
+		BeginClosePrediction(sessionGuid);
 		RequestCloseDialogue_Server(sessionGuid);
 		return;
 	}
@@ -600,9 +640,13 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 
 void UMounteaDialogueManager::CloseDialogue_Implementation()
 {
+	const FGuid closingSessionGuid = IsValid(DialogueContext) ? DialogueContext->SessionGUID : FGuid();
+	const bool bSkipCloseBroadcast = bPredictedCloseEventFired
+		&& PredictedCloseSessionGUID.IsValid()
+		&& PredictedCloseSessionGUID == closingSessionGuid;
+
 	if (UMounteaDialogueManagerStatics::IsServer(GetOwner()))
 	{
-		const FGuid closingSessionGuid = IsValid(DialogueContext) ? DialogueContext->SessionGUID : FGuid();
 		auto* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>() : nullptr;
 		if (subsystem)
 		{
@@ -626,8 +670,14 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 
 	SetDialogueContext(nullptr);
 	
-	if (UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
+	if (UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()) && !bSkipCloseBroadcast)
 		OnDialogueClosed.Broadcast(DialogueContext);
+
+	if (bSkipCloseBroadcast)
+	{
+		bPredictedCloseEventFired = false;
+		PredictedCloseSessionGUID.Invalidate();
+	}
 
 	DialogueInstigator = nullptr;
 	ResetClientSyncCaches(FGuid());
@@ -743,6 +793,7 @@ void UMounteaDialogueManager::SelectNode_Implementation(const FGuid& NodeGuid)
 
 	if (!UMounteaDialogueManagerStatics::IsServer(GetOwner()))
 	{
+		BeginSelectPrediction(NodeGuid);
 		RequestSelectNode_Server(sessionGuid, NodeGuid);
 		return;
 	}
@@ -786,12 +837,20 @@ void UMounteaDialogueManager::DialogueRowProcessed_Implementation(const bool bFo
 {
 	// To avoid race conditions simply return if active
 	if (ManagerState != EDialogueManagerState::EDMS_Active)
+	{
+		LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Manager][DialogueRowProcessed] Ignored because state is not Active. Manager=%s State=%d"),
+			*GetNameSafe(this), static_cast<int32>(ManagerState))
 		return;
+	}
 
 	const FGuid sessionGuid = IsValid(DialogueContext) ? DialogueContext->SessionGUID : FGuid();
+	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Manager][DialogueRowProcessed] Enter Manager=%s Session=%s ForceFinish=%s IsServer=%s"),
+		*GetNameSafe(this), *sessionGuid.ToString(), bForceFinish ? TEXT("true") : TEXT("false"),
+		UMounteaDialogueManagerStatics::IsServer(GetOwner()) ? TEXT("true") : TEXT("false"))
 
 	if (!UMounteaDialogueManagerStatics::IsServer(GetOwner()))
 	{
+		LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Manager][DialogueRowProcessed] Client forwarding to server RPC. Session=%s"), *sessionGuid.ToString())
 		RequestDialogueRowProcessed_Server(sessionGuid, bForceFinish);
 		return;
 	}
@@ -836,7 +895,7 @@ void UMounteaDialogueManager::SkipDialogueRow_Implementation()
 
 void UMounteaDialogueManager::UpdateWorldDialogueUI_Implementation(const FString& Command)
 {
-	if (UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
+	if (!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
 		return;
 
 	ProcessWorldWidgetUpdate(Command);
@@ -858,7 +917,7 @@ void UMounteaDialogueManager::ProcessWorldWidgetUpdate(const FString& Command)
 
 void UMounteaDialogueManager::ApplyReplicatedWidgetCommand(const FString& Command)
 {
-	if (UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
+	if (!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
 		return;
 
 	if (Command.IsEmpty())
@@ -883,7 +942,18 @@ bool UMounteaDialogueManager::IsCoreWidgetCommand(const FString& Command) const
 bool UMounteaDialogueManager::ShouldReplayPayloadCommand(const FMounteaDialogueContextPayload& Payload) const
 {
 	return !Payload.LastWidgetCommand.IsEmpty()
-		&& Payload.ContextVersion > LastAppliedPayloadCommandVersion;
+		&& Payload.ContextVersion > LastAppliedPayloadCommandVersion
+		&& !IsCoreWidgetCommand(Payload.LastWidgetCommand);
+}
+
+bool UMounteaDialogueManager::IsPredictionEnabled()
+{
+	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+	bPredictionEnabled = dialogueSettings ? dialogueSettings->IsClientPredictionEnabled() : true;
+
+	return bPredictionEnabled
+		&& !UMounteaDialogueManagerStatics::IsServer(GetOwner())
+		&& UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner());
 }
 
 uint32 UMounteaDialogueManager::BuildAllowedChildrenHash(const TArray<FGuid>& AllowedChildren) const
@@ -894,6 +964,158 @@ uint32 UMounteaDialogueManager::BuildAllowedChildrenHash(const TArray<FGuid>& Al
 		hash = HashCombineFast(hash, GetTypeHash(childGuid));
 	}
 	return hash;
+}
+
+void UMounteaDialogueManager::BeginSelectPrediction(const FGuid& NodeGuid)
+{
+	if (!IsPredictionEnabled())
+		return;
+
+	if (!IsValid(DialogueContext))
+		return;
+
+	if (!DialogueContext->SessionGUID.IsValid())
+		return;
+
+	ClearPredictionState();
+
+	PendingPredictionType = EDialogueClientPredictionType::Select;
+	PendingPredictionSessionGUID = DialogueContext->SessionGUID;
+	PendingPredictionNodeGUID = NodeGuid;
+	PendingPredictionStartContextVersion = LastReceivedPayloadVersion;
+
+	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+	const float timeout = dialogueSettings ? dialogueSettings->GetClientPredictionTimeoutSeconds() : 0.75f;
+	if (GetWorld())
+		GetWorld()->GetTimerManager().SetTimer(PendingPredictionHandle, this, &UMounteaDialogueManager::OnPredictionTimeout, timeout, false);
+
+	ApplyPredictedUICommand(MounteaDialogueWidgetCommands::RemoveDialogueOptions);
+	ApplyPredictedUICommand(MounteaDialogueWidgetCommands::HideDialogueRow);
+}
+
+void UMounteaDialogueManager::BeginClosePrediction(const FGuid& SessionGuid)
+{
+	if (!IsPredictionEnabled())
+		return;
+
+	if (!SessionGuid.IsValid())
+		return;
+
+	ClearPredictionState();
+
+	PendingPredictionType = EDialogueClientPredictionType::Close;
+	PendingPredictionSessionGUID = SessionGuid;
+	PendingPredictionStartContextVersion = LastReceivedPayloadVersion;
+
+	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+	const float timeout = dialogueSettings ? dialogueSettings->GetClientPredictionTimeoutSeconds() : 0.75f;
+	if (GetWorld())
+		GetWorld()->GetTimerManager().SetTimer(PendingPredictionHandle, this, &UMounteaDialogueManager::OnPredictionTimeout, timeout, false);
+
+	ApplyPredictedUICommand(MounteaDialogueWidgetCommands::CloseDialogueWidget);
+
+	if (!bPredictedCloseEventFired || PredictedCloseSessionGUID != SessionGuid)
+	{
+		bPredictedCloseEventFired = true;
+		PredictedCloseSessionGUID = SessionGuid;
+		OnDialogueClosed.Broadcast(DialogueContext);
+	}
+}
+
+void UMounteaDialogueManager::ResolvePredictionFromPayload(const FMounteaDialogueContextPayload& Payload)
+{
+	if (PendingPredictionType == EDialogueClientPredictionType::None)
+		return;
+
+	if (PendingPredictionType == EDialogueClientPredictionType::Select)
+	{
+		if (Payload.SessionGUID != PendingPredictionSessionGUID)
+		{
+			ClearPredictionState();
+			return;
+		}
+
+		if (Payload.ContextVersion > PendingPredictionStartContextVersion)
+		{
+			ClearPredictionState();
+			return;
+		}
+	}
+
+	if (PendingPredictionType == EDialogueClientPredictionType::Close)
+	{
+		if (Payload.SessionGUID != PendingPredictionSessionGUID)
+		{
+			ClearPredictionState();
+			return;
+		}
+	}
+}
+
+void UMounteaDialogueManager::ResolvePredictionFromManagerState()
+{
+	if (PendingPredictionType != EDialogueClientPredictionType::Close)
+		return;
+
+	if (ManagerState != EDialogueManagerState::EDMS_Active)
+		ClearPredictionState();
+}
+
+void UMounteaDialogueManager::RollbackPrediction(const FString& Reason)
+{
+	if (PendingPredictionType == EDialogueClientPredictionType::None)
+		return;
+
+	LOG_WARNING(TEXT("[Client Prediction] Rolling back `%s` prediction: %s"),
+		PendingPredictionType == EDialogueClientPredictionType::Select ? TEXT("Select") : TEXT("Close"),
+		*Reason)
+
+	UMounteaDialogueWorldSubsystem* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>() : nullptr;
+	if (subsystem)
+	{
+		if (UMounteaDialogueSession* session = subsystem->GetGameStateSession())
+		{
+			const FMounteaDialogueContextPayload& payload = session->GetContextPayload();
+			if (payload.IsValid())
+				ReconcileClientUIFromPayload(payload);
+		}
+	}
+
+	if (PendingPredictionType == EDialogueClientPredictionType::Close)
+	{
+		bPredictedCloseEventFired = false;
+		PredictedCloseSessionGUID.Invalidate();
+	}
+
+	ClearPredictionState();
+}
+
+void UMounteaDialogueManager::ClearPredictionState()
+{
+	if (GetWorld())
+		GetWorld()->GetTimerManager().ClearTimer(PendingPredictionHandle);
+
+	PendingPredictionType = EDialogueClientPredictionType::None;
+	PendingPredictionSessionGUID.Invalidate();
+	PendingPredictionNodeGUID.Invalidate();
+	PendingPredictionStartContextVersion = 0;
+}
+
+void UMounteaDialogueManager::ApplyPredictedUICommand(const FString& Command)
+{
+	if (!IsPredictionEnabled())
+		return;
+
+	FString resultMessage;
+	Execute_UpdateDialogueUI(this, resultMessage, Command);
+}
+
+void UMounteaDialogueManager::OnPredictionTimeout()
+{
+	if (PendingPredictionType == EDialogueClientPredictionType::None)
+		return;
+
+	RollbackPrediction(TEXT("Timeout waiting for authoritative update."));
 }
 
 void UMounteaDialogueManager::ResetClientSyncCaches(const FGuid& SessionGUID)
@@ -918,6 +1140,8 @@ void UMounteaDialogueManager::ResetClientSyncCaches(const FGuid& SessionGUID)
 	bClientAudioPlaying = false;
 	LastReconciledViewMode = DialogueClientViewMode_None;
 	LastDialogueCommand.Empty();
+	LastReceivedPayloadVersion = 0;
+	ClearPredictionState();
 }
 
 void UMounteaDialogueManager::ReconcileClientAudioFromPayload(const FMounteaDialogueContextPayload& Payload, const bool bShouldPlayRowAudio)
@@ -966,7 +1190,7 @@ void UMounteaDialogueManager::ReconcileClientAudioFromPayload(const FMounteaDial
 
 void UMounteaDialogueManager::ReconcileClientUIFromPayload(const FMounteaDialogueContextPayload& Payload)
 {
-	if (GetWorld() && GetWorld()->GetNetMode() == NM_DedicatedServer)
+	if (!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
 		return;
 
 	if (ManagerState == EDialogueManagerState::EDMS_Active && !IsValid(DialogueWidget))
@@ -989,25 +1213,13 @@ void UMounteaDialogueManager::ReconcileClientUIFromPayload(const FMounteaDialogu
 	const bool bCanRenderRow = UMounteaDialogueTraversalStatics::IsDialogueRowValid(Payload.ActiveDialogueRow)
 		&& Payload.ActiveDialogueRow.RowData.IsValidIndex(Payload.ActiveDialogueRowDataIndex)
 		&& UMounteaDialogueTraversalStatics::IsDialogueRowDataValid(Payload.ActiveDialogueRow.RowData[Payload.ActiveDialogueRowDataIndex]);
-
-	if (bHasOptions)
-	{
-		const uint32 optionsHash = BuildAllowedChildrenHash(Payload.AllowedChildNodeGUIDs);
-		const bool bNeedsRefresh = LastReconciledViewMode != DialogueClientViewMode_Options
-			|| LastReconciledOptionsHash != optionsHash;
-		if (bNeedsRefresh)
-		{
-			ApplyReplicatedWidgetCommand(MounteaDialogueWidgetCommands::HideDialogueRow);
-			ApplyReplicatedWidgetCommand(MounteaDialogueWidgetCommands::AddDialogueOptions);
-		}
-
-		LastReconciledOptionsHash = optionsHash;
-		LastReconciledRowGUID.Invalidate();
-		LastReconciledRowIndex = INDEX_NONE;
-		LastReconciledViewMode = DialogueClientViewMode_Options;
-		ReconcileClientAudioFromPayload(Payload, false);
-		return;
-	}
+	const bool bShouldShowOptions = bHasOptions && !bCanRenderRow;
+	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Manager][Reconcile] Manager=%s Session=%s Version=%d State=%d CanRenderRow=%s HasOptions=%s ShowOptions=%s RowGUID=%s RowIndex=%d"),
+		*GetNameSafe(this), *Payload.SessionGUID.ToString(), Payload.ContextVersion, static_cast<int32>(ManagerState),
+		bCanRenderRow ? TEXT("true") : TEXT("false"),
+		bHasOptions ? TEXT("true") : TEXT("false"),
+		bShouldShowOptions ? TEXT("true") : TEXT("false"),
+		*Payload.ActiveDialogueRow.RowGUID.ToString(), Payload.ActiveDialogueRowDataIndex)
 
 	if (bCanRenderRow)
 	{
@@ -1025,6 +1237,31 @@ void UMounteaDialogueManager::ReconcileClientUIFromPayload(const FMounteaDialogu
 		LastReconciledOptionsHash = 0;
 		LastReconciledViewMode = DialogueClientViewMode_Row;
 		ReconcileClientAudioFromPayload(Payload, true);
+		return;
+	}
+
+	if (bShouldShowOptions)
+	{
+		if (IsValid(DialogueContext))
+		{
+			DialogueContext->UpdateActiveDialogueRow(FDialogueRow::Invalid());
+			DialogueContext->UpdateActiveDialogueRowDataIndex(0);
+		}
+
+		const uint32 optionsHash = BuildAllowedChildrenHash(Payload.AllowedChildNodeGUIDs);
+		const bool bNeedsRefresh = LastReconciledViewMode != DialogueClientViewMode_Options
+			|| LastReconciledOptionsHash != optionsHash;
+		if (bNeedsRefresh)
+		{
+			ApplyReplicatedWidgetCommand(MounteaDialogueWidgetCommands::HideDialogueRow);
+			ApplyReplicatedWidgetCommand(MounteaDialogueWidgetCommands::AddDialogueOptions);
+		}
+
+		LastReconciledOptionsHash = optionsHash;
+		LastReconciledRowGUID.Invalidate();
+		LastReconciledRowIndex = INDEX_NONE;
+		LastReconciledViewMode = DialogueClientViewMode_Options;
+		ReconcileClientAudioFromPayload(Payload, false);
 		return;
 	}
 
@@ -1190,7 +1427,7 @@ bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, 
 	if (IsValid(DialogueContext))
 		DialogueContext->LastWidgetCommand = Command;
 
-	if (GetWorld() && GetWorld()->GetNetMode() == NM_DedicatedServer)
+	if (!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
 		return true;
 
 	if (DialogueWidget)
@@ -1202,7 +1439,7 @@ bool UMounteaDialogueManager::UpdateDialogueUI_Implementation(FString& Message, 
 
 bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
 {
-	if (GetWorld() && GetWorld()->GetNetMode() == NM_DedicatedServer)
+	if (!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
 		return true;
 
 	FString dialogueMessage;
@@ -1281,3 +1518,5 @@ void UMounteaDialogueManager::SetDialogueWidgetZOrder_Implementation(const int32
 
 	viewportSubsystem->AddWidgetForPlayer(dialogueWidget, localPlayer, widgetSlot);
 }
+
+

@@ -17,6 +17,13 @@
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "MounteaDialogueManager.generated.h"
 
+enum class EDialogueClientPredictionType : uint8
+{
+	None,
+	Select,
+	Close
+};
+
 /**
  *  Mountea Dialogue Manager Component
  * 
@@ -193,7 +200,16 @@ private:
 	void ReconcileClientAudioFromPayload(const FMounteaDialogueContextPayload& Payload, bool bShouldPlayRowAudio);
 	bool IsCoreWidgetCommand(const FString& Command) const;
 	bool ShouldReplayPayloadCommand(const FMounteaDialogueContextPayload& Payload) const;
+	bool IsPredictionEnabled();
 	uint32 BuildAllowedChildrenHash(const TArray<FGuid>& AllowedChildren) const;
+	void BeginSelectPrediction(const FGuid& NodeGuid);
+	void BeginClosePrediction(const FGuid& SessionGuid);
+	void ResolvePredictionFromPayload(const FMounteaDialogueContextPayload& Payload);
+	void ResolvePredictionFromManagerState();
+	void RollbackPrediction(const FString& Reason);
+	void ClearPredictionState();
+	void ApplyPredictedUICommand(const FString& Command);
+	void OnPredictionTimeout();
 	void ResetClientSyncCaches(const FGuid& SessionGUID);
 
 public:
@@ -369,11 +385,20 @@ protected:
 	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, 
 		meta=(DisplayThumbnail=false))
 	FTimerHandle TimerHandle_RowTimer;
+	FTimerHandle PendingPredictionHandle;
 
 	UPROPERTY(Transient)
 	FString LastDialogueCommand;
 
 	bool bParticipantsStarted = false;
+	bool bPredictionEnabled = true;
+	EDialogueClientPredictionType PendingPredictionType = EDialogueClientPredictionType::None;
+	FGuid PendingPredictionSessionGUID;
+	FGuid PendingPredictionNodeGUID;
+	int32 PendingPredictionStartContextVersion = 0;
+	bool bPredictedCloseEventFired = false;
+	FGuid PredictedCloseSessionGUID;
+	int32 LastReceivedPayloadVersion = 0;
 	int32 LastAppliedPayloadCommandVersion = 0;
 	FGuid LastClientSyncSessionGUID;
 	FGuid LastReconciledRowGUID;
