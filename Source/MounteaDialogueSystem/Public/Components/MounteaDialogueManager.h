@@ -101,8 +101,7 @@ public:
 
 	virtual void RequestStartDialogue_Implementation(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants) override;
 	virtual void RequestCloseDialogue_Implementation() override;
-	UFUNCTION()
-	virtual void DialogueStartRequestReceived(const bool bResult, const FString& ResultMessage) override;
+	
 	virtual void StartDialogue_Implementation() override;
 	virtual void CloseDialogue_Implementation() override;
 	virtual void CleanupDialogue_Implementation() override;
@@ -117,6 +116,7 @@ public:
 	virtual void DialogueRowProcessed_Implementation(const bool bForceFinish = false) override;
 	virtual void SkipDialogueRow_Implementation() override;
 	
+	PRAGMA_DISABLE_DEPRECATION_WARNINGS
 	virtual void UpdateWorldDialogueUI_Implementation(const FString& Command) override;
 	virtual bool AddDialogueUIObject_Implementation(UObject* NewDialogueObject) override;
 	virtual bool AddDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects) override;
@@ -124,11 +124,9 @@ public:
 	virtual bool RemoveDialogueUIObjects_Implementation(const TArray<UObject*>& DialogueObjectsToRemove) override;
 	virtual void SetDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects) override;
 	virtual void ResetDialogueUIObjects_Implementation() override;
-
 	virtual bool CreateDialogueUI_Implementation(FString& Message) override;
 	virtual bool UpdateDialogueUI_Implementation(FString& Message, const FString& Command) override;
 	virtual bool CloseDialogueUI_Implementation() override;
-
 	virtual void ExecuteWidgetCommand_Implementation(const FString& Command) override;
 	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const override;
 	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) override;
@@ -136,6 +134,7 @@ public:
 	virtual UUserWidget* GetDialogueWidget_Implementation() const override;
 	virtual int32 GetDialogueWidgetZOrder_Implementation() const override;
 	virtual void SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder) override;
+	PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
 	/**
 	 * Called by UMounteaDialogueSession (via OnRep or NotifyLocalManagers) when the replicated
@@ -145,6 +144,9 @@ public:
 	 * @param Payload  The latest payload received from the session.
 	 */
 	void OnContextPayloadUpdated(const FMounteaDialogueContextPayload& Payload);
+	
+	UFUNCTION()
+	virtual void DialogueStartRequestReceived(const bool bResult, const FString& ResultMessage);
 
 private:
 
@@ -209,22 +211,8 @@ private:
 	UFUNCTION()
 	void OnRep_ManagerState();
 
-	void ProcessWorldWidgetUpdate(const FString& Command);
-	void ApplyReplicatedWidgetCommand(const FString& Command);
 	void ReconcileClientUIFromPayload(const FMounteaDialogueContextPayload& Payload);
 	void ReconcileClientAudioFromPayload(const FMounteaDialogueContextPayload& Payload, bool bShouldPlayRowAudio);
-	bool IsCoreWidgetCommand(const FString& Command) const;
-	bool ShouldReplayPayloadCommand(const FMounteaDialogueContextPayload& Payload) const;
-	bool IsPredictionEnabled();
-	uint32 BuildAllowedChildrenHash(const TArray<FGuid>& AllowedChildren) const;
-	void BeginSelectPrediction(const FGuid& NodeGuid);
-	void BeginClosePrediction(const FGuid& SessionGuid);
-	void ResolvePredictionFromPayload(const FMounteaDialogueContextPayload& Payload);
-	void ResolvePredictionFromManagerState();
-	void RollbackPrediction(const FString& Reason);
-	void ClearPredictionState();
-	void ApplyPredictedUICommand(const FString& Command);
-	void OnPredictionTimeout();
 	void ResetClientSyncCaches(const FGuid& SessionGUID);
 
 public:
@@ -262,8 +250,10 @@ public:
 	/**
 	 * Event called when Dialogue Widget Class or Widget have changed.
 	 *❗ Dialogue Widget Could be Null
+	 * @deprecated Use UMounteaDialogueParticipantUIStatics instead.
 	 */
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager",
+		meta=(DeprecatedProperty, DeprecationMessage="Use UMounteaDialogueParticipantUIStatics instead."))
 	FDialogueUserInterfaceChanged OnDialogueUserInterfaceChanged;
 	
 
@@ -340,21 +330,21 @@ protected:
 
 	/**
 	 * Manager based Dialogue Widget Class.
-	 * ❔ Could be left empty if Project Settings are setup properly
-	 * ❗ Must implement MounteaDialogueWBPInterface
+	 * @deprecated Assign widget class via UMounteaDialogueConfiguration::DefaultDialogueWidgetClass.
 	 */
-	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue|Manager", 
-		DisplayName="Dialogue Widget Class Override", 
-		meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
+	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue|Manager",
+		DisplayName="Dialogue Widget Class Override (Deprecated)",
+		meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface",
+			DeprecatedProperty, DeprecationMessage="Assign widget class via UMounteaDialogueConfiguration::DefaultDialogueWidgetClass."))
 	TSubclassOf<UUserWidget> DialogueWidgetClass = nullptr;
 
 	/**
 	 * The Z-order of the dialogue widget.
-	 * ❔ This determines the order in which the widget is rendered relative to other UI elements.
-	 * ❔ A higher Z-order means the widget will be rendered on top of others with lower Z-orders.
+	 * @deprecated Set ZOrder via UMounteaDialogueConfiguration::DefaultDialogueWidgetZOrder.
 	 */
-	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue|Manager", 
-		meta=(UIMin=0,ClampMin=0))
+	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue|Manager",
+		meta=(UIMin=0, ClampMin=0,
+			DeprecatedProperty, DeprecationMessage="Set ZOrder via UMounteaDialogueConfiguration::DefaultDialogueWidgetZOrder."))
 	int32 DialogueWidgetZOrder;
 
 	/**
@@ -377,19 +367,21 @@ protected:
 	EDialogueManagerType DialogueManagerType;
 	
 	/**
-	 * An array of dialogue objects. Serves purpose of listeners who receive information about UI events.
-	 * Each must implement `IMounteaDialogueWBPInterface` interface.
+	 * An array of dialogue objects (world UI listeners).
+	 * @deprecated Attach UMounteaDialogueParticipantUserInterfaceComponent to each actor instead.
 	 */
-	UPROPERTY(VisibleAnywhere, Category="Mountea", AdvancedDisplay, 
-		meta=(DisplayThumbnail=false))
+	UPROPERTY(VisibleAnywhere, Category="Mountea", AdvancedDisplay,
+		meta=(DisplayThumbnail=false,
+			DeprecatedProperty, DeprecationMessage="Attach UMounteaDialogueParticipantUserInterfaceComponent to each actor instead."))
 	TArray<TObjectPtr<UObject>> DialogueObjects;
-	
+
 	/**
 	 * Dialogue Widget which has been created.
-	 * ❔ Transient, for actual runtime only.
+	 * @deprecated UI is now owned by UMounteaDialogueParticipantUserInterfaceComponent.
 	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, 
-		meta=(DisplayThumbnail=false))
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay,
+		meta=(DisplayThumbnail=false,
+			DeprecatedProperty, DeprecationMessage="UI is now owned by UMounteaDialogueParticipantUserInterfaceComponent."))
 	TObjectPtr<UUserWidget> DialogueWidget = nullptr;
 
 	/**
@@ -410,27 +402,12 @@ protected:
 	FTimerHandle TimerHandle_RowTimer;
 	FTimerHandle PendingPredictionHandle;
 
-	UPROPERTY(Transient)
-	FString LastDialogueCommand;
-
 	bool bParticipantsStarted = false;
-	bool bPredictionEnabled = true;
-	EDialogueClientPredictionType PendingPredictionType = EDialogueClientPredictionType::None;
-	FGuid PendingPredictionSessionGUID;
-	FGuid PendingPredictionNodeGUID;
-	int32 PendingPredictionStartContextVersion = 0;
-	bool bPredictedCloseEventFired = false;
-	FGuid PredictedCloseSessionGUID;
 	int32 LastReceivedPayloadVersion = 0;
-	int32 LastAppliedPayloadCommandVersion = 0;
 	FGuid LastClientSyncSessionGUID;
-	FGuid LastReconciledRowGUID;
-	int32 LastReconciledRowIndex = INDEX_NONE;
-	uint32 LastReconciledOptionsHash = 0;
 	FGuid LastPlayedAudioRowGUID;
 	int32 LastPlayedAudioRowIndex = INDEX_NONE;
 	bool bClientAudioPlaying = false;
-	uint8 LastReconciledViewMode = 0;
 
 protected:
 	

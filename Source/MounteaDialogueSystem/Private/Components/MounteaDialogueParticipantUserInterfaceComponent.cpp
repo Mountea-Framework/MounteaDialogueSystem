@@ -230,8 +230,8 @@ void UMounteaDialogueParticipantUserInterfaceComponent::RequestCloseDialogue_Imp
 {
 	if (ParentManager.GetObject())
 	{
-		const UMounteaDialogueContext* ctx = Execute_GetDialogueContext(ParentManager.GetObject());
-		const FGuid sessionGuid = IsValid(ctx) ? ctx->SessionGUID : FGuid();
+		const UMounteaDialogueContext* dialogueContext = ParentManager->Execute_GetDialogueContext(ParentManager.GetObject());
+		const FGuid sessionGuid = IsValid(dialogueContext) ? dialogueContext->SessionGUID : FGuid();
 		BeginClosePrediction(sessionGuid);
 	}
 	UMounteaDialogueManagerStatics::RequestCloseDialogue(ParentManager);
@@ -289,13 +289,13 @@ void UMounteaDialogueParticipantUserInterfaceComponent::ExecuteUISignal(const FM
 		return;
 	}
 
-	FString msg;
-	if (Signal.Command == TEXT("CreateDialogueWidget"))
-		Execute_CreateDialogueUI(this, msg);
-	else if (Signal.Command == TEXT("CloseDialogueWidget"))
+	FString signalMessage;
+	if (Signal.Command == MounteaDialogueWidgetCommands::CreateDialogueWidget)
+		Execute_CreateDialogueUI(this, signalMessage);
+	else if (Signal.Command == MounteaDialogueWidgetCommands::CloseDialogueWidget)
 		Execute_CloseDialogueUI(this);
 	else if (!Signal.Command.IsEmpty())
-		Execute_UpdateDialogueUI(this, msg, Signal.Command);
+		Execute_UpdateDialogueUI(this, signalMessage, Signal.Command);
 }
 
 void UMounteaDialogueParticipantUserInterfaceComponent::DrainPendingSignals(
@@ -427,7 +427,7 @@ void UMounteaDialogueParticipantUserInterfaceComponent::ReconcileFromPayload(
 	if (!ParentManager.GetObject())
 		return;
 
-	const EDialogueManagerState managerState = Execute_GetManagerState(ParentManager.GetObject());
+	const EDialogueManagerState managerState = ParentManager->Execute_GetManagerState(ParentManager.GetObject());
 
 	if (managerState == EDialogueManagerState::EDMS_Active && !IsValid(UserInterface))
 	{
@@ -523,14 +523,14 @@ void UMounteaDialogueParticipantUserInterfaceComponent::BeginSelectPrediction(co
 	if (!ParentManager.GetObject())
 		return;
 
-	const UMounteaDialogueContext* ctx = Execute_GetDialogueContext(ParentManager.GetObject());
-	if (!IsValid(ctx) || !ctx->SessionGUID.IsValid())
+	const UMounteaDialogueContext* dialogueContext = ParentManager->Execute_GetDialogueContext(ParentManager.GetObject());
+	if (!IsValid(dialogueContext) || !dialogueContext->SessionGUID.IsValid())
 		return;
 
 	ClearPredictionState();
 
 	PendingPredictionType = EDialogueClientPredictionType::Select;
-	PendingPredictionSessionGUID = ctx->SessionGUID;
+	PendingPredictionSessionGUID = dialogueContext->SessionGUID;
 	PendingPredictionNodeGUID = NodeGuid;
 
 	const UWorld* world = GetWorld();
@@ -656,8 +656,8 @@ void UMounteaDialogueParticipantUserInterfaceComponent::ApplyPredictedUICommand(
 	signal.Command = Command;
 	if (ParentManager.GetObject())
 	{
-		const UMounteaDialogueContext* ctx = Execute_GetDialogueContext(ParentManager.GetObject());
-		signal.SessionGUID = IsValid(ctx) ? ctx->SessionGUID : FGuid();
+		const UMounteaDialogueContext* dialogueContext = ParentManager->Execute_GetDialogueContext(ParentManager.GetObject());
+		signal.SessionGUID = IsValid(dialogueContext) ? dialogueContext->SessionGUID : FGuid();
 	}
 	signal.RequiredContextVersion = 0;
 	signal.bForceReconcile = false;

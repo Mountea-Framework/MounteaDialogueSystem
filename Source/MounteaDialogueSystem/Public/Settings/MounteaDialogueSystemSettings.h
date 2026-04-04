@@ -14,11 +14,11 @@ namespace MounteaDialogueWidgetCommands
 	const FString CloseDialogueWidget			(TEXT("CloseDialogueWidget"));
 	const FString ShowDialogueRow				(TEXT("ShowDialogueRow"));
 	const FString UpdateDialogueRow				(TEXT("UpdateDialogueRow"));
-	const FString HideDialogueRow					(TEXT("HideDialogueRow"));
-	const FString AddDialogueOptions				(TEXT("AddDialogueOptions"));
-	const FString RemoveDialogueOptions		(TEXT("RemoveDialogueOptions"));
-	const FString ShowSkipUI							(TEXT("ShowSkipUI"));
-	const FString HideSkipUI								(TEXT("HideSkipUI"));
+	const FString HideDialogueRow				(TEXT("HideDialogueRow"));
+	const FString AddDialogueOptions			(TEXT("AddDialogueOptions"));
+	const FString RemoveDialogueOptions			(TEXT("RemoveDialogueOptions"));
+	const FString ShowSkipUI					(TEXT("ShowSkipUI"));
+	const FString HideSkipUI					(TEXT("HideSkipUI"));
 }
 
 /**

@@ -16,6 +16,7 @@
 #include "Interfaces/Core/MounteaDialogueParticipantUIInterface.h"
 #include "MounteaDialogueParticipantUserInterfaceComponent.generated.h"
 
+struct FMounteaDialogueContextPayload;
 /**
  * Mountea Dialogue Participant User Interface Component.
  *

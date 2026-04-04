@@ -1,4 +1,4 @@
-// Copyright (C) 2026 Dominik (Pavlicek) Morse. All rights reserved.
+﻿// Copyright (C) 2026 Dominik (Pavlicek) Morse. All rights reserved.
 //
 // Developed for the Mountea Framework as a free tool. This solution is provided
 // for use and sharing without charge. Redistribution is allowed under the following conditions:
@@ -57,8 +57,7 @@ public:
 	 *
 	 * @param NewManager  Manager to associate with this UI component.
 	 */
-	UFUNCTION(BlueprintNativeEvent,
-		Category="Mountea|Dialogue|Participant|UI",
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI",
 		meta=(CustomTag="MounteaK2Setter"))
 	void SetParentManager(const TScriptInterface<IMounteaDialogueManagerInterface>& NewManager);
 	virtual void SetParentManager_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& NewManager) = 0;
@@ -66,9 +65,7 @@ public:
 	/**
 	 * Returns the currently associated manager.
 	 */
-	UFUNCTION(BlueprintNativeEvent,
-		BlueprintPure,
-		Category="Mountea|Dialogue|Participant|UI",
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI",
 		meta=(CustomTag="MounteaK2Getter"))
 	TScriptInterface<IMounteaDialogueManagerInterface> GetParentManager() const;
 	virtual TScriptInterface<IMounteaDialogueManagerInterface> GetParentManager_Implementation() const = 0;
@@ -79,9 +76,7 @@ public:
 	 *
 	 * @param Manager  Manager to listen to.
 	 */
-	UFUNCTION(BlueprintNativeEvent,
-		BlueprintCallable,
-		Category="Mountea|Dialogue|Participant|UI",
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI",
 		meta=(CustomTag="MounteaK2Setter"))
 	void BindToManager(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	virtual void BindToManager_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) = 0;
@@ -89,9 +84,7 @@ public:
 	/**
 	 * Removes all event and signal delegate bindings and clears the manager reference.
 	 */
-	UFUNCTION(BlueprintNativeEvent,
-		BlueprintCallable,
-		Category="Mountea|Dialogue|Participant|UI",
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI",
 		meta=(CustomTag="MounteaK2Setter"))
 	void UnbindFromManager();
 	virtual void UnbindFromManager_Implementation() = 0;
@@ -105,8 +98,7 @@ public:
 	 *
 	 * @param NewUserInterface  The new UI target object.
 	 */
-	UFUNCTION(BlueprintNativeEvent,
-		Category="Mountea|Dialogue|Participant|UI",
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI",
 		meta=(CustomTag="MounteaK2Setter"))
 	void SetUserInterface(UObject* NewUserInterface);
 	virtual void SetUserInterface_Implementation(UObject* NewUserInterface) = 0;
@@ -114,9 +106,7 @@ public:
 	/**
 	 * Returns the current UI target object.
 	 */
-	UFUNCTION(BlueprintNativeEvent,
-		BlueprintPure,
-		Category="Mountea|Dialogue|Participant|UI",
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI",
 		meta=(CustomTag="MounteaK2Getter"))
 	UObject* GetUserInterface() const;
 	virtual UObject* GetUserInterface_Implementation() const = 0;
@@ -130,8 +120,7 @@ public:
 	 * @param Message  Out: human-readable result message for debugging.
 	 * @return True if the UI was successfully created.
 	 */
-	UFUNCTION(BlueprintNativeEvent,
-		Category="Mountea|Dialogue|Participant|UI")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI")
 	bool CreateDialogueUI(FString& Message);
 	virtual bool CreateDialogueUI_Implementation(FString& Message) = 0;
 
@@ -142,8 +131,7 @@ public:
 	 * @param Command  Widget command (see MounteaDialogueWidgetCommands namespace).
 	 * @return True if the update was dispatched successfully.
 	 */
-	UFUNCTION(BlueprintNativeEvent,
-		Category="Mountea|Dialogue|Participant|UI")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI")
 	bool UpdateDialogueUI(FString& Message, const FString& Command);
 	virtual bool UpdateDialogueUI_Implementation(FString& Message, const FString& Command) = 0;
 
@@ -153,8 +141,7 @@ public:
 	 *
 	 * @return True if the close sequence was executed.
 	 */
-	UFUNCTION(BlueprintNativeEvent,
-		Category="Mountea|Dialogue|Participant|UI")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI")
 	bool CloseDialogueUI();
 	virtual bool CloseDialogueUI_Implementation() = 0;
 
@@ -163,8 +150,7 @@ public:
 	 *
 	 * @param Command  Widget command to execute.
 	 */
-	UFUNCTION(BlueprintNativeEvent,
-		Category="Mountea|Dialogue|Participant|UI")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI")
 	void ExecuteWidgetCommand(const FString& Command);
 	virtual void ExecuteWidgetCommand_Implementation(const FString& Command) = 0;
 
@@ -176,32 +162,28 @@ public:
 	 *
 	 * @param NodeGuid  GUID of the node to select.
 	 */
-	UFUNCTION(BlueprintNativeEvent,
-		Category="Mountea|Dialogue|Participant|UI")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI")
 	void RequestSelectNode(const FGuid& NodeGuid);
 	virtual void RequestSelectNode_Implementation(const FGuid& NodeGuid) = 0;
 
 	/**
 	 * Forwards a row-skip request to the manager authority.
 	 */
-	UFUNCTION(BlueprintNativeEvent,
-		Category="Mountea|Dialogue|Participant|UI")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI")
 	void RequestSkipDialogueRow();
 	virtual void RequestSkipDialogueRow_Implementation() = 0;
 
 	/**
 	 * Forwards a dialogue close request to the manager authority.
 	 */
-	UFUNCTION(BlueprintNativeEvent,
-		Category="Mountea|Dialogue|Participant|UI")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI")
 	void RequestCloseDialogue();
 	virtual void RequestCloseDialogue_Implementation() = 0;
 
 	/**
 	 * Forwards a row-processed notification to the manager authority.
 	 */
-	UFUNCTION(BlueprintNativeEvent,
-		Category="Mountea|Dialogue|Participant|UI")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI")
 	void RequestProcessDialogueRow();
 	virtual void RequestProcessDialogueRow_Implementation() = 0;
 
@@ -214,8 +196,7 @@ public:
 	 *
 	 * @param Signal  Version-stamped UI command from the server.
 	 */
-	UFUNCTION(BlueprintNativeEvent,
-		Category="Mountea|Dialogue|Participant|UI")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI")
 	void DispatchUISignal(const FMounteaDialogueUISignal& Signal);
 	virtual void DispatchUISignal_Implementation(const FMounteaDialogueUISignal& Signal) = 0;
 };

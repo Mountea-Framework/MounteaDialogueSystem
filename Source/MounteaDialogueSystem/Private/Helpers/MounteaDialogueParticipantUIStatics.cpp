@@ -33,14 +33,14 @@ void UMounteaDialogueParticipantUIStatics::SetParentManager(
 	const TScriptInterface<IMounteaDialogueManagerInterface>& NewManager)
 {
 	if (Target.GetObject())
-		Execute_SetParentManager(Target.GetObject(), NewManager);
+		Target->Execute_SetParentManager(Target.GetObject(), NewManager);
 }
 
 TScriptInterface<IMounteaDialogueManagerInterface> UMounteaDialogueParticipantUIStatics::GetParentManager(
 	const TScriptInterface<IMounteaDialogueParticipantUIInterface>& Target)
 {
 	if (Target.GetObject())
-		return Execute_GetParentManager(Target.GetObject());
+		return Target->Execute_GetParentManager(Target.GetObject());
 	return nullptr;
 }
 
@@ -49,14 +49,14 @@ void UMounteaDialogueParticipantUIStatics::BindToManager(
 	const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	if (Target.GetObject())
-		Execute_BindToManager(Target.GetObject(), Manager);
+		Target->Execute_BindToManager(Target.GetObject(), Manager);
 }
 
 void UMounteaDialogueParticipantUIStatics::UnbindFromManager(
 	const TScriptInterface<IMounteaDialogueParticipantUIInterface>& Target)
 {
 	if (Target.GetObject())
-		Execute_UnbindFromManager(Target.GetObject());
+		Target->Execute_UnbindFromManager(Target.GetObject());
 }
 
 void UMounteaDialogueParticipantUIStatics::SetUserInterface(
@@ -64,14 +64,14 @@ void UMounteaDialogueParticipantUIStatics::SetUserInterface(
 	UObject* NewUserInterface)
 {
 	if (Target.GetObject())
-		Execute_SetUserInterface(Target.GetObject(), NewUserInterface);
+		Target->Execute_SetUserInterface(Target.GetObject(), NewUserInterface);
 }
 
 UObject* UMounteaDialogueParticipantUIStatics::GetUserInterface(
 	const TScriptInterface<IMounteaDialogueParticipantUIInterface>& Target)
 {
 	if (Target.GetObject())
-		return Execute_GetUserInterface(Target.GetObject());
+		return Target->Execute_GetUserInterface(Target.GetObject());
 	return nullptr;
 }
 
@@ -80,7 +80,7 @@ bool UMounteaDialogueParticipantUIStatics::CreateDialogueUI(
 	FString& Message)
 {
 	if (Target.GetObject())
-		return Execute_CreateDialogueUI(Target.GetObject(), Message);
+		return Target->Execute_CreateDialogueUI(Target.GetObject(), Message);
 	Message = TEXT("Invalid UI component target.");
 	return false;
 }
@@ -91,7 +91,7 @@ bool UMounteaDialogueParticipantUIStatics::UpdateDialogueUI(
 	const FString& Command)
 {
 	if (Target.GetObject())
-		return Execute_UpdateDialogueUI(Target.GetObject(), Message, Command);
+		return Target->Execute_UpdateDialogueUI(Target.GetObject(), Message, Command);
 	Message = TEXT("Invalid UI component target.");
 	return false;
 }
@@ -100,7 +100,7 @@ bool UMounteaDialogueParticipantUIStatics::CloseDialogueUI(
 	const TScriptInterface<IMounteaDialogueParticipantUIInterface>& Target)
 {
 	if (Target.GetObject())
-		return Execute_CloseDialogueUI(Target.GetObject());
+		return Target->Execute_CloseDialogueUI(Target.GetObject());
 	return false;
 }
 
@@ -109,7 +109,7 @@ void UMounteaDialogueParticipantUIStatics::ExecuteWidgetCommand(
 	const FString& Command)
 {
 	if (Target.GetObject())
-		Execute_ExecuteWidgetCommand(Target.GetObject(), Command);
+		Target->Execute_ExecuteWidgetCommand(Target.GetObject(), Command);
 }
 
 void UMounteaDialogueParticipantUIStatics::RequestSelectNode(
@@ -117,28 +117,28 @@ void UMounteaDialogueParticipantUIStatics::RequestSelectNode(
 	const FGuid& NodeGuid)
 {
 	if (Target.GetObject())
-		Execute_RequestSelectNode(Target.GetObject(), NodeGuid);
+		Target->Execute_RequestSelectNode(Target.GetObject(), NodeGuid);
 }
 
 void UMounteaDialogueParticipantUIStatics::RequestSkipDialogueRow(
 	const TScriptInterface<IMounteaDialogueParticipantUIInterface>& Target)
 {
 	if (Target.GetObject())
-		Execute_RequestSkipDialogueRow(Target.GetObject());
+		Target->Execute_RequestSkipDialogueRow(Target.GetObject());
 }
 
 void UMounteaDialogueParticipantUIStatics::RequestCloseDialogue(
 	const TScriptInterface<IMounteaDialogueParticipantUIInterface>& Target)
 {
 	if (Target.GetObject())
-		Execute_RequestCloseDialogue(Target.GetObject());
+		Target->Execute_RequestCloseDialogue(Target.GetObject());
 }
 
 void UMounteaDialogueParticipantUIStatics::RequestProcessDialogueRow(
 	const TScriptInterface<IMounteaDialogueParticipantUIInterface>& Target)
 {
 	if (Target.GetObject())
-		Execute_RequestProcessDialogueRow(Target.GetObject());
+		Target->Execute_RequestProcessDialogueRow(Target.GetObject());
 }
 
 void UMounteaDialogueParticipantUIStatics::DispatchUISignal(
@@ -146,5 +146,5 @@ void UMounteaDialogueParticipantUIStatics::DispatchUISignal(
 	const FMounteaDialogueUISignal& Signal)
 {
 	if (Target.GetObject())
-		Execute_DispatchUISignal(Target.GetObject(), Signal);
+		Target->Execute_DispatchUISignal(Target.GetObject(), Signal);
 }

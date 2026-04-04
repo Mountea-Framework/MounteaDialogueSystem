@@ -623,7 +623,7 @@ int32 UMounteaDialogueParticipant::GetCurrentPIEInstanceID() const
 				return Context.PIEInstance;
 		}
 	}
-	return -1;
+	return INDEX_NONE;
 }
 
 #endif

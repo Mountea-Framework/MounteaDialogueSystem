@@ -12,7 +12,6 @@
 #include "Components/MounteaDialogueManager.h"
 
 #include "TimerManager.h"
-#include "Blueprint/GameViewportSubsystem.h"
 #include "Graph/MounteaDialogueGraph.h"
 
 #include "Data/MounteaDialogueContext.h"
@@ -22,9 +21,7 @@
 #include "Helpers/MounteaDialogueManagerStatics.h"
 #include "Helpers/MounteaDialogueParticipantStatics.h"
 #include "Helpers/MounteaDialogueTraversalStatics.h"
-#include "Interfaces/HUD/MounteaDialogueWBPInterface.h"
 #include "Net/UnrealNetwork.h"
-#include "Settings/MounteaDialogueSystemSettings.h"
 #include "Components/MounteaDialogueSession.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Subsystem/MounteaDialogueWorldSubsystem.h"
@@ -36,8 +33,7 @@ static constexpr uint8 DialogueClientViewMode_Neutral = 3;
 static constexpr uint8 DialogueClientViewMode_Closed = 4;
 
 UMounteaDialogueManager::UMounteaDialogueManager()
-	: DialogueWidgetZOrder(12)
-	, DefaultManagerState(EDialogueManagerState::EDMS_Enabled)
+	: DefaultManagerState(EDialogueManagerState::EDMS_Enabled)
 	, DialogueContext(nullptr)
 {
 	bAutoActivate = true;
@@ -76,9 +72,6 @@ void UMounteaDialogueManager::BeginPlay()
 
 	OnDialogueFailed.AddUniqueDynamic(this, &UMounteaDialogueManager::DialogueFailed);
 
-	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
-	bPredictionEnabled = dialogueSettings ? dialogueSettings->IsClientPredictionEnabled() : true;
-
 }
 
 void UMounteaDialogueManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -102,7 +95,6 @@ void UMounteaDialogueManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	else
 		LOG_ERROR(TEXT("[EndPlay] No World Found!"))
 
-	ClearPredictionState();
 }
 
 AActor* UMounteaDialogueManager::GetOwningActor_Implementation() const
@@ -176,7 +168,6 @@ void UMounteaDialogueManager::OnRep_ManagerState()
 
 	OnDialogueManagerStateChanged.Broadcast(ManagerState);
 	ProcessStateUpdated();
-	ResolvePredictionFromManagerState();
 }
 
 void UMounteaDialogueManager::ProcessStateUpdated()
@@ -265,10 +256,6 @@ void UMounteaDialogueManager::NotifyParticipants(const TArray<TScriptInterface<I
 void UMounteaDialogueManager::DialogueFailed(const FString& ErrorMessage)
 {
 	LOG_ERROR(TEXT("[Dialogue Failed] %s"), *ErrorMessage)
-
-	if (!UMounteaDialogueManagerStatics::IsServer(GetOwner()) && PendingPredictionType != EDialogueClientPredictionType::None)
-		RollbackPrediction(ErrorMessage);
-
 	SetManagerState(DefaultManagerState);
 }
 
@@ -475,7 +462,6 @@ void UMounteaDialogueManager::RequestCloseDialogue_Implementation()
 			}
 		}
 
-		BeginClosePrediction(sessionGuid);
 		RequestCloseDialogue_Server(sessionGuid);
 		return;
 	}
@@ -600,9 +586,6 @@ void UMounteaDialogueManager::StartDialogue_Implementation()
 void UMounteaDialogueManager::CloseDialogue_Implementation()
 {
 	const FGuid closingSessionGuid = IsValid(DialogueContext) ? DialogueContext->SessionGUID : FGuid();
-	const bool bSkipCloseBroadcast = bPredictedCloseEventFired
-		&& PredictedCloseSessionGUID.IsValid()
-		&& PredictedCloseSessionGUID == closingSessionGuid;
 
 	if (UMounteaDialogueManagerStatics::IsServer(GetOwner()))
 	{
@@ -641,15 +624,9 @@ void UMounteaDialogueManager::CloseDialogue_Implementation()
 	Execute_CleanupDialogue(this);
 
 	SetDialogueContext(nullptr);
-	
-	if (UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()) && !bSkipCloseBroadcast)
-		OnDialogueClosed.Broadcast(DialogueContext);
 
-	if (bSkipCloseBroadcast)
-	{
-		bPredictedCloseEventFired = false;
-		PredictedCloseSessionGUID.Invalidate();
-	}
+	if (UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
+		OnDialogueClosed.Broadcast(DialogueContext);
 
 	DialogueInstigator = nullptr;
 	ResetClientSyncCaches(FGuid());
@@ -778,7 +755,6 @@ void UMounteaDialogueManager::SelectNode_Implementation(const FGuid& NodeGuid)
 
 	if (!UMounteaDialogueManagerStatics::IsServer(GetOwner()))
 	{
-		BeginSelectPrediction(NodeGuid);
 		RequestSelectNode_Server(sessionGuid, NodeGuid);
 		return;
 	}
@@ -870,229 +846,11 @@ void UMounteaDialogueManager::SkipDialogueRow_Implementation()
 	session->HandleSkipDialogueRow(this, sessionGuid);
 }
 
+PRAGMA_DISABLE_DEPRECATION_WARNINGS
+
 void UMounteaDialogueManager::UpdateWorldDialogueUI_Implementation(const FString& Command)
 {
-	if (!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
-		return;
-
-	ProcessWorldWidgetUpdate(Command);
-}
-
-void UMounteaDialogueManager::ProcessWorldWidgetUpdate(const FString& Command)
-{
-	if (LastDialogueCommand == Command)
-		return;
-
-	for (const auto& dialogueObject : DialogueObjects)
-	{
-		if (dialogueObject)
-			IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(dialogueObject, this, Command);
-	}
-
-	LastDialogueCommand = Command;
-}
-
-void UMounteaDialogueManager::ApplyReplicatedWidgetCommand(const FString& Command)
-{
-	if (!UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner()))
-		return;
-
-	if (Command.IsEmpty())
-		return;
-
-	if (IsValid(DialogueWidget))
-		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(DialogueWidget, this, Command);
-
-	ProcessWorldWidgetUpdate(Command);
-}
-
-bool UMounteaDialogueManager::IsCoreWidgetCommand(const FString& Command) const
-{
-	return Command == MounteaDialogueWidgetCommands::ShowDialogueRow
-		|| Command == MounteaDialogueWidgetCommands::HideDialogueRow
-		|| Command == MounteaDialogueWidgetCommands::AddDialogueOptions
-		|| Command == MounteaDialogueWidgetCommands::RemoveDialogueOptions
-		|| Command == MounteaDialogueWidgetCommands::CreateDialogueWidget
-		|| Command == MounteaDialogueWidgetCommands::CloseDialogueWidget;
-}
-
-bool UMounteaDialogueManager::ShouldReplayPayloadCommand(const FMounteaDialogueContextPayload& Payload) const
-{
-	return !Payload.LastWidgetCommand.IsEmpty()
-		&& Payload.ContextVersion > LastAppliedPayloadCommandVersion
-		&& !IsCoreWidgetCommand(Payload.LastWidgetCommand);
-}
-
-bool UMounteaDialogueManager::IsPredictionEnabled()
-{
-	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
-	bPredictionEnabled = dialogueSettings ? dialogueSettings->IsClientPredictionEnabled() : true;
-
-	return bPredictionEnabled
-		&& !UMounteaDialogueManagerStatics::IsServer(GetOwner())
-		&& UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(GetOwner());
-}
-
-uint32 UMounteaDialogueManager::BuildAllowedChildrenHash(const TArray<FGuid>& AllowedChildren) const
-{
-	uint32 hash = 0;
-	for (const FGuid& childGuid : AllowedChildren)
-	{
-		hash = HashCombineFast(hash, GetTypeHash(childGuid));
-	}
-	return hash;
-}
-
-void UMounteaDialogueManager::BeginSelectPrediction(const FGuid& NodeGuid)
-{
-	if (!IsPredictionEnabled())
-		return;
-
-	if (!IsValid(DialogueContext))
-		return;
-
-	if (!DialogueContext->SessionGUID.IsValid())
-		return;
-
-	ClearPredictionState();
-
-	PendingPredictionType = EDialogueClientPredictionType::Select;
-	PendingPredictionSessionGUID = DialogueContext->SessionGUID;
-	PendingPredictionNodeGUID = NodeGuid;
-	PendingPredictionStartContextVersion = LastReceivedPayloadVersion;
-
-	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
-	const float timeout = dialogueSettings ? dialogueSettings->GetClientPredictionTimeoutSeconds() : 0.75f;
-	if (GetWorld())
-		GetWorld()->GetTimerManager().SetTimer(PendingPredictionHandle, this, &UMounteaDialogueManager::OnPredictionTimeout, timeout, false);
-
-	ApplyPredictedUICommand(MounteaDialogueWidgetCommands::RemoveDialogueOptions);
-	ApplyPredictedUICommand(MounteaDialogueWidgetCommands::HideDialogueRow);
-}
-
-void UMounteaDialogueManager::BeginClosePrediction(const FGuid& SessionGuid)
-{
-	if (!IsPredictionEnabled())
-		return;
-
-	if (!SessionGuid.IsValid())
-		return;
-
-	ClearPredictionState();
-
-	PendingPredictionType = EDialogueClientPredictionType::Close;
-	PendingPredictionSessionGUID = SessionGuid;
-	PendingPredictionStartContextVersion = LastReceivedPayloadVersion;
-
-	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
-	const float timeout = dialogueSettings ? dialogueSettings->GetClientPredictionTimeoutSeconds() : 0.75f;
-	if (GetWorld())
-		GetWorld()->GetTimerManager().SetTimer(PendingPredictionHandle, this, &UMounteaDialogueManager::OnPredictionTimeout, timeout, false);
-
-	ApplyPredictedUICommand(MounteaDialogueWidgetCommands::CloseDialogueWidget);
-
-	if (!bPredictedCloseEventFired || PredictedCloseSessionGUID != SessionGuid)
-	{
-		bPredictedCloseEventFired = true;
-		PredictedCloseSessionGUID = SessionGuid;
-		OnDialogueClosed.Broadcast(DialogueContext);
-	}
-}
-
-void UMounteaDialogueManager::ResolvePredictionFromPayload(const FMounteaDialogueContextPayload& Payload)
-{
-	if (PendingPredictionType == EDialogueClientPredictionType::None)
-		return;
-
-	if (PendingPredictionType == EDialogueClientPredictionType::Select)
-	{
-		if (Payload.SessionGUID != PendingPredictionSessionGUID)
-		{
-			ClearPredictionState();
-			return;
-		}
-
-		if (Payload.ContextVersion > PendingPredictionStartContextVersion)
-		{
-			ClearPredictionState();
-			return;
-		}
-	}
-
-	if (PendingPredictionType == EDialogueClientPredictionType::Close)
-	{
-		if (Payload.SessionGUID != PendingPredictionSessionGUID)
-		{
-			ClearPredictionState();
-			return;
-		}
-	}
-}
-
-void UMounteaDialogueManager::ResolvePredictionFromManagerState()
-{
-	if (PendingPredictionType != EDialogueClientPredictionType::Close)
-		return;
-
-	if (ManagerState != EDialogueManagerState::EDMS_Active)
-		ClearPredictionState();
-}
-
-void UMounteaDialogueManager::RollbackPrediction(const FString& Reason)
-{
-	if (PendingPredictionType == EDialogueClientPredictionType::None)
-		return;
-
-	LOG_WARNING(TEXT("[Client Prediction] Rolling back `%s` prediction: %s"),
-		PendingPredictionType == EDialogueClientPredictionType::Select ? TEXT("Select") : TEXT("Close"),
-		*Reason)
-
-	UMounteaDialogueWorldSubsystem* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UMounteaDialogueWorldSubsystem>() : nullptr;
-	if (subsystem)
-	{
-		if (UMounteaDialogueSession* session = subsystem->GetGameStateSession())
-		{
-			const FMounteaDialogueContextPayload& payload = session->GetContextPayload();
-			if (payload.IsValid())
-				ReconcileClientUIFromPayload(payload);
-		}
-	}
-
-	if (PendingPredictionType == EDialogueClientPredictionType::Close)
-	{
-		bPredictedCloseEventFired = false;
-		PredictedCloseSessionGUID.Invalidate();
-	}
-
-	ClearPredictionState();
-}
-
-void UMounteaDialogueManager::ClearPredictionState()
-{
-	if (GetWorld())
-		GetWorld()->GetTimerManager().ClearTimer(PendingPredictionHandle);
-
-	PendingPredictionType = EDialogueClientPredictionType::None;
-	PendingPredictionSessionGUID.Invalidate();
-	PendingPredictionNodeGUID.Invalidate();
-	PendingPredictionStartContextVersion = 0;
-}
-
-void UMounteaDialogueManager::ApplyPredictedUICommand(const FString& Command)
-{
-	if (!IsPredictionEnabled())
-		return;
-
-	FString resultMessage;
-	Execute_UpdateDialogueUI(this, resultMessage, Command);
-}
-
-void UMounteaDialogueManager::OnPredictionTimeout()
-{
-	if (PendingPredictionType == EDialogueClientPredictionType::None)
-		return;
-
-	RollbackPrediction(TEXT("Timeout waiting for authoritative update."));
+	LOG_WARNING(TEXT("[MounteaDialogueManager] UpdateWorldDialogueUI is deprecated. Use UMounteaDialogueParticipantUserInterfaceComponent."))
 }
 
 void UMounteaDialogueManager::ResetClientSyncCaches(const FGuid& SessionGUID)
@@ -1108,17 +866,10 @@ void UMounteaDialogueManager::ResetClientSyncCaches(const FGuid& SessionGUID)
 	}
 
 	LastClientSyncSessionGUID = SessionGUID;
-	LastAppliedPayloadCommandVersion = 0;
-	LastReconciledRowGUID.Invalidate();
-	LastReconciledRowIndex = INDEX_NONE;
-	LastReconciledOptionsHash = 0;
+	LastReceivedPayloadVersion = 0;
 	LastPlayedAudioRowGUID.Invalidate();
 	LastPlayedAudioRowIndex = INDEX_NONE;
 	bClientAudioPlaying = false;
-	LastReconciledViewMode = DialogueClientViewMode_None;
-	LastDialogueCommand.Empty();
-	LastReceivedPayloadVersion = 0;
-	ClearPredictionState();
 }
 
 void UMounteaDialogueManager::ReconcileClientAudioFromPayload(const FMounteaDialogueContextPayload& Payload, const bool bShouldPlayRowAudio)
@@ -1179,96 +930,36 @@ void UMounteaDialogueManager::ReconcileClientUIFromPayload(const FMounteaDialogu
 
 bool UMounteaDialogueManager::AddDialogueUIObject_Implementation(UObject* NewDialogueObject)
 {
-	if (NewDialogueObject == nullptr)
-	{
-		LOG_WARNING(TEXT("[AddDialogueUIObject] Input parameter is null!"));
-		return false;
-	}
-
-	if (!NewDialogueObject->Implements<UMounteaDialogueWBPInterface>())
-	{
-		LOG_WARNING(TEXT("[AddDialogueUIObject] Input parameter does not implement 'IMounteaDialogueWBPInterface'!"));
-		return false;
-	}
-
-	if (DialogueObjects.Contains(NewDialogueObject))
-	{
-		LOG_WARNING(TEXT("[AddDialogueUIObject] Input parameter already stored!"));
-		return false;
-	}
-
-	DialogueObjects.Add(NewDialogueObject);
-	
-	return true;
+	LOG_WARNING(TEXT("[MounteaDialogueManager] AddDialogueUIObject is deprecated. Use UMounteaDialogueParticipantUserInterfaceComponent."))
+	return false;
 }
 
 bool UMounteaDialogueManager::AddDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects)
 {
-	if (NewDialogueObjects.Num() == 0)
-	{
-		LOG_WARNING(TEXT("[AddDialogueUIObjects] Input array is empty!"));
-		return false;
-	}
-
-	bool bAllAdded = true;
-	for (UObject* Object : NewDialogueObjects)
-	{
-		if (!AddDialogueUIObject_Implementation(Object))
-			bAllAdded = false;
-	}
-
-	return bAllAdded;
+	LOG_WARNING(TEXT("[MounteaDialogueManager] AddDialogueUIObjects is deprecated. Use UMounteaDialogueParticipantUserInterfaceComponent."))
+	return false;
 }
 
 bool UMounteaDialogueManager::RemoveDialogueUIObject_Implementation(UObject* DialogueObjectToRemove)
 {
-	if (DialogueObjectToRemove == nullptr)
-	{
-		LOG_WARNING(TEXT("[RemoveDialogueUIObject] Input parameter is null!"));
-		return false;
-	}
-
-	if (!DialogueObjects.Contains(DialogueObjectToRemove))
-	{
-		LOG_WARNING(TEXT("[RemoveDialogueUIObject] Input parameter not found in stored objects!"));
-		return false;
-	}
-
-	DialogueObjects.Remove(DialogueObjectToRemove);
-	return true;
+	LOG_WARNING(TEXT("[MounteaDialogueManager] RemoveDialogueUIObject is deprecated. Use UMounteaDialogueParticipantUserInterfaceComponent."))
+	return false;
 }
 
 bool UMounteaDialogueManager::RemoveDialogueUIObjects_Implementation(const TArray<UObject*>& DialogueObjectsToRemove)
 {
-	if (DialogueObjectsToRemove.Num() == 0)
-	{
-		LOG_WARNING(TEXT("[RemoveDialogueUIObjects] Input array is empty!"));
-		return false;
-	}
-
-	bool bAllRemoved = true;
-	for (UObject* Object : DialogueObjectsToRemove)
-	{
-		if (!RemoveDialogueUIObject_Implementation(Object))
-			bAllRemoved = false;
-	}
-
-	return bAllRemoved;
+	LOG_WARNING(TEXT("[MounteaDialogueManager] RemoveDialogueUIObjects is deprecated. Use UMounteaDialogueParticipantUserInterfaceComponent."))
+	return false;
 }
 
 void UMounteaDialogueManager::SetDialogueUIObjects_Implementation(const TArray<UObject*>& NewDialogueObjects)
 {
-	DialogueObjects.Empty();
-
-	for (UObject* Object : NewDialogueObjects)
-	{
-		AddDialogueUIObject_Implementation(Object);
-	}
+	LOG_WARNING(TEXT("[MounteaDialogueManager] SetDialogueUIObjects is deprecated. Use UMounteaDialogueParticipantUserInterfaceComponent."))
 }
 
 void UMounteaDialogueManager::ResetDialogueUIObjects_Implementation()
 {
-	DialogueObjects.Empty();
+	LOG_WARNING(TEXT("[MounteaDialogueManager] ResetDialogueUIObjects is deprecated. Use UMounteaDialogueParticipantUserInterfaceComponent."))
 }
 
 bool UMounteaDialogueManager::CreateDialogueUI_Implementation(FString& Message)
@@ -1296,60 +987,41 @@ void UMounteaDialogueManager::ExecuteWidgetCommand_Implementation(const FString&
 	LOG_WARNING(TEXT("[MounteaDialogueManager] ExecuteWidgetCommand is deprecated. Use UMounteaDialogueParticipantUserInterfaceComponent."))
 }
 
+PRAGMA_DISABLE_DEPRECATION_WARNINGS
+
 TSubclassOf<UUserWidget> UMounteaDialogueManager::GetDialogueWidgetClass() const
 {
-	if (DialogueWidgetClass != nullptr)
-		return DialogueWidgetClass;
-
-	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
-	return dialogueSettings ? dialogueSettings->GetDefaultDialogueWidget().LoadSynchronous() : nullptr;
+	LOG_WARNING(TEXT("[MounteaDialogueManager] GetDialogueWidgetClass is deprecated. Use UMounteaDialogueConfiguration::DefaultDialogueWidgetClass."))
+	return nullptr;
 }
 
 void UMounteaDialogueManager::SetDialogueWidgetClass(const TSubclassOf<UUserWidget> NewWidgetClass)
 {
-	if (DialogueWidgetClass != NewWidgetClass)
-	{
-		DialogueWidgetClass = NewWidgetClass;
-		OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidget);
-	}
+	LOG_WARNING(TEXT("[MounteaDialogueManager] SetDialogueWidgetClass is deprecated. Use UMounteaDialogueConfiguration::DefaultDialogueWidgetClass."))
 }
 
 void UMounteaDialogueManager::SetDialogueWidget_Implementation(UUserWidget* NewDialogueWidget)
 {
-	DialogueWidget = NewDialogueWidget;
-
-	OnDialogueUserInterfaceChanged.Broadcast(DialogueWidgetClass, DialogueWidget);
+	LOG_WARNING(TEXT("[MounteaDialogueManager] SetDialogueWidget is deprecated. Use UMounteaDialogueParticipantUserInterfaceComponent."))
 }
 
 UUserWidget* UMounteaDialogueManager::GetDialogueWidget_Implementation() const
 {
-	return DialogueWidget;
+	LOG_WARNING(TEXT("[MounteaDialogueManager] GetDialogueWidget is deprecated. Use UMounteaDialogueParticipantUserInterfaceComponent."))
+	return nullptr;
 }
 
 int32 UMounteaDialogueManager::GetDialogueWidgetZOrder_Implementation() const
 {
-	return DialogueWidgetZOrder;
+	LOG_WARNING(TEXT("[MounteaDialogueManager] GetDialogueWidgetZOrder is deprecated. Use UMounteaDialogueConfiguration::DefaultDialogueWidgetZOrder."))
+	return 0;
 }
 
 void UMounteaDialogueManager::SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder)
 {
-	if (NewZOrder == DialogueWidgetZOrder) return;
-
-	DialogueWidgetZOrder = NewZOrder;
-	
-	auto dialogueWidget = Execute_GetDialogueWidget(this);
-	if (!dialogueWidget) return;
-
-	ULocalPlayer* localPlayer = dialogueWidget->GetOwningLocalPlayer();
-	if (!localPlayer) return;
-
-	UGameViewportSubsystem* viewportSubsystem = UGameViewportSubsystem::Get(GetWorld());
-	if (!viewportSubsystem) return;
-
-	FGameViewportWidgetSlot widgetSlot = viewportSubsystem->GetWidgetSlot(dialogueWidget);
-	widgetSlot.ZOrder = NewZOrder;
-
-	viewportSubsystem->AddWidgetForPlayer(dialogueWidget, localPlayer, widgetSlot);
+	LOG_WARNING(TEXT("[MounteaDialogueManager] SetDialogueWidgetZOrder is deprecated. Use UMounteaDialogueConfiguration::DefaultDialogueWidgetZOrder."))
 }
+
+PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
 

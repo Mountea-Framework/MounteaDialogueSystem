@@ -83,7 +83,7 @@ FText UMounteaDialogueHUDStatics::ReplaceRegexInText(const FString& Regex, const
 int32 UMounteaDialogueHUDStatics::GetWidgetZOrder(UUserWidget* Widget, UObject* WorldContext)
 {
 	if (!Widget || !WorldContext)
-		return -1;
+		return INDEX_NONE;
 
 	ULocalPlayer* localPlayer = Widget->GetOwningLocalPlayer();
 	if (localPlayer)
@@ -96,7 +96,7 @@ int32 UMounteaDialogueHUDStatics::GetWidgetZOrder(UUserWidget* Widget, UObject* 
 		}
 	}
 
-	return -1;
+	return INDEX_NONE;
 }
 
 EDialogueOptionState UMounteaDialogueHUDStatics::GetFocusState(UUserWidget* Widget)
