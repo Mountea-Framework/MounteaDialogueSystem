@@ -444,6 +444,18 @@ public:
 		meta=(CustomTag="MounteaK2Validate"))
 	static bool ShouldExecuteCosmetics(const AActor* Owner);
 
+	/**
+	 * Traverses the owner chain of Actor to find the locally controlled APlayerController.
+	 * Handles APawn, APlayerController, APlayerState, and generic owner-chain traversal.
+	 * Returns null when called on a dedicated server or for AI-controlled actors.
+	 *
+	 * @param Owner  Actor whose owning player controller is requested.
+	 * @return  The local APlayerController, or null if none found.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Getter"))
+	static APlayerController* GetOwnerPlayerController(const AActor* Owner);
+
 	// --- Speech data helpers ----------------------------
 
 	/**

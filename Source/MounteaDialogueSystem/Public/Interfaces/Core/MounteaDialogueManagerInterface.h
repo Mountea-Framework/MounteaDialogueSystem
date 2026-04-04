@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
+#include "Data/MounteaDialogueUITypes.h"
 #include "UObject/Interface.h"
 #include "MounteaDialogueManagerInterface.generated.h"
 
@@ -51,6 +52,12 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueFailed, const FString&, Err
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueManagerStateChanged, const EDialogueManagerState&, NewState);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDialogueWidgetCommand, const TScriptInterface<IMounteaDialogueManagerInterface>&, DialogueManager, const FString&, WidgetCommand);
+
+/**
+ * Fired on the owning client when a UI signal arrives via Client_DispatchUISignal.
+ * Bound by UMounteaDialogueParticipantUserInterfaceComponent instances.
+ */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueUISignalEvent, const FMounteaDialogueUISignal&, Signal);
 
 /**
  * Mountea Dialogue Manager Interface.
@@ -418,4 +425,6 @@ public:
 	virtual FDialogueWidgetCommand& GetDialogueWidgetCommandHandle() = 0;
 
 	virtual FTimerHandle& GetDialogueRowTimerHandle() = 0;
+
+	virtual FDialogueUISignalEvent& GetDialogueUISignalEventHandle() = 0;
 };

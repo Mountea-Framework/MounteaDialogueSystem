@@ -56,6 +56,16 @@ public:
 	TSoftClassPtr<UUserWidget> DefaultDialogueWidgetClass;
 
 	/**
+	 * Default Z-order for the dialogue widget when added to screen via
+	 * UMounteaDialogueParticipantUserInterfaceComponent.
+	 * Higher values render on top of elements with lower Z-orders.
+	 */
+	UPROPERTY(EditDefaultsOnly,
+		Category = "🖥 UserInterface",
+		meta=(UIMin=0, ClampMin=0))
+	int32 DefaultDialogueWidgetZOrder = 12;
+
+	/**
 	 * Sets Input mode when in Dialogue.
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "🖥 UserInterface")
@@ -123,12 +133,16 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "💬 Subtitles")
 	TMap<FUIRowID, FMounteaSubtitlesSettings> SubtitlesSettingsOverrides;
 
+public:
+
+	int32 GetDefaultDialogueWidgetZOrder() const { return DefaultDialogueWidgetZOrder; }
+
 protected:
-	
+
 #if WITH_EDITOR
 	static FSlateFontInfo SetupDefaultFontSettings();
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 #endif
-	
-	
+
+
 };

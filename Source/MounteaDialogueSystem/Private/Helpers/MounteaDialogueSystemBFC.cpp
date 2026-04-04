@@ -963,6 +963,29 @@ bool UMounteaDialogueSystemBFC::ShouldExecuteCosmetics(const AActor* Owner)
 	return IsLocalPlayer(Owner);
 }
 
+APlayerController* UMounteaDialogueSystemBFC::GetOwnerPlayerController(const AActor* Owner)
+{
+	if (!Owner)
+		return nullptr;
+
+	if (const APawn* pawn = Cast<APawn>(Owner))
+		return Cast<APlayerController>(pawn->GetController());
+
+	if (APlayerController* playerController = const_cast<APlayerController*>(Cast<APlayerController>(Owner)))
+		return playerController->IsLocalPlayerController() ? playerController : nullptr;
+
+	if (const APlayerState* playerState = Cast<APlayerState>(Owner))
+	{
+		if (APlayerController* playerController = Cast<APlayerController>(playerState->GetOwner()))
+			return playerController->IsLocalPlayerController() ? playerController : nullptr;
+	}
+
+	if (const AActor* ownerActor = Owner->GetOwner())
+		return GetOwnerPlayerController(ownerActor);
+
+	return nullptr;
+}
+
 FDialogueRow UMounteaDialogueSystemBFC::GetSpeechData(UMounteaDialogueGraphNode* Node)
 {
 	if (!Node) return FDialogueRow();

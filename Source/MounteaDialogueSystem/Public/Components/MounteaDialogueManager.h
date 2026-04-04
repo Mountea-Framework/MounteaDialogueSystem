@@ -14,15 +14,9 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Data/MounteaDialogueContextPayload.h"
+#include "Data/MounteaDialogueUITypes.h"
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "MounteaDialogueManager.generated.h"
-
-enum class EDialogueClientPredictionType : uint8
-{
-	None,
-	Select,
-	Close
-};
 
 /**
  *  Mountea Dialogue Manager Component
@@ -78,6 +72,8 @@ public:
 	{ return OnDialogueWidgetCommandRequested; };
 	virtual FTimerHandle& GetDialogueRowTimerHandle() override
 	{ return TimerHandle_RowTimer; };
+	virtual FDialogueUISignalEvent& GetDialogueUISignalEventHandle() override
+	{ return OnDialogueUISignalRequested; };
 
 protected:
 
@@ -190,7 +186,26 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void CleanupDialogue_Server();
-	
+
+	/**
+	 * Delivers a version-stamped UI signal to the owning client.
+	 * Broadcasts OnDialogueUISignalRequested locally on the client.
+	 * On a listen server the _Implementation fires in-process — host is treated as a client.
+	 *
+	 * @param Signal  Version-stamped UI command to deliver.
+	 */
+	UFUNCTION(Client, Reliable)
+	void Client_DispatchUISignal(const FMounteaDialogueUISignal& Signal);
+
+	/**
+	 * Tells the owning client to purge all pending signals that belong to a completed session.
+	 * Delivered as a sentinel signal with RequiredContextVersion = INT32_MAX.
+	 *
+	 * @param SessionGUID  Session whose queued signals should be discarded.
+	 */
+	UFUNCTION(Client, Reliable)
+	void Client_ClearUISignals(const FGuid& SessionGUID);
+
 	UFUNCTION()
 	void OnRep_ManagerState();
 
@@ -308,6 +323,14 @@ public:
 	*/
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueWidgetCommand OnDialogueWidgetCommandRequested;
+
+	/**
+	 * Fired locally when a UI signal arrives via Client_DispatchUISignal.
+	 * UMounteaDialogueParticipantUserInterfaceComponent instances bind to this
+	 * delegate to receive UI lifecycle commands from the server.
+	 */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
+	FDialogueUISignalEvent OnDialogueUISignalRequested;
 
 protected:
 
