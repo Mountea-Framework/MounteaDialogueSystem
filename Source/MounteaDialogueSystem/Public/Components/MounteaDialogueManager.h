@@ -148,6 +148,26 @@ public:
 	UFUNCTION()
 	virtual void DialogueStartRequestReceived(const bool bResult, const FString& ResultMessage);
 
+	/**
+	 * Delivers a version-stamped UI signal to the owning client.
+	 * Broadcasts OnDialogueUISignalRequested locally on the client.
+	 * On a listen server the _Implementation fires in-process — host is treated as a client.
+	 * Called by UMounteaDialogueSession after payload writes to notify UI of state changes.
+	 *
+	 * @param Signal  Version-stamped UI command to deliver.
+	 */
+	UFUNCTION(Client, Reliable)
+	void Client_DispatchUISignal(const FMounteaDialogueUISignal& Signal);
+	
+	/**
+	 * Tells the owning client to purge all pending signals that belong to a completed session.
+	 * Delivered as a sentinel signal with RequiredContextVersion = INT32_MAX.
+	 *
+	 * @param SessionGUID  Session whose queued signals should be discarded.
+	 */
+	UFUNCTION(Client, Reliable)
+	void Client_ClearUISignals(const FGuid& SessionGUID);
+
 private:
 
 	UFUNCTION(Server, Reliable)
@@ -188,26 +208,7 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void CleanupDialogue_Server();
-
-	/**
-	 * Delivers a version-stamped UI signal to the owning client.
-	 * Broadcasts OnDialogueUISignalRequested locally on the client.
-	 * On a listen server the _Implementation fires in-process — host is treated as a client.
-	 *
-	 * @param Signal  Version-stamped UI command to deliver.
-	 */
-	UFUNCTION(Client, Reliable)
-	void Client_DispatchUISignal(const FMounteaDialogueUISignal& Signal);
-
-	/**
-	 * Tells the owning client to purge all pending signals that belong to a completed session.
-	 * Delivered as a sentinel signal with RequiredContextVersion = INT32_MAX.
-	 *
-	 * @param SessionGUID  Session whose queued signals should be discarded.
-	 */
-	UFUNCTION(Client, Reliable)
-	void Client_ClearUISignals(const FGuid& SessionGUID);
-
+	
 	UFUNCTION()
 	void OnRep_ManagerState();
 

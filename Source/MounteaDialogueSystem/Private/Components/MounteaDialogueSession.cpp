@@ -20,6 +20,7 @@
 #include "Helpers/MounteaDialogueTraversalStatics.h"
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
+#include "Interfaces/Nodes/MounteaDialogueSpeechDataInterface.h"
 #include "Net/UnrealNetwork.h"
 #include "Net/Core/PushModel/PushModel.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
@@ -384,9 +385,6 @@ bool UMounteaDialogueSession::IsSessionRequestValid(UMounteaDialogueManager* Man
 		return false;
 	}
 
-	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][Validate] %s accepted. Session=%s Manager=%s"),
-		ActionName, *SessionGUID.ToString(), *GetNameSafe(Manager))
-
 	return true;
 }
 
@@ -618,6 +616,13 @@ bool UMounteaDialogueSession::HandleNodeProcessed(UMounteaDialogueManager* Manag
 	dialogueContext->UpdateActiveDialogueRowDataIndex(0);
 	ApplyAllowedChildrenPayload(dialogueContext);
 
+	Manager->Client_DispatchUISignal(FMounteaDialogueUISignal{
+		MounteaDialogueWidgetCommands::AddDialogueOptions,
+		dialogueContext->SessionGUID,
+		ContextPayload.ContextVersion,
+		false
+	});
+
 	return true;
 }
 
@@ -791,33 +796,37 @@ bool UMounteaDialogueSession::HandleProcessNode(UMounteaDialogueManager* Manager
 		return false;
 
 	UMounteaDialogueContext* dialogueContext = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(Manager);
-	if (!IsValid(dialogueContext)
-		|| !IsValid(dialogueContext->ActiveNode)
-		|| !dialogueContext->ActiveDialogueParticipant.GetObject()
-		|| !dialogueContext->ActiveDialogueParticipant.GetInterface())
+	if (!IsValid(dialogueContext) || !IsValid(dialogueContext->ActiveNode))
 	{
-		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[Process Node] Invalid Context or Active Node or Active Dialogue Participant!"));
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[Process Node] Invalid Context or Active Node!"));
 		return false;
 	}
 
 	UMounteaDialogueGraphNode* processingNode = dialogueContext->ActiveNode;
-	if (!IsValid(dialogueContext->ActiveNode))
+	if (processingNode->Implements<UMounteaDialogueSpeechDataInterface>()
+		&& (!dialogueContext->ActiveDialogueParticipant.GetObject()
+			|| !dialogueContext->ActiveDialogueParticipant.GetInterface()))
 	{
-		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[Process Node] Active Node became invalid after processing."));
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[Process Node] Speech node requires a valid Active Dialogue Participant!"));
 		return false;
 	}
 
+	processingNode->Execute_ProcessNode(Manager);
+
 	if (dialogueContext->ActiveNode != processingNode)
 	{
-		LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][HandleProcessNode][Server] Active node changed by node processing. NewNodeGUID=%s NewNodeName=%s"),
-			*dialogueContext->ActiveNode->GetNodeGUID().ToString(), *dialogueContext->ActiveNode->GetName())
 		ApplyNodeSwitchPayload(dialogueContext);
 		return true;
 	}
 
 	ApplyRowStatePayload(dialogueContext);
-	dialogueContext->ActiveDialogueParticipant->GetOnParticipantBecomeActiveEventHandle().Broadcast(true);
 	Manager->GetDialogueNodeStartedEventHandle().Broadcast(dialogueContext);
+
+	if (processingNode->Implements<UMounteaDialogueSpeechDataInterface>()
+		&& dialogueContext->ActiveDialogueParticipant.GetObject()
+		&& dialogueContext->ActiveDialogueParticipant.GetInterface())
+		dialogueContext->ActiveDialogueParticipant->GetOnParticipantBecomeActiveEventHandle().Broadcast(true);
+
 	IMounteaDialogueManagerInterface::Execute_ProcessDialogueRow(Manager);
 	return true;
 }

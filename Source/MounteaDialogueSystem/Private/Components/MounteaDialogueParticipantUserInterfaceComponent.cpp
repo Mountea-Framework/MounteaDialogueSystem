@@ -339,6 +339,9 @@ void UMounteaDialogueParticipantUserInterfaceComponent::OnContextVersionUpdated(
 	const FMounteaDialogueContextPayload& payload = session->GetContextPayload();
 	const int32 currentVersion = payload.ContextVersion;
 
+	LastDispatchedContextVersion = FMath::Max(LastDispatchedContextVersion, currentVersion);
+	LastDispatchedSessionGUID = Context->SessionGUID;
+
 	ResolvePredictionFromPayload(payload);
 
 	if (!PendingUISignals.IsEmpty())

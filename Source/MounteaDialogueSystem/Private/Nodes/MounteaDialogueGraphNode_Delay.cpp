@@ -37,9 +37,9 @@ void UMounteaDialogueGraphNode_Delay::ProcessNode_Implementation(const TScriptIn
 
 	if (GetWorld())
 	{
-		FTimerDelegate TimerDelegate_TypeWriterUpdateInterval;
-		TimerDelegate_TypeWriterUpdateInterval.BindUFunction(this, "OnDelayDurationExpired", Manager);
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle_NodeDelay, TimerDelegate_TypeWriterUpdateInterval, DelayDuration, false);
+		FTimerDelegate TimerDelegate_NodeDelay;
+		TimerDelegate_NodeDelay.BindUFunction(this, "OnDelayDurationExpired", Manager);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_NodeDelay, TimerDelegate_NodeDelay, DelayDuration, false);
 	}
 	else
 	{
