@@ -153,8 +153,7 @@ void UMounteaDialogueSession::TryDispatchPendingClientPayload()
 	if (LastPendingDispatchWarningVersion != PendingClientDispatchVersion)
 	{
 		LastPendingDispatchWarningVersion = PendingClientDispatchVersion;
-		LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.PendingMissing.%s.%d"),
-			*PendingClientDispatchSessionGUID.ToString(), PendingClientDispatchVersion), TEXT("[Diag][Session][TryDispatchPending] No local manager found for pending payload. Session=%s Version=%d"),
+		LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.PendingMissing")), TEXT("[Diag][Session][TryDispatchPending] No local manager found for pending payload. Session=%s Version=%d"),
 			*PendingClientDispatchSessionGUID.ToString(), PendingClientDispatchVersion)
 		LOG_WARNING(TEXT("[Dialogue Session] Pending payload version %d could not be delivered yet: no local manager registered."), PendingClientDispatchVersion)
 	}
@@ -298,8 +297,7 @@ void UMounteaDialogueSession::NotifyLocalManagers()
 			return;
 		}
 
-		LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.Notify.ServerMissing.%s.%d"),
-			*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion), TEXT("[Diag][Session][Notify] Missing authoritative manager. Session=%s Version=%d"),
+		LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.Notify.ServerMissing")), TEXT("[Diag][Session][Notify] Missing authoritative manager. Session=%s Version=%d"),
 			*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion)
 		LOG_WARNING(TEXT("[Dialogue Session] Missing authoritative manager while dispatching payload version %d."), ContextPayload.ContextVersion)
 		return;
@@ -331,8 +329,7 @@ void UMounteaDialogueSession::NotifyLocalManagers()
 	bClientDispatchPending = true;
 	PendingClientDispatchSessionGUID = ContextPayload.SessionGUID;
 	PendingClientDispatchVersion = ContextPayload.ContextVersion;
-	LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.Notify.ClientPending.%s.%d"),
-		*PendingClientDispatchSessionGUID.ToString(), PendingClientDispatchVersion), TEXT("[Diag][Session][Notify] Client dispatch pending. Session=%s Version=%d"),
+	LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.Notify.ClientPending")), TEXT("[Diag][Session][Notify] Client dispatch pending. Session=%s Version=%d"),
 		*PendingClientDispatchSessionGUID.ToString(), PendingClientDispatchVersion)
 	if (!world->GetTimerManager().IsTimerActive(PendingDispatchRetryTimer))
 		world->GetTimerManager().SetTimer(PendingDispatchRetryTimer, this, &UMounteaDialogueSession::TryDispatchPendingClientPayload, 0.25f, true);
@@ -855,6 +852,16 @@ bool UMounteaDialogueSession::HandleProcessNode(UMounteaDialogueManager* Manager
 
 	ApplyRowStatePayload(dialogueContext);
 	Manager->GetDialogueNodeStartedEventHandle().Broadcast(dialogueContext);
+
+	if (!processingNode->Implements<UMounteaDialogueSpeechDataInterface>())
+	{
+		Manager->Client_DispatchUISignal(FMounteaDialogueUISignal{
+			MounteaDialogueWidgetCommands::HideDialogueRow,
+			dialogueContext->SessionGUID,
+			ContextPayload.ContextVersion,
+			false
+		});
+	}
 
 	if (processingNode->Implements<UMounteaDialogueSpeechDataInterface>()
 		&& dialogueContext->ActiveDialogueParticipant.GetObject()

@@ -62,26 +62,23 @@ void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode_Implementation(const TS
 
 void UMounteaDialogueGraphNode_ReturnToNode::OnDelayDurationExpired(const TScriptInterface<IMounteaDialogueManagerInterface>& MounteaDialogueManagerInterface)
 {
-	if (SelectedNode && MounteaDialogueManagerInterface)
+	if (!SelectedNode || !MounteaDialogueManagerInterface)
+		return;
+
+	UObject* managerObject = MounteaDialogueManagerInterface.GetObject();
+	UMounteaDialogueContext* Context = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(managerObject);
+	if (!Context)
+		return;
+
+	if (bAutoCompleteSelectedNode)
 	{
-		if (UMounteaDialogueContext* Context = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(MounteaDialogueManagerInterface.GetObject()))
-		{
-			Context->SetDialogueContext(SelectedNode, UMounteaDialogueTraversalStatics::GetAllowedChildNodesFiltered(SelectedNode, Context));
-			Context->UpdateActiveDialogueRow(UMounteaDialogueTraversalStatics::GetSpeechData(SelectedNode));
-			Context->ActiveDialogueRowDataIndex = 0;
-
-			IMounteaDialogueManagerInterface::Execute_PrepareNode(MounteaDialogueManagerInterface.GetObject());
-
-			// TODO: Force to the new system
-			/*
-			if (bAutoCompleteSelectedNode)
-			{
-				MounteaDialogueManagerInterface->GetDialogueNodeFinishedEventHandle().Broadcast(Context);
-				MounteaDialogueManagerInterface->GetDialogueVoiceSkipRequestEventHandle().Broadcast(nullptr);
-			}
-			*/
-		}
+		Context->SetDialogueContext(SelectedNode, UMounteaDialogueTraversalStatics::GetAllowedChildNodesFiltered(SelectedNode, Context));
+		Context->UpdateActiveDialogueRow(UMounteaDialogueTraversalStatics::GetSpeechData(SelectedNode));
+		Context->UpdateActiveDialogueRowDataIndex(0);
+		IMounteaDialogueManagerInterface::Execute_NodeProcessed(managerObject);
 	}
+	else
+		IMounteaDialogueManagerInterface::Execute_SelectNode(managerObject, SelectedNode->GetNodeGUID());
 }
 
 TArray<FString> UMounteaDialogueGraphNode_ReturnToNode::GetRowNames() const
