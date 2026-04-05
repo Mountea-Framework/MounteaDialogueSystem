@@ -62,9 +62,8 @@ void UMounteaDialogueSession::OnRep_ContextPayload()
 	const int32 newVersion = ContextPayload.ContextVersion;
 	if (newVersion <= 0 || newVersion <= LastDeliveredContextVersion)
 	{
-		const FString staleKey = FString::Printf(TEXT("Diag.Session.OnRep.Client.Stale.%s.%d.%d"),
-			*ContextPayload.SessionGUID.ToString(), newVersion, LastDeliveredContextVersion);
-		LOG_ERROR_KEY(staleKey, TEXT("[Diag][Session][OnRep] Stale/invalid version. New=%d Last=%d"), newVersion, LastDeliveredContextVersion)
+		const FString staleKey = FString::Printf(TEXT("Diag.Session.OnRep.Client.Version"));
+		LOG_INFO_KEY(staleKey, TEXT("[Diag][Session][OnRep] Stale/invalid version. New=%d Last=%d"), newVersion, LastDeliveredContextVersion)
 		if (bClientDispatchPending)
 			TryDispatchPendingClientPayload();
 		return;
@@ -478,11 +477,10 @@ void UMounteaDialogueSession::ApplyRowStatePayload(const UMounteaDialogueContext
 	WriteContextPayload(MoveTemp(newPayload));
 }
 
-
 bool UMounteaDialogueSession::HandleSelectNode(UMounteaDialogueManager* Manager, const FGuid& SessionGUID, const FGuid& NodeGUID)
 {
 	if (!IsSessionRequestValid(Manager, SessionGUID, TEXT("Select Node")))
-		return false;
+		return false;	
 
 	UMounteaDialogueContext* dialogueContext = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(Manager);
 	if (!UMounteaDialogueContextStatics::IsContextValid(dialogueContext))
@@ -490,6 +488,13 @@ bool UMounteaDialogueSession::HandleSelectNode(UMounteaDialogueManager* Manager,
 		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[Node Selected] Invalid Context!"));
 		return false;
 	}
+	
+	Manager->Client_DispatchUISignal(FMounteaDialogueUISignal{
+		MounteaDialogueWidgetCommands::RemoveDialogueOptions,
+		dialogueContext->SessionGUID,
+		ContextPayload.ContextVersion,
+		false
+	});
 
 	UMounteaDialogueGraphNode* selectedNode = nullptr;
 	for (UMounteaDialogueGraphNode* childNode : dialogueContext->GetChildrenNodes())
@@ -607,6 +612,12 @@ bool UMounteaDialogueSession::HandleNodeProcessed(UMounteaDialogueManager* Manag
 
 		Manager->GetDialogueNodeSelectedEventHandle().Broadcast(dialogueContext);
 		ApplyNodeSwitchPayload(dialogueContext);
+		Manager->Client_DispatchUISignal(FMounteaDialogueUISignal{
+			MounteaDialogueWidgetCommands::RemoveDialogueOptions,
+			dialogueContext->SessionGUID,
+			ContextPayload.ContextVersion,
+			false
+		});
 		IMounteaDialogueManagerInterface::Execute_PrepareNode(Manager);
 		return true;
 	}
@@ -675,9 +686,21 @@ bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager
 			dialogueContext->UpdateActiveDialogueRowDataIndex(nextIndex);
 			Manager->GetDialogueContextUpdatedEventHande().Broadcast(dialogueContext);
 			ApplyRowStatePayload(dialogueContext);
+			Manager->Client_DispatchUISignal(FMounteaDialogueUISignal{
+				MounteaDialogueWidgetCommands::ShowDialogueRow,
+				dialogueContext->SessionGUID,
+				ContextPayload.ContextVersion,
+				false
+			});
 			IMounteaDialogueManagerInterface::Execute_ProcessDialogueRow(Manager);
 			break;
 		case ERowExecutionMode::EREM_Stopping:
+			Manager->Client_DispatchUISignal(FMounteaDialogueUISignal{
+				MounteaDialogueWidgetCommands::HideDialogueRow,
+				dialogueContext->SessionGUID,
+				ContextPayload.ContextVersion,
+				false
+			});
 			Manager->GetDialogueNodeFinishedEventHandle().Broadcast(dialogueContext);
 			break;
 		case ERowExecutionMode::Default:
@@ -687,8 +710,13 @@ bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager
 		return true;
 	}
 
+	Manager->Client_DispatchUISignal(FMounteaDialogueUISignal{
+		MounteaDialogueWidgetCommands::HideDialogueRow,
+		dialogueContext->SessionGUID,
+		ContextPayload.ContextVersion,
+		false
+	});
 	IMounteaDialogueManagerInterface::Execute_NodeProcessed(Manager);
-	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][HandleDialogueRowProcessed] No next row, moving to NodeProcessed."))
 	return true;
 }
 
@@ -730,6 +758,12 @@ bool UMounteaDialogueSession::HandleProcessDialogueRow(UMounteaDialogueManager* 
 	}
 
 	Manager->GetDialogueRowStartedEventHandle().Broadcast(dialogueContext);
+	Manager->Client_DispatchUISignal(FMounteaDialogueUISignal{
+		MounteaDialogueWidgetCommands::ShowDialogueRow,
+		dialogueContext->SessionGUID,
+		ContextPayload.ContextVersion,
+		false
+	});
 	if (dialogueContext->ActiveDialogueParticipant.GetObject() && dialogueContext->ActiveDialogueParticipant.GetInterface())
 	{
 		dialogueContext->ActiveDialogueParticipant->Execute_PlayParticipantVoice(
@@ -811,7 +845,7 @@ bool UMounteaDialogueSession::HandleProcessNode(UMounteaDialogueManager* Manager
 		return false;
 	}
 
-	processingNode->Execute_ProcessNode(Manager);
+	processingNode->ProcessNode(Manager);
 
 	if (dialogueContext->ActiveNode != processingNode)
 	{
