@@ -96,12 +96,6 @@ public:
 	int32 ActiveDialogueRowDataIndex = 0;
 
 	/**
-	 * Last widget command string broadcast to dialogue UI.
-	 */
-	UPROPERTY(BlueprintReadOnly, Category="Context")
-	FString LastWidgetCommand;
-
-	/**
 	 * Monotonically increasing version counter. Incremented on every server-side mutation.
 	 * Clients use this to detect skipped updates.
 	 */
@@ -128,7 +122,6 @@ public:
 		DialogueParticipants.Empty();
 		ActiveDialogueRow = FDialogueRow();
 		ActiveDialogueRowDataIndex = 0;
-		LastWidgetCommand.Empty();
 		ContextVersion = 0;
 	}
 };

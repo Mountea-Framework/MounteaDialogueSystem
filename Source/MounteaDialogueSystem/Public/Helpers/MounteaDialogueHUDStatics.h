@@ -182,8 +182,9 @@ public:
 	 * @param WidgetParams   Contains 3 options:\n 1. the anchors for the widget, determining how the widget is positioned relative to its parent\n2. the margin for the widget, defining the padding or offset from the parent's bounds\n3. The Z-order index of the child widget, determining its rendering order within the parent
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|HUD|Viewport", 
-		meta=(CustomTag="MounteaK2Setter"))
-	static void AddChildWidgetToViewport(AActor* ViewportManager, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams = FWidgetAdditionParams());
+		meta=(CustomTag="MounteaK2Setter"),
+		meta=(AutoCreateRefTerm="WidgetParamts"))
+	static void AddChildWidgetToViewport(AActor* ViewportManager, UUserWidget* ChildWidget, const FWidgetAdditionParams WidgetParams);
 
 	/**
 	 * Removes a child widget from the viewport using the specified viewport manager that implements MounteaDialogueHUDClassInterface.

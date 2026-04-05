@@ -49,7 +49,6 @@ UMounteaDialogueParticipantUserInterfaceComponent::UMounteaDialogueParticipantUs
 void UMounteaDialogueParticipantUserInterfaceComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	// Inert until BindToManager is called externally.
 }
 
 void UMounteaDialogueParticipantUserInterfaceComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -62,8 +61,7 @@ void UMounteaDialogueParticipantUserInterfaceComponent::EndPlay(const EEndPlayRe
 
 // --- Manager Binding ----------------------------------------------------------
 
-void UMounteaDialogueParticipantUserInterfaceComponent::SetParentManager_Implementation(
-	const TScriptInterface<IMounteaDialogueManagerInterface>& NewManager)
+void UMounteaDialogueParticipantUserInterfaceComponent::SetParentManager_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& NewManager)
 {
 	ParentManager = NewManager;
 }
@@ -74,8 +72,7 @@ UMounteaDialogueParticipantUserInterfaceComponent::GetParentManager_Implementati
 	return ParentManager;
 }
 
-void UMounteaDialogueParticipantUserInterfaceComponent::BindToManager_Implementation(
-	const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueParticipantUserInterfaceComponent::BindToManager_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	if (!IsValid(Manager.GetObject()))
 	{
@@ -106,15 +103,8 @@ void UMounteaDialogueParticipantUserInterfaceComponent::UnbindFromManager_Implem
 
 void UMounteaDialogueParticipantUserInterfaceComponent::SetUserInterface_Implementation(UObject* NewUserInterface)
 {
-	UserInterface = NewUserInterface;
-
-	if (ParentManager.GetObject())
-	{
-		ParentManager->GetDialogueUserInterfaceChangedEventHandle().Broadcast(
-			nullptr,
-			Cast<UUserWidget>(NewUserInterface)
-		);
-	}
+	if (NewUserInterface != UserInterface)
+		UserInterface = NewUserInterface;
 }
 
 UObject* UMounteaDialogueParticipantUserInterfaceComponent::GetUserInterface_Implementation() const
@@ -166,11 +156,10 @@ bool UMounteaDialogueParticipantUserInterfaceComponent::CreateDialogueUI_Impleme
 		return false;
 	}
 
-	const UMounteaDialogueConfiguration* config = settings ? settings->GetDialogueConfiguration().LoadSynchronous() : nullptr;
-	const int32 zOrder = config ? config->GetDefaultDialogueWidgetZOrder() : 12;
-
-	if (!newWidget->IsInViewport())
-		newWidget->AddToPlayerScreen(zOrder);
+	// Broadcast the newly created widget so we can either:
+	// * show it using AddToPlayerScreen
+	// * show it using HUD Class
+	OnDialogueWidgetCreated.Broadcast(newWidget);
 
 	Execute_SetUserInterface(this, newWidget);
 	IMounteaDialogueUIBaseInterface::Execute_BindEvents(UserInterface);
@@ -178,8 +167,7 @@ bool UMounteaDialogueParticipantUserInterfaceComponent::CreateDialogueUI_Impleme
 	return Execute_UpdateDialogueUI(this, Message, MounteaDialogueWidgetCommands::CreateDialogueWidget);
 }
 
-bool UMounteaDialogueParticipantUserInterfaceComponent::UpdateDialogueUI_Implementation(
-	FString& Message, const FString& Command)
+bool UMounteaDialogueParticipantUserInterfaceComponent::UpdateDialogueUI_Implementation(FString& Message, const FString& Command)
 {
 	if (!UMounteaDialogueSystemBFC::ShouldExecuteCosmetics(GetOwner()))
 		return true;
@@ -200,8 +188,7 @@ bool UMounteaDialogueParticipantUserInterfaceComponent::CloseDialogueUI_Implemen
 	if (!IsValid(UserInterface))
 		return false;
 
-	IMounteaDialogueUIBaseInterface::Execute_ProcessStringCommand(
-		UserInterface, MounteaDialogueWidgetCommands::CloseDialogueWidget, nullptr);
+	IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(UserInterface, ParentManager, MounteaDialogueWidgetCommands::CloseDialogueWidget);
 	IMounteaDialogueUIBaseInterface::Execute_UnbindEvents(UserInterface);
 	UserInterface = nullptr;
 	return true;
@@ -244,8 +231,7 @@ void UMounteaDialogueParticipantUserInterfaceComponent::RequestProcessDialogueRo
 
 // --- Signal Dispatch ----------------------------------------------------------
 
-void UMounteaDialogueParticipantUserInterfaceComponent::DispatchUISignal_Implementation(
-	const FMounteaDialogueUISignal& Signal)
+void UMounteaDialogueParticipantUserInterfaceComponent::DispatchUISignal_Implementation(const FMounteaDialogueUISignal& Signal)
 {
 	// Sentinel from Client_ClearUISignals: flush all pending signals for this session.
 	if (Signal.RequiredContextVersion == INT32_MAX)
@@ -298,8 +284,7 @@ void UMounteaDialogueParticipantUserInterfaceComponent::ExecuteUISignal(const FM
 		Execute_UpdateDialogueUI(this, signalMessage, Signal.Command);
 }
 
-void UMounteaDialogueParticipantUserInterfaceComponent::DrainPendingSignals(
-	int32 CurrentVersion, const FGuid& SessionGUID)
+void UMounteaDialogueParticipantUserInterfaceComponent::DrainPendingSignals(int32 CurrentVersion, const FGuid& SessionGUID)
 {
 	// Drop signals from a different session.
 	PendingUISignals.RemoveAll([&](const FMounteaDialogueUISignal& Queued)
@@ -329,14 +314,12 @@ void UMounteaDialogueParticipantUserInterfaceComponent::DrainPendingSignals(
 
 // --- Private helpers ----------------------------------------------------------
 
-void UMounteaDialogueParticipantUserInterfaceComponent::OnUISignalReceived(
-	const FMounteaDialogueUISignal& Signal)
+void UMounteaDialogueParticipantUserInterfaceComponent::OnUISignalReceived(const FMounteaDialogueUISignal& Signal)
 {
 	Execute_DispatchUISignal(this, Signal);
 }
 
-void UMounteaDialogueParticipantUserInterfaceComponent::OnContextVersionUpdated(
-	UMounteaDialogueContext* Context)
+void UMounteaDialogueParticipantUserInterfaceComponent::OnContextVersionUpdated(UMounteaDialogueContext* Context)
 {
 	if (!IsValid(Context))
 		return;
@@ -362,8 +345,7 @@ void UMounteaDialogueParticipantUserInterfaceComponent::OnContextVersionUpdated(
 		DrainPendingSignals(currentVersion, Context->SessionGUID);
 }
 
-void UMounteaDialogueParticipantUserInterfaceComponent::BindLifecycleDelegates(
-	const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueParticipantUserInterfaceComponent::BindLifecycleDelegates(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	Manager->GetDialogueContextUpdatedEventHande().AddUniqueDynamic(this, &UMounteaDialogueParticipantUserInterfaceComponent::OnContextVersionUpdated);
 	Manager->GetDialogueStartedEventHandle().AddUniqueDynamic(this, &UMounteaDialogueParticipantUserInterfaceComponent::OnDialogueStarted);
@@ -376,8 +358,7 @@ void UMounteaDialogueParticipantUserInterfaceComponent::BindLifecycleDelegates(
 	Manager->GetDialogueRowFinishedEventHandle().AddUniqueDynamic(this, &UMounteaDialogueParticipantUserInterfaceComponent::OnDialogueRowFinished);
 }
 
-void UMounteaDialogueParticipantUserInterfaceComponent::UnbindLifecycleDelegates(
-	const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
+void UMounteaDialogueParticipantUserInterfaceComponent::UnbindLifecycleDelegates(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
 	Manager->GetDialogueContextUpdatedEventHande().RemoveDynamic(this, &UMounteaDialogueParticipantUserInterfaceComponent::OnContextVersionUpdated);
 	Manager->GetDialogueStartedEventHandle().RemoveDynamic(this, &UMounteaDialogueParticipantUserInterfaceComponent::OnDialogueStarted);
@@ -415,8 +396,7 @@ void UMounteaDialogueParticipantUserInterfaceComponent::ResetClientSyncCaches(co
 	LastAppliedCommand.Empty();
 }
 
-void UMounteaDialogueParticipantUserInterfaceComponent::ReconcileFromPayload(
-	const FMounteaDialogueContextPayload& Payload)
+void UMounteaDialogueParticipantUserInterfaceComponent::ReconcileFromPayload(const FMounteaDialogueContextPayload& Payload)
 {
 	if (!UMounteaDialogueSystemBFC::ShouldExecuteCosmetics(GetOwner()))
 		return;
@@ -581,8 +561,7 @@ void UMounteaDialogueParticipantUserInterfaceComponent::BeginClosePrediction(con
 	}
 }
 
-void UMounteaDialogueParticipantUserInterfaceComponent::ResolvePredictionFromPayload(
-	const FMounteaDialogueContextPayload& Payload)
+void UMounteaDialogueParticipantUserInterfaceComponent::ResolvePredictionFromPayload(const FMounteaDialogueContextPayload& Payload)
 {
 	if (PendingPredictionType == EDialogueClientPredictionType::None)
 		return;
@@ -673,35 +652,57 @@ void UMounteaDialogueParticipantUserInterfaceComponent::OnPredictionTimeout()
 }
 
 // --- Lifecycle delegate handlers ----------------------------------------------
+// These fire locally on whichever process the manager runs on.
+// On a dedicated server the manager runs server-side only, so these never fire
+// on the client — Client_DispatchUISignal is the authoritative UI delivery path.
+// On a listen server / local play both the delegate AND the signal fire in-process;
+// all UI methods are idempotent so double-firing is safe.
 
 void UMounteaDialogueParticipantUserInterfaceComponent::OnDialogueStarted(UMounteaDialogueContext* Context)
 {
+	// Fallback creation for listen-server / local play.
+	// On a dedicated-server client this is a no-op because the delegate never fires there.
+	// CreateDialogueUI guards against double-creation via IsValid(UserInterface).
+	FString message;
+	Execute_CreateDialogueUI(this, message);
 }
 
 void UMounteaDialogueParticipantUserInterfaceComponent::OnDialogueClosed(UMounteaDialogueContext* Context)
 {
+	// Ensure UI is torn down even if the close signal was missed or arrived out-of-order.
+	// CloseDialogueUI checks IsValid(UserInterface) so safe to call redundantly.
+	Execute_CloseDialogueUI(this);
 }
 
 void UMounteaDialogueParticipantUserInterfaceComponent::OnDialogueFailed(const FString& ErrorMessage)
 {
+	// Dialogue failed — clean up any open UI unconditionally.
+	Execute_CloseDialogueUI(this);
 }
 
 void UMounteaDialogueParticipantUserInterfaceComponent::OnDialogueNodeStarted(UMounteaDialogueContext* Context)
 {
+	// UI updates for node transitions are carried by FMounteaDialogueUISignal commands
+	// dispatched from the server via Client_DispatchUISignal. No action needed here.
 }
 
 void UMounteaDialogueParticipantUserInterfaceComponent::OnDialogueNodeFinished(UMounteaDialogueContext* Context)
 {
+	// See OnDialogueNodeStarted — signals drive all UI state changes.
 }
 
 void UMounteaDialogueParticipantUserInterfaceComponent::OnDialogueNodeSelected(UMounteaDialogueContext* Context)
 {
+	// Node selection confirmation arrives via OnContextVersionUpdated, which drains
+	// PendingUISignals. No additional UI action required here.
 }
 
 void UMounteaDialogueParticipantUserInterfaceComponent::OnDialogueRowStarted(UMounteaDialogueContext* Context)
 {
+	// Row display is handled by ReconcileFromPayload triggered from OnContextVersionUpdated.
 }
 
 void UMounteaDialogueParticipantUserInterfaceComponent::OnDialogueRowFinished(UMounteaDialogueContext* Context)
 {
+	// Row completion state is reconciled from the next payload version.
 }

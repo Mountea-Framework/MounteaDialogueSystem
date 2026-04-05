@@ -211,7 +211,7 @@ UUserWidget* UMounteaDialogueHUDStatics::GetViewportWidget(AActor* ViewportManag
 	return nullptr;
 }
 
-void UMounteaDialogueHUDStatics::AddChildWidgetToViewport(AActor* ViewportManager, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams)
+void UMounteaDialogueHUDStatics::AddChildWidgetToViewport(AActor* ViewportManager, UUserWidget* ChildWidget, const FWidgetAdditionParams WidgetParams)
 {
 	if (!IsValid(ViewportManager))
 	{

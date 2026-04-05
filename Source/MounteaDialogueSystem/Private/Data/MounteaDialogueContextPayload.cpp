@@ -141,7 +141,6 @@ bool FMounteaDialogueContextPayload::NetSerialize(FArchive& Ar, UPackageMap* Map
 	Ar << ActiveDialogueRow.RowGUID;
 
 	Ar << ActiveDialogueRowDataIndex;
-	Ar << LastWidgetCommand;
 	Ar << ContextVersion;
 
 	bOutSuccess = true;

@@ -229,7 +229,6 @@ void UMounteaDialogueManager::OnContextPayloadUpdated(const FMounteaDialogueCont
 
 	DialogueContext->ActiveDialogueRow = Payload.ActiveDialogueRow;
 	DialogueContext->ActiveDialogueRowDataIndex = Payload.ActiveDialogueRowDataIndex;
-	DialogueContext->LastWidgetCommand = Payload.LastWidgetCommand;
 
 	OnDialogueContextUpdated.Broadcast(DialogueContext);
 

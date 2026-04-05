@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Interfaces/HUD/MounteaDialogueUIBaseInterface.h"
 #include "Interfaces/HUD/MounteaDialogueWBPInterface.h"
 #include "MounteaDialogue.generated.h"
 
@@ -13,13 +14,37 @@
  * 
  */
 UCLASS(DisplayName="Mountea Dialogue", ClassGroup=Mountea)
-class MOUNTEADIALOGUESYSTEM_API UMounteaDialogue : public UUserWidget, public IMounteaDialogueWBPInterface
+class MOUNTEADIALOGUESYSTEM_API UMounteaDialogue : public UUserWidget, public IMounteaDialogueWBPInterface, public IMounteaDialogueUIBaseInterface
 {
 	GENERATED_BODY()
 
 public:
 		
 	UMounteaDialogue(const FObjectInitializer& ObjectInitializer);
+	
+public:
+	
+	// MounteaDialogueUIBaseInterface ---
+	
+	virtual bool BindEvents_Implementation() override
+	{
+		return true;
+	};
+	
+	virtual bool UnbindEvents_Implementation() override
+	{
+		return true;
+	}
+	
+	virtual void ProcessStringCommand_Implementation(const FString& Command, UObject* OptionalPayload = nullptr) override
+	{
+		
+	}
+	
+	virtual void ApplyTheme_Implementation() override
+	{	
+		
+	}
 	
 protected:
 	

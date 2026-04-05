@@ -50,10 +50,7 @@ void UMounteaDialogueSession::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 void UMounteaDialogueSession::OnRep_ContextPayload()
 {
 	if (!ContextPayload.SessionGUID.IsValid())
-	{
-		LOG_ERROR_KEY(TEXT("Diag.Session.OnRep.Client.InvalidSession"), TEXT("[Diag][Session][OnRep] Invalid SessionGUID, payload ignored."))
-		return;
-	}
+		return; // Expected: initial replication before any dialogue starts.
 
 	if (LastDeliveredSessionGUID != ContextPayload.SessionGUID)
 	{
@@ -77,15 +74,6 @@ void UMounteaDialogueSession::OnRep_ContextPayload()
 		LOG_WARNING(TEXT("[Dialogue Session] Payload versions jumped from %d to %d."), LastDeliveredContextVersion, newVersion)
 
 	LastDeliveredContextVersion = newVersion;
-	const FString onRepDispatchKey = FString::Printf(TEXT("Diag.Session.OnRep.Client.Dispatch.%s.%d"),
-		*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion);
-	LOG_ERROR_KEY(onRepDispatchKey, TEXT("[Diag][Session][OnRep] Dispatching to local managers. Session=%s Version=%d LastDelivered=%d"),
-		*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion, LastDeliveredContextVersion)
-	LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.OnRep.Client.ActiveNode.%s.%d"),
-		*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion),
-		TEXT("[Diag][Session][OnRep][ClientActiveNode] Session=%s Version=%d ActiveNodeGUID=%s ActiveGraphGUID=%s"),
-		*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion,
-		*ContextPayload.ActiveNodeGUID.ToString(), *ContextPayload.ActiveGraphGUID.ToString())
 	NotifyLocalManagers();
 }
 
@@ -93,6 +81,12 @@ void UMounteaDialogueSession::WriteContextPayload(FMounteaDialogueContextPayload
 {
 	if (!GetOwner() || !GetOwner()->HasAuthority())
 		return;
+
+	if (!NewPayload.SessionGUID.IsValid())
+	{
+		LOG_WARNING(TEXT("[MounteaDialogueSession] WriteContextPayload skipped — invalid SessionGUID."))
+		return;
+	}
 
 	const bool bSessionChanged = ContextPayload.SessionGUID.IsValid()
 		&& NewPayload.SessionGUID.IsValid()
@@ -104,10 +98,6 @@ void UMounteaDialogueSession::WriteContextPayload(FMounteaDialogueContextPayload
 	}
 
 	NewPayload.ContextVersion = ContextPayload.ContextVersion + 1;
-	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][WritePayload][Server] Session=%s NextVersion=%d ActiveNodeGUID=%s ActiveGraphGUID=%s Allowed=%d RowGUID=%s RowIndex=%d"),
-		*NewPayload.SessionGUID.ToString(), NewPayload.ContextVersion, *NewPayload.ActiveNodeGUID.ToString(),
-		*NewPayload.ActiveGraphGUID.ToString(), NewPayload.AllowedChildNodeGUIDs.Num(),
-		*NewPayload.ActiveDialogueRow.RowGUID.ToString(), NewPayload.ActiveDialogueRowDataIndex)
 	ContextPayload = MoveTemp(NewPayload);
 	MARK_PROPERTY_DIRTY_FROM_NAME(UMounteaDialogueSession, ContextPayload, this);
 	LastDeliveredContextVersion = ContextPayload.ContextVersion;
@@ -146,17 +136,9 @@ void UMounteaDialogueSession::TryDispatchPendingClientPayload()
 			continue;
 
 		const bool bIsLocal = UMounteaDialogueManagerStatics::IsLocalPlayer(ownerActor);
-		LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.PendingCandidate.%s.%s.%d"),
-			*GetNameSafe(manager), *ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion),
-			TEXT("[Diag][Session][TryDispatchPending] Candidate Manager=%s Owner=%s IsLocal=%s Session=%s Version=%d"),
-			*GetNameSafe(manager), *GetNameSafe(ownerActor), bIsLocal ? TEXT("true") : TEXT("false"),
-			*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion)
 		if (!bIsLocal)
 			continue;
-
-		LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.PendingDispatch.%s.%d"),
-			*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion), TEXT("[Diag][Session][TryDispatchPending] Delivering pending payload to Manager=%s Owner=%s Session=%s Version=%d"),
-			*GetNameSafe(manager), *GetNameSafe(ownerActor), *ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion)
+		
 		manager->OnContextPayloadUpdated(ContextPayload);
 		bClientDispatchPending = false;
 		LastPendingDispatchWarningVersion = 0;
@@ -300,14 +282,6 @@ void UMounteaDialogueSession::NotifyLocalManagers()
 	{
 		if (IsValid(AuthoritativeManager.Get()))
 		{
-			LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.Notify.ServerDispatch.%s.%d"),
-				*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion), TEXT("[Diag][Session][Notify] Server dispatch to AuthoritativeManager=%s Session=%s Version=%d"),
-				*GetNameSafe(AuthoritativeManager.Get()), *ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion)
-			LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.Notify.ServerActiveNode.%s.%d"),
-				*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion),
-				TEXT("[Diag][Session][Notify][ServerActiveNode] Session=%s Version=%d ActiveNodeGUID=%s ActiveGraphGUID=%s"),
-				*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion,
-				*ContextPayload.ActiveNodeGUID.ToString(), *ContextPayload.ActiveGraphGUID.ToString())
 			AuthoritativeManager->OnContextPayloadUpdated(ContextPayload);
 			return;
 		}
@@ -320,10 +294,6 @@ void UMounteaDialogueSession::NotifyLocalManagers()
 				continue;
 
 			AuthoritativeManager = manager;
-			LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.Notify.ServerRecovered.%s.%d"),
-				*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion), TEXT("[Diag][Session][Notify] Recovered authoritative manager=%s Session=%s Version=%d"),
-				*GetNameSafe(manager), *ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion)
-			LOG_WARNING(TEXT("[Dialogue Session] Recovered authoritative manager while dispatching payload version %d."), ContextPayload.ContextVersion)
 			manager->OnContextPayloadUpdated(ContextPayload);
 			return;
 		}
@@ -345,17 +315,9 @@ void UMounteaDialogueSession::NotifyLocalManagers()
 			continue;
 
 		const bool bIsLocal = UMounteaDialogueManagerStatics::IsLocalPlayer(ownerActor);
-		LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.Notify.ClientCandidate.%s.%s.%d"),
-			*GetNameSafe(manager), *ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion),
-			TEXT("[Diag][Session][Notify] Client candidate Manager=%s Owner=%s IsLocal=%s Session=%s Version=%d"),
-			*GetNameSafe(manager), *GetNameSafe(ownerActor), bIsLocal ? TEXT("true") : TEXT("false"),
-			*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion)
 		if (!bIsLocal)
 			continue;
 
-		LOG_ERROR_KEY(FString::Printf(TEXT("Diag.Session.Notify.ClientDispatch.%s.%d"),
-			*ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion), TEXT("[Diag][Session][Notify] Client dispatch to local Manager=%s Owner=%s Session=%s Version=%d"),
-			*GetNameSafe(manager), *GetNameSafe(ownerActor), *ContextPayload.SessionGUID.ToString(), ContextPayload.ContextVersion)
 		manager->OnContextPayloadUpdated(ContextPayload);
 		bClientDispatchPending = false;
 		LastPendingDispatchWarningVersion = 0;
@@ -518,27 +480,6 @@ void UMounteaDialogueSession::ApplyRowStatePayload(const UMounteaDialogueContext
 	WriteContextPayload(MoveTemp(newPayload));
 }
 
-void UMounteaDialogueSession::ApplyWidgetCommandPayload(const UMounteaDialogueContext* DialogueContext, const FString& WidgetCommand)
-{
-	if (!GetOwner() || !GetOwner()->HasAuthority())
-		return;
-
-	FMounteaDialogueContextPayload newPayload = ContextPayload;
-
-	if (IsValid(DialogueContext))
-	{
-		if (DialogueContext->SessionGUID.IsValid())
-			newPayload.SessionGUID = DialogueContext->SessionGUID;
-
-		newPayload.DialogueParticipants = DialogueContext->DialogueParticipants;
-		newPayload.ActiveDialogueParticipant = DialogueContext->ActiveDialogueParticipant;
-		newPayload.ActiveDialogueRow = DialogueContext->ActiveDialogueRow;
-		newPayload.ActiveDialogueRowDataIndex = DialogueContext->ActiveDialogueRowDataIndex;
-	}
-
-	newPayload.LastWidgetCommand = WidgetCommand;
-	WriteContextPayload(MoveTemp(newPayload));
-}
 
 bool UMounteaDialogueSession::HandleSelectNode(UMounteaDialogueManager* Manager, const FGuid& SessionGUID, const FGuid& NodeGUID)
 {
@@ -580,11 +521,6 @@ bool UMounteaDialogueSession::HandleSelectNode(UMounteaDialogueManager* Manager,
 	UMounteaDialogueTraversalStatics::UpdateMatchingDialogueParticipant(dialogueContext, newActiveParticipant);
 
 	ApplyNodeSwitchPayload(dialogueContext);
-
-	FString resultMessage;
-	if (!IMounteaDialogueManagerInterface::Execute_UpdateDialogueUI(Manager, resultMessage, MounteaDialogueWidgetCommands::RemoveDialogueOptions))
-		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
-	ApplyWidgetCommandPayload(dialogueContext, dialogueContext->LastWidgetCommand);
 
 	Manager->GetDialogueNodeSelectedEventHandle().Broadcast(dialogueContext);
 	IMounteaDialogueManagerInterface::Execute_PrepareNode(Manager);
@@ -682,19 +618,11 @@ bool UMounteaDialogueSession::HandleNodeProcessed(UMounteaDialogueManager* Manag
 	dialogueContext->UpdateActiveDialogueRowDataIndex(0);
 	ApplyAllowedChildrenPayload(dialogueContext);
 
-	FString resultMessage;
-	if (!IMounteaDialogueManagerInterface::Execute_UpdateDialogueUI(Manager, resultMessage, MounteaDialogueWidgetCommands::AddDialogueOptions))
-		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
-	ApplyWidgetCommandPayload(dialogueContext, dialogueContext->LastWidgetCommand);
-
 	return true;
 }
 
 bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager* Manager, const FGuid& SessionGUID, const bool bForceFinish)
 {
-	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][HandleDialogueRowProcessed] Enter Session=%s ForceFinish=%s Manager=%s"),
-		*SessionGUID.ToString(), bForceFinish ? TEXT("true") : TEXT("false"), *GetNameSafe(Manager))
-
 	if (!IsSessionRequestValid(Manager, SessionGUID, TEXT("Process Dialogue Row")))
 		return false;
 
@@ -727,12 +655,6 @@ bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager
 		&& UMounteaDialogueTraversalStatics::IsDialogueRowDataValid(rowDataArray[nextIndex]);
 	const ERowExecutionMode nextRowExecutionMode = bDialogueRowDataValid ? rowDataArray[nextIndex].RowExecutionBehaviour : ERowExecutionMode::EREM_Automatic;
 	const ERowExecutionMode activeRowExecutionMode = rowDataArray.IsValidIndex(currentIndex) ? rowDataArray[currentIndex].RowExecutionBehaviour : ERowExecutionMode::EREM_Automatic;
-	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][HandleDialogueRowProcessed] RowState Current=%d Next=%d ActiveValid=%s NextValid=%s ActiveMode=%d NextMode=%d"),
-		currentIndex, nextIndex,
-		bIsActiveRowValid ? TEXT("true") : TEXT("false"),
-		bDialogueRowDataValid ? TEXT("true") : TEXT("false"),
-		static_cast<int32>(activeRowExecutionMode),
-		static_cast<int32>(nextRowExecutionMode))
 
 	if (activeRowExecutionMode == ERowExecutionMode::EREM_AwaitInput && !bForceFinish)
 		return true;
@@ -741,11 +663,6 @@ bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager
 
 	if (bIsActiveRowValid && bDialogueRowDataValid)
 	{
-		FString resultMessage;
-		if (!IMounteaDialogueManagerInterface::Execute_UpdateDialogueUI(Manager, resultMessage, MounteaDialogueWidgetCommands::HideDialogueRow))
-			LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
-		ApplyWidgetCommandPayload(dialogueContext, dialogueContext->LastWidgetCommand);
-
 		switch (nextRowExecutionMode)
 		{
 		case ERowExecutionMode::EREM_Automatic:
@@ -772,9 +689,6 @@ bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager
 
 bool UMounteaDialogueSession::HandleProcessDialogueRow(UMounteaDialogueManager* Manager, const FGuid& SessionGUID)
 {
-	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][HandleProcessDialogueRow] Enter Session=%s Manager=%s"),
-		*SessionGUID.ToString(), *GetNameSafe(Manager))
-
 	if (!IsSessionRequestValid(Manager, SessionGUID, TEXT("Process Dialogue Row")))
 		return false;
 
@@ -794,11 +708,6 @@ bool UMounteaDialogueSession::HandleProcessDialogueRow(UMounteaDialogueManager* 
 
 	if (!dialogueContext->ActiveNode->IsA(UMounteaDialogueGraphNode_DialogueNodeBase::StaticClass()))
 		return true;
-
-	FString resultMessage;
-	if (!IMounteaDialogueManagerInterface::Execute_UpdateDialogueUI(Manager, resultMessage, MounteaDialogueWidgetCommands::ShowDialogueRow))
-		LOG_INFO(TEXT("[Node Selected] UpdateUI Message: %s"), *resultMessage)
-	ApplyWidgetCommandPayload(dialogueContext, dialogueContext->LastWidgetCommand);
 
 	const int32 activeIndex = dialogueContext->GetActiveDialogueRowDataIndex();
 	const FDialogueRow row = dialogueContext->GetActiveDialogueRow();
@@ -830,8 +739,6 @@ bool UMounteaDialogueSession::HandleProcessDialogueRow(UMounteaDialogueManager* 
 		delegate,
 		UMounteaDialogueTraversalStatics::GetRowDuration(rowData),
 		false);
-	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][HandleProcessDialogueRow] Timer scheduled. Duration=%.3f RowIndex=%d RowGUID=%s"),
-		UMounteaDialogueTraversalStatics::GetRowDuration(rowData), activeIndex, *row.RowGUID.ToString())
 
 	return true;
 }
@@ -874,7 +781,7 @@ bool UMounteaDialogueSession::HandleNodePrepared(UMounteaDialogueManager* Manage
 
 	AddTraversedNode(dialogueContext->ActiveNode);
 	dialogueContext->AddTraversedNode(dialogueContext->ActiveNode);
-	IMounteaDialogueManagerInterface::Execute_ProcessNode(Manager);
+ 	IMounteaDialogueManagerInterface::Execute_ProcessNode(Manager);
 	return true;
 }
 
@@ -894,10 +801,6 @@ bool UMounteaDialogueSession::HandleProcessNode(UMounteaDialogueManager* Manager
 	}
 
 	UMounteaDialogueGraphNode* processingNode = dialogueContext->ActiveNode;
-	LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][HandleProcessNode][Server] Session=%s ProcessingNodeGUID=%s NodeName=%s"),
-		*SessionGUID.ToString(), *processingNode->GetNodeGUID().ToString(), *processingNode->GetName())
-	processingNode->ProcessNode(Manager);
-
 	if (!IsValid(dialogueContext->ActiveNode))
 	{
 		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[Process Node] Active Node became invalid after processing."));

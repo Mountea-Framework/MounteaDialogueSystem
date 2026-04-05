@@ -17,6 +17,8 @@
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "MounteaDialogueParticipantUIInterface.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDialogueWidgetCreated, UUserWidget*, DialogueWidget);
+
 UINTERFACE(MinimalAPI, BlueprintType, Blueprintable)
 class UMounteaDialogueParticipantUIInterface : public UInterface
 {
@@ -57,16 +59,14 @@ public:
 	 *
 	 * @param NewManager  Manager to associate with this UI component.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI",
-		meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI")
 	void SetParentManager(const TScriptInterface<IMounteaDialogueManagerInterface>& NewManager);
 	virtual void SetParentManager_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& NewManager) = 0;
 
 	/**
 	 * Returns the currently associated manager.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI",
-		meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI")
 	TScriptInterface<IMounteaDialogueManagerInterface> GetParentManager() const;
 	virtual TScriptInterface<IMounteaDialogueManagerInterface> GetParentManager_Implementation() const = 0;
 
@@ -76,16 +76,14 @@ public:
 	 *
 	 * @param Manager  Manager to listen to.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI",
-		meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI")
 	void BindToManager(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	virtual void BindToManager_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) = 0;
 
 	/**
 	 * Removes all event and signal delegate bindings and clears the manager reference.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI",
-		meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI")
 	void UnbindFromManager();
 	virtual void UnbindFromManager_Implementation() = 0;
 
@@ -98,16 +96,14 @@ public:
 	 *
 	 * @param NewUserInterface  The new UI target object.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI",
-		meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI")
 	void SetUserInterface(UObject* NewUserInterface);
 	virtual void SetUserInterface_Implementation(UObject* NewUserInterface) = 0;
 
 	/**
 	 * Returns the current UI target object.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI",
-		meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI")
 	UObject* GetUserInterface() const;
 	virtual UObject* GetUserInterface_Implementation() const = 0;
 
@@ -199,4 +195,6 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant|UI")
 	void DispatchUISignal(const FMounteaDialogueUISignal& Signal);
 	virtual void DispatchUISignal_Implementation(const FMounteaDialogueUISignal& Signal) = 0;
+	
+	virtual FOnDialogueWidgetCreated& GetOnDialogueWidgetCreatedEventHandle() = 0;
 };

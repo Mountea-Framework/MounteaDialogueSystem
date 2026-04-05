@@ -147,7 +147,6 @@ private:
 	void ApplyNodeSwitchPayload(const UMounteaDialogueContext* DialogueContext);
 	void ApplyAllowedChildrenPayload(const UMounteaDialogueContext* DialogueContext);
 	void ApplyRowStatePayload(const UMounteaDialogueContext* DialogueContext);
-	void ApplyWidgetCommandPayload(const UMounteaDialogueContext* DialogueContext, const FString& WidgetCommand);
 
 	TWeakObjectPtr<UMounteaDialogueManager> AuthoritativeManager;
 	TMap<int32, TScriptInterface<IMounteaDialogueParticipantInterface>> RoleOverrides;

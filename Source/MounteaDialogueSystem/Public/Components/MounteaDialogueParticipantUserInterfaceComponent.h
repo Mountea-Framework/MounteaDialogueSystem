@@ -36,9 +36,7 @@ UCLASS(ClassGroup=(Mountea), Blueprintable,
 	hideCategories=(Collision, AssetUserData, Cooking, Activation, Rendering, Sockets),
 	AutoExpandCategories=("Mountea", "Dialogue"),
 	meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue User Interface Component"))
-class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueParticipantUserInterfaceComponent
-	: public UActorComponent
-	, public IMounteaDialogueParticipantUIInterface
+class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueParticipantUserInterfaceComponent : public UActorComponent, public IMounteaDialogueParticipantUIInterface
 {
 	GENERATED_BODY()
 
@@ -82,6 +80,13 @@ public:
 	// --- IMounteaDialogueParticipantUIInterface — Signal Dispatch -----------------
 
 	virtual void DispatchUISignal_Implementation(const FMounteaDialogueUISignal& Signal) override;
+	
+	// --- IMounteaDialogueParticipantUIInterface — Widget Created -----------------
+	
+	virtual FOnDialogueWidgetCreated& GetOnDialogueWidgetCreatedEventHandle() override
+	{
+		return OnDialogueWidgetCreated;
+	};
 
 protected:
 
@@ -182,6 +187,10 @@ private:
 	FTimerHandle PendingPredictionHandle;
 
 protected:
+	
+	/** Event called when Widget is created. */
+	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Participant|UI")
+	FOnDialogueWidgetCreated OnDialogueWidgetCreated;
 
 	/**
 	 * The single UI target object. Must implement IMounteaDialogueWBPInterface.
