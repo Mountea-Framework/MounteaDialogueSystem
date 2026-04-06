@@ -612,7 +612,7 @@ void FMounteaDialogueSystemEditor::LauncherButtonClicked() const
 
 void FMounteaDialogueSystemEditor::DialoguerButtonClicked() const
 {
-	const FString URL = "https://mountea-framework.github.io/MounteaDialoguer/";
+	const FString URL = "https://mountea.tools/dialoguer/app";
 
 	if (!URL.IsEmpty())
 	{

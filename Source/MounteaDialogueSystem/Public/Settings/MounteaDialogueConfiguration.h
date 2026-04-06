@@ -52,7 +52,9 @@ public:
 	 * User Widget class to be set as default one if requested.
 	 * ❗ Must implement MounteaDialogueWBPInterface❗
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "🖥 UserInterface", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
+	UPROPERTY(EditDefaultsOnly, Category = "🖥 UserInterface", 
+		meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"),
+		meta=(NoResetToDefault))
 	TSoftClassPtr<UUserWidget> DefaultDialogueWidgetClass;
 
 	/**
@@ -62,11 +64,14 @@ public:
 	 */
 	UPROPERTY(EditDefaultsOnly,
 		Category = "🖥 UserInterface",
-		meta=(UIMin=0, ClampMin=0))
+		meta=(UIMin=0, ClampMin=0),
+		meta=(NoResetToDefault))
 	int32 DefaultDialogueWidgetZOrder = 12;
 
 	/**
 	 * Sets Input mode when in Dialogue.
+	 * Not implemented in any way in the system, only provides single-point-of-truth for
+	 * your custom implementations.
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "🖥 UserInterface")
 	EMounteaInputMode InputMode;
