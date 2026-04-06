@@ -847,6 +847,13 @@ bool UMounteaDialogueSession::HandleProcessNode(UMounteaDialogueManager* Manager
 	if (dialogueContext->ActiveNode != processingNode)
 	{
 		ApplyNodeSwitchPayload(dialogueContext);
+		Manager->Client_DispatchUISignal(FMounteaDialogueUISignal{
+			MounteaDialogueWidgetCommands::HideDialogueRow,
+			dialogueContext->SessionGUID,
+			ContextPayload.ContextVersion,
+			false
+		});
+		IMounteaDialogueManagerInterface::Execute_PrepareNode(Manager);
 		return true;
 	}
 

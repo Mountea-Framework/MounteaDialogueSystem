@@ -48,7 +48,7 @@ void UMounteaDialogueGraphNode_OpenChildGraph::ProcessNode_Implementation(const 
 		return;
 	}
 
-	if (!TargetDialogue.IsValid())
+	if (TargetDialogue.IsNull())
 	{
 		LOG_ERROR(TEXT("[Open Child Graph Node] No target dialogue assigned on node '%s'. Terminating."), *GetName());
 		Manager->Execute_NodeProcessed(Manager.GetObject());
@@ -91,8 +91,6 @@ void UMounteaDialogueGraphNode_OpenChildGraph::ProcessNode_Implementation(const 
 	context->SetDialogueContext(firstNode, allowedChildren);
 	context->UpdateActiveDialogueRow(UMounteaDialogueTraversalStatics::GetSpeechData(firstNode));
 	context->UpdateActiveDialogueRowDataIndex(0);
-
-	Manager->Execute_PrepareNode(Manager.GetObject());
 }
 
 #if WITH_EDITOR
