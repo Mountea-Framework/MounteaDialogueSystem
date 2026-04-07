@@ -66,5 +66,7 @@ public:
 	virtual FText GetNodeCategory_Implementation() const override;
 	
 	virtual bool ValidateNode(FDataValidationContext& Context, const bool RichFormat) const override;
+	
+	virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
 #endif
 };

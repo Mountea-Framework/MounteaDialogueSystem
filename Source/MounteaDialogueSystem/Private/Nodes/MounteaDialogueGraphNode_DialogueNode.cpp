@@ -62,6 +62,16 @@ bool UMounteaDialogueGraphNode_DialogueNode::ValidateNode(FDataValidationContext
 	return Super::ValidateNode(Context, RichFormat);
 }
 
+void UMounteaDialogueGraphNode_DialogueNode::PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeChainProperty(PropertyChangedEvent);
+	
+	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(FDialogueRow, DialogueParticipantName))
+	{
+		Dialogue.UpdateFromDialogueParticipantName();
+	}
+}
+
 #endif
 
 
