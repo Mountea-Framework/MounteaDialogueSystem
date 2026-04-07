@@ -857,53 +857,78 @@ bool FAssetEditor_MounteaDialogueGraph::CanSelectAllNodes()
 
 void FAssetEditor_MounteaDialogueGraph::DeleteSelectedNodes()
 {
-	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
-	if (!CurrentGraphEditor.IsValid())
-	{
-		return;
-	}
+	TSharedPtr<SGraphEditor> currGraphEditor = GetCurrGraphEditor();
+	if (!currGraphEditor.IsValid())
+		return;	
 
 	const FScopedTransaction Transaction(FGenericCommands::Get().Delete->GetDescription());
 
-	CurrentGraphEditor->GetCurrentGraph()->Modify();
+	currGraphEditor->GetCurrentGraph()->Modify();
 
-	const FGraphPanelSelectionSet SelectedNodes = CurrentGraphEditor->GetSelectedNodes();
-	CurrentGraphEditor->ClearSelectionSet();
+	const FGraphPanelSelectionSet selectedNodes = currGraphEditor->GetSelectedNodes();
+	currGraphEditor->ClearSelectionSet();
 
-	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
+	// Collect edge nodes connected to nodes being deleted
+	TSet<UEdNode_MounteaDialogueGraphEdge*> edgesToDelete;
+	for (FGraphPanelSelectionSet::TConstIterator NodeIt(selectedNodes); NodeIt; ++NodeIt)
 	{
-		UEdGraphNode* EdNode = Cast<UEdGraphNode>(*NodeIt);
-		if (EdNode == nullptr || !EdNode->CanUserDeleteNode())
+		if (UEdNode_MounteaDialogueGraphNode* EditorNode = Cast<UEdNode_MounteaDialogueGraphNode>(*NodeIt))
+		{
+			for (UEdGraphPin* Pin : EditorNode->Pins)
+			{
+				for (UEdGraphPin* LinkedPin : Pin->LinkedTo)
+				{
+					if (UEdNode_MounteaDialogueGraphEdge* EdgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(LinkedPin->GetOwningNode()))
+						edgesToDelete.Add(EdgeNode);
+				}
+			}
+		}
+	}
+
+	// Destroy edge nodes before breaking links to avoid double-destroy race in PinConnectionListChanged
+	for (UEdNode_MounteaDialogueGraphEdge* EdgeNode : edgesToDelete)
+	{
+		if (!IsValid(EdgeNode))
+			continue;
+		EdgeNode->Modify();
+		if (UEdGraph* ParentGraph = EdgeNode->GetGraph())
+			ParentGraph->Modify();
+		EdgeNode->DestroyNode();
+	}
+
+	for (FGraphPanelSelectionSet::TConstIterator NodeIt(selectedNodes); NodeIt; ++NodeIt)
+	{
+		UEdGraphNode* editorNodes = Cast<UEdGraphNode>(*NodeIt);
+		if (editorNodes == nullptr || !editorNodes->CanUserDeleteNode())
 			continue;;
 
-		if (UEdNode_MounteaDialogueGraphNode* EdNode_Node = Cast<UEdNode_MounteaDialogueGraphNode>(EdNode))
+		if (UEdNode_MounteaDialogueGraphNode* editorNode = Cast<UEdNode_MounteaDialogueGraphNode>(editorNodes))
 		{
-			EdNode_Node->Modify(true);
+			editorNode->Modify(true);
+			
+			const UEdGraphSchema* graphSchema = editorNode->GetSchema();
+			if (graphSchema != nullptr)
+				graphSchema->BreakNodeLinks(*editorNode);
 
-			const UEdGraphSchema* Schema = EdNode_Node->GetSchema();
-			if (Schema != nullptr)
-			{
-				Schema->BreakNodeLinks(*EdNode_Node);
-			}
-
-			EdNode_Node->DestroyNode();
+			editorNode->DestroyNode();
 		}
 		else
 		{
-			EdNode->Modify();
-			EdNode->DestroyNode();
+			editorNodes->Modify();
+			editorNodes->DestroyNode();
 		}
 	}
 
 	// Update UI
-	CurrentGraphEditor->NotifyGraphChanged();
+	currGraphEditor->NotifyGraphChanged();
 
-	UEdGraph* EdGraph = CurrentGraphEditor->GetCurrentGraph();
-	UObject* GraphOwner = EdGraph->GetOuter();
-	if (GraphOwner)
+	if (UEdGraph* editorGraph = currGraphEditor->GetCurrentGraph())
 	{
-		GraphOwner->PostEditChange();
-		GraphOwner->MarkPackageDirty();
+		if (UObject* graphOwner = editorGraph->GetOuter())
+		{
+			graphOwner->PostEditChange();
+			graphOwner->MarkPackageDirty();
+		}
 	}
 }
 
