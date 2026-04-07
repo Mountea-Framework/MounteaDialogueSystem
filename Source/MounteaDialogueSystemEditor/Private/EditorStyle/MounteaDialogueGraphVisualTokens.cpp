@@ -132,7 +132,7 @@ FLinearColor FMounteaDialogueGraphVisualTokens::GetNodeHeaderForeground(const UM
 const FSlateBrush* FMounteaDialogueGraphVisualTokens::GetNodeIconBrush(const UMounteaDialogueGraphNode* Node)
 {
 	if (!Node)
-		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Small"));
+		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Default"));
 	if (Node->IsA<UMounteaDialogueGraphNode_StartNode>())
 		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Start"));
 	if (Node->IsA<UMounteaDialogueGraphNode_Delay>())
@@ -147,7 +147,7 @@ const FSlateBrush* FMounteaDialogueGraphVisualTokens::GetNodeIconBrush(const UMo
 		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Return"));
 	if (Node->IsA<UMounteaDialogueGraphNode_OpenChildGraph>())
 		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.OpenChildGraph"));
-	return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Small"));
+	return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Default"));
 }
 
 FVector2D FMounteaDialogueGraphVisualTokens::GetNodeSizeHint(const UMounteaDialogueGraphNode* Node)
