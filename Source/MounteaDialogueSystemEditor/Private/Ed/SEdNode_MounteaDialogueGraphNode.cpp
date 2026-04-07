@@ -26,6 +26,7 @@
 #include "ScopedTransaction.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
 #include "UnrealEdGlobals.h"
+#include "Nodes/MounteaDialogueGraphNode_DialogueNode.h"
 #include "Widgets/Images/SImage.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
@@ -487,6 +488,8 @@ const FSlateBrush* SEdNode_MounteaDialogueGraphNode::GetNameIcon() const
 		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Return"));
 	if (edNode->DialogueGraphNode->IsA<UMounteaDialogueGraphNode_OpenChildGraph>())
 		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.OpenChildGraph"));
+	if (edNode->DialogueGraphNode->IsA<UMounteaDialogueGraphNode_DialogueNode>())
+		return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Speech"));
 
 	return FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Node.Icon.Small"));
 }

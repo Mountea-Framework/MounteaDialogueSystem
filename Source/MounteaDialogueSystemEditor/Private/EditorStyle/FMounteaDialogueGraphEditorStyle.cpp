@@ -144,6 +144,7 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.Node.Icon.Complete", new SVG_BRUSH_TINT(TEXT("WebIcons/circle-check-big"), Icon14x14, FLinearColor::White));
 	StyleSet->Set("MDSStyleSet.Node.Icon.Return", new SVG_BRUSH_TINT(TEXT("WebIcons/tags"), Icon14x14, FLinearColor::White));
 	StyleSet->Set("MDSStyleSet.Node.Icon.OpenChildGraph", new SVG_BRUSH_TINT(TEXT("WebIcons/external-link"), Icon14x14, FLinearColor::White));
+	StyleSet->Set("MDSStyleSet.Node.Icon.Speech", new SVG_BRUSH_TINT(TEXT("WebIcons/quote"), Icon14x14, FLinearColor::White));
 	StyleSet->Set("MDSStyleSet.Node.Chip.ParticipantIcon", new SVG_BRUSH(TEXT("WebIcons/user"), Icon14x14));
 	StyleSet->Set("MDSStyleSet.Node.Chip.DecoratorIcon", new SVG_BRUSH(TEXT("WebIcons/tags"), Icon14x14));
 	StyleSet->Set("MDSStyleSet.Edge.MidpointIcon", new SVG_BRUSH(TEXT("WebIcons/sliders-horizontal"), Icon14x14));
