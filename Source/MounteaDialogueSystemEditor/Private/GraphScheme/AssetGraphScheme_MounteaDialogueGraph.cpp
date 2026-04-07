@@ -343,65 +343,45 @@ const FPinConnectionResponse UAssetGraphScheme_MounteaDialogueGraph::CanCreateCo
 {
 	// Make sure the pins are not on the same node
 	if (A->GetOwningNode() == B->GetOwningNode())
-	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorSameNode", "Both are on the same node"));
-	}
 
 	// Compare the directions
 	if ((A->Direction == EGPD_Input) && (B->Direction == EGPD_Input))
-	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorInput", "Can't connect input node to input node"));
-	}
 	else if ((A->Direction == EGPD_Output) && (B->Direction == EGPD_Output))
-	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorOutput", "Can't connect output node to output node"));
-	}
 
 	// check for cycles
-	FNodeVisitorCycleChecker CycleChecker;
-	if (!CycleChecker.CheckForLoop(A->GetOwningNode(), B->GetOwningNode()))
-	{
+	FNodeVisitorCycleChecker cycleChecker;
+	if (!cycleChecker.CheckForLoop(A->GetOwningNode(), B->GetOwningNode()))
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Can't create a graph cycle.\nIn order to return back, please use `Return To Node`."));
-	}
-	if (!CycleChecker.CheckForLoop(B->GetOwningNode(), A->GetOwningNode()))
-	{
+	if (!cycleChecker.CheckForLoop(B->GetOwningNode(), A->GetOwningNode()))
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Can't create a graph cycle.\nIn order to return back, please use `Return To Node`."));
-	}
 
-	UEdNode_MounteaDialogueGraphNode* EdNode_A = Cast<UEdNode_MounteaDialogueGraphNode>(A->GetOwningNode());
-	UEdNode_MounteaDialogueGraphNode* EdNode_B = Cast<UEdNode_MounteaDialogueGraphNode>(B->GetOwningNode());
+	UEdNode_MounteaDialogueGraphNode* nodeA = Cast<UEdNode_MounteaDialogueGraphNode>(A->GetOwningNode());
+	UEdNode_MounteaDialogueGraphNode* nodeB = Cast<UEdNode_MounteaDialogueGraphNode>(B->GetOwningNode());
 
-	if (EdNode_A == nullptr || EdNode_B == nullptr)
-	{
+	if (nodeA == nullptr || nodeB == nullptr)
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinError", "Not a valid UMounteaDialogueGraphEdNode"));
-	}
 
-	const auto* OpenChildA = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(EdNode_A->DialogueGraphNode);
-	if (OpenChildA && OpenChildA->TargetDialogue.IsNull())
-	{
+	const auto* openChildA = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(nodeA->DialogueGraphNode);
+	if (openChildA && openChildA->TargetDialogue.IsNull())
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("OpenChildGraphMissingTargetA", "Open Child Graph is missing Target Dialogue."));
-	}
 
-	const auto* OpenChildB = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(EdNode_B->DialogueGraphNode);
-	if (OpenChildB && OpenChildB->TargetDialogue.IsNull())
-	{
+	const auto* openChildB = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(nodeB->DialogueGraphNode);
+	if (openChildB && openChildB->TargetDialogue.IsNull())
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("OpenChildGraphMissingTargetB", "Open Child Graph is missing Target Dialogue."));
-	}
 
-	FText ErrorMessage;
+	FText errorMessage;
 	if (A->Direction == EGPD_Input)
 	{
-		if (!EdNode_A->DialogueGraphNode->CanCreateConnection(EdNode_B->DialogueGraphNode, EGPD_Input, ErrorMessage))
-		{
-			return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, ErrorMessage);
-		}
+		if (!nodeA->DialogueGraphNode->CanCreateConnection(nodeB->DialogueGraphNode, EGPD_Input, errorMessage))
+			return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, errorMessage);
 	}
 	else
 	{
-		if (!EdNode_B->DialogueGraphNode->CanCreateConnection(EdNode_A->DialogueGraphNode, EGPD_Output, ErrorMessage))
-		{
-			return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, ErrorMessage);
-		}
+		if (!nodeB->DialogueGraphNode->CanCreateConnection(nodeA->DialogueGraphNode, EGPD_Output, errorMessage))
+			return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, errorMessage);
 	}
 	
 	return FPinConnectionResponse(CONNECT_RESPONSE_MAKE_WITH_CONVERSION_NODE, LOCTEXT("PinConnect", "Connect nodes with edge"));
@@ -435,6 +415,10 @@ bool UAssetGraphScheme_MounteaDialogueGraph::TryCreateConnection(UEdGraphPin* A,
 		if (childNode == inputNode)
 			return false;
 	}
+
+	FPinConnectionResponse response = CanCreateConnection(outputNode->GetOutputPin(), inputNode->GetInputPin());
+	if (response.Response == CONNECT_RESPONSE_DISALLOW)
+		return false;
 
 	return CreateAutomaticConversionNodeAndConnections(outputNode->GetOutputPin(), inputNode->GetInputPin());
 }
