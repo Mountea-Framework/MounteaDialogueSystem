@@ -13,22 +13,11 @@
 
 #include "Containers/StringConv.h"
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4456 4457 4458 4459)
-#endif
-
 extern "C"
 {
 #include "md4c.h"
 #include "md4c-html.h"
-#include "md4c_source.inl"
-#include "md4c_html_source.inl"
 }
-
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
 namespace
 {
