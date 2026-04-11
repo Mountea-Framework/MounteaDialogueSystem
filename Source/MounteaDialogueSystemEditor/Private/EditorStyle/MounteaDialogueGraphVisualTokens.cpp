@@ -52,12 +52,12 @@ FLinearColor FMounteaDialogueGraphVisualTokens::GetMutedForeground()
 
 FLinearColor FMounteaDialogueGraphVisualTokens::GetPrimaryAccent()
 {
-	return HexToLinearColor(TEXT("#f97316"));
+	return HexToLinearColor(TEXT("#ff6a00"));
 }
 
 FLinearColor FMounteaDialogueGraphVisualTokens::GetSelectionRing()
 {
-	FLinearColor selectionColor = HexToLinearColor(TEXT("#f97316"));
+	FLinearColor selectionColor = GetPrimaryAccent();
 	selectionColor.A = 0.20f;
 	return selectionColor;
 }
@@ -69,7 +69,7 @@ FLinearColor FMounteaDialogueGraphVisualTokens::GetWireColor()
 
 FLinearColor FMounteaDialogueGraphVisualTokens::GetEdgeSelectionRing()
 {
-	FLinearColor selectionColor = HexToLinearColor(TEXT("#f97316"));
+	FLinearColor selectionColor = GetPrimaryAccent();
 	selectionColor.A = 1.0f;
 	return selectionColor;
 }
@@ -83,7 +83,7 @@ FLinearColor FMounteaDialogueGraphVisualTokens::GetEdgeSelectionRingHovered()
 
 FLinearColor FMounteaDialogueGraphVisualTokens::GetEdgeSelectionOverlay()
 {
-	FLinearColor overlayColor = HexToLinearColor(TEXT("#f97316"));
+	FLinearColor overlayColor = GetPrimaryAccent();
 	overlayColor.A = 0.26f;
 	return overlayColor;
 }
