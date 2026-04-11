@@ -12,9 +12,9 @@
 #include "Framework/Application/SlateApplication.h"
 #include "Styling/AppStyle.h"
 #include "Styling/CoreStyle.h"
+#include "Widgets/SBoxPanel.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SBorder.h"
-#include "Widgets/Layout/SBoxPanel.h"
 #include "Widgets/Text/STextBlock.h"
 
 FPluginVersion MDSPopup::GetPluginVersion()
