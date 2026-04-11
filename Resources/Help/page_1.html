@@ -3,34 +3,80 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Mountea Dialogue System - Setup</title>
+	<title>Mountea Dialogue System - Installation & Plugin Enablement</title>
 </head>
 <body>
 	<section class="doc-page">
 		<header>
-			<span class="version">Mountea Dialogue System</span>
-			<h1>Setup Checklist</h1>
-			<p class="muted">Core setup items for a working dialogue flow.</p>
+			<span class="version">Chapter 2 of 10</span>
+			<h1>Installation & Plugin Enablement</h1>
+			<p class="muted">Confirm the plugin is installed correctly and all required editor/runtime modules are available.</p>
 		</header>
 
-		<h2>Required Pieces</h2>
-		<ul>
-			<li>Configure Dialogue Settings in Project Settings.</li>
-			<li>Configure Gameplay Tags source and verify imported tags.</li>
-			<li>Set GameMode, HUD, and Dialogue Participant components.</li>
-			<li>Open example content and test one end-to-end interaction.</li>
-		</ul>
+		<div class="card">
+			<h2>What You Will Learn</h2>
+			<ul>
+				<li>How to verify plugin activation for the current project.</li>
+				<li>How to confirm data/content folders are available.</li>
+				<li>How to identify installation issues before runtime debugging.</li>
+			</ul>
+		</div>
 
-		<h2>Useful Links</h2>
-		<p>
-			<a href="#" data-mds-type="external" data-mds-target="https://discord.gg/c2WQ658V44">Open Community Discord</a>
-		</p>
-		<p>
-			<a href="#" data-mds-type="external" data-mds-target="https://mountea-framework.github.io/MounteaDialoguer/">Open Dialoguer Tool</a>
-		</p>
-		<p>
-			<a href="#" data-mds-type="page" data-mds-target="0">Back To Introduction</a>
-		</p>
+		<div class="card">
+			<h2>When To Use This</h2>
+			<p>Use this chapter first on every machine where the plugin is used. It prevents late failures caused by missing modules or disabled content.</p>
+		</div>
+
+		<div class="card">
+			<h2>Prerequisites</h2>
+			<ul>
+				<li>Project can open in Unreal Editor.</li>
+				<li>You have permission to edit plugins and project settings.</li>
+				<li>Engine version is compatible with current plugin branch.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>Step-by-Step Workflow</h2>
+			<ol>
+				<li>Open Plugins window and confirm Mountea Dialogue System is enabled.</li>
+				<li>Restart editor if activation state changed.</li>
+				<li>Open plugin data and example folders to validate content mount points.</li>
+				<li>Open Project Settings and ensure Mountea Dialogue category is visible.</li>
+			</ol>
+			<p>
+				<a href="#" data-mds-type="folder" data-mds-target="/MounteaDialogueSystem/Data">Open Data Folder</a><br />
+				<a href="#" data-mds-type="folder" data-mds-target="/MounteaDialogueSystem/Example">Open Example Folder</a><br />
+				<a href="#" data-mds-type="settings" data-mds-target="Mountea">Open Mountea Dialogue Settings</a>
+			</p>
+		</div>
+
+		<div class="card">
+			<h2>Validation Checklist</h2>
+			<ul>
+				<li>No startup warnings about missing dialogue classes/modules.</li>
+				<li>Project settings section is visible and editable.</li>
+				<li>Plugin sample assets are visible in Content Browser.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>Common Mistakes + Fixes</h2>
+			<p><strong>Mistake:</strong> plugin enabled but editor not restarted.<br /><strong>Fix:</strong> restart editor after any plugin state change.</p>
+			<p><strong>Mistake:</strong> sample content hidden.<br /><strong>Fix:</strong> enable plugin content visibility in Content Browser filters.</p>
+		</div>
+
+		<div class="card">
+			<h2>Next Chapter</h2>
+			<p>
+				<a href="#" data-mds-type="page" data-mds-target="0">Back To Chapter 1</a><br />
+				<a href="#" data-mds-type="page" data-mds-target="2">Go To Chapter 3: Project Settings Deep Dive</a>
+			</p>
+			<p>
+				<a href="#" data-mds-type="external" data-mds-target="https://discord.gg/c2WQ658V44">Open Community Discord</a><br />
+				<a href="#" data-mds-type="external" data-mds-target="https://mountea-framework.github.io/MounteaDialoguer/">Open Dialoguer Tool</a>
+			</p>
+		</div>
 	</section>
 </body>
 </html>

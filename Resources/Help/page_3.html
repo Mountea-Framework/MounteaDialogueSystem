@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Mountea Dialogue System - Gameplay Tags Setup & Verification</title>
+</head>
+<body>
+	<section class="doc-page">
+		<header>
+			<span class="version">Chapter 4 of 10</span>
+			<h1>Gameplay Tags Setup & Verification</h1>
+			<p class="muted">Ensure gameplay tags are present, synchronized, and trusted before building branching logic.</p>
+		</header>
+
+		<div class="card">
+			<h2>What You Will Learn</h2>
+			<ul>
+				<li>How dialogue tags are sourced and validated.</li>
+				<li>How to detect stale or missing tag data quickly.</li>
+				<li>How tag readiness affects conditions and decorators.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>When To Use This</h2>
+			<p>Run through this chapter before authoring conditions. It prevents broken branches caused by nonexistent or misspelled tags.</p>
+		</div>
+
+		<div class="card">
+			<h2>Prerequisites</h2>
+			<ul>
+				<li>Mountea project settings already reviewed.</li>
+				<li>Gameplay Tags project settings accessible.</li>
+				<li>Internet available only if pulling remote defaults; otherwise local tags are enough.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>Step-by-Step Workflow</h2>
+			<ol>
+				<li>Open Gameplay Tags settings and review current list/source files.</li>
+				<li>Open Mountea settings and verify tags URL / auto-check behavior.</li>
+				<li>Restart editor if tag source changed.</li>
+				<li>Open any graph node that depends on tags and validate dropdown/search results.</li>
+			</ol>
+			<p>
+				<a href="#" data-mds-type="settings" data-mds-target="GameplayTags">Open Gameplay Tags Settings</a><br />
+				<a href="#" data-mds-type="settings" data-mds-target="Mountea">Open Mountea Dialogue Settings</a>
+			</p>
+		</div>
+
+		<div class="card">
+			<h2>Validation Checklist</h2>
+			<ul>
+				<li>Expected dialogue tags are visible in tag pickers.</li>
+				<li>No warnings about missing tag table/source file.</li>
+				<li>Tag-based conditions in sample graph evaluate as expected.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>Common Mistakes + Fixes</h2>
+			<p><strong>Mistake:</strong> adding tags without reloading dependent editors.<br /><strong>Fix:</strong> close/reopen graph editor after tag updates.</p>
+			<p><strong>Mistake:</strong> using free-text names in conditions.<br /><strong>Fix:</strong> always pick tags from validated list.</p>
+		</div>
+
+		<div class="card">
+			<h2>Next Chapter</h2>
+			<p>
+				<a href="#" data-mds-type="page" data-mds-target="2">Back To Chapter 3</a><br />
+				<a href="#" data-mds-type="page" data-mds-target="4">Go To Chapter 5: World Setup</a>
+			</p>
+		</div>
+	</section>
+</body>
+</html>

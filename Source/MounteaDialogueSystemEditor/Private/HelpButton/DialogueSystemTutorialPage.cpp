@@ -14,7 +14,9 @@
 #include "ContentBrowserModule.h"
 #include "IContentBrowserSingleton.h"
 #include "ISettingsModule.h"
+#include "Interfaces/IPluginManager.h"
 #include "LevelEditor.h"
+#include "Misc/Paths.h"
 #include "Modules/ModuleManager.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
 #include "Slate/SMounteaDialogueHtmlView.h"
@@ -28,6 +30,37 @@
 
 namespace
 {
+	FString EscapeHtml(const FString& InputValue)
+	{
+		FString outputValue = InputValue;
+		outputValue.ReplaceInline(TEXT("&"), TEXT("&amp;"));
+		outputValue.ReplaceInline(TEXT("<"), TEXT("&lt;"));
+		outputValue.ReplaceInline(TEXT(">"), TEXT("&gt;"));
+		outputValue.ReplaceInline(TEXT("\""), TEXT("&quot;"));
+		return outputValue;
+	}
+
+	FString BuildMissingPageHtml(const int32 PageId, const FString& PagePath)
+	{
+		const FString escapedPath = EscapeHtml(PagePath);
+
+		return FString::Printf(
+			TEXT("<!DOCTYPE html><html><head><meta charset=\"utf-8\" /><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /><title>Mountea Dialogue System - Missing Tutorial Page</title></head><body><section class=\"doc-page\"><header><span class=\"version\">Mountea Dialogue System</span><h1>Tutorial Page Is Missing</h1><p class=\"muted\">The requested chapter could not be loaded from disk.</p></header><div class=\"card\"><h2>Details</h2><p><strong>Page ID:</strong> %d</p><p><strong>Configured Path:</strong> <code>%s</code></p><p>Please verify the file path in Project Settings under Mountea Dialogue System (Editor) - HelpPages.</p></div><div class=\"card\"><h2>Quick Actions</h2><p><a href=\"#\" data-mds-type=\"settings\" data-mds-target=\"Mountea\">Open Mountea Dialogue Settings</a></p><p><a href=\"#\" data-mds-type=\"page\" data-mds-target=\"0\">Go To Welcome Chapter</a></p></div></section></body></html>"),
+			PageId,
+			*escapedPath
+		);
+	}
+
+	FString GetFallbackTutorialPagePath()
+	{
+		const TSharedPtr<IPlugin> plugin = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"));
+		if(!plugin.IsValid())
+			return FString();
+
+		const FString fallbackPath = FPaths::Combine(plugin->GetBaseDir(), TEXT("Resources/Help/page_missing.html"));
+		return FPaths::ConvertRelativePathToFull(fallbackPath);
+	}
+
 	void OpenSettingsPage(const FString& SettingsCategory)
 	{
 		ISettingsModule& settingsModule = FModuleManager::LoadModuleChecked<ISettingsModule>("Settings");
@@ -69,11 +102,11 @@ void SDialogueSystemTutorialPage::Construct(const FArguments& InArgs)
 	(void)InArgs;
 
 	TSharedRef<SVerticalBox> navigationBox = SNew(SVerticalBox);
+	TArray<int32> pageIds;
 
 	const UMounteaDialogueGraphEditorSettings* editorSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
 	if(editorSettings)
 	{
-		TArray<int32> pageIds;
 		editorSettings->GetEditorTemplatePages().GetKeys(pageIds);
 		pageIds.Sort();
 
@@ -114,6 +147,12 @@ void SDialogueSystemTutorialPage::Construct(const FArguments& InArgs)
 		]
 	];
 
+	if(pageIds.Num() > 0)
+	{
+		SwitchToPage(pageIds[0]);
+		return;
+	}
+
 	SwitchToPage(0);
 }
 
@@ -122,6 +161,13 @@ TSharedRef<SWidget> SDialogueSystemTutorialPage::CreateNavigationButton(const FT
 	return SNew(SButton)
 		.ButtonStyle(FAppStyle::Get(), "SimpleButton")
 		.ContentPadding(FMargin(10.f, 8.f))
+		.ButtonColorAndOpacity_Lambda([this, PageId]() -> FSlateColor
+		{
+			if(CurrentPageId == PageId)
+				return FSlateColor(FLinearColor(0.10f, 0.42f, 0.90f, 0.45f));
+
+			return FSlateColor(FLinearColor(0.f, 0.f, 0.f, 0.f));
+		})
 		.OnClicked_Lambda([this, PageId]()
 		{
 			SwitchToPage(PageId);
@@ -131,6 +177,13 @@ TSharedRef<SWidget> SDialogueSystemTutorialPage::CreateNavigationButton(const FT
 			SNew(STextBlock)
 			.Text(Label)
 			.Font(FCoreStyle::GetDefaultFontStyle("Regular", 11))
+			.ColorAndOpacity_Lambda([this, PageId]() -> FSlateColor
+			{
+				if(CurrentPageId == PageId)
+					return FSlateColor(FLinearColor(0.98f, 0.99f, 1.f, 1.f));
+
+				return FSlateColor::UseForeground();
+			})
 		];
 }
 
@@ -144,10 +197,23 @@ void SDialogueSystemTutorialPage::SwitchToPage(int32 PageId)
 		return;
 
 	const FString pagePath = editorSettings->GetEditorTemplatePagePath(PageId);
-	if(pagePath.IsEmpty())
-		return;
-
 	CurrentPageId = PageId;
+	Invalidate(EInvalidateWidgetReason::Paint);
+
+	if(pagePath.IsEmpty() || !FPaths::FileExists(pagePath))
+	{
+		const FString fallbackPath = GetFallbackTutorialPagePath();
+		if(!fallbackPath.IsEmpty() && FPaths::FileExists(fallbackPath))
+		{
+			HtmlView->LoadHtmlFile(fallbackPath);
+			return;
+		}
+
+		const FString fallbackHtml = BuildMissingPageHtml(PageId, pagePath);
+		HtmlView->LoadHtmlString(fallbackHtml, FString());
+		return;
+	}
+
 	HtmlView->LoadHtmlFile(pagePath);
 }
 

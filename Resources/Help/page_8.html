@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Mountea Dialogue System - Debugging & Troubleshooting</title>
+</head>
+<body>
+	<section class="doc-page">
+		<header>
+			<span class="version">Chapter 9 of 10</span>
+			<h1>Debugging & Troubleshooting</h1>
+			<p class="muted">Use a structured fault isolation approach to locate setup errors fast and prevent regressions.</p>
+		</header>
+
+		<div class="card">
+			<h2>What You Will Learn</h2>
+			<ul>
+				<li>How to isolate failures by subsystem: settings, tags, world wiring, graph, UI.</li>
+				<li>How to build quick reproducible tests for common failures.</li>
+				<li>How to document a fix so teams avoid repeated breakages.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>When To Use This</h2>
+			<p>Use this chapter whenever dialogue flow stops working after changes, engine updates, or content migrations.</p>
+		</div>
+
+		<div class="card">
+			<h2>Prerequisites</h2>
+			<ul>
+				<li>A known failing scenario in PIE or editor preview.</li>
+				<li>Access to Output Log and test content.</li>
+				<li>Ability to compare current setup against a previously working state.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>Step-by-Step Workflow</h2>
+			<ol>
+				<li>Reproduce failure in the smallest possible scenario.</li>
+				<li>Confirm settings and tag integrity before inspecting graph details.</li>
+				<li>Validate participant component placement and runtime ownership.</li>
+				<li>Inspect UI event chain and close/open lifecycle.</li>
+				<li>Apply one fix, rerun same scenario, then regress-test a second path.</li>
+			</ol>
+			<p>
+				<a href="#" data-mds-type="settings" data-mds-target="Mountea">Open Mountea Dialogue Settings</a><br />
+				<a href="#" data-mds-type="settings" data-mds-target="GameplayTags">Open Gameplay Tags Settings</a><br />
+				<a href="#" data-mds-type="worldsettings" data-mds-target="open">Open World Settings</a>
+			</p>
+		</div>
+
+		<div class="card">
+			<h2>Validation Checklist</h2>
+			<ul>
+				<li>Failure is reproducible before fix and gone after fix.</li>
+				<li>No new warning/errors introduced in Output Log.</li>
+				<li>At least one alternative conversation path still works.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>Common Mistakes + Fixes</h2>
+			<p><strong>Mistake:</strong> changing multiple systems before retest.<br /><strong>Fix:</strong> use one-change-per-test iteration.</p>
+			<p><strong>Mistake:</strong> fixing only the symptom in UI layer.<br /><strong>Fix:</strong> verify data source and participant lifecycle first.</p>
+		</div>
+
+		<div class="card">
+			<h2>Next Chapter</h2>
+			<p>
+				<a href="#" data-mds-type="page" data-mds-target="7">Back To Chapter 8</a><br />
+				<a href="#" data-mds-type="page" data-mds-target="9">Go To Chapter 10: Production Checklist & Useful Links</a>
+			</p>
+		</div>
+	</section>
+</body>
+</html>

@@ -43,18 +43,66 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAl
 	SharedStylesheetPath.FilePath = resolvePluginPath(TEXT("Resources/Help/DialogueEditorHelp.css"));
 	SharedScriptPath.FilePath = resolvePluginPath(TEXT("Resources/Help/DialogueEditorHelp.js"));
 
-	FDialogueEditorPageConfig introPage(
-		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_Intro", "Introduction"),
+	FDialogueEditorPageConfig welcomePage(
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_Welcome", "Welcome & Learning Path"),
 		resolvePluginPath(TEXT("Resources/Help/page_0.html"))
 	);
 
-	FDialogueEditorPageConfig setupPage(
-		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_Setup", "Setup"),
+	FDialogueEditorPageConfig installationPage(
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_Installation", "Installation & Plugin Enablement"),
 		resolvePluginPath(TEXT("Resources/Help/page_1.html"))
 	);
 
-	EditorTemplatePages.Add(0, introPage);
-	EditorTemplatePages.Add(1, setupPage);
+	FDialogueEditorPageConfig projectSettingsPage(
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_ProjectSettings", "Project Settings Deep Dive"),
+		resolvePluginPath(TEXT("Resources/Help/page_2.html"))
+	);
+
+	FDialogueEditorPageConfig gameplayTagsPage(
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_GameplayTags", "Gameplay Tags Setup & Verification"),
+		resolvePluginPath(TEXT("Resources/Help/page_3.html"))
+	);
+
+	FDialogueEditorPageConfig worldSetupPage(
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_WorldSetup", "World Setup (GameMode/HUD/Participants)"),
+		resolvePluginPath(TEXT("Resources/Help/page_4.html"))
+	);
+
+	FDialogueEditorPageConfig firstGraphPage(
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_FirstGraph", "Building Your First Dialogue Graph"),
+		resolvePluginPath(TEXT("Resources/Help/page_5.html"))
+	);
+
+	FDialogueEditorPageConfig uiIntegrationPage(
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_UIIntegration", "UI Integration & Participant UI Flow"),
+		resolvePluginPath(TEXT("Resources/Help/page_6.html"))
+	);
+
+	FDialogueEditorPageConfig advancedAuthoringPage(
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_AdvancedAuthoring", "Advanced Authoring (Decorators, Conditions, Events)"),
+		resolvePluginPath(TEXT("Resources/Help/page_7.html"))
+	);
+
+	FDialogueEditorPageConfig debuggingPage(
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_Debugging", "Debugging & Troubleshooting"),
+		resolvePluginPath(TEXT("Resources/Help/page_8.html"))
+	);
+
+	FDialogueEditorPageConfig productionChecklistPage(
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_ProductionChecklist", "Production Checklist & Useful Links"),
+		resolvePluginPath(TEXT("Resources/Help/page_9.html"))
+	);
+
+	EditorTemplatePages.Add(0, welcomePage);
+	EditorTemplatePages.Add(1, installationPage);
+	EditorTemplatePages.Add(2, projectSettingsPage);
+	EditorTemplatePages.Add(3, gameplayTagsPage);
+	EditorTemplatePages.Add(4, worldSetupPage);
+	EditorTemplatePages.Add(5, firstGraphPage);
+	EditorTemplatePages.Add(6, uiIntegrationPage);
+	EditorTemplatePages.Add(7, advancedAuthoringPage);
+	EditorTemplatePages.Add(8, debuggingPage);
+	EditorTemplatePages.Add(9, productionChecklistPage);
 
 	ReportLegacyVisualSettings();
 }
