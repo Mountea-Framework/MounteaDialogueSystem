@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Definitions/MounteaDialogueEditorPageTypes.h"
 #include "Engine/DeveloperSettings.h"
 #include "MounteaDialogueGraphEditorSettings.generated.h"
 
@@ -145,6 +146,28 @@ protected:
 
 #pragma endregion
 
+#pragma region HelpPages
+
+	/**
+	 * Shared styling for editor HTML pages.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "HelpPages", AdvancedDisplay, meta = (FilePathFilter = "css"))
+	FFilePath SharedStylesheetPath;
+
+	/**
+	 * Shared script for editor HTML pages.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "HelpPages", AdvancedDisplay, meta = (FilePathFilter = "js"))
+	FFilePath SharedScriptPath;
+
+	/**
+	 * Help pages displayed in tutorial windows.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "HelpPages", AdvancedDisplay)
+	TMap<int32, FDialogueEditorPageConfig> EditorTemplatePages;
+
+#pragma endregion
+
 public:
 
 #pragma region GraphNodes_Getters
@@ -213,6 +236,25 @@ public:
 	FString GetGameplayTagsURL() const
 	{ return GameplayTagsURL; };
 	
+#pragma endregion
+
+#pragma region HelpPages_Getters
+
+	FString GetSharedStylesheetPath() const
+	{ return SharedStylesheetPath.FilePath; };
+
+	FString GetSharedScriptPath() const
+	{ return SharedScriptPath.FilePath; };
+
+	const TMap<int32, FDialogueEditorPageConfig>& GetEditorTemplatePages() const
+	{ return EditorTemplatePages; };
+
+	FString GetEditorTemplatePagePath(const int32 PageId) const;
+
+	FText GetEditorTemplatePageTitle(const int32 PageId) const;
+
+	FString GetOfflineChangelogPath() const;
+
 #pragma endregion
 
 private:

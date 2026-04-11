@@ -4,6 +4,7 @@
 
 #include "Consts/MounteaDialogueEditorConsts.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
+#include "Interfaces/IPluginManager.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphEditorSettings"
 
@@ -11,6 +12,16 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAl
 {
 	CategoryName = TEXT("Mountea Framework");
 	SectionName = TEXT("Mountea Dialogue System (Editor)");
+
+	auto resolvePluginPath = [](const FString& RelativePath) -> FString
+	{
+		const TSharedPtr<IPlugin> plugin = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"));
+		if(!plugin.IsValid())
+			return RelativePath;
+
+		const FString fullPath = FPaths::Combine(plugin->GetBaseDir(), RelativePath);
+		return FPaths::ConvertRelativePathToFull(fullPath);
+	};
 	
 	AutoLayoutStrategy = EAutoLayoutStrategyType::EALS_Tree;
 
@@ -29,6 +40,22 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAl
 
 	bDisplayStandardNodes = true;
 
+	SharedStylesheetPath.FilePath = resolvePluginPath(TEXT("Resources/Help/DialogueEditorHelp.css"));
+	SharedScriptPath.FilePath = resolvePluginPath(TEXT("Resources/Help/DialogueEditorHelp.js"));
+
+	FDialogueEditorPageConfig introPage(
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_Intro", "Introduction"),
+		resolvePluginPath(TEXT("Resources/Help/page_0.html"))
+	);
+
+	FDialogueEditorPageConfig setupPage(
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_Setup", "Setup"),
+		resolvePluginPath(TEXT("Resources/Help/page_1.html"))
+	);
+
+	EditorTemplatePages.Add(0, introPage);
+	EditorTemplatePages.Add(1, setupPage);
+
 	ReportLegacyVisualSettings();
 }
 
@@ -39,21 +66,49 @@ void UMounteaDialogueGraphEditorSettings::PostEditChangeProperty(FPropertyChange
 
 FString UMounteaDialogueGraphEditorSettings::GetNodeReplacementLocalPath() const
 {
-	FString PluginBaseDir = FPaths::ConvertRelativePathToFull(
+	FString pluginBaseDir = FPaths::ConvertRelativePathToFull(
 		FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("MounteaDialogueSystem"))
 	);
 	
-	FString ConfigPath = FPaths::Combine(
-		PluginBaseDir,
+	FString configPath = FPaths::Combine(
+		pluginBaseDir,
 		TEXT("Config"),
 		TEXT("node_replacements.json")
 	);
 	
 	// Convert to full path and normalize
-	ConfigPath = FPaths::ConvertRelativePathToFull(ConfigPath);
-	FPaths::NormalizeFilename(ConfigPath);
+	configPath = FPaths::ConvertRelativePathToFull(configPath);
+	FPaths::NormalizeFilename(configPath);
 
-	return ConfigPath;
+	return configPath;
+}
+
+FString UMounteaDialogueGraphEditorSettings::GetEditorTemplatePagePath(const int32 PageId) const
+{
+	const FDialogueEditorPageConfig* found = EditorTemplatePages.Find(PageId);
+	if(!found)
+		return FString();
+
+	return FPaths::ConvertRelativePathToFull(found->PageFile.FilePath);
+}
+
+FText UMounteaDialogueGraphEditorSettings::GetEditorTemplatePageTitle(const int32 PageId) const
+{
+	const FDialogueEditorPageConfig* found = EditorTemplatePages.Find(PageId);
+	if(!found)
+		return FText::GetEmpty();
+
+	return found->PageTitle;
+}
+
+FString UMounteaDialogueGraphEditorSettings::GetOfflineChangelogPath() const
+{
+	const TSharedPtr<IPlugin> plugin = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"));
+	if(!plugin.IsValid())
+		return FString();
+
+	const FString offlinePath = FPaths::Combine(plugin->GetBaseDir(), TEXT("Resources/Help/changelog_offline.html"));
+	return FPaths::ConvertRelativePathToFull(offlinePath);
 }
 
 void UMounteaDialogueGraphEditorSettings::ReportLegacyVisualSettings() const
