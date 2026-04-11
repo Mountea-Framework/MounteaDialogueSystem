@@ -31,6 +31,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef MAX
+    #undef MAX
+#endif
+
+#ifdef MIN
+    #undef MIN
+#endif
+
+#ifdef OFF_MAX
+    #undef OFF_MAX
+#endif
 
 /*****************************
  ***  Miscellaneous Stuff  ***
