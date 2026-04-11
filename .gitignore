@@ -85,3 +85,4 @@ Config/UpdateConfig.ini
 *.h~
 *.cpp~
 *.kra
+/.vscode
