@@ -1,0 +1,118 @@
+:root {
+	font-family: "Inter", "Segoe UI", sans-serif;
+	--page-bg: #1d1f24;
+	--page-border: #2f323c;
+	--text: #f4f4f5;
+	--text-muted: #b8bcc8;
+	--accent: #8dd5ff;
+	--panel: #23262d;
+	--code-bg: #16181d;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	background: transparent;
+	color: var(--text);
+}
+
+body {
+	padding: 20px;
+}
+
+.doc-page {
+	max-width: 980px;
+	margin: 0 auto;
+	padding: 24px;
+	border: 1px solid var(--page-border);
+	background: linear-gradient(180deg, #252933 0%, #1e2128 100%);
+	border-radius: 14px;
+}
+
+header {
+	margin-bottom: 18px;
+	padding-bottom: 14px;
+	border-bottom: 1px solid var(--page-border);
+}
+
+h1,
+h2,
+h3,
+h4 {
+	margin: 0 0 10px;
+	line-height: 1.25;
+}
+
+h1 {
+	font-size: 28px;
+}
+
+h2 {
+	font-size: 22px;
+	margin-top: 24px;
+}
+
+h3 {
+	font-size: 18px;
+	margin-top: 18px;
+}
+
+p,
+li {
+	line-height: 1.65;
+	font-size: 14px;
+	color: var(--text);
+}
+
+.version,
+small,
+.muted {
+	color: var(--text-muted);
+}
+
+a {
+	color: var(--accent);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+code {
+	padding: 2px 6px;
+	border-radius: 6px;
+	background: var(--code-bg);
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+pre {
+	padding: 14px;
+	border-radius: 8px;
+	background: var(--code-bg);
+	overflow: auto;
+}
+
+blockquote {
+	border-left: 3px solid var(--accent);
+	margin: 12px 0;
+	padding: 8px 12px;
+	background: rgba(141, 213, 255, 0.08);
+}
+
+hr {
+	border: none;
+	height: 1px;
+	background: var(--page-border);
+	margin: 20px 0;
+}
+
+.card {
+	padding: 12px 14px;
+	border-radius: 10px;
+	background: var(--panel);
+	border: 1px solid var(--page-border);
+	margin-top: 12px;
+}
