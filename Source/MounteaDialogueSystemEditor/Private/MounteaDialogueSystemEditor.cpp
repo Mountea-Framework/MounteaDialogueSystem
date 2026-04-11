@@ -610,6 +610,11 @@ void FMounteaDialogueSystemEditor::LauncherButtonClicked() const
 	}
 }
 
+void FMounteaDialogueSystemEditor::BuilderButtonClicked() const
+{
+	FPlatformProcess::LaunchURL(TEXT("https://github.com/Mountea-Framework/MounteaUnrealBuilder"), nullptr, nullptr);
+}
+
 void FMounteaDialogueSystemEditor::DialoguerButtonClicked() const
 {
 	const FString URL = "https://mountea.tools/dialoguer/app";
@@ -1003,6 +1008,15 @@ TSharedRef<SWidget> FMounteaDialogueSystemEditor::MakeMounteaMenuWidget() const
 		FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Launcher"),
 		FUIAction(
 			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::LauncherButtonClicked)
+		)
+	);
+
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("MounteaSystemEditor_BuilderButton_Label", "Mountea Unreal Builder"),
+		LOCTEXT("MounteaSystemEditor_BuilderButton_ToolTip", "⛏️ Open Mountea Unreal Builder\n\n❔ A desktop application for automating Unreal Engine plugin and project builds across multiple engine versions and platforms."),
+		FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Builder"),
+		FUIAction(
+			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::BuilderButtonClicked)
 		)
 	);
 	MenuBuilder.EndSection();

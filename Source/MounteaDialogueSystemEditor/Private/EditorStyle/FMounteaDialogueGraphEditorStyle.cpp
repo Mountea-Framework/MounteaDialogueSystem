@@ -123,6 +123,7 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.Help", new SVG_BRUSH_TINT(TEXT("WebIcons/message-circle-question-mark"), Icon40x40, FLinearColor::White));
 	StyleSet->Set("MDSStyleSet.Dialoguer", new IMAGE_BRUSH(TEXT("Dialoguer_Icon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.Launcher", new IMAGE_BRUSH(TEXT("MPLIcon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.Dialoguer", new IMAGE_BRUSH(TEXT("Builder_Icon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.Wiki", new SVG_BRUSH_TINT(TEXT("WebIcons/book-open-text"), Icon40x40, FLinearColor::White));
 	StyleSet->Set("MDSStyleSet.Youtube", new SVG_BRUSH_TINT(TEXT("WebIcons/brand-youtube"), Icon12x12, FLinearColor::White));
 	StyleSet->Set("MDSStyleSet.Settings", new SVG_BRUSH_TINT(TEXT("WebIcons/settings"), Icon12x12, FLinearColor::White));
