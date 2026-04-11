@@ -86,3 +86,4 @@ Config/UpdateConfig.ini
 *.cpp~
 *.kra
 /.vscode
+compile_commands.json
