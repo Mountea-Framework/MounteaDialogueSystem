@@ -10,6 +10,7 @@
 #include "HttpModule.h"
 #include "IContentBrowserSingleton.h"
 #include "ISettingsModule.h"
+#include "Misc/MessageDialog.h"
 
 #include "AssetActions/MounteaDialogueAdditionalDataAssetAction.h"
 #include "AssetActions/MounteaDialogueDecoratorAssetAction.h"
@@ -46,6 +47,8 @@
 #include "Graph/MounteaDialogueGraph.h"
 #include "HelpButton/DialogueSystemTutorialPage.h"
 #include "HelpButton/MDSCommands.h"
+#include "Helpers/MounteaDialogueHtmlHelpers.h"
+#include "Helpers/MounteaDialogueMarkdownHelpers.h"
 #include "Helpers/MounteaDialogueFixUtilities.h"
 #include "ImportConfig/MounteaDialogueImportConfig.h"
 #include "Interfaces/IMainFrameModule.h"
@@ -80,6 +83,17 @@ public:
 
 void FMounteaDialogueSystemEditor::StartupModule()
 {
+	{
+		const TSharedPtr<IPlugin> webBrowserPlugin = IPluginManager::Get().FindPlugin(TEXT("WebBrowserWidget"));
+		if(!webBrowserPlugin.IsValid() || !webBrowserPlugin->IsEnabled())
+		{
+			const FText warningTitle = NSLOCTEXT("MounteaDialogue", "WebBrowserMissing", "Missing Plugin");
+			const FText warningMessage = NSLOCTEXT("MounteaDialogue", "WebBrowserMissingMessage",
+				"The 'Web Browser Widget' plugin is required for HTML help and changelog rendering.");
+			FMessageDialog::Open(EAppMsgType::Ok, warningMessage, warningTitle);
+		}
+	}
+
 	// Try to request Changelog from GitHub
 	{
 		Http = &FHttpModule::Get();
@@ -549,19 +563,29 @@ void FMounteaDialogueSystemEditor::RegisterAssetTypeAction(IAssetTools& AssetToo
 
 void FMounteaDialogueSystemEditor::OnGetResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
-	FString ResponseBody;
-	if (Response.Get() == nullptr) return;
-	
-	if (Response.IsValid() && Response->GetResponseCode() == 200)
+
+	FString responseBody;
+	FString changelogHtml;
+	FString htmlSourcePath;
+
+	if(Response.Get() != nullptr && Response.IsValid() && Response->GetResponseCode() == 200)
 	{
-		ResponseBody = Response->GetContentAsString();
-		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
+		responseBody = Response->GetContentAsString();
+
+		FString markdownBodyHtml;
+		if(FMounteaDialogueMarkdownHelpers::ConvertMarkdownToHtml(responseBody, markdownBodyHtml))
+			changelogHtml = FMounteaDialogueHtmlHelpers::BuildChangelogDocument(markdownBodyHtml);
+		else
+			changelogHtml = FMounteaDialogueHtmlHelpers::BuildChangelogDocument(FMounteaDialogueHtmlHelpers::BuildChangelogFallbackMessage());
 	}
 
-	// Register Popup even if we have no response, this way we can show at least something
+	if(changelogHtml.IsEmpty())
 	{
-		MDSPopup::Register(ResponseBody);
+		if(!FMounteaDialogueHtmlHelpers::LoadOfflineChangelogHtml(changelogHtml, htmlSourcePath))
+			changelogHtml = FMounteaDialogueHtmlHelpers::BuildChangelogDocument(FMounteaDialogueHtmlHelpers::BuildChangelogFallbackMessage());
 	}
+
+	MDSPopup::Register(responseBody, changelogHtml, htmlSourcePath);
 }
 
 void FMounteaDialogueSystemEditor::SendHTTPGet()
