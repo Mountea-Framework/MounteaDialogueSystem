@@ -68,7 +68,8 @@ protected:
 	 * The system will use this URL to download and apply the tags if allowed.
 	 * Default: @link https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/refs/heads/master/Config/node_replacements.json
 	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings", AdvancedDisplay, meta=(ConfigRestartRequired=true))
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings", AdvancedDisplay, 
+		meta=(ConfigRestartRequired=true))
 	FString NodeReplacementURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/refs/heads/master/Config/node_replacements.json");
 
 #pragma endregion
@@ -90,7 +91,8 @@ protected:
 	 * If turned on custom K2 Nodes will contain additional details, which might break visual appearance
 	 * and might not work well with plugins like `BlueprintAssist`.
 	 */
-	UPROPERTY(config, EditDefaultsOnly,  Category = "BlueprintNodes", meta=(ConfigRestartRequired=true))
+	UPROPERTY(config, EditDefaultsOnly,  Category = "BlueprintNodes", 
+		meta=(ConfigRestartRequired=true))
 	bool bDisplayStandardNodes;
 	
 #pragma endregion
@@ -131,7 +133,8 @@ protected:
 	 * If set to true, the system will automatically verify and update gameplay tags on engine startup.
 	 * Default is True.
 	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", meta=(ConfigRestartRequired=true))
+	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", 
+		meta=(ConfigRestartRequired=true))
 	uint8 bAllowAutoGameplayTagsCheck : 1;
 
 	/**
@@ -141,7 +144,8 @@ protected:
 	 * The system will use this URL to download and apply the tags if allowed.
 	 * Default: @link https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini
 	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay, meta=(ConfigRestartRequired=true))
+	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay, 
+		meta=(ConfigRestartRequired=true))
 	FString GameplayTagsURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini");
 
 #pragma endregion
@@ -151,19 +155,21 @@ protected:
 	/**
 	 * Shared styling for editor HTML pages.
 	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "HelpPages", AdvancedDisplay, meta = (FilePathFilter = "css"))
+	UPROPERTY(config, EditDefaultsOnly, Category = "HelpPages", 
+		meta = (FilePathFilter = "css"))
 	FFilePath SharedStylesheetPath;
 
 	/**
 	 * Shared script for editor HTML pages.
 	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "HelpPages", AdvancedDisplay, meta = (FilePathFilter = "js"))
+	UPROPERTY(config, EditDefaultsOnly, Category = "HelpPages", 
+		meta = (FilePathFilter = "js"))
 	FFilePath SharedScriptPath;
 
 	/**
 	 * Help pages displayed in tutorial windows.
 	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "HelpPages", AdvancedDisplay)
+	UPROPERTY(config, EditDefaultsOnly, Category = "HelpPages")
 	TMap<int32, FDialogueEditorPageConfig> EditorTemplatePages;
 
 #pragma endregion

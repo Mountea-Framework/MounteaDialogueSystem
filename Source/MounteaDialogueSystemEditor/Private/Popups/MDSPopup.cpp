@@ -147,8 +147,8 @@ void MDSPopup::Open(const FString& ChangelogHtml, const FString& ChangelogHtmlPa
 		return;
 
 	const TSharedRef<SBorder> windowContent = SNew(SBorder)
-		.BorderImage(FCoreStyle::Get().GetBrush("ToolPanel.GroupBorder"))
-		.Padding(FMargin(8.0f, 8.0f));
+		.BorderImage(FCoreStyle::Get().GetBrush("NoBorder"))
+		.Padding(FMargin(0.0f, 0.0f));
 
 	TSharedPtr<SWindow> window = SNew(SWindow)
 		.AutoCenter(EAutoCenter::PreferredWorkArea)
@@ -166,28 +166,20 @@ void MDSPopup::Open(const FString& ChangelogHtml, const FString& ChangelogHtmlPa
 
 	const TSharedRef<SVerticalBox> innerContent = SNew(SVerticalBox)
 		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10)
-		[
-			SNew(STextBlock)
-			.Font(FCoreStyle::GetDefaultFontStyle("Regular", 24))
-			.Text(FText::FromString("Mountea Dialogue System"))
-			.Justification(ETextJustify::Center)
-		]
-		+ SVerticalBox::Slot()
 		.FillHeight(1.0f)
-		.Padding(10)
+		.Padding(0)
 		[
 			SNew(SBorder)
 			.Padding(0)
-			.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+			.BorderImage(FCoreStyle::Get().GetBrush("NoBorder"))
+			.BorderBackgroundColor(FLinearColor::Transparent)
 			[
 				SAssignNew(htmlView, SMounteaDialogueHtmlView)
 			]
 		]
 		+ SVerticalBox::Slot()
 		.AutoHeight()
-		.Padding(10)
+		.Padding(4)
 		[
 			SNew(SHorizontalBox)
 			+ SHorizontalBox::Slot()

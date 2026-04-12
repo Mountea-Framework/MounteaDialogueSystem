@@ -214,8 +214,8 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText>& Errors, 
 	const FVector2f popupClientSize = GetPopupClientSize(TSharedPtr<SWindow>());
 
 	const TSharedRef<SBorder> windowContent = SNew(SBorder)
-		.BorderImage(FCoreStyle::Get().GetBrush("ToolPanel.GroupBorder"))
-		.Padding(FMargin(8.0f, 8.0f));
+		.BorderImage(FCoreStyle::Get().GetBrush("NoBorder"))
+		.Padding(FMargin(0.0f, 0.0f));
 
 	TSharedPtr<SWindow> window = SNew(SWindow)
 		.AutoCenter(EAutoCenter::PreferredWorkArea)
@@ -233,7 +233,8 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText>& Errors, 
 	windowContent->SetContent(
 		SNew(SBorder)
 		.Padding(0)
-		.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+		.BorderImage(FCoreStyle::Get().GetBrush("NoBorder"))
+		.BorderBackgroundColor(FLinearColor::Transparent)
 		[
 			SAssignNew(htmlView, SMounteaDialogueHtmlView)
 			.OnConsoleMessage(FOnMounteaDialogueConsoleMessage::CreateStatic(&MDSPopup_GraphValidation::HandleConsoleMessage))
