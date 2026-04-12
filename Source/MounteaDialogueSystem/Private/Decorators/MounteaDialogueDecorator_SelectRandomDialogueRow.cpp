@@ -46,7 +46,7 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Impleme
 		LOG_WARNING(TEXT("[ExecuteDecorator] %s ActiveDialogueRow is invalid!\nExecution is skipped."), *(GetDecoratorName().ToString()));
 		return;
 	}
-	if (GetContext()->GetActiveDialogueRow().DialogueRowData.Num() == 0)
+	if (GetContext()->GetActiveDialogueRow().RowData.Num() == 0)
 	{
 		LOG_WARNING(TEXT("[ExecuteDecorator] %s DialogueRowData is empty!\nExecution is skipped."), *(GetDecoratorName().ToString()));
 		return;
@@ -63,7 +63,7 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Impleme
 		ClampedRange = RandomRange;
 	}
 
-	const int32 MaxValue = GetContext()->GetActiveDialogueRow().DialogueRowData.Num() - 1;
+	const int32 MaxValue = GetContext()->GetActiveDialogueRow().RowData.Num() - 1;
 	const int32 Range = FMath::RandRange
 	(
 		FMath::Max(0, ClampedRange.X),

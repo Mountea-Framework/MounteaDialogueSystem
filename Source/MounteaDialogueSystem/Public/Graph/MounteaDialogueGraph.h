@@ -36,7 +36,9 @@ struct FMounteaDialogueDecorator;
  * Can be manually created from Content Browser, using Mountea Dialogue category.
  * Comes with Node editor, which provides easy to follow visual way to create Dialogue Trees.
  */
-UCLASS(BlueprintType, ClassGroup=("Mountea|Dialogue"), DisplayName="Mountea Dialogue Tree",	HideCategories=("Hidden", "Private", "Base"), AutoExpandCategories=("Mountea", "Dialogue"))
+UCLASS(BlueprintType, ClassGroup=("Mountea|Dialogue"), DisplayName="Mountea Dialogue Tree",	
+	HideCategories=("Hidden", "Private", "Base"), 
+	AutoExpandCategories=("Mountea", "Dialogue"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraph : public UObject, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()
@@ -44,8 +46,6 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraph : public UObject, public I
 public:
 	
 	UMounteaDialogueGraph();
-
-#pragma region Variables
 
 protected:
 	
@@ -55,7 +55,9 @@ protected:
 	 * This array should contain an instance of each decorator used in the graph.
 	 * The order of the decorators in this array determines the order in which they will be applied to the nodes.
 	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue", NoClear, meta=(NoResetToDefault))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Decorators",
+		meta=(NoResetToDefault),
+		meta=(ShowOnlyInnerProperties))
 	TArray<FMounteaDialogueDecorator> GraphDecorators;
 
 	/**
@@ -65,13 +67,16 @@ protected:
 	 * This array should contain an instance of each decorator used in the graph.
 	 * The order of the decorators in this array determines the order in which they will be applied to the nodes.
 	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,  Category = "Mountea|Dialogue", NoClear, meta=(NoResetToDefault))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Decorators",
+		meta=(NoResetToDefault),
+		meta=(ShowOnlyInnerProperties))
 	TArray<FMounteaDialogueDecorator> GraphScopeDecorators;
 
 	/**
 	 * A set of gameplay tags associated with this dialogue graph.
 	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Defaults",
+		meta=(NoResetToDefault))
 	FGameplayTagContainer GraphTags;
 
 	/**
@@ -79,41 +84,42 @@ protected:
 	*❗ Unique identifier for this Dialogue Graph instance.
 	*❔ Can be used for debugging and tracing purposes.
 	*/
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Mountea|Dialogue", meta=(NoResetToDefault))
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Defaults",
+		meta=(NoResetToDefault), AssetRegistrySearchable)
 	FGuid GraphGUID;
 
 public:
 	
-	// Pointer to the starting node of the dialogue graph.
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
-	TObjectPtr<UMounteaDialogueGraphNode> StartNode = nullptr;
-
-	/**
-	 * The class of the dialogue node represented by this instance.
-	 */
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
-	TSubclassOf<UMounteaDialogueGraphNode> NodeType;
-
-	/**
-	 * The class of the dialogue edge represented by this instance.
-	 */
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
-	TSubclassOf<UMounteaDialogueGraphEdge> EdgeType;
-
 	/**
 	 * An array of root nodes in the dialogue graph. These are the nodes that do not have any incoming connections.
 	 */
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, Category = "Private|Defailts")
 	TArray<TObjectPtr<UMounteaDialogueGraphNode>> RootNodes;
 
 	/**
 	 * Array containing all the nodes in the graph, including both root nodes and child nodes.
 	 */
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, Category = "Private|Defailts")
 	TArray<TObjectPtr<UMounteaDialogueGraphNode>> AllNodes;
+	
+	// Pointer to the starting node of the dialogue graph.
+	UPROPERTY(BlueprintReadOnly, Category = "Private|Defailts")
+	TObjectPtr<UMounteaDialogueGraphNode> StartNode = nullptr;
+
+	/**
+	 * The class of the dialogue node represented by this instance.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Private|Confige")
+	TSubclassOf<UMounteaDialogueGraphNode> NodeType;
+
+	/**
+	 * The class of the dialogue edge represented by this instance.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Private|Config")
+	TSubclassOf<UMounteaDialogueGraphEdge> EdgeType;
 
 	// Flag indicating whether an edge is enabled
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(BlueprintReadOnly, Category = "Private|Config")
 	bool bEdgeEnabled;
 
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Graph")
@@ -126,10 +132,6 @@ private:
 
 	UPROPERTY()
 	bool bIsGraphActive;
-
-#pragma endregion
-
-#pragma region Functions
 
 public:
 
@@ -228,10 +230,6 @@ public:
 	
 	virtual void PostInitProperties() override;
 
-#pragma endregion
-
-#pragma region TickableInterface
-
 	virtual void
 	RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
 	virtual void
@@ -242,27 +240,28 @@ public:
 	UPROPERTY(BlueprintAssignable, BlueprintReadOnly, Category="Mountea|Dialogue")
 	FMounteaDialogueTick GraphTickEvent;
 
-#pragma endregion
-
 #if WITH_EDITORONLY_DATA
 
 public:
+	
 	UPROPERTY()
 	class UEdGraph* EdGraph;
 
 	/**
 	 * Source file from import.
 	 */
-	UPROPERTY(VisibleAnywhere, Category = "Mountea|Import", meta=(NoResetToDefault))
+	UPROPERTY(VisibleAnywhere, Category = "Private|Import", 
+		meta=(NoResetToDefault))
 	FString SourceFile;
 
 	/**
 	 * Source data from import.
 	 */
-	UPROPERTY(VisibleAnywhere, Category = "Mountea|Import", meta=(TitleProperty="Json file: {JsonFile}", NoResetToDefault, ShowOnlyInnerProperties))
+	UPROPERTY(VisibleAnywhere, Category = "Private|Import", 
+		meta=(TitleProperty="Json file: {JsonFile}", NoResetToDefault, ShowOnlyInnerProperties))
 	TArray<FDialogueImportData> SourceData;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Mountea|Dialogue|Editor")
+	UPROPERTY(BlueprintReadOnly, Category = "Private|Editor")
 	bool bCanRenameNode;
 
 	void InitializePIEInstance(const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant, const int32 PIEInstance, const bool bIsRegistered);

@@ -11,7 +11,10 @@
 class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
 class UAudioComponent;
+class APawn;
+class APlayerController;
 enum class EDialogueParticipantState : uint8;
+struct FDialogueParticipant;
 
 /**
  * This library contains implementations of Dialogue Participant Functions.
@@ -248,4 +251,25 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Setter"))
 	static void ProcessDialogueCommand(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const FString& Command, UObject* Payload);
+
+	// --- Helper functions ------------------------------
+	
+	static const FDialogueParticipant* FindParticipantDataRow(const FName& ParticipantRow, FGameplayTag* OutParticipantTag = nullptr);
+	UFUNCTION()
+	static TArray<FName> GetDialogueParticipantRowNames();
+
+	static TScriptInterface<IMounteaDialogueParticipantInterface> GetGraphOwnerParticipant(
+		const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
+	static TScriptInterface<IMounteaDialogueParticipantInterface> GetParticipantByType(
+		const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants,
+		EDialogueParticipantType Type,
+		const UObject* WorldContextObject = nullptr);
+
+	static TScriptInterface<IMounteaDialogueParticipantInterface> FindDialogueParticipantInterface(UObject* ParticipantActor, bool& bResult);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	static TScriptInterface<IMounteaDialogueParticipantInterface> ResolveParticipantFromActor(AActor* ParticipantActor, bool& bResult);
+
+	static APawn* FindPlayerPawn(AActor* ForActor, int32& SearchDepth);
+	static APlayerController* FindPlayerController(AActor* ForActor, int32& SearchDepth);
 };

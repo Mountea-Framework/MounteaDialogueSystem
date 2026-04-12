@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Mountea Dialogue System - Building Your First Dialogue Graph</title>
+</head>
+<body>
+	<section class="doc-page">
+		<header>
+			<span class="version">Chapter 6 of 10</span>
+			<h1>Building Your First Dialogue Graph</h1>
+			<p class="muted">Create a minimal but complete graph that confirms data, tags, and runtime participants are all integrated.</p>
+		</header>
+
+		<div class="card">
+			<h2>What You Will Learn</h2>
+			<ul>
+				<li>How to author a first graph with clear entry, branch, and exit.</li>
+				<li>How to keep graph structure readable from day one.</li>
+				<li>How to run a quick success/fail validation loop.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>When To Use This</h2>
+			<p>Use after runtime wiring is ready. This chapter confirms your project can execute an authored graph in PIE.</p>
+		</div>
+
+		<div class="card">
+			<h2>Prerequisites</h2>
+			<ul>
+				<li>World setup completed.</li>
+				<li>Gameplay tags validated.</li>
+				<li>At least one actor pair ready for interaction testing.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>Step-by-Step Workflow</h2>
+			<ol>
+				<li>Create a new dialogue asset.</li>
+				<li>Add greeting node, one branch condition, and one clean ending node.</li>
+				<li>Use auto-arrange once to keep readability.</li>
+				<li>Bind graph to one participant flow and run PIE test.</li>
+			</ol>
+			<pre><code>Minimum first graph shape:
+Entry -> Greeting -> Choice/Condition -> Response A/B -> Exit</code></pre>
+		</div>
+
+		<div class="card">
+			<h2>Validation Checklist</h2>
+			<ul>
+				<li>Graph compiles without missing references.</li>
+				<li>One full conversation path reaches exit in PIE.</li>
+				<li>Branch behavior is deterministic for your selected condition.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>Common Mistakes + Fixes</h2>
+			<p><strong>Mistake:</strong> starting with a very large graph.<br /><strong>Fix:</strong> validate one tiny graph first, then scale.</p>
+			<p><strong>Mistake:</strong> no explicit exit path.<br /><strong>Fix:</strong> always include predictable termination nodes.</p>
+		</div>
+
+		<div class="card">
+			<h2>Next Chapter</h2>
+			<p>
+				<a href="#" data-mds-type="page" data-mds-target="4">Back To Chapter 5</a><br />
+				<a href="#" data-mds-type="page" data-mds-target="6">Go To Chapter 7: UI Integration & Participant UI Flow</a>
+			</p>
+		</div>
+	</section>
+</body>
+</html>

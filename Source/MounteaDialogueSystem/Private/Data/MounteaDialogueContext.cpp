@@ -1,4 +1,13 @@
-// All rights reserved Dominik Pavlicek 2023
+// Copyright (C) 2026 Dominik (Pavlicek) Morse. All rights reserved.
+//
+// Developed for the Mountea Framework as a free tool. This solution is provided
+// for use and sharing without charge. Redistribution is allowed under the following conditions:
+//
+// - You may use this solution in commercial products, provided the product is not
+//   this solution itself (or unless significant modifications have been made to the solution).
+// - You may not resell or redistribute the original, unmodified solution.
+//
+// For more information, visit: https://mountea.tools
 
 
 #include "Data/MounteaDialogueContext.h"
@@ -6,8 +15,6 @@
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
-#include "Net/UnrealNetwork.h"
-#include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 
 
 FString UMounteaDialogueContext::ToString() const
@@ -16,12 +23,6 @@ FString UMounteaDialogueContext::ToString() const
 
 	FString activeDialoguePart = FString("Active Dialogue Participant: ");
 	activeDialoguePart.Append(ActiveDialogueParticipant.GetObject() ? ActiveDialogueParticipant->Execute_GetParticipantTag(ActiveDialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
-
-	FString playerDialoguePart = FString("Player Dialogue Participant: ");
-	playerDialoguePart.Append(PlayerDialogueParticipant.GetObject() ? PlayerDialogueParticipant->Execute_GetParticipantTag(PlayerDialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
-
-	FString otherDialoguePart = FString("Other Dialogue Participant: ");
-	otherDialoguePart.Append(DialogueParticipant.GetObject() ? DialogueParticipant->Execute_GetParticipantTag(DialogueParticipant.GetObject()).ToString() : TEXT("invalid"));
 
 	FString allDialogueParts = FString("Dialogue Participants: ");
 	allDialogueParts.Append(FString::Printf(TEXT("%d"), DialogueParticipants.Num()));
@@ -33,15 +34,13 @@ FString UMounteaDialogueContext::ToString() const
 	activeRow.Append(ActiveDialogueRow.RowTitle.ToString());
 
 	FString activeRowData = FString("Active Row Data: ");
-	activeRowData.Append(FString::Printf(TEXT("%d"), ActiveDialogueRow.DialogueRowData.Num()));
+	activeRowData.Append(FString::Printf(TEXT("%d"), ActiveDialogueRow.RowData.Num()));
 
 	FString lastWidgetCommand = FString("Last Widget Context: ");
 	lastWidgetCommand.Append(FString::Printf(TEXT("%s"), *LastWidgetCommand));
 
 	returnValue
 		.Append(activeDialoguePart).Append(TEXT("\n"))
-		.Append(playerDialoguePart).Append(TEXT("\n"))
-		.Append(otherDialoguePart).Append(TEXT("\n"))
 		.Append(allDialogueParts).Append(TEXT("\n"))
 		.Append(activeNode).Append(TEXT("\n"))
 		.Append(activeRow).Append(TEXT("\n"))
@@ -53,32 +52,16 @@ FString UMounteaDialogueContext::ToString() const
 
 bool UMounteaDialogueContext::IsValid() const
 {
-	return ActiveNode != nullptr && DialogueParticipants.Num() > 0; // && PlayerDialogueParticipant.GetInterface() != nullptr;
+	return ActiveNode != nullptr && DialogueParticipants.Num() > 0;
 }
 
-void UMounteaDialogueContext::SetDialogueContext(const TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant, UMounteaDialogueGraphNode* NewActiveNode, const TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes)
+void UMounteaDialogueContext::SetDialogueContext(UMounteaDialogueGraphNode* NewActiveNode, TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes)
 {
-	DialogueParticipant = NewParticipant;
-	
 	if (ActiveNode && ActiveNode->GetNodeGUID() != PreviousActiveNode)
-	{
 		PreviousActiveNode = ActiveNode->GetNodeGUID();
-	}
-	
+
 	ActiveNode = NewActiveNode;
 	AllowedChildNodes = NewAllowedChildNodes;
-
-	if (!DialogueParticipants.Contains(NewParticipant))
-	{
-		DialogueParticipants.Add(NewParticipant);
-	}
-}
-
-void UMounteaDialogueContext::UpdateDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant)
-{
-	DialogueParticipant = NewParticipant;
-
-	AddDialogueParticipant(NewParticipant);
 }
 
 void UMounteaDialogueContext::UpdateActiveDialogueNode(UMounteaDialogueGraphNode* NewActiveNode)
@@ -113,16 +96,9 @@ void UMounteaDialogueContext::UpdateActiveDialogueRowDataIndex(const int32 NewIn
 	ActiveDialogueRowDataIndex = NewIndex;
 }
 
-void UMounteaDialogueContext::UpdateDialoguePlayerParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant)
-{
-	PlayerDialogueParticipant = NewParticipant;
-	
-	AddDialogueParticipant(NewParticipant);
-}
-
 void UMounteaDialogueContext::SetActiveDialogueParticipant(const TScriptInterface<IMounteaDialogueParticipantInterface>& NewParticipant)
 {
-	if (NewParticipant != ActiveDialogueParticipant)
+	if (NewParticipant == ActiveDialogueParticipant)
 		return;
 
 	ActiveDialogueParticipant = NewParticipant;
@@ -209,17 +185,10 @@ void UMounteaDialogueContext::ClearDialogueParticipants()
 	DialogueParticipants.Empty();
 }
 
-void UMounteaDialogueContext::SetDialogueContextBP(const TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant, UMounteaDialogueGraphNode* NewActiveNode,TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes)
+void UMounteaDialogueContext::SetDialogueContextBP(UMounteaDialogueGraphNode* NewActiveNode, TArray<UMounteaDialogueGraphNode*> NewAllowedChildNodes)
 {
-	SetDialogueContext(NewParticipant, NewActiveNode, NewAllowedChildNodes);
+	SetDialogueContext(NewActiveNode, NewAllowedChildNodes);
 
-	DialogueContextUpdatedFromBlueprint.Broadcast(this);
-}
-
-void UMounteaDialogueContext::UpdateDialogueParticipantBP(const TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant)
-{
-	UpdateDialogueParticipant(NewParticipant);
-	
 	DialogueContextUpdatedFromBlueprint.Broadcast(this);
 }
 
@@ -247,13 +216,6 @@ void UMounteaDialogueContext::UpdateActiveDialogueTableBP(const FDataTableRowHan
 void UMounteaDialogueContext::UpdateActiveDialogueRowDataIndexBP(const int32 NewIndex)
 {
 	UpdateActiveDialogueRowDataIndex(NewIndex);
-
-	DialogueContextUpdatedFromBlueprint.Broadcast(this);
-}
-
-void UMounteaDialogueContext::UpdateDialoguePlayerParticipantBP(const TScriptInterface<IMounteaDialogueParticipantInterface> NewParticipant)
-{
-	UpdateDialoguePlayerParticipant(NewParticipant);
 
 	DialogueContextUpdatedFromBlueprint.Broadcast(this);
 }
@@ -309,102 +271,4 @@ bool UMounteaDialogueContext::RemoveDialogueParticipantsBP(const TArray<TScriptI
 	return false;
 }
 
-void UMounteaDialogueContext::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
-	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueParticipant);
-	DOREPLIFETIME(UMounteaDialogueContext, PlayerDialogueParticipant);
-	DOREPLIFETIME(UMounteaDialogueContext, DialogueParticipant);
-	DOREPLIFETIME(UMounteaDialogueContext, DialogueParticipants);
-	DOREPLIFETIME(UMounteaDialogueContext, ActiveNode);
-	DOREPLIFETIME(UMounteaDialogueContext, PreviousActiveNode);
-	DOREPLIFETIME(UMounteaDialogueContext, AllowedChildNodes);
-	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueTableHandle);
-	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueRow);
-	DOREPLIFETIME(UMounteaDialogueContext, ActiveDialogueRowDataIndex);
-	DOREPLIFETIME(UMounteaDialogueContext, LastWidgetCommand);
-}
 
-UMounteaDialogueContext* UMounteaDialogueContext::operator += (const UMounteaDialogueContext* Other)
-{
-	if (!Other) return this;
-	
-	if (Other->DialogueParticipants != DialogueParticipants)
-		DialogueParticipants = Other->DialogueParticipants;	
-	if (Other->AllowedChildNodes != AllowedChildNodes)
-		AllowedChildNodes = Other->AllowedChildNodes;
-	if (Other->ActiveNode != ActiveNode)
-		ActiveNode = Other->ActiveNode;
-	if (Other->ActiveDialogueParticipant != ActiveDialogueParticipant)
-		ActiveDialogueParticipant = Other->ActiveDialogueParticipant;
-	if (Other->PlayerDialogueParticipant != PlayerDialogueParticipant)
-		PlayerDialogueParticipant = Other->PlayerDialogueParticipant;
-	if (Other->DialogueParticipant != DialogueParticipant)
-		DialogueParticipant = Other->DialogueParticipant;
-	if (Other->ActiveDialogueTableHandle != ActiveDialogueTableHandle)
-		ActiveDialogueTableHandle = Other->ActiveDialogueTableHandle;
-	if (Other->ActiveDialogueRow != ActiveDialogueRow)
-		ActiveDialogueRow = Other->ActiveDialogueRow;
-	if (Other->ActiveDialogueRowDataIndex != ActiveDialogueRowDataIndex)
-		ActiveDialogueRowDataIndex = Other->ActiveDialogueRowDataIndex;
-	if (Other->LastWidgetCommand != LastWidgetCommand)
-		LastWidgetCommand = Other->LastWidgetCommand;
-	
-	return this;
-}
-
-UMounteaDialogueContext* UMounteaDialogueContext::operator += (const FMounteaDialogueContextReplicatedStruct& Other)
-{
-	if (Other.IsValid())
-	{
-		if (ActiveDialogueParticipant != Other.ActiveDialogueParticipant)
-			ActiveDialogueParticipant = Other.ActiveDialogueParticipant;
-		if (PlayerDialogueParticipant != Other.PlayerDialogueParticipant)
-			PlayerDialogueParticipant = Other.PlayerDialogueParticipant;
-		if (DialogueParticipant != Other.DialogueParticipant)
-			DialogueParticipant = Other.DialogueParticipant;
-		if (DialogueParticipants != Other.DialogueParticipants)
-			DialogueParticipants = Other.DialogueParticipants;
-
-		if (ActiveDialogueRowDataIndex != Other.ActiveDialogueRowDataIndex)
-			ActiveDialogueRowDataIndex = Other.ActiveDialogueRowDataIndex;
-		if (ActiveDialogueTableHandle != Other.ActiveDialogueTableHandle)
-			ActiveDialogueTableHandle = Other.ActiveDialogueTableHandle;
-
-		if (Other.LastWidgetCommand != LastWidgetCommand)
-			LastWidgetCommand = Other.LastWidgetCommand;
-		
-		UMounteaDialogueGraph* activeGraph = nullptr;
-		if (DialogueParticipant.GetObject() && DialogueParticipant.GetInterface())
-			activeGraph = DialogueParticipant->Execute_GetDialogueGraph(DialogueParticipant.GetObject());
-
-		// Only proceed with node updates if we have a valid graph
-		if (activeGraph)
-		{
-			if (!ActiveNode || (ActiveNode && ActiveNode->GetNodeGUID() != Other.ActiveNodeGuid))
-				ActiveNode = UMounteaDialogueSystemBFC::FindNodeByGUID(activeGraph, Other.ActiveNodeGuid);
-			if (PreviousActiveNode != Other.PreviousActiveNodeGuid)
-				PreviousActiveNode = Other.PreviousActiveNodeGuid;
-			
-			AllowedChildNodes = UMounteaDialogueSystemBFC::FindNodesByGUID(activeGraph, Other.AllowedChildNodes);
-			
-			UMounteaDialogueGraphNode_DialogueNodeBase* dialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(ActiveNode);
-
-			const FDialogueRow selectedRow = dialogueNode ? UMounteaDialogueSystemBFC::GetDialogueRow(ActiveDialogueTableHandle.DataTable,ActiveDialogueTableHandle.RowName) : FDialogueRow::Invalid();
-			if (dialogueNode)
-				ActiveDialogueRow = selectedRow.IsValid() ? selectedRow : UMounteaDialogueSystemBFC::GetDialogueRow(ActiveNode);
-		}
-		else
-		{
-			ActiveNode = nullptr;
-			AllowedChildNodes.Empty();
-			PreviousActiveNode = FGuid();
-			ActiveDialogueRow = FDialogueRow::Invalid();
-
-			LOG_INFO(TEXT("[Dialogue Context] Dialogue Context had no Graph!"))
-		}
-	}
-
-	return this;
-}

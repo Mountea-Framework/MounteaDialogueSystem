@@ -92,6 +92,18 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant")
 	FGameplayTag GetParticipantTag() const;
 	virtual FGameplayTag GetParticipantTag_Implementation() const = 0;
+
+	/**
+	 * Returns the role bitmask for this participant, as defined in the linked FDialogueParticipant row.
+	 * Use EDialogueParticipantType flags to test individual roles.
+	 * Returns 0 (None) if no participant data row is linked.
+	 *
+	 * @return Bitmask of EDialogueParticipantType flags.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Participant",
+		meta=(CustomTag="MounteaK2Getter"))
+	int32 GetParticipantType() const;
+	virtual int32 GetParticipantType_Implementation() const = 0;
 	
 	/**
 	 * Helps initialize Participant.

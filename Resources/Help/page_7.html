@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Mountea Dialogue System - Advanced Authoring</title>
+</head>
+<body>
+	<section class="doc-page">
+		<header>
+			<span class="version">Chapter 8 of 10</span>
+			<h1>Advanced Authoring (Decorators, Conditions, Events)</h1>
+			<p class="muted">Scale beyond linear conversations using reusable conditions, contextual decorators, and event-driven responses.</p>
+		</header>
+
+		<div class="card">
+			<h2>What You Will Learn</h2>
+			<ul>
+				<li>How to organize advanced branches without unreadable graph growth.</li>
+				<li>When to use decorators versus explicit branch nodes.</li>
+				<li>How to test event side effects safely.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>When To Use This</h2>
+			<p>Use this chapter after baseline conversation flow is stable. Advanced authoring should extend validated behavior, not replace fundamentals.</p>
+		</div>
+
+		<div class="card">
+			<h2>Prerequisites</h2>
+			<ul>
+				<li>At least one working graph with UI feedback.</li>
+				<li>Known gameplay tags and runtime variables available for conditions.</li>
+				<li>Agreement on naming conventions for reusable logic.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>Step-by-Step Workflow</h2>
+			<ol>
+				<li>Extract repeated checks into reusable condition/decorator logic.</li>
+				<li>Add event hooks only where gameplay state must change.</li>
+				<li>Group related branches spatially and name nodes for searchability.</li>
+				<li>Test every branch end state in PIE with logged outcomes.</li>
+			</ol>
+			<pre><code>Authoring principle:
+One node = one clear responsibility.
+If a node does too much, split behavior and keep flow explicit.</code></pre>
+		</div>
+
+		<div class="card">
+			<h2>Validation Checklist</h2>
+			<ul>
+				<li>All branches reachable by at least one test path.</li>
+				<li>No event side effect triggers twice unexpectedly.</li>
+				<li>Decorators remain understandable to teammates during review.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>Common Mistakes + Fixes</h2>
+			<p><strong>Mistake:</strong> hidden logic spread across too many decorators.<br /><strong>Fix:</strong> keep critical branch gates visually explicit in graph.</p>
+			<p><strong>Mistake:</strong> adding events without rollback plan.<br /><strong>Fix:</strong> log side effects and isolate risky actions behind clear conditions.</p>
+		</div>
+
+		<div class="card">
+			<h2>Next Chapter</h2>
+			<p>
+				<a href="#" data-mds-type="page" data-mds-target="6">Back To Chapter 7</a><br />
+				<a href="#" data-mds-type="page" data-mds-target="8">Go To Chapter 9: Debugging & Troubleshooting</a>
+			</p>
+		</div>
+	</section>
+</body>
+</html>

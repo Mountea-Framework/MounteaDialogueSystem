@@ -4,7 +4,7 @@
 #include "Helpers/MounteaDialogueHUDStatics.h"
 
 #include "Blueprint/GameViewportSubsystem.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Helpers/MounteaDialogueTraversalStatics.h"
 #include "Interfaces/HUD/MounteaDialogueHUDClassInterface.h"
 #include "Interfaces/HUD/MounteaDialogueUIBaseInterface.h"
 #include "Interfaces/HUD/MounteaDialogueWBPInterface.h"
@@ -12,6 +12,7 @@
 #include "Interfaces/UMG/MounteaDialogueRowInterface.h"
 #include "Interfaces/UMG/MounteaDialogueSkipInterface.h"
 #include "Interfaces/UMG/MounteaDialogueViewportWidgetInterface.h"
+#include "Interfaces/Nodes/MounteaDialogueSpeechDataInterface.h"
 #include "Internationalization/Regex.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 #include "WBP/MounteaDialogueOptionsContainer.h"
@@ -26,32 +27,33 @@ FWidgetDialogueRow UMounteaDialogueHUDStatics::NewDialogueWidgetRowData(const FD
 	return FWidgetDialogueRow(SourceRow, SourceRowData);
 }
 
-FGuid UMounteaDialogueHUDStatics::GetDialogueNodeGuid(UMounteaDialogueGraphNode_DialogueNodeBase* FromNode)
+FGuid UMounteaDialogueHUDStatics::GetDialogueNodeGuid(UMounteaDialogueGraphNode* FromNode)
 {
 	return FromNode ? FromNode->GetNodeGUID() : FGuid();
 }
 
-FDialogueRow UMounteaDialogueHUDStatics::GetDialogueNodeRow(UMounteaDialogueGraphNode_DialogueNodeBase* FromNode)
+FDialogueRow UMounteaDialogueHUDStatics::GetDialogueNodeRow(UMounteaDialogueGraphNode* FromNode)
 {
-	if (TObjectPtr<UMounteaDialogueGraphNode_DialogueNodeBase> dialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(FromNode) )
-		return UMounteaDialogueSystemBFC::GetDialogueRow(FromNode);
+	if (IsValid(FromNode) && FromNode->Implements<UMounteaDialogueSpeechDataInterface>())
+		return UMounteaDialogueTraversalStatics::GetSpeechData(FromNode);
 
 	return FDialogueRow::Invalid();
 }
 
-TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> UMounteaDialogueHUDStatics::FilterDialogueFriendlyNodes(const TArray<UMounteaDialogueGraphNode*>& RawNodes)
+TArray<UMounteaDialogueGraphNode*> UMounteaDialogueHUDStatics::FilterDialogueFriendlyNodes(const TArray<UMounteaDialogueGraphNode*>& RawNodes)
 {
-	TArray<UMounteaDialogueGraphNode_DialogueNodeBase*> returnArray;
+	TArray<UMounteaDialogueGraphNode*> returnArray;
 	
 	for (const auto& Itr : RawNodes)
 	{
-		if (!Itr) continue;
-
-		if (TObjectPtr<UMounteaDialogueGraphNode_DialogueNodeBase> dialogueNode = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(Itr))
-			returnArray.Add(dialogueNode);
+		if (IsValid(Itr) && Itr->Implements<UMounteaDialogueSpeechDataInterface>())
+			returnArray.Add(Itr);
 	}
 
-	UMounteaDialogueSystemBFC::SortNodes(returnArray);
+	returnArray.Sort([](const UMounteaDialogueGraphNode& Left, const UMounteaDialogueGraphNode& Right)
+	{
+		return Left.ExecutionOrder < Right.ExecutionOrder;
+	});
 	return returnArray;
 }
 
@@ -81,7 +83,7 @@ FText UMounteaDialogueHUDStatics::ReplaceRegexInText(const FString& Regex, const
 int32 UMounteaDialogueHUDStatics::GetWidgetZOrder(UUserWidget* Widget, UObject* WorldContext)
 {
 	if (!Widget || !WorldContext)
-		return -1;
+		return INDEX_NONE;
 
 	ULocalPlayer* localPlayer = Widget->GetOwningLocalPlayer();
 	if (localPlayer)
@@ -94,7 +96,7 @@ int32 UMounteaDialogueHUDStatics::GetWidgetZOrder(UUserWidget* Widget, UObject* 
 		}
 	}
 
-	return -1;
+	return INDEX_NONE;
 }
 
 EDialogueOptionState UMounteaDialogueHUDStatics::GetFocusState(UUserWidget* Widget)
@@ -209,7 +211,7 @@ UUserWidget* UMounteaDialogueHUDStatics::GetViewportWidget(AActor* ViewportManag
 	return nullptr;
 }
 
-void UMounteaDialogueHUDStatics::AddChildWidgetToViewport(AActor* ViewportManager, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams)
+void UMounteaDialogueHUDStatics::AddChildWidgetToViewport(AActor* ViewportManager, UUserWidget* ChildWidget, const FWidgetAdditionParams WidgetParams)
 {
 	if (!IsValid(ViewportManager))
 	{
@@ -444,9 +446,16 @@ void UMounteaDialogueHUDStatics::SetDialogueOptionClass(UObject* ContainerObject
 	containerInterface->Execute_SetDialogueOptionClass(ContainerObject, NewDialogueOptionClass);
 }
 
-void UMounteaDialogueHUDStatics::AddNewDialogueOption(UObject* ContainerObject, UMounteaDialogueGraphNode_DialogueNodeBase* NewDialogueOption)
+void UMounteaDialogueHUDStatics::AddNewDialogueOption(UObject* ContainerObject, UMounteaDialogueGraphNode* NewDialogueOption)
 {
-	if (!IsValid(ContainerObject)) return;
+	if (!IsValid(NewDialogueOption) || !NewDialogueOption->Implements<UMounteaDialogueSpeechDataInterface>())
+	{
+		LOG_WARNING(TEXT("[Add New Dialogue Option] Invalid Dialogue Option provided!"))
+		return;
+	}
+	
+	if (!IsValid(ContainerObject)) 
+		return;
 
 	auto containerInterface = GetOptionsContainerInterface(ContainerObject);
 
@@ -459,8 +468,8 @@ void UMounteaDialogueHUDStatics::AddNewDialogueOption(UObject* ContainerObject, 
 	containerInterface->Execute_AddNewDialogueOption(ContainerObject, NewDialogueOption);
 }
 
-void UMounteaDialogueHUDStatics::AddNewDialogueOptions(UObject* ContainerObject, const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& NewDialogueOptions)
-{
+void UMounteaDialogueHUDStatics::AddNewDialogueOptions(UObject* ContainerObject, const TArray<UMounteaDialogueGraphNode*>& NewDialogueOptions)
+{	
 	if (!IsValid(ContainerObject))
 		return;
 
@@ -474,8 +483,14 @@ void UMounteaDialogueHUDStatics::AddNewDialogueOptions(UObject* ContainerObject,
 		LOG_WARNING(TEXT("[Add New Dialogue Options] Container Object %s doesn't properly implement `IMounteaDialogueOptionsContainerInterface`!"), *ContainerObject->GetName())
 }
 
-void UMounteaDialogueHUDStatics::RemoveDialogueOption(UObject* ContainerObject, UMounteaDialogueGraphNode_DialogueNodeBase* DirtyDialogueOption)
+void UMounteaDialogueHUDStatics::RemoveDialogueOption(UObject* ContainerObject, UMounteaDialogueGraphNode* DirtyDialogueOption)
 {
+	if (!IsValid(DirtyDialogueOption) || !DirtyDialogueOption->Implements<UMounteaDialogueSpeechDataInterface>())
+	{
+		LOG_WARNING(TEXT("[Remove Dialogue Option] Invalid Dialogue Option provided!"))
+		return;
+	}
+	
 	if (!IsValid(ContainerObject)) return;
 
 	auto containerInterface = GetOptionsContainerInterface(ContainerObject);
@@ -489,7 +504,7 @@ void UMounteaDialogueHUDStatics::RemoveDialogueOption(UObject* ContainerObject, 
 	containerInterface->Execute_RemoveDialogueOption(ContainerObject, DirtyDialogueOption);
 }
 
-void UMounteaDialogueHUDStatics::RemoveDialogueOptions(UObject* ContainerObject, const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& DirtyDialogueOptions)
+void UMounteaDialogueHUDStatics::RemoveDialogueOptions(UObject* ContainerObject, const TArray<UMounteaDialogueGraphNode*>& DirtyDialogueOptions)
 {
 	if (!IsValid(ContainerObject)) return;
 

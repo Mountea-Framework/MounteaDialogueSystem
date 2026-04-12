@@ -3,10 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Definitions/MounteaDialogueEditorPageTypes.h"
 #include "Engine/DeveloperSettings.h"
 #include "MounteaDialogueGraphEditorSettings.generated.h"
-
-class UMounteaDialogueGraphNode;
 
 #pragma region Enums
 
@@ -14,62 +13,12 @@ UENUM(BlueprintType)
 enum class EAutoLayoutStrategyType : uint8
 {
 	EALS_Tree				UMETA(DisplayName="Tree"),
-	EALS_ForceDirected	UMETA(DisplayName="Force Directed"),
+	EALS_ForceDirected		UMETA(DisplayName="Force Directed"),
 
-	Default						UMETA(Hidden)
-};
-
-UENUM(BlueprintType)
-enum class EWiringStyle : uint8
-{
-	EWS_Vanilla				UMETA(DisplayName="Vanilla"),
-	EWS_Simple			UMETA(DisplayName="90° Angle"),
-	EWS_Complex			UMETA(DisplayName="45° Angle"),
-
-	Default						UMETA(Hidden)
-};
-
-UENUM(BlueprintType)
-enum class EBubbleDrawRule : uint8
-{
-	EBDR_Always			UMETA(DisplayName="Always"),
-	EBDR_OnSelected	UMETA(DisplayName="When Selected")
-};
-
-UENUM(BlueprintType)
-enum class ENodeTheme : uint8
-{
-	ENT_DarkTheme			UMETA(DisplayName="Dark Theme"),
-	ENT_LightTheme			UMETA(DisplayName="Light Theme")
-};
-
-UENUM(BlueprintType)
-enum class EDecoratorsInfoStyle : uint8
-{
-	EDSI_Stack				UMETA(DisplayName="Stack"),
-	EDIS_Unified				UMETA(DisplayName="Unified")
-};
-
-UENUM(BlueprintType)
-enum class ENodeCornerType : uint8
-{
-	ENT_SoftCorners			UMETA(DisplayName="Soft Corners"),
-	ENT_HardCorners			UMETA(DisplayName="Hard Corners")
-};
-
-UENUM(BlueprintType)
-enum class EArrowType : uint8
-{
-	ERT_SimpleArrow			UMETA(DisplayName="Simple Arrow"),
-	ERT_HollowArrow			UMETA(DisplayName="Hollow Arrow"),
-	ERT_FancyArrow			UMETA(DisplayName="Fancy Arrow"),
-	ERT_Bubble					UMETA(DisplayName="Bubble"),
-	ERT_None					UMETA(DisplayName="Nothing")
+	Default					UMETA(Hidden)
 };
 
 #pragma endregion 
-
-class UMounteaDialogueGraphNode;
 
 /**
  * Mountea Dialogue System global settings.
@@ -107,32 +56,10 @@ protected:
 #pragma region GraphNodes
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
-	ENodeCornerType NodeType;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
-	ENodeTheme NodeTheme;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings|DecoratorsInfo")
-	uint8 bShowDetailedInfo_NumDecorators : 1;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings|DecoratorsInfo")
-	uint8 bShowDetailedInfo_InheritsDecorators : 1;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
-	EDecoratorsInfoStyle DecoratorsInfoStyle;
-	
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	bool bDisplayAutomaticNames;
 
 	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings")
 	bool bAllowRenameNodes;
-
-	/**
-	 * Select a Node Class and specify Override Colour for this Node type.
-	 * Only non-abstract classes are allowed!
-	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings", meta=(ShowTreeView))
-	TMap<TSoftClassPtr<UMounteaDialogueGraphNode>, FLinearColor> OverrideNodeBackgroundColours;
 
 	/**
 	 * URL for the Nodes Replacement configuration file.
@@ -141,7 +68,8 @@ protected:
 	 * The system will use this URL to download and apply the tags if allowed.
 	 * Default: @link https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/refs/heads/master/Config/node_replacements.json
 	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings", AdvancedDisplay, meta=(ConfigRestartRequired=true))
+	UPROPERTY(config, EditDefaultsOnly, Category = "NodesSettings", AdvancedDisplay, 
+		meta=(ConfigRestartRequired=true))
 	FString NodeReplacementURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/refs/heads/master/Config/node_replacements.json");
 
 #pragma endregion
@@ -163,34 +91,19 @@ protected:
 	 * If turned on custom K2 Nodes will contain additional details, which might break visual appearance
 	 * and might not work well with plugins like `BlueprintAssist`.
 	 */
-	UPROPERTY(config, EditDefaultsOnly,  Category = "BlueprintNodes", meta=(ConfigRestartRequired=true))
+	UPROPERTY(config, EditDefaultsOnly,  Category = "BlueprintNodes", 
+		meta=(ConfigRestartRequired=true))
 	bool bDisplayStandardNodes;
 	
 #pragma endregion
 	
-#pragma region GraphWiring
-	
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(UIMin=0.1f, ClampMin=0.1f, UIMax=1.5f, ClampMax=1.5f))
-	float WireWidth;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring")
-	EArrowType ArrowType;
-
-	UPROPERTY(config, EditDefaultsOnly, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]"))
-	bool bUseAdvancedWiring;
-
-	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]", EditCondition="bUseAdvancedWiring"))
-	FVector2f AdvancedWiringConnectionTangent = FVector2f(0.0f, 350.f);
-
-	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "NodeWiring", meta=(ToolTip="[BETA] Feature]", EditCondition="bUseAdvancedWiring"))
-	float ControlPointDistance = 100.0f;
-
-#pragma endregion
-
 #pragma region GraphArrange
 	
 	UPROPERTY(config, EditDefaultsOnly, Category = "AutoArrange")
-	float OptimalDistance;
+	float OptimalHorizontalDistance;
+
+	UPROPERTY(config, EditDefaultsOnly, Category = "AutoArrange")
+	float OptimalVerticalDistance;
 	
 	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
 	EAutoLayoutStrategyType AutoLayoutStrategy;
@@ -220,7 +133,8 @@ protected:
 	 * If set to true, the system will automatically verify and update gameplay tags on engine startup.
 	 * Default is True.
 	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", meta=(ConfigRestartRequired=true))
+	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", 
+		meta=(ConfigRestartRequired=true))
 	uint8 bAllowAutoGameplayTagsCheck : 1;
 
 	/**
@@ -230,8 +144,33 @@ protected:
 	 * The system will use this URL to download and apply the tags if allowed.
 	 * Default: @link https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini
 	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay, meta=(ConfigRestartRequired=true))
+	UPROPERTY(config, EditDefaultsOnly, Category = "GameplayTags", AdvancedDisplay, 
+		meta=(ConfigRestartRequired=true))
 	FString GameplayTagsURL = FString("https://raw.githubusercontent.com/Mountea-Framework/MounteaDialogueSystem/master/Config/Tags/MounteaDialogueSystemTags.ini");
+
+#pragma endregion
+
+#pragma region HelpPages
+
+	/**
+	 * Shared styling for editor HTML pages.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "HelpPages", 
+		meta = (FilePathFilter = "css"))
+	FFilePath SharedStylesheetPath;
+
+	/**
+	 * Shared script for editor HTML pages.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "HelpPages", 
+		meta = (FilePathFilter = "js"))
+	FFilePath SharedScriptPath;
+
+	/**
+	 * Help pages displayed in tutorial windows.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "HelpPages")
+	TMap<int32, FDialogueEditorPageConfig> EditorTemplatePages;
 
 #pragma endregion
 
@@ -239,37 +178,11 @@ public:
 
 #pragma region GraphNodes_Getters
 	
-	ENodeTheme GetNodeTheme() const
-	{ return NodeTheme; };
-
-	ENodeCornerType GetNodeType() const
-	{ return NodeType; };
-
-	bool ShowDetailedInfo_NumDecorators() const
-	{ return bShowDetailedInfo_NumDecorators; };
-
-	bool ShowDetailedInfo_InheritsDecorators() const
-	{ return bShowDetailedInfo_InheritsDecorators; };
-	
 	bool ShowAutomaticNames() const
 	{ return bDisplayAutomaticNames; };
 
-	EDecoratorsInfoStyle GetDecoratorsStyle() const
-	{ return DecoratorsInfoStyle; };
-
 	bool AllowRenameNodes() const
 	{ return bAllowRenameNodes; };
-
-	bool FindNodeBackgroundColourOverride(const TSoftClassPtr<UMounteaDialogueGraphNode> NodeClass, FLinearColor& BackgroundColour)
-	{
-		if (OverrideNodeBackgroundColours.Contains(NodeClass))
-		{
-			BackgroundColour = *OverrideNodeBackgroundColours.Find(NodeClass);
-			return true;
-		}
-
-		return false;
-	}
 
 	FString GetNodeReplacementURL() const
 	{ return NodeReplacementURL; };
@@ -286,32 +199,16 @@ public:
 
 #pragma endregion 
 
-#pragma region GraphWiring_Getters
-
-	float GetWireWidth() const
-	{ return WireWidth; };
-
-	EArrowType GetArrowType() const
-	{ return ArrowType; };
-
-	bool AllowAdvancedWiring() const
-	{ return bUseAdvancedWiring; };
-
-	FVector2f GetAdvancedWiringConnectionTangent() const
-	{ return AdvancedWiringConnectionTangent; };
-
-	float GetControlPointDistance() const
-	{ return ControlPointDistance; };
-
-#pragma endregion 
-
 #pragma region GraphArrange_Getters
 	
 	EAutoLayoutStrategyType GetAutoLayoutStrategy() const
 	{ return AutoLayoutStrategy; };
 
-	float GetOptimalDistance() const
-	{ return OptimalDistance; };
+	float GetOptimalHorizontalDistance() const
+	{ return OptimalHorizontalDistance; };
+
+	float GetOptimalVerticalDistance() const
+	{ return OptimalVerticalDistance; };
 
 	int32 GetMaxIteration() const
 	{ return MaxIteration; };
@@ -346,5 +243,29 @@ public:
 	{ return GameplayTagsURL; };
 	
 #pragma endregion
+
+#pragma region HelpPages_Getters
+
+	FString GetSharedStylesheetPath() const
+	{ return SharedStylesheetPath.FilePath; };
+
+	FString GetSharedScriptPath() const
+	{ return SharedScriptPath.FilePath; };
+
+	const TMap<int32, FDialogueEditorPageConfig>& GetEditorTemplatePages() const
+	{ return EditorTemplatePages; };
+
+	FString GetEditorTemplatePagePath(const int32 PageId) const;
+
+	FText GetEditorTemplatePageTitle(const int32 PageId) const;
+
+	FString GetOfflineChangelogPath() const;
+	FString GetGeneratedChangelogPath() const;
+
+#pragma endregion
+
+private:
+
+	void ReportLegacyVisualSettings() const;
  
 };

@@ -49,20 +49,13 @@ UEdGraph_MounteaDialogueGraph* UEdNode_MounteaDialogueGraphNode::GetDialogueGrap
 void UEdNode_MounteaDialogueGraphNode::AllocateDefaultPins()
 {
 	if (DialogueGraphNode == nullptr)
-	{
 		EditorLOG_ERROR(TEXT("[AllocateDefaultPins] Cannot find Owning Graph Node!"))
-		//return;
-	}
 		
 	if (DialogueGraphNode->bAllowInputNodes)
-	{
-		CreatePin(EGPD_Input, "MultipleNodes", FName(), TEXT("In"));
-	}
+	CreatePin(EGPD_Input, "MultipleNodes", FName(), TEXT("In"));
 
 	if (DialogueGraphNode->bAllowOutputNodes)
-	{
-		CreatePin(EGPD_Output, "MultipleNodes", FName(), TEXT("Out"));
-	}
+	CreatePin(EGPD_Output, "MultipleNodes", FName(), TEXT("Out"));
 }
 
 FText UEdNode_MounteaDialogueGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
@@ -82,24 +75,12 @@ void UEdNode_MounteaDialogueGraphNode::AutowireNewNode(UEdGraphPin* FromPin)
 	if (FromPin != nullptr)
 	{
 		if (GetSchema()->TryCreateConnection(FromPin, GetInputPin()))
-		{
-			FromPin->GetOwningNode()->NodeConnectionListChanged();
-		}
+		FromPin->GetOwningNode()->NodeConnectionListChanged();
 	}
 }
 
 FLinearColor UEdNode_MounteaDialogueGraphNode::GetBackgroundColor() const
 {
-	// Getting Node colour based on the Settings if any found, otherwise use this logic
-	if (UMounteaDialogueGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
-	{
-		FLinearColor ReturnColour;
-		if (GraphEditorSettings->FindNodeBackgroundColourOverride(DialogueGraphNode->GetClass(), ReturnColour))
-		{
-			return ReturnColour;
-		}
-	}
-	
 	return DialogueGraphNode ? DialogueGraphNode->GetBackgroundColor() : FLinearColor::Black;
 }
 
@@ -111,9 +92,7 @@ UEdGraphPin* UEdNode_MounteaDialogueGraphNode::GetInputPin() const
 UEdGraphPin* UEdNode_MounteaDialogueGraphNode::GetOutputPin() const
 {
 	if (Pins.IsValidIndex(1))
-	{
 		return Pins[1];
-	}
 
 	return Pins[0];
 }
@@ -121,28 +100,20 @@ UEdGraphPin* UEdNode_MounteaDialogueGraphNode::GetOutputPin() const
 bool UEdNode_MounteaDialogueGraphNode::CanUserDeleteNode() const
 {
 	if( !Super::CanUserDeleteNode())
-	{
 		return false;
-	}
 
 	if (DialogueGraphNode)
-	{
-		return DialogueGraphNode->bAllowDelete;
-	}	
+		return DialogueGraphNode->bAllowDelete;	
 	return bAllowDelete;
 }
 
 bool UEdNode_MounteaDialogueGraphNode::CanDuplicateNode() const
 {
 	if( !Super::CanUserDeleteNode())
-	{
 		return false;
-	}
 
 	if (DialogueGraphNode)
-	{
 		return DialogueGraphNode->bAllowCopy;
-	}
 	
 	return bAllowCopy;
 }
@@ -150,9 +121,7 @@ bool UEdNode_MounteaDialogueGraphNode::CanDuplicateNode() const
 bool UEdNode_MounteaDialogueGraphNode::CanUserPasteNodes() const
 {
 	if (DialogueGraphNode)
-	{
 		return DialogueGraphNode->bAllowPaste;
-	}
 
 	return bAllowPaste;
 }
@@ -160,9 +129,7 @@ bool UEdNode_MounteaDialogueGraphNode::CanUserPasteNodes() const
 FText UEdNode_MounteaDialogueGraphNode::GetTooltipText() const
 {
 	if (DialogueGraphNode)
-	{
 		return DialogueGraphNode->GetNodeTooltipText();
-	}
 	
 	return NSLOCTEXT("UEdNode_MounteaDialogueGraphNode", "DefaultToolTip", "Mountea Dialogue Node");
 }

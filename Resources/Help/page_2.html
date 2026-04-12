@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Mountea Dialogue System - Project Settings Deep Dive</title>
+</head>
+<body>
+	<section class="doc-page">
+		<header>
+			<span class="version">Chapter 3 of 10</span>
+			<h1>Project Settings Deep Dive</h1>
+			<p class="muted">Configure editor and runtime defaults so every dialogue graph starts from predictable baseline rules.</p>
+		</header>
+
+		<div class="card">
+			<h2>What You Will Learn</h2>
+			<ul>
+				<li>Which settings affect graph authoring experience.</li>
+				<li>How auto-arrange and node options influence daily workflow.</li>
+				<li>How to keep team-wide defaults stable while allowing local overrides.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>When To Use This</h2>
+			<p>Use this chapter right after installation, and revisit when graph layout or editor behavior feels inconsistent between teammates.</p>
+		</div>
+
+		<div class="card">
+			<h2>Prerequisites</h2>
+			<ul>
+				<li>Plugin enabled and project restarted.</li>
+				<li>Project settings category visible.</li>
+				<li>At least one test dialogue asset for validation.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>Step-by-Step Workflow</h2>
+			<ol>
+				<li>Open Mountea Dialogue Editor settings.</li>
+				<li>Review node behavior toggles (rename, automatic names, standard nodes).</li>
+				<li>Tune auto-arrange values for your graph size profile.</li>
+				<li>Save config and reopen one graph to validate effect.</li>
+			</ol>
+			<p><a href="#" data-mds-type="settings" data-mds-target="Mountea">Open Mountea Dialogue Settings</a></p>
+			<pre><code>Suggested first-pass values:
+OptimalHorizontalDistance: 220-300
+OptimalVerticalDistance: 100-160
+AutoLayoutStrategy: Tree</code></pre>
+		</div>
+
+		<div class="card">
+			<h2>Validation Checklist</h2>
+			<ul>
+				<li>Graph auto-arrange no longer causes overlapping core nodes.</li>
+				<li>Node naming behavior matches team expectation.</li>
+				<li>No deprecated-visual warnings are treated as blocking issues.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>Common Mistakes + Fixes</h2>
+			<p><strong>Mistake:</strong> changing many settings at once and losing baseline.<br /><strong>Fix:</strong> change one category, validate, then continue.</p>
+			<p><strong>Mistake:</strong> forcing one layout profile for every graph type.<br /><strong>Fix:</strong> select values that serve your most frequent graph size.</p>
+		</div>
+
+		<div class="card">
+			<h2>Next Chapter</h2>
+			<p>
+				<a href="#" data-mds-type="page" data-mds-target="1">Back To Chapter 2</a><br />
+				<a href="#" data-mds-type="page" data-mds-target="3">Go To Chapter 4: Gameplay Tags Setup & Verification</a>
+			</p>
+		</div>
+	</section>
+</body>
+</html>

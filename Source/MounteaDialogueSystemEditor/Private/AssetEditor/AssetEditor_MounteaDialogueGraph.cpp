@@ -16,10 +16,13 @@
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
+#include "Edges/MounteaDialogueGraphEdge.h"
+#include "Ed/SEdNode_MounteaDialogueGraphNode.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "GraphScheme/AssetGraphScheme_MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
+#include "Helpers/MounteaDialogueNodeSpacingUtils.h"
 #include "Layout/AssetEditorTabs.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemEditorBFC.h"
@@ -78,12 +81,37 @@ void FAssetEditor_MounteaDialogueGraph::InitMounteaDialogueGraphAssetEditor(
 	CreateCommandList();
 
 	if (!ToolbarBuilder.IsValid())
-	{
 		ToolbarBuilder = MakeShareable(new FAssetEditorToolbarMounteaDialogueGraph(SharedThis(this)));
-	}
 
 	BindCommands();
 	CreateInternalWidgets();
+
+	if (UEdGraph_MounteaDialogueGraph* dialogueEdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph ? EditingGraph->EdGraph : nullptr))
+	{
+		int32 migratedLinks = 0;
+		int32 removedDuplicateEdges = 0;
+		const bool bGraphNormalized = dialogueEdGraph->NormalizeEdgeNodes(true, migratedLinks, removedDuplicateEdges);
+
+		if (migratedLinks > 0 || removedDuplicateEdges > 0)
+			EditorLOG_INFO(TEXT("[InitMounteaDialogueGraphAssetEditor] Migrated %d direct link(s), removed %d duplicate edge node(s)."), migratedLinks, removedDuplicateEdges);
+
+		if (bGraphNormalized && EditingGraph)
+		{
+			EditingGraph->Modify();
+			EditingGraph->MarkPackageDirty();
+		}
+	}
+
+	RebuildMounteaDialogueGraph();
+	if (ViewportWidget.IsValid())
+		ViewportWidget->NotifyGraphChanged();
+
+	// Clear any dirty state accumulated during init — edge migration and structural rebuild
+	// are transparent repairs, not user edits. If the user makes a real change the normal
+	// dirty tracking will kick in from that point onward.
+	if (EditingGraph)
+		if (UPackage* pkg = EditingGraph->GetOutermost())
+			pkg->SetDirtyFlag(false);
 
 	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
 
@@ -253,9 +281,7 @@ FString FAssetEditor_MounteaDialogueGraph::GetDocumentationLink() const
 void FAssetEditor_MounteaDialogueGraph::SaveAsset_Execute()
 {
 	if (EditingGraph != nullptr)
-	{
 		RebuildMounteaDialogueGraph();
-	}
 
 	FAssetEditorToolkit::SaveAsset_Execute();
 }
@@ -289,8 +315,10 @@ FString FAssetEditor_MounteaDialogueGraph::GetReferencerName() const
 
 void FAssetEditor_MounteaDialogueGraph::SetDialogueBeingEdited(UMounteaDialogueGraph* NewDialogue)
 {
-	if (NewDialogue == nullptr) return;
-	if (NewDialogue == EditingGraph) return;
+	if (NewDialogue == nullptr) 
+		return;
+	if (NewDialogue == EditingGraph) 
+		return;
 
 	UMounteaDialogueGraph* Previous = EditingGraph;
 	EditingGraph = NewDialogue;
@@ -358,6 +386,20 @@ void FAssetEditor_MounteaDialogueGraph::BindCommands()
 
 	ToolkitCommands->MapAction
 	(
+		FMounteaDialogueGraphEditorCommands::Get().RecenterGraph,
+		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::RecenterGraph),
+		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::CanRecenterGraph)
+	);
+
+	ToolkitCommands->MapAction
+	(
+		FMounteaDialogueGraphEditorCommands::Get().FitGraphToView,
+		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::FitGraphToView),
+		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::CanFitGraphToView)
+	);
+
+	ToolkitCommands->MapAction
+	(
 		FMounteaDialogueGraphEditorCommands::Get().ValidateGraph,
 		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::ValidateGraph),
 		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::CanValidateGraph)
@@ -378,7 +420,10 @@ void FAssetEditor_MounteaDialogueGraph::BindCommands()
 
 void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 {
-	if (EditingGraph->EdGraph == nullptr)
+	const bool bNeedsRebuild = EditingGraph->EdGraph == nullptr
+		|| EditingGraph->EdGraph->Nodes.IsEmpty();
+
+	if (bNeedsRebuild)
 	{
 		EditingGraph->EdGraph = CastChecked<UEdGraph_MounteaDialogueGraph>(
 			FBlueprintEditorUtils::CreateNewGraph(EditingGraph, NAME_None, UEdGraph_MounteaDialogueGraph::StaticClass(),
@@ -522,7 +567,7 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 
 				if (!CurrentNodeInputPin)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Current node has no input pin: %s"), *CurrentNode->GetName());
+					EditorLOG_INFO(TEXT("Current node has no input pin: %s"), *CurrentNode->GetName());
 					continue;
 				}
 
@@ -553,17 +598,36 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 
 						if (ParentOutputPin)
 						{
-							ParentOutputPin->MakeLinkTo(CurrentNodeInputPin);
+							// Reuse the existing imported edge (with its conditions) so they survive
+							// the RebuildMounteaDialogueGraph call that follows CreateEdGraph.
+							// A direct pin link would cause NormalizeEdgeNodes to create a new blank
+							// UMounteaDialogueGraphEdge, discarding any imported conditions.
+							UMounteaDialogueGraphEdge* existingEdge = ParentDialogueNode->Edges.FindRef(DialogueNode);
+							if (existingEdge)
+							{
+								UEdNode_MounteaDialogueGraphEdge* edgeNode = MounteaDialogueGraph->CreateEdgeNode(ParentEdNode, CurrentNode);
+								if (edgeNode)
+								{
+									edgeNode->MounteaDialogueGraphEdge = existingEdge;
+									edgeNode->CreateNewGuid();
+									edgeNode->NodePosX = (ParentEdNode->NodePosX + CurrentNode->NodePosX) * 0.5f;
+									edgeNode->NodePosY = (ParentEdNode->NodePosY + CurrentNode->NodePosY) * 0.5f;
+									edgeNode->SetFlags(RF_Transactional);
+									existingEdge->SetFlags(RF_Transactional);
+									MounteaDialogueGraph->AddNode(edgeNode, true, false);
+								}
+							}
+							else
+								ParentOutputPin->MakeLinkTo(CurrentNodeInputPin);
 						}
 						else
 						{
-							UE_LOG(LogTemp, Warning, TEXT("Parent node has no output pin: %s"),
-									*ParentEdNode->GetName());
+							EditorLOG_INFO(TEXT("Parent node has no output pin: %s"), *ParentEdNode->GetName());
 						}
 					}
 					else
 					{
-						UE_LOG(LogTemp, Warning, TEXT("Could not find EdNode for parent dialogue node"));
+						EditorLOG_INFO(TEXT("Could not find EdNode for parent dialogue node"));
 					}
 				}
 			}
@@ -594,6 +658,16 @@ void FAssetEditor_MounteaDialogueGraph::CreateCommandList()
 									FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::AutoArrange),
 									FCanExecuteAction::CreateRaw(
 										this, &FAssetEditor_MounteaDialogueGraph::CanAutoArrange));
+
+	GraphEditorCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().RecenterGraph,
+									FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::RecenterGraph),
+									FCanExecuteAction::CreateRaw(
+										this, &FAssetEditor_MounteaDialogueGraph::CanRecenterGraph));
+
+	GraphEditorCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().FitGraphToView,
+									FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::FitGraphToView),
+									FCanExecuteAction::CreateRaw(
+										this, &FAssetEditor_MounteaDialogueGraph::CanFitGraphToView));
 
 	GraphEditorCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().ValidateGraph,
 									FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::ValidateGraph),
@@ -783,56 +857,79 @@ bool FAssetEditor_MounteaDialogueGraph::CanSelectAllNodes()
 
 void FAssetEditor_MounteaDialogueGraph::DeleteSelectedNodes()
 {
-	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
-	if (!CurrentGraphEditor.IsValid())
-	{
-		return;
-	}
+	TSharedPtr<SGraphEditor> currGraphEditor = GetCurrGraphEditor();
+	if (!currGraphEditor.IsValid())
+		return;	
 
 	const FScopedTransaction Transaction(FGenericCommands::Get().Delete->GetDescription());
 
-	CurrentGraphEditor->GetCurrentGraph()->Modify();
+	currGraphEditor->GetCurrentGraph()->Modify();
 
-	const FGraphPanelSelectionSet SelectedNodes = CurrentGraphEditor->GetSelectedNodes();
-	CurrentGraphEditor->ClearSelectionSet();
+	const FGraphPanelSelectionSet selectedNodes = currGraphEditor->GetSelectedNodes();
+	currGraphEditor->ClearSelectionSet();
 
-	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
+	// Collect edge nodes connected to nodes being deleted
+	TSet<UEdNode_MounteaDialogueGraphEdge*> edgesToDelete;
+	for (FGraphPanelSelectionSet::TConstIterator NodeIt(selectedNodes); NodeIt; ++NodeIt)
 	{
-		UEdGraphNode* EdNode = Cast<UEdGraphNode>(*NodeIt);
-		if (EdNode == nullptr || !EdNode->CanUserDeleteNode())
+		if (UEdNode_MounteaDialogueGraphNode* EditorNode = Cast<UEdNode_MounteaDialogueGraphNode>(*NodeIt))
+		{
+			for (UEdGraphPin* Pin : EditorNode->Pins)
+			{
+				for (UEdGraphPin* LinkedPin : Pin->LinkedTo)
+				{
+					if (UEdNode_MounteaDialogueGraphEdge* EdgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(LinkedPin->GetOwningNode()))
+						edgesToDelete.Add(EdgeNode);
+				}
+			}
+		}
+	}
+
+	// Destroy edge nodes before breaking links to avoid double-destroy race in PinConnectionListChanged
+	for (UEdNode_MounteaDialogueGraphEdge* EdgeNode : edgesToDelete)
+	{
+		if (!IsValid(EdgeNode))
+			continue;
+		EdgeNode->Modify();
+		if (UEdGraph* ParentGraph = EdgeNode->GetGraph())
+			ParentGraph->Modify();
+		EdgeNode->DestroyNode();
+	}
+
+	for (FGraphPanelSelectionSet::TConstIterator NodeIt(selectedNodes); NodeIt; ++NodeIt)
+	{
+		UEdGraphNode* editorNodes = Cast<UEdGraphNode>(*NodeIt);
+		if (editorNodes == nullptr || !editorNodes->CanUserDeleteNode())
 			continue;;
 
-		if (UEdNode_MounteaDialogueGraphNode* EdNode_Node = Cast<UEdNode_MounteaDialogueGraphNode>(EdNode))
+		if (UEdNode_MounteaDialogueGraphNode* editorNode = Cast<UEdNode_MounteaDialogueGraphNode>(editorNodes))
 		{
-			EdNode_Node->Modify(true);
+			editorNode->Modify(true);
+			
+			const UEdGraphSchema* graphSchema = editorNode->GetSchema();
+			if (graphSchema != nullptr)
+				graphSchema->BreakNodeLinks(*editorNode);
 
-			const UEdGraphSchema* Schema = EdNode_Node->GetSchema();
-			if (Schema != nullptr)
-			{
-				Schema->BreakNodeLinks(*EdNode_Node);
-			}
-
-			EdNode_Node->DestroyNode();
+			editorNode->DestroyNode();
 		}
 		else
 		{
-			EdNode->Modify();
-			EdNode->DestroyNode();
+			editorNodes->Modify();
+			editorNodes->DestroyNode();
 		}
 	}
 
 	// Update UI
-	CurrentGraphEditor->NotifyGraphChanged();
+	currGraphEditor->NotifyGraphChanged();
 
-	UEdGraph* EdGraph = CurrentGraphEditor->GetCurrentGraph();
-	UObject* GraphOwner = EdGraph->GetOuter();
-	if (GraphOwner)
+	if (UEdGraph* editorGraph = currGraphEditor->GetCurrentGraph())
 	{
-		GraphOwner->PostEditChange();
-		GraphOwner->MarkPackageDirty();
+		if (UObject* graphOwner = editorGraph->GetOuter())
+		{
+			graphOwner->PostEditChange();
+			graphOwner->MarkPackageDirty();
+		}
 	}
-
-	RebuildMounteaDialogueGraph();
 }
 
 bool FAssetEditor_MounteaDialogueGraph::CanDeleteNodes()
@@ -1035,8 +1132,6 @@ void FAssetEditor_MounteaDialogueGraph::PasteNodesHere(const FVector2f& Location
 		GraphOwner->PostEditChange();
 		GraphOwner->MarkPackageDirty();
 	}
-
-	RebuildMounteaDialogueGraph();
 }
 
 bool FAssetEditor_MounteaDialogueGraph::CanPasteNodes()
@@ -1101,6 +1196,7 @@ void FAssetEditor_MounteaDialogueGraph::AutoArrange()
 	if (LayoutStrategy != nullptr)
 	{
 		LayoutStrategy->Layout(EdGraph);
+		MounteaDialogueNodeSpacingUtils::EnforceMinimumParentChildYSpacing(EdGraph, 12);
 		LayoutStrategy->ConditionalBeginDestroy();
 	}
 	else
@@ -1112,6 +1208,58 @@ void FAssetEditor_MounteaDialogueGraph::AutoArrange()
 bool FAssetEditor_MounteaDialogueGraph::CanAutoArrange() const
 {
 	return EditingGraph != nullptr && Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph) != nullptr;
+}
+
+void FAssetEditor_MounteaDialogueGraph::RecenterGraph()
+{
+	if (!EditingGraph || !EditingGraph->EdGraph || !EditingGraph->StartNode)
+	{
+		return;
+	}
+
+	UEdGraphNode* startEdNode = nullptr;
+	for (UEdGraphNode* graphNode : EditingGraph->EdGraph->Nodes)
+	{
+		UEdNode_MounteaDialogueGraphNode* dialogueEdNode = Cast<UEdNode_MounteaDialogueGraphNode>(graphNode);
+		if (!dialogueEdNode)
+		{
+			continue;
+		}
+
+		const bool bIsMatchingNodeObject = dialogueEdNode->DialogueGraphNode == EditingGraph->StartNode;
+		const bool bIsMatchingNodeGuid = dialogueEdNode->NodeGuid == EditingGraph->StartNode->GetNodeGUID();
+		if (bIsMatchingNodeObject || bIsMatchingNodeGuid)
+		{
+			startEdNode = dialogueEdNode;
+			break;
+		}
+	}
+
+	if (startEdNode)
+	{
+		JumpToNode(startEdNode, false, true);
+	}
+}
+
+bool FAssetEditor_MounteaDialogueGraph::CanRecenterGraph() const
+{
+	return EditingGraph && EditingGraph->EdGraph && EditingGraph->StartNode && ViewportWidget.IsValid();
+}
+
+void FAssetEditor_MounteaDialogueGraph::FitGraphToView()
+{
+	TSharedPtr<SGraphEditor> currentGraphEditor = GetCurrGraphEditor();
+	if (!currentGraphEditor.IsValid())
+	{
+		return;
+	}
+
+	currentGraphEditor->ZoomToFit(false);
+}
+
+bool FAssetEditor_MounteaDialogueGraph::CanFitGraphToView() const
+{
+	return EditingGraph && EditingGraph->EdGraph && ViewportWidget.IsValid();
 }
 
 void FAssetEditor_MounteaDialogueGraph::ValidateGraph()
@@ -1128,24 +1276,15 @@ void FAssetEditor_MounteaDialogueGraph::ValidateGraph()
 
 	const UMounteaDialogueGraph* MounteaGraph = EdGraph->GetMounteaDialogueGraph();
 	check(MounteaGraph != nullptr);
-	
-	RebuildMounteaDialogueGraph();
-	
-	FDataValidationContext ValidationContext;
-	if (MounteaGraph->ValidateGraph(ValidationContext, true) == false)
-	{
-		TArray<FText> Errors, Warnings;
-		ValidationContext.SplitIssues(Errors, Warnings);
 
-		TArray<FText> Combined = Errors;
-		Combined.Append(Warnings);
-		
-		ValidationWindow = MDSPopup_GraphValidation::Open(Combined);
-	}
-	else
-	{
-		ValidationWindow = MDSPopup_GraphValidation::Open(TArray<FText>());
-	}
+	FDataValidationContext ValidationContext;
+	MounteaGraph->ValidateGraph(ValidationContext, false);
+
+	TArray<FText> Errors;
+	TArray<FText> Warnings;
+	ValidationContext.SplitIssues(Warnings, Errors);
+
+	ValidationWindow = MDSPopup_GraphValidation::Open(Errors, Warnings);
 }
 
 bool FAssetEditor_MounteaDialogueGraph::CanValidateGraph() const
@@ -1247,7 +1386,31 @@ void FAssetEditor_MounteaDialogueGraph::OnFinishedChangingProperties(const FProp
 
 	EditingGraph->EdGraph->GetSchema()->ForceVisualizationCacheClear();
 
-	RebuildMounteaDialogueGraph();
+	// Property-only change — topology is unchanged; only refresh execution order and visuals.
+	UEdGraph_MounteaDialogueGraph* mounteaGraphEditor = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
+	if (mounteaGraphEditor)
+	{
+		mounteaGraphEditor->ResetExecutionOrders();
+		mounteaGraphEditor->AssignExecutionOrder();
+	}
+
+	TSharedPtr<SGraphEditor> currentGraphEditor = GetCurrGraphEditor();
+	if (!currentGraphEditor.IsValid())
+		return;
+	if (!mounteaGraphEditor)
+	{
+		currentGraphEditor->NotifyGraphChanged();
+		return;
+	}
+
+	for (UEdGraphNode* graphnode : mounteaGraphEditor->Nodes)
+	{
+		UEdNode_MounteaDialogueGraphNode* selectednode = Cast<UEdNode_MounteaDialogueGraphNode>(graphnode);
+		if (selectednode && selectednode->SEdNode)
+			selectednode->SEdNode->UpdateGraphNode();
+	}
+
+	currentGraphEditor->NotifyGraphChanged();
 }
 
 TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Viewport(const FSpawnTabArgs& Args)
@@ -1258,9 +1421,7 @@ TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Viewport(const 
 		.Label(LOCTEXT("ViewportTab_Title", "Viewport"));
 
 	if (ViewportWidget.IsValid())
-	{
 		SpawnedTab->SetContent(ViewportWidget.ToSharedRef());
-	}
 
 	return SpawnedTab;
 }

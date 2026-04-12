@@ -4,7 +4,8 @@
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
 #include "TimerManager.h"
 #include "Data/MounteaDialogueContext.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Helpers/MounteaDialogueTraversalStatics.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Misc/DataValidation.h"
 #include "Nodes/MounteaDialogueGraphNode_Delay.h"
 
@@ -16,7 +17,8 @@ UMounteaDialogueGraphNode_DialogueNodeBase::UMounteaDialogueGraphNode_DialogueNo
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseInternalTitle", "Dialogue Node Base");
 #if WITH_EDITORONLY_DATA
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_DialogueNodeBaseContextMenu", "Dialogue Node");
-	BackgroundColor = FLinearColor(FColor::Orange);
+	EditorNodeColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("3b82f6")));
+	EditorHeaderForegroundColour = FLinearColor::White;
 
 	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_BaseTooltip", "* Abstract class, should not appear in Graph Editor.\n* Enhances 'MounteaDialogueGraphNode' Base class with Dialogue data.\n* Provides DataTable and Row options that define the Dialogue data which will be displayed in UI.");
 #endif
@@ -31,12 +33,12 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode_Implementation(cons
 {
 	if (Manager)
 	{
-		if (UMounteaDialogueContext* Context = Manager->Execute_GetDialogueContext(Manager.GetObject()))
+		if (UMounteaDialogueContext* Context = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(Manager.GetObject()))
 		{
 			GetWorld()->GetTimerManager().ClearTimer(Manager->GetDialogueRowTimerHandle());
 
-			const FDialogueRow DialogueRow = UMounteaDialogueSystemBFC::GetDialogueRow(Context->ActiveNode);
-			if (UMounteaDialogueSystemBFC::IsDialogueRowValid(DialogueRow) && DialogueRow.DialogueRowData.Array().IsValidIndex(Context->GetActiveDialogueRowDataIndex()))
+			const FDialogueRow DialogueRow = UMounteaDialogueTraversalStatics::GetSpeechData(Context->ActiveNode);
+			if (UMounteaDialogueTraversalStatics::IsDialogueRowValid(DialogueRow) && DialogueRow.RowData.IsValidIndex(Context->GetActiveDialogueRowDataIndex()))
 			{
 				Context->UpdateActiveDialogueRow(DialogueRow);
 				Context->UpdateActiveDialogueRowDataIndex(Context->ActiveDialogueRowDataIndex);
@@ -50,20 +52,32 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::ProcessNode_Implementation(cons
 
 void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	if (bUseGameplayTags)
+	if (bUseGameplayTags && Manager.GetInterface())
 	{
-		// Switch Participants based on Tags
-		if (Manager.GetInterface())
+		if (UMounteaDialogueContext* tempContext = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(Manager.GetObject()))
 		{
-			if (const auto TempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
-			{
-				const TScriptInterface<IMounteaDialogueParticipantInterface> BestMatchingParticipant = UMounteaDialogueSystemBFC::SwitchActiveParticipant(TempContext);
-				UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(TempContext, BestMatchingParticipant);
-			}
+			const TScriptInterface<IMounteaDialogueParticipantInterface> bestMatchingParticipant = UMounteaDialogueTraversalStatics::ResolveActiveParticipant(tempContext);
+			UMounteaDialogueTraversalStatics::UpdateMatchingDialogueParticipant(tempContext, bestMatchingParticipant);
 		}
 	}
 
 	Super::PreProcessNode_Implementation(Manager);
+}
+
+FDialogueRow UMounteaDialogueGraphNode_DialogueNodeBase::GetSpeechData_Implementation() const
+{
+	if (!IsValid(DataTable))
+		return {};
+	
+	const FString searchContext;
+	const auto returnValue = DataTable->FindRow<FDialogueRow>(RowName, searchContext);
+	return returnValue != nullptr ? *returnValue : FDialogueRow::Invalid();
+}
+
+bool UMounteaDialogueGraphNode_DialogueNodeBase::SetSpeechData_Implementation(const FDialogueRow& NewSpeechData)
+{
+	LOG_ERROR(TEXT("[SetSpeechData] Dialogue Graph Node doesn't support direct Row override!"))
+	return false;
 }
 
 UDataTable* UMounteaDialogueGraphNode_DialogueNodeBase::GetDataTable() const
@@ -74,35 +88,22 @@ UDataTable* UMounteaDialogueGraphNode_DialogueNodeBase::GetDataTable() const
 bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNodeRuntime_Implementation() const
 {
 	if (DataTable == nullptr)
-	{
 		return false;
-	}
 
 	if (RowName.IsNone())
-	{
 		return false;
-	}
 
 	if (MaxChildrenNodes > -1 && ChildrenNodes.Num() > MaxChildrenNodes)
-	{
 		return false;
-	}
 
 	const FString Context;
 	const FDialogueRow* SelectedRow = DataTable->FindRow<FDialogueRow>(RowName, Context);
 
 	if (SelectedRow == nullptr)
-	{
 		return false;
-	}
 
-	if (SelectedRow)
-	{
-		if (SelectedRow->DialogueRowData.Num() == 0)
-		{
-			return false;
-		}
-	}
+	if (SelectedRow && SelectedRow->RowData.Num() == 0)
+		return false;
 	
 	return true;
 }
@@ -192,7 +193,7 @@ bool UMounteaDialogueGraphNode_DialogueNodeBase::ValidateNode(FDataValidationCon
 
 	if (SelectedRow)
 	{
-		if (SelectedRow->DialogueRowData.Num() == 0)
+	if (SelectedRow->RowData.Num() == 0)
 		{
 			bResult = false;
 
@@ -241,18 +242,16 @@ TArray<FText> UMounteaDialogueGraphNode_DialogueNodeBase::GetPreviews() const
 {
 	TArray<FText> ReturnValues;
 	
-	const auto Row = UMounteaDialogueSystemBFC::GetDialogueRow( this );
-	if (UMounteaDialogueSystemBFC::IsDialogueRowValid(Row))
+	const FDialogueRow Row = GetSpeechData_Implementation();
+	if (UMounteaDialogueTraversalStatics::IsDialogueRowValid(Row))
 	{
-		for (auto Itr : Row.DialogueRowData.Array())
+		for (const auto& Itr : Row.RowData)
 		{
 			ReturnValues.Add( Itr.RowText );
 		}
 	}
 	else
-	{
 		ReturnValues.Empty();
-	}
 
 	return ReturnValues;
 }

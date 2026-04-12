@@ -5,6 +5,7 @@
 
 #include "Settings/MounteaDialogueSystemSettings.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "HAL/PlatformTime.h"
 
 // Log category definition
 DEFINE_LOG_CATEGORY(LogMounteaDialogueSystem);
@@ -52,4 +53,26 @@ void PrintDialogueLog(const ELogVerbosity::Type Verbosity, const FString& Messag
 		
 		UKismetSystemLibrary::PrintString(GWorld, Message, true, true, Color, Duration);
 	}
+}
+
+void PrintDialogueLogKeyed(const ELogVerbosity::Type Verbosity, const FString& Message, FLinearColor Color, float Duration, const FString& Key)
+{
+	if (Key.IsEmpty())
+	{
+		PrintDialogueLog(Verbosity, Message, Color, Duration);
+		return;
+	}
+
+	static TMap<FString, double> LastLogTimeByKey;
+	constexpr double KeyThrottleSeconds = 0.35;
+	const double now = FPlatformTime::Seconds();
+
+	if (const double* lastTime = LastLogTimeByKey.Find(Key))
+	{
+		if ((now - *lastTime) < KeyThrottleSeconds)
+			return;
+	}
+
+	LastLogTimeByKey.Add(Key, now);
+	PrintDialogueLog(Verbosity, Message, Color, Duration);
 }

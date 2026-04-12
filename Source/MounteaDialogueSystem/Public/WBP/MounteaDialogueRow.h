@@ -48,11 +48,11 @@ protected:
 
 	// Timer Handle responsible for the whole Duration of the effect
 	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
-	FTimerHandle								TimerHandle_TypeWriterDuration;
+	FTimerHandle TimerHandle_TypeWriterDuration;
 
 	// Timer Handle responsible for each character update
 	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue")
-	FTimerHandle								TimerHandle_TypeWriterUpdateInterval;
+	FTimerHandle TimerHandle_TypeWriterUpdateInterval;
 
 protected:
 	

@@ -17,7 +17,6 @@ FDialogueOptionData::FDialogueOptionData() :
 FDialogueOptionData::FDialogueOptionData(const FGuid& Node, const FDialogueRow& DialogueRow) :
 	OptionGuid(Node),
 	OptionTitle(DialogueRow.RowTitle),
-	OptionIcon(DialogueRow.RowOptionalIcon),
 	UIRowID(DialogueRow.UIRowID)
 {
 }

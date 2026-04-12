@@ -4,29 +4,33 @@
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 
 #include "Data/MounteaDialogueContext.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Helpers/MounteaDialogueTraversalStatics.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Misc/DataValidation.h"
 #include "TimerManager.h"
 #include "Algo/AnyOf.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
+#include "Nodes/MounteaDialogueGraphNode_Delay.h"
+#include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraphNode_ReturnToNode"
 
-UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode() : DelayDuration(0.1f),
-																				   bAutoCompleteSelectedNode(false),
-																				   SelectedNode(nullptr)
+UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode() : 
+	DelayDuration(0.1f),
+	bAutoCompleteSelectedNode(false),
+	SelectedNode(nullptr)
 {
 	NodeTitle = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeTitle", "Return To Node");
 	NodeTypeName = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeInternalTitle", "Return To Node");
 #if WITH_EDITORONLY_DATA
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeContextMenu", "Return To Node");
-	BackgroundColor = FLinearColor(FColor::White);
+	EditorNodeColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("f97316")));
+	EditorHeaderForegroundColour = FLinearColor::White;
 
 	bAllowOutputNodes = false;
 
-	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeTooltip",
-							  "* Provides ability to return from Dialogue Node to different one.\n* Useful when dialogue branching disallows pin connections.");
+	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_ReturnToNodeTooltip", "* Provides ability to return from Dialogue Node to different one.\n* Useful when dialogue branching disallows pin connections.");
 #endif
 
 	bAutoStarts = true;
@@ -36,8 +40,9 @@ UMounteaDialogueGraphNode_ReturnToNode::UMounteaDialogueGraphNode_ReturnToNode()
 	AllowedInputClasses.Add(UMounteaDialogueGraphNode::StaticClass());
 
 	// Disable those Node Classes
-	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_ReturnToNode::StaticClass());
+	AllowedNodesFilter.Add(StaticClass());
 	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_CompleteNode::StaticClass());
+	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_Delay::StaticClass());
 	AllowedNodesFilter.Add(UMounteaDialogueGraphNode_StartNode::StaticClass());
 }
 
@@ -50,42 +55,30 @@ void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode_Implementation(const TS
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle_Delay, TimerDelegate_TypeWriterUpdateInterval, DelayDuration, false);
 	}
 	else
-	{
 		OnDelayDurationExpired(Manager);
-	}
 	
 	Super::ProcessNode_Implementation(Manager);
 }
 
 void UMounteaDialogueGraphNode_ReturnToNode::OnDelayDurationExpired(const TScriptInterface<IMounteaDialogueManagerInterface>& MounteaDialogueManagerInterface)
 {
-	if (SelectedNode && MounteaDialogueManagerInterface)
+	if (!SelectedNode || !MounteaDialogueManagerInterface)
+		return;
+
+	UObject* managerObject = MounteaDialogueManagerInterface.GetObject();
+	UMounteaDialogueContext* Context = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(managerObject);
+	if (!Context)
+		return;
+
+	if (bAutoCompleteSelectedNode)
 	{
-		if (const auto Context = MounteaDialogueManagerInterface->Execute_GetDialogueContext(MounteaDialogueManagerInterface.GetObject()))
-		{
-			auto dialogueNodeToStart = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(SelectedNode);
-			
-			Context->SetDialogueContext(Context->DialogueParticipant, SelectedNode, UMounteaDialogueSystemBFC::GetAllowedChildNodes(SelectedNode));
-			
-			FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
-			newDialogueTableHandle.DataTable = dialogueNodeToStart->GetDataTable();
-			newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();
-			Context->UpdateActiveDialogueTable(dialogueNodeToStart ? newDialogueTableHandle : FDataTableRowHandle());
-			Context->UpdateActiveDialogueRow( UMounteaDialogueSystemBFC::FindDialogueRow(newDialogueTableHandle.DataTable, newDialogueTableHandle.RowName) );
-			Context->ActiveDialogueRowDataIndex = 0;
-
-			MounteaDialogueManagerInterface->Execute_PrepareNode(MounteaDialogueManagerInterface.GetObject());
-
-			// TODO: Force to the new system
-			/*
-			if (bAutoCompleteSelectedNode)
-			{
-				MounteaDialogueManagerInterface->GetDialogueNodeFinishedEventHandle().Broadcast(Context);
-				MounteaDialogueManagerInterface->GetDialogueVoiceSkipRequestEventHandle().Broadcast(nullptr);
-			}
-			*/
-		}
+		Context->SetDialogueContext(SelectedNode, UMounteaDialogueTraversalStatics::GetAllowedChildNodesFiltered(SelectedNode, Context));
+		Context->UpdateActiveDialogueRow(UMounteaDialogueTraversalStatics::GetSpeechData(SelectedNode));
+		Context->UpdateActiveDialogueRowDataIndex(0);
+		IMounteaDialogueManagerInterface::Execute_NodeProcessed(managerObject);
 	}
+	else
+		IMounteaDialogueManagerInterface::Execute_SelectNode(managerObject, SelectedNode->GetNodeGUID());
 }
 
 TArray<FString> UMounteaDialogueGraphNode_ReturnToNode::GetRowNames() const
@@ -123,7 +116,7 @@ TArray<FString> UMounteaDialogueGraphNode_ReturnToNode::GetRowNames() const
 				}
 			);
 		},
-		[](int32 Index)
+		[](const int32 Index)
 		{
 			return FString::FromInt(Index);
 		}
@@ -195,9 +188,7 @@ void UMounteaDialogueGraphNode_ReturnToNode::PostEditChangeProperty(FPropertyCha
 	if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueGraphNode_ReturnToNode, SelectedNodeIndex))
 	{
 		if (SelectedNodeIndex.IsEmpty())
-		{
 			SelectedNode = nullptr;
-		}
 		else
 		{
 			const int32 Index = FCString::Atoi((TEXT("%s"), *SelectedNodeIndex));

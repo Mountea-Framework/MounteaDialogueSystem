@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Mountea Dialogue System - UI Integration & Participant UI Flow</title>
+</head>
+<body>
+	<section class="doc-page">
+		<header>
+			<span class="version">Chapter 7 of 10</span>
+			<h1>UI Integration & Participant UI Flow</h1>
+			<p class="muted">Connect authored graph output to UI components with reliable participant-driven updates.</p>
+		</header>
+
+		<div class="card">
+			<h2>What You Will Learn</h2>
+			<ul>
+				<li>How UI receives dialogue state and text updates.</li>
+				<li>How participant UI component participates in flow ownership.</li>
+				<li>How to test UI visibility, transitions, and cleanup states.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>When To Use This</h2>
+			<p>Use after first graph runs in PIE without UI polish. This chapter makes dialogue user-facing and testable by designers.</p>
+		</div>
+
+		<div class="card">
+			<h2>Prerequisites</h2>
+			<ul>
+				<li>Working graph from Chapter 6.</li>
+				<li>UI widget blueprint/class ready for dialogue display.</li>
+				<li>Participant component configuration understood.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>Step-by-Step Workflow</h2>
+			<ol>
+				<li>Bind dialogue events to UI show/hide and text population logic.</li>
+				<li>Ensure participant UI component references expected widget owner.</li>
+				<li>Test interaction start, mid-conversation choice, and completion cleanup.</li>
+				<li>Run test with both keyboard/controller to validate interaction UX.</li>
+			</ol>
+			<p><a href="#" data-mds-type="worldsettings" data-mds-target="open">Open World Settings</a></p>
+		</div>
+
+		<div class="card">
+			<h2>Validation Checklist</h2>
+			<ul>
+				<li>Dialogue panel appears exactly once per interaction.</li>
+				<li>Speaker/line updates are synchronized with graph events.</li>
+				<li>UI closes cleanly at dialogue end or cancel path.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>Common Mistakes + Fixes</h2>
+			<p><strong>Mistake:</strong> multiple widget instances per interaction.<br /><strong>Fix:</strong> centralize create/show ownership and guard against duplicate spawn.</p>
+			<p><strong>Mistake:</strong> UI stays visible after exit node.<br /><strong>Fix:</strong> bind explicit cleanup on dialogue finish and interruption paths.</p>
+		</div>
+
+		<div class="card">
+			<h2>Next Chapter</h2>
+			<p>
+				<a href="#" data-mds-type="page" data-mds-target="5">Back To Chapter 6</a><br />
+				<a href="#" data-mds-type="page" data-mds-target="7">Go To Chapter 8: Advanced Authoring</a>
+			</p>
+		</div>
+	</section>
+</body>
+</html>

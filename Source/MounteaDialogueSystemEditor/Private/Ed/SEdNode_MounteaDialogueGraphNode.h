@@ -5,12 +5,12 @@
 #include "CoreMinimal.h"
 #include "SGraphNode.h"
 
-enum class EDecoratorsInfoStyle : uint8;
 class UEdNode_MounteaDialogueGraphNode;
+class UMounteaDialogueGraphEditorSettings;
+class SGraphPin;
 
 class SEdNode_MounteaDialogueGraphNode : public SGraphNode
 {
-	
 public:
 	SLATE_BEGIN_ARGS(SEdNode_MounteaDialogueGraphNode) {}
 	SLATE_END_ARGS()
@@ -19,9 +19,7 @@ public:
 
 	virtual void OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 	virtual void OnMouseLeave(const FPointerEvent& MouseEvent) override;
-
-	const FSlateBrush* GetIndexBrush() const;
-	FText GetNodeTitle() const;
+	virtual void MoveTo(const FVector2f& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty) override;
 
 	virtual void UpdateGraphNode() override;
 	virtual void CreatePinWidgets() override;
@@ -29,70 +27,50 @@ public:
 	virtual bool IsNameReadOnly() const override;
 
 	void OnNameTextCommitted(const FText& InText, ETextCommit::Type CommitInfo);
-	
-	virtual const FSlateBrush* GetNodeTypeBrush () const;
-	virtual const FSlateBrush* GetTextNodeTypeBrush () const;
-	virtual FSlateColor GetFontColor() const;
-	virtual FSlateColor GetBorderBackgroundColor() const;
-	virtual FSlateColor GetBorderFrontColor() const;
-	virtual FSlateColor GetNodeTitleBackgroundColor() const;
-	virtual FSlateColor GetDecoratorsBackgroundColor() const;
 
-	virtual FSlateColor GetPinsDockColor() const;
-	
-	virtual EVisibility GetDragOverMarkerVisibility() const;
-
-	virtual const FSlateBrush* GetNameIcon() const;
-
-	virtual const FSlateBrush* GetInheritsImageBrush() const;
-	virtual FSlateColor GetInheritsImageTint() const;
-
-	const FSlateBrush* GetBulletPointImageBrush() const;
-
-	virtual FText GetIndexOverlayTooltipText() const;
-	virtual FText GetIndexText() const;
-	EVisibility GetIndexSlotVisibility() const;
-	FVector2f GetIndexSlotOffset() const;
-	FVector2f GetIndexSlotSize() const;
-	
-	virtual void OnIndexHoverStateChanged(bool bArg) const;
-	virtual FSlateColor GetOverlayWidgetBackgroundColor(bool bArg) const;
-
-	bool HasGraphDecorators() const;
-	bool HasNodeDecorators() const;
-	
-	virtual FText GetDecoratorsText() const;
-	virtual FText GetNumberOfDecorators() const;
-	virtual FText GetDecoratorsInheritanceText() const;
-	
-	EVisibility ShowImplementsOnlySlot_Unified() const;
-	EVisibility ShowInheritsDecoratorsSlot_Unified() const;
-	EVisibility ShowImplementsOnlySlot_Stack() const;
-	EVisibility ShowInheritsDecoratorsSlot_Stack() const;
-	EVisibility ShowAllDecorators() const;
-	EVisibility ShowDecoratorsBottomPadding() const;
-
-	FSlateColor GetImplementsRowColor() const;
-	FSlateColor GetBulletPointsImagePointColor_Implements() const;
-	FSlateColor GetBulletPointsImagePointColor_Inherits() const;
-	
-	virtual EDecoratorsInfoStyle GetDecoratorsStyle() const;
-	EVisibility GetStackVisibility() const;
-	EVisibility GetUnifiedVisibility() const;
-
+	FText GetNodeTitle() const;
+	FText GetPreviewText() const;
+	FText GetRowsMetaText() const;
+	TArray<FText> GetParticipantChipTexts() const;
+	TArray<FText> GetDecoratorChipTexts() const;
 	FText GetTooltipText() const;
+	int32 GetDialogueRowCount() const;
 
-	TSharedRef<SWidget> CreateNameSlotWidget();
+	EVisibility GetDragOverMarkerVisibility() const;
+	const FSlateBrush* GetNameIcon() const;
+	const FSlateBrush* GetParticipantIcon() const;
+	const FSlateBrush* GetDecoratorIcon() const;
 
+	FSlateColor GetHeaderTextColor() const;
+	FSlateColor GetHeaderIconColor() const;
+	FSlateColor GetSelectionRingColor() const;
+	FSlateColor GetCardBorderColor() const;
+	FSlateColor GetCardBackgroundColor() const;
+	FSlateColor GetParticipantChipBackgroundColor() const;
+	FSlateColor GetParticipantChipForegroundColor() const;
+	FSlateColor GetDecoratorChipBackgroundColor() const;
+	FSlateColor GetDecoratorChipForegroundColor() const;
+	FSlateColor GetSeparatorColor() const;
+
+	bool HasParticipantChip() const;
+	bool HasDecoratorChips() const;
 	bool ShouldUpdate() const;
 	bool IsNodeActive() const;
 
-protected:
+private:
+	TSharedRef<SWidget> CreateNameSlotWidget();
+	TSharedRef<SWidget> CreateHeaderWidget();
+	TSharedRef<SWidget> CreateBodyWidget();
+	TSharedRef<SWidget> CreateParticipantChipsWidget();
+	TSharedRef<SWidget> CreateDecoratorChipsWidget();
+	TSharedRef<SWidget> CreateTagChipsWidget(const TArray<FText>& ChipTexts, const FSlateBrush* ChipIcon, const FSlateColor& ChipForegroundColor, const FSlateColor& ChipBackgroundColor) const;
+	TSharedRef<SWidget> CreateTagChip(const FText& ChipText, const FSlateBrush* ChipIcon, const FSlateColor& ChipForegroundColor, const FSlateColor& ChipBackgroundColor) const;
+	FLinearColor GetAccentColor() const;
+	FVector2f GetNodeSizeHint() const;
+
+private:
 	TSharedPtr<SBorder> NodeBody;
-	TSharedPtr<SHorizontalBox> OutputPinBox;
-
-	TObjectPtr<class UMounteaDialogueGraphEditorSettings> GraphEditorSettings = nullptr;
-
-	FLinearColor NodeInnerColor;
-	FLinearColor PinsDockColor;
+	TSharedPtr<SVerticalBox> InputPinBox;
+	TSharedPtr<SVerticalBox> OutputPinBox;
+	TObjectPtr<UMounteaDialogueGraphEditorSettings> GraphEditorSettings = nullptr;
 };
