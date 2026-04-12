@@ -41,6 +41,7 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	const FVector2D Icon12x12(12.0f, 12.0f);
 	const FVector2D Icon14x14(14.0f, 14.0f);
 	const FVector2D Icon16x16(16.0f, 16.0f);
+	const FVector2D Icon24x24(24.0f, 24.0f);
 	const FVector2D Icon32x32(32.0f, 32.0f);
 	const FVector2D Icon40x40(40.0f, 40.0f);
 	const FVector2D Icon64x64(64.0f, 64.0f);
@@ -61,14 +62,14 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.K2Node_SetterIcon", new SVG_BRUSH_TINT(TEXT("WebIcons/sunrise"), Icon40x40, FLinearColor::White));
 	StyleSet->Set("MDSStyleSet.K2Node_ValidateIcon", new SVG_BRUSH_TINT(TEXT("WebIcons/network"), Icon40x40, FLinearColor::White));
 
-	StyleSet->Set("MDSStyleSet.AutoArrange", new SVG_BRUSH_TINT(TEXT("WebIcons/network"), Icon16x16, FLinearColor::White));
-	StyleSet->Set("MDSStyleSet.RecenterGraph", new SVG_BRUSH_TINT(TEXT("WebIcons/locate-fixed"), Icon16x16, FLinearColor::White));
-	StyleSet->Set("MDSStyleSet.FitGraphToView", new SVG_BRUSH_TINT(TEXT("WebIcons/crosshair"), Icon16x16, FLinearColor::White));
+	StyleSet->Set("MDSStyleSet.AutoArrange", new SVG_BRUSH_TINT(TEXT("WebIcons/network"), Icon24x24, FLinearColor::White));
+	StyleSet->Set("MDSStyleSet.RecenterGraph", new SVG_BRUSH_TINT(TEXT("WebIcons/locate-fixed"), Icon24x24, FLinearColor::White));
+	StyleSet->Set("MDSStyleSet.FitGraphToView", new SVG_BRUSH_TINT(TEXT("WebIcons/crosshair"), Icon24x24, FLinearColor::White));
 
-	StyleSet->Set("MDSStyleSet.ExportGraph", new SVG_BRUSH_TINT(TEXT("WebIcons/folder-input"), Icon32x32, FLinearColor::White));
-	StyleSet->Set("MDSStyleSet.ReimportGraph", new SVG_BRUSH_TINT(TEXT("WebIcons/folder-sync"), Icon32x32, FLinearColor::White));
-	StyleSet->Set("MDSStyleSet.GraphSettings", new SVG_BRUSH_TINT(TEXT("WebIcons/settings"), Icon32x32, FLinearColor::White));
-	StyleSet->Set("MDSStyleSet.ValidateGraph", new SVG_BRUSH_TINT(TEXT("WebIcons/shield-check"), Icon32x32, FLinearColor::White));
+	StyleSet->Set("MDSStyleSet.ExportGraph", new SVG_BRUSH_TINT(TEXT("WebIcons/folder-input"), Icon24x24, FLinearColor::White));
+	StyleSet->Set("MDSStyleSet.ReimportGraph", new SVG_BRUSH_TINT(TEXT("WebIcons/folder-sync"), Icon24x24, FLinearColor::White));
+	StyleSet->Set("MDSStyleSet.GraphSettings", new SVG_BRUSH_TINT(TEXT("WebIcons/settings"), Icon24x24, FLinearColor::White));
+	StyleSet->Set("MDSStyleSet.ValidateGraph", new SVG_BRUSH_TINT(TEXT("WebIcons/shield-check"), Icon24x24, FLinearColor::White));
 
 	StyleSet->Set("MDSStyleSet.Graph.SimpleArrow", new IMAGE_BRUSH(TEXT("SimpleArrow"), Icon16x16));
 
@@ -123,7 +124,7 @@ void FMounteaDialogueGraphEditorStyle::Create()
 	StyleSet->Set("MDSStyleSet.Help", new SVG_BRUSH_TINT(TEXT("WebIcons/message-circle-question-mark"), Icon40x40, FLinearColor::White));
 	StyleSet->Set("MDSStyleSet.Dialoguer", new IMAGE_BRUSH(TEXT("Dialoguer_Icon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.Launcher", new IMAGE_BRUSH(TEXT("MPLIcon"), Icon40x40));
-	StyleSet->Set("MDSStyleSet.Dialoguer", new IMAGE_BRUSH(TEXT("Builder_Icon"), Icon40x40));
+	StyleSet->Set("MDSStyleSet.Builder", new IMAGE_BRUSH(TEXT("Builder_Icon"), Icon40x40));
 	StyleSet->Set("MDSStyleSet.Wiki", new SVG_BRUSH_TINT(TEXT("WebIcons/book-open-text"), Icon40x40, FLinearColor::White));
 	StyleSet->Set("MDSStyleSet.Youtube", new SVG_BRUSH_TINT(TEXT("WebIcons/brand-youtube"), Icon12x12, FLinearColor::White));
 	StyleSet->Set("MDSStyleSet.Settings", new SVG_BRUSH_TINT(TEXT("WebIcons/settings"), Icon12x12, FLinearColor::White));
