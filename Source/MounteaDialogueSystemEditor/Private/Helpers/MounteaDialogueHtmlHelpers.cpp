@@ -12,8 +12,11 @@
 #include "Helpers/MounteaDialogueHtmlHelpers.h"
 
 #include "Interfaces/IPluginManager.h"
+#include "HAL/FileManager.h"
+#include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "Logging/LogMacros.h"
 #include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
 
 FString FMounteaDialogueHtmlHelpers::BuildBaseUrl(const FString& SourcePath)
@@ -33,7 +36,7 @@ FString FMounteaDialogueHtmlHelpers::InjectSharedAssets(const FString& HtmlConte
 	const UMounteaDialogueGraphEditorSettings* settings = GetDefault<UMounteaDialogueGraphEditorSettings>();
 	if(!settings)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[MounteaDialogueHtmlHelpers] Editor settings are not available."));
+		EditorLOG_WARNING( TEXT("[MounteaDialogueHtmlHelpers] Editor settings are not available."));
 		return HtmlContent;
 	}
 
@@ -56,9 +59,7 @@ FString FMounteaDialogueHtmlHelpers::InjectSharedAssets(const FString& HtmlConte
 			}
 		}
 		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[MounteaDialogueHtmlHelpers] Failed to load shared stylesheet: %s"), *cssPath);
-		}
+			EditorLOG_WARNING( TEXT("[MounteaDialogueHtmlHelpers] Failed to load shared stylesheet: %s"), *cssPath);
 	}
 
 	if(!settings->GetSharedScriptPath().IsEmpty())
@@ -78,9 +79,7 @@ FString FMounteaDialogueHtmlHelpers::InjectSharedAssets(const FString& HtmlConte
 			}
 		}
 		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[MounteaDialogueHtmlHelpers] Failed to load shared script: %s"), *scriptPath);
-		}
+			EditorLOG_WARNING( TEXT("[MounteaDialogueHtmlHelpers] Failed to load shared script: %s"), *scriptPath);
 	}
 
 	return result;
@@ -91,16 +90,14 @@ bool FMounteaDialogueHtmlHelpers::LoadHtmlFile(const FString& FilePath, FString&
 	OutHtml.Empty();
 	if(FilePath.IsEmpty())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[MounteaDialogueHtmlHelpers] Cannot load HTML file. File path is empty."));
+		EditorLOG_WARNING( TEXT("[MounteaDialogueHtmlHelpers] Cannot load HTML file. File path is empty."));
 		return false;
 	}
 
 	const FString normalizedPath = FPaths::ConvertRelativePathToFull(FilePath);
 	const bool wasLoaded = FFileHelper::LoadFileToString(OutHtml, *normalizedPath);
 	if(!wasLoaded)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[MounteaDialogueHtmlHelpers] Failed to load HTML file: %s"), *normalizedPath);
-	}
+		EditorLOG_WARNING( TEXT("[MounteaDialogueHtmlHelpers] Failed to load HTML file: %s"), *normalizedPath);
 
 	return wasLoaded;
 }
@@ -113,24 +110,42 @@ bool FMounteaDialogueHtmlHelpers::LoadOfflineChangelogHtml(FString& OutHtml, FSt
 	const UMounteaDialogueGraphEditorSettings* settings = GetDefault<UMounteaDialogueGraphEditorSettings>();
 	if(!settings)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[MounteaDialogueHtmlHelpers] Editor settings are not available for offline changelog."));
+		EditorLOG_WARNING( TEXT("[MounteaDialogueHtmlHelpers] Editor settings are not available for offline changelog."));
 		return false;
 	}
 
 	OutPath = settings->GetOfflineChangelogPath();
 	if(OutPath.IsEmpty())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[MounteaDialogueHtmlHelpers] Offline changelog path is empty."));
+		EditorLOG_WARNING( TEXT("[MounteaDialogueHtmlHelpers] Offline changelog path is empty."));
 		return false;
 	}
 
 	const bool wasLoaded = FFileHelper::LoadFileToString(OutHtml, *OutPath);
 	if(!wasLoaded)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[MounteaDialogueHtmlHelpers] Failed to load offline changelog: %s"), *OutPath);
-	}
+		EditorLOG_WARNING( TEXT("[MounteaDialogueHtmlHelpers] Failed to load offline changelog: %s"), *OutPath);
 
 	return wasLoaded;
+}
+
+bool FMounteaDialogueHtmlHelpers::SaveHtmlFile(const FString& FilePath, const FString& HtmlContent)
+{
+	if(FilePath.IsEmpty())
+	{
+		EditorLOG_WARNING(TEXT("[MounteaDialogueHtmlHelpers] Cannot save HTML file. File path is empty."));
+		return false;
+	}
+
+	const FString normalizedPath = FPaths::ConvertRelativePathToFull(FilePath);
+	const FString directoryPath = FPaths::GetPath(normalizedPath);
+	if(!directoryPath.IsEmpty())
+		IFileManager::Get().MakeDirectory(*directoryPath, true);
+
+	const bool wasSaved = FFileHelper::SaveStringToFile(HtmlContent, *normalizedPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
+	if(!wasSaved)
+		EditorLOG_WARNING(TEXT("[MounteaDialogueHtmlHelpers] Failed to save HTML file: %s"), *normalizedPath);
+
+	return wasSaved;
 }
 
 FString FMounteaDialogueHtmlHelpers::BuildChangelogDocument(const FString& ChangelogBodyHtml)

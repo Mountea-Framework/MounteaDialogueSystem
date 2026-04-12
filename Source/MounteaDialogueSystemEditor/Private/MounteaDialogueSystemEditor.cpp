@@ -563,10 +563,13 @@ void FMounteaDialogueSystemEditor::RegisterAssetTypeAction(IAssetTools& AssetToo
 
 void FMounteaDialogueSystemEditor::OnGetResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
-
 	FString responseBody;
 	FString changelogHtml;
-	FString htmlSourcePath;
+	FString changelogHtmlPath;
+
+	const UMounteaDialogueGraphEditorSettings* editorSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
+	if(editorSettings)
+		changelogHtmlPath = editorSettings->GetGeneratedChangelogPath();
 
 	if(Response.Get() != nullptr && Response.IsValid() && Response->GetResponseCode() == 200)
 	{
@@ -581,11 +584,15 @@ void FMounteaDialogueSystemEditor::OnGetResponse(FHttpRequestPtr Request, FHttpR
 
 	if(changelogHtml.IsEmpty())
 	{
-		if(!FMounteaDialogueHtmlHelpers::LoadOfflineChangelogHtml(changelogHtml, htmlSourcePath))
+		FString offlinePath;
+		if(!FMounteaDialogueHtmlHelpers::LoadOfflineChangelogHtml(changelogHtml, offlinePath))
 			changelogHtml = FMounteaDialogueHtmlHelpers::BuildChangelogDocument(FMounteaDialogueHtmlHelpers::BuildChangelogFallbackMessage());
 	}
 
-	MDSPopup::Register(responseBody, changelogHtml, htmlSourcePath);
+	if(!changelogHtmlPath.IsEmpty())
+		FMounteaDialogueHtmlHelpers::SaveHtmlFile(changelogHtmlPath, changelogHtml);
+
+	MDSPopup::Register(responseBody, changelogHtml, changelogHtmlPath);
 }
 
 void FMounteaDialogueSystemEditor::SendHTTPGet()
@@ -796,13 +803,9 @@ void FMounteaDialogueSystemEditor::OnGetResponse_Tags(FHttpRequestPtr Request, F
 	}
 	
 	if (!DoesHaveValidTags())
-	{
 		CreateTagsConfig(ResponseBody);
-	}
 	else
-	{
 		UpdateTagsConfig(ResponseBody);
-	}
 }
 
 void FMounteaDialogueSystemEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& TabManager)
@@ -812,7 +815,7 @@ void FMounteaDialogueSystemEditor::RegisterTabSpawners(const TSharedRef<FTabMana
 		.SetDisplayName(FText::FromString("Dialogue System Tutorial"))
 		.SetTooltipText(FText::FromString("Learn about the Mountea Dialogue System"))
 		.SetGroup(WorkspaceMenu::GetMenuStructure().GetDeveloperToolsMiscCategory())
-		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "InputBindingEditor.OutputLog"));
+		.SetIcon(FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Tutorial"));
 }
 
 TSharedRef<SDockTab> FMounteaDialogueSystemEditor::OnSpawnDialogueSystemTutorialTab(const FSpawnTabArgs& SpawnTabArgs)

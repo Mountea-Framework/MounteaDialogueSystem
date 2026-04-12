@@ -20,6 +20,7 @@ public:
 	static FString InjectSharedAssets(const FString& HtmlContent);
 	static bool LoadHtmlFile(const FString& FilePath, FString& OutHtml);
 	static bool LoadOfflineChangelogHtml(FString& OutHtml, FString& OutPath);
+	static bool SaveHtmlFile(const FString& FilePath, const FString& HtmlContent);
 
 	static FString BuildChangelogDocument(const FString& ChangelogBodyHtml);
 	static FString BuildChangelogFallbackMessage();

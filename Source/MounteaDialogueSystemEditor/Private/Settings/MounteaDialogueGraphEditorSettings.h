@@ -254,6 +254,7 @@ public:
 	FText GetEditorTemplatePageTitle(const int32 PageId) const;
 
 	FString GetOfflineChangelogPath() const;
+	FString GetGeneratedChangelogPath() const;
 
 #pragma endregion
 

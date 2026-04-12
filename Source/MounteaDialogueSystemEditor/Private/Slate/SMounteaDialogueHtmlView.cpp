@@ -38,6 +38,23 @@ void SMounteaDialogueHtmlView::Construct(const FArguments& InArgs)
 			{
 				if(InArgs._OnLoadCompleted.IsBound())
 					InArgs._OnLoadCompleted.Execute();
+				
+				WebBrowser->ExecuteJavascript(TEXT(
+							"(function() {"
+							"  var start = window.pageYOffset || document.documentElement.scrollTop;"
+							"  var startTime = null;"
+							"  var duration = 100;"
+							"  function animation(currentTime) {"
+							"    if (startTime === null) startTime = currentTime;"
+							"    var timeElapsed = currentTime - startTime;"
+							"    var progress = Math.min(timeElapsed / duration, 1);"
+							"    var ease = 1 - Math.pow(1 - progress, 3);"
+							"    window.scrollTo(0, start * (1 - ease));"
+							"    if (timeElapsed < duration) requestAnimationFrame(animation);"
+							"  }"
+							"  requestAnimationFrame(animation);"
+							"})();"						
+						));				
 
 				RegisterActiveTimer(0.2f, FWidgetActiveTimerDelegate::CreateLambda(
 					[this](double CurrentTime, float DeltaTime) -> EActiveTimerReturnType

@@ -5,7 +5,7 @@
 #include "Interfaces/IPluginManager.h"
 #include "MDSPopupConfig.h"
 #include "Misc/FileHelper.h"
-#include "Regex.h"
+#include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Slate/SMounteaDialogueHtmlView.h"
@@ -101,7 +101,7 @@ bool MDSPopup::ExtractVersionFromMarkdown(const FString& ChangelogMarkdown, FStr
 	return !OutVersion.IsEmpty();
 }
 
-void MDSPopup::Register(const FString& ChangelogMarkdown, const FString& ChangelogHtml, const FString& HtmlSourcePath)
+void MDSPopup::Register(const FString& ChangelogMarkdown, const FString& ChangelogHtml, const FString& ChangelogHtmlPath)
 {
 	const TSharedPtr<IPlugin> plugin = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"));
 	if(!plugin.IsValid())
@@ -129,10 +129,10 @@ void MDSPopup::Register(const FString& ChangelogMarkdown, const FString& Changel
 	mdsPopupConfig->PluginVersionUpdate = currentPluginVersion;
 	mdsPopupConfig->SaveConfig(CPF_Config, *normalizedConfigFilePath);
 
-	Open(ChangelogHtml, HtmlSourcePath);
+	Open(ChangelogHtml, ChangelogHtmlPath);
 }
 
-void MDSPopup::Open(const FString& ChangelogHtml, const FString& HtmlSourcePath)
+void MDSPopup::Open(const FString& ChangelogHtml, const FString& ChangelogHtmlPath)
 {
 	if(!FSlateApplication::Get().CanDisplayWindows())
 		return;
@@ -232,6 +232,14 @@ void MDSPopup::Open(const FString& ChangelogHtml, const FString& HtmlSourcePath)
 	windowContent->SetContent(innerContent);
 	window = FSlateApplication::Get().AddWindow(window.ToSharedRef());
 
-	if(htmlView.IsValid())
-		htmlView->LoadHtmlString(ChangelogHtml, HtmlSourcePath);
+	if(!htmlView.IsValid())
+		return;
+
+	if(!ChangelogHtmlPath.IsEmpty() && FPaths::FileExists(ChangelogHtmlPath))
+	{
+		htmlView->LoadHtmlFile(ChangelogHtmlPath);
+		return;
+	}
+
+	htmlView->LoadHtmlString(ChangelogHtml, ChangelogHtmlPath);
 }

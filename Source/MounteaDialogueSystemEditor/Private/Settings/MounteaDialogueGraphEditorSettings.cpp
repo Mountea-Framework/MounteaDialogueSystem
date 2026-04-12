@@ -49,37 +49,37 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAl
 	);
 
 	FDialogueEditorPageConfig installationPage(
-		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_Installation", "Installation & Plugin Enablement"),
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_Installation", "First Steps"),
 		resolvePluginPath(TEXT("Resources/Help/page_1.html"))
 	);
 
 	FDialogueEditorPageConfig projectSettingsPage(
-		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_ProjectSettings", "Project Settings Deep Dive"),
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_ProjectSettings", "Project Settings"),
 		resolvePluginPath(TEXT("Resources/Help/page_2.html"))
 	);
 
 	FDialogueEditorPageConfig gameplayTagsPage(
-		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_GameplayTags", "Gameplay Tags Setup & Verification"),
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_GameplayTags", "Gameplay Tags"),
 		resolvePluginPath(TEXT("Resources/Help/page_3.html"))
 	);
 
 	FDialogueEditorPageConfig worldSetupPage(
-		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_WorldSetup", "World Setup (GameMode/HUD/Participants)"),
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_WorldSetup", "World Setup"),
 		resolvePluginPath(TEXT("Resources/Help/page_4.html"))
 	);
 
 	FDialogueEditorPageConfig firstGraphPage(
-		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_FirstGraph", "Building Your First Dialogue Graph"),
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_FirstGraph", "Your First Dialogue Graph"),
 		resolvePluginPath(TEXT("Resources/Help/page_5.html"))
 	);
 
 	FDialogueEditorPageConfig uiIntegrationPage(
-		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_UIIntegration", "UI Integration & Participant UI Flow"),
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_UIIntegration", "UI Integration"),
 		resolvePluginPath(TEXT("Resources/Help/page_6.html"))
 	);
 
 	FDialogueEditorPageConfig advancedAuthoringPage(
-		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_AdvancedAuthoring", "Advanced Authoring (Decorators, Conditions, Events)"),
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_AdvancedAuthoring", "Advanced Authoring"),
 		resolvePluginPath(TEXT("Resources/Help/page_7.html"))
 	);
 
@@ -89,7 +89,7 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAl
 	);
 
 	FDialogueEditorPageConfig productionChecklistPage(
-		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_ProductionChecklist", "Production Checklist & Useful Links"),
+		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_ProductionChecklist", "Useful Links"),
 		resolvePluginPath(TEXT("Resources/Help/page_9.html"))
 	);
 
@@ -157,6 +157,16 @@ FString UMounteaDialogueGraphEditorSettings::GetOfflineChangelogPath() const
 
 	const FString offlinePath = FPaths::Combine(plugin->GetBaseDir(), TEXT("Resources/Help/changelog_offline.html"));
 	return FPaths::ConvertRelativePathToFull(offlinePath);
+}
+
+FString UMounteaDialogueGraphEditorSettings::GetGeneratedChangelogPath() const
+{
+	const TSharedPtr<IPlugin> plugin = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"));
+	if(!plugin.IsValid())
+		return FString();
+
+	const FString generatedPath = FPaths::Combine(plugin->GetBaseDir(), TEXT("Resources/Help/changelog.html"));
+	return FPaths::ConvertRelativePathToFull(generatedPath);
 }
 
 void UMounteaDialogueGraphEditorSettings::ReportLegacyVisualSettings() const

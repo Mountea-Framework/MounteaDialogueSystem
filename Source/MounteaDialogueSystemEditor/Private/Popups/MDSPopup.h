@@ -13,8 +13,8 @@ struct FPluginVersion
 class MDSPopup
 {
 public:
-	static void Register(const FString& ChangelogMarkdown, const FString& ChangelogHtml, const FString& HtmlSourcePath);
-	static void Open(const FString& ChangelogHtml, const FString& HtmlSourcePath);
+	static void Register(const FString& ChangelogMarkdown, const FString& ChangelogHtml, const FString& ChangelogHtmlPath);
+	static void Open(const FString& ChangelogHtml, const FString& ChangelogHtmlPath);
 
 	static FPluginVersion GetPluginVersion();
 	static bool IsVersionGreater(const FString& NewVersion, const FString& OldVersion);
