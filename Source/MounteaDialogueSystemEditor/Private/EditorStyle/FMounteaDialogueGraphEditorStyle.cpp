@@ -60,7 +60,7 @@ void FMounteaDialogueGraphEditorStyle::Create()
 
 	StyleSet->Set("MDSStyleSet.K2Node_GetterIcon", new SVG_BRUSH_TINT(TEXT("WebIcons/sunset"), Icon40x40, FLinearColor::White));
 	StyleSet->Set("MDSStyleSet.K2Node_SetterIcon", new SVG_BRUSH_TINT(TEXT("WebIcons/sunrise"), Icon40x40, FLinearColor::White));
-	StyleSet->Set("MDSStyleSet.K2Node_ValidateIcon", new SVG_BRUSH_TINT(TEXT("WebIcons/network"), Icon40x40, FLinearColor::White));
+	StyleSet->Set("MDSStyleSet.K2Node_ValidateIcon", new SVG_BRUSH_TINT(TEXT("WebIcons/shield-check"), Icon40x40, FLinearColor::White));
 
 	StyleSet->Set("MDSStyleSet.AutoArrange", new SVG_BRUSH_TINT(TEXT("WebIcons/network"), Icon24x24, FLinearColor::White));
 	StyleSet->Set("MDSStyleSet.RecenterGraph", new SVG_BRUSH_TINT(TEXT("WebIcons/locate-fixed"), Icon24x24, FLinearColor::White));
