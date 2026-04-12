@@ -10,7 +10,7 @@
 	"DocsURL": "https://mountea.tools/docs/dialoguesystem/gettingstarted/firststeps/",
 	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/ea38ae1f87b24807a66fdf4fa65ef521",
 	"SupportURL": "https://discord.gg/c2WQ658V44",
-	"EngineVersion": "5.6.0",
+	"EngineVersion": "5.7.0",
 	"CanContainContent": true,
 	"Installed": true,
 	"Modules": [
