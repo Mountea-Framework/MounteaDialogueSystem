@@ -13,6 +13,8 @@ public:
 	}
 	
 	TSharedPtr<FUICommandInfo> AutoArrange;
+	TSharedPtr<FUICommandInfo> RecenterGraph;
+	TSharedPtr<FUICommandInfo> FitGraphToView;
 	TSharedPtr<FUICommandInfo> ValidateGraph;
 
 	TSharedPtr<FUICommandInfo> FindInDialogue;

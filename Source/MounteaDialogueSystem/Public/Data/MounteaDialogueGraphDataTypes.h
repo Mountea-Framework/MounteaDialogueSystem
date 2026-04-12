@@ -17,9 +17,11 @@
 class UMounteaDialogueContext;
 class IMounteaDialogueParticipantInterface;
 class UMounteaDialogueGraphNode;
+class UMounteaDialogueGraph;
 class USoundBase;
 class UTexture;
 class UDataAsset;
+class AActor;
 
 UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class EMounteaDialogueLoggingVerbosity : uint8
@@ -34,14 +36,13 @@ enum class EMounteaDialogueLoggingVerbosity : uint8
 };
 ENUM_CLASS_FLAGS(EMounteaDialogueLoggingVerbosity)
 
-
 UENUM(BlueprintType)
 enum class EDialogueManagerType : uint8
 {
-	EDMT_PlayerDialogue UMETA(DisplayName="Player (Active) Dialogue"),
-	EDMT_EnvironmentDialogue UMETA(DisplayName="Environment (Passive) Dialogue"),
+	EDMT_PlayerDialogue 		UMETA(DisplayName="Player (Active) Dialogue"),
+	EDMT_EnvironmentDialogue 	UMETA(DisplayName="Environment (Passive) Dialogue"),
 
-	Default UMETA(hidden)
+	Default 					UMETA(hidden)
 };
 
 /**
@@ -52,11 +53,11 @@ enum class EDialogueManagerType : uint8
 UENUM(BlueprintType)
 enum class EDialogueManagerState : uint8
 {
-	EDMS_Disabled UMETA(DisplayName="Disabled", Tooltip="Disabled. Dialogue cannot start."),
-	EDMS_Enabled UMETA(DisplayName="Enabled", Tooltip="Enabled. Dialogue can start."),
-	EDMS_Active UMETA(DisplayName="Active", Tooltip="Active. Is in Diaologue."),
+	EDMS_Disabled 	UMETA(DisplayName="Disabled", Tooltip="Disabled. Dialogue cannot start."),
+	EDMS_Enabled 	UMETA(DisplayName="Enabled", Tooltip="Enabled. Dialogue can start."),
+	EDMS_Active 	UMETA(DisplayName="Active", Tooltip="Active. Is in Diaologue."),
 
-	Default UMETA(hidden)
+	Default 		UMETA(hidden)
 };
 
 /**
@@ -67,11 +68,11 @@ enum class EDialogueManagerState : uint8
 UENUM(BlueprintType)
 enum class EDialogueParticipantState : uint8
 {
-	EDPS_Disabled UMETA(DisplayName="Disabled", Tooltip="Disabled. Dialogue cannot start."),
-	EDPS_Enabled UMETA(DisplayName="Enabled", Tooltip="Enabled. Dialogue can start."),
-	EDPS_Active UMETA(DisplayName="Active", Tooltip="Active. Is in Diaologue."),
+	EDPS_Disabled 	UMETA(DisplayName="Disabled", Tooltip="Disabled. Dialogue cannot start."),
+	EDPS_Enabled 	UMETA(DisplayName="Enabled", Tooltip="Enabled. Dialogue can start."),
+	EDPS_Active 	UMETA(DisplayName="Active", Tooltip="Active. Is in Diaologue."),
 
-	Default UMETA(hidden)
+	Default 		UMETA(hidden)
 };
 
 /**
@@ -82,13 +83,13 @@ enum class EDialogueParticipantState : uint8
 UENUM(BlueprintType)
 enum class ERowDurationMode : uint8
 {
-	ERDM_Manual UMETA(DisplayName="Manual", Tooltip="Row won't start automatically and will wait for `NextDialogueRow` request.", hidden),
-	ERDM_Duration UMETA(DisplayName="Duration", Tooltip="Uses either duration of 'Row Sound' or value from 'Duration'."),
-	EDRM_Override UMETA(DisplayName="Override", Tooltip="Uses 'Duration Override' value."),
-	EDRM_Add UMETA(DisplayName="Add Time", Tooltip="Adds 'Duration Override' value to 'Duration'."),
-	ERDM_AutoCalculate UMETA(DisplayName="Calculate", Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds."),
+	ERDM_Manual 		UMETA(DisplayName="Manual", Tooltip="Row won't start automatically and will wait for `NextDialogueRow` request.", hidden),
+	ERDM_Duration 		UMETA(DisplayName="Duration", Tooltip="Uses either duration of 'Row Sound' or value from 'Duration'."),
+	EDRM_Override 		UMETA(DisplayName="Override", Tooltip="Uses 'Duration Override' value."),
+	EDRM_Add 			UMETA(DisplayName="Add Time", Tooltip="Adds 'Duration Override' value to 'Duration'."),
+	ERDM_AutoCalculate 	UMETA(DisplayName="Calculate", Tooltip="Calculates Duration automatically. Base value is: 100 characters per 8 seconds."),
 
-	Default UMETA(hidden)
+	Default 			UMETA(hidden)
 };
 
 /**
@@ -97,11 +98,11 @@ enum class ERowDurationMode : uint8
 UENUM(BlueprintType)
 enum class ERowExecutionMode : uint8
 {
-	EREM_Automatic UMETA(DisplayName="Automatic", Tooltip="Next row will be executed if any is present."),
-	EREM_AwaitInput UMETA(DisplayName="Await Input", Tooltip="Next row will be executed once request is triggered."),
-	EREM_Stopping UMETA(DisplayName="Stopping", Tooltip="Row will stop execution of whole Node and will finish both."),
+	EREM_Automatic 		UMETA(DisplayName="Automatic", Tooltip="Next row will be executed if any is present."),
+	EREM_AwaitInput 	UMETA(DisplayName="Await Input", Tooltip="Next row will be executed once request is triggered."),
+	EREM_Stopping 		UMETA(DisplayName="Stopping", Tooltip="Row will stop execution of whole Node and will finish both."),
 
-	Default UMETA(hidden)
+	Default 			UMETA(hidden)
 };
 
 /**
@@ -112,8 +113,8 @@ enum class ERowExecutionMode : uint8
 UENUM(BlueprintType)
 enum class EMounteaInputMode : uint8
 {
-	EIM_UIOnly UMETA(DisplayName="UI Only"),
-	EIM_UIAndGame UMETA(DisplayName="UI & Game")
+	EIM_UIOnly 			UMETA(DisplayName="UI Only"),
+	EIM_UIAndGame 		UMETA(DisplayName="UI & Game")
 };
 
 /**
@@ -130,7 +131,9 @@ struct FMounteaSubtitlesSettings
 	 * Default:
 	 * * Color: White
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles", meta=(DisplayName="Color and Oppacity"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles", 
+		meta=(DisplayName="Color and Oppacity"),
+		meta=(NoResetToDefault))
 	FSlateColor FontColor;
 	/**
 	 * Slate Font Info settings.
@@ -140,21 +143,35 @@ struct FMounteaSubtitlesSettings
 	 * * Typeface: 'Regular'
 	 * * Outline: 1
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles", meta=(ForceShowEngineContent))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles", 
+		meta=(ForceShowEngineContent),
+		meta=(NoResetToDefault))
 	FSlateFontInfo SubtitlesFont;
+	
 	/**
 	 * Shadow Offset Settings.
 	 * Defines shadow offset on X and Y axis.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles",
+		meta=(NoResetToDefault))
 	FVector2D ShadowOffset;
+	
 	/**
 	 * Shadow Color Settings.
 	 * Default:
 	 * * Color: Black
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles",
+		meta=(NoResetToDefault))
 	FLinearColor ShadowColor;
+
+	/**
+	 * Optional icon associated with this subtitle style.
+	 * Replaces the per-row RowOptionalIcon that was previously stored on FDialogueRow.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Subtitles",
+		meta=(NoResetToDefault))
+	TSoftObjectPtr<UTexture2D> RowOptionalIcon = nullptr;
 
 	/**
 	 * Settings GUID.
@@ -164,7 +181,9 @@ struct FMounteaSubtitlesSettings
 	 * 
 	 * Invalid settings are ignored!
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Subtitles", meta=(IgnoreForMemberInitializationTest))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Subtitles", 
+		meta=(IgnoreForMemberInitializationTest),
+		meta=(NoResetToDefault))
 	FGuid SettingsGUID;
 
 public:
@@ -174,6 +193,22 @@ public:
 	};
 };
 
+/**
+ * Defines the role of a participant in a dialogue session.
+ * Used as a bitmask — a single participant may hold multiple roles simultaneously.
+ *
+ * Example: An NPC who is also the session host could be both NPC and Environment.
+ */
+UENUM(BlueprintType, meta=(Bitflags, UseEnumValuesAsMaskValuesInEditor="true"))
+enum class EDialogueParticipantType : uint8
+{
+	None		= 0			UMETA(Hidden),
+	Player		= 1 << 0	UMETA(DisplayName="Player"),
+	NPC			= 1 << 1	UMETA(DisplayName="NPC"),
+	Environment	= 1 << 2	UMETA(DisplayName="Environment"),
+};
+ENUM_CLASS_FLAGS(EDialogueParticipantType)
+
 #define LOCTEXT_NAMESPACE "DialogueParticipant"
 
 USTRUCT(BlueprintType)
@@ -182,11 +217,30 @@ struct FDialogueParticipant : public FTableRowBase
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Participant")
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Participant",
+		meta=(NoResetToDefault))
 	FName ParticipantName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
+		meta=(NoResetToDefault),
+		meta=(Categories="Mountea_Dialogue,Dialogue"))
 	FGameplayTag ParticipantCategoryTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
+		meta=(NoResetToDefault))
+	TSoftObjectPtr<UTexture2D> ParticipantIcon;
+
+	/**
+	 * Role bitmask for this participant.
+	 * Used at runtime to determine how the participant interacts with dialogue flow
+	 * (e.g. whether it drives player input, auto-advances, owns the graph, etc.).
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Participant",
+		meta=(Bitmask, BitmaskEnum="/Script/MounteaDialogueSystem.EDialogueParticipantType"),
+		meta=(NoResetToDefault))
+	int32 ParticipantType = 0;
+
 };
 
 #undef LOCTEXT_NAMESPACE
@@ -204,6 +258,7 @@ struct FDialogueRowData
 	GENERATED_BODY()
 
 public:
+	
 	/**
 	 * Row Text.
 	 * 
@@ -213,8 +268,11 @@ public:
 	 * 
 	 * ❗ This Text should not be displayed as option to be selected, for that use 'DialogueRow.RowTitle' value
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true, MultiLine=true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
+		meta=(ExposeOnSpawn=true, MultiLine=true),
+		meta=(NoResetToDefault))
 	FText RowText;
+	
 	/**
 	 * Row Sound.
 	 * 
@@ -224,16 +282,22 @@ public:
 	 * ❗ Is not directly used in any C++ code
 	 * ❔ Could be used with 'DP_PlayDialogueSound' or as Sound Value for any better way of handling synced animations and sounds (to get more info how to do that, join the Support Discord)
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
+		meta=(ExposeOnSpawn=true),
+		meta=(NoResetToDefault))
 	TObjectPtr<USoundBase> RowSound = nullptr;
+	
 	/**
 	 * Row Duration Mode
 	 * 
 	 * ❗ Recommended value
 	 * ❔ Determines how the 'Row Duration' is calculated.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
+		meta=(ExposeOnSpawn=true),
+		meta=(NoResetToDefault))
 	ERowDurationMode RowDurationMode;
+	
 	/**
 	 * Row Duration
 	 * 
@@ -241,8 +305,10 @@ public:
 	 * ❔ Determines for how long the UI will display this Row Data.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
-		meta=(EditCondition="RowSound==nullptr", UIMin=0.f, ClampMin=0.f, ExposeOnSpawn = true))
+		meta=(EditCondition="RowSound==nullptr", UIMin=0.f, ClampMin=0.f, ExposeOnSpawn = true),
+		meta=(NoResetToDefault))
 	float RowDuration;
+	
 	/**
 	 * Row Duration Override
 	 * 
@@ -251,20 +317,28 @@ public:
 	 * 
 	 * ❗ No validation applied here, so using value of -4684 will result in weird behaviour.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
+		meta=(ExposeOnSpawn=true),
+		meta=(NoResetToDefault))
 	float RowDurationOverride;
+	
 	/**
 	 * If set to true this Row will stop the whole Node execution and next row won't start.
 	 * Default is false.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(ExposeOnSpawn=true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
+		meta=(ExposeOnSpawn=true),
+		meta=(NoResetToDefault))
 	ERowExecutionMode RowExecutionBehaviour;
+	
 	/**
 	 * Row GUID.
 	 * 
 	 * Unique Key when searching and binding this Row.
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, meta=(IgnoreForMemberInitializationTest))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, 
+		meta=(IgnoreForMemberInitializationTest),
+		meta=(NoResetToDefault))
 	FGuid RowGUID = FGuid::NewGuid();
 
 public:
@@ -331,18 +405,22 @@ public:
  * Contains name of Participant and Row Data.
  */
 USTRUCT(BlueprintType)
-struct FDialogueRow : public FTableRowBase
+struct MOUNTEADIALOGUESYSTEM_API FDialogueRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
 public:
+	
 	/**
 	 * List of GameplayTags which distinguish participants. 
 	 * 
 	 * ❗ New feature in version 1.0.5.X.
 	 * ❔ Each unique dialogue Participant should be using different Tag, if generic, then use something like `Dialogue.NPC`
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", DisplayName="Compatible Participants Tags")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
+		DisplayName="Compatible Participants Tags",
+		meta=(Categories="Mountea_Dialogue,Dialogue"),
+		meta=(NoResetToDefault))
 	FGameplayTagContainer CompatibleTags;
 
 	/**
@@ -357,17 +435,14 @@ public:
 	 * * Max: 255
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
-		meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true, DisplayName="Row Type ID"))
+		meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true),
+		meta=(DisplayName="Row Type ID"),
+		meta=(NoResetToDefault))
 	int32 UIRowID = 0;
 	
-	/**
-	 * Optional Row Icon.
-	 * 
-	 * ❗ Optional value.
-	 * ❔ Could be used to mark special dialogue options, like "Open Store" or "Leave conversation" with special icon.
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
-	TObjectPtr<UTexture> RowOptionalIcon = nullptr;
+	UPROPERTY(NotReplicated, 
+		meta=(DeprecatedProperty, DeprecationMessage="Use DialogueParticipantName instead"))
+	FText DialogueParticipant;
 	
 	/**
 	 * Name of the Dialogue Participant.
@@ -376,31 +451,45 @@ public:
 	 * If left empty, Dialogue will ignore it and use its default Participant name.
 	 * ❔ Each row might have different participant tied to it, so there can be three-way dialogues, where one player talks to 2 NPCs
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
-	FText DialogueParticipant;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
+		meta=(GetOptions="MounteaDialogueSystem.MounteaDialogueParticipantStatics.GetDialogueParticipantRowNames"),
+		meta=(NoResetToDefault))
+	FName DialogueParticipantName;
 	
 	/**
 	 * Title of the Dialogue Row.
 	 * 
 	 * ❔ This should summarize what is this row about, let's say "Accept offering" is a title for "Thank you very much, kind sir, it would be pleasure to join you on your adventure!".
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
+		meta=(NoResetToDefault))
 	FText RowTitle;
 	
 	/**
-	 * List of Dialogue Row Data. Not replicated, must be found locally for each Client from replicated Active Node!
-	 * 
+	 * List of Dialogue Row Data.
+	 *
 	 * ❔ Each Dialogue Row can contain multiple of those, where each Data Row represents:
 	 * * What Sound should be played
 	 * * What text should be displayed
-	 * 
+	 *
 	 * This provides easy way to have multiple dialogue lines per single Node.
 	 * As example, Player asks NPC what happened to its family. And each sentence could be its own Dialogue Row Data input.
 	 * This makes UI easier to read and sounds more managable.
-	 * 
+	 *
 	 * Each Data Row has its Duration, which could be based on the Sound, directly set, calculated on generic formula or added atop of the sound duration.
 	 */
-	UPROPERTY(NotReplicated, EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(TitleProperty="RowText"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
+		meta=(TitleProperty="RowText"),
+		meta=(ShowOnlyInnerProperties),
+		meta=(NoResetToDefault))
+	TArray<FDialogueRowData> RowData;
+
+	/**
+	 * Legacy serialized field kept for one migration pass.
+	 * Older assets stored this as a Set under this exact name.
+	 */
+	UPROPERTY(NotReplicated, 
+		meta=(DeprecatedProperty, DeprecationMessage="Use RowData array instead"))
 	TSet<FDialogueRowData> DialogueRowData;
 	
 	/**
@@ -410,7 +499,9 @@ public:
 	 * This data could be used for Decorators or UI in general.
 	 * Any Data Asset can be used here and no logic is tied to this attribute.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(AllowAbstract=false))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
+		meta=(AllowAbstract=false),
+		meta=(NoResetToDefault))
 	TObjectPtr<UDialogueAdditionalData> DialogueRowAdditionalData = nullptr;
 	
 	/**
@@ -418,31 +509,24 @@ public:
 	 * 
 	 * Unique Key when searching and binding this Row.
 	 */
-	UPROPERTY(/*Transient, */VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay, 
+		meta=(NoExport, IgnoreForMemberInitializationTest, NoElementDuplicate),
+		meta=(NoResetToDefault))
 	FGuid RowGUID;
 	
-	/**
-	 * ❗ WIP
-	 * Title Settings Override.
-	 * 
-	 * ❔ Provides ability to override this Row Title using direct settings rather than 'UIRowID'.
-	 * ❗ No logic is implemented yet
-	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dialogue", AdvancedDisplay)
-	FMounteaSubtitlesSettings TitleSettingsOverride;
-
 public:
 	FDialogueRow()
-		: CompatibleTags(), RowOptionalIcon(nullptr),
-		DialogueParticipant(LOCTEXT("FDialogueRow_Participant", "Dialogue Participant")), RowTitle(LOCTEXT("FDialogueRow_Title", "Selectable Option"))
+		: CompatibleTags(),
+		DialogueParticipantName(NAME_None), RowTitle(LOCTEXT("FDialogueRow_Title", "Selectable Option"))
 	{
 		RowGUID = FGuid::NewGuid();
 	};
 
-	FDialogueRow(const int32 NewUIRowID, UTexture* InRowIcon, const FText& InText, const FText& InParticipant,
-				const TSet<FDialogueRowData>& InData, UDialogueAdditionalData* NewData, const FGameplayTagContainer& InCompatibleTags)
-		: CompatibleTags(InCompatibleTags), UIRowID(NewUIRowID), RowOptionalIcon(InRowIcon), DialogueParticipant(InParticipant),
-		RowTitle(InText), DialogueRowData(InData), DialogueRowAdditionalData(NewData)
+	FDialogueRow(const int32 NewUIRowID, const FText& InText, const FText& InParticipant,
+				const TArray<FDialogueRowData>& InData, UDialogueAdditionalData* NewData, const FGameplayTagContainer& InCompatibleTags)
+		: CompatibleTags(InCompatibleTags), UIRowID(NewUIRowID), DialogueParticipant(FText::GetEmpty()),
+		DialogueParticipantName(InParticipant.IsEmpty() ? NAME_None : FName(*InParticipant.ToString())),
+		RowTitle(InText), RowData(InData), DialogueRowAdditionalData(NewData)
 	{
 		RowGUID = FGuid::NewGuid();
 	}
@@ -451,11 +535,10 @@ public:
 	
 	inline FDialogueRow& operator=(const FDialogueRow& Other)
 	{
-		RowOptionalIcon = Other.RowOptionalIcon;
 		DialogueParticipant = Other.DialogueParticipant;
+		DialogueParticipantName = Other.DialogueParticipantName;
 		RowTitle = Other.RowTitle;
-		DialogueRowData = Other.DialogueRowData;
-		TitleSettingsOverride = Other.TitleSettingsOverride;
+		RowData = Other.RowData;
 		UIRowID = Other.UIRowID;
 		DialogueRowAdditionalData = Other.DialogueRowAdditionalData;
 		RowGUID = FGuid::NewGuid();
@@ -483,47 +566,80 @@ public:
 	{
 		return
 		RowGUID.IsValid() &&
-		DialogueRowData.Num() > 0;
+		RowData.Num() > 0;
 	}
 
 	bool IsNearlyEqual(const FDialogueRow& Other) const
 	{
+		const FName thisParticipantName = !DialogueParticipantName.IsNone() ? DialogueParticipantName : FName(*DialogueParticipant.ToString());
+		const FName otherParticipantName = !Other.DialogueParticipantName.IsNone() ? Other.DialogueParticipantName : FName(*Other.DialogueParticipant.ToString());
+
 		if (RowTitle.EqualTo(Other.RowTitle) &&
 		CompatibleTags.HasAllExact(Other.CompatibleTags) &&
-		DialogueParticipant.EqualTo(Other.DialogueParticipant))
-		{
+		thisParticipantName == otherParticipantName)
 			return true;
-		}
 
-		if (RowTitle.EqualTo(Other.RowTitle) && DialogueRowData.Num() > 0 && Other.DialogueRowData.Num() > 0)
+		if (RowTitle.EqualTo(Other.RowTitle) && RowData.Num() > 0 && Other.RowData.Num() > 0)
 		{
-			const FDialogueRowData ThisFirstRowData = DialogueRowData.Array()[0];
-			const FDialogueRowData OtherFirstRowData = Other.DialogueRowData.Array()[0];
-
-			if (ThisFirstRowData == OtherFirstRowData)
-			{
+			if (RowData[0] == Other.RowData[0])
 				return true;
-			}
 		}
 
 		return false;
 	}
 
 	FString ToString() const;
+
+	virtual void OnPostDataImport(const UDataTable* InDataTable, const FName InRowName, TArray<FString>& OutCollectedImportProblems) override;
+	virtual void OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName) override;
 	
 	static FDialogueRow Invalid()
 	{
 		FDialogueRow Row;
 		Row.RowGUID.Invalidate();
+		Row.RowData.Empty();
 		Row.DialogueRowData.Empty();
 		return Row;
 	}
+
+	void PostSerialize(const FArchive& Ar)
+	{
+		if (Ar.IsLoading() && RowData.Num() == 0 && DialogueRowData.Num() > 0)
+		{
+			RowData = DialogueRowData.Array();
+			DialogueRowData.Empty();
+		}
+		
+		if (Ar.IsLoading() && !DialogueParticipant.IsEmpty() && DialogueParticipantName.IsNone())
+		{
+			DialogueParticipantName = FName(*DialogueParticipant.ToString());
+			DialogueParticipant = FText::GetEmpty();
+		}
+
+		if (Ar.IsLoading() && DialogueParticipant.IsEmpty() && !DialogueParticipantName.IsNone())
+		{
+			DialogueParticipant = FText::FromName(DialogueParticipantName);
+		}
+	}
+
+	void UpdateFromDialogueParticipantName();
+};
+
+template<>
+struct TStructOpsTypeTraits<FDialogueRow> : public TStructOpsTypeTraitsBase2<FDialogueRow>
+{
+	enum
+	{
+		WithPostSerialize = true
+	};
 };
 
 #undef LOCTEXT_NAMESPACE
 
 /**
- * 
+ * UI Row Identifier
+ *
+ * Represents a unique identifier for a UI row element.
  */
 USTRUCT(BlueprintType)
 struct FUIRowID
@@ -531,14 +647,24 @@ struct FUIRowID
 	GENERATED_BODY()
 
 	/**
-	 * 
+	 * UI Row Identifier
+	 *
+	 * Represents a unique identifier for a user interface row in the dialogue graph.
+	 * This identifier is clamped between 0 and 255..
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue", 
+		meta=(UIMax=255, ClampMax = 255, UIMin = 0, ClampMin=0, NoSpinbox =true),
+		meta=(NoResetToDefault))
 	int32 UIRowID = 0;
+
 	/**
-	 * 
+	 * Row Widget Class
+	 *
+	 * Specifies the widget class to be used for representing rows within the dialogue system.
+	 * This allows customization of the user interface rows by linking to a specific `UUserWidget` subclass.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue",
+		meta=(NoResetToDefault))
 	TSubclassOf<UUserWidget> RowWidgetClass;
 
 public:
@@ -561,7 +687,9 @@ public:
 };
 
 /**
- * 
+ * Dialogue Traverse Path
+ *
+ * Represents a path taken during the traversal of a dialogue tree.
  */
 USTRUCT(BlueprintType)
 struct FDialogueTraversePath
@@ -582,13 +710,16 @@ public:
 		, TraverseCount(FMath::Max(0, InTraverseCount))
 	{}
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath",
+		meta=(NoResetToDefault))
 	FGuid NodeGuid;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath",
+		meta=(NoResetToDefault))
 	FGuid GraphGuid;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mountea|Dialogue|TraversePath",
+		meta=(NoResetToDefault))
 	int32 TraverseCount;
 
 	bool operator==(const FDialogueTraversePath& Other) const
@@ -604,9 +735,7 @@ public:
 	FDialogueTraversePath& operator+=(const FDialogueTraversePath& Other)
 	{
 		if (NodeGuid == Other.NodeGuid && GraphGuid == Other.GraphGuid)
-		{
 			TraverseCount += Other.TraverseCount;
-		}
 		return *this;
 	}
 
@@ -626,63 +755,55 @@ public:
 	}
 };
 
-USTRUCT()
-struct FMounteaDialogueContextReplicatedStruct
+/**
+ * A lightweight request struct passed to the server when initiating a dialogue.
+ * Uses soft object references to avoid passing raw actor pointers across RPCs.
+ */
+USTRUCT(BlueprintType)
+struct FDialogueStartRequest
 {
 	GENERATED_BODY()
-	
-	UPROPERTY()
-	TScriptInterface<IMounteaDialogueParticipantInterface> ActiveDialogueParticipant;
-	UPROPERTY()
-	TScriptInterface<IMounteaDialogueParticipantInterface> PlayerDialogueParticipant;
-	UPROPERTY()
-	TScriptInterface<IMounteaDialogueParticipantInterface> DialogueParticipant;
-	UPROPERTY()
-	TArray<TScriptInterface<IMounteaDialogueParticipantInterface>> DialogueParticipants;
-	
-	UPROPERTY(meta=(IgnoreForMemberInitializationTest))
-	FGuid ActiveNodeGuid;
-	UPROPERTY(meta=(IgnoreForMemberInitializationTest))
-	FGuid PreviousActiveNodeGuid;
-	UPROPERTY()
-	TArray<FGuid> AllowedChildNodes;
-	UPROPERTY()
-	FDataTableRowHandle ActiveDialogueTableHandle;
-	UPROPERTY()
-	int32 ActiveDialogueRowDataIndex = 0;
-	UPROPERTY()
-	FString LastWidgetCommand;
 
-	FMounteaDialogueContextReplicatedStruct();
-	explicit FMounteaDialogueContextReplicatedStruct(UMounteaDialogueContext* Source);
+public:
 
-	FMounteaDialogueContextReplicatedStruct operator+=(UMounteaDialogueContext* Source);
-	bool operator==(const FMounteaDialogueContextReplicatedStruct& Other) const
+	/**
+	 * Preferred runtime actor reference for the primary participant.
+	 * This is network-safe for RPC usage and should be populated by callers.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Request")
+	TObjectPtr<AActor> MainParticipantActorRef = nullptr;
+
+	/**
+	 * The primary participant actor — typically the NPC initiating or owning the dialogue graph.
+	 * Legacy soft reference kept for compatibility fallback.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Request")
+	TSoftObjectPtr<AActor> MainParticipantActor;
+
+	/**
+	 * Preferred runtime actor references for additional participants.
+	 * This is network-safe for RPC usage and should be populated by callers.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Request")
+	TArray<TObjectPtr<AActor>> OtherParticipantActorRefs;
+
+	/**
+	 * Additional participants in the conversation.
+	 * Legacy soft references kept for compatibility fallback.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Request")
+	TArray<TSoftObjectPtr<AActor>> OtherParticipantActors;
+
+	/**
+	 * Optional dialogue graph override to run for this session.
+	 * If empty, the main participant's graph is used.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mountea|Dialogue|Request")
+	TSoftObjectPtr<UMounteaDialogueGraph> DialogueGraph;
+
+	bool IsValid() const
 	{
-		return ActiveDialogueParticipant == Other.ActiveDialogueParticipant
-		&& DialogueParticipants == Other.DialogueParticipants
-		&& ActiveNodeGuid == Other.ActiveNodeGuid
-		&& AllowedChildNodes == Other.AllowedChildNodes
-		&& ActiveDialogueTableHandle == Other.ActiveDialogueTableHandle
-		&& ActiveDialogueRowDataIndex == Other.ActiveDialogueRowDataIndex;
+		return ::IsValid(MainParticipantActorRef) || !MainParticipantActor.IsNull();
 	}
-	bool operator!=(const FMounteaDialogueContextReplicatedStruct& Other) const
-	{
-		return !(*this == Other);
-	}
-
-	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess);
-
-	FString ToString() const;
-	bool IsValid() const;
-	void Reset();
 };
 
-template<>
-struct TStructOpsTypeTraits<FMounteaDialogueContextReplicatedStruct> : public TStructOpsTypeTraitsBase2<FMounteaDialogueContextReplicatedStruct>
-{
-	enum 
-	{
-		WithNetSerializer = true
-	};
-};

@@ -1,5 +1,6 @@
 #include "MounteaDialogueDecoratorAssetAction.h"
 
+#include "Consts/MounteaDialogueEditorConsts.h"
 #include "Decorators/MounteaDialogueDecoratorBase.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecoratorAssetAction"
@@ -36,7 +37,7 @@ const TArray<FText>& FMounteaDialogueDecoratorAssetAction::GetSubMenus() const
 {
 	static const TArray<FText> AssetTypeActionSubMenu
 	{
-		FText::FromString("1. Node Decorators")
+		FText::FromString(MounteaDialogueConsts::Submenu_Decorators)
 	};
 	return AssetTypeActionSubMenu;
 };

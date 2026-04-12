@@ -13,7 +13,9 @@
  * Add variables to that new Blueprint Class.
  * Then you can create this Dialogue Additional Data using the newly defined Blueprint class.
  */
-UCLASS( Blueprintable, meta=(UsesHierarchy=true), BlueprintType, EditInlineNew, ClassGroup="Mountea|Dialogue", AutoExpandCategories=("Mountea, Dialogue"), DisplayName="Dialogue Additional Data")
+UCLASS( Blueprintable, meta=(UsesHierarchy=true), BlueprintType, EditInlineNew, ClassGroup="Mountea|Dialogue", 
+	AutoExpandCategories=("Mountea, Dialogue"), 
+	DisplayName="Dialogue Additional Data")
 class MOUNTEADIALOGUESYSTEM_API UDialogueAdditionalData : public UObject
 {
 	GENERATED_BODY()

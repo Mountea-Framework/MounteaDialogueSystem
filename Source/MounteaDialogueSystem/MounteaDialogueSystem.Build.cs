@@ -6,6 +6,10 @@ public class MounteaDialogueSystem : ModuleRules
 {
 	public MounteaDialogueSystem(ReadOnlyTargetRules Target) : base(Target)
 	{
+		bPrecompile = true;
+		bUsePrecompiled = false;
+		PrecompileForTargets = PrecompileTargetsType.Game;
+
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		bLegacyPublicIncludePaths = false;
 		CppCompileWarningSettings.ShadowVariableWarningLevel = WarningLevel.Error;

@@ -2,13 +2,16 @@
 
 #pragma once
 
-#include "Framework/Text/SlateHyperlinkRun.h"
+#include "CoreMinimal.h"
 
-class SScrollBox;
+enum class EWebBrowserConsoleLogSeverity;
+class SWindow;
 
 class MDSPopup_GraphValidation
 {
 public:
-	static TSharedPtr<SWindow> Open(const TArray<FText> ValidationMessages);
-	static void OnBrowserLinkClicked(const FSlateHyperlinkRun::FMetadata& Metadata);
+	static TSharedPtr<SWindow> Open(const TArray<FText>& Errors, const TArray<FText>& Warnings);
+
+private:
+	static void HandleConsoleMessage(const FString& Message, const FString& Source, int32 Line, EWebBrowserConsoleLogSeverity Severity);
 };

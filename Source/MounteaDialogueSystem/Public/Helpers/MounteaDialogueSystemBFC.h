@@ -7,8 +7,10 @@
 
 #include "Data/MounteaDialogueGraphDataTypes.h"
 
+#include "Interfaces/Core/MounteaDialogueConditionContextInterface.h"
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
+#include "Interfaces/Nodes/MounteaDialogueSpeechDataInterface.h"
 
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Blueprint/UserWidget.h"
@@ -199,11 +201,25 @@ public:
 	/**
 	 * Returns all Allowed Child Nodes for given Parent Node
 	 *❗Might return empty array❗
-	 * 
+	 *
 	 * @param ParentNode	Node to get all Children From
-	 */ 
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers", meta=(Keywords="diaogue, child, nodes"), meta=(CustomTag="MounteaK2Getter"))
 	static TArray<UMounteaDialogueGraphNode*> GetAllowedChildNodes(const UMounteaDialogueGraphNode* ParentNode);
+
+	/**
+	 * Returns all Allowed Child Nodes for a given Parent Node after filtering out edges whose conditions fail.
+	 *❗Might return empty array❗
+	 *
+	 * @param ParentNode       Node to get filtered children from.
+	 * @param ConditionContext  Context used to evaluate per-edge conditions.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(Keywords="dialogue, child, nodes, filter, condition"),
+		meta=(CustomTag="MounteaK2Getter"))
+	static TArray<UMounteaDialogueGraphNode*> GetAllowedChildNodesFiltered(
+		const UMounteaDialogueGraphNode* ParentNode,
+		const TScriptInterface<IMounteaDialogueConditionContextInterface>& ConditionContext);
 	
 	/**
 	 * Returns whether Dialogue Row is valid or not.
@@ -215,8 +231,9 @@ public:
 	{
 		FGuid InvalidGuid;
 		InvalidGuid.Invalidate();
-		
-		return Row.RowGUID != InvalidGuid && Row.DialogueParticipant.IsEmpty() == false && Row.DialogueRowData.Num() > 0;
+
+		const bool bHasParticipant = !Row.DialogueParticipantName.IsNone() || !Row.DialogueParticipant.IsEmpty();
+		return Row.RowGUID != InvalidGuid && bHasParticipant && Row.RowData.Num() > 0;
 	}
 
 	/**
@@ -359,7 +376,6 @@ public:
 	static UMounteaDialogueGraphNode* GetStartingNode(const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant, const UMounteaDialogueGraph* Graph);
 
 	static UMounteaDialogueContext* CreateDialogueContext(UObject* NewOwner, const TScriptInterface<IMounteaDialogueParticipantInterface>& MainParticipant, const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& DialogueParticipants);
-	static UMounteaDialogueContext* CreateDialogueContext(UObject* NewOwner, const FMounteaDialogueContextReplicatedStruct& NewData);
 
 	static AActor* GetDialogueManagerLocalOwner(const UObject* Manager);
 	static AActor* GetDialogueManagerLocalOwner(const TScriptInterface<const IMounteaDialogueManagerInterface>& Manager);
@@ -393,6 +409,98 @@ public:
 		meta=(CustomTag="MounteaK2Getter"))
 	static TArray<TSubclassOf<UMounteaDialogueGraphNode>> GetAllowedInputClasses(UMounteaDialogueGraphNode* Target);
 	
+	// --- Authority helpers ------------------------------
+
+	/**
+	 * Returns true if the given actor is on the server or standalone (not a remote client).
+	 * Use this to gate server-authoritative state mutations.
+	 *
+	 * @param Owner  Actor whose net role is checked.
+	 * @return  True when running on the authoritative server or in standalone.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Validate"))
+	static bool IsServer(const AActor* Owner);
+
+	/**
+	 * Returns true if the given actor is locally controlled by the owning client.
+	 * Use this to gate cosmetic and UI operations.
+	 *
+	 * @param Owner  Actor whose local control is checked.
+	 * @return  True for the locally controlled actor on standalone and listen server.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Validate"))
+	static bool IsLocalPlayer(const AActor* Owner);
+
+	/**
+	 * Returns true when cosmetic and UI operations should execute for this actor.
+	 * Equivalent to IsLocalPlayer. Never use !IsServer for this purpose.
+	 *
+	 * @param Owner  Actor to check.
+	 * @return  True when the actor is locally controlled.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Validate"))
+	static bool ShouldExecuteCosmetics(const AActor* Owner);
+
+	/**
+	 * Traverses the owner chain of Actor to find the locally controlled APlayerController.
+	 * Handles APawn, APlayerController, APlayerState, and generic owner-chain traversal.
+	 * Returns null when called on a dedicated server or for AI-controlled actors.
+	 *
+	 * @param Owner  Actor whose owning player controller is requested.
+	 * @return  The local APlayerController, or null if none found.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Getter"))
+	static APlayerController* GetOwnerPlayerController(const AActor* Owner);
+
+	// --- Speech data helpers ----------------------------
+
+	/**
+	 * Returns the FDialogueRow from a node if it implements IMounteaDialogueSpeechDataInterface.
+	 * Returns a default FDialogueRow for non-speech nodes (Delay, OpenChildGraph, etc.).
+	 *
+	 * @param Node  Node to query.
+	 * @return  The speech data row, or an empty default if the node carries no speech.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Getter"))
+	static FDialogueRow GetSpeechData(UMounteaDialogueGraphNode* Node);
+
+	/**
+	 * Returns true if the given node implements IMounteaDialogueSpeechDataInterface
+	 * and therefore carries dialogue speech data.
+	 *
+	 * @param Node  Node to check.
+	 * @return  True when the node has speech data accessible via the speech interface.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
+		meta=(CustomTag="MounteaK2Validate"))
+	static bool NodeHasSpeechData(UMounteaDialogueGraphNode* Node);
+
+	/**
+	 * Finds the first participant in the array whose type bitmask includes the requested type.
+	 * Returns null if no match found.
+	 *
+	 * @param Participants  Array to search.
+	 * @param Type          The type bit to test.
+	 */
+	static TScriptInterface<IMounteaDialogueParticipantInterface> GetParticipantByType(
+		const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants,
+		EDialogueParticipantType Type);
+
+	/**
+	 * Finds the first participant in the array that owns a non-null dialogue graph.
+	 * Used when a call site needs the graph-owning participant without knowing its type.
+	 * Returns null if none found.
+	 *
+	 * @param Participants  Array to search.
+	 */
+	static TScriptInterface<IMounteaDialogueParticipantInterface> GetGraphOwnerParticipant(
+		const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants);
+
 	// --- Template functions ------------------------------
 	
 	template <typename NodeType>

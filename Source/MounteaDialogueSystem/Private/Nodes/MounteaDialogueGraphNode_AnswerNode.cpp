@@ -15,7 +15,8 @@ UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 #if WITH_EDITORONLY_DATA
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_AnswerNodeContextMenuName", "Answer Node");
 	
-	BackgroundColor = FLinearColor(FColor::Turquoise);
+	EditorNodeColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("8b5cf6")));
+	EditorHeaderForegroundColour = FLinearColor::White;
 
 	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_AnswerTooltip", "* This Node represents Player's answers.\n* This Node requires Player's input to be started.\n* Requires Dialogue Data Table to work properly.");
 #endif
@@ -28,27 +29,6 @@ UMounteaDialogueGraphNode_AnswerNode::UMounteaDialogueGraphNode_AnswerNode()
 
 	bAutoStarts = false;
 	bUseGameplayTags = true;
-}
-
-void UMounteaDialogueGraphNode_AnswerNode::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
-{
-	if (!bUseGameplayTags)
-	{
-		if (Manager.GetInterface())
-		{
-			if (const auto TempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
-			{
-				UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(TempContext, TempContext->GetDialoguePlayerParticipant());
-			}
-		}
-	}
-
-	Super::PreProcessNode_Implementation(Manager);
-}
-
-void UMounteaDialogueGraphNode_AnswerNode::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
-{
-	Super::ProcessNode_Implementation(Manager);
 }
 
 #if WITH_EDITOR

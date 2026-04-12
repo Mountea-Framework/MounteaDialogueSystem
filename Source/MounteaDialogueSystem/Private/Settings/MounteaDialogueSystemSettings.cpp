@@ -123,6 +123,16 @@ float UMounteaDialogueSystemSettings::GetSkipDuration() const
 	return dialogueConfig ? dialogueConfig->SkipDuration : 1.f;
 }
 
+bool UMounteaDialogueSystemSettings::IsClientPredictionEnabled() const
+{
+	return bEnableClientPrediction;
+}
+
+float UMounteaDialogueSystemSettings::GetClientPredictionTimeoutSeconds() const
+{
+	return FMath::Max(0.05f, ClientPredictionTimeoutSeconds);
+}
+
 #if WITH_EDITOR
 
 FSlateFontInfo UMounteaDialogueSystemSettings::SetupDefaultFontSettings()

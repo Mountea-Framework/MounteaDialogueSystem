@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Mountea Dialogue System - World Setup</title>
+</head>
+<body>
+	<section class="doc-page">
+		<header>
+			<span class="version">Chapter 5 of 10</span>
+			<h1>World Setup (GameMode, HUD, Participants)</h1>
+			<p class="muted">Wire runtime ownership points so dialogue requests, UI, and participants can communicate in play sessions.</p>
+		</header>
+
+		<div class="card">
+			<h2>What You Will Learn</h2>
+			<ul>
+				<li>Which runtime actors/components are mandatory for an end-to-end interaction.</li>
+				<li>How to place participants and verify registration.</li>
+				<li>How world settings impact dialogue startup behavior.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>When To Use This</h2>
+			<p>After settings and tags are stable, before graph authoring deep dive. Runtime wiring should be ready before content authoring scales up.</p>
+		</div>
+
+		<div class="card">
+			<h2>Prerequisites</h2>
+			<ul>
+				<li>Playable test level available.</li>
+				<li>GameMode and HUD classes can be edited.</li>
+				<li>Player and NPC actors are available for participant setup.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>Step-by-Step Workflow</h2>
+			<ol>
+				<li>Open World Settings and validate active GameMode for test map.</li>
+				<li>Configure HUD/UI integration expected by your dialogue flow.</li>
+				<li>Add required participant component to actors that can speak or receive dialogue.</li>
+				<li>Run PIE and trigger one interaction from player to NPC.</li>
+			</ol>
+			<p>
+				<a href="#" data-mds-type="worldsettings" data-mds-target="open">Open World Settings</a><br />
+				<a href="#" data-mds-type="folder" data-mds-target="/MounteaDialogueSystem/Example">Open Example Content Folder</a>
+			</p>
+		</div>
+
+		<div class="card">
+			<h2>Validation Checklist</h2>
+			<ul>
+				<li>Participant component exists on all expected actors.</li>
+				<li>HUD/UI receives dialogue events at runtime.</li>
+				<li>No silent failures when initiating first interaction.</li>
+			</ul>
+		</div>
+
+		<div class="card">
+			<h2>Common Mistakes + Fixes</h2>
+			<p><strong>Mistake:</strong> testing in a map with different GameMode than configured setup map.<br /><strong>Fix:</strong> verify World Settings per map.</p>
+			<p><strong>Mistake:</strong> participant component added only to NPC.<br /><strong>Fix:</strong> confirm both interaction sides are wired where required by your flow.</p>
+		</div>
+
+		<div class="card">
+			<h2>Next Chapter</h2>
+			<p>
+				<a href="#" data-mds-type="page" data-mds-target="3">Back To Chapter 4</a><br />
+				<a href="#" data-mds-type="page" data-mds-target="5">Go To Chapter 6: Building Your First Dialogue Graph</a>
+			</p>
+		</div>
+	</section>
+</body>
+</html>

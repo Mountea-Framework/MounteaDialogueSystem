@@ -2,6 +2,138 @@
 
 #include "Helpers/MounteaDialogueManagerStatics.h"
 
+#include "GameFramework/Controller.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerState.h"
+#include "Engine/World.h"
+#include "Graph/MounteaDialogueGraph.h"
+#include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
+#include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
+
+UMounteaDialogueGraph* UMounteaDialogueManagerStatics::ResolveGraphByGuid(
+	const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants,
+	const FGuid& GraphGuid)
+{
+	if (!GraphGuid.IsValid())
+		return nullptr;
+
+	TArray<UMounteaDialogueGraph*> graphsToVisit;
+	TSet<const UMounteaDialogueGraph*> visitedGraphs;
+
+	for (const auto& participant : Participants)
+	{
+		if (!participant.GetObject() || !participant.GetInterface())
+			continue;
+
+		UMounteaDialogueGraph* participantGraph = participant->Execute_GetDialogueGraph(participant.GetObject());
+		if (IsValid(participantGraph))
+			graphsToVisit.AddUnique(participantGraph);
+	}
+
+	while (graphsToVisit.Num() > 0)
+	{
+		UMounteaDialogueGraph* currentGraph = graphsToVisit.Pop(EAllowShrinking::No);
+		if (!IsValid(currentGraph) || visitedGraphs.Contains(currentGraph))
+			continue;
+
+		visitedGraphs.Add(currentGraph);
+
+		if (currentGraph->GetGraphGUID() == GraphGuid)
+			return currentGraph;
+
+		const TArray<UMounteaDialogueGraphNode*> allNodes = currentGraph->GetAllNodes();
+		for (const auto* node : allNodes)
+		{
+			const auto* openChildNode = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(node);
+			if (!IsValid(openChildNode))
+				continue;
+
+			UMounteaDialogueGraph* childGraph = openChildNode->TargetDialogue.LoadSynchronous();
+			if (IsValid(childGraph) && !visitedGraphs.Contains(childGraph))
+				graphsToVisit.AddUnique(childGraph);
+		}
+	}
+
+	return nullptr;
+}
+
+TScriptInterface<IMounteaDialogueManagerInterface> UMounteaDialogueManagerStatics::FindDialogueManagerInterface(UObject* ManagerActor, bool& bResult)
+{
+	bResult = false;
+
+	if (!ManagerActor)
+		return nullptr;
+
+	TScriptInterface<IMounteaDialogueManagerInterface> resultValue;
+	if (ManagerActor->Implements<UMounteaDialogueManagerInterface>())
+	{
+		resultValue = ManagerActor;
+		bResult = true;
+		return resultValue;
+	}
+
+	AActor* dialogueManagerActor = Cast<AActor>(ManagerActor);
+	if (!IsValid(dialogueManagerActor))
+		return nullptr;
+
+	TArray<UActorComponent*> actorComponents = dialogueManagerActor->GetComponentsByInterface(UMounteaDialogueManagerInterface::StaticClass());
+	if (!actorComponents.Num() == 0)
+	{
+		resultValue = actorComponents[0];
+		bResult = true;
+		return resultValue;
+	}
+	
+	return nullptr;
+}
+
+TScriptInterface<IMounteaDialogueManagerInterface> UMounteaDialogueManagerStatics::FindDialogueManagerInterface(AActor* CandidateActor, int& SearchDepth)
+{
+	if (!IsValid(CandidateActor))
+		return nullptr;
+
+	if (SearchDepth >= 4)
+		return nullptr;
+	
+	bool bLuckyShot = false;
+	auto returnvalue = FindDialogueManagerInterface(CandidateActor, bLuckyShot);
+	if (bLuckyShot)
+		return returnvalue;
+	
+	if (auto playerState = Cast<APlayerState>(CandidateActor))
+		return FindDialogueManagerInterface(playerState, bLuckyShot);
+	
+	if (const APlayerController* PlayerController = Cast<APlayerController>(CandidateActor))
+	{
+		if (APlayerState* playerState = PlayerController->PlayerState)
+		{
+			SearchDepth++;
+			return FindDialogueManagerInterface(playerState, SearchDepth);
+		}
+	}
+	
+	if (const AController* Controller = Cast<AController>(CandidateActor))
+	{
+		if (APlayerState* playerState = Controller->PlayerState)
+		{
+			SearchDepth++;
+			return FindDialogueManagerInterface(playerState, SearchDepth);
+		}
+	}
+	
+	if (const APawn* Pawn = Cast<APawn>(CandidateActor))
+	{
+		if (APlayerState* playerState = Pawn->GetPlayerState())
+		{
+			SearchDepth++;
+			return FindDialogueManagerInterface(playerState, SearchDepth);
+		}
+	}
+	
+	return nullptr;
+}
+
 AActor* UMounteaDialogueManagerStatics::GetOwningActor(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
 {
 	return Target.GetObject() ? Target->Execute_GetOwningActor(Target.GetObject()) : nullptr;
@@ -32,44 +164,77 @@ EDialogueManagerType UMounteaDialogueManagerStatics::GetDialogueManagerType(cons
 	return Target.GetObject() ? Target->GetDialogueManagerType() : EDialogueManagerType::Default;
 }
 
-bool UMounteaDialogueManagerStatics::AddDialogueUIObject(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, UObject* NewDialogueObject)
+bool UMounteaDialogueManagerStatics::IsServer(const AActor* Owner)
 {
-	return Target.GetObject() ? Target->Execute_AddDialogueUIObject(Target.GetObject(), NewDialogueObject) : false;
+	if (!IsValid(Owner))
+		return false;
+
+	const UWorld* world = Owner->GetWorld();
+	return IsValid(world) && world->GetNetMode() != NM_Client;
 }
 
-bool UMounteaDialogueManagerStatics::AddDialogueUIObjects(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const TArray<UObject*>& NewDialogueObjects)
+bool UMounteaDialogueManagerStatics::IsLocalPlayer(const AActor* Owner)
 {
-	return Target.GetObject() ? Target->Execute_AddDialogueUIObjects(Target.GetObject(), NewDialogueObjects) : false;
+	if (!IsValid(Owner))
+		return false;
+
+	const UWorld* world = Owner->GetWorld();
+	if (IsValid(world) && world->GetNetMode() == NM_Standalone)
+		return true;
+
+	if (const APlayerController* playerController = Cast<APlayerController>(Owner))
+		return playerController->IsLocalController();
+
+	if (const AController* controller = Cast<AController>(Owner))
+		return controller->IsLocalController();
+
+	if (const APlayerState* playerState = Cast<APlayerState>(Owner))
+	{
+		if (const APlayerController* directController = playerState->GetPlayerController())
+		{
+			if (directController->IsLocalController())
+				return true;
+		}
+
+		if (IsValid(world))
+		{
+			for (FConstPlayerControllerIterator It = world->GetPlayerControllerIterator(); It; ++It)
+			{
+				const APlayerController* playerController = It->Get();
+				if (!IsValid(playerController) || !playerController->IsLocalController())
+					continue;
+
+				if (playerController->PlayerState == playerState)
+					return true;
+			}
+		}
+	}
+
+	const APawn* pawn = Cast<APawn>(Owner);
+	if (IsValid(pawn))
+	{
+		if (pawn->IsLocallyControlled())
+			return true;
+
+		const AController* pawnController = pawn->GetController();
+		const bool isPawnControllerLocal = IsValid(pawnController) && pawnController->IsLocalController();
+		return isPawnControllerLocal;
+	}
+
+	if (Owner->HasLocalNetOwner())
+		return true;
+
+	return false;
 }
 
-bool UMounteaDialogueManagerStatics::RemoveDialogueUIObject(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, UObject* DialogueObjectToRemove)
+bool UMounteaDialogueManagerStatics::ShouldExecuteCosmetics(const AActor* Owner)
 {
-	return Target.GetObject() ? Target->Execute_RemoveDialogueUIObject(Target.GetObject(), DialogueObjectToRemove) : false;
-}
-
-bool UMounteaDialogueManagerStatics::RemoveDialogueUIObjects(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const TArray<UObject*>& DialogueObjectsToRemove)
-{
-	return Target.GetObject() ? Target->Execute_RemoveDialogueUIObjects(Target.GetObject(), DialogueObjectsToRemove) : false;
-}
-
-void UMounteaDialogueManagerStatics::SetDialogueUIObjects(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const TArray<UObject*>& NewDialogueObjects)
-{
-	if (Target.GetObject()) Target->Execute_SetDialogueUIObjects(Target.GetObject(), NewDialogueObjects);
-}
-
-void UMounteaDialogueManagerStatics::ResetDialogueUIObjects(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
-{
-	if (Target.GetObject()) Target->Execute_ResetDialogueUIObjects(Target.GetObject());
+	return IsLocalPlayer(Owner);
 }
 
 void UMounteaDialogueManagerStatics::SelectNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const FGuid& NodeGUID)
 {
 	if (Target.GetObject()) Target->Execute_SelectNode(Target.GetObject(), NodeGUID);
-}
-
-void UMounteaDialogueManagerStatics::UpdateWorldDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const FString& Command)
-{
-	if (Target.GetObject()) Target->Execute_UpdateWorldDialogueUI(Target.GetObject(), Command);
 }
 
 void UMounteaDialogueManagerStatics::PrepareNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
@@ -97,50 +262,6 @@ void UMounteaDialogueManagerStatics::RequestStartDialogue(const TScriptInterface
 	if (Target.GetObject()) Target->Execute_RequestStartDialogue(Target.GetObject(), DialogueInitiator, InitialParticipants);
 }
 
-bool UMounteaDialogueManagerStatics::CreateDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, FString& Message)
-{
-	return Target.GetObject() ? Target->Execute_CreateDialogueUI(Target.GetObject(), Message) : false;
-}
-
-bool UMounteaDialogueManagerStatics::UpdateDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, FString& Message, const FString& Command)
-{
-	return Target.GetObject() ? Target->Execute_UpdateDialogueUI(Target.GetObject(), Message, Command) : false;
-}
-
-bool UMounteaDialogueManagerStatics::CloseDialogueUI(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
-{
-	return Target.GetObject() ? Target->Execute_CloseDialogueUI(Target.GetObject()) : false;
-}
-
-void UMounteaDialogueManagerStatics::ExecuteWidgetCommand(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const FString& Command)
-{
-	if (Target.GetObject()) Target->Execute_ExecuteWidgetCommand(Target.GetObject(), Command);
-}
-
-void UMounteaDialogueManagerStatics::SetDialogueWidget(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, UUserWidget* DialogueUIPtr)
-{
-	if (Target.GetObject()) Target->Execute_SetDialogueWidget(Target.GetObject(), DialogueUIPtr);
-}
-
-UUserWidget* UMounteaDialogueManagerStatics::GetDialogueWidget(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
-{
-	return Target.GetObject() ? Target->Execute_GetDialogueWidget(Target.GetObject()) : nullptr;
-}
-
-TSubclassOf<UUserWidget> UMounteaDialogueManagerStatics::GetDialogueWidgetClass(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
-{
-	return Target.GetObject() ? Target->GetDialogueWidgetClass() : nullptr;
-}
-
-int32 UMounteaDialogueManagerStatics::GetDialogueWidgetZOrder(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
-{
-	return Target.GetObject() ? Target->Execute_GetDialogueWidgetZOrder(Target.GetObject()) : -1;
-}
-
-void UMounteaDialogueManagerStatics::SetDialogueWidgetZOrder(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const int32 NewZOrder)
-{
-	if (Target.GetObject()) Target->Execute_SetDialogueWidgetZOrder(Target.GetObject(), NewZOrder);
-}
 
 void UMounteaDialogueManagerStatics::ProcessDialogueRow(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
 {

@@ -119,6 +119,12 @@ private:
 	void AutoArrange();
 	bool CanAutoArrange() const;
 
+	void RecenterGraph();
+	bool CanRecenterGraph() const;
+
+	void FitGraphToView();
+	bool CanFitGraphToView() const;
+
 	void ValidateGraph();
 	bool CanValidateGraph() const;
 

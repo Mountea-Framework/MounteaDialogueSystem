@@ -11,6 +11,9 @@
 class IMounteaDialogueManagerInterface;
 class IMounteaDialogueParticipantInterface;
 
+class UMounteaDialogueGraph;
+class UMounteaDialogueGraphNode;
+
 UENUM(BlueprintType)
 enum class EDecoratorState : uint8
 {
@@ -26,7 +29,8 @@ enum class EDecoratorState : uint8
  * Decorators are instanced and exist only as "triggers".
  * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
  */
-UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea, Dialogue"))
+UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), 
+	AutoExpandCategories=("Mountea, Dialogue"), HideCategories=("Private"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecoratorBase : public UObject, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()
@@ -65,6 +69,15 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator")
 	FString GetDecoratorDocumentationLink() const;
+
+	/**
+	 * Returns the stable GUID for this decorator instance.
+	 * Set from the Dialoguer import ID so instances can be tracked across reimports.
+	 */
+	UFUNCTION(BlueprintPure, Category="Mountea|Dialogue|Decorator",
+		meta=(CustomTag="MounteaK2Getter"))
+	FGuid GetDecoratorGUID() const;
+	
 	virtual FString GetDecoratorDocumentationLink_Implementation() const
 	{
 		return TEXT("https://mountea.tools/docs/DialogueSystem/DialogueDecorators/DialogueDecorator");
@@ -124,8 +137,8 @@ public:
 	
 	/**
 	 * Evaluates the Decorator.
-	 * Called for each Node it is attached to.
-	 * Could enhance Node's 'CanStartNode'. Example would be: BP_RequireItem decorator, which would return true if Player has specific Item in inventory. Otherwise it returns false and its Node is not available in Selection of Answers.
+	 * Called for informational purposes — does NOT gate node traversal.
+	 * Use edge conditions (UMounteaDialogueConditionBase) to control whether a child node is reachable.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Decorator")
 	bool EvaluateDecorator();
@@ -230,23 +243,32 @@ public:
 	
 #pragma endregion
 	
-protected:
+public:	
 
-	UPROPERTY(BlueprintReadOnly, Category="Private")
+	UPROPERTY(BlueprintReadOnly, Category="Private",
+		meta=(NoResetToDefault))
 	FText DecoratorName;
 
-	UPROPERTY(BlueprintReadOnly, Category="Private")
+	UPROPERTY(BlueprintReadOnly, Category="Private",
+		meta=(NoResetToDefault))
 	TSet<TSoftClassPtr<UMounteaDialogueGraphNode>> BlacklistedNodes;
 
 	UPROPERTY()
-	EDecoratorState	DecoratorState	=	EDecoratorState::Uninitialized;
+	EDecoratorState	DecoratorState = EDecoratorState::Uninitialized;
 
 	UPROPERTY()
-	TObjectPtr<UWorld>	OwningWorld	=	nullptr;
+	TObjectPtr<UWorld> OwningWorld	= nullptr;
+	
 	UPROPERTY()
-	TScriptInterface<IMounteaDialogueParticipantInterface>	OwnerParticipant	=	nullptr;
-	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue|Decorator", AdvancedDisplay)
-	TScriptInterface<IMounteaDialogueManagerInterface>		OwningManager		=	nullptr;
+	TScriptInterface<IMounteaDialogueParticipantInterface> OwnerParticipant = nullptr;
+	
+	UPROPERTY(BlueprintReadOnly, Category="Private", AdvancedDisplay,
+		meta=(NoResetToDefault))
+	TScriptInterface<IMounteaDialogueManagerInterface> OwningManager = nullptr;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Private", AdvancedDisplay,
+		meta=(NoResetToDefault))
+	FGuid DecoratorGUID;
 };
 
 
@@ -281,8 +303,12 @@ public:
 	 * Those Decorators are instanced and exist only as "triggers".
 	 * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "Mountea|Dialogue", meta=(NoResetToDefault, AllowAbstract = "false", BlueprintBaseOnly = "true"))
-	TObjectPtr<UMounteaDialogueDecoratorBase>				DecoratorType		= nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, NoClear,
+		Category="Decorator",
+		meta=(NoResetToDefault),
+		meta=(ShowInnerProperties),
+		meta=(AllowAbstract="false"))
+	TObjectPtr<UMounteaDialogueDecoratorBase> DecoratorType = nullptr;
 
 public:
 

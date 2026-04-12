@@ -37,16 +37,41 @@ public:
 	UMounteaDialogueConfiguration();
 
 public:
+	
+	/**
+	 * A DataTable asset that holds information about the dialogue participants in the Mountea Dialogue System.
+	 *
+	 * The asset must conform to the row structure specified by the `DialogueParticipant` structure to ensure proper data handling.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "🗣 Participants", 
+		meta=(RequiredAssetDataTags = "RowStructure=/Script/MounteaDialogueSystem.DialogueParticipant"),
+		meta=(NoResetToDefault))
+	TArray<TSoftObjectPtr<UDataTable>> DialogueParticipantsTables;
 
 	/**
 	 * User Widget class to be set as default one if requested.
 	 * ❗ Must implement MounteaDialogueWBPInterface❗
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "🖥 UserInterface", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
+	UPROPERTY(EditDefaultsOnly, Category = "🖥 UserInterface", 
+		meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"),
+		meta=(NoResetToDefault))
 	TSoftClassPtr<UUserWidget> DefaultDialogueWidgetClass;
 
 	/**
+	 * Default Z-order for the dialogue widget when added to screen via
+	 * UMounteaDialogueParticipantUserInterfaceComponent.
+	 * Higher values render on top of elements with lower Z-orders.
+	 */
+	UPROPERTY(EditDefaultsOnly,
+		Category = "🖥 UserInterface",
+		meta=(UIMin=0, ClampMin=0),
+		meta=(NoResetToDefault))
+	int32 DefaultDialogueWidgetZOrder = 12;
+
+	/**
 	 * Sets Input mode when in Dialogue.
+	 * Not implemented in any way in the system, only provides single-point-of-truth for
+	 * your custom implementations.
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "🖥 UserInterface")
 	EMounteaInputMode InputMode;
@@ -113,12 +138,16 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "💬 Subtitles")
 	TMap<FUIRowID, FMounteaSubtitlesSettings> SubtitlesSettingsOverrides;
 
+public:
+
+	int32 GetDefaultDialogueWidgetZOrder() const { return DefaultDialogueWidgetZOrder; }
+
 protected:
-	
+
 #if WITH_EDITOR
 	static FSlateFontInfo SetupDefaultFontSettings();
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 #endif
-	
-	
+
+
 };

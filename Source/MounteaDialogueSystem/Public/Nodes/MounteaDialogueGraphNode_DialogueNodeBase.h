@@ -6,6 +6,7 @@
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Engine/DataTable.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Interfaces/Nodes/MounteaDialogueSpeechDataInterface.h"
 #include "UObject/Object.h"
 #include "MounteaDialogueGraphNode_DialogueNodeBase.generated.h"
 
@@ -16,8 +17,9 @@
  * Enhances 'MounteaDialogueGraphNode' Base class with Dialogue data.
  * Provides DataTable and Row options that define the Dialogue data which will be displayed in UI.
  */
-UCLASS(Abstract, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"))
-class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_DialogueNodeBase : public UMounteaDialogueGraphNode
+UCLASS(Abstract, ClassGroup=("Mountea|Dialogue"), 
+	AutoExpandCategories=("Previews"))
+class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_DialogueNodeBase : public UMounteaDialogueGraphNode, public IMounteaDialogueSpeechDataInterface
 {
 	GENERATED_BODY()
 
@@ -28,8 +30,10 @@ public:
 public:
 	
 	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
-
 	virtual void PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
+	
+	virtual FDialogueRow GetSpeechData_Implementation() const override;
+	virtual bool SetSpeechData_Implementation(const FDialogueRow& NewSpeechData) override;
 
 	/**
 	 * Returns the Dialogue Data Table for this graph node.
@@ -37,7 +41,8 @@ public:
 	 *
 	 * @return The Dialogue Data Table for this graph node.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mountea|Dialogue|Decorator", 
+		meta=(CustomTag="MounteaK2Getter"))
 	virtual UDataTable* GetDataTable() const;
 
 	/**
@@ -46,7 +51,8 @@ public:
 	 *
 	 * @return The Dialogue Data Row name.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mountea|Dialogue|Decorator", 
+		meta=(CustomTag="MounteaK2Getter"))
 	virtual FName GetRowName() const
 	{ return RowName; }
 
@@ -54,7 +60,8 @@ public:
 	 * Sets the Dialogue Data Table for this graph node.
 	 * @param NewDataTable The new DataTable to set.
 	 */
-	UFUNCTION(/*BlueprintCallable,*/ Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(/*BlueprintCallable,*/ Category = "Mountea|Dialogue|Decorator", 
+		meta=(CustomTag="MounteaK2Setter"))
 	virtual void SetDataTable(UDataTable* NewDataTable)
 	{
 		DataTable = NewDataTable;
@@ -64,7 +71,8 @@ public:
 	 * Sets the Dialogue Data Row name.
 	 * @param NewRowName The new row name to set.
 	 */
-	UFUNCTION(/*BlueprintCallable,*/ Category = "Mountea|Dialogue|Decorator", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(/*BlueprintCallable,*/ Category = "Mountea|Dialogue|Decorator", 
+		meta=(CustomTag="MounteaK2Setter"))
 	virtual void SetRowName(const FName NewRowName)
 	{
 		RowName = NewRowName;
@@ -79,25 +87,29 @@ public:
 	/**
 	 * Shows read-only Texts with localization of selected Dialogue Row.
 	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Base", meta=(MultiLine=true, ShowOnlyInnerProperties))
+	UPROPERTY(Transient, VisibleAnywhere, Category="Base", 
+		meta=(MultiLine=true, ShowOnlyInnerProperties),
+		meta=(HiddenInGraph))
 	TArray<FText> Preview;
 
 	FSimpleDelegate PreviewsUpdated;
 
 #endif
 
-protected:
+public:
 
 	/**
 	 * The data table containing the dialogue rows.
 	 * ❗ Strongly suggested to use 'DialogueRow' based Data Tables
 	 */
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail=false, NoResetToDefault, RequiredAssetDataTags = "RowStructure=/Script/MounteaDialogueSystem.DialogueRow"))
-	TObjectPtr<UDataTable>	DataTable;
+	UPROPERTY(SaveGame, Category="Dialogue", EditAnywhere, BlueprintReadOnly, 
+		meta=(DisplayThumbnail=false, NoResetToDefault, RequiredAssetDataTags = "RowStructure=/Script/MounteaDialogueSystem.DialogueRow"))
+	TObjectPtr<UDataTable> DataTable;
 
 	/** Name of row in the table that we want */
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
-	FName					RowName;
+	UPROPERTY(SaveGame, Category="Dialogue", EditAnywhere, BlueprintReadOnly, 
+		meta=(GetOptions ="GetRowNames", NoResetToDefault, EditCondition="DataTable!=nullptr"))
+	FName RowName;
 
 	/**
 	 * Flag defining how the Participant is searched for.
@@ -117,8 +129,10 @@ protected:
 	 * ❗ New feature in version 1.0.5.X.
 	 * ❔ Each unique dialogue Participant should be using different Tag, if generic, then use something like `Dialogue.NPC`
 	 */
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault))
-	uint8				bUseGameplayTags : 1;
+	UPROPERTY(SaveGame, Category="Private", BlueprintReadOnly, 
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
+	uint8 bUseGameplayTags : 1;
 
 #if WITH_EDITOR
 	
@@ -131,7 +145,6 @@ public:
 #endif
 
 #if WITH_EDITORONLY_DATA
-public:
 	virtual void UpdatePreviews();
 #endif
 
@@ -141,9 +154,7 @@ private:
 	TArray<FName> GetRowNames() const
 	{
 		if (DataTable)
-		{
 			return DataTable->GetRowNames();
-		}
 
 		return TArray<FName>();
 	}

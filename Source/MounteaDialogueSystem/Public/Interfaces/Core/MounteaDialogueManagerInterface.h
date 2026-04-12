@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
+#include "Data/MounteaDialogueUITypes.h"
 #include "UObject/Interface.h"
 #include "MounteaDialogueManagerInterface.generated.h"
 
@@ -51,6 +52,12 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueFailed, const FString&, Err
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueManagerStateChanged, const EDialogueManagerState&, NewState);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDialogueWidgetCommand, const TScriptInterface<IMounteaDialogueManagerInterface>&, DialogueManager, const FString&, WidgetCommand);
+
+/**
+ * Fired on the owning client when a UI signal arrives via Client_DispatchUISignal.
+ * Bound by UMounteaDialogueParticipantUserInterfaceComponent instances.
+ */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogueUISignalEvent, const FMounteaDialogueUISignal&, Signal);
 
 /**
  * Mountea Dialogue Manager Interface.
@@ -145,8 +152,6 @@ public:
 	void RequestStartDialogue(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants);
 	virtual void RequestStartDialogue_Implementation(AActor* DialogueInitiator, const FDialogueParticipants& InitialParticipants) = 0;
 
-	virtual void DialogueStartRequestReceived(const bool bResult, const FString& ResultMessage) = 0;
-
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	void StartDialogue();
 	virtual void StartDialogue_Implementation() = 0;
@@ -162,166 +167,105 @@ public:
 	void CloseDialogue();
 	virtual void CloseDialogue_Implementation() = 0;
 
-	// --- World UI functions ------------------------------
-	
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	// --- World UI functions (deprecated — use UMounteaDialogueParticipantUserInterfaceComponent) ---
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager",
+		meta=(DeprecatedFunction),
+		meta=(DeprecationMessage="Use IMounteaDialogueParticipantUIInterface instead."))
 	void UpdateWorldDialogueUI(const FString& Command);
 	virtual void UpdateWorldDialogueUI_Implementation(const FString& Command) = 0;
 
-	/**
-	 * Adds a single dialogue UI object to the manager.
-	 * @param NewDialogueObject The object to add.
-	 * @return True if the object was successfully added, false otherwise.
-	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager",
+		meta=(DeprecatedFunction),
+		meta=(DeprecationMessage="Use IMounteaDialogueParticipantUIInterface instead."))
 	bool AddDialogueUIObject(UObject* NewDialogueObject);
 	virtual bool AddDialogueUIObject_Implementation(UObject* NewDialogueObject) = 0;
 
-	/**
-	 * Adds an array of dialogue UI objects to the manager.
-	 * @param NewDialogueObjects Array of objects to add.
-	 * @return Number of objects successfully added.
-	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager",
+		meta=(DeprecatedFunction),
+		meta=(DeprecationMessage="Use IMounteaDialogueParticipantUIInterface instead."))
 	bool AddDialogueUIObjects(const TArray<UObject* >& NewDialogueObjects);
 	virtual bool AddDialogueUIObjects_Implementation(const TArray<UObject* >& NewDialogueObjects) = 0;
 
-	/**
-	 * Removes a single dialogue UI object from the manager.
-	 * @param DialogueObjectToRemove The object to remove.
-	 * @return True if the object was successfully removed, false otherwise.
-	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager",
+		meta=(DeprecatedFunction),
+		meta=(DeprecationMessage="Use IMounteaDialogueParticipantUIInterface instead."))
 	bool RemoveDialogueUIObject(UObject* DialogueObjectToRemove);
 	virtual bool RemoveDialogueUIObject_Implementation(UObject* DialogueObjectToRemove) = 0;
 
-	/**
-	 * Removes multiple dialogue UI objects from the manager.
-	 * @param DialogueObjectsToRemove Array of objects to remove.
-	 * @return Number of objects successfully removed.
-	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager",
+		meta=(DeprecatedFunction),
+		meta=(DeprecationMessage="Use IMounteaDialogueParticipantUIInterface instead."))
 	bool RemoveDialogueUIObjects(const TArray<UObject* >& DialogueObjectsToRemove);
 	virtual bool RemoveDialogueUIObjects_Implementation(const TArray<UObject* >& DialogueObjectsToRemove) = 0;
 
-	/**
-	 * Sets the entire array of dialogue UI objects, replacing any existing objects.
-	 * @param NewDialogueObjects The new array of dialogue UI objects.
-	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager",
+		meta=(DeprecatedFunction),
+		meta=(DeprecationMessage="Use IMounteaDialogueParticipantUIInterface instead."))
 	void SetDialogueUIObjects(const TArray<UObject* >& NewDialogueObjects);
 	virtual void SetDialogueUIObjects_Implementation(const TArray<UObject* >& NewDialogueObjects) = 0;
 
-	/**
-	 * Resets the dialogue manager, removing all dialogue UI objects.
-	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager",
+		meta=(DeprecatedFunction),
+		meta=(DeprecationMessage="Use IMounteaDialogueParticipantUIInterface instead."))
 	void ResetDialogueUIObjects();
 	virtual void ResetDialogueUIObjects_Implementation() = 0;
-	
-	// --- Screen UI functions ------------------------------
 
-	/**
-	 * Tries to Create Dialogue UI.
-	 * This function servers a purpose to try showing Dialogue UI to player.
-	 * ❔ If this function fails, Message will be populated with error message explaining what went wrong.
-	 * 
-	 * @param Message InMessage to be populated with error message explaining why returns false
-	 * @return true if UI can be added to screen, false if cannot
-	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	// --- Screen UI functions (deprecated — use UMounteaDialogueParticipantUserInterfaceComponent) ---
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager",
+		meta=(DeprecatedFunction),
+		meta=(DeprecationMessage="Use IMounteaDialogueParticipantUIInterface instead."))
 	bool CreateDialogueUI(FString& Message);
 	virtual bool CreateDialogueUI_Implementation(FString& Message) = 0;
 
-	/**
-	 * Tries to Update Dialogue UI.
-	 * This function servers a purpose to try update Dialogue UI to player using given command.
-	 * ❔ If this function fails, Message will be populated with error message explaining what went wrong.
-	 * 
-	 * @param Message				InMessage to be populated with error message explaining why returns false
-	 * @param Command				Command to be processed.
-	 * @return								true if UI can be update, false if cannot
-	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager",
+		meta=(DeprecatedFunction),
+		meta=(DeprecationMessage="Use IMounteaDialogueParticipantUIInterface instead."))
 	bool UpdateDialogueUI(FString& Message, const FString& Command);
 	virtual bool UpdateDialogueUI_Implementation(FString& Message, const FString& Command) = 0;
 
-	/**
-	 * Tries to Close Dialogue UI.
-	 * This function servers a purpose to try tear down Dialogue UI from player.
-	 * 
-	 * @return true if UI can be removed from screen, false if cannot
-	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager",
+		meta=(DeprecatedFunction),
+		meta=(DeprecationMessage="Use IMounteaDialogueParticipantUIInterface instead."))
 	bool CloseDialogueUI();
 	virtual bool CloseDialogueUI_Implementation() = 0;
 
-	// --- General UI functions ------------------------------
+	// --- General UI functions (deprecated — use UMounteaDialogueParticipantUserInterfaceComponent) ---
 
-	/**
-	 * Executes a specified command on a dialogue UI widget within the target object, if it supports the required interface.
-	 * 
-	 * This function allows developers to send specific commands to a dialogue widget, enabling customization or control over UI
-	 * elements, provided the target implements the MounteaDialogueManagerInterface.
-	 *
-	 * @param Command	A string representing the command to be executed on the target widget (e.g., "Open", "Close", "Refresh").
-	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager",
+		meta=(DeprecatedFunction),
+		meta=(DeprecationMessage="Use IMounteaDialogueParticipantUIInterface instead."))
 	void ExecuteWidgetCommand(const FString& Command);
 	virtual void ExecuteWidgetCommand_Implementation(const FString& Command) = 0;
 
-	/**
-	 * Gets the widget class used to display Dialogue UI.
-	 * 
-	 * @return The widget class used to display Dialogue UI.
-	 */
+	UE_DEPRECATED(5.5, "Use UMounteaDialogueConfiguration::DefaultDialogueWidgetClass instead.")
 	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const = 0;
-	
-	/**
-	 * Sets the widget class for the Dialogue UI.
-	 * ❗ This is a pure virtual function that must be implemented in derived classes.
-	 *
-	 * @param NewWidgetClass	The new widget class to set.
-	 */
+
+	UE_DEPRECATED(5.5, "Use UMounteaDialogueConfiguration::DefaultDialogueWidgetClass instead.")
 	virtual void SetDialogueWidgetClass(TSubclassOf<UUserWidget> NewWidgetClass) = 0;
-	
-	/**
-	 * Sets Dialogue UI pointer.
-	 * 
-	 * ❔ Using null value resets saved value
-	 * @param DialogueUIPtr	UserWidget pointer to be saved as Dialogue UI
-	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager",
+		meta=(DeprecatedFunction),
+		meta=(DeprecationMessage="Use IMounteaDialogueParticipantUIInterface instead."))
 	void SetDialogueWidget(UUserWidget* DialogueUIPtr);
 	virtual void SetDialogueWidget_Implementation(UUserWidget* DialogueUIPtr) = 0;
 
-	/**
-	 * Returns the widget used to display the current dialogue.
-	 *
-	 * @return The widget used to display the current dialogue.
-	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager",
+		meta=(DeprecatedFunction),
+		meta=(DeprecationMessage="Use IMounteaDialogueParticipantUIInterface instead."))
 	UUserWidget* GetDialogueWidget() const;
 	virtual UUserWidget* GetDialogueWidget_Implementation() const = 0;
 
-	/**
-	 * Retrieves the Z-order of the dialogue widget.
-	 * The Z-order determines the rendering order of the widget, with higher values rendering on top of lower values.
-	 *
-	 * @return The current Z-order value of the dialogue widget.
-	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager",
+		meta=(DeprecatedFunction),
+		meta=(DeprecationMessage="Use UMounteaDialogueConfiguration::DefaultDialogueWidgetZOrder instead."))
 	int32 GetDialogueWidgetZOrder() const;
 	virtual int32 GetDialogueWidgetZOrder_Implementation() const = 0;
 
-	/**
-	 * Sets a new Z-order for the dialogue widget.
-	 * The Z-order determines the rendering order of the widget, with higher values rendering on top of lower values.
-	 * ❗ Runtime changes are not allowed!
-	 *
-	 * @param NewZOrder The new Z-order value to be applied to the dialogue widget.
-	 */
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager",
+		meta=(DeprecatedFunction),
+		meta=(DeprecationMessage="Use UMounteaDialogueConfiguration::DefaultDialogueWidgetZOrder instead."))
 	void SetDialogueWidgetZOrder(const int32 NewZOrder);
 	virtual void SetDialogueWidgetZOrder_Implementation(const int32 NewZOrder) = 0;
 
@@ -394,8 +338,6 @@ public:
 	void SkipDialogueRow();
 	virtual void SkipDialogueRow_Implementation() = 0;
 
-	virtual void SyncContext(const FMounteaDialogueContextReplicatedStruct& Context) = 0;
-
 public:
 
 	virtual FDialogueStartRequested& GetDialogueStartRequestedEventHandle() = 0;
@@ -420,4 +362,6 @@ public:
 	virtual FDialogueWidgetCommand& GetDialogueWidgetCommandHandle() = 0;
 
 	virtual FTimerHandle& GetDialogueRowTimerHandle() = 0;
+
+	virtual FDialogueUISignalEvent& GetDialogueUISignalEventHandle() = 0;
 };

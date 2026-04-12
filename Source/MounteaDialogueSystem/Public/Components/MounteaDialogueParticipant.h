@@ -17,7 +17,10 @@ class UMounteaDialogueGraphNode_DialogueNodeBase;
  * ❔ This Component allows any Actor to be Dialogue Participant.
  * ❗ Requires Dialogue Graph to work.
  */
-UCLASS(ClassGroup=(Mountea), Blueprintable, hideCategories=(Collision, AssetUserData, Cooking, Activation, Rendering, Sockets), AutoExpandCategories=("Mountea", "Dialogue", "Mountea|Dialogue"), meta=(BlueprintSpawnableComponent, DisplayName = "Mountea Dialogue Participant"))
+UCLASS(ClassGroup=(Mountea), Blueprintable, 
+	hideCategories=(Collision, AssetUserData, Cooking, Activation, Rendering, Sockets), 
+	AutoExpandCategories=("Mountea", "Dialogue"), 
+	meta=(BlueprintSpawnableComponent, DisplayName = "Mountea Dialogue Participant"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueParticipant : public UActorComponent, public IMounteaDialogueParticipantInterface, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()
@@ -31,8 +34,6 @@ protected:
 	virtual void BeginPlay() override;	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-#pragma region Functions
-
 public:
 	
 	virtual void InitializeParticipant_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
@@ -43,7 +44,8 @@ public:
 	 * 
 	 * @return The found audio component, or nullptr if not found.
  	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", 
+		meta=(CustomTag="MounteaK2Getter"))
 	UAudioComponent* FindAudioComponent() const;
 	
 	/**
@@ -52,7 +54,8 @@ public:
 	 * @param Arg The Name to search for.
 	 * @return The found audio component, or nullptr if not found.
  	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", 
+		meta=(CustomTag="MounteaK2Getter"))
 	UAudioComponent* FindAudioComponentByName(const FName& Arg) const;
 	
 	/**
@@ -61,7 +64,8 @@ public:
 	 * @param Arg The tag to search for.
 	 * @return The found audio component, or nullptr if not found.
  	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Participant", 
+		meta=(CustomTag="MounteaK2Getter"))
 	UAudioComponent* FindAudioComponentByTag(const FName& Arg) const;
 	
 	virtual void PlayParticipantVoice_Implementation(USoundBase* ParticipantVoice) override;
@@ -72,10 +76,29 @@ protected:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-#pragma endregion 
-
-#pragma region Variables
-
+public:
+	
+	/**
+	 * Defines what Participant this specific one is linked to.
+	 * Participants are stored in Project Configuration.
+	 */
+	UPROPERTY(Replicated, SaveGame, EditAnywhere, Category="Dialogue|Participant",
+		meta=(NoResetToDefault),
+		meta=(GetOptions="GetAvailableParticipants"),
+		DisplayName="Participant")
+	FName ParticipantRow;
+	
+	FDialogueParticipant* ParticipantData;
+	
+	/**
+	 * Gameplay tag identifying this Participant.
+	 * Servers a purpose of being unique ID for Dialogues with multiple Participants.
+	 */
+	UPROPERTY(Replicated, SaveGame, EditAnywhere, Category="Dialogue|Participant", 
+		meta=(NoResetToDefault),
+		meta=(Categories="Mountea_Dialogue,Dialogue"))
+	FGameplayTag ParticipantTag;
+	
 protected:
 
 	/**
@@ -85,7 +108,9 @@ protected:
 	 *
 	 * Set Graph is allowed only outside active Dialogue.
 	 */
-	UPROPERTY(ReplicatedUsing=OnRep_DialogueGraph, SaveGame, EditAnywhere, Category="Mountea|Dialogue", meta=(NoResetToDefault))
+	UPROPERTY(ReplicatedUsing=OnRep_DialogueGraph, SaveGame, EditAnywhere, Category="Dialogue|Graph", 
+		meta=(NoResetToDefault),
+		meta=(ForceShowEngineContent, ForceShowPluginContent))
 	TObjectPtr<UMounteaDialogueGraph> DialogueGraph = nullptr;
 
 	/**
@@ -93,7 +118,8 @@ protected:
 	 * ❔ Is used in BeginPlay to set ParticipantState.
 	 * ❔ Is used as fallback value once Dialogue Ends.
 	 */
-	UPROPERTY(Replicated, SaveGame, EditAnywhere, Category="Mountea|Dialogue|Participant", meta=(NoResetToDefault))
+	UPROPERTY(Replicated, SaveGame, EditAnywhere, Category="Dialogue|Participant", 
+		meta=(NoResetToDefault))
 	EDialogueParticipantState DefaultParticipantState;
 
 	/**
@@ -101,7 +127,8 @@ protected:
 	* ❗ In order to start Dialogue, this value must not be Disabled.
 	* ❔ Can be updated using SetDialogueParticipantState function.
 	*/
-	UPROPERTY(ReplicatedUsing=OnRep_ParticipantState, Transient, VisibleAnywhere,  Category="Mountea|Dialogue|Participant",  meta=(NoResetToDefault))
+	UPROPERTY(ReplicatedUsing=OnRep_ParticipantState, Transient, VisibleAnywhere,  Category="Dialogue|Participant",
+		meta=(NoResetToDefault))
 	EDialogueParticipantState ParticipantState;
 
 	/**
@@ -115,14 +142,17 @@ protected:
 	 *
 	 * This is user friendly way to avoid node 'SetAudioComponent'.
 	 */
-	UPROPERTY(EditAnywhere, Category="Mountea|Dialogue|Participant", meta=(NoResetToDefault))
+	UPROPERTY(EditAnywhere, Category="Dialogue|Participant", 
+		meta=(NoResetToDefault),
+		meta=(GetOptions="GetAvailableAudioComponentsNames"))
 	FName AudioComponentIdentification;
 	
 	/**
 	 * Audio Component for Dialogue Participant Voice.
 	 * ❗ Is populated by FindAudioComponent is called.
 	 */
-	UPROPERTY(SaveGame, VisibleAnywhere, Category="Mountea|Dialogue|Participant", AdvancedDisplay, meta=(DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Dialogue|Participant", AdvancedDisplay, 
+		meta=(DisplayThumbnail=false, NoResetToDefault))
 	TObjectPtr<UAudioComponent> AudioComponent = nullptr;
 	
 	/**
@@ -131,29 +161,34 @@ protected:
 	 * If this value is selected, this Participant's Dialogue will start from Selected Node, if valid!
 	 * Otherwise it will start from Start Node of the Graph.
 	 */
-	UPROPERTY(Replicated, SaveGame, VisibleAnywhere, Category="Mountea|Dialogue|Participant", AdvancedDisplay, meta=(DisplayThumbnail=false, NoResetToDefault))
+	UPROPERTY(Replicated, SaveGame, VisibleAnywhere, Category="Dialogue|Participant", AdvancedDisplay, 
+		meta=(DisplayThumbnail=false, NoResetToDefault))
 	TObjectPtr<UMounteaDialogueGraphNode> StartingNode = nullptr;
 
 	/**
 	 * Contains mapped list of Traversed Nodes by GUIDs.
 	 * To update Performance, this Path is updated only once Dialogue has finished. Temporary Path is stored in Dialogue Context.
 	 */
-	UPROPERTY(Replicated, SaveGame, VisibleAnywhere, Category="Mountea|Dialogue|Participant", AdvancedDisplay, meta=(NoResetToDefault))
+	UPROPERTY(Replicated, SaveGame, VisibleAnywhere, Category="Dialogue|Participant", AdvancedDisplay, 
+		meta=(NoResetToDefault))
 	TArray<FDialogueTraversePath> TraversedPath;
-
-	/**
-	 * Gameplay tag identifying this Participant.
-	 * Servers a purpose of being unique ID for Dialogues with multiple Participants.
-	 */
-	UPROPERTY(Replicated, SaveGame, EditAnywhere, Category="Mountea|Dialogue|Participant", meta=(NoResetToDefault))
-	FGameplayTag ParticipantTag;
 
 private:
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category="Mountea|Dialogue|Participant", meta=(AllowPrivateAccess))
+	UPROPERTY(Transient, BlueprintReadOnly, Category="Dialogue|Participant", 
+		meta=(AllowPrivateAccess))
 	TScriptInterface<IMounteaDialogueManagerInterface> DialogueManager;
+	
+public:
+	
+	UFUNCTION()
+	TArray<FName> GetAvailableParticipants() const;
+	
+	UFUNCTION()
+	TArray<FName> GetAvailableAudioComponentsNames() const;
 
-#pragma endregion
+	UFUNCTION()
+	TArray<UAudioComponent*> GetAvailableAudioComponents() const;
 
 #pragma region EventVariables
 	
@@ -261,7 +296,10 @@ public:
 
 	virtual FGameplayTag GetParticipantTag_Implementation() const override
 	{ return ParticipantTag; };
-	
+
+	virtual int32 GetParticipantType_Implementation() const override
+	{ return ParticipantData ? ParticipantData->ParticipantType : 0; };
+
 	virtual void ProcessDialogueCommand_Implementation(const FString& Command, UObject* Payload) override
 	{ ParticipantCommandRequested.Broadcast(Command, Payload); };
 
@@ -335,4 +373,8 @@ protected:
 	
 #endif
 	
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+		
 };

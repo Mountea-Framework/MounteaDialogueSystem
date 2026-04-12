@@ -70,7 +70,8 @@ protected:
 	/**
 	 * Dialogue Option Data.
 	 */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue", meta=(ExposeOnSpawn=true))
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Mountea|Dialogue", 
+		meta=(ExposeOnSpawn=true))
 	FDialogueOptionData	DialogueOptionData;
 
 	/**

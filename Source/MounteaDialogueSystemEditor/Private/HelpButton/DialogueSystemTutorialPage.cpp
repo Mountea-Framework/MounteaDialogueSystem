@@ -1,587 +1,264 @@
-﻿// All rights reserved Dominik Morse 2024
+// Copyright (C) 2026 Dominik (Pavlicek) Morse. All rights reserved.
+//
+// Developed for the Mountea Framework as a free tool. This solution is provided
+// for use and sharing without charge. Redistribution is allowed under the following conditions:
+//
+// - You may use this solution in commercial products, provided the product is not
+//   this solution itself (or unless significant modifications have been made to the solution).
+// - You may not resell or redistribute the original, unmodified solution.
+//
+// For more information, visit: https://mountea.tools
 
 #include "DialogueSystemTutorialPage.h"
 
 #include "ContentBrowserModule.h"
 #include "IContentBrowserSingleton.h"
-#include "Widgets/Text/SRichTextBlock.h"
-#include "Widgets/Layout/SScrollBox.h"
-#include "Widgets/Layout/SBorder.h"
-#include "Widgets/Images/SImage.h"
-#include "Widgets/Layout/SBox.h"
-#include "Modules/ModuleManager.h"
 #include "ISettingsModule.h"
+#include "Interfaces/IPluginManager.h"
 #include "LevelEditor.h"
+#include "Misc/Paths.h"
+#include "Modules/ModuleManager.h"
+#include "Settings/MounteaDialogueGraphEditorSettings.h"
+#include "Slate/SMounteaDialogueHtmlView.h"
+#include "Styling/AppStyle.h"
+#include "Styling/CoreStyle.h"
+#include "Widgets/SBoxPanel.h"
+#include "Widgets/Input/SButton.h"
+#include "Widgets/Layout/SBorder.h"
+#include "Widgets/Layout/SScrollBox.h"
+#include "Widgets/Text/STextBlock.h"
 
-void OpenSettingsPage(const FString& SettingsCategory)
+namespace
 {
-	ISettingsModule& SettingsModule = FModuleManager::LoadModuleChecked<ISettingsModule>("Settings");
-
-	if (SettingsCategory == "Mountea")
-		SettingsModule.ShowViewer("Project", TEXT("Mountea Framework"), TEXT("Mountea Dialogue System"));
-	else if (SettingsCategory == "GameplayTags")
-		SettingsModule.ShowViewer("Project", TEXT("Project"), TEXT("GameplayTags"));
-}
-
-void OpenContentBrowserFolder(const FString& FolderName)
-{
-	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
-	ContentBrowserModule.Get().SyncBrowserToFolders({ FolderName });
-}
-
-void OpenWorldSettings()
-{
-	if (FModuleManager::Get().IsModuleLoaded("LevelEditor"))
+	FString EscapeHtml(const FString& InputValue)
 	{
-		FLevelEditorModule& LevelEditor = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-		TSharedPtr<FTabManager> TabManager = LevelEditor.GetLevelEditorTabManager();
-		
-		if (TabManager.IsValid())
-			TabManager->TryInvokeTab(FName("WorldSettingsTab"));
+		FString outputValue = InputValue;
+		outputValue.ReplaceInline(TEXT("&"), TEXT("&amp;"));
+		outputValue.ReplaceInline(TEXT("<"), TEXT("&lt;"));
+		outputValue.ReplaceInline(TEXT(">"), TEXT("&gt;"));
+		outputValue.ReplaceInline(TEXT("\""), TEXT("&quot;"));
+		return outputValue;
+	}
+
+	FString BuildMissingPageHtml(const int32 PageId, const FString& PagePath)
+	{
+		const FString escapedPath = EscapeHtml(PagePath);
+
+		return FString::Printf(
+			TEXT("<!DOCTYPE html><html><head><meta charset=\"utf-8\" /><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /><title>Mountea Dialogue System - Missing Tutorial Page</title></head><body><section class=\"doc-page\"><header><span class=\"version\">Mountea Dialogue System</span><h1>Tutorial Page Is Missing</h1><p class=\"muted\">The requested chapter could not be loaded from disk.</p></header><div class=\"card\"><h2>Details</h2><p><strong>Page ID:</strong> %d</p><p><strong>Configured Path:</strong> <code>%s</code></p><p>Please verify the file path in Project Settings under Mountea Dialogue System (Editor) - HelpPages.</p></div><div class=\"card\"><h2>Quick Actions</h2><p><a href=\"#\" data-mds-type=\"settings\" data-mds-target=\"Mountea\">Open Mountea Dialogue Settings</a></p><p><a href=\"#\" data-mds-type=\"page\" data-mds-target=\"0\">Go To Welcome Chapter</a></p></div></section></body></html>"),
+			PageId,
+			*escapedPath
+		);
+	}
+
+	FString GetFallbackTutorialPagePath()
+	{
+		const TSharedPtr<IPlugin> plugin = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"));
+		if(!plugin.IsValid())
+			return FString();
+
+		const FString fallbackPath = FPaths::Combine(plugin->GetBaseDir(), TEXT("Resources/Help/page_missing.html"));
+		return FPaths::ConvertRelativePathToFull(fallbackPath);
+	}
+
+	void OpenSettingsPage(const FString& SettingsCategory)
+	{
+		ISettingsModule& settingsModule = FModuleManager::LoadModuleChecked<ISettingsModule>("Settings");
+
+		if(SettingsCategory == TEXT("Mountea"))
+		{
+			settingsModule.ShowViewer("Project", TEXT("Mountea Framework"), TEXT("Mountea Dialogue System"));
+			return;
+		}
+
+		if(SettingsCategory == TEXT("GameplayTags"))
+		{
+			settingsModule.ShowViewer("Project", TEXT("Project"), TEXT("GameplayTags"));
+		}
+	}
+
+	void OpenContentBrowserFolder(const FString& FolderName)
+	{
+		FContentBrowserModule& contentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+		contentBrowserModule.Get().SyncBrowserToFolders({FolderName});
+	}
+
+	void OpenWorldSettings()
+	{
+		if(!FModuleManager::Get().IsModuleLoaded("LevelEditor"))
+			return;
+
+		FLevelEditorModule& levelEditor = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+		TSharedPtr<FTabManager> tabManager = levelEditor.GetLevelEditorTabManager();
+		if(!tabManager.IsValid())
+			return;
+
+		tabManager->TryInvokeTab(FName("WorldSettingsTab"));
 	}
 }
 
 void SDialogueSystemTutorialPage::Construct(const FArguments& InArgs)
 {
-	// Header 1 (Largest, Bold)
-	FTextBlockStyle Header1Style = FCoreStyle::Get().GetWidgetStyle<FTextBlockStyle>("NormalText");
-	FSlateFontInfo Header1FontInfo = FCoreStyle::GetDefaultFontStyle("Bold", 22);
-	Header1Style.SetFont(Header1FontInfo);
+	(void)InArgs;
 
-	// Header 2 (Medium, Semi-Bold)
-	FTextBlockStyle Header2Style = FCoreStyle::Get().GetWidgetStyle<FTextBlockStyle>("NormalText");
-	FSlateFontInfo Header2FontInfo = FCoreStyle::GetDefaultFontStyle("Regular", 18);
-	Header2Style.SetFont(Header2FontInfo);
+	TSharedRef<SVerticalBox> navigationBox = SNew(SVerticalBox);
+	TArray<int32> pageIds;
 
-	// Header 3 (Smaller, Regular)
-	FTextBlockStyle Header3Style = FCoreStyle::Get().GetWidgetStyle<FTextBlockStyle>("NormalText");
-	FSlateFontInfo Header3FontInfo = FCoreStyle::GetDefaultFontStyle("Light", 16);
-	Header3Style.SetFont(Header3FontInfo);
+	const UMounteaDialogueGraphEditorSettings* editorSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
+	if(editorSettings)
+	{
+		editorSettings->GetEditorTemplatePages().GetKeys(pageIds);
+		pageIds.Sort();
 
-	FString arrowEmoji = TEXT("➡");
-	FString bookEmoji = TEXT("📖");
-	FString sparkleEmoji = TEXT("✨");
-	FString folderEmoji = TEXT("📂");
-	FString hashEmoji = TEXT("🏷️");
-	FString graduationEmoji = TEXT("🎓");
-	FString speechEmoji = TEXT("🗣️");
+		for(const int32 pageId : pageIds)
+		{
+			const FText pageTitle = editorSettings->GetEditorTemplatePageTitle(pageId);
+			navigationBox->AddSlot()
+			.AutoHeight()
+			[
+				CreateNavigationButton(pageTitle, pageId)
+			];
+		}
+	}
 
-	FString TitleMessage = TEXT("Before You Start");
-	
-	FString IntroMessage = FString(R"(
-Before you start creating any super complex dialogue, there are a few steps that must be done.
-In order to make everything work, you should set up default values.
-So let's start with those annoying configurations before so we can focus on dialogues later.
-
-Dialogue System comes with two configurations, one for Runtime (Game) and the other for Editor.
-We will go over both configurations in more detail in a second.
-)");
-
-	FString ProjectSettingsTitle = TEXT("Project Settings");
-	FString ProjectSettingsMessage = FString(R"(
-)") + sparkleEmoji + FString(R"( Open Dialogue Settings here: <a id="settings" href="Mountea">Mountea Dialogue System Settings</>
-)") + folderEmoji + FString(R"( Default Mountea Dialogue Configuration is located in this folder: <a id="folder" href="/MounteaDialogueSystem/Data">Default Config Folder</>
-)");
-
-	FString DialogueConfigTitle = TEXT("Dialogue Config");
-	FString DialogueConfigMessage = FString(R"(
-You can open the Dialogue Config file to take a look at what is inside.
-Most important is <RichTextBlock.Italic>Dialogue Widget</>, which defines the UI part of your dialogue.
-The default config comes with a default Widget already set up for you.
-)");
-
-	FString GameSettingsTitle = TEXT("Game Settings");
-	FString GameSettingsMessage = FString(R"(
-Before you start, you need to set up your Game. Open <RichTextBlock.Italic>World Settings</> )") + arrowEmoji + FString(R"( <a id="worldsettings" href="#">using this link</> and set up your <RichTextBlock.Italic>Game Mode</>.
-If you are feeling lost, you can simply take a look at the <a id="folder" href="/MounteaDialogueSystem/Example">Example Folder</> which contains <RichTextBlock.BoldHighlight>Example Level</>.
-)");
-
-	FString PlayerPawnTitle = TEXT("Player Pawn");
-	FString PlayerPawnMessage = FString(R"(
-Player Pawn must have <RichTextBlock.BoldHighlight>Dialogue Participant</> component.
-)") + bookEmoji + FString(R"( <a id="browser" href="https://mountea.tools/docs/dialoguesystem/gettingstarted/setupdialogueparticipant/">Wiki setup</> if you need help.
-)");
-
-	FString HUDClassTitle= TEXT("HUD Class");
-	FString HUDClassMessage = FString(R"(
-HUD Class is very important and Dialogue system is using a custom one! This is to ensure there is a single place that manages all UI elements. 
-Without HUD Class your UI won't show.
-Default HUD Class is <a id="folder" href="/MounteaDialogueSystem/Blueprints/Core">in this folder</>. It comes with code to handle multiple full-screen Widgets at once to ensure proper layering (Dialogue will not overlap over Health etc.).
-)") + graduationEmoji + FString(R"( To learn more join our <a id="browser" href="https://discord.gg/c2WQ658V44">free Discord server</>, as this is a fairly <RichTextBlock.BoldHighlight>advanced</> topic.
-)");
-
-	FString PlayerControllerTitle = TEXT("Player Controller");
-	FString PlayerControllerMessage = FString(R"(
-Default Player Controller Class is <a id="folder" href="/MounteaDialogueSystem/Blueprints/Core">in this folder</>.
-I would strongly suggest using the default one as your parent class!
-For multiplayer purposes, the Player Controller contains <RichTextBlock.BoldHighlight>Dialogue Manager Net Sync</> component.
-)") + graduationEmoji + FString(R"( To learn more join our <a id="browser" href="https://discord.gg/c2WQ658V44">free Discord server</>, as this is a fairly <RichTextBlock.BoldHighlight>advanced</> topic.
-)");
-
-	FString PlayerStateTitle = TEXT("Player State");
-	FString PlayerStateMessage = FString(R"(
-Default Player State Class is <a id="folder" href="/MounteaDialogueSystem/Blueprints/Core">in this folder</>.
-<RichTextBlock.BoldHighlight>Player State</> is one of the most important keys for this configuration! Player State is where <RichTextBlock.BoldHighlight>Dialogue Manager Component</> must be.
-)");
-
-	FString UserInterfaceTitle = TEXT("User Interface");
-	FString UserInterfaceIntro = FString(R"(
-A big part of the Dialogue system is User Interface. You want players to see the Dialogue and have the ability to choose from Dialogue answers.
-Mountea Dialogue System provides a structured way to handle this situation.
-)");
-
-	FString UserInterfaceHierarchy = FString(R"(
-+-- Main Dialogue UI
-	+-- Options Container
-		+-- Option
-	+-- Dialogue Row
-	+-- Skip
-)");
-
-	FString UserInterfaceOutro = FString(R"(
-You can always implement your own UI, as the system is <RichTextBlock.BoldHighlight>Interface</> based, you don't need to stick with predefined UI.
-)") + folderEmoji + FString(R"( All Widgets are <a id="folder" href="/MounteaDialogueSystem/WBP">in this folder</>.
-)");
-
-
-	FString MakeDialogueTitle = TEXT("Make Dialogue");
-	FString MakeDialogueMessage = FString(R"(
-Creating Dialogue is fairly simple. There are two ways to create dialogue:
-* Manually in engine using Content Browser
-* Importing from <a id="browser" href="https://mountea-framework.github.io/MounteaDialoguer/">free online Dialoguer Tool</>
-)") + hashEmoji + FString(R"( Mountea Dialogue is heavily using <RichTextBlock.BoldHighlight>Gameplay Tags</>. <a id="settings" href="GameplayTags">Gameplay Tags Settings</> is something you should get familiar with.
-)");
-
-	FString ManualCreateTitle = TEXT("Manual Create");
-	FString ManualCreateMessage = FString(R"(
-Creating Dialogue manually is simple. Just right-click your folder in Content Browser and select 
-)") + speechEmoji + FString(R"( <RichTextBlock.BoldHighlight>Mountea Dialogue -> Mountea Dialogue Tree</> option.
-)");
-
-	FString ImportTitle = TEXT("Import");
-	FString ImportMessage = FString(R"(
-Create your dialogue in the browser and download <RichTextBlock.Italic>.mnteadlg</> file. 
-Then simply drag-and-drop to any folder, and Dialogue will be created for you, including <RichTextBlock.BoldHighlight>Gameplay Tags</>, <RichTextBlock.BoldHighlight>Dialogue Rows</>, and localization <RichTextBlock.BoldHighlight>String Tables</>.
-)");
-
-	FString HaveFunTitle = TEXT("Have Fun!");
-
-	FString HaveFunContent = FString(R"(
-If you need anything, feel free to join <a id="browser" href="https://discord.gg/2vXWEEN">free Discord server</> and read <a id="browser" href="https://mountea.tools/docs/dialoguesystem/gettingstarted/firststeps/">online Documentation</>.
-)");
-	
 	ChildSlot
 	[
-		SNew(SBorder)
-		.Padding(10)
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		.FillWidth(0.24f)
 		[
-			SNew(SScrollBox)
-
-			// Title
-			+ SScrollBox::Slot()	
+			SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("Brushes.Background"))
+			.Padding(20.f)
 			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(TitleMessage))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				.TextStyle(&Header1Style)
-			]
-
-			// Intro
-			+ SScrollBox::Slot()	
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(IntroMessage))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-			]
-
-			// Image Divider
-			+ SScrollBox::Slot()
-			.Padding(FMargin(0, 5, 0, 5))
-			[
-				SNew(SBox)
-				.HeightOverride(2)
+				SNew(SScrollBox)
+				+ SScrollBox::Slot()
 				[
-					SNew(SImage)
-					.Image(FCoreStyle::Get().GetBrush("WhiteBrush"))
-					.ColorAndOpacity(FLinearColor(1, 1, 1, 0.3))
+					navigationBox
 				]
-			]
-
-			// Project Settings
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(ProjectSettingsTitle))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				.TextStyle(&Header2Style)
-			]
-
-			// Project Settings Content
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(ProjectSettingsMessage))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				+ SRichTextBlock::HyperlinkDecorator(TEXT("settings"), FSlateHyperlinkRun::FOnClick::CreateLambda([](const FSlateHyperlinkRun::FMetadata& Metadata)
-				{
-					const FString* Category = Metadata.Find(TEXT("href"));
-					if (Category) { OpenSettingsPage(*Category); }
-				}))
-				+ SRichTextBlock::HyperlinkDecorator(TEXT("folder"), FSlateHyperlinkRun::FOnClick::CreateLambda([](const FSlateHyperlinkRun::FMetadata& Metadata)
-				{
-					const FString* FolderName = Metadata.Find(TEXT("href"));
-					if (FolderName) { OpenContentBrowserFolder(*FolderName); }
-				}))
-			]
-
-			// Dialogue Config Title
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(DialogueConfigTitle))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				.TextStyle(&Header3Style)
-			]
-
-			// Dialogue Config Content
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(DialogueConfigMessage))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-			]
-
-			// Image Divider
-			+ SScrollBox::Slot()
-			.Padding(FMargin(0, 5, 0, 5))
-			[
-				SNew(SBox)
-				.HeightOverride(2)
-				[
-					SNew(SImage)
-					.Image(FCoreStyle::Get().GetBrush("WhiteBrush"))
-					.ColorAndOpacity(FLinearColor(1, 1, 1, 0.3))
-				]
-			]
-
-			// Game Settings Title
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(GameSettingsTitle))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				.TextStyle(&Header2Style)
-			]
-
-			// Game Settings Content
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(GameSettingsMessage))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				+ SRichTextBlock::HyperlinkDecorator(TEXT("worldsettings"), FSlateHyperlinkRun::FOnClick::CreateLambda([](const FSlateHyperlinkRun::FMetadata&)
-				{
-					OpenWorldSettings();
-				}))
-				+ SRichTextBlock::HyperlinkDecorator(TEXT("folder"), FSlateHyperlinkRun::FOnClick::CreateLambda([](const FSlateHyperlinkRun::FMetadata& Metadata)
-				{
-					const FString* FolderName = Metadata.Find(TEXT("href"));
-					if (FolderName) { OpenContentBrowserFolder(*FolderName); }
-				}))
-			]
-
-			// Player Pawn Title
-		   + SScrollBox::Slot()
-		   [
-			   SNew(SRichTextBlock)
-			   .Text(FText::FromString(PlayerPawnTitle))
-			   .DecoratorStyleSet(&FCoreStyle::Get())
-			   .AutoWrapText(true)
-			   .TextStyle(&Header3Style)
-		   ]
-
-		   // Player Pawn Content
-		   + SScrollBox::Slot()
-		   [
-			   SNew(SRichTextBlock)
-			   .Text(FText::FromString(PlayerPawnMessage))
-			   .DecoratorStyleSet(&FCoreStyle::Get())
-			   .AutoWrapText(true)
-				+ SRichTextBlock::HyperlinkDecorator(TEXT("browser"), FSlateHyperlinkRun::FOnClick::CreateLambda([](const FSlateHyperlinkRun::FMetadata& Metadata)
-				{
-					const FString* URL = Metadata.Find(TEXT("href"));
-					if (URL) { FPlatformProcess::LaunchURL(**URL, nullptr, nullptr); }
-				}))
-			]
-
-			// HUD Class Title
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(HUDClassTitle))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				.TextStyle(&Header3Style)
-			]
-
-			// HUD Class Content
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(HUDClassMessage))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				+ SRichTextBlock::HyperlinkDecorator(TEXT("folder"), FSlateHyperlinkRun::FOnClick::CreateLambda([](const FSlateHyperlinkRun::FMetadata& Metadata)
-				{
-					const FString* FolderName = Metadata.Find(TEXT("href"));
-					if (FolderName) { OpenContentBrowserFolder(*FolderName); }
-				}))
-				+ SRichTextBlock::HyperlinkDecorator(TEXT("browser"), FSlateHyperlinkRun::FOnClick::CreateLambda([](const FSlateHyperlinkRun::FMetadata& Metadata)
-				{
-					const FString* URL = Metadata.Find(TEXT("href"));
-					if (URL) { FPlatformProcess::LaunchURL(**URL, nullptr, nullptr); }
-				}))
-			]
-
-			// Player Controller Title
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(PlayerControllerTitle))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				.TextStyle(&Header3Style) 
-			]
-
-			// Player Controller Content
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(PlayerControllerMessage))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				+ SRichTextBlock::HyperlinkDecorator(TEXT("folder"), FSlateHyperlinkRun::FOnClick::CreateLambda([](const FSlateHyperlinkRun::FMetadata& Metadata)
-				{
-					const FString* FolderName = Metadata.Find(TEXT("href"));
-					if (FolderName) { OpenContentBrowserFolder(*FolderName); }
-				}))
-				+ SRichTextBlock::HyperlinkDecorator(TEXT("browser"), FSlateHyperlinkRun::FOnClick::CreateLambda([](const FSlateHyperlinkRun::FMetadata& Metadata)
-				{
-					const FString* URL = Metadata.Find(TEXT("href"));
-					if (URL) { FPlatformProcess::LaunchURL(**URL, nullptr, nullptr); }
-				}))
-			]
-
-			// Player State Title
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(PlayerStateTitle))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				.TextStyle(&Header3Style) 
-			]
-
-			// Player State Content
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(PlayerStateMessage))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				+ SRichTextBlock::HyperlinkDecorator(TEXT("folder"), FSlateHyperlinkRun::FOnClick::CreateLambda([](const FSlateHyperlinkRun::FMetadata& Metadata)
-				{
-					const FString* FolderName = Metadata.Find(TEXT("href"));
-					if (FolderName) { OpenContentBrowserFolder(*FolderName); }
-				}))
-			]
-
-			// Image Divider
-			+ SScrollBox::Slot()
-			.Padding(FMargin(0, 5, 0, 5))
-			[
-				SNew(SBox)
-				.HeightOverride(2)
-				[
-					SNew(SImage)
-					.Image(FCoreStyle::Get().GetBrush("WhiteBrush"))
-					.ColorAndOpacity(FLinearColor(1, 1, 1, 0.3))
-				]
-			]
-
-			// User Interface Title
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(UserInterfaceTitle))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				.TextStyle(&Header2Style)
-			]
-
-			// User Interface Content
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(UserInterfaceIntro))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-			]
-
-			// UI Hierarchy (Monospaced Font)
-			+ SScrollBox::Slot()
-			.Padding(10)
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(UserInterfaceHierarchy))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				.TextStyle(FCoreStyle::Get(), "MonospacedText")
-			]
-
-			// UI Outro with Folder Link
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(UserInterfaceOutro))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				+ SRichTextBlock::HyperlinkDecorator(TEXT("folder"), FSlateHyperlinkRun::FOnClick::CreateLambda([](const FSlateHyperlinkRun::FMetadata& Metadata)
-				{
-					const FString* FolderName = Metadata.Find(TEXT("href"));
-					if (FolderName) { OpenContentBrowserFolder(*FolderName); }
-				}))
-			]
-			
-			// Image Divider
-			+ SScrollBox::Slot()
-			.Padding(FMargin(0, 5, 0, 5))
-			[
-				SNew(SBox)
-				.HeightOverride(2)
-				[
-					SNew(SImage)
-					.Image(FCoreStyle::Get().GetBrush("WhiteBrush"))
-					.ColorAndOpacity(FLinearColor(1, 1, 1, 0.3))
-				]
-			]
-
-			// Make Dialogue Title
-		   + SScrollBox::Slot()
-		   [
-			   SNew(SRichTextBlock)
-			   .Text(FText::FromString(MakeDialogueTitle))
-			   .DecoratorStyleSet(&FCoreStyle::Get())
-			   .AutoWrapText(true)
-			   .TextStyle(&Header2Style) 
-		   ]
-
-		   // Make Dialogue Content
-		   + SScrollBox::Slot()
-		   [
-			   SNew(SRichTextBlock)
-			   .Text(FText::FromString(MakeDialogueMessage))
-			   .DecoratorStyleSet(&FCoreStyle::Get())
-			   .AutoWrapText(true)
-				+ SRichTextBlock::HyperlinkDecorator(TEXT("settings"), FSlateHyperlinkRun::FOnClick::CreateLambda([](const FSlateHyperlinkRun::FMetadata& Metadata)
-				{
-					const FString* Category = Metadata.Find(TEXT("href"));
-					if (Category) { OpenSettingsPage(*Category); }
-				}))
-				+ SRichTextBlock::HyperlinkDecorator(TEXT("folder"), FSlateHyperlinkRun::FOnClick::CreateLambda([](const FSlateHyperlinkRun::FMetadata& Metadata)
-				{
-					const FString* FolderName = Metadata.Find(TEXT("href"));
-					if (FolderName) { OpenContentBrowserFolder(*FolderName); }
-				}))
-				+ SRichTextBlock::HyperlinkDecorator(TEXT("browser"), FSlateHyperlinkRun::FOnClick::CreateLambda([](const FSlateHyperlinkRun::FMetadata& Metadata)
-				{
-					const FString* URL = Metadata.Find(TEXT("href"));
-					if (URL) { FPlatformProcess::LaunchURL(**URL, nullptr, nullptr); }
-				}))
-			]
-
-			// Manual Create Title
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(ManualCreateTitle))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				.TextStyle(&Header3Style)
-			]
-
-			// Manual Create
-			+ SScrollBox::Slot()	
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(ManualCreateMessage))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-			]
-
-			// Import Create Title
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(ImportTitle))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				.TextStyle(&Header3Style)
-			]
-
-			// Import
-			+ SScrollBox::Slot()	
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(ImportMessage))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-			]
-			
-			// Image Divider
-			+ SScrollBox::Slot()
-			.Padding(FMargin(0, 5, 0, 5))
-			[
-				SNew(SBox)
-				.HeightOverride(2)
-				[
-					SNew(SImage)
-					.Image(FCoreStyle::Get().GetBrush("WhiteBrush"))
-					.ColorAndOpacity(FLinearColor(1, 1, 1, 0.3))
-				]
-			]
-
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(HaveFunTitle))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				.TextStyle(&Header2Style)
-			]
-
-			// Have Fun Content
-			+ SScrollBox::Slot()
-			[
-				SNew(SRichTextBlock)
-				.Text(FText::FromString(HaveFunContent))
-				.DecoratorStyleSet(&FCoreStyle::Get())
-				.AutoWrapText(true)
-				+ SRichTextBlock::HyperlinkDecorator(TEXT("browser"), FSlateHyperlinkRun::FOnClick::CreateLambda([](const FSlateHyperlinkRun::FMetadata& Metadata)
-				{
-					const FString* URL = Metadata.Find(TEXT("href"));
-					if (URL) { FPlatformProcess::LaunchURL(**URL, nullptr, nullptr); }
-				}))
 			]
 		]
+		+ SHorizontalBox::Slot()
+		.FillWidth(0.76f)
+		.Padding(4.f, 0.f)
+		[
+			SAssignNew(HtmlView, SMounteaDialogueHtmlView)
+			.OnConsoleMessage_Raw(this, &SDialogueSystemTutorialPage::HandleConsoleMessage)
+		]
 	];
+
+	if(pageIds.Num() > 0)
+	{
+		SwitchToPage(pageIds[0]);
+		return;
+	}
+
+	SwitchToPage(0);
 }
 
+TSharedRef<SWidget> SDialogueSystemTutorialPage::CreateNavigationButton(const FText& Label, int32 PageId)
+{
+	return SNew(SButton)
+		.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+		.ContentPadding(FMargin(10.f, 8.f))
+		.ButtonColorAndOpacity_Lambda([this, PageId]() -> FSlateColor
+		{
+			if(CurrentPageId == PageId)
+				return FSlateColor(FLinearColor(0.10f, 0.42f, 0.90f, 0.45f));
+
+			return FSlateColor(FLinearColor(0.f, 0.f, 0.f, 0.f));
+		})
+		.OnClicked_Lambda([this, PageId]()
+		{
+			SwitchToPage(PageId);
+			return FReply::Handled();
+		})
+		[
+			SNew(STextBlock)
+			.Text(Label)
+			.Font(FCoreStyle::GetDefaultFontStyle("Regular", 11))
+			.ColorAndOpacity_Lambda([this, PageId]() -> FSlateColor
+			{
+				if(CurrentPageId == PageId)
+					return FSlateColor(FLinearColor(0.98f, 0.99f, 1.f, 1.f));
+
+				return FSlateColor::UseForeground();
+			})
+		];
+}
+
+void SDialogueSystemTutorialPage::SwitchToPage(int32 PageId)
+{
+	if(!HtmlView.IsValid())
+		return;
+
+	const UMounteaDialogueGraphEditorSettings* editorSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
+	if(!editorSettings)
+		return;
+
+	const FString pagePath = editorSettings->GetEditorTemplatePagePath(PageId);
+	CurrentPageId = PageId;
+	Invalidate(EInvalidateWidgetReason::Paint);
+
+	if(pagePath.IsEmpty() || !FPaths::FileExists(pagePath))
+	{
+		const FString fallbackPath = GetFallbackTutorialPagePath();
+		if(!fallbackPath.IsEmpty() && FPaths::FileExists(fallbackPath))
+		{
+			HtmlView->LoadHtmlFile(fallbackPath);
+			return;
+		}
+
+		const FString fallbackHtml = BuildMissingPageHtml(PageId, pagePath);
+		HtmlView->LoadHtmlString(fallbackHtml, FString());
+		return;
+	}
+
+	HtmlView->LoadHtmlFile(pagePath);
+}
+
+void SDialogueSystemTutorialPage::HandleConsoleMessage(const FString& Message, const FString& Source, int32 Line, EWebBrowserConsoleLogSeverity Severity)
+{
+	(void)Source;
+	(void)Line;
+	(void)Severity;
+
+	if(!Message.StartsWith(TEXT("MDS_LINK:")))
+		return;
+
+	const FString data = Message.RightChop(9);
+	FString dataType;
+	FString dataTarget;
+	if(!data.Split(TEXT(":"), &dataType, &dataTarget))
+		return;
+
+	if(dataType == TEXT("external"))
+	{
+		FPlatformProcess::LaunchURL(*dataTarget, nullptr, nullptr);
+		return;
+	}
+
+	if(dataType == TEXT("page"))
+	{
+		const int32 pageId = FCString::Atoi(*dataTarget);
+		SwitchToPage(pageId);
+		return;
+	}
+
+	if(dataType == TEXT("settings"))
+	{
+		OpenSettingsPage(dataTarget);
+		return;
+	}
+
+	if(dataType == TEXT("folder"))
+	{
+		OpenContentBrowserFolder(dataTarget);
+		return;
+	}
+
+	if(dataType == TEXT("worldsettings"))
+	{
+		OpenWorldSettings();
+	}
+}

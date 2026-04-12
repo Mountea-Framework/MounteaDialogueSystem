@@ -4,12 +4,44 @@
 
 #include "Algo/AnyOf.h"
 #include "Data/MounteaDialogueContext.h"
+#include "Decorators/MounteaDialogueDecorator_OnlyFirstTime.h"
+#include "Decorators/MounteaDialogueDecorator_OverrideOnlyFirstTime.h"
 #include "Graph/MounteaDialogueGraph.h"
+#include "Helpers/MounteaDialogueContextStatics.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Helpers/MounteaDialogueParticipantStatics.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Misc/DataValidation.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueNode"
+
+namespace MounteaDialogueNodeRuntime
+{
+	void ExecuteDecorators(const UMounteaDialogueContext* DialogueContext)
+	{
+		if (!IsValid(DialogueContext))
+			return;
+
+		const TScriptInterface<IMounteaDialogueParticipantInterface> graphOwner =
+			UMounteaDialogueParticipantStatics::GetGraphOwnerParticipant(DialogueContext->DialogueParticipants);
+		if (!graphOwner.GetObject() || !graphOwner.GetInterface())
+			return;
+
+		UObject* participantObject = graphOwner.GetObject();
+		const UMounteaDialogueGraph* dialogueGraph = graphOwner->Execute_GetDialogueGraph(participantObject);
+		const UMounteaDialogueGraphNode* activeNode = DialogueContext->GetActiveNode();
+		if (!IsValid(dialogueGraph) || !IsValid(activeNode))
+			return;
+
+		TArray<FMounteaDialogueDecorator> allDecorators;
+		allDecorators.Append(activeNode->GetNodeDecorators());
+		if (activeNode->DoesInheritDecorators())
+			allDecorators.Append(dialogueGraph->GetGraphDecorators());
+
+		for (const auto& decorator : allDecorators)
+			decorator.ExecuteDecorator();
+	}
+}
 
 UMounteaDialogueGraphNode::UMounteaDialogueGraphNode(): Graph(nullptr), OwningWorld(nullptr)
 {
@@ -21,7 +53,8 @@ UMounteaDialogueGraphNode::UMounteaDialogueGraphNode(): Graph(nullptr), OwningWo
 #if WITH_EDITORONLY_DATA
 	CompatibleGraphType = UMounteaDialogueGraph::StaticClass();
 
-	BackgroundColor = FLinearColor::Black;
+	EditorNodeColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("f97316")));
+	EditorHeaderForegroundColour = FLinearColor::White;
 
 	bAllowInputNodes = true;
 	bAllowOutputNodes = true;
@@ -125,32 +158,40 @@ void UMounteaDialogueGraphNode::TickMounteaEvent_Implementation(UObject* SelfRef
 void UMounteaDialogueGraphNode::InitializeNode_Implementation(UWorld* InWorld)
 {
 	SetNewWorld(InWorld);
-
-	if (Graph) SetNodeIndex(Graph->AllNodes.Find(this));
 	
 	OnNodeStateChanged.Broadcast(this);
 }
 
 void UMounteaDialogueGraphNode::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
 {
-	const auto managerOwner = Manager->Execute_GetOwningActor(Manager.GetObject());
-	ensure(managerOwner);
+	const AActor* managerOwner = IMounteaDialogueManagerInterface::Execute_GetOwningActor(Manager.GetObject());
+	if (!IsValid(managerOwner))
+	{
+		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[PreProcessNode] Invalid owning Actor!"));
+		return;
+	}
 	
 	InitializeNode(managerOwner->GetWorld());
 	
 	Execute_RegisterTick(this, Graph);
+
+	UMounteaDialogueContext* dialogueContext = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(Manager.GetObject());
+	TScriptInterface<IMounteaDialogueParticipantInterface> activeParticipant = nullptr;
+	if (IsValid(dialogueContext))
+		activeParticipant = dialogueContext->ActiveDialogueParticipant;
 
 	for (const auto& nodeDecorator : NodeDecorators)
 	{
 		if (!IsValid(nodeDecorator.DecoratorType))
 			continue;
 
-		nodeDecorator.DecoratorType->InitializeDecorator(managerOwner->GetWorld(), 
-			Manager->Execute_GetDialogueContext(Manager.GetObject())->ActiveDialogueParticipant, 
+		nodeDecorator.DecoratorType->InitializeDecorator(
+			managerOwner->GetWorld(),
+			activeParticipant,
 			Manager);
 	}
 	
-	Manager->Execute_NodePrepared(Manager.GetObject());
+	IMounteaDialogueManagerInterface::Execute_NodePrepared(Manager.GetObject());
 }
 
 void UMounteaDialogueGraphNode::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
@@ -169,14 +210,14 @@ void UMounteaDialogueGraphNode::ProcessNode_Implementation(const TScriptInterfac
 		return;
 	}
 	
-	UMounteaDialogueContext* Context = Manager->Execute_GetDialogueContext(Manager.GetObject());
-	if (!Context || !UMounteaDialogueSystemBFC::IsContextValid(Context))
+	UMounteaDialogueContext* Context = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(Manager.GetObject());
+	if (!Context || !UMounteaDialogueContextStatics::IsContextValid(Context))
 	{
 		Manager->GetDialogueFailedEventHandle().Broadcast(TEXT("[ProcessNode] Invalid Dialogue Context!"));
 		return;
 	}
 	
-	UMounteaDialogueSystemBFC::ExecuteDecorators(this, Context);
+	MounteaDialogueNodeRuntime::ExecuteDecorators(Context);
 }
 
 TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators() const
@@ -187,9 +228,7 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators()
 	for (auto Itr : NodeDecorators)
 	{
 		if (Itr.DecoratorType != nullptr)
-		{
 			TempReturn.AddUnique(Itr);
-		}
 	}	
 	Return = TempReturn;
 	return Return;
@@ -197,7 +236,7 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraphNode::GetNodeDecorators()
 
 bool UMounteaDialogueGraphNode::CanStartNode_Implementation() const
 {
-	return EvaluateDecorators();
+	return true;
 }
 
 bool UMounteaDialogueGraphNode::EvaluateDecorators_Implementation() const
@@ -226,12 +265,6 @@ bool UMounteaDialogueGraphNode::EvaluateDecorators_Implementation() const
 	}
 
 	return bSatisfied;
-}
-
-void UMounteaDialogueGraphNode::SetNodeIndex(const int32 NewIndex)
-{
-	check(NewIndex>INDEX_NONE);
-	NodeIndex = NewIndex;
 }
 
 FText UMounteaDialogueGraphNode::GetNodeTitle_Implementation() const
@@ -263,7 +296,11 @@ FText UMounteaDialogueGraphNode::GetNodeTooltipText_Implementation() const
 
 FLinearColor UMounteaDialogueGraphNode::GetBackgroundColor() const
 {
-	return BackgroundColor;
+#if WITH_EDITORONLY_DATA
+	return EditorNodeColour;
+#else
+	return FLinearColor::Black;
+#endif
 }
 
 void UMounteaDialogueGraphNode::SetNodeTitle(const FText& NewTitle)
@@ -294,8 +331,7 @@ bool UMounteaDialogueGraphNode::CanCreateConnection(UMounteaDialogueGraphNode* O
 	// Check allowed input classes (only applies for output pins)
 	if (Direction == EGPD_Output)
 	{
-		// Use centralized logic from the Dialogue System
-		const TArray<TSubclassOf<UMounteaDialogueGraphNode>> allowedClasses = UMounteaDialogueSystemBFC::GetAllowedInputClasses(this);
+		const TArray<TSubclassOf<UMounteaDialogueGraphNode>> allowedClasses = Execute_GetAllowedInputClasses(this);
 
 		const UClass* otherClass = Other->GetClass();
 
@@ -443,6 +479,29 @@ bool UMounteaDialogueGraphNode::ValidateNode(FDataValidationContext& Context, co
 
 		for (auto Itr : GetNodeDecorators())
 		{
+			if (Itr.DecoratorType
+				&& (Itr.DecoratorType->IsA<UMounteaDialogueDecorator_OnlyFirstTime>()
+					|| Itr.DecoratorType->IsA<UMounteaDialogueDecorator_OverrideOnlyFirstTime>()))
+			{
+				const FString RichTextWarning =
+				FString(TEXT("* ")).
+				Append(TEXT("<RichTextBlock.Bold>")).
+				Append(NodeTitle.ToString()).
+				Append(TEXT("</>: Decorator ")).
+				Append(TEXT("<RichTextBlock.Bold>")).
+				Append(Itr.DecoratorType->GetClass()->GetDisplayNameText().ToString()).
+				Append(TEXT("</> is deprecated. Use incoming edge condition ")).
+				Append(TEXT("<RichTextBlock.Bold>Only First Time</> for traversal gating. Use condition negation for repeat-path branches."));
+
+				const FString TextWarning =
+				FString(NodeTitle.ToString()).
+				Append(TEXT(": Decorator ")).
+				Append(Itr.DecoratorType->GetClass()->GetDisplayNameText().ToString()).
+				Append(TEXT(" is deprecated. Use incoming edge condition Only First Time for traversal gating. Use condition negation for repeat-path branches."));
+
+				Context.AddWarning(FText::FromString(RichFormat ? RichTextWarning : TextWarning));
+			}
+
 			TArray<FText> DecoratorErrors;
 			if (Itr.ValidateDecorator(DecoratorErrors) == false)
 			{
@@ -491,10 +550,10 @@ FText UMounteaDialogueGraphNode::GetDefaultTooltipBody() const
 	
 	const FText Implements = FText::Format(LOCTEXT("UMounteaDialogueGraphNode_ImplementsTooltip", "Implements Decorators: {0}"), ImplementsNumber);
 	
-	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0} ({1})\n\n{2}\n{3}\nNode Execution Order: {4}\nNode Index: {5}"),
+	return FText::Format(LOCTEXT("UMounteaDialogueGraphNode_BaseTooltip", "{0} ({1})\n\n{2}\n{3}\nNode Execution Order: {4}"),
 		NodeTypeName,
 		FText::FromString(NodeGUID.ToString(EGuidFormats::DigitsWithHyphensLower)),
-		Inherits, Implements, ExecutionOrder, NodeIndex);
+		Inherits, Implements, ExecutionOrder);
 }
 
 #endif
