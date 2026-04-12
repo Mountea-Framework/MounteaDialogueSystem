@@ -1,10 +1,10 @@
-Current Version: 3.0.3.56
+Current Version: **3.0.3.56**
 
 # Changelog
 
 All notable changes to this project will be documented in this file.
 
-** Version 3.0.3**
+**Version 3.0.3**
 ### Added
 > - Added new features to Toolbar menu
 > - Added dependency on CommonUI
