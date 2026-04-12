@@ -20,10 +20,11 @@ struct FDialogueEditorPageConfig
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Config")
 	FText PageTitle;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (FilePathFilter = "html"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Config",
+		meta = (FilePathFilter = "html"))
 	FFilePath PageFile;
 
 	FDialogueEditorPageConfig()
