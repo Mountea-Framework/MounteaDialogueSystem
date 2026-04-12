@@ -109,7 +109,8 @@ protected:
 	 * Set Graph is allowed only outside active Dialogue.
 	 */
 	UPROPERTY(ReplicatedUsing=OnRep_DialogueGraph, SaveGame, EditAnywhere, Category="Dialogue|Graph", 
-		meta=(NoResetToDefault))
+		meta=(NoResetToDefault),
+		meta=(ForceShowEngineContent, ForceShowPluginContent))
 	TObjectPtr<UMounteaDialogueGraph> DialogueGraph = nullptr;
 
 	/**
