@@ -66,6 +66,9 @@ void UMounteaDialogueGraphNode_DialogueNodeBase::PreProcessNode_Implementation(c
 
 FDialogueRow UMounteaDialogueGraphNode_DialogueNodeBase::GetSpeechData_Implementation() const
 {
+	if (!IsValid(DataTable))
+		return {};
+	
 	const FString searchContext;
 	const auto returnValue = DataTable->FindRow<FDialogueRow>(RowName, searchContext);
 	return returnValue != nullptr ? *returnValue : FDialogueRow::Invalid();
