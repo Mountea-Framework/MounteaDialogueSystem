@@ -7,6 +7,7 @@
 #include "Styling/SlateStyleRegistry.h"
 #include "Brushes/SlateImageBrush.h"
 #include "Brushes/SlateRoundedBoxBrush.h"
+#include "Fonts/CompositeFont.h"
 #include "Misc/Paths.h"
 
 #define IMAGE_BRUSH( RelativePath, ... ) FSlateImageBrush( StyleSet->RootToContentDir( RelativePath, TEXT(".png") ), __VA_ARGS__ )
@@ -153,27 +154,28 @@ void FMounteaDialogueGraphEditorStyle::Create()
 		const FString interCollectionPath = StyleSet->RootToContentDir(TEXT("Fonts/Inter"), TEXT(".ttc"));
 		const FString interLightPath = StyleSet->RootToContentDir(TEXT("Fonts/Inter-Light"), TEXT(".ttf"));
 		const FString interSemiBoldPath = StyleSet->RootToContentDir(TEXT("Fonts/Inter-SemiBold"), TEXT(".ttf"));
+		const auto MakeFontInfo = [](const FString& FontPath, const float FontSize, const FName TypefaceName)
+		{
+			TSharedRef<FCompositeFont> compositeFont = MakeShared<FCompositeFont>();
+			compositeFont->DefaultTypeface.Fonts.Add(FTypefaceEntry(TypefaceName, FString(FontPath), EFontHinting::Default, EFontLoadingPolicy::LazyLoad));
+			return FSlateFontInfo(compositeFont, FontSize, TypefaceName);
+		};
 
-		FSlateFontInfo interTitle(interCollectionPath, 12);
-		interTitle.TypefaceFontName = FName(TEXT("SemiBold"));
+		FSlateFontInfo interTitle = MakeFontInfo(interCollectionPath, 12, FName(TEXT("SemiBold")));
 		if (FPaths::FileExists(interSemiBoldPath))
-			interTitle = FSlateFontInfo(interSemiBoldPath, 12);
+			interTitle = MakeFontInfo(interSemiBoldPath, 12, FName(TEXT("SemiBold")));
 
-		FSlateFontInfo interRegular(interCollectionPath, 14);
-		interRegular.TypefaceFontName = FName(TEXT("Regular"));
+		FSlateFontInfo interRegular = MakeFontInfo(interCollectionPath, 14, FName(TEXT("Regular")));
 
-		FSlateFontInfo interSmall(interCollectionPath, 12);
-		interSmall.TypefaceFontName = FName(TEXT("SemiBold"));
+		FSlateFontInfo interSmall = MakeFontInfo(interCollectionPath, 12, FName(TEXT("SemiBold")));
 		if (FPaths::FileExists(interSemiBoldPath))
-			interSmall = FSlateFontInfo(interSemiBoldPath, 12);
+			interSmall = MakeFontInfo(interSemiBoldPath, 12, FName(TEXT("SemiBold")));
 
-		FSlateFontInfo interBody(interCollectionPath, 12);
-		interBody.TypefaceFontName = FName(TEXT("Regular"));
+		FSlateFontInfo interBody = MakeFontInfo(interCollectionPath, 12, FName(TEXT("Regular")));
 
-		FSlateFontInfo interTag(interCollectionPath, 10);
-		interTag.TypefaceFontName = FName(TEXT("Light"));
+		FSlateFontInfo interTag = MakeFontInfo(interCollectionPath, 10, FName(TEXT("Light")));
 		if (FPaths::FileExists(interLightPath))
-			interTag = FSlateFontInfo(interLightPath, 10);
+			interTag = MakeFontInfo(interLightPath, 10, FName(TEXT("Light")));
 
 		FTextBlockStyle NormalText = FTextBlockStyle()
 			.SetFont(interRegular)

@@ -19,7 +19,7 @@ public:
 
 	virtual void OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 	virtual void OnMouseLeave(const FPointerEvent& MouseEvent) override;
-	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty) override;
+	virtual void MoveTo(const FVector2f& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty) override;
 
 	virtual void UpdateGraphNode() override;
 	virtual void CreatePinWidgets() override;
@@ -66,7 +66,7 @@ private:
 	TSharedRef<SWidget> CreateTagChipsWidget(const TArray<FText>& ChipTexts, const FSlateBrush* ChipIcon, const FSlateColor& ChipForegroundColor, const FSlateColor& ChipBackgroundColor) const;
 	TSharedRef<SWidget> CreateTagChip(const FText& ChipText, const FSlateBrush* ChipIcon, const FSlateColor& ChipForegroundColor, const FSlateColor& ChipBackgroundColor) const;
 	FLinearColor GetAccentColor() const;
-	FVector2D GetNodeSizeHint() const;
+	FVector2f GetNodeSizeHint() const;
 
 private:
 	TSharedPtr<SBorder> NodeBody;

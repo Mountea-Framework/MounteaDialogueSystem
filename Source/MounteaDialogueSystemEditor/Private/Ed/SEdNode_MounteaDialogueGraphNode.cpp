@@ -138,9 +138,9 @@ void SEdNode_MounteaDialogueGraphNode::OnMouseLeave(const FPointerEvent& MouseEv
 	SGraphNode::OnMouseLeave(MouseEvent);
 }
 
-void SEdNode_MounteaDialogueGraphNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
+void SEdNode_MounteaDialogueGraphNode::MoveTo(const FVector2f& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
 {
-	FVector2D adjustedPosition = NewPosition;
+	FVector2f adjustedPosition = NewPosition;
 
 	const UEdNode_MounteaDialogueGraphNode* dialogueNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode);
 	float requiredTopY = 0.0f;
@@ -162,7 +162,7 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 	SetupErrorReporting();
 	ContentScale.Bind(this, &SGraphNode::GetContentScale);
 
-	const FVector2D nodeSizeHint = GetNodeSizeHint();
+	const FVector2f nodeSizeHint = GetNodeSizeHint();
 
 	GetOrAddSlot(ENodeZone::Center)
 	[
@@ -856,11 +856,11 @@ FLinearColor SEdNode_MounteaDialogueGraphNode::GetAccentColor() const
 	return FMounteaDialogueGraphVisualTokens::GetNodeAccentColor(edNode->DialogueGraphNode);
 }
 
-FVector2D SEdNode_MounteaDialogueGraphNode::GetNodeSizeHint() const
+FVector2f SEdNode_MounteaDialogueGraphNode::GetNodeSizeHint() const
 {
 	const UEdNode_MounteaDialogueGraphNode* edNode = Cast<UEdNode_MounteaDialogueGraphNode>(GraphNode);
 	if (!edNode || !edNode->DialogueGraphNode)
-		return FVector2D(250.0f, 124.0f);
+		return FVector2f(250.0f, 124.0f);
 
 	return FMounteaDialogueGraphVisualTokens::GetNodeSizeHint(edNode->DialogueGraphNode);
 }

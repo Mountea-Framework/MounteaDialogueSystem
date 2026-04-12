@@ -35,5 +35,5 @@ struct FMounteaDialogueGraphVisualTokens
 	static FLinearColor GetNodeHeaderForeground(const UMounteaDialogueGraphNode* Node);
 	static const FSlateBrush* GetNodeIconBrush(const UMounteaDialogueGraphNode* Node);
 
-	static FVector2D GetNodeSizeHint(const UMounteaDialogueGraphNode* Node);
+	static FVector2f GetNodeSizeHint(const UMounteaDialogueGraphNode* Node);
 };
