@@ -14,7 +14,7 @@ public class MounteaDialogueSystemEditor : ModuleRules
 		
 		// Add the zip library
 		PublicIncludePaths.Add(System.IO.Path.Combine(ModuleDirectory, "ThirdParty", "zip"));
-		PrivateIncludePaths.Add(System.IO.Path.Combine(ModuleDirectory, "Private", "ThirdParty", "md4c"));
+		PrivateIncludePaths.Add(System.IO.Path.Combine(ModuleDirectory, "ThirdParty", "md4c"));
 		PublicDefinitions.Add("ZIP_STATIC");
 		
 		var MZPlatformValue = "0";
