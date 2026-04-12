@@ -1278,20 +1278,13 @@ void FAssetEditor_MounteaDialogueGraph::ValidateGraph()
 	check(MounteaGraph != nullptr);
 
 	FDataValidationContext ValidationContext;
-	if (MounteaGraph->ValidateGraph(ValidationContext, true) == false)
-	{
-		TArray<FText> Errors, Warnings;
-		ValidationContext.SplitIssues(Errors, Warnings);
+	MounteaGraph->ValidateGraph(ValidationContext, false);
 
-		TArray<FText> Combined = Errors;
-		Combined.Append(Warnings);
-		
-		ValidationWindow = MDSPopup_GraphValidation::Open(Combined);
-	}
-	else
-	{
-		ValidationWindow = MDSPopup_GraphValidation::Open(TArray<FText>());
-	}
+	TArray<FText> Errors;
+	TArray<FText> Warnings;
+	ValidationContext.SplitIssues(Warnings, Errors);
+
+	ValidationWindow = MDSPopup_GraphValidation::Open(Errors, Warnings);
 }
 
 bool FAssetEditor_MounteaDialogueGraph::CanValidateGraph() const

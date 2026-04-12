@@ -153,7 +153,6 @@ FString FMounteaDialogueHtmlHelpers::BuildChangelogDocument(const FString& Chang
 	const FString headerHtml = TEXT(
 		"<section class=\"doc-page changelog-page\">"
 		"<header>"
-		"<span class=\"version\">Mountea Dialogue System</span>"
 		"<h1>What is New</h1>"
 		"<p>Thanks for using Mountea Dialogue System. Here are the latest changes.</p>"
 		"</header>"

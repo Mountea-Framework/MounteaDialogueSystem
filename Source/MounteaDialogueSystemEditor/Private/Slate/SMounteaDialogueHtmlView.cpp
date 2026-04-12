@@ -73,7 +73,7 @@ void SMounteaDialogueHtmlView::Construct(const FArguments& InArgs)
 			SNew(SBox)
 			.Visibility_Lambda([this]()
 			{
-				return IsInputBlocked ? EVisibility::Visible : EVisibility::Collapsed;
+				return IsInputBlocked ? EVisibility::HitTestInvisible : EVisibility::Collapsed;
 			})
 			[
 				SNew(SBorder)
