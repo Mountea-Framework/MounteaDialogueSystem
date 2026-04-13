@@ -31,6 +31,8 @@
 #include "Popups/MDSPopup.h"
 #include "Serialization/JsonReader.h"
 #include "Styling/SlateStyleRegistry.h"
+#include "Containers/Ticker.h"
+#include "UnrealEdMisc.h"
 
 #include "ToolMenus.h"
 #include "WorkspaceMenuStructure.h"
@@ -91,6 +93,60 @@ void FMounteaDialogueSystemEditor::StartupModule()
 			const FText warningMessage = NSLOCTEXT("MounteaDialogue", "WebBrowserMissingMessage",
 				"The 'Web Browser Widget' plugin is required for HTML help and changelog rendering.");
 			FMessageDialog::Open(EAppMsgType::Ok, warningMessage, warningTitle);
+			
+			FString projectFilePath = FPaths::ProjectDir() / FApp::GetProjectName() + TEXT(".uproject");			
+			FString jsonString;
+			if (FFileHelper::LoadFileToString(jsonString, *projectFilePath))
+			{
+				TSharedPtr<FJsonObject> jsonObject;
+				TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(jsonString);
+				
+				if (FJsonSerializer::Deserialize(reader, jsonObject) && jsonObject.IsValid())
+				{
+					TArray<TSharedPtr<FJsonValue>> pluginsArray;
+					if (jsonObject->HasField(TEXT("Plugins")))
+						pluginsArray = jsonObject->GetArrayField(TEXT("Plugins"));
+					
+					bool bExists = false;
+					for (const TSharedPtr<FJsonValue>& plugin : pluginsArray)
+					{
+						TSharedPtr<FJsonObject> pluginObj = plugin->AsObject();
+						if (pluginObj.IsValid() && pluginObj->GetStringField(TEXT("Name")) == TEXT("WebBrowserWidget"))
+						{
+							pluginObj->SetBoolField(TEXT("Enabled"), true);
+							bExists = true;
+							break;
+						}
+					}
+					
+					if (!bExists)
+					{
+						TSharedPtr<FJsonObject> newPlugin = MakeShareable(new FJsonObject());
+						newPlugin->SetStringField(TEXT("Name"), TEXT("WebBrowserWidget"));
+						newPlugin->SetBoolField(TEXT("Enabled"), true);
+						pluginsArray.Add(MakeShareable(new FJsonValueObject(newPlugin)));
+					}
+					
+					jsonObject->SetArrayField(TEXT("Plugins"), pluginsArray);
+					
+					FString outputString;
+					TSharedRef<TJsonWriter<>> writer = TJsonWriterFactory<>::Create(&outputString);
+					if (FJsonSerializer::Serialize(jsonObject.ToSharedRef(), writer))
+					{
+						if (FFileHelper::SaveStringToFile(outputString, *projectFilePath))
+						{
+							FTSTicker::GetCoreTicker().AddTicker(
+								FTickerDelegate::CreateLambda([](float)
+								{
+									FUnrealEdMisc::Get().RestartEditor(false);
+									return false;
+								})
+							);
+							return;
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -503,7 +559,8 @@ void FMounteaDialogueSystemEditor::ShutdownModule()
 
 	// Thumbnails and Icons
 	{
-		FSlateStyleRegistry::UnRegisterSlateStyle(DialogueTreeSet->GetStyleSetName());
+		if (DialogueTreeSet.IsValid())
+			FSlateStyleRegistry::UnRegisterSlateStyle(DialogueTreeSet->GetStyleSetName());
 	}
 
 	// Style Shutdown
