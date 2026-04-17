@@ -19,6 +19,8 @@ All notable changes to this project will be documented in this file.
 > - Guid validation ignored for builds
 > - Fixed Crash when `ActiveDialogueParticipant` is nullptr
 
+---
+
 **Version 3.0.2**
 ### Fixed
 > - Fixed issue with Dialogue Plugin blocking reimport
