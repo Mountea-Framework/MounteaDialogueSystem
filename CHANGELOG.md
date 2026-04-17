@@ -4,6 +4,8 @@ Current Version: **3.0.3.56**
 
 All notable changes to this project will be documented in this file.
 
+---
+
 **Version 3.0.3**
 ### Added
 > - Added new features to Toolbar menu
@@ -24,6 +26,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 > - Focusable interface is now driven by native `Is Focusable` variable
+
+---
 
 **Version 3.0.0**
 ### Added
@@ -53,6 +57,8 @@ All notable changes to this project will be documented in this file.
 >   - This approach also enables custom settings by making custom Config class
 > - Content Browser menu is updated
 > - Main Ribbon menu button has been updated, now including links to YouTube channel and even links to Settings
+
+---
 
 **Version 2.0.4**
 ### Added
@@ -98,6 +104,8 @@ All notable changes to this project will be documented in this file.
 > - Enabled (almost) 0s dialogue durations
 >   - Allows rapid transitions with very short or nearly zero-duration dialogues.
 
+---
+
 **Version 2.0.3**
 ### Added 
 > - Typewriter Effect
@@ -136,6 +144,8 @@ All notable changes to this project will be documented in this file.
 > - All functions are now categorized by `Class`
 >   - Manager function are in `Mountea|Dialogue|Manager` section etc.
 
+---
+
 **Version 2.0.0**
 ### Added
 > - Dialogue Nodes can be created in blueprints
@@ -168,6 +178,8 @@ All notable changes to this project will be documented in this file.
 > - Dialogue Node and pre-defined Decorators require `FDialogueRow` DataTable
 > - Dialogue Decorators don't have drop arrow in the list anymore - replaced with `Delete` button
 
+---
+
 **Version 1.0.6**
 ### Added
 > - Added: Advanced Wiring Style for Nodes
@@ -185,6 +197,8 @@ All notable changes to this project will be documented in this file.
 > - Changed: Lead Node now can point to multiple Answer Nodes
 > - Changed: Answer Node now can point to multiple Lead Nodes
 
+---
+
 **Version 1.0.5**
 ### Added
 > - Added: Added support for Gameplay Tags (beta)
@@ -197,6 +211,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 > - Changed: Exposed `bDoesAutoStart` for Dialogue Nodes
+
+---
 
 **Version 1.0.0**
 ### Added
