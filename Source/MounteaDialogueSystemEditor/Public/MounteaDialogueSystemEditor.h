@@ -64,7 +64,6 @@ private:
 	void SettingsButtonClicked() const;
 	void EditorSettingsButtonClicked() const;
 	void ConfigButtonClicked() const;
-	TSharedRef<SWidget> MakeMounteaMenuWidget() const;
 
 protected:
 		
