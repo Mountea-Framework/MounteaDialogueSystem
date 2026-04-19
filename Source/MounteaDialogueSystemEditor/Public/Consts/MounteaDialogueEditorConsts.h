@@ -20,6 +20,13 @@ namespace MounteaDialogueConsts
 	constexpr const wchar_t* Submenu_NodeTemplates =	TEXT("5. Node Templates");
 }
 
+namespace MounteaAdvancedDialogueToolbar
+{
+	static const FName MounteaSharedMenuName("MounteaFramework.SharedMenu");
+	static const FName MounteaSharedSectionName("MounteaFramework");
+	static const FName MounteaSharedButtonName("MounteaFrameworkButton");
+}
+
 namespace MounteaDialogueWireConsts
 {
 	// Wire rendering
