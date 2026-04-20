@@ -25,7 +25,7 @@
  *   decorators.json          — shared decorator definitions
  *   conditions.json          — shared condition definitions
  *   Thumbnails/{id}.png      — participant thumbnails
- *   dialogues/*.mnteadlg     — individual dialogue archives
+ *   dialogues/[name].mnteadlg — individual dialogue archives
  *
  * Each nested .mnteadlg is extracted to a temp location and imported through
  * the standard ImportDialogueGraph() path. The import-config entry for every
