@@ -78,7 +78,7 @@ TScriptInterface<IMounteaDialogueManagerInterface> UMounteaDialogueManagerStatic
 		return nullptr;
 
 	TArray<UActorComponent*> actorComponents = dialogueManagerActor->GetComponentsByInterface(UMounteaDialogueManagerInterface::StaticClass());
-	if (!actorComponents.Num() == 0)
+	if (actorComponents.Num() != 0)
 	{
 		resultValue = actorComponents[0];
 		bResult = true;

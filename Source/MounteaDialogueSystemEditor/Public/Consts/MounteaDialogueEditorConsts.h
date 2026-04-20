@@ -13,11 +13,11 @@
 
 namespace MounteaDialogueConsts
 {
-	constexpr const wchar_t* Submenu_Decorators =		TEXT("1. Node Decorators");
-	constexpr const wchar_t* Submenu_Conditions =		TEXT("2. Edge Conditions");
-	constexpr const wchar_t* Submenu_Configurations =	TEXT("3. Configuration");
-	constexpr const wchar_t* Submenu_DialogueData =		TEXT("4. Dialogue Data");
-	constexpr const wchar_t* Submenu_NodeTemplates =	TEXT("5. Node Templates");
+	constexpr const TCHAR* Submenu_Decorators =		TEXT("1. Node Decorators");
+	constexpr const TCHAR* Submenu_Conditions =		TEXT("2. Edge Conditions");
+	constexpr const TCHAR* Submenu_Configurations =	TEXT("3. Configuration");
+	constexpr const TCHAR* Submenu_DialogueData =	TEXT("4. Dialogue Data");
+	constexpr const TCHAR* Submenu_NodeTemplates =	TEXT("5. Node Templates");
 }
 
 namespace MounteaAdvancedDialogueToolbar
