@@ -1,22 +1,23 @@
 <!DOCTYPE html>
-<html class="setup-page-root">
+<html>
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>Mountea Dialogue System - Setup Defaults</title>
+	<link rel="stylesheet" href="DialogueEditorHelp.css?v=help-ui-20260421b" />
 </head>
-<body class="setup-page-body">
-	<section class="doc-page setup-page">
+<body class="setup-page-body help-page-body--fullscreen">
+	<section class="doc-page setup-page help-fullscreen-page">
 		<header class="setup-header">
 			<h1>Setup Defaults</h1>
-			<div class="setup-chip-row">
-				<span class="setup-chip setup-chip--gamemode">GameMode: __MDS_GAMEMODE_CLASS__</span>
-				<span class="setup-chip __MDS_STATUS_CHIP_CLASS__">__MDS_STATUS_CHIP_TEXT__</span>
+			<div class="setup-chip-row ui-chip-row">
+				<span class="setup-chip ui-chip setup-chip--gamemode">GameMode: __MDS_GAMEMODE_CLASS__</span>
+				<span class="setup-chip ui-chip __MDS_STATUS_CHIP_CLASS__">__MDS_STATUS_CHIP_TEXT__</span>
 			</div>
 		</header>
 
 		<section class="card setup-results">
-			<div class="setup-table-scroll">
+			<div class="setup-table-scroll ui-scroll-y">
 				<table class="setup-table">
 					<colgroup>
 						<col class="col-role" />
@@ -44,12 +45,13 @@
 		</section>
 
 		<section class="card setup-actions">
-			<div class="setup-action-row">
+			<div class="setup-action-row ui-action-row">
 				__MDS_EXAMPLE_LEVEL_BUTTON__
-				<a class="setup-action" href="#" data-mds-type="external" data-mds-target="https://discord.gg/c2WQ658V44">Support Discord</a>
-				<a class="setup-action setup-action--close" href="#" data-mds-type="close" data-mds-target="">Close</a>
+				<a class="setup-action ui-action" href="#" data-mds-type="external" data-mds-target="https://discord.gg/c2WQ658V44">Support Discord</a>
+				<a class="setup-action ui-action setup-action--close ui-action--close" href="#" data-mds-type="close" data-mds-target="">Close</a>
 			</div>
 		</section>
 	</section>
 </body>
 </html>
+
