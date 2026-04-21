@@ -26,4 +26,9 @@ private:
 	static FString BuildResultHtml(const FSetupDefaultsReport& Report);
 	static FString BuildResultHtml_WithTemplate(const FSetupDefaultsReport& Report, const FString& TemplateHtml);
 	static void HandleConsoleMessage(TWeakPtr<SWindow> WeakWindow, const FString& Message, const FString& Source, int32 Line, EWebBrowserConsoleLogSeverity Severity);
+	
+	static FString GetStatusBadgeClass(ESetupItemStatus Status);
+	static FString EscapeHtml(const FString& Text);
+	static FString GetStatusLabel(ESetupItemStatus Status);
+	static FVector2f GetPopupClientSize(const TSharedPtr<SWindow>& Window);
 };

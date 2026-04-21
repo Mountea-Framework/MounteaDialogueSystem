@@ -204,13 +204,22 @@ FSetupItemResult FMounteaDialogueSetupUtilities::CheckAndSetupSlot(const ESetupA
 
 bool FMounteaDialogueSetupUtilities::BlueprintHasComponent(const UBlueprintGeneratedClass* BPGC, const TSubclassOf<UActorComponent> CompClass)
 {
-	if (!BPGC || !BPGC->SimpleConstructionScript || !CompClass)
+	if (!BPGC || !CompClass)
 		return false;
 
-	for (USCS_Node* node : BPGC->SimpleConstructionScript->GetAllNodes())
+	const UClass* currentClass = BPGC;
+	while (currentClass)
 	{
-		if (node && node->ComponentClass && node->ComponentClass->IsChildOf(CompClass))
-			return true;
+		const UBlueprintGeneratedClass* currentBPGC = Cast<UBlueprintGeneratedClass>(currentClass);
+		if (currentBPGC && currentBPGC->SimpleConstructionScript)
+		{
+			for (USCS_Node* node : currentBPGC->SimpleConstructionScript->GetAllNodes())
+			{
+				if (node && node->ComponentClass && node->ComponentClass->IsChildOf(CompClass))
+					return true;
+			}
+		}
+		currentClass = currentClass->GetSuperClass();
 	}
 	return false;
 }
@@ -239,10 +248,17 @@ bool FMounteaDialogueSetupUtilities::BlueprintHasInterface(UBlueprint* BP, const
 	if (!BP || !InterfaceClass)
 		return false;
 
-	for (const FBPInterfaceDescription& desc : BP->ImplementedInterfaces)
+	UBlueprint* current = BP;
+	while (current)
 	{
-		if (desc.Interface && desc.Interface->IsChildOf(InterfaceClass))
-			return true;
+		for (const FBPInterfaceDescription& desc : current->ImplementedInterfaces)
+		{
+			if (desc.Interface && desc.Interface->IsChildOf(InterfaceClass))
+				return true;
+		}
+
+		UBlueprintGeneratedClass* parentBPGC = Cast<UBlueprintGeneratedClass>(current->ParentClass);
+		current = parentBPGC ? Cast<UBlueprint>(parentBPGC->ClassGeneratedBy) : nullptr;
 	}
 	return false;
 }

@@ -12,6 +12,7 @@
 #include "MDSSetupDefaultsPopup.h"
 
 #include "FileHelpers.h"
+#include "Consts/MounteaDialogueEditorConsts.h"
 #include "Framework/Application/SlateApplication.h"
 #include "GenericPlatform/GenericApplication.h"
 #include "HAL/PlatformProcess.h"
@@ -23,70 +24,6 @@
 #include "Containers/Ticker.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/SWindow.h"
-
-namespace
-{
-	constexpr float PopupWidthRatio = 0.4f;
-	constexpr float PopupHeightRatio = 0.6f;
-
-	FVector2f GetPopupClientSize(const TSharedPtr<SWindow>& Window)
-	{
-		FDisplayMetrics displayMetrics;
-		FSlateApplication::Get().GetDisplayMetrics(displayMetrics);
-
-		FPlatformRect workArea = displayMetrics.PrimaryDisplayWorkAreaRect;
-		if (Window.IsValid())
-		{
-			const FSlateRect windowRect = Window->GetRectInScreen();
-			const FVector2D windowCenter(
-				(windowRect.Left + windowRect.Right) * 0.5,
-				(windowRect.Top + windowRect.Bottom) * 0.5
-			);
-			workArea = displayMetrics.GetMonitorWorkAreaFromPoint(windowCenter);
-		}
-
-		const float workAreaWidth = static_cast<float>(workArea.Right - workArea.Left);
-		const float workAreaHeight = static_cast<float>(workArea.Bottom - workArea.Top);
-		return FVector2f(workAreaWidth * PopupWidthRatio, workAreaHeight * PopupHeightRatio);
-	}
-
-	FString EscapeHtml(const FString& InputValue)
-	{
-		FString outputValue = InputValue;
-		outputValue.ReplaceInline(TEXT("&"), TEXT("&amp;"));
-		outputValue.ReplaceInline(TEXT("<"), TEXT("&lt;"));
-		outputValue.ReplaceInline(TEXT(">"), TEXT("&gt;"));
-		outputValue.ReplaceInline(TEXT("\""), TEXT("&quot;"));
-		outputValue.ReplaceInline(TEXT("'"), TEXT("&#39;"));
-		return outputValue;
-	}
-
-	FString GetStatusBadgeClass(ESetupItemStatus Status)
-	{
-		switch (Status)
-		{
-		case ESetupItemStatus::AlreadyPresent: return TEXT("setup-badge setup-badge--present");
-		case ESetupItemStatus::Added:          return TEXT("setup-badge setup-badge--added");
-		case ESetupItemStatus::CppClass:       return TEXT("setup-badge setup-badge--cpp");
-		case ESetupItemStatus::Failed:         return TEXT("setup-badge setup-badge--failed");
-		case ESetupItemStatus::Skipped:        return TEXT("setup-badge setup-badge--skipped");
-		}
-		return TEXT("setup-badge");
-	}
-
-	FString GetStatusLabel(ESetupItemStatus Status)
-	{
-		switch (Status)
-		{
-		case ESetupItemStatus::AlreadyPresent: return TEXT("&#x2705; Already set");
-		case ESetupItemStatus::Added:          return TEXT("&#x2705; Added");
-		case ESetupItemStatus::CppClass:       return TEXT("&#x274C; C++ class");
-		case ESetupItemStatus::Failed:         return TEXT("&#x274C; Failed");
-		case ESetupItemStatus::Skipped:        return TEXT("&mdash; Skipped");
-		}
-		return TEXT("Unknown");
-	}
-}
 
 void MDSSetupDefaultsPopup::Open(const FSetupDefaultsReport& Report)
 {
@@ -207,19 +144,20 @@ FString MDSSetupDefaultsPopup::BuildResultHtml_WithTemplate(const FSetupDefaults
 	}
 	else if (Report.AllSucceeded())
 	{
-		summaryMessage = TEXT("&#x1F389; All components configured. Your project is ready for Mountea Dialogue.");
+		summaryMessage = TEXT("All components configured. Your project is ready for Mountea Dialogue.");
 		summaryClass = TEXT("setup-summary--success");
 	}
 	else if (!Report.AnySucceeded())
 	{
-		summaryMessage = TEXT("&#x274C; All checks failed. Check the Example Level for a reference setup.");
+		summaryMessage = TEXT("All checks failed. Check the Example Level for a reference setup.");
 		summaryClass = TEXT("setup-summary--failed");
 		exampleLevelButton = TEXT("<a class=\"setup-action\" href=\"#\" data-mds-type=\"level\" data-mds-target=\"/MounteaDialogueSystem/Example/M_DialogueExample\">Open Example Level</a>");
 	}
 	else
 	{
-		summaryMessage = TEXT("&#x26A0; Some items could not be configured automatically. See details above.");
+		summaryMessage = TEXT("Some items could not be configured automatically. See details above.");
 		summaryClass = TEXT("setup-summary--partial");
+		exampleLevelButton = TEXT("<a class=\"setup-action\" href=\"#\" data-mds-type=\"level\" data-mds-target=\"/MounteaDialogueSystem/Example/M_DialogueExample\">Open Example Level</a>");
 	}
 
 	const FString statusChipClass = Report.AllSucceeded()
@@ -275,4 +213,62 @@ void MDSSetupDefaultsPopup::HandleConsoleMessage(TWeakPtr<SWindow> WeakWindow, c
 		if (FPackageName::DoesPackageExist(dataTarget))
 			FEditorFileUtils::LoadMap(dataTarget, false, true);
 	}
+}
+
+FVector2f MDSSetupDefaultsPopup::GetPopupClientSize(const TSharedPtr<SWindow>& Window)
+{
+	FDisplayMetrics displayMetrics;
+	FSlateApplication::Get().GetDisplayMetrics(displayMetrics);
+
+	FPlatformRect workArea = displayMetrics.PrimaryDisplayWorkAreaRect;
+	if (Window.IsValid())
+	{
+		const FSlateRect windowRect = Window->GetRectInScreen();
+		const FVector2D windowCenter(
+			(windowRect.Left + windowRect.Right) * 0.5,
+			(windowRect.Top + windowRect.Bottom) * 0.5
+		);
+		workArea = displayMetrics.GetMonitorWorkAreaFromPoint(windowCenter);
+	}
+
+	const float workAreaWidth = static_cast<float>(workArea.Right - workArea.Left);
+	const float workAreaHeight = static_cast<float>(workArea.Bottom - workArea.Top);
+	return FVector2f(workAreaWidth * MounteaPopup::PopupWidthRatio, workAreaHeight * MounteaPopup::PopupHeightRatio);
+}
+
+FString MDSSetupDefaultsPopup::EscapeHtml(const FString& InputValue)
+{
+	FString outputValue = InputValue;
+	outputValue.ReplaceInline(TEXT("&"), TEXT("&amp;"));
+	outputValue.ReplaceInline(TEXT("<"), TEXT("&lt;"));
+	outputValue.ReplaceInline(TEXT(">"), TEXT("&gt;"));
+	outputValue.ReplaceInline(TEXT("\""), TEXT("&quot;"));
+	outputValue.ReplaceInline(TEXT("'"), TEXT("&#39;"));
+	return outputValue;
+}
+
+FString MDSSetupDefaultsPopup::GetStatusBadgeClass(ESetupItemStatus Status)
+{
+	switch (Status)
+	{
+		case ESetupItemStatus::AlreadyPresent: return TEXT("setup-badge setup-badge--present");
+		case ESetupItemStatus::Added:          return TEXT("setup-badge setup-badge--added");
+		case ESetupItemStatus::CppClass:       return TEXT("setup-badge setup-badge--cpp");
+		case ESetupItemStatus::Failed:         return TEXT("setup-badge setup-badge--failed");
+		case ESetupItemStatus::Skipped:        return TEXT("setup-badge setup-badge--skipped");
+	}
+	return TEXT("setup-badge");
+}
+
+FString MDSSetupDefaultsPopup::GetStatusLabel(ESetupItemStatus Status)
+{
+	switch (Status)
+	{
+		case ESetupItemStatus::AlreadyPresent: return TEXT("&#x2705; Already set");
+		case ESetupItemStatus::Added:          return TEXT("&#x2705; Added");
+		case ESetupItemStatus::CppClass:       return TEXT("&#x274C; C++ class");
+		case ESetupItemStatus::Failed:         return TEXT("&#x274C; Failed");
+		case ESetupItemStatus::Skipped:        return TEXT("&mdash; Skipped");
+	}
+	return TEXT("Unknown");
 }
