@@ -4,6 +4,7 @@
 #include "Settings/MounteaDialogueSystemSettings.h"
 
 #include "Engine/Font.h"
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Settings/MounteaDialogueConfiguration.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueSystemSettings"
@@ -25,7 +26,9 @@ UMounteaDialogueSystemSettings::UMounteaDialogueSystemSettings()
 
 #if WITH_EDITOR
 	SubtitlesSettings.SubtitlesFont = SetupDefaultFontSettings();
-	if (SubtitlesSettings.SettingsGUID.IsValid() == false)	SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
+	if (SubtitlesSettings.SettingsGUID.IsValid() == false)	
+		SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
+	SetupEditorData();
 #endif
 
 }
@@ -133,6 +136,12 @@ float UMounteaDialogueSystemSettings::GetClientPredictionTimeoutSeconds() const
 	return FMath::Max(0.05f, ClientPredictionTimeoutSeconds);
 }
 
+void UMounteaDialogueSystemSettings::SetDialogueConfiguration(const TSoftObjectPtr<UMounteaDialogueConfiguration> NewDialogueConfiguration)
+{
+	if (DialogueConfiguration != NewDialogueConfiguration)
+		DialogueConfiguration = NewDialogueConfiguration;	
+}
+
 #if WITH_EDITOR
 
 FSlateFontInfo UMounteaDialogueSystemSettings::SetupDefaultFontSettings()
@@ -216,6 +225,31 @@ void UMounteaDialogueSystemSettings::PostEditChangeChainProperty(FPropertyChange
 			}
 		}
 	}
+}
+
+void UMounteaDialogueSystemSettings::SetupEditorData()
+{
+	const TSoftObjectPtr<UMounteaDialogueConfiguration> existingConfig = GetDialogueConfiguration();
+	if (!existingConfig.IsNull())
+		return;
+
+	const FString defaultConfigPath = TEXT("/MounteaDialogueSystem/Data/DefaultMounteaDialogueConfiguration.DefaultMounteaDialogueConfiguration");
+	FSoftObjectPath configSoftPath(defaultConfigPath);
+	if (!configSoftPath.IsValid())
+	{
+		LOG_WARNING(TEXT("[SetupEditorData] Invalid default Dialogue Configuration path: %s"), *defaultConfigPath);
+		return;
+	}
+
+	const auto* defaultConfig = Cast<UMounteaDialogueConfiguration>(configSoftPath.TryLoad());
+	if (!defaultConfig)
+	{
+		LOG_WARNING(TEXT("[SetupEditorData] Default Dialogue Configuration asset is missing or failed to load: %s"), *defaultConfigPath);
+		return;
+	}
+	
+	SetDialogueConfiguration(TSoftObjectPtr<UMounteaDialogueConfiguration>(configSoftPath));
+	SaveConfig();
 }
 
 #endif
