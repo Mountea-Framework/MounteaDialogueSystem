@@ -29,6 +29,8 @@
 #include "Interfaces/IHttpResponse.h"
 #include "Interfaces/IPluginManager.h"
 #include "Popups/MDSPopup.h"
+#include "Popups/MDSSetupDefaultsPopup.h"
+#include "Setup/MounteaDialogueSetupUtilities.h"
 #include "Serialization/JsonReader.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Containers/Ticker.h"
@@ -367,7 +369,13 @@ void FMounteaDialogueSystemEditor::StartupModule()
 			FExecuteAction::CreateStatic(&FMounteaDialogueFixUtilities::ReplaceNodesInSelectedBlueprints),
 			FCanExecuteAction::CreateStatic(&FMounteaDialogueFixUtilities::CanExecute)
 		);
-		
+
+		PluginCommands->MapAction(
+			FMDSCommands::Get().SetupDefaultsAction,
+			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::SetupDefaultsButtonClicked),
+			FCanExecuteAction()
+		);
+
 		IMainFrameModule& mainFrame = FModuleManager::Get().LoadModuleChecked<IMainFrameModule>("MainFrame");
 		mainFrame.GetMainFrameCommandBindings()->Append(PluginCommands.ToSharedRef());
 
@@ -891,6 +899,12 @@ void FMounteaDialogueSystemEditor::TutorialButtonClicked() const
 	FGlobalTabmanager::Get()->TryInvokeTab(FName("DialogueSystemTutorial"));
 }
 
+void FMounteaDialogueSystemEditor::SetupDefaultsButtonClicked() const
+{
+	const FSetupDefaultsReport report = FMounteaDialogueSetupUtilities::RunSetupDefaults();
+	MDSSetupDefaultsPopup::Open(report);
+}
+
 void FMounteaDialogueSystemEditor::RegisterMenus()
 {
 	if (!UToolMenus::Get()->IsMenuRegistered(MounteaAdvancedDialogueToolbar::MounteaSharedMenuName))
@@ -951,6 +965,19 @@ void FMounteaDialogueSystemEditor::RegisterMenus()
 				LOCTEXT("DlgSubMenu_Tooltip", "💬 Mountea Dialogue System tools"),
 				FNewToolMenuDelegate::CreateLambda([this](UToolMenu* subMenu)
 				{
+					{
+						FToolMenuSection& setupSection = subMenu->FindOrAddSection("MounteaDialogue_Setup");
+						setupSection.Label = LOCTEXT("DlgSetup_Label", "Mountea Dialogue Setup");
+						setupSection.InsertPosition = FToolMenuInsert(NAME_None, EToolMenuInsertType::First);
+						setupSection.AddEntry(FToolMenuEntry::InitMenuEntry(
+							"MounteaDialogue_SetupDefaults",
+							LOCTEXT("MounteaSystemEditor_SetupDefaults_Label", "Setup Defaults"),
+							LOCTEXT("MounteaSystemEditor_SetupDefaults_Tooltip", "⚙ Auto-configure current level's GameMode classes with required Mountea Dialogue components"),
+							FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.AutoSetup"),
+							FToolMenuExecuteAction::CreateLambda([this](const FToolMenuContext&) { SetupDefaultsButtonClicked(); })
+						));
+					}
+
 					{
 						FToolMenuSection& tutorialSection = subMenu->FindOrAddSection("MounteaDialogue_Tutorial");
 						tutorialSection.Label = LOCTEXT("DlgTutorial_Label", "Mountea Dialogue Tutorial");

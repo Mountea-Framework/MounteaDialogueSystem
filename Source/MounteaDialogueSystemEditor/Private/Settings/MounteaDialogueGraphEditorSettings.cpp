@@ -42,6 +42,7 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAl
 
 	SharedStylesheetPath.FilePath = resolvePluginPath(TEXT("Resources/Help/DialogueEditorHelp.css"));
 	SharedScriptPath.FilePath = resolvePluginPath(TEXT("Resources/Help/DialogueEditorHelp.js"));
+	SetupDefaultsHtmlPath.FilePath = resolvePluginPath(TEXT("Resources/Help/setup_defaults_result.html"));
 
 	FDialogueEditorPageConfig welcomePage(
 		NSLOCTEXT("MounteaDialogueGraphEditorSettings", "EditorTemplatePages_Welcome", "Welcome & Learning Path"),
