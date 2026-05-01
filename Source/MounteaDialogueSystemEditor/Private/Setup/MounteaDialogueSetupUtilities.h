@@ -27,8 +27,7 @@ enum class ESetupActorRole : uint8
 	Pawn,
 	PlayerController,
 	PlayerState,
-	GameState,
-	HUD
+	GameState
 };
 
 struct FSetupItemResult

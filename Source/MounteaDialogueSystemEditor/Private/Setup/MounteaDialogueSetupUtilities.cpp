@@ -27,9 +27,7 @@
 #include "Components/MounteaDialogueManager.h"
 #include "Components/MounteaDialogueSession.h"
 #include "GameFramework/GameStateBase.h"
-#include "GameFramework/HUD.h"
 #include "GameFramework/PlayerState.h"
-#include "Interfaces/HUD/MounteaDialogueHUDClassInterface.h"
 
 bool FSetupDefaultsReport::AllSucceeded() const
 {
@@ -103,7 +101,6 @@ FSetupDefaultsReport FMounteaDialogueSetupUtilities::RunSetupDefaults()
 	report.Items.Add(CheckAndSetupSlot(ESetupActorRole::PlayerController,  cdo->PlayerControllerClass,     UMounteaDialogueParticipantUserInterfaceComponent::StaticClass(), nullptr));
 	report.Items.Add(CheckAndSetupSlot(ESetupActorRole::PlayerState,       cdo->PlayerStateClass,          UMounteaDialogueManager::StaticClass(),                           nullptr));
 	report.Items.Add(CheckAndSetupSlot(ESetupActorRole::GameState,         cdo->GameStateClass,            UMounteaDialogueSession::StaticClass(),                           nullptr));
-	report.Items.Add(CheckAndSetupSlot(ESetupActorRole::HUD,               cdo->HUDClass,                  nullptr,                                                          UMounteaDialogueHUDClassInterface::StaticClass()));
 
 	return report;
 }
@@ -116,7 +113,6 @@ FString FMounteaDialogueSetupUtilities::GetRoleDisplayName(const ESetupActorRole
 		case ESetupActorRole::PlayerController: return TEXT("Player Controller");
 		case ESetupActorRole::PlayerState:      return TEXT("Player State");
 		case ESetupActorRole::GameState:        return TEXT("Game State");
-		case ESetupActorRole::HUD:              return TEXT("HUD");
 	}
 	return TEXT("Unknown");
 }

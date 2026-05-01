@@ -24,6 +24,7 @@
 #include "Interfaces/HUD/MounteaDialogueWBPInterface.h"
 #include "Settings/MounteaDialogueConfiguration.h"
 #include "Settings/MounteaDialogueSystemSettings.h"
+#include "Subsystem/MounteaDialogueLocalPlayerSubsystem.h"
 #include "Subsystem/MounteaDialogueWorldSubsystem.h"
 
 static constexpr uint8 UICompViewMode_None    = 0;
@@ -161,6 +162,16 @@ bool UMounteaDialogueParticipantUserInterfaceComponent::CreateDialogueUI_Impleme
 	// * show it using HUD Class
 	OnDialogueWidgetCreated.Broadcast(newWidget);
 
+	if (ULocalPlayer* localPlayer = playerController->GetLocalPlayer())
+	{
+		if (UMounteaDialogueLocalPlayerSubsystem* localPlayerSubsystem = localPlayer->GetSubsystem<UMounteaDialogueLocalPlayerSubsystem>())
+			localPlayerSubsystem->AttachWidget(newWidget);
+		else
+			newWidget->AddToPlayerScreen();
+	}
+	else
+		newWidget->AddToPlayerScreen();
+
 	Execute_SetUserInterface(this, newWidget);
 	IMounteaDialogueUIBaseInterface::Execute_BindEvents(UserInterface);
 
@@ -187,6 +198,18 @@ bool UMounteaDialogueParticipantUserInterfaceComponent::CloseDialogueUI_Implemen
 {
 	if (!IsValid(UserInterface))
 		return false;
+
+	if (UUserWidget* userWidget = Cast<UUserWidget>(UserInterface))
+	{
+		if (APlayerController* playerController = UMounteaDialogueSystemBFC::GetOwnerPlayerController(GetOwner()))
+		{
+			if (ULocalPlayer* localPlayer = playerController->GetLocalPlayer())
+			{
+				if (UMounteaDialogueLocalPlayerSubsystem* localPlayerSubsystem = localPlayer->GetSubsystem<UMounteaDialogueLocalPlayerSubsystem>())
+					localPlayerSubsystem->RemoveWidget(userWidget);
+			}
+		}
+	}
 
 	IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(UserInterface, ParentManager, MounteaDialogueWidgetCommands::CloseDialogueWidget);
 	IMounteaDialogueUIBaseInterface::Execute_UnbindEvents(UserInterface);

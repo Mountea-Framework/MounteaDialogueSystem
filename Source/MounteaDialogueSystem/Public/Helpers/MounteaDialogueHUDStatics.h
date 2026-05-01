@@ -49,7 +49,8 @@ struct FWidgetAdditionParams
 /**
  * 
  */
-UCLASS(DisplayName="Mountea Dialogue HUD Function Library")
+UCLASS(DisplayName="Mountea Dialogue HUD Function Library",
+	meta=(DeprecatedNode, DeprecationMessage="MounteaDialogueHUDStatics is deprecated. Use object-input functions on this class."))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueHUDStatics : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
@@ -153,7 +154,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|HUD|Viewport", 
 		meta=(CustomTag="MounteaK2Getter"))
-	static TSubclassOf<UUserWidget> GetViewportBaseClass(AActor* ViewportManager);
+	static TSubclassOf<UUserWidget> GetViewportBaseClass(UObject* ViewportManager);
 	
 	/**
 	 * Initializes the viewport widget using the specified viewport manager that implements MounteaDialogueHUDClassInterface.
@@ -162,7 +163,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|HUD|Viewport", 
 		meta=(CustomTag="MounteaK2Setter"))
-	static void InitializeViewportWidget(AActor* ViewportManager);
+	static void InitializeViewportWidget(UObject* ViewportManager);
 
 	/**
 	 * Retrieves the viewport widget from the specified viewport manager that implements the MounteaDialogueHUDClassInterface.
@@ -172,7 +173,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|HUD|Viewport", 
 		meta=(CustomTag="MounteaK2Getter"))
-	static UUserWidget* GetViewportWidget(AActor* ViewportManager);
+	static UUserWidget* GetViewportWidget(UObject* ViewportManager);
 	
 	/**
 	 * Adds a child widget to the viewport using the specified viewport manager that implements MounteaDialogueHUDClassInterface.
@@ -184,7 +185,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|HUD|Viewport", 
 		meta=(CustomTag="MounteaK2Setter"),
 		meta=(AutoCreateRefTerm="WidgetParamts"))
-	static void AddChildWidgetToViewport(AActor* ViewportManager, UUserWidget* ChildWidget, const FWidgetAdditionParams WidgetParams);
+	static void AddChildWidgetToViewport(UObject* ViewportManager, UUserWidget* ChildWidget, const FWidgetAdditionParams WidgetParams);
 
 	/**
 	 * Removes a child widget from the viewport using the specified viewport manager that implements MounteaDialogueHUDClassInterface.
@@ -194,7 +195,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|HUD|Viewport", 
 		meta=(CustomTag="MounteaK2Setter"))
-	static void RemoveChildWidgetFromViewport(AActor* ViewportManager, UUserWidget* ChildWidget);
+	static void RemoveChildWidgetFromViewport(UObject* ViewportManager, UUserWidget* ChildWidget);
 
 	// --- Viewport Widget Interface functions ------------------------------
 	
@@ -207,7 +208,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|HUD|Viewport", 
 		meta=(CustomTag="MounteaK2Setter"))
-	static void AddChildWidget(UUserWidget* ParentWidget, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams = FWidgetAdditionParams());
+	static void AddChildWidget(UObject* ParentWidget, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams = FWidgetAdditionParams());
 
 	/**
 	 * Removes a child widget from the specified parent widget that implements the MounteaDialogueViewportWidgetInterface.
@@ -217,7 +218,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|HUD|Viewport", 
 		meta=(CustomTag="MounteaK2Setter"))
-	static void RemoveChildWidget(UUserWidget* ParentWidget, UUserWidget* ChildWidget);
+	static void RemoveChildWidget(UObject* ParentWidget, UUserWidget* ChildWidget);
 
 	// --- Dialogue Base UI Interface functions ------------------------------
 

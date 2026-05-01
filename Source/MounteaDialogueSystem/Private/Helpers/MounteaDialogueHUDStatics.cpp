@@ -4,6 +4,9 @@
 #include "Helpers/MounteaDialogueHUDStatics.h"
 
 #include "Blueprint/GameViewportSubsystem.h"
+#include "Engine/LocalPlayer.h"
+#include "GameFramework/Actor.h"
+#include "GameFramework/PlayerController.h"
 #include "Helpers/MounteaDialogueTraversalStatics.h"
 #include "Interfaces/HUD/MounteaDialogueHUDClassInterface.h"
 #include "Interfaces/HUD/MounteaDialogueUIBaseInterface.h"
@@ -15,6 +18,7 @@
 #include "Interfaces/Nodes/MounteaDialogueSpeechDataInterface.h"
 #include "Internationalization/Regex.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
+#include "Subsystem/MounteaDialogueLocalPlayerSubsystem.h"
 #include "WBP/MounteaDialogueOptionsContainer.h"
 
 FDialogueOptionData UMounteaDialogueHUDStatics::NewDialogueOptionData(const FGuid& Node, const FDialogueRow& DialogueRow)
@@ -167,79 +171,120 @@ int32 UMounteaDialogueHUDStatics::GetSafeOptionIndex(UObject* Container, const E
 }
 
 
-TSubclassOf<UUserWidget> UMounteaDialogueHUDStatics::GetViewportBaseClass(AActor* ViewportManager)
+TSubclassOf<UUserWidget> UMounteaDialogueHUDStatics::GetViewportBaseClass(UObject* ViewportManager)
 {
 	if (!IsValid(ViewportManager))
-	{
-		LOG_ERROR(TEXT("[GetViewportBaseClass] Invalid Viewport Manager provided!"));
 		return nullptr;
-	}
-	
+
 	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
 		return IMounteaDialogueHUDClassInterface::Execute_GetViewportBaseClass(ViewportManager);
 
-	LOG_ERROR(TEXT("[GetViewportWidget] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
+	if (const APlayerController* playerController = Cast<APlayerController>(ViewportManager))
+	{
+		if (ULocalPlayer* localPlayer = playerController->GetLocalPlayer())
+		{
+			if (UMounteaDialogueLocalPlayerSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueLocalPlayerSubsystem>())
+				return subsystem->GetViewportBaseClassSafe();
+		}
+	}
+
 	return nullptr;
 }
 
-void UMounteaDialogueHUDStatics::InitializeViewportWidget(AActor* ViewportManager)
+void UMounteaDialogueHUDStatics::InitializeViewportWidget(UObject* ViewportManager)
 {
 	if (!IsValid(ViewportManager))
+		return;
+
+	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
 	{
-		LOG_ERROR(TEXT("[InitializeViewportWidget] Invalid Viewport Manager provided!"));
+		IMounteaDialogueHUDClassInterface::Execute_InitializeViewportWidget(ViewportManager);
 		return;
 	}
-	
-	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
-		return IMounteaDialogueHUDClassInterface::Execute_InitializeViewportWidget(ViewportManager);
 
-	LOG_ERROR(TEXT("[InitializeViewportWidget] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
+	if (APlayerController* playerController = Cast<APlayerController>(ViewportManager))
+	{
+		if (ULocalPlayer* localPlayer = playerController->GetLocalPlayer())
+		{
+			if (UMounteaDialogueLocalPlayerSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueLocalPlayerSubsystem>())
+				subsystem->InitializeViewportWidget();
+		}
+	}
 }
 
-UUserWidget* UMounteaDialogueHUDStatics::GetViewportWidget(AActor* ViewportManager)
+UUserWidget* UMounteaDialogueHUDStatics::GetViewportWidget(UObject* ViewportManager)
 {
 	if (!IsValid(ViewportManager))
-	{
-		LOG_ERROR(TEXT("[GetViewportWidget] Invalid Viewport Manager provided!"));
 		return nullptr;
-	}
-	
+
 	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
 		return IMounteaDialogueHUDClassInterface::Execute_GetViewportWidget(ViewportManager);
 
-	LOG_ERROR(TEXT("[GetViewportWidget] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
+	if (const APlayerController* playerController = Cast<APlayerController>(ViewportManager))
+	{
+		if (ULocalPlayer* localPlayer = playerController->GetLocalPlayer())
+		{
+			if (UMounteaDialogueLocalPlayerSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueLocalPlayerSubsystem>())
+				return subsystem->GetViewportWidget();
+		}
+	}
+
 	return nullptr;
 }
 
-void UMounteaDialogueHUDStatics::AddChildWidgetToViewport(AActor* ViewportManager, UUserWidget* ChildWidget, const FWidgetAdditionParams WidgetParams)
+void UMounteaDialogueHUDStatics::AddChildWidgetToViewport(UObject* ViewportManager, UUserWidget* ChildWidget, const FWidgetAdditionParams WidgetParams)
 {
-	if (!IsValid(ViewportManager))
+	if (!IsValid(ViewportManager) || !IsValid(ChildWidget))
+		return;
+
+	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
 	{
-		LOG_ERROR(TEXT("[AddChildWidgetToViewport] Invalid Viewport Manager provided!"));
+		IMounteaDialogueHUDClassInterface::Execute_AddChildWidgetToViewport(ViewportManager, ChildWidget, WidgetParams.ZOrder, WidgetParams.Anchors, WidgetParams.Margin);
 		return;
 	}
-	
-	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
-		return IMounteaDialogueHUDClassInterface::Execute_AddChildWidgetToViewport(ViewportManager, ChildWidget, WidgetParams.ZOrder, WidgetParams.Anchors, WidgetParams.Margin);
 
-	LOG_ERROR(TEXT("[AddChildWidgetToViewport] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
+	if (APlayerController* playerController = Cast<APlayerController>(ViewportManager))
+	{
+		if (ULocalPlayer* localPlayer = playerController->GetLocalPlayer())
+		{
+			if (UMounteaDialogueLocalPlayerSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueLocalPlayerSubsystem>())
+			{
+				subsystem->AttachWidget(ChildWidget, WidgetParams);
+				return;
+			}
+		}
+	}
+
+	ChildWidget->AddToPlayerScreen(WidgetParams.ZOrder);
 }
 
-void UMounteaDialogueHUDStatics::RemoveChildWidgetFromViewport(AActor* ViewportManager, UUserWidget* ChildWidget)
+void UMounteaDialogueHUDStatics::RemoveChildWidgetFromViewport(UObject* ViewportManager, UUserWidget* ChildWidget)
 {
-	if (!IsValid(ViewportManager))
+	if (!IsValid(ViewportManager) || !IsValid(ChildWidget))
+		return;
+
+	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
 	{
-		LOG_ERROR(TEXT("[RemoveChildWidgetFromViewport] Invalid Viewport Manager provided!"));
+		IMounteaDialogueHUDClassInterface::Execute_RemoveChildWidgetFromViewport(ViewportManager, ChildWidget);
 		return;
 	}
-	
-	if (ViewportManager->Implements<UMounteaDialogueHUDClassInterface>())
-		return IMounteaDialogueHUDClassInterface::Execute_RemoveChildWidgetFromViewport(ViewportManager, ChildWidget);
 
-	LOG_ERROR(TEXT("[RemoveChildWidgetFromViewport] Viewport manager does not implement 'MounteaDialogueHUDClassInterface'!"));
+	if (APlayerController* playerController = Cast<APlayerController>(ViewportManager))
+	{
+		if (ULocalPlayer* localPlayer = playerController->GetLocalPlayer())
+		{
+			if (UMounteaDialogueLocalPlayerSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueLocalPlayerSubsystem>())
+			{
+				subsystem->RemoveWidget(ChildWidget);
+				return;
+			}
+		}
+	}
+
+	ChildWidget->RemoveFromParent();
 }
 
-void UMounteaDialogueHUDStatics::AddChildWidget(UUserWidget* ParentWidget, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams)
+void UMounteaDialogueHUDStatics::AddChildWidget(UObject* ParentWidget, UUserWidget* ChildWidget, const FWidgetAdditionParams& WidgetParams)
 {
 	if (!IsValid(ParentWidget))
 	{
@@ -253,7 +298,7 @@ void UMounteaDialogueHUDStatics::AddChildWidget(UUserWidget* ParentWidget, UUser
 	LOG_ERROR(TEXT("[AddChildWidget] ParentWidget does not implement `MounteaDialogueViewportWidgetInterface`!"));
 }
 
-void UMounteaDialogueHUDStatics::RemoveChildWidget(UUserWidget* ParentWidget, UUserWidget* ChildWidget)
+void UMounteaDialogueHUDStatics::RemoveChildWidget(UObject* ParentWidget, UUserWidget* ChildWidget)
 {
 	if (!IsValid(ParentWidget))
 	{
