@@ -14,6 +14,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Engine/LocalPlayer.h"
 #include "Interfaces/UMG/MounteaDialogueViewportWidgetInterface.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
 
 void UMounteaDialogueLocalPlayerSubsystem::Deinitialize()
 {
@@ -54,8 +55,16 @@ void UMounteaDialogueLocalPlayerSubsystem::InitializeViewportWidget_Implementati
 		return;
 
 	if (!ViewportBaseClass)
-		return;
-
+	{
+		const auto settings = GetDefault<UMounteaDialogueSystemSettings>();
+		if (!IsValid(settings))
+			return;
+		const auto config =settings->GetDialogueConfiguration().LoadSynchronous();
+		if (!IsValid(config))
+			return;
+		ViewportBaseClass = config->DefaultDialogueWrapperWidgetClass.LoadSynchronous();	
+	}
+	
 	ULocalPlayer* localPlayer = GetLocalPlayer();
 	if (!localPlayer || !localPlayer->GetPlayerController(GetWorld()))
 		return;

@@ -27,21 +27,13 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueLocalPlayerSubsystem : public UL
 public:
 
 	virtual void Deinitialize() override;
-
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Local Player|Viewport",
-		meta=(CustomTag="MounteaK2Setter"))
+	
 	void SetViewportBaseClass(TSubclassOf<UUserWidget> NewViewportBaseClass);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Local Player|Viewport",
-		meta=(CustomTag="MounteaK2Getter"))
+	
 	TSubclassOf<UUserWidget> GetViewportBaseClassSafe() const;
 
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Local Player|Viewport",
-		meta=(CustomTag="MounteaK2Setter"))
 	void AttachWidget(UUserWidget* Widget, const FWidgetAdditionParams WidgetParams = FWidgetAdditionParams());
-
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Local Player|Viewport",
-		meta=(CustomTag="MounteaK2Setter"))
+	
 	void RemoveWidget(UUserWidget* Widget);
 
 	// IMounteaDialogueHUDClassInterface

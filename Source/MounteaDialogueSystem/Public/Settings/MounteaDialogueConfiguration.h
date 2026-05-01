@@ -56,6 +56,15 @@ public:
 		meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"),
 		meta=(NoResetToDefault))
 	TSoftClassPtr<UUserWidget> DefaultDialogueWidgetClass;
+	
+	/**
+	 * User Widget class to be set as Viewport for HUD elements.
+	 * ❗ Must implement MounteaDialogueViewportWidgetInterface❗
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "🖥 UserInterface", 
+		meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueViewportWidgetInterface"),
+		meta=(NoResetToDefault))
+	TSoftClassPtr<UUserWidget> DefaultDialogueWrapperWidgetClass;
 
 	/**
 	 * Default Z-order for the dialogue widget when added to screen via
