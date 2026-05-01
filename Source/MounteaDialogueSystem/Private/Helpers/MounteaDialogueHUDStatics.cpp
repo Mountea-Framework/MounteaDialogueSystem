@@ -7,6 +7,7 @@
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/PlayerController.h"
+#include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Helpers/MounteaDialogueTraversalStatics.h"
 #include "Interfaces/HUD/MounteaDialogueHUDClassInterface.h"
 #include "Interfaces/HUD/MounteaDialogueUIBaseInterface.h"
@@ -18,7 +19,7 @@
 #include "Interfaces/Nodes/MounteaDialogueSpeechDataInterface.h"
 #include "Internationalization/Regex.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
-#include "Subsystem/MounteaDialogueLocalPlayerSubsystem.h"
+#include "Subsystem/MounteaDialogueViewportHUDSubsystem.h"
 #include "WBP/MounteaDialogueOptionsContainer.h"
 
 FDialogueOptionData UMounteaDialogueHUDStatics::NewDialogueOptionData(const FGuid& Node, const FDialogueRow& DialogueRow)
@@ -170,6 +171,33 @@ int32 UMounteaDialogueHUDStatics::GetSafeOptionIndex(UObject* Container, const E
 	return newActive;
 }
 
+UMounteaDialogueViewportHUDSubsystem* UMounteaDialogueHUDStatics::GetViewportHUDSubsystem(UObject* Context)
+{
+	if (!IsValid(Context))
+		return nullptr;
+
+	APlayerController* playerController = nullptr;
+
+	int32 contextDepth = 3;
+	if (playerController != Cast<APlayerController>(Context))
+	{
+		if (AActor* actor = Cast<AActor>(Context))
+			playerController = UMounteaDialogueSystemBFC::FindPlayerController(actor, contextDepth);
+		else if (const UActorComponent* actorComp = Cast<UActorComponent>(Context))
+		{
+			if (AActor* ownerActor = actorComp->GetOwner())
+				playerController = UMounteaDialogueSystemBFC::FindPlayerController(ownerActor, contextDepth);
+		}
+		else if (const UUserWidget* userWidget = Cast<UUserWidget>(Context))
+			playerController = UMounteaDialogueSystemBFC::FindPlayerController(userWidget->GetOwningPlayer(), contextDepth);
+	}
+
+	if (!IsValid(playerController))
+		return nullptr;
+
+	const ULocalPlayer* localPlayer = playerController->GetLocalPlayer();
+	return IsValid(localPlayer) ? localPlayer->GetSubsystem<UMounteaDialogueViewportHUDSubsystem>() : nullptr;
+}
 
 TSubclassOf<UUserWidget> UMounteaDialogueHUDStatics::GetViewportBaseClass(UObject* ViewportManager)
 {
@@ -183,8 +211,8 @@ TSubclassOf<UUserWidget> UMounteaDialogueHUDStatics::GetViewportBaseClass(UObjec
 	{
 		if (ULocalPlayer* localPlayer = playerController->GetLocalPlayer())
 		{
-			if (UMounteaDialogueLocalPlayerSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueLocalPlayerSubsystem>())
-				return subsystem->GetViewportBaseClassSafe();
+			if (UMounteaDialogueViewportHUDSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueViewportHUDSubsystem>())
+				return IMounteaDialogueHUDClassInterface::Execute_GetViewportBaseClass(subsystem);
 		}
 	}
 
@@ -206,7 +234,7 @@ void UMounteaDialogueHUDStatics::InitializeViewportWidget(UObject* ViewportManag
 	{
 		if (ULocalPlayer* localPlayer = playerController->GetLocalPlayer())
 		{
-			if (UMounteaDialogueLocalPlayerSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueLocalPlayerSubsystem>())
+			if (UMounteaDialogueViewportHUDSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueViewportHUDSubsystem>())
 				subsystem->InitializeViewportWidget();
 		}
 	}
@@ -224,7 +252,7 @@ UUserWidget* UMounteaDialogueHUDStatics::GetViewportWidget(UObject* ViewportMana
 	{
 		if (ULocalPlayer* localPlayer = playerController->GetLocalPlayer())
 		{
-			if (UMounteaDialogueLocalPlayerSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueLocalPlayerSubsystem>())
+			if (UMounteaDialogueViewportHUDSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueViewportHUDSubsystem>())
 				return subsystem->GetViewportWidget();
 		}
 	}
@@ -247,9 +275,9 @@ void UMounteaDialogueHUDStatics::AddChildWidgetToViewport(UObject* ViewportManag
 	{
 		if (ULocalPlayer* localPlayer = playerController->GetLocalPlayer())
 		{
-			if (UMounteaDialogueLocalPlayerSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueLocalPlayerSubsystem>())
+			if (UMounteaDialogueViewportHUDSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueViewportHUDSubsystem>())
 			{
-				subsystem->AttachWidget(ChildWidget, WidgetParams);
+				IMounteaDialogueHUDClassInterface::Execute_AddChildWidgetToViewport(subsystem, ChildWidget, WidgetParams.ZOrder, WidgetParams.Anchors, WidgetParams.Margin);
 				return;
 			}
 		}
@@ -273,9 +301,9 @@ void UMounteaDialogueHUDStatics::RemoveChildWidgetFromViewport(UObject* Viewport
 	{
 		if (ULocalPlayer* localPlayer = playerController->GetLocalPlayer())
 		{
-			if (UMounteaDialogueLocalPlayerSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueLocalPlayerSubsystem>())
+			if (UMounteaDialogueViewportHUDSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueViewportHUDSubsystem>())
 			{
-				subsystem->RemoveWidget(ChildWidget);
+				IMounteaDialogueHUDClassInterface::Execute_RemoveChildWidgetFromViewport(subsystem, ChildWidget);
 				return;
 			}
 		}

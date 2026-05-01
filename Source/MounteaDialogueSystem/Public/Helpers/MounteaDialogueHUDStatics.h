@@ -11,7 +11,7 @@
 
 class IMounteaDialogueManagerInterface;
 class UMounteaDialogueGraphNode;
-class UMounteaDialogueGraphNode;
+class UMounteaDialogueViewportHUDSubsystem;
 
 struct FDialogueRowData;
 struct FDialogueOptionData;
@@ -145,6 +145,23 @@ public:
 	static int32 GetSafeOptionIndex(UObject* Container, const EUINavigation Direction);
 	
 	// --- HUD Interface functions ------------------------------
+	
+	/**
+	 * Retrieves the Dialogue Viewport UI subsystem associated with the provided context.
+	 *
+	 * This function determines the player controller tied to the given context and returns
+	 * the associated UI subsystem if available.
+	 *
+	 * @param Context The context object used to locate the player controller. This can be an actor,
+	 *                actor component, or user widget. If invalid, the function returns nullptr.
+	 * @return A pointer to the UMounteaDialogueViewportHUDSubsystem if found; otherwise, nullptr.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|HUD|Viewport", 
+		meta=(CustomTag="MounteaK2Getter"),
+		meta=(DefaultToSelf="Context"),
+		meta=(CompactNodeTitle="Mountea Dialogue Viewport HUD Subsystem"),
+		DisplayName="Get Mountea Dialogue Viewport HUD Subsystem")
+	static UMounteaDialogueViewportHUDSubsystem* GetViewportHUDSubsystem(UObject* Context);
 
 	/**
 	 * Retrieves the base widget class used for the viewport from the specified viewport manager that implements MounteaDialogueHUDClassInterface.

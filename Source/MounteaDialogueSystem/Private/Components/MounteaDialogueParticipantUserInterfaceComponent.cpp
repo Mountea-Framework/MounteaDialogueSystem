@@ -24,7 +24,7 @@
 #include "Interfaces/HUD/MounteaDialogueWBPInterface.h"
 #include "Settings/MounteaDialogueConfiguration.h"
 #include "Settings/MounteaDialogueSystemSettings.h"
-#include "Subsystem/MounteaDialogueLocalPlayerSubsystem.h"
+#include "Subsystem/MounteaDialogueViewportHUDSubsystem.h"
 #include "Subsystem/MounteaDialogueWorldSubsystem.h"
 
 static constexpr uint8 UICompViewMode_None    = 0;
@@ -164,8 +164,9 @@ bool UMounteaDialogueParticipantUserInterfaceComponent::CreateDialogueUI_Impleme
 
 	if (ULocalPlayer* localPlayer = playerController->GetLocalPlayer())
 	{
-		if (UMounteaDialogueLocalPlayerSubsystem* localPlayerSubsystem = localPlayer->GetSubsystem<UMounteaDialogueLocalPlayerSubsystem>())
-			localPlayerSubsystem->AttachWidget(newWidget);
+		if (UMounteaDialogueViewportHUDSubsystem* localPlayerSubsystem = localPlayer->GetSubsystem<UMounteaDialogueViewportHUDSubsystem>())
+			IMounteaDialogueHUDClassInterface::Execute_AddChildWidgetToViewport(localPlayerSubsystem, newWidget, 0, FAnchors(0,0,1,1), FMargin());
+		
 		else
 			newWidget->AddToPlayerScreen();
 	}
@@ -205,8 +206,8 @@ bool UMounteaDialogueParticipantUserInterfaceComponent::CloseDialogueUI_Implemen
 		{
 			if (ULocalPlayer* localPlayer = playerController->GetLocalPlayer())
 			{
-				if (UMounteaDialogueLocalPlayerSubsystem* localPlayerSubsystem = localPlayer->GetSubsystem<UMounteaDialogueLocalPlayerSubsystem>())
-					localPlayerSubsystem->RemoveWidget(userWidget);
+				if (UMounteaDialogueViewportHUDSubsystem* localPlayerSubsystem = localPlayer->GetSubsystem<UMounteaDialogueViewportHUDSubsystem>())
+					IMounteaDialogueHUDClassInterface::Execute_RemoveChildWidgetFromViewport(localPlayerSubsystem, userWidget);
 			}
 		}
 	}
