@@ -87,3 +87,4 @@ Config/UpdateConfig.ini
 *.kra
 /.vscode
 compile_commands.json
+Resources/Help/changelog.html

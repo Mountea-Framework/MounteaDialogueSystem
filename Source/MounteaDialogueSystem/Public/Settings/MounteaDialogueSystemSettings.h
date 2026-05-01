@@ -39,7 +39,10 @@ protected:
 	 * Contains all gameplay configuration that was stored in settings.
 	 * Defines update frequency, Widget classes etc.
 	 */
-	UPROPERTY(config, EditDefaultsOnly, Category = "Configuration")
+	UPROPERTY(config, EditDefaultsOnly, Category = "Configuration",
+		meta=(NoClear),
+		meta=(NoResetToDefault),
+		meta=(ForceShowEngineContent, ForceShowPluginContent))
 	TSoftObjectPtr<UMounteaDialogueConfiguration> DialogueConfiguration;
 
 	/**
@@ -57,10 +60,13 @@ protected:
 	UPROPERTY(config, EditDefaultsOnly, Category = "Logging", meta=(Bitmask, BitmaskEnum="/Script/MounteaDialogueSystem.EMounteaDialogueLoggingVerbosity"))
 	uint8 LogVerbosity;
 
-	UPROPERTY(config, EditDefaultsOnly, Category = "Networking")
+	UPROPERTY(config, EditDefaultsOnly, Category = "Networking",
+		meta=(NoResetToDefault))
 	bool bEnableClientPrediction = true;
 
-	UPROPERTY(config, EditDefaultsOnly, Category = "Networking", meta=(UIMin=0.05, ClampMin=0.05))
+	UPROPERTY(config, EditDefaultsOnly, Category = "Networking", 
+		meta=(UIMin=0.05, ClampMin=0.05),
+		meta=(NoResetToDefault))
 	float ClientPredictionTimeoutSeconds = 0.75f;
 
 	/**
@@ -191,6 +197,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Settings", meta=(CustomTag="MounteaK2Getter"))
 	float GetClientPredictionTimeoutSeconds() const;
 	
+	void SetDialogueConfiguration(const TSoftObjectPtr<UMounteaDialogueConfiguration> NewDialogueConfiguration);
+	
 protected:
 
 #if WITH_EDITOR
@@ -198,6 +206,8 @@ protected:
 	
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
+	
+	void SetupEditorData();
 
 #endif
 	
