@@ -172,6 +172,13 @@ protected:
 	UPROPERTY(config, EditDefaultsOnly, Category = "HelpPages")
 	TMap<int32, FDialogueEditorPageConfig> EditorTemplatePages;
 
+	/**
+	 * HTML template for the Setup Defaults result popup.
+	 */
+	UPROPERTY(config, EditDefaultsOnly, Category = "HelpPages",
+		meta = (FilePathFilter = "html"))
+	FFilePath SetupDefaultsHtmlPath;
+
 #pragma endregion
 
 public:
@@ -261,6 +268,9 @@ public:
 
 	FString GetOfflineChangelogPath() const;
 	FString GetGeneratedChangelogPath() const;
+
+	FString GetSetupDefaultsHtmlPath() const
+	{ return SetupDefaultsHtmlPath.FilePath; }
 
 #pragma endregion
 

@@ -74,6 +74,7 @@ protected:
 
 	void RegisterTabSpawners(const TSharedRef<FTabManager>& TabManager);
 	void TutorialButtonClicked() const;
+	void SetupDefaultsButtonClicked() const;
 	
 private:
 	TSharedRef<SDockTab> OnSpawnDialogueSystemTutorialTab(const FSpawnTabArgs& SpawnTabArgs);

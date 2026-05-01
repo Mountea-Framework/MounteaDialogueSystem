@@ -53,3 +53,9 @@ namespace MounteaGraphLayoutStrategy
 	constexpr int32 OptimalHorizontalDistance = 300;
 	constexpr int32 OptimalVerticalDistance = 200;
 }
+
+namespace MounteaPopup
+{
+	constexpr float PopupWidthRatio = 0.4f;
+	constexpr float PopupHeightRatio = 0.6f;
+}
