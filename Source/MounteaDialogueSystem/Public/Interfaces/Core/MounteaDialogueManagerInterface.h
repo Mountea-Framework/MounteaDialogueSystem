@@ -230,15 +230,13 @@ public:
 		meta=(DeprecationMessage="Use IMounteaDialogueParticipantUIInterface instead."))
 	bool CloseDialogueUI();
 	virtual bool CloseDialogueUI_Implementation() = 0;
-
-	// --- General UI functions (deprecated — use UMounteaDialogueParticipantUserInterfaceComponent) ---
-
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager",
-		meta=(DeprecatedFunction),
-		meta=(DeprecationMessage="Use IMounteaDialogueParticipantUIInterface instead."))
+	
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Manager")
 	void ExecuteWidgetCommand(const FString& Command);
 	virtual void ExecuteWidgetCommand_Implementation(const FString& Command) = 0;
 
+	// --- General UI functions (deprecated — use UMounteaDialogueParticipantUserInterfaceComponent) ---
+	
 	UE_DEPRECATED(5.5, "Use UMounteaDialogueConfiguration::DefaultDialogueWidgetClass instead.")
 	virtual TSubclassOf<UUserWidget> GetDialogueWidgetClass() const = 0;
 
