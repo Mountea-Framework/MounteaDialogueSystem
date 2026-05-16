@@ -24,13 +24,6 @@ UMounteaDialogueSystemSettings::UMounteaDialogueSystemSettings()
 
 	LogVerbosity = 14; // hack it
 
-#if WITH_EDITOR
-	SubtitlesSettings.SubtitlesFont = SetupDefaultFontSettings();
-	if (SubtitlesSettings.SettingsGUID.IsValid() == false)	
-		SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
-	SetupEditorData();
-#endif
-
 }
 
 TSoftObjectPtr<UMounteaDialogueConfiguration> UMounteaDialogueSystemSettings::GetDialogueConfiguration() const
@@ -195,15 +188,12 @@ void UMounteaDialogueSystemSettings::PostEditChangeChainProperty(FPropertyChange
 		{
 			SubtitlesSettings.SettingsGUID.Invalidate();
 			SubtitlesSettings.SubtitlesFont = SetupDefaultFontSettings();
-			if (SubtitlesSettings.SettingsGUID.IsValid() == false)	SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
+			if (SubtitlesSettings.SettingsGUID.IsValid() == false)	
+				SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
 		}
 		else
-		{
 			if (SubtitlesSettings.SettingsGUID.IsValid() == false)
-			{
 				SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
-			}
-		}
 	}
 
 	if (PropertyChangedEvent.PropertyChain.GetActiveMemberNode()->GetValue()->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueSystemSettings, SubtitlesSettingsOverrides))
@@ -214,42 +204,40 @@ void UMounteaDialogueSystemSettings::PostEditChangeChainProperty(FPropertyChange
 			{
 				Itr.Value.SettingsGUID.Invalidate();
 				Itr.Value.SubtitlesFont = SetupDefaultFontSettings();
-				if (Itr.Value.SettingsGUID.IsValid() == false)	Itr.Value.SettingsGUID = FGuid::NewGuid();
+				if (Itr.Value.SettingsGUID.IsValid() == false)	
+					Itr.Value.SettingsGUID = FGuid::NewGuid();
 			}
 			else
-			{
 				if (Itr.Value.SettingsGUID.IsValid() == false)
-				{
 					Itr.Value.SettingsGUID = FGuid::NewGuid();
-				}
-			}
 		}
 	}
 }
 
-void UMounteaDialogueSystemSettings::SetupEditorData()
+bool UMounteaDialogueSystemSettings::SetupEditorData()
 {
 	const TSoftObjectPtr<UMounteaDialogueConfiguration> existingConfig = GetDialogueConfiguration();
 	if (!existingConfig.IsNull())
-		return;
+		return true;
 
 	const FString defaultConfigPath = TEXT("/MounteaDialogueSystem/Data/DefaultMounteaDialogueConfiguration.DefaultMounteaDialogueConfiguration");
 	FSoftObjectPath configSoftPath(defaultConfigPath);
 	if (!configSoftPath.IsValid())
 	{
 		LOG_WARNING(TEXT("[SetupEditorData] Invalid default Dialogue Configuration path: %s"), *defaultConfigPath);
-		return;
+		return false;
 	}
 
 	const auto* defaultConfig = Cast<UMounteaDialogueConfiguration>(configSoftPath.TryLoad());
 	if (!defaultConfig)
 	{
 		LOG_WARNING(TEXT("[SetupEditorData] Default Dialogue Configuration asset is missing or failed to load: %s"), *defaultConfigPath);
-		return;
+		return false;
 	}
 	
 	SetDialogueConfiguration(TSoftObjectPtr<UMounteaDialogueConfiguration>(configSoftPath));
 	SaveConfig();
+	return true;
 }
 
 #endif

@@ -24,6 +24,7 @@ enum class ESetupItemStatus : uint8
 
 enum class ESetupActorRole : uint8
 {
+	Settings,
 	Pawn,
 	PlayerController,
 	PlayerState,
@@ -41,6 +42,7 @@ struct FSetupItemResult
 struct FSetupDefaultsReport
 {
 	bool bIsDefaultGameMode = false;
+	bool bEditorDataSetupSucceeded = false;
 	FString GameModeClassName;
 	TArray<FSetupItemResult> Items;
 

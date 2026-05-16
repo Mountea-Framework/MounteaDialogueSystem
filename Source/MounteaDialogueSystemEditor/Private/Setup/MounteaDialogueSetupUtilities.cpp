@@ -21,6 +21,7 @@
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Editor.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
 
 #include "Components/MounteaDialogueParticipant.h"
 #include "Components/MounteaDialogueParticipantUserInterfaceComponent.h"
@@ -70,6 +71,24 @@ FSetupDefaultsReport FMounteaDialogueSetupUtilities::RunSetupDefaults()
 	if (!world)
 		return report;
 
+	FSetupItemResult settingsResult;
+	settingsResult.Role = ESetupActorRole::Settings;
+	settingsResult.ClassName = TEXT("Mountea Dialogue System Settings");
+	UMounteaDialogueSystemSettings* settings = GetMutableDefault<UMounteaDialogueSystemSettings>();
+	if (settings && settings->SetupEditorData())
+	{
+		report.bEditorDataSetupSucceeded = true;
+		settingsResult.Status = ESetupItemStatus::Added;
+		settingsResult.Details = TEXT("Default Dialogue Configuration is valid and ready.");
+	}
+	else
+	{
+		report.bEditorDataSetupSucceeded = false;
+		settingsResult.Status = ESetupItemStatus::Failed;
+		settingsResult.Details = TEXT("Failed to validate or assign default Dialogue Configuration.");
+	}
+	report.Items.Add(settingsResult);
+
 	AWorldSettings* worldSettings = world->GetWorldSettings();
 	TSubclassOf<AGameModeBase> gameModeClass = worldSettings ? worldSettings->DefaultGameMode : nullptr;
 
@@ -109,6 +128,7 @@ FString FMounteaDialogueSetupUtilities::GetRoleDisplayName(const ESetupActorRole
 {
 	switch (Role)
 	{
+		case ESetupActorRole::Settings:         return TEXT("Dialogue System Settings");
 		case ESetupActorRole::Pawn:             return TEXT("Pawn");
 		case ESetupActorRole::PlayerController: return TEXT("Player Controller");
 		case ESetupActorRole::PlayerState:      return TEXT("Player State");
