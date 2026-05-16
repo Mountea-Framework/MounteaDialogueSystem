@@ -58,6 +58,15 @@ public:
 	TSoftClassPtr<UUserWidget> DefaultDialogueWidgetClass;
 	
 	/**
+	 * User Widget class to be set as default one if requested.
+	 * ❗ Must implement MounteaMonologueWBPInterface and MounteaDialogueWBPInterface❗
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "🖥 UserInterface", BlueprintReadOnly,
+		meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaMonologueWBPInterface"),
+		meta=(NoResetToDefault))
+	TSoftClassPtr<UUserWidget> DefaultMonologueWidgetClass;
+	
+	/**
 	 * User Widget class to be set as Viewport for HUD elements.
 	 * ❗ Must implement MounteaDialogueViewportWidgetInterface❗
 	 */
