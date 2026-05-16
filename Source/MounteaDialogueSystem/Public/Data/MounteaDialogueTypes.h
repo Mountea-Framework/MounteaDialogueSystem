@@ -13,6 +13,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Data/MounteaDialogueGraphDataTypes.h"
 #include "UObject/Object.h"
-#include "MounteaDialogueTypes.generated.h"
+
+class UMounteaDialogueContext;
+
+struct MOUNTEADIALOGUESYSTEM_API FMounteaDialogueRowDataInfo
+{
+	int32 IncreasedIndex = 0;
+	bool bIsActiveRowValid = false;
+	bool bDialogueRowDataValid = false;
+	ERowExecutionMode NextRowExecutionMode = ERowExecutionMode::EREM_Automatic;
+	ERowExecutionMode ActiveRowExecutionMode = ERowExecutionMode::EREM_Automatic;
+};
+
+MOUNTEADIALOGUESYSTEM_API FMounteaDialogueRowDataInfo GetDialogueRowDataInfo(const UMounteaDialogueContext* DialogueContext);
 

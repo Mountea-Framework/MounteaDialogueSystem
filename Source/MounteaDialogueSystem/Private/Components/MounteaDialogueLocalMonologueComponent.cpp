@@ -12,6 +12,7 @@
 #include "Components/MounteaDialogueLocalMonologueComponent.h"
 
 #include "Data/MounteaDialogueContext.h"
+#include "Data/MounteaDialogueTypes.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -505,8 +506,7 @@ void UMounteaDialogueLocalMonologueComponent::DialogueRowProcessed_Implementatio
 
 	world->GetTimerManager().ClearTimer(TimerHandle_RowTimer);
 
-	const MounteaDialogueManagerHelpers::FDialogueRowDataInfo rowInfo =
-		MounteaDialogueManagerHelpers::GetDialogueRowDataInfo(dialogueContext);
+	const FMounteaDialogueRowDataInfo rowInfo = GetDialogueRowDataInfo(dialogueContext);
 
 	if (rowInfo.ActiveRowExecutionMode == ERowExecutionMode::EREM_AwaitInput && !bForceFinish)
 		return;

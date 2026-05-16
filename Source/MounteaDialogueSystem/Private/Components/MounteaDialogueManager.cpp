@@ -16,6 +16,7 @@
 
 #include "Data/MounteaDialogueContext.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
+#include "Data/MounteaDialogueTypes.h"
 #include "Helpers/MounteaDialogueContextStatics.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueManagerStatics.h"
@@ -111,9 +112,9 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 
 
 
-MounteaDialogueManagerHelpers::FDialogueRowDataInfo MounteaDialogueManagerHelpers::GetDialogueRowDataInfo(const UMounteaDialogueContext* DialogueContext)
+FMounteaDialogueRowDataInfo GetDialogueRowDataInfo(const UMounteaDialogueContext* DialogueContext)
 {
-	FDialogueRowDataInfo Info;
+	FMounteaDialogueRowDataInfo Info;
 	
 	const int32 currentIndex = DialogueContext->GetActiveDialogueRowDataIndex();
 	Info.IncreasedIndex = currentIndex + 1;
