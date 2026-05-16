@@ -17,6 +17,19 @@ struct FMounteaDialogueGraphNodeConfig
 	TSet<TSoftClassPtr<UMounteaDialogueGraphNode>> AllowedInputClasses;
 };
 
+USTRUCT(BlueprintType)
+struct MOUNTEADIALOGUESYSTEM_API FMounteaDialogueGraphTypeDefinition
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Graph Types")
+	FName TypeId = NAME_None;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Graph Types",
+		meta=(Categories="Mountea_Dialogue.Graph.Type"))
+	FGameplayTag RootTag;
+};
+
 /**
  * UMounteaDialogueConfiguration
  *
@@ -56,7 +69,7 @@ public:
 		meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"),
 		meta=(NoResetToDefault))
 	TSoftClassPtr<UUserWidget> DefaultDialogueWidgetClass;
-	
+
 	/**
 	 * User Widget class to be set as default one if requested.
 	 * ❗ Must implement MounteaMonologueWBPInterface and MounteaDialogueWBPInterface❗
@@ -65,7 +78,7 @@ public:
 		meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaMonologueWBPInterface"),
 		meta=(NoResetToDefault))
 	TSoftClassPtr<UUserWidget> DefaultMonologueWidgetClass;
-	
+
 	/**
 	 * User Widget class to be set as Viewport for HUD elements.
 	 * ❗ Must implement MounteaDialogueViewportWidgetInterface❗
@@ -130,7 +143,7 @@ public:
 	 * ❗Lower the value higher the performance impact❗
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
-		Category = "💬 Subtitles", 
+		Category = "💬 Subtitles",
 		meta=(UIMin=0.01f, ClampMin=0.01f, UIMax=1.f, ClampMax=1.f, Units="seconds"))
 	float UpdateFrequency = 0.05f;
 
@@ -138,7 +151,7 @@ public:
 	 * Defines fading duration to naturally stop voice when anything is playing.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
-		Category = "💬 Subtitles", 
+		Category = "💬 Subtitles",
 		meta=(UIMin=0.01f, ClampMin=0.01f, UIMax=1.f, ClampMax=1.f, Units="seconds"))
 	float SkipFadeDuration = 0.01f;
 
@@ -147,9 +160,33 @@ public:
 	 * The list of per-node type configurations will be enhanced in future.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
-		Category = "⚙ Configuration", 
+		Category = "⚙ Configuration",
 		meta=(AllowAbstract))
 	TMap<TSoftClassPtr<UMounteaDialogueGraphNode>, FMounteaDialogueGraphNodeConfig> NodesConfiguration;
+
+	/**
+	 * Root namespace for graph type tags.
+	 * All tags under this namespace are treated as graph type declarations.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "⚙ Configuration|Graph Types",
+		meta=(Categories="Mountea_Dialogue.Graph.Type"))
+	FGameplayTag GraphTypeNamespaceRootTag;
+
+	/**
+	 * Supported graph types mapped to their root tags.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "⚙ Configuration|Graph Types",
+		meta=(TitleProperty="TypeId"))
+	TArray<FMounteaDialogueGraphTypeDefinition> GraphTypeDefinitions;
+
+	/**
+	 * Fallback graph type used when a graph has no explicit type tags.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "⚙ Configuration|Graph Types")
+	FName DefaultGraphTypeId = FName(TEXT("Dialogue"));
 
 	/**
 	 * List of General Dialogue Settings.
@@ -171,6 +208,7 @@ public:
 public:
 
 	int32 GetDefaultDialogueWidgetZOrder() const { return DefaultDialogueWidgetZOrder; }
+	bool ResolveGraphTypeFromTags(const FGameplayTagContainer& InGraphTags, FName& OutResolvedTypeId, FString& OutFailureReason) const;
 
 protected:
 

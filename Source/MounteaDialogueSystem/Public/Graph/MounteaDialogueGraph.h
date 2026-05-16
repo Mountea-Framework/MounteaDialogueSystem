@@ -76,7 +76,8 @@ protected:
 	 * A set of gameplay tags associated with this dialogue graph.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Defaults",
-		meta=(NoResetToDefault))
+		meta=(NoResetToDefault),
+		meta=(Categories="Mountea_Dialogue.Graph.Type,Graph.Type"))
 	FGameplayTagContainer GraphTags;
 
 	/**
@@ -274,6 +275,7 @@ public:
 #if WITH_EDITOR
 
 	virtual bool ValidateGraph(FDataValidationContext& Context, bool RichTextFormat) const;
+	virtual bool ValidateGraphType(FDataValidationContext& Context, bool RichTextFormat) const;
 	virtual bool ValidateDecorators(FDataValidationContext& Context, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators, const FString& DecoratorTypeName) const;
 	virtual bool ValidateGraphDecorators(FDataValidationContext& Context, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators, const FString& DecoratorTypeName) const;
 	virtual bool ValidateStartNode(FDataValidationContext& Context, bool RichTextFormat) const;

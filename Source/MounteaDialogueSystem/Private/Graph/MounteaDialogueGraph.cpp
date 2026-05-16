@@ -7,6 +7,8 @@
 #include "Misc/DataValidation.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
+#include "Settings/MounteaDialogueConfiguration.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraph"
 
@@ -294,6 +296,9 @@ void UMounteaDialogueGraph::InitializePIEInstance(const TScriptInterface<IMounte
 bool UMounteaDialogueGraph::ValidateGraph(FDataValidationContext& Context, bool RichTextFormat) const
 {
 	bool bReturnValue = true;
+
+	// Validate Graph Type
+	bReturnValue &= ValidateGraphType(Context, RichTextFormat);
 	
 	// Validate Graph and Scoped Decorators
 	bReturnValue &= ValidateDecorators(Context, RichTextFormat, GraphDecorators, TEXT("Graph Decorators"));
@@ -306,6 +311,66 @@ bool UMounteaDialogueGraph::ValidateGraph(FDataValidationContext& Context, bool 
 	bReturnValue &= ValidateAllNodes(Context, RichTextFormat);
 
 	return bReturnValue;
+}
+
+bool UMounteaDialogueGraph::ValidateGraphType(FDataValidationContext& Context, bool RichTextFormat) const
+{
+	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+	if (!dialogueSettings)
+	{
+		const FText richText = INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: Missing Mountea Dialogue System Settings.");
+		const FText plainText = FText::Format(
+			INVTEXT("{0}: Missing Mountea Dialogue System Settings."),
+			FText::FromString(GetName()));
+
+		Context.AddError(RichTextFormat ? richText : plainText);
+		return false;
+	}
+
+	const TSoftObjectPtr<UMounteaDialogueConfiguration> dialogueConfigurationPath = dialogueSettings->GetDialogueConfiguration();
+	if (dialogueConfigurationPath.IsNull())
+	{
+		const FText richText = INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: Graph Type Validation failed. Dialogue Configuration is not assigned in System Settings.");
+		const FText plainText = FText::Format(
+			INVTEXT("{0}: Graph Type Validation failed. Dialogue Configuration is not assigned in System Settings."),
+			FText::FromString(GetName()));
+
+		Context.AddError(RichTextFormat ? richText : plainText);
+		return false;
+	}
+
+	const UMounteaDialogueConfiguration* dialogueConfiguration = dialogueConfigurationPath.LoadSynchronous();
+	if (!dialogueConfiguration)
+	{
+		const FText richText = FText::Format(
+			INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: Graph Type Validation failed. Dialogue Configuration asset could not be loaded: <RichTextBlock.Bold>{0}</>."),
+			FText::FromString(dialogueConfigurationPath.ToSoftObjectPath().ToString()));
+		const FText plainText = FText::Format(
+			INVTEXT("{0}: Graph Type Validation failed. Dialogue Configuration asset could not be loaded: {1}."),
+			FText::FromString(GetName()),
+			FText::FromString(dialogueConfigurationPath.ToSoftObjectPath().ToString()));
+
+		Context.AddError(RichTextFormat ? richText : plainText);
+		return false;
+	}
+
+	FName resolvedGraphTypeId = NAME_None;
+	FString failureReason;
+	if (!dialogueConfiguration->ResolveGraphTypeFromTags(GraphTags, resolvedGraphTypeId, failureReason))
+	{
+		const FText richText = FText::Format(
+			INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: Graph Type Validation failed. {0}"),
+			FText::FromString(failureReason));
+		const FText plainText = FText::Format(
+			INVTEXT("{0}: Graph Type Validation failed. {1}"),
+			FText::FromString(GetName()),
+			FText::FromString(failureReason));
+
+		Context.AddError(RichTextFormat ? richText : plainText);
+		return false;
+	}
+
+	return true;
 }
 
 bool UMounteaDialogueGraph::ValidateDecorators(FDataValidationContext& Context, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators, const FString& DecoratorTypeName) const
