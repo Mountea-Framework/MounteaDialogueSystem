@@ -71,15 +71,7 @@ protected:
 		meta=(NoResetToDefault),
 		meta=(ShowOnlyInnerProperties))
 	TArray<FMounteaDialogueDecorator> GraphScopeDecorators;
-
-	/**
-	 * A set of gameplay tags associated with this dialogue graph.
-	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Defaults",
-		meta=(NoResetToDefault),
-		meta=(Categories="Mountea_Dialogue.Graph.Type,Graph.Type"))
-	FGameplayTagContainer GraphTags;
-
+	
 	/**
 	* GUID for this Mountea Dialogue Graph.
 	*❗ Unique identifier for this Dialogue Graph instance.
@@ -90,6 +82,14 @@ protected:
 	FGuid GraphGUID;
 
 public:
+	
+	/**
+	 * A set of gameplay tags associated with this dialogue graph.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Defaults",
+		meta=(NoResetToDefault),
+		meta=(Categories="Mountea_Dialogue.Graph.Type,Graph.Type"))
+	FGameplayTagContainer GraphTags;
 	
 	/**
 	 * An array of root nodes in the dialogue graph. These are the nodes that do not have any incoming connections.

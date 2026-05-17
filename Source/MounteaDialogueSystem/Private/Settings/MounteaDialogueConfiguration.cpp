@@ -8,6 +8,7 @@
 #include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
 #include "Nodes/MounteaDialogueGraphNode_Delay.h"
+#include "Nodes/MounteaDialogueGraphNode_DialogueNode.h"
 #include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
 #include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
@@ -81,6 +82,12 @@ UMounteaDialogueConfiguration::UMounteaDialogueConfiguration() :
 		openChildGraphNodeConfig.AllowedInputClasses.Add(UMounteaDialogueGraphNode::StaticClass());
 		NodesConfiguration.Add(UMounteaDialogueGraphNode_OpenChildGraph::StaticClass(), openChildGraphNodeConfig);
 	}
+	
+	MonologueWhitelistedNodes.Add(UMounteaDialogueGraphNode_AnswerNode::StaticClass());
+	MonologueWhitelistedNodes.Add(UMounteaDialogueGraphNode_CompleteNode::StaticClass());
+	MonologueWhitelistedNodes.Add(UMounteaDialogueGraphNode_Delay::StaticClass());
+	MonologueWhitelistedNodes.Add(UMounteaDialogueGraphNode_OpenChildGraph::StaticClass());
+	MonologueWhitelistedNodes.Add(UMounteaDialogueGraphNode_DialogueNode::StaticClass());
 }
 
 bool UMounteaDialogueConfiguration::ResolveGraphTypeFromTags(

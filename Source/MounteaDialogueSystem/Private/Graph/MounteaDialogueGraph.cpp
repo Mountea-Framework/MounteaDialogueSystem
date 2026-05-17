@@ -498,9 +498,7 @@ bool UMounteaDialogueGraph::ValidateAllNodes(FDataValidationContext& Context, bo
 	for (UMounteaDialogueGraphNode* Itr : AllNodes)
 	{
 		if (Itr != nullptr && !Itr->ValidateNode(Context, RichTextFormat))
-		{
 			bReturnValue = false;
-		}
 	}
 	return bReturnValue;
 }
