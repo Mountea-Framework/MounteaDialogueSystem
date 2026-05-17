@@ -182,6 +182,14 @@ public:
 	TArray<FMounteaDialogueGraphTypeDefinition> GraphTypeDefinitions;
 
 	/**
+	 * List of Nodes which are allowed in Monologue Graphs.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "⚙ Configuration|Monologue",
+		meta=(AllowAbstract))
+	TSet<TSoftClassPtr<UMounteaDialogueGraphNode>> MonologueWhitelistedNodes;
+
+	/**
 	 * Fallback graph type used when a graph has no explicit type tags.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,

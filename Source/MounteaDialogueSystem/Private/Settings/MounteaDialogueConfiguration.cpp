@@ -4,6 +4,7 @@
 #include "Settings/MounteaDialogueConfiguration.h"
 
 #include "Engine/Font.h"
+#include "NativeGameplayTags.h"
 #include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
 #include "Nodes/MounteaDialogueGraphNode_Delay.h"
@@ -11,24 +12,31 @@
 #include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
+namespace MounteaDialogueConfigurationTags
+{
+	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_MDS_GraphTypeNamespace, "Mountea_Dialogue.Graph.Type");
+	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_MDS_GraphTypeDialogue, "Mountea_Dialogue.Graph.Type.Dialogue");
+	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_MDS_GraphTypeMonologue, "Mountea_Dialogue.Graph.Type.Monologue");
+}
+
 UMounteaDialogueConfiguration::UMounteaDialogueConfiguration() :
 	InputMode(EMounteaInputMode::EIM_UIAndGame),
 	bAllowSubtitles(true),
 	bSkipRowWithAudioSkip(false)
 {
-	GraphTypeNamespaceRootTag = FGameplayTag::RequestGameplayTag(FName(TEXT("Mountea_Dialogue.Graph.Type")), false);
+	GraphTypeNamespaceRootTag = MounteaDialogueConfigurationTags::TAG_MDS_GraphTypeNamespace;
 	DefaultGraphTypeId = FName(TEXT("Dialogue"));
 	GraphTypeDefinitions.Empty();
 	{
 		FMounteaDialogueGraphTypeDefinition dialogueType;
 		dialogueType.TypeId = FName(TEXT("Dialogue"));
-		dialogueType.RootTag = FGameplayTag::RequestGameplayTag(FName(TEXT("Mountea_Dialogue.Graph.Type.Dialogue")), false);
+		dialogueType.RootTag = MounteaDialogueConfigurationTags::TAG_MDS_GraphTypeDialogue;
 		GraphTypeDefinitions.Add(dialogueType);
 	}
 	{
 		FMounteaDialogueGraphTypeDefinition monologueType;
 		monologueType.TypeId = FName(TEXT("Monologue"));
-		monologueType.RootTag = FGameplayTag::RequestGameplayTag(FName(TEXT("Mountea_Dialogue.Graph.Type.Monologue")), false);
+		monologueType.RootTag = MounteaDialogueConfigurationTags::TAG_MDS_GraphTypeMonologue;
 		GraphTypeDefinitions.Add(monologueType);
 	}
 
