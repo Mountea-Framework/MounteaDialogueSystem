@@ -10,6 +10,7 @@
 #include "EdGraphUtilities.h"
 
 #include "Graph/MounteaDialogueGraph.h"
+#include "Helpers/MounteaMonologueStatics.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "EditorCommands/FMounteaDialogueGraphEditorCommands.h"
 #include "AssetEditor/FAssetEditorToolbarMounteaDialogueGraph.h"
@@ -36,7 +37,10 @@
 #include "Search/MounteaDialogueSearchUtils.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "Settings/MounteaDialogueConfiguration.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
+#include "Styling/AppStyle.h"
 #include "UObject/ObjectSaveContext.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
@@ -50,6 +54,141 @@ const FName FAssetEditorTabs_MounteaDialogueGraph::ViewportID(TEXT("Viewport"));
 const FName FAssetEditorTabs_MounteaDialogueGraph::SearchToolbarID(TEXT("Search"));
 
 #pragma endregion
+
+namespace
+{
+	const UMounteaDialogueConfiguration* ResolveDialogueConfiguration()
+	{
+		const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+		if (!IsValid(dialogueSettings))
+		{
+			return nullptr;
+		}
+
+		return dialogueSettings->GetDialogueConfiguration().LoadSynchronous();
+	}
+
+	TArray<const UClass*> BuildMonologueWhitelist(const UMounteaDialogueConfiguration* dialogueConfiguration)
+	{
+		TArray<const UClass*> whitelist;
+		if (!IsValid(dialogueConfiguration))
+		{
+			return whitelist;
+		}
+
+		for (const TSoftClassPtr<UMounteaDialogueGraphNode>& whitelistedClassPtr : dialogueConfiguration->MonologueWhitelistedNodes)
+		{
+			const UClass* whitelistedClass = whitelistedClassPtr.LoadSynchronous();
+			if (IsValid(whitelistedClass))
+			{
+				whitelist.AddUnique(whitelistedClass);
+			}
+		}
+
+		return whitelist;
+	}
+
+	bool IsClassAllowedForMonologue(const UClass* candidateClass, const TArray<const UClass*>& whitelist)
+	{
+		if (!IsValid(candidateClass))
+		{
+			return false;
+		}
+
+		for (const UClass* whitelistedClass : whitelist)
+		{
+			if (IsValid(whitelistedClass) && candidateClass->IsChildOf(whitelistedClass))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	int32 CountOutgoingChildren(const UEdNode_MounteaDialogueGraphNode* sourceNode)
+	{
+		if (!sourceNode || !sourceNode->DialogueGraphNode || !sourceNode->DialogueGraphNode->bAllowOutputNodes)
+		{
+			return 0;
+		}
+
+		const UEdGraphPin* outputPin = sourceNode->GetOutputPin();
+		if (!outputPin)
+		{
+			return 0;
+		}
+
+		TSet<const UEdNode_MounteaDialogueGraphNode*> uniqueChildren;
+		for (UEdGraphPin* linkedPin : outputPin->LinkedTo)
+		{
+			UEdGraphNode* linkedOwner = linkedPin ? linkedPin->GetOwningNode() : nullptr;
+			if (UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(linkedOwner))
+			{
+				if (UEdNode_MounteaDialogueGraphNode* endNode = edgeNode->GetEndNode())
+				{
+					uniqueChildren.Add(endNode);
+				}
+				continue;
+			}
+
+			if (const UEdNode_MounteaDialogueGraphNode* childNode = Cast<UEdNode_MounteaDialogueGraphNode>(linkedOwner))
+			{
+				uniqueChildren.Add(childNode);
+			}
+		}
+
+		return uniqueChildren.Num();
+	}
+
+	bool ValidatePastedNodesForMonologue(
+		const TSet<UEdGraphNode*>& pastedNodes,
+		const TArray<const UClass*>& monologueWhitelist,
+		FString& outFailureReason)
+	{
+		outFailureReason.Empty();
+
+		for (UEdGraphNode* pastedNode : pastedNodes)
+		{
+			UEdNode_MounteaDialogueGraphNode* dialogueEdNode = Cast<UEdNode_MounteaDialogueGraphNode>(pastedNode);
+			if (!dialogueEdNode || !dialogueEdNode->DialogueGraphNode)
+			{
+				continue;
+			}
+
+			UMounteaDialogueGraphNode* dialogueNode = dialogueEdNode->DialogueGraphNode;
+			const UClass* nodeClass = dialogueNode->GetClass();
+			const bool bIsStartNode = dialogueNode->IsA(UMounteaDialogueGraphNode_StartNode::StaticClass());
+			if (!bIsStartNode && !IsClassAllowedForMonologue(nodeClass, monologueWhitelist))
+			{
+				outFailureReason = FString::Printf(
+					TEXT("Paste rejected: node '%s' uses disallowed class '%s' for Monologue graphs."),
+					*dialogueNode->GetNodeTitle().ToString(),
+					nodeClass ? *nodeClass->GetName() : TEXT("None"));
+				return false;
+			}
+
+			if (CountOutgoingChildren(dialogueEdNode) > 1)
+			{
+				outFailureReason = FString::Printf(
+					TEXT("Paste rejected: node '%s' would exceed Monologue max child limit (1)."),
+					*dialogueNode->GetNodeTitle().ToString());
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	void ShowMonologuePasteRejection(const FString& reason)
+	{
+		FNotificationInfo notification(FText::FromString(reason));
+		notification.ExpireDuration = 5.0f;
+		notification.bUseSuccessFailIcons = true;
+		notification.Image = FAppStyle::GetBrush(TEXT("MessageLog.Error"));
+		FSlateNotificationManager::Get().AddNotification(notification);
+	}
+}
 
 void FAssetEditor_MounteaDialogueGraph::OnPackageSaved(const FString& String, UPackage* Package, FObjectPostSaveContext ObjectPostSaveContext)
 {
@@ -1078,6 +1217,48 @@ void FAssetEditor_MounteaDialogueGraph::PasteNodesHere(const FVector2f& Location
 		// Import the nodes
 		TSet<UEdGraphNode*> PastedNodes;
 		FEdGraphUtilities::ImportNodesFromText(EdGraph, TextToImport, PastedNodes);
+
+		if (PastedNodes.Num() == 0)
+		{
+			return;
+		}
+
+		if (IsValid(EditingGraph) && UMounteaMonologueStatics::IsGraphMonologue(EditingGraph))
+		{
+			const UMounteaDialogueConfiguration* dialogueConfiguration = ResolveDialogueConfiguration();
+			const TArray<const UClass*> monologueWhitelist = BuildMonologueWhitelist(dialogueConfiguration);
+			FString validationFailureReason;
+			const bool bWhitelistUsable = monologueWhitelist.Num() > 0;
+			const bool bPastedContentValid = bWhitelistUsable && ValidatePastedNodesForMonologue(PastedNodes, monologueWhitelist, validationFailureReason);
+			if (!bPastedContentValid)
+			{
+				if (!bWhitelistUsable)
+				{
+					validationFailureReason = TEXT("Paste rejected: Monologue whitelist is empty or invalid in Dialogue Configuration.");
+				}
+
+				TArray<UEdGraphNode*> pastedNodesToDestroy;
+				pastedNodesToDestroy.Reserve(PastedNodes.Num());
+				for (UEdGraphNode* pastedNode : PastedNodes)
+				{
+					if (IsValid(pastedNode))
+					{
+						pastedNodesToDestroy.Add(pastedNode);
+					}
+				}
+
+				for (UEdGraphNode* pastedNode : pastedNodesToDestroy)
+				{
+					pastedNode->DestroyNode();
+				}
+
+				CurrentGraphEditor->ClearSelectionSet();
+				CurrentGraphEditor->NotifyGraphChanged();
+				EditorLOG_WARNING(TEXT("[PasteNodesHere] %s"), *validationFailureReason);
+				ShowMonologuePasteRejection(validationFailureReason);
+				return;
+			}
+		}
 
 		//Average position of nodes so we can move them while still maintaining relative distances to each other
 		FVector2D AvgNodePosition(0.0f, 0.0f);

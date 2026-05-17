@@ -347,11 +347,7 @@ public:
 		meta=(Keywords="UI,process"),
 		meta=(CustomTag="MounteaK2Setter"),
 		meta=(DeprecatedFunction, DeprecationMessage="Manager UI APIs are deprecated. Use Participant UI Component + UI statics."))
-	UE_DEPRECATED(5.5, "Manager UI APIs are deprecated. Use Participant UI Component + UI statics.")
-	static void ExecuteWidgetCommand(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const FString& Command)
-	{
-		LOG_ERROR(TEXT("[ExecuteWidgetCommand] Deprecated API called. Use Participant UI Component + UI statics."));
-	}
+	static void ExecuteWidgetCommand(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const FString& Command);
 
 	/**
 	 * Sets Dialogue UI pointer.

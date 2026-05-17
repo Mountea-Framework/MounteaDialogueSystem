@@ -415,17 +415,3 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 };
-
-namespace MounteaDialogueManagerHelpers
-{
-	struct FDialogueRowDataInfo
-	{
-		int32	IncreasedIndex;
-		bool	bIsActiveRowValid;
-		bool	bDialogueRowDataValid;
-		ERowExecutionMode	NextRowExecutionMode;
-		ERowExecutionMode	ActiveRowExecutionMode;
-	};
-
-	inline FDialogueRowDataInfo GetDialogueRowDataInfo(const UMounteaDialogueContext* DialogueContext);
-}

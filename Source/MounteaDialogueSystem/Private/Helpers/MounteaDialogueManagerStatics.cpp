@@ -262,6 +262,11 @@ void UMounteaDialogueManagerStatics::RequestStartDialogue(const TScriptInterface
 	if (Target.GetObject()) Target->Execute_RequestStartDialogue(Target.GetObject(), DialogueInitiator, InitialParticipants);
 }
 
+void UMounteaDialogueManagerStatics::ExecuteWidgetCommand(const TScriptInterface<IMounteaDialogueManagerInterface>& Target, const FString& Command)
+{
+	if (Target.GetObject())
+		IMounteaDialogueManagerInterface::Execute_ExecuteWidgetCommand(Target.GetObject(), Command);
+}
 
 void UMounteaDialogueManagerStatics::ProcessDialogueRow(const TScriptInterface<IMounteaDialogueManagerInterface>& Target)
 {

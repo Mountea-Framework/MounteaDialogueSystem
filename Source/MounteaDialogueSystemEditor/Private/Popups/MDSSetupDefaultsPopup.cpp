@@ -117,6 +117,9 @@ FString MDSSetupDefaultsPopup::BuildResultHtml(const FSetupDefaultsReport& Repor
 
 FString MDSSetupDefaultsPopup::BuildResultHtml_WithTemplate(const FSetupDefaultsReport& Report, const FString& TemplateHtml)
 {
+	const bool bAllSucceeded = Report.AllSucceeded();
+	const bool bAnySucceeded = Report.AnySucceeded();
+
 	FString rowsHtml;
 	for (const FSetupItemResult& item : Report.Items)
 	{
@@ -138,16 +141,18 @@ FString MDSSetupDefaultsPopup::BuildResultHtml_WithTemplate(const FSetupDefaults
 
 	if (Report.bIsDefaultGameMode)
 	{
-		summaryMessage = TEXT("&#x274C; Default GameMode detected. Assign a custom GameMode in World Settings first.");
+		summaryMessage = Report.bEditorDataSetupSucceeded
+			? TEXT("&#x274C; Default GameMode detected. Assign a custom GameMode in World Settings first.")
+			: TEXT("&#x274C; Default GameMode detected and settings setup failed. Assign a custom GameMode and verify default Dialogue Configuration.");
 		summaryClass = TEXT("setup-summary--failed");
 		exampleLevelButton = TEXT("<a class=\"setup-action\" href=\"#\" data-mds-type=\"level\" data-mds-target=\"/MounteaDialogueSystem/Example/M_DialogueExample\">Open Example Level</a>");
 	}
-	else if (Report.AllSucceeded())
+	else if (bAllSucceeded)
 	{
 		summaryMessage = TEXT("All components configured. Your project is ready for Mountea Dialogue.");
 		summaryClass = TEXT("setup-summary--success");
 	}
-	else if (!Report.AnySucceeded())
+	else if (!bAnySucceeded)
 	{
 		summaryMessage = TEXT("All checks failed. Check the Example Level for a reference setup.");
 		summaryClass = TEXT("setup-summary--failed");
@@ -160,12 +165,12 @@ FString MDSSetupDefaultsPopup::BuildResultHtml_WithTemplate(const FSetupDefaults
 		exampleLevelButton = TEXT("<a class=\"setup-action\" href=\"#\" data-mds-type=\"level\" data-mds-target=\"/MounteaDialogueSystem/Example/M_DialogueExample\">Open Example Level</a>");
 	}
 
-	const FString statusChipClass = Report.AllSucceeded()
+	const FString statusChipClass = bAllSucceeded
 		? TEXT("setup-chip--success")
-		: (Report.AnySucceeded() ? TEXT("setup-chip--partial") : TEXT("setup-chip--failed"));
-	const FString statusChipText = Report.AllSucceeded()
+		: (bAnySucceeded ? TEXT("setup-chip--partial") : TEXT("setup-chip--failed"));
+	const FString statusChipText = bAllSucceeded
 		? TEXT("All Set")
-		: (Report.AnySucceeded() ? TEXT("Partial") : TEXT("Failed"));
+		: (bAnySucceeded ? TEXT("Partial") : TEXT("Failed"));
 
 	FString resultHtml = TemplateHtml;
 	resultHtml.ReplaceInline(TEXT("__MDS_GAMEMODE_CLASS__"), *EscapeHtml(Report.GameModeClassName), ESearchCase::CaseSensitive);

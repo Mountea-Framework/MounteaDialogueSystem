@@ -16,6 +16,7 @@
 
 #include "Data/MounteaDialogueContext.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
+#include "Data/MounteaDialogueTypes.h"
 #include "Helpers/MounteaDialogueContextStatics.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueManagerStatics.h"
@@ -111,9 +112,9 @@ void UMounteaDialogueManager::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 
 
 
-MounteaDialogueManagerHelpers::FDialogueRowDataInfo MounteaDialogueManagerHelpers::GetDialogueRowDataInfo(const UMounteaDialogueContext* DialogueContext)
+FMounteaDialogueRowDataInfo GetDialogueRowDataInfo(const UMounteaDialogueContext* DialogueContext)
 {
-	FDialogueRowDataInfo Info;
+	FMounteaDialogueRowDataInfo Info;
 	
 	const int32 currentIndex = DialogueContext->GetActiveDialogueRowDataIndex();
 	Info.IncreasedIndex = currentIndex + 1;
@@ -983,7 +984,51 @@ bool UMounteaDialogueManager::CloseDialogueUI_Implementation()
 
 void UMounteaDialogueManager::ExecuteWidgetCommand_Implementation(const FString& Command)
 {
-	LOG_WARNING(TEXT("[MounteaDialogueManager] ExecuteWidgetCommand is deprecated. Use UMounteaDialogueParticipantUserInterfaceComponent."))
+	if (Command.IsEmpty())
+	{
+		LOG_WARNING(TEXT("[MounteaDialogueManager] ExecuteWidgetCommand received empty command. Skipping."));
+		return;
+	}
+
+	UWorld* world = GetWorld();
+	UMounteaDialogueWorldSubsystem* subsystem = world ? world->GetSubsystem<UMounteaDialogueWorldSubsystem>() : nullptr;
+	const UMounteaDialogueSession* session = subsystem ? subsystem->GetGameStateSession() : nullptr;
+	if (!session || !IsValid(DialogueContext) || !DialogueContext->SessionGUID.IsValid())
+	{
+		LOG_WARNING(TEXT("[MounteaDialogueManager] ExecuteWidgetCommand('%s') skipped: no valid active session/context."), *Command);
+		return;
+	}
+
+	const FMounteaDialogueContextPayload& payload = session->GetContextPayload();
+
+	FMounteaDialogueUISignal signal;
+	signal.Command = Command;
+	signal.SessionGUID = DialogueContext->SessionGUID;
+	signal.RequiredContextVersion = payload.ContextVersion;
+	signal.bForceReconcile = Command == MounteaDialogueWidgetCommands::CreateDialogueWidget
+		|| Command == MounteaDialogueWidgetCommands::CloseDialogueWidget;
+
+	const bool bIsCloseCommand = Command == MounteaDialogueWidgetCommands::CloseDialogueWidget;
+
+	if (UMounteaDialogueManagerStatics::IsServer(GetOwner()))
+	{
+		Client_DispatchUISignal(signal);
+
+		if (bIsCloseCommand)
+			Client_ClearUISignals(signal.SessionGUID);
+	}
+	else if (UMounteaDialogueSystemBFC::CanExecuteCosmeticEvents(world))
+	{
+		OnDialogueUISignalRequested.Broadcast(signal);
+
+		if (bIsCloseCommand)
+		{
+			FMounteaDialogueUISignal clearSignal;
+			clearSignal.SessionGUID = signal.SessionGUID;
+			clearSignal.RequiredContextVersion = INT32_MAX;
+			OnDialogueUISignalRequested.Broadcast(clearSignal);
+		}
+	}
 }
 
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
