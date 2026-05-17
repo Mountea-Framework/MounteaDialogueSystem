@@ -13,6 +13,7 @@
 #include "Helpers/MounteaMonologueStatics.h"
 
 #include "Graph/MounteaDialogueGraph.h"
+#include "Settings/MounteaDialogueConfiguration.h"
 #include "Settings/MounteaDialogueSystemSettings.h"
 
 
@@ -20,17 +21,20 @@ bool UMounteaMonologueStatics::IsGraphMonologue(UMounteaDialogueGraph* Graph)
 {
 	if (!IsValid(Graph))
 		return false;
-	const auto dlgSettings = GetMutableDefault<UMounteaDialogueSystemSettings>();
-	if (!IsValid(dlgSettings))
+
+	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+	if (!IsValid(dialogueSettings))
 		return false;
-	const auto dlgConfig = dlgSettings->GetDialogueConfiguration().LoadSynchronous();
-	if (!IsValid(dlgConfig))
+
+	const UMounteaDialogueConfiguration* dialogueConfig = dialogueSettings->GetDialogueConfiguration().LoadSynchronous();
+	if (!IsValid(dialogueConfig))
 		return false;
-	const auto mlgTag = dlgConfig->GraphTypeDefinitions.FindByPredicate([&](const FMounteaDialogueGraphTypeDefinition& Definition)
-	{
-		return Definition.TypeId.IsEqual(FName("Monologue"));
-	});
-	if (!mlgTag)
+
+	FName resolvedGraphTypeId = NAME_None;
+	FString failureReason;
+	if (!dialogueConfig->ResolveGraphTypeFromTags(Graph->GraphTags, resolvedGraphTypeId, failureReason))
 		return false;
-	return Graph->GraphTags.HasTagExact(mlgTag->RootTag);
+
+	static const FName MonologueTypeId(TEXT("Monologue"));
+	return resolvedGraphTypeId.IsEqual(MonologueTypeId);
 }

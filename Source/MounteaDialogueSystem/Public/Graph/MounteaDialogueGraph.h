@@ -276,6 +276,7 @@ public:
 
 	virtual bool ValidateGraph(FDataValidationContext& Context, bool RichTextFormat) const;
 	virtual bool ValidateGraphType(FDataValidationContext& Context, bool RichTextFormat) const;
+	virtual bool ValidateMonologueConstraints(FDataValidationContext& Context, bool RichTextFormat) const;
 	virtual bool ValidateDecorators(FDataValidationContext& Context, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators, const FString& DecoratorTypeName) const;
 	virtual bool ValidateGraphDecorators(FDataValidationContext& Context, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators, const FString& DecoratorTypeName) const;
 	virtual bool ValidateStartNode(FDataValidationContext& Context, bool RichTextFormat) const;
