@@ -71,14 +71,7 @@ protected:
 		meta=(NoResetToDefault),
 		meta=(ShowOnlyInnerProperties))
 	TArray<FMounteaDialogueDecorator> GraphScopeDecorators;
-
-	/**
-	 * A set of gameplay tags associated with this dialogue graph.
-	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Defaults",
-		meta=(NoResetToDefault))
-	FGameplayTagContainer GraphTags;
-
+	
 	/**
 	* GUID for this Mountea Dialogue Graph.
 	*❗ Unique identifier for this Dialogue Graph instance.
@@ -89,6 +82,14 @@ protected:
 	FGuid GraphGUID;
 
 public:
+	
+	/**
+	 * A set of gameplay tags associated with this dialogue graph.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Defaults",
+		meta=(NoResetToDefault),
+		meta=(Categories="Mountea_Dialogue.Graph.Type,Graph.Type"))
+	FGameplayTagContainer GraphTags;
 	
 	/**
 	 * An array of root nodes in the dialogue graph. These are the nodes that do not have any incoming connections.
@@ -274,6 +275,8 @@ public:
 #if WITH_EDITOR
 
 	virtual bool ValidateGraph(FDataValidationContext& Context, bool RichTextFormat) const;
+	virtual bool ValidateGraphType(FDataValidationContext& Context, bool RichTextFormat) const;
+	virtual bool ValidateMonologueConstraints(FDataValidationContext& Context, bool RichTextFormat) const;
 	virtual bool ValidateDecorators(FDataValidationContext& Context, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators, const FString& DecoratorTypeName) const;
 	virtual bool ValidateGraphDecorators(FDataValidationContext& Context, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators, const FString& DecoratorTypeName) const;
 	virtual bool ValidateStartNode(FDataValidationContext& Context, bool RichTextFormat) const;

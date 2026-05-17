@@ -207,7 +207,8 @@ protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 	
-	void SetupEditorData();
+public:
+	bool SetupEditorData();
 
 #endif
 	
