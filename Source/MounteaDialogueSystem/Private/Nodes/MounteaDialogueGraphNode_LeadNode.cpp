@@ -17,7 +17,8 @@ UMounteaDialogueGraphNode_LeadNode::UMounteaDialogueGraphNode_LeadNode()
 #if WITH_EDITORONLY_DATA	
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_LeadNodeContextMenuName", "Lead Node");
 	
-	BackgroundColor = FLinearColor(FColor::Orange);
+	EditorNodeColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("3b82f6")));
+	EditorHeaderForegroundColour = FLinearColor::White;
 	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_LeadTooltip", "* This Node represents NPC lines.\n* This Node starts automatically upon reaching in the Dialogue Tree.\n* Requires Dialogue Data Table to work properly.");
 #endif
 	
@@ -27,28 +28,6 @@ UMounteaDialogueGraphNode_LeadNode::UMounteaDialogueGraphNode_LeadNode()
 
 	bAutoStarts = true;
 	bUseGameplayTags = true;
-}
-
-void UMounteaDialogueGraphNode_LeadNode::PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
-{
-	if (!bUseGameplayTags)
-	{
-		// Switch Active Participant to NPC
-		if (Manager.GetInterface())
-		{
-			if (const auto TempContext = Manager->Execute_GetDialogueContext(Manager.GetObject()))
-			{
-				TempContext->SetActiveDialogueParticipant(TempContext->GetDialogueParticipant());
-			}
-		}
-	}
-
-	Super::PreProcessNode_Implementation(Manager);
-}
-
-void UMounteaDialogueGraphNode_LeadNode::ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
-{
-	Super::ProcessNode_Implementation(Manager);
 }
 
 #if WITH_EDITOR

@@ -2,17 +2,20 @@
 
 #include "AssetGraphScheme_MounteaDialogueGraph.h"
 
-#include "FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph.h"
 #include "FConnectionDrawingPolicy_MounteaDialogueGraph.h"
 #include "GraphEditorActions.h"
 #include "Graph/MounteaDialogueGraph.h"
+#include "Helpers/MounteaMonologueStatics.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
+#include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
 #include "ToolMenu.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "Framework/Commands/GenericCommands.h"
+#include "Settings/MounteaDialogueConfiguration.h"
 #include "Settings/MounteaDialogueGraphEditorSettings.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
 
 #define LOCTEXT_NAMESPACE "AssetGraphScheme_MounteaDialogueGraph"
 
@@ -27,9 +30,7 @@ public:
 		VisitedNodes.Add(StartNode);
 
 		if (!QuiCheckDirectConnections(StartNode, EndNode))
-		{
 			return false;
-		}
 		
 		return TraverseInputNodesToRoot(EndNode);
 	}
@@ -52,13 +53,9 @@ private:
 					{
 						UEdGraphNode* OtherNode = OtherPin->GetOwningNode();
 						if (VisitedNodes.Contains(OtherNode))
-						{
 							return false;
-						}
 						else
-						{
 							return TraverseInputNodesToRoot(OtherNode);
-						}
 					}
 				}
 			}
@@ -72,17 +69,13 @@ private:
 		for (auto Itr : B->Pins)
 		{
 			if (A->Pins.Contains(Itr) )
-			{
 				return false;
-			}
 		}
 		
 		for (auto Itr : A->Pins)
 		{
 			if (B->Pins.Contains(Itr))
-			{
 				return false;
-			}
 		}
 		
 		return true;
@@ -90,6 +83,48 @@ private:
 	
 	TSet<UEdGraphNode*> VisitedNodes;
 };
+
+namespace
+{
+	const UMounteaDialogueConfiguration* ResolveDialogueConfiguration()
+	{
+		const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+		if (!IsValid(dialogueSettings))
+			return nullptr;
+
+		return dialogueSettings->GetDialogueConfiguration().LoadSynchronous();
+	}
+
+	TArray<const UClass*> BuildMonologueWhitelist(const UMounteaDialogueConfiguration* dialogueConfiguration)
+	{
+		TArray<const UClass*> whitelist;
+		if (!IsValid(dialogueConfiguration))
+			return whitelist;
+
+		for (const TSoftClassPtr<UMounteaDialogueGraphNode>& whitelistedClassPtr : dialogueConfiguration->MonologueWhitelistedNodes)
+		{
+			const UClass* whitelistedClass = whitelistedClassPtr.LoadSynchronous();
+			if (IsValid(whitelistedClass))
+				whitelist.AddUnique(whitelistedClass);
+		}
+
+		return whitelist;
+	}
+
+	bool IsClassAllowedForMonologue(const UClass* candidateClass, const TArray<const UClass*>& whitelist)
+	{
+		if (!IsValid(candidateClass))
+			return false;
+
+		for (const UClass* whitelistedClass : whitelist)
+		{
+			if (IsValid(whitelistedClass) && candidateClass->IsChildOf(whitelistedClass))
+				return true;
+		}
+
+		return false;
+	}
+}
 
 UEdGraphNode* FAssetSchemaAction_MounteaDialogueGraph_NewNode::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode)
 {
@@ -200,13 +235,10 @@ void UAssetGraphScheme_MounteaDialogueGraph::GetBreakLinkToSubMenuActions(UToolM
 		Args.Add(TEXT("NumberOfNodes"), Count);
 
 		if (Count == 0)
-		{
 			Description = FText::Format(LOCTEXT("BreakDesc", "Break link to {NodeTitle}"), Args);
-		}
 		else
-		{
 			Description = FText::Format(LOCTEXT("BreakDescMulti", "Break link to {NodeTitle} ({NumberOfNodes})"), Args);
-		}
+		
 		++Count;
 
 		Section.AddMenuEntry(NAME_None, Description, Description, FSlateIcon(), FUIAction(
@@ -224,15 +256,13 @@ void UAssetGraphScheme_MounteaDialogueGraph::GetGraphContextActions(FGraphContex
 	UMounteaDialogueGraph* Graph = CastChecked<UMounteaDialogueGraph>(ContextMenuBuilder.CurrentGraph->GetOuter());
 
 	if (Graph->NodeType == nullptr)
-	{
 		return;
-	}
-
-	const bool bNoParent = (ContextMenuBuilder.FromPin == NULL);
 
 	 FText AddToolTip = LOCTEXT("NewMoutneaDialogueGraphNodeTooltip", "Add Dialogue Node here");
 
 	TSet<TSubclassOf<UMounteaDialogueGraphNode> > Visited;
+	const bool bIsMonologueGraph = UMounteaMonologueStatics::IsGraphMonologue(Graph);
+	const TArray<const UClass*> monologueWhitelist = bIsMonologueGraph ? BuildMonologueWhitelist(ResolveDialogueConfiguration()) : TArray<const UClass*>();
 
 	FText Desc = Graph->NodeType.GetDefaultObject()->ContextMenuName;
 	FText NodeCategory = Graph->NodeType.GetDefaultObject()->GetNodeCategory();
@@ -244,7 +274,8 @@ void UAssetGraphScheme_MounteaDialogueGraph::GetGraphContextActions(FGraphContex
 		Desc = FText::FromString(Title);
 	}
 
-	if (!Graph->NodeType->HasAnyClassFlags(CLASS_Abstract))
+	if (!Graph->NodeType->HasAnyClassFlags(CLASS_Abstract)
+		&& (!bIsMonologueGraph || IsClassAllowedForMonologue(Graph->NodeType, monologueWhitelist)))
 	{
 		TSharedPtr<FAssetSchemaAction_MounteaDialogueGraph_NewNode> NewNodeAction(new FAssetSchemaAction_MounteaDialogueGraph_NewNode(NodeCategory, Desc, AddToolTip, 0));
 		NewNodeAction->NodeTemplate = NewObject<UEdNode_MounteaDialogueGraphNode>(ContextMenuBuilder.OwnerOfTemporaries);
@@ -268,6 +299,9 @@ void UAssetGraphScheme_MounteaDialogueGraph::GetGraphContextActions(FGraphContex
 				continue;
 
 			if (!NodeType.GetDefaultObject()->bAllowManualCreate)
+				continue;
+
+			if (bIsMonologueGraph && !IsClassAllowedForMonologue(NodeType, monologueWhitelist))
 				continue;
 			
 			Desc = NodeType.GetDefaultObject()->ContextMenuName;
@@ -314,9 +348,7 @@ void UAssetGraphScheme_MounteaDialogueGraph::GetContextMenuActions(UToolMenu* Me
 						FNewToolMenuDelegate::CreateUObject((UAssetGraphScheme_MounteaDialogueGraph* const)this, &UAssetGraphScheme_MounteaDialogueGraph::GetBreakLinkToSubMenuActions, const_cast<UEdGraphPin*>(Context->Pin)));
 				}
 				else
-				{
 					((UAssetGraphScheme_MounteaDialogueGraph* const)this)->GetBreakLinkToSubMenuActions(Menu, const_cast<UEdGraphPin*>(Context->Pin));
-				}
 			}
 		}
 	}
@@ -343,63 +375,90 @@ const FPinConnectionResponse UAssetGraphScheme_MounteaDialogueGraph::CanCreateCo
 {
 	// Make sure the pins are not on the same node
 	if (A->GetOwningNode() == B->GetOwningNode())
-	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorSameNode", "Both are on the same node"));
-	}
 
 	// Compare the directions
 	if ((A->Direction == EGPD_Input) && (B->Direction == EGPD_Input))
-	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorInput", "Can't connect input node to input node"));
-	}
 	else if ((A->Direction == EGPD_Output) && (B->Direction == EGPD_Output))
-	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorOutput", "Can't connect output node to output node"));
-	}
 
 	// check for cycles
-	FNodeVisitorCycleChecker CycleChecker;
-	if (!CycleChecker.CheckForLoop(A->GetOwningNode(), B->GetOwningNode()))
-	{
+	FNodeVisitorCycleChecker cycleChecker;
+	if (!cycleChecker.CheckForLoop(A->GetOwningNode(), B->GetOwningNode()))
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Can't create a graph cycle.\nIn order to return back, please use `Return To Node`."));
-	}
-	if (!CycleChecker.CheckForLoop(B->GetOwningNode(), A->GetOwningNode()))
-	{
+	if (!cycleChecker.CheckForLoop(B->GetOwningNode(), A->GetOwningNode()))
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Can't create a graph cycle.\nIn order to return back, please use `Return To Node`."));
-	}
 
-	UEdNode_MounteaDialogueGraphNode* EdNode_A = Cast<UEdNode_MounteaDialogueGraphNode>(A->GetOwningNode());
-	UEdNode_MounteaDialogueGraphNode* EdNode_B = Cast<UEdNode_MounteaDialogueGraphNode>(B->GetOwningNode());
+	UEdNode_MounteaDialogueGraphNode* nodeA = Cast<UEdNode_MounteaDialogueGraphNode>(A->GetOwningNode());
+	UEdNode_MounteaDialogueGraphNode* nodeB = Cast<UEdNode_MounteaDialogueGraphNode>(B->GetOwningNode());
 
-	if (EdNode_A == nullptr || EdNode_B == nullptr)
-	{
+	if (nodeA == nullptr || nodeB == nullptr)
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinError", "Not a valid UMounteaDialogueGraphEdNode"));
-	}
 
-	FText ErrorMessage;
+	const auto* openChildA = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(nodeA->DialogueGraphNode);
+	if (openChildA && openChildA->TargetDialogue.IsNull())
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("OpenChildGraphMissingTargetA", "Open Child Graph is missing Target Dialogue."));
+
+	const auto* openChildB = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(nodeB->DialogueGraphNode);
+	if (openChildB && openChildB->TargetDialogue.IsNull())
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("OpenChildGraphMissingTargetB", "Open Child Graph is missing Target Dialogue."));
+
+	const UEdGraphPin* outputPin = (A->Direction == EGPD_Output) ? A : B;
+	const UEdNode_MounteaDialogueGraphNode* sourceNode = outputPin ? Cast<UEdNode_MounteaDialogueGraphNode>(outputPin->GetOwningNode()) : nullptr;
+	UMounteaDialogueGraph* owningGraph = sourceNode && sourceNode->DialogueGraphNode ? sourceNode->DialogueGraphNode->GetGraph() : nullptr;
+	if (IsValid(owningGraph) && UMounteaMonologueStatics::IsGraphMonologue(owningGraph) && outputPin && outputPin->LinkedTo.Num() >= 1)
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("MonologueSingleChildLimit", "Monologue graphs allow only one child per node."));
+
+	FText errorMessage;
 	if (A->Direction == EGPD_Input)
 	{
-		if (!EdNode_A->DialogueGraphNode->CanCreateConnection(EdNode_B->DialogueGraphNode, EGPD_Input, ErrorMessage))
-		{
-			return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, ErrorMessage);
-		}
+		if (!nodeA->DialogueGraphNode->CanCreateConnection(nodeB->DialogueGraphNode, EGPD_Input, errorMessage))
+			return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, errorMessage);
 	}
 	else
 	{
-		if (!EdNode_B->DialogueGraphNode->CanCreateConnection(EdNode_A->DialogueGraphNode, EGPD_Output, ErrorMessage))
-		{
-			return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, ErrorMessage);
-		}
+		if (!nodeB->DialogueGraphNode->CanCreateConnection(nodeA->DialogueGraphNode, EGPD_Output, errorMessage))
+			return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, errorMessage);
 	}
 	
-	if (EdNode_A->DialogueGraphNode->GetGraph()->bEdgeEnabled)
+	return FPinConnectionResponse(CONNECT_RESPONSE_MAKE_WITH_CONVERSION_NODE, LOCTEXT("PinConnect", "Connect nodes with edge"));
+}
+
+bool UAssetGraphScheme_MounteaDialogueGraph::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const
+{
+	UEdNode_MounteaDialogueGraphNode* outputNode = nullptr;
+	UEdNode_MounteaDialogueGraphNode* inputNode = nullptr;
+
+	if (A && A->Direction == EGPD_Output)
 	{
-		return FPinConnectionResponse(CONNECT_RESPONSE_MAKE_WITH_CONVERSION_NODE, LOCTEXT("PinConnect", "Connect nodes with edge"));
+		outputNode = Cast<UEdNode_MounteaDialogueGraphNode>(A->GetOwningNode());
+		inputNode = Cast<UEdNode_MounteaDialogueGraphNode>(B ? B->GetOwningNode() : nullptr);
 	}
 	else
 	{
-		return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, LOCTEXT("PinConnect", "Connect nodes"));
+		outputNode = Cast<UEdNode_MounteaDialogueGraphNode>(B ? B->GetOwningNode() : nullptr);
+		inputNode = Cast<UEdNode_MounteaDialogueGraphNode>(A ? A->GetOwningNode() : nullptr);
 	}
+
+	if (!outputNode || !inputNode || !outputNode->GetOutputPin() || !inputNode->GetInputPin())
+		return false;
+
+	for (UEdGraphPin* linkedPin : outputNode->GetOutputPin()->LinkedTo)
+	{
+		UEdGraphNode* childNode = linkedPin ? linkedPin->GetOwningNode() : nullptr;
+		if (UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(childNode))
+			childNode = edgeNode->GetEndNode();
+
+		if (childNode == inputNode)
+			return false;
+	}
+
+	FPinConnectionResponse response = CanCreateConnection(outputNode->GetOutputPin(), inputNode->GetInputPin());
+	if (response.Response == CONNECT_RESPONSE_DISALLOW)
+		return false;
+
+	return CreateAutomaticConversionNodeAndConnections(outputNode->GetOutputPin(), inputNode->GetInputPin());
 }
 
 bool UAssetGraphScheme_MounteaDialogueGraph::CreateAutomaticConversionNodeAndConnections(UEdGraphPin* A, UEdGraphPin* B) const
@@ -423,28 +482,15 @@ bool UAssetGraphScheme_MounteaDialogueGraph::CreateAutomaticConversionNodeAndCon
 	UEdNode_MounteaDialogueGraphEdge* EdgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(Action.PerformAction(NodeA->GetGraph(), nullptr, InitPos, false));
 
 	if (A->Direction == EGPD_Output)
-	{
 		EdgeNode->CreateConnections(NodeA, NodeB);
-	}
 	else
-	{
 		EdgeNode->CreateConnections(NodeB, NodeA);
-	}
 
 	return true;
 }
 
 FConnectionDrawingPolicy* UAssetGraphScheme_MounteaDialogueGraph::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj) const
 {
-	/*
-	if (const UMounteaDialogueGraphEditorSettings* MounteaDialogueGraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
-	{
-		if (MounteaDialogueGraphEditorSettings->AllowAdvancedWiring())
-		{
-			return new FConnectionDrawingPolicy_AdvancedMounteaDialogueGraph(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
-		}
-	}
-	*/
 	return new FConnectionDrawingPolicy_MounteaDialogueGraph(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
 }
 
@@ -479,12 +525,12 @@ UEdGraphPin* UAssetGraphScheme_MounteaDialogueGraph::DropPinOnNode(UEdGraphNode*
 	UEdNode_MounteaDialogueGraphNode* EdNode = Cast<UEdNode_MounteaDialogueGraphNode>(InTargetNode);
 	switch (InSourcePinDirection)
 	{
-	case EGPD_Input:
-		return EdNode->GetOutputPin();
-	case EGPD_Output:
-		return EdNode->GetInputPin();
-	default:
-		return nullptr;
+		case EGPD_Input:
+			return EdNode->GetOutputPin();
+		case EGPD_Output:
+			return EdNode->GetInputPin();
+		default:
+			return nullptr;
 	}
 }
 

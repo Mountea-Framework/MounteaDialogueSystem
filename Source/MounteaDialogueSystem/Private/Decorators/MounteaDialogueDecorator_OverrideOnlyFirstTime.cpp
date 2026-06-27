@@ -4,8 +4,8 @@
 #include "Decorators/MounteaDialogueDecorator_OverrideOnlyFirstTime.h"
 
 #include "Data/MounteaDialogueContext.h"
-#include "Helpers/MounteaDialogueGraphHelpers.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
+#include "Helpers/MounteaDialogueContextStatics.h"
+#include "Helpers/MounteaDialogueTraversalStatics.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_OverrideOnlyFirstTime"
 
@@ -42,17 +42,17 @@ void UMounteaDialogueDecorator_OverrideOnlyFirstTime::ExecuteDecorator_Implement
 	if (const auto TempContext = GetContext())
 	{
 		// We assume Context and Manager are already valid, but safety is safety
-		if (!UMounteaDialogueSystemBFC::IsContextValid(TempContext) ) return;
+		if (!UMounteaDialogueContextStatics::IsContextValid(TempContext)) return;
 		if (!IsFirstTime()) return;
 
-		const auto NewRow = UMounteaDialogueSystemBFC::FindDialogueRow(DataTable, RowName);
+		const FDialogueRow NewRow = UMounteaDialogueTraversalStatics::GetDialogueRow(DataTable, RowName);
 
 		FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
 		newDialogueTableHandle.DataTable = DataTable;
 		newDialogueTableHandle.RowName = RowName;
 		
 		TempContext->UpdateActiveDialogueTable(newDialogueTableHandle);
-		TempContext->UpdateActiveDialogueRow( NewRow );
+		TempContext->UpdateActiveDialogueRow(NewRow);
 	}
 }
 

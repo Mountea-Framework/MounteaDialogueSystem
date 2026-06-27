@@ -3,6 +3,15 @@
 
 #include "Helpers/MounteaDialogueParticipantStatics.h"
 
+#include "Components/MounteaDialogueSession.h"
+#include "Components/ActorComponent.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerState.h"
+#include "Settings/MounteaDialogueConfiguration.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
+#include "Subsystem/MounteaDialogueWorldSubsystem.h"
+
 bool UMounteaDialogueParticipantStatics::CanStartDialogue(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target)
 {
 	return Target.GetObject() ? Target->Execute_CanStartDialogue(Target.GetObject()) : false;
@@ -111,4 +120,222 @@ TArray<FDialogueTraversePath> UMounteaDialogueParticipantStatics::GetTraversedPa
 void UMounteaDialogueParticipantStatics::ProcessDialogueCommand(const TScriptInterface<IMounteaDialogueParticipantInterface>& Target, const FString& Command, UObject* Payload)
 {
 	if (Target.GetObject()) Target->Execute_ProcessDialogueCommand(Target.GetObject(), Command, Payload);
+}
+
+const FDialogueParticipant* UMounteaDialogueParticipantStatics::FindParticipantDataRow(const FName& ParticipantRow, FGameplayTag* OutParticipantTag)
+{
+	if (ParticipantRow.IsNone())
+		return nullptr;
+
+	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+	if (!IsValid(dialogueSettings))
+		return nullptr;
+
+	const UMounteaDialogueConfiguration* dialogueConfig = dialogueSettings->GetDialogueConfiguration().LoadSynchronous();
+	if (!IsValid(dialogueConfig))
+		return nullptr;
+
+	for (const TSoftObjectPtr<UDataTable>& dialogueParticipantsTable : dialogueConfig->DialogueParticipantsTables)
+	{
+		const UDataTable* participantsTable = dialogueParticipantsTable.LoadSynchronous();
+		if (!IsValid(participantsTable))
+			continue;
+
+		const FDialogueParticipant* dialogueParticipantRow = participantsTable->FindRow<FDialogueParticipant>(ParticipantRow, TEXT(""));
+		if (!dialogueParticipantRow)
+			continue;
+
+		if (OutParticipantTag != nullptr)
+			*OutParticipantTag = dialogueParticipantRow->ParticipantCategoryTag;
+
+		return dialogueParticipantRow;
+	}
+
+	return nullptr;
+}
+
+TArray<FName> UMounteaDialogueParticipantStatics::GetDialogueParticipantRowNames()
+{
+	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+	if (!IsValid(dialogueSettings))
+		return {};
+
+	const UMounteaDialogueConfiguration* dialogueConfig = dialogueSettings->GetDialogueConfiguration().LoadSynchronous();
+	if (!IsValid(dialogueConfig))
+		return {};
+
+	TSet<FName> uniqueParticipants;
+	uniqueParticipants.Reserve(dialogueConfig->DialogueParticipantsTables.Num() * 4);
+
+	for (const TSoftObjectPtr<UDataTable>& participantsTablePtr : dialogueConfig->DialogueParticipantsTables)
+	{
+		const UDataTable* participantsTable = participantsTablePtr.LoadSynchronous();
+		if (!IsValid(participantsTable))
+			continue;
+
+		uniqueParticipants.Append(participantsTable->GetRowNames());
+	}
+
+	TArray<FName> sortedParticipants = uniqueParticipants.Array();
+	sortedParticipants.Sort([](const FName& left, const FName& right)
+	{
+		return left.LexicalLess(right);
+	});
+	return sortedParticipants;
+}
+
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueParticipantStatics::GetGraphOwnerParticipant(
+	const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants)
+{
+	for (const auto& participant : Participants)
+	{
+		if (!participant.GetObject() || !participant.GetInterface())
+			continue;
+
+		if (participant->Execute_GetDialogueGraph(participant.GetObject()) != nullptr)
+			return participant;
+	}
+
+	return nullptr;
+}
+
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueParticipantStatics::GetParticipantByType(
+	const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants,
+	const EDialogueParticipantType Type,
+	const UObject* WorldContextObject)
+{
+	const int32 typeMask = static_cast<int32>(Type);
+	if (typeMask == 0)
+		return nullptr;
+
+	UWorld* participantWorld = WorldContextObject ? WorldContextObject->GetWorld() : nullptr;
+	if (!participantWorld)
+	{
+		for (const auto& participant : Participants)
+		{
+			UObject* participantObject = participant.GetObject();
+			if (!participantObject)
+				continue;
+
+			if (const AActor* participantActor = Cast<AActor>(participantObject))
+			{
+				participantWorld = participantActor->GetWorld();
+				break;
+			}
+
+			if (const UActorComponent* participantComponent = Cast<UActorComponent>(participantObject))
+			{
+				participantWorld = participantComponent->GetWorld();
+				break;
+			}
+
+			participantWorld = participantObject->GetWorld();
+			if (participantWorld)
+				break;
+		}
+	}
+
+	if (participantWorld)
+	{
+		if (UMounteaDialogueWorldSubsystem* dialogueSubsystem = participantWorld->GetSubsystem<UMounteaDialogueWorldSubsystem>())
+		{
+			if (UMounteaDialogueSession* dialogueSession = dialogueSubsystem->GetGameStateSession())
+			{
+				const TScriptInterface<IMounteaDialogueParticipantInterface> sessionOverride = dialogueSession->GetRoleOverride(Type);
+				if (sessionOverride.GetObject() && sessionOverride.GetInterface())
+					return sessionOverride;
+			}
+		}
+	}
+
+	for (const auto& participant : Participants)
+	{
+		if (!participant.GetObject())
+			continue;
+
+		const int32 participantType = IMounteaDialogueParticipantInterface::Execute_GetParticipantType(participant.GetObject());
+		if ((participantType & typeMask) != 0)
+			return participant;
+	}
+
+	return nullptr;
+}
+
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueParticipantStatics::FindDialogueParticipantInterface(UObject* ParticipantActor, bool& bResult)
+{
+	bResult = false;
+
+	if (!ParticipantActor)
+		return nullptr;
+
+	TScriptInterface<IMounteaDialogueParticipantInterface> resultValue;
+	if (ParticipantActor->Implements<UMounteaDialogueParticipantInterface>())
+	{
+		resultValue = ParticipantActor;
+		bResult = true;
+		return resultValue;
+	}
+
+	AActor* dialogueParticipantActor = Cast<AActor>(ParticipantActor);
+	if (!IsValid(dialogueParticipantActor))
+		return nullptr;
+
+	TArray<UActorComponent*> actorComponents = dialogueParticipantActor->GetComponentsByInterface(UMounteaDialogueParticipantInterface::StaticClass());
+	if (actorComponents.Num() == 0)
+		return nullptr;
+
+	resultValue = actorComponents[0];
+	bResult = true;
+	return resultValue;
+}
+
+TScriptInterface<IMounteaDialogueParticipantInterface> UMounteaDialogueParticipantStatics::ResolveParticipantFromActor(AActor* ParticipantActor, bool& bResult)
+{
+	return FindDialogueParticipantInterface(ParticipantActor, bResult);
+}
+
+APawn* UMounteaDialogueParticipantStatics::FindPlayerPawn(AActor* ForActor, int32& SearchDepth)
+{
+	SearchDepth++;
+	if (SearchDepth >= 8)
+		return nullptr;
+
+	if (APawn* playerPawn = Cast<APawn>(ForActor))
+		return playerPawn;
+
+	if (APlayerState* playerState = Cast<APlayerState>(ForActor))
+		return playerState->GetPawn();
+
+	if (APlayerController* playerController = Cast<APlayerController>(ForActor))
+	{
+		if (playerController->IsLocalPlayerController())
+			return playerController->GetPawn();
+		return FindPlayerPawn(playerController->PlayerState, SearchDepth);
+	}
+
+	if (AActor* ownerActor = ForActor ? ForActor->GetOwner() : nullptr)
+		return FindPlayerPawn(ownerActor, SearchDepth);
+
+	return nullptr;
+}
+
+APlayerController* UMounteaDialogueParticipantStatics::FindPlayerController(AActor* ForActor, int32& SearchDepth)
+{
+	SearchDepth++;
+	if (SearchDepth >= 8)
+		return nullptr;
+
+	if (APlayerController* playerController = Cast<APlayerController>(ForActor))
+		return playerController;
+
+	if (APlayerState* playerState = Cast<APlayerState>(ForActor))
+		return playerState->GetPlayerController();
+
+	if (APawn* actorPawn = Cast<APawn>(ForActor))
+		return Cast<APlayerController>(actorPawn->GetController());
+
+	if (AActor* ownerActor = ForActor ? ForActor->GetOwner() : nullptr)
+		return FindPlayerController(ownerActor, SearchDepth);
+
+	return nullptr;
 }

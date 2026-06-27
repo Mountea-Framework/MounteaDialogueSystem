@@ -53,16 +53,6 @@ public:
 		return FText::FromString(ReturnString);
 	}
 
-	static ENodeTheme GetNodeTheme()
-	{
-		if (GetMounteaDialogueEditorSettings() != nullptr)
-		{
-			return GetMounteaDialogueEditorSettings()->GetNodeTheme();
-		}
-
-		return ENodeTheme::ENT_DarkTheme;
-	}
-
 	static void TriggerPreviewRefresh(TArray<UObject*> NodeObjects)
 	{
 		for (auto Itr : NodeObjects)

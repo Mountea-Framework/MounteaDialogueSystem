@@ -11,3 +11,8 @@ UMounteaDialogueGraph* UMounteaDialogueGraphEdge::GetGraph() const
 {
 	return Graph;
 }
+
+FMounteaDialogueEdgeConditions UMounteaDialogueGraphEdge::GetEdgeConditions() const
+{
+	return EdgeConditions;
+}

@@ -13,6 +13,24 @@ void FMounteaDialogueGraphEditorCommands::RegisterCommands()
 		FInputChord()
 	);
 
+	UI_COMMAND
+	(
+		RecenterGraph,
+		"Recenter",
+		"Focuses Start node in the viewport.",
+		EUserInterfaceActionType::Button,
+		FInputChord()
+	);
+
+	UI_COMMAND
+	(
+		FitGraphToView,
+		"Fit to View",
+		"Frames the full graph in the viewport.",
+		EUserInterfaceActionType::Button,
+		FInputChord()
+	);
+
 	
 	UI_COMMAND
 	(

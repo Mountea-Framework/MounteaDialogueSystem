@@ -60,7 +60,17 @@ void FMounteaDialogueDecorator_CustomDetailsHelper::Update()
 	.VAlign(VAlign_Center)
 	.Padding(4.f)
 	[
-		PropertyCustomizationHelpers::MakeDeleteButton(OnDeleteClicked)
+		SNew(SButton)
+		.ButtonStyle(FAppStyle::Get(), "HoverHintOnly")
+		.ToolTipText(LOCTEXT("DeleteItem", "Delete Item"))
+		.ContentPadding(4.f)
+		.ForegroundColor(FSlateColor::UseForeground())
+		.OnClicked_Lambda([OnDeleteClicked]() { OnDeleteClicked.ExecuteIfBound(); return FReply::Handled(); })
+		[
+			SNew(SImage)
+			.Image(FMounteaDialogueGraphEditorStyle::GetBrush("MDSStyleSet.Icon.Delete"))
+			.ColorAndOpacity(FSlateColor::UseForeground())
+		]
 	];
 	
 	// Browse Asset

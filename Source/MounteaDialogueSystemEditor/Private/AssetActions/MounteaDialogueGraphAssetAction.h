@@ -20,6 +20,7 @@ public:
 protected:
 
 	void ExecuteExportDialogue(TArray< TWeakObjectPtr<UObject> > Objects);
+	void ExecuteExportProject(TArray< TWeakObjectPtr<UObject> > Objects);
 	void ExecuteReimportDialogue(TArray< TWeakObjectPtr<UObject> > Objects);
 	void ExecuteOpenDialogueSource(TArray< TWeakObjectPtr<UObject> > Objects);
 

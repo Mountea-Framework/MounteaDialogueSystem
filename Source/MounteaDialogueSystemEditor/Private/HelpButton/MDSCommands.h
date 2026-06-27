@@ -28,4 +28,6 @@ public:
 	TSharedPtr< FUICommandInfo > DialoguerAction;
 
 	TSharedPtr< FUICommandInfo > FixMounteaNodesAction;
+
+	TSharedPtr< FUICommandInfo > SetupDefaultsAction;
 };

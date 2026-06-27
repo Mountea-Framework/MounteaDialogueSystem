@@ -4,6 +4,7 @@
 #include "Settings/MounteaDialogueSystemSettings.h"
 
 #include "Engine/Font.h"
+#include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Settings/MounteaDialogueConfiguration.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueSystemSettings"
@@ -22,11 +23,6 @@ UMounteaDialogueSystemSettings::UMounteaDialogueSystemSettings()
 	DialogueWidgetCommands.Add(MounteaDialogueWidgetCommands::RemoveDialogueOptions);
 
 	LogVerbosity = 14; // hack it
-
-#if WITH_EDITOR
-	SubtitlesSettings.SubtitlesFont = SetupDefaultFontSettings();
-	if (SubtitlesSettings.SettingsGUID.IsValid() == false)	SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
-#endif
 
 }
 
@@ -123,6 +119,22 @@ float UMounteaDialogueSystemSettings::GetSkipDuration() const
 	return dialogueConfig ? dialogueConfig->SkipDuration : 1.f;
 }
 
+bool UMounteaDialogueSystemSettings::IsClientPredictionEnabled() const
+{
+	return bEnableClientPrediction;
+}
+
+float UMounteaDialogueSystemSettings::GetClientPredictionTimeoutSeconds() const
+{
+	return FMath::Max(0.05f, ClientPredictionTimeoutSeconds);
+}
+
+void UMounteaDialogueSystemSettings::SetDialogueConfiguration(const TSoftObjectPtr<UMounteaDialogueConfiguration> NewDialogueConfiguration)
+{
+	if (DialogueConfiguration != NewDialogueConfiguration)
+		DialogueConfiguration = NewDialogueConfiguration;	
+}
+
 #if WITH_EDITOR
 
 FSlateFontInfo UMounteaDialogueSystemSettings::SetupDefaultFontSettings()
@@ -176,15 +188,12 @@ void UMounteaDialogueSystemSettings::PostEditChangeChainProperty(FPropertyChange
 		{
 			SubtitlesSettings.SettingsGUID.Invalidate();
 			SubtitlesSettings.SubtitlesFont = SetupDefaultFontSettings();
-			if (SubtitlesSettings.SettingsGUID.IsValid() == false)	SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
+			if (SubtitlesSettings.SettingsGUID.IsValid() == false)	
+				SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
 		}
 		else
-		{
 			if (SubtitlesSettings.SettingsGUID.IsValid() == false)
-			{
 				SubtitlesSettings.SettingsGUID = FGuid::NewGuid();
-			}
-		}
 	}
 
 	if (PropertyChangedEvent.PropertyChain.GetActiveMemberNode()->GetValue()->GetFName() == GET_MEMBER_NAME_CHECKED(UMounteaDialogueSystemSettings, SubtitlesSettingsOverrides))
@@ -195,17 +204,40 @@ void UMounteaDialogueSystemSettings::PostEditChangeChainProperty(FPropertyChange
 			{
 				Itr.Value.SettingsGUID.Invalidate();
 				Itr.Value.SubtitlesFont = SetupDefaultFontSettings();
-				if (Itr.Value.SettingsGUID.IsValid() == false)	Itr.Value.SettingsGUID = FGuid::NewGuid();
+				if (Itr.Value.SettingsGUID.IsValid() == false)	
+					Itr.Value.SettingsGUID = FGuid::NewGuid();
 			}
 			else
-			{
 				if (Itr.Value.SettingsGUID.IsValid() == false)
-				{
 					Itr.Value.SettingsGUID = FGuid::NewGuid();
-				}
-			}
 		}
 	}
+}
+
+bool UMounteaDialogueSystemSettings::SetupEditorData()
+{
+	const TSoftObjectPtr<UMounteaDialogueConfiguration> existingConfig = GetDialogueConfiguration();
+	if (!existingConfig.IsNull())
+		return true;
+
+	const FString defaultConfigPath = TEXT("/MounteaDialogueSystem/Data/DefaultMounteaDialogueConfiguration.DefaultMounteaDialogueConfiguration");
+	FSoftObjectPath configSoftPath(defaultConfigPath);
+	if (!configSoftPath.IsValid())
+	{
+		LOG_WARNING(TEXT("[SetupEditorData] Invalid default Dialogue Configuration path: %s"), *defaultConfigPath);
+		return false;
+	}
+
+	const auto* defaultConfig = Cast<UMounteaDialogueConfiguration>(configSoftPath.TryLoad());
+	if (!defaultConfig)
+	{
+		LOG_WARNING(TEXT("[SetupEditorData] Default Dialogue Configuration asset is missing or failed to load: %s"), *defaultConfigPath);
+		return false;
+	}
+	
+	SetDialogueConfiguration(TSoftObjectPtr<UMounteaDialogueConfiguration>(configSoftPath));
+	SaveConfig();
+	return true;
 }
 
 #endif

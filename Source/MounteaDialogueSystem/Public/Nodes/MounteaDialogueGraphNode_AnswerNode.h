@@ -14,7 +14,8 @@
  * This Node requires Player's input to be started.
  * Requires Dialogue Data Table to work properly.
  */
-UCLASS(ClassGroup=("Mountea|Dialogue"), DisplayName="Answer Node", meta=(ToolTip="Mountea Dialogue Tree: Answer Node"))
+UCLASS(ClassGroup=("Mountea|Dialogue"), DisplayName="Answer Node", 
+	meta=(ToolTip="Mountea Dialogue Tree: Answer Node"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_AnswerNode : public UMounteaDialogueGraphNode_DialogueNodeBase
 {
 	GENERATED_BODY()
@@ -22,9 +23,6 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_AnswerNode : public UM
 	UMounteaDialogueGraphNode_AnswerNode();
 
 public:
-
-	virtual void PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
-	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 
 #if WITH_EDITOR
 	virtual FText GetDescription_Implementation() const override;

@@ -2,6 +2,7 @@
 
 
 #include "MounteaDialogueAdditionalDataAssetAction.h"
+#include "Consts/MounteaDialogueEditorConsts.h"
 #include "Data/DialogueAdditionalData.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueAdditionalDataAssetAction"
@@ -39,7 +40,7 @@ const TArray<FText>& FMounteaDialogueAdditionalDataAssetAction::GetSubMenus() co
 {
 	static const TArray<FText> AssetTypeActionSubMenu
 	{
-		FText::FromString("3. Configuration")
+		FText::FromString(MounteaDialogueConsts::Submenu_Configurations)
 	};
 	return AssetTypeActionSubMenu;
 };

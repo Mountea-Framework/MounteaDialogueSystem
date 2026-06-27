@@ -2,8 +2,9 @@
 
 
 #include "Decorators/MounteaIDialogueDecorator_SwapParticipants.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Data/MounteaDialogueContext.h"
+#include "Helpers/MounteaDialogueTraversalStatics.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueDecorator_SwapParticipants"
 
@@ -21,15 +22,18 @@ void UMounteaDialogueDecorator_SwapParticipants::ExecuteDecorator_Implementation
 
 	if (!OwningManager) return;
 	
-	Context = OwningManager->Execute_GetDialogueContext(OwningManager.GetObject());
+	Context = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(OwningManager.GetObject());
 
 	if (!Context) return;
 
-	auto newParticipant = UMounteaDialogueSystemBFC::FindParticipantByTag(Context, NewParticipantTag);
-	if (newParticipant != Context->ActiveDialogueParticipant)
+	const TScriptInterface<IMounteaDialogueParticipantInterface> newParticipant =
+		UMounteaDialogueTraversalStatics::FindParticipantByTag(Context, NewParticipantTag);
+	if (!newParticipant.GetObject() || !newParticipant.GetInterface())
+		return;
+	if (newParticipant == Context->ActiveDialogueParticipant)
 		return;
 
-	UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(Context, newParticipant);
+	UMounteaDialogueTraversalStatics::UpdateMatchingDialogueParticipant(Context, newParticipant);
 	OwningManager->GetDialogueContextUpdatedEventHande().Broadcast(Context);
 }
 

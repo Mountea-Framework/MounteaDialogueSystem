@@ -4,7 +4,6 @@
 #include "Nodes/MounteaDialogueGraphNode_Delay.h"
 
 #include "Data/MounteaDialogueContext.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "TimerManager.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
@@ -19,7 +18,8 @@ UMounteaDialogueGraphNode_Delay::UMounteaDialogueGraphNode_Delay()
 #if WITH_EDITORONLY_DATA
 	ContextMenuName = LOCTEXT("MounteaDialogueGraphNode_DelayNodeContextMenuName", "Delay Node");
 	
-	BackgroundColor = FLinearColor(FColor::FromHex("007ddc"));
+	EditorNodeColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("7dd3fc")));
+	EditorHeaderForegroundColour = FLinearColor::FromSRGBColor(FColor::FromHex(TEXT("0f172a")));
 	NodeTooltipText = LOCTEXT("MounteaDialogueGraphNode_DelayTooltip", "* This Node does nothing but waits until its Timer expires\n* After expiration following node is selected automatically");
 	bCanRenameNode = false;
 #endif
@@ -37,9 +37,9 @@ void UMounteaDialogueGraphNode_Delay::ProcessNode_Implementation(const TScriptIn
 
 	if (GetWorld())
 	{
-		FTimerDelegate TimerDelegate_TypeWriterUpdateInterval;
-		TimerDelegate_TypeWriterUpdateInterval.BindUFunction(this, "OnDelayDurationExpired", Manager);
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle_NodeDelay, TimerDelegate_TypeWriterUpdateInterval, DelayDuration, false);
+		FTimerDelegate TimerDelegate_NodeDelay;
+		TimerDelegate_NodeDelay.BindUFunction(this, "OnDelayDurationExpired", Manager);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_NodeDelay, TimerDelegate_NodeDelay, DelayDuration, false);
 	}
 	else
 	{
@@ -72,18 +72,6 @@ void UMounteaDialogueGraphNode_Delay::OnDelayDurationExpired(const TScriptInterf
 	auto managerObject = MounteaDialogueManagerInterface.GetObject();
 	if (const auto Context = MounteaDialogueManagerInterface->Execute_GetDialogueContext(managerObject))
 	{
-		/*
-		auto dialogueNodeToStart = Cast<UMounteaDialogueGraphNode_DialogueNodeBase>(ChildrenNodes[0]);
-			
-		Context->SetDialogueContext(Context->DialogueParticipant, dialogueNodeToStart, UMounteaDialogueSystemBFC::GetAllowedChildNodes(dialogueNodeToStart));
-
-		Context->ActiveDialogueRowDataIndex = 	UMounteaDialogueSystemBFC::GetDialogueRow(dialogueNodeToStart).DialogueRowData.Num() - 1; // Force-set the last row
-		FDataTableRowHandle newDialogueTableHandle = FDataTableRowHandle();
-		newDialogueTableHandle.DataTable = dialogueNodeToStart->GetDataTable();
-		newDialogueTableHandle.RowName = dialogueNodeToStart->GetRowName();
-		Context->UpdateActiveDialogueTable(dialogueNodeToStart ? newDialogueTableHandle : FDataTableRowHandle());
-		*/
-		
 		MounteaDialogueManagerInterface->Execute_NodeProcessed(managerObject);
 	}
 }

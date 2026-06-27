@@ -17,6 +17,19 @@ struct FMounteaDialogueGraphNodeConfig
 	TSet<TSoftClassPtr<UMounteaDialogueGraphNode>> AllowedInputClasses;
 };
 
+USTRUCT(BlueprintType)
+struct MOUNTEADIALOGUESYSTEM_API FMounteaDialogueGraphTypeDefinition
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Graph Types")
+	FName TypeId = NAME_None;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Graph Types",
+		meta=(Categories="Mountea_Dialogue.Graph.Type"))
+	FGameplayTag RootTag;
+};
+
 /**
  * UMounteaDialogueConfiguration
  *
@@ -37,42 +50,90 @@ public:
 	UMounteaDialogueConfiguration();
 
 public:
+	
+	/**
+	 * A DataTable asset that holds information about the dialogue participants in the Mountea Dialogue System.
+	 *
+	 * The asset must conform to the row structure specified by the `DialogueParticipant` structure to ensure proper data handling.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "🗣 Participants", BlueprintReadOnly,
+		meta=(RequiredAssetDataTags = "RowStructure=/Script/MounteaDialogueSystem.DialogueParticipant"),
+		meta=(NoResetToDefault))
+	TArray<TSoftObjectPtr<UDataTable>> DialogueParticipantsTables;
 
 	/**
 	 * User Widget class to be set as default one if requested.
 	 * ❗ Must implement MounteaDialogueWBPInterface❗
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "🖥 UserInterface", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
+	UPROPERTY(EditDefaultsOnly, Category = "🖥 UserInterface", BlueprintReadOnly,
+		meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"),
+		meta=(NoResetToDefault))
 	TSoftClassPtr<UUserWidget> DefaultDialogueWidgetClass;
 
 	/**
-	 * Sets Input mode when in Dialogue.
+	 * User Widget class to be set as default one if requested.
+	 * ❗ Must implement MounteaMonologueWBPInterface and MounteaDialogueWBPInterface❗
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "🖥 UserInterface")
+	UPROPERTY(EditDefaultsOnly, Category = "🖥 UserInterface", BlueprintReadOnly,
+		meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaMonologueWBPInterface"),
+		meta=(NoResetToDefault))
+	TSoftClassPtr<UUserWidget> DefaultMonologueWidgetClass;
+
+	/**
+	 * User Widget class to be set as Viewport for HUD elements.
+	 * ❗ Must implement MounteaDialogueViewportWidgetInterface❗
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "🖥 UserInterface", BlueprintReadOnly,
+		meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueViewportWidgetInterface"),
+		meta=(NoResetToDefault))
+	TSoftClassPtr<UUserWidget> DefaultDialogueWrapperWidgetClass;
+
+	/**
+	 * Default Z-order for the dialogue widget when added to screen via
+	 * UMounteaDialogueParticipantUserInterfaceComponent.
+	 * Higher values render on top of elements with lower Z-orders.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "🖥 UserInterface",
+		meta=(UIMin=0, ClampMin=0),
+		meta=(NoResetToDefault))
+	int32 DefaultDialogueWidgetZOrder = 12;
+
+	/**
+	 * Sets Input mode when in Dialogue.
+	 * Not implemented in any way in the system, only provides single-point-of-truth for
+	 * your custom implementations.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "🖥 UserInterface")
 	EMounteaInputMode InputMode;
 	
 	/**
 	 * Whether subtitles are allowed or not.
 	 * If subtitles are not allowed, C++ requests won't request showing subtitles.
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "💬 Subtitles")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "💬 Subtitles")
 	uint8 bAllowSubtitles : 1;
 
 	// Defines how long a Skip Key must be held in order to start the Skip
-	UPROPERTY(EditDefaultsOnly, Category = "🖥 UserInterface")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "🖥 UserInterface")
 	float SkipDuration = 1.f;
 
 	/**
 	 * Defines whether whole Dialogue Row is skipped when audio skip is requested.
 	 * This setting defines behaviour for all Nodes. Each Node allows different behaviour, so in special cases Node inversion can be used.
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "🔊 Audio")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "🔊 Audio")
 	uint8 bSkipRowWithAudioSkip : 1;
 
 	/**
 	 * Defines coefficient of speed per 100 characters for `Automatic` `RowDurationMode`.
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "🖥 UserInterface")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "🖥 UserInterface")
 	float DurationCoefficient = 8.f;
 	
 	/**
@@ -81,44 +142,88 @@ public:
 	 * ❔ Units: seconds
 	 * ❗Lower the value higher the performance impact❗
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "💬 Subtitles", meta=(UIMin=0.01f, ClampMin=0.01f, UIMax=1.f, ClampMax=1.f, Units="seconds"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "💬 Subtitles",
+		meta=(UIMin=0.01f, ClampMin=0.01f, UIMax=1.f, ClampMax=1.f, Units="seconds"))
 	float UpdateFrequency = 0.05f;
 
 	/**
 	 * Defines fading duration to naturally stop voice when anything is playing.
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "💬 Subtitles", meta=(UIMin=0.01f, ClampMin=0.01f, UIMax=1.f, ClampMax=1.f, Units="seconds"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "💬 Subtitles",
+		meta=(UIMin=0.01f, ClampMin=0.01f, UIMax=1.f, ClampMax=1.f, Units="seconds"))
 	float SkipFadeDuration = 0.01f;
 
 	/**
 	 * Defines the per-node type configuration of allowed classes.
 	 * The list of per-node type configurations will be enhanced in future.
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "⚙ Configuration",
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "⚙ Configuration",
 		meta=(AllowAbstract))
 	TMap<TSoftClassPtr<UMounteaDialogueGraphNode>, FMounteaDialogueGraphNodeConfig> NodesConfiguration;
+
+	/**
+	 * Root namespace for graph type tags.
+	 * All tags under this namespace are treated as graph type declarations.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "⚙ Configuration|Graph Types",
+		meta=(Categories="Mountea_Dialogue.Graph.Type"))
+	FGameplayTag GraphTypeNamespaceRootTag;
+
+	/**
+	 * Supported graph types mapped to their root tags.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "⚙ Configuration|Graph Types",
+		meta=(TitleProperty="TypeId"))
+	TArray<FMounteaDialogueGraphTypeDefinition> GraphTypeDefinitions;
+
+	/**
+	 * List of Nodes which are allowed in Monologue Graphs.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "⚙ Configuration|Monologue",
+		meta=(AllowAbstract))
+	TSet<TSoftClassPtr<UMounteaDialogueGraphNode>> MonologueWhitelistedNodes;
+
+	/**
+	 * Fallback graph type used when a graph has no explicit type tags.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "⚙ Configuration|Graph Types")
+	FName DefaultGraphTypeId = FName(TEXT("Dialogue"));
 
 	/**
 	 * List of General Dialogue Settings.
 	 * Defines font, sizes etc. for all subtitles.
 	 * If any Widget is supposed to be overriden and use different setup for subtitles, just add that override to 'SubtitlesSettingsOverrides'.
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "💬 Subtitles")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "💬 Subtitles")
 	FMounteaSubtitlesSettings SubtitlesSettings;
 
 	/**
 	 * Map of Widget Classes and their Subtitles Settings.
 	 * Used for overriding General Defaults.
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "💬 Subtitles")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "💬 Subtitles")
 	TMap<FUIRowID, FMounteaSubtitlesSettings> SubtitlesSettingsOverrides;
 
+public:
+
+	int32 GetDefaultDialogueWidgetZOrder() const { return DefaultDialogueWidgetZOrder; }
+	bool ResolveGraphTypeFromTags(const FGameplayTagContainer& InGraphTags, FName& OutResolvedTypeId, FString& OutFailureReason) const;
+
 protected:
-	
+
 #if WITH_EDITOR
 	static FSlateFontInfo SetupDefaultFontSettings();
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 #endif
-	
-	
+
+
 };

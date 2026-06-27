@@ -2,238 +2,339 @@
 
 #include "FConnectionDrawingPolicy_MounteaDialogueGraph.h"
 
+#include "FMDSPathDrawer.h"
+#include "SGraphPanel.h"
+#include "Consts/MounteaDialogueEditorConsts.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
+#include "EditorStyle/MounteaDialogueGraphVisualTokens.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
-#include "Settings/MounteaDialogueGraphEditorSettings.h"
+#include "Rendering/DrawElements.h"
+#include "Framework/Application/SlateApplication.h"
+
+
+namespace MDSGraphWireHelpers
+{
+	static bool IsDirectNodeToNodeConnection(const FConnectionParams& Params)
+	{
+		if (!Params.AssociatedPin1 || !Params.AssociatedPin2)
+		{
+			return false;
+		}
+
+		const UEdGraphNode* owningNodeA = Params.AssociatedPin1->GetOwningNode();
+		const UEdGraphNode* owningNodeB = Params.AssociatedPin2->GetOwningNode();
+		const bool bEdgeNodeConnection = Cast<UEdNode_MounteaDialogueGraphEdge>(owningNodeA) || Cast<UEdNode_MounteaDialogueGraphEdge>(owningNodeB);
+		return !bEdgeNodeConnection;
+	}
+}
 
 FConnectionDrawingPolicy_MounteaDialogueGraph::FConnectionDrawingPolicy_MounteaDialogueGraph
 (int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj)
 	: FKismetConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, ZoomFactor, InClippingRect, InDrawElements, InGraphObj)
 	  , GraphObj(InGraphObj)
 {
-	if (const UMounteaDialogueGraphEditorSettings* GraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
-	{
-		switch (GraphEditorSettings->GetArrowType())
-		{
-			case EArrowType::ERT_SimpleArrow:
-					ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.SimpleArrow"));
-					break;
-			case EArrowType::ERT_HollowArrow:
-				ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.HollowArrow"));
-				break;
-			case EArrowType::ERT_FancyArrow:
-				ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.FancyArrow"));
-				break;
-			case EArrowType::ERT_Bubble:
-				ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.Bubble"));
-				break;
-			case EArrowType::ERT_None:
-			default:
-				ArrowImage = nullptr;
-		}
-	}
-	else
-	{
-		ArrowImage = FAppStyle::GetBrush( TEXT("GenericPlay") );
-	}
-	
+	ArrowImage = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Graph.SimpleArrow"));
 	ArrowRadius = ArrowImage ? ArrowImage->ImageSize * ZoomFactor * 0.5f : FVector2D(0.f);
 	MidpointImage = nullptr;
 	MidpointRadius = FVector2D::ZeroVector;
 	HoverDeemphasisDarkFraction = 0.8f;
-
-	BubbleImage = FAppStyle::GetBrush( TEXT("Graph.Arrow") );
+	BubbleImage = FAppStyle::GetBrush(TEXT("Graph.Arrow"));
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FConnectionParams& Params)
 {
 	Params.AssociatedPin1 = OutputPin;
 	Params.AssociatedPin2 = InputPin;
+	Params.WireThickness  = MounteaDialogueWireConsts::WireThickness;
+	Params.WireColor      = FMounteaDialogueGraphVisualTokens::GetWireColor();
+	Params.bUserFlag1     = false;
 
-	const UMounteaDialogueGraphEditorSettings* MounteaDialogueGraphEditorSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
-	if (MounteaDialogueGraphEditorSettings)
+	if (InputPin)
 	{
-		Params.WireThickness = MounteaDialogueGraphEditorSettings->GetWireWidth();
-	}
-	else
-	{
-		Params.WireThickness = 1.f;
+		if (UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(InputPin->GetOwningNode()))
+		{
+			if (SelectedEdgeNodes.Contains(edgeNode))
+			{
+				Params.WireColor     = FMounteaDialogueGraphVisualTokens::GetPrimaryAccent();
+				Params.WireThickness = MounteaDialogueWireConsts::WireThickness * 2.0f;
+				Params.bUserFlag1    = true;
+			}
+		}
 	}
 
 	const bool bDeemphasizeUnhoveredPins = HoveredPins.Num() > 0;
 	if (bDeemphasizeUnhoveredPins)
-	{
-		ApplyHoverDeemphasis(OutputPin, InputPin, /*inout*/ Params.WireThickness, /*inout*/ Params.WireColor);
-	}
+		ApplyHoverDeemphasis(OutputPin, InputPin, Params.WireThickness, Params.WireColor);
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& InPinGeometries, FArrangedChildren& ArrangedNodes)
 {
-	// Build an acceleration structure to quickly find geometry for the nodes
 	NodeWidgetMap.Empty();
-	for (int32 NodeIndex = 0; NodeIndex < ArrangedNodes.Num(); ++NodeIndex)
+	SelectedEdgeNodes.Empty();
+
+	for (int32 nodeIndex = 0; nodeIndex < ArrangedNodes.Num(); ++nodeIndex)
 	{
-		FArrangedWidget& CurWidget = ArrangedNodes[NodeIndex];
-		TSharedRef<SGraphNode> ChildNode = StaticCastSharedRef<SGraphNode>(CurWidget.Widget);
-		NodeWidgetMap.Add(ChildNode->GetNodeObj(), NodeIndex);
+		TSharedRef<SGraphNode> childNode = StaticCastSharedRef<SGraphNode>(ArrangedNodes[nodeIndex].Widget);
+		NodeWidgetMap.Add(childNode->GetNodeObj(), nodeIndex);
+
+		if (UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(childNode->GetNodeObj()))
+		{
+			const TSharedPtr<SGraphPanel> panel = childNode->GetOwnerPanel();
+			if (panel.IsValid() && panel->SelectionManager.IsNodeSelected(edgeNode))
+				SelectedEdgeNodes.Add(edgeNode);
+		}
 	}
 
-	// Now draw
+	CachedArrangedNodes = &ArrangedNodes;
+
 	FConnectionDrawingPolicy::Draw(InPinGeometries, ArrangedNodes);
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FGeometry& StartGeom, const FGeometry& EndGeom, const FConnectionParams& Params)
 {
-	const FVector2f StartCenter = FGeometryHelper::CenterOf(StartGeom);
-	const FVector2f EndCenter = FGeometryHelper::CenterOf(EndGeom);
+	// Resolve exact top/bottom centers directly in absolute space.
+	// This avoids extreme-value closest-point queries that introduce visible X drift at deep zoom-out.
+	const FVector2D startPoint = StartGeom.LocalToAbsolute(FVector2D(StartGeom.GetLocalSize().X * 0.5f, StartGeom.GetLocalSize().Y));
+	const FVector2D endPoint   = EndGeom.LocalToAbsolute(FVector2D(EndGeom.GetLocalSize().X * 0.5f, 0.0f));
 
-	DrawSplineWithArrow(StartCenter, EndCenter, Params);
+	DrawSubwayWireWithArrow(startPoint, endPoint, Params);
 }
 
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FVector2f& StartPoint, const FVector2f& EndPoint, const FConnectionParams& Params)
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)
 {
-	// bUserFlag1 indicates that we need to reverse the direction of connection (used by debugger)
-	const FVector2f& P0 = Params.bUserFlag1 ? EndPoint : StartPoint;
-	const FVector2f& P1 = Params.bUserFlag1 ? StartPoint : EndPoint;
-	
-	FConnectionParams NewParams = Params;
-	
-	if (const UMounteaDialogueGraphEditorSettings* MounteaDialogueGraphEditorSettings = GetMutableDefault<UMounteaDialogueGraphEditorSettings>())
-		NewParams.WireThickness = MounteaDialogueGraphEditorSettings->GetWireWidth();
-	
-	Internal_DrawLineWithArrow(P0, P1, NewParams);
+	DrawSubwayWireWithArrow(StartPoint, EndPoint, Params);
 }
 
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawPreviewConnector(const FGeometry& PinGeometry, const FVector2f& StartPoint, const FVector2f& EndPoint, UEdGraphPin* Pin)
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawPreviewConnector(const FGeometry& PinGeometry, const FVector2D& StartPoint, const FVector2D& EndPoint, UEdGraphPin* Pin)
 {
-	FConnectionParams Params;
-	DetermineWiringStyle(Pin, nullptr, /*inout*/ Params);
-
-	if (Pin->Direction == EGPD_Output)
-		DrawSplineWithArrow(FGeometryHelper::FindClosestPointOnGeom(PinGeometry, EndPoint), EndPoint, Params);
-	else
-		DrawSplineWithArrow(FGeometryHelper::FindClosestPointOnGeom(PinGeometry, StartPoint), StartPoint, Params);
+	FConnectionParams previewParams;
+	previewParams.WireColor     = FMounteaDialogueGraphVisualTokens::GetWireColor();
+	previewParams.WireThickness = MounteaDialogueWireConsts::WireThickness;
+	previewParams.bDrawBubbles  = false;
+	DrawSubwayWireWithArrow(StartPoint, EndPoint, previewParams);
 }
 
-FVector2f FConnectionDrawingPolicy_MounteaDialogueGraph::ComputeSplineTangent(const FVector2f& Start, const FVector2f& End) const
+FVector2D FConnectionDrawingPolicy_MounteaDialogueGraph::ComputeSplineTangent(const FVector2D& Start, const FVector2D& End) const
 {
-	const FVector2f Delta = End - Start;
-	const FVector2f NormDelta = Delta.GetSafeNormal();
-
-	return NormDelta;
+	return FVector2D(0.0f, MounteaDialogueWireConsts::WireStubOffset * ZoomFactor);
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineLinkGeometry(FArrangedChildren& ArrangedNodes, TSharedRef<SWidget>& OutputPinWidget, UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FArrangedWidget*& StartWidgetGeometry, FArrangedWidget*& EndWidgetGeometry)
 {
-	if (UEdNode_MounteaDialogueGraphEdge* EdgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(InputPin->GetOwningNode()))
+	StartWidgetGeometry = nullptr;
+	EndWidgetGeometry = nullptr;
+
+	const auto resolveGeometryFromPin = [this](const UEdGraphPin* TargetPin) -> FArrangedWidget*
 	{
-		UEdNode_MounteaDialogueGraphNode* Start = EdgeNode->GetStartNode();
-		UEdNode_MounteaDialogueGraphNode* End = EdgeNode->GetEndNode();
-		if (Start != nullptr && End != nullptr)
+		if (!TargetPin || !PinGeometries)
+			return nullptr;
+
+		if (TSharedPtr<SGraphPin>* targetWidget = PinToPinWidgetMap.Find(TargetPin))
 		{
-			int32* StartNodeIndex = NodeWidgetMap.Find(Start);
-			int32* EndNodeIndex = NodeWidgetMap.Find(End);
-			if (StartNodeIndex != nullptr && EndNodeIndex != nullptr)
-			{
-				StartWidgetGeometry = &(ArrangedNodes[*StartNodeIndex]);
-				EndWidgetGeometry = &(ArrangedNodes[*EndNodeIndex]);
-			}
+			TSharedRef<SGraphPin> pinWidget = (*targetWidget).ToSharedRef();
+			return PinGeometries->Find(pinWidget);
 		}
+
+		return nullptr;
+	};
+
+	const auto resolveGeometryFromNode = [this, &ArrangedNodes](const UEdGraphNode* TargetNode) -> FArrangedWidget*
+	{
+		if (!TargetNode)
+			return nullptr;
+
+		if (int32* nodeIndex = NodeWidgetMap.Find(TargetNode))
+			return &(ArrangedNodes[*nodeIndex]);
+
+		return nullptr;
+	};
+
+	FString geometryPath = TEXT("missing");
+	if (UEdNode_MounteaDialogueGraphEdge* edgeInputOwner = InputPin ? Cast<UEdNode_MounteaDialogueGraphEdge>(InputPin->GetOwningNode()) : nullptr)
+	{
+		UEdNode_MounteaDialogueGraphNode* startNode = edgeInputOwner->GetStartNode();
+		UEdNode_MounteaDialogueGraphNode* endNode = edgeInputOwner->GetEndNode();
+
+		StartWidgetGeometry = resolveGeometryFromNode(startNode);
+		EndWidgetGeometry = resolveGeometryFromNode(endNode);
+		if (StartWidgetGeometry && EndWidgetGeometry)
+			geometryPath = TEXT("node");
 	}
 	else
 	{
-		StartWidgetGeometry = PinGeometries->Find(OutputPinWidget);
+		StartWidgetGeometry = PinGeometries ? PinGeometries->Find(OutputPinWidget) : nullptr;
+		EndWidgetGeometry = resolveGeometryFromPin(InputPin);
+		if (StartWidgetGeometry && EndWidgetGeometry)
+			geometryPath = TEXT("pin");
+	}
 
-		if (TSharedPtr<SGraphPin>* pTargetWidget = PinToPinWidgetMap.Find(InputPin))
+	if (!StartWidgetGeometry || !EndWidgetGeometry)
+	{
+		const FString outputNodeName = OutputPin && OutputPin->GetOwningNode() ? OutputPin->GetOwningNode()->GetName() : TEXT("None");
+		const FString inputNodeName = InputPin && InputPin->GetOwningNode() ? InputPin->GetOwningNode()->GetName() : TEXT("None");
+
+		static double lastMissingGeometryLogTime = 0.0;
+		const double now = FPlatformTime::Seconds();
+		if ((now - lastMissingGeometryLogTime) > 0.25)
 		{
-			TSharedRef<SGraphPin> InputWidget = (*pTargetWidget).ToSharedRef();
-			EndWidgetGeometry = PinGeometries->Find(InputWidget);
+			EditorLOG_WARNING(TEXT("[DetermineLinkGeometry] Missing geometry (Path=%s, OutputNode=%s, InputNode=%s)."), *geometryPath, *outputNodeName, *inputNodeName);
+			lastMissingGeometryLogTime = now;
 		}
 	}
 }
 
-void FConnectionDrawingPolicy_MounteaDialogueGraph::Internal_DrawLineWithArrow(const FVector2f& StartAnchorPoint, const FVector2f& EndAnchorPoint, const FConnectionParams& Params)
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSubwayWireWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)
 {
-	const FVector2f DeltaPos = EndAnchorPoint - StartAnchorPoint;
-	const FVector2f UnitDelta = DeltaPos.GetSafeNormal();
+	// Keep wire construction numerically stable at extreme zoom-out levels.
+	const float stubOffset = MounteaDialogueWireConsts::WireStubOffset * ZoomFactor;
+	const float gridStep   = FMath::Max(MounteaDialogueWireConsts::WireGridSize * ZoomFactor, 0.1f);
+	const float minStyleDistance = FMath::Max(MounteaDialogueWireConsts::MinStyleDistance * ZoomFactor, 1.0f);
+	const bool bExtremeZoomOut = ZoomFactor < 0.35f;
 
-	const FVector2f StartPoint = StartAnchorPoint;
-	const FVector2f EndPoint = EndAnchorPoint - (ArrowRadius.X * UnitDelta);
-
-	const float nodesDelta = abs(StartPoint.X - EndPoint.X);
-	
-	float OffsetValue = 0.f;
-	const UMounteaDialogueGraphEditorSettings* GraphSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
-	if (GraphSettings == nullptr || GraphSettings->AllowAdvancedWiring() == false || nodesDelta <= GraphSettings->GetControlPointDistance() * ZoomFactor)
+	auto snapToGrid = [gridStep](const FVector2D& V) -> FVector2D
 	{
-		DrawConnection(WireLayerID, StartPoint, EndPoint, Params);
+		return FVector2D(
+			FMath::RoundToFloat(V.X / gridStep) * gridStep,
+			FMath::RoundToFloat(V.Y / gridStep) * gridStep
+		);
+	};
+
+	FVector2D wireStart = StartPoint + FVector2D(0.0f, stubOffset);
+	FVector2D wireEnd   = EndPoint   - FVector2D(0.0f, stubOffset);
+	if (!bExtremeZoomOut)
+	{
+		wireStart = snapToGrid(wireStart);
+		wireEnd   = snapToGrid(wireEnd);
+	}
+
+	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
+		StartPoint, FVector2D::ZeroVector, wireStart, FVector2D::ZeroVector,
+		Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+
+	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
+		wireEnd, FVector2D::ZeroVector, EndPoint, FVector2D::ZeroVector,
+		Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+
+	if (bExtremeZoomOut)
+	{
+		// At tiny zoom scales, use deterministic orthogonal routing to avoid zig-zag and drift.
+		const float midY = (wireStart.Y + wireEnd.Y) * 0.5f;
+		const FVector2D firstTurn(wireStart.X, midY);
+		const FVector2D secondTurn(wireEnd.X, midY);
+
+		FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
+			wireStart, FVector2D::ZeroVector, firstTurn, FVector2D::ZeroVector,
+			Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+
+		FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
+			firstTurn, FVector2D::ZeroVector, secondTurn, FVector2D::ZeroVector,
+			Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+
+		FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
+			secondTurn, FVector2D::ZeroVector, wireEnd, FVector2D::ZeroVector,
+			Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
 	}
 	else
 	{
-		OffsetValue = -3.f;
-		const FVector2f ConnectionEndPoint = FVector2f(EndPoint.X, EndPoint.Y + OffsetValue);
-		DrawCurvedConnection(WireLayerID, StartPoint, ConnectionEndPoint, Params);
-		
+		const float dist = FVector2D::Distance(wireStart, wireEnd);
+		const bool bBackward = wireEnd.Y < wireStart.Y;
+
+		if (dist < minStyleDistance)
+		{
+			FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
+				wireStart, FVector2D::ZeroVector, wireEnd, FVector2D::ZeroVector,
+				Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+		}
+		else if (bBackward)
+		{
+			const FVector2D delta = wireEnd - wireStart;
+			// Keep backward-link curvature gentle; aggressive tangents create visible hooks at deep zoom.
+			const float horizontalSpan = FMath::Abs(delta.X);
+			const float maxAllowedTangent = FVector2D::Distance(wireStart, wireEnd) * 0.35f;
+			const float tangentLen = FMath::Min(horizontalSpan * 0.35f, maxAllowedTangent);
+			const FVector2D tangent(FMath::Sign(delta.X) * tangentLen, 0.0f);
+
+			FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
+				wireStart, tangent, wireEnd, tangent,
+				Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+		}
+		else
+		{
+			FMDSPathDrawer drawer(WireLayerID, ZoomFactor, DrawElementsList, Params);
+			drawer.DrawSubwayWire(wireStart, FVector2D(0.0f, 1.0f), wireEnd, FVector2D(0.0f, 1.0f));
+		}
 	}
 
-	// Draw the arrow
 	if (ArrowImage)
 	{
-		FVector2D ArrowDrawPos = EndPoint - ArrowRadius;
-		ArrowDrawPos.Y += OffsetValue;
-		const float AngleInRadians = FMath::DegreesToRadians(90.f);
+		const FVector2D arrowDirection    = FVector2D(0.0f, 1.0f);
+		const FVector2D rawArrowSize      = ArrowImage->ImageSize * ZoomFactor;
+		const FVector2D arrowSize(
+			FMath::Max(rawArrowSize.X, 4.0f),
+			FMath::Max(rawArrowSize.Y, 4.0f)
+		);
+		const FVector2D arrowCenter       = EndPoint - (arrowDirection * (arrowSize.X * 0.50f));
+		const FVector2D arrowDrawPosition = arrowCenter - (arrowSize * 0.5f);
+		const float arrowAngle            = FMath::Atan2(arrowDirection.Y, arrowDirection.X);
 
 		FSlateDrawElement::MakeRotatedBox(
 			DrawElementsList,
 			ArrowLayerID,
-			FPaintGeometry(ArrowDrawPos, ArrowImage->ImageSize * ZoomFactor, ZoomFactor),
+			FPaintGeometry(arrowDrawPosition, arrowSize, 1.0f),
 			ArrowImage,
 			ESlateDrawEffect::None,
-			AngleInRadians,
+			arrowAngle,
 			TOptional<FVector2D>(),
 			FSlateDrawElement::RelativeToElement,
 			Params.WireColor
 		);
 	}
-}
 
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawCurvedConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params)
-{
-	const UMounteaDialogueGraphEditorSettings* GraphSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
+	if (Params.bUserFlag1)
+	{
+		const float time      = static_cast<float>(FSlateApplication::Get().GetCurrentTime());
+		const float speed     = 0.6f;
+		const int32 dotCount  = 4;
+		const float dotRadius = FMath::Clamp(5.0f * ZoomFactor, 2.0f, 8.0f);
+		const FVector2D dotSize(dotRadius * 2.0f, dotRadius * 2.0f);
+		const FSlateBrush* dotBrush = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Icon.BulletPoint"));
 
-	FVector2f Tangent = GraphSettings->GetAdvancedWiringConnectionTangent().GetAbs();
+		const TArray<TPair<FVector2D, FVector2D>> dotSegments = {
+			{ StartPoint, wireStart },
+			{ wireEnd,    EndPoint  }
+		};
 
-	const int32 SideValue = (End.X > Start.X) ? 1 : -1;
+		for (int32 i = 0; i < dotCount; ++i)
+		{
+			const float t         = FMath::Frac(time * speed + static_cast<float>(i) / static_cast<float>(dotCount));
+			const FVector2D dotCenter = FMath::Lerp(StartPoint, EndPoint, t);
 
-	Tangent.X *= SideValue;
-	Tangent.Y *= 0.5f;
-	
-	FVector2f ControlPoint1 = Start + (Tangent * ZoomFactor);
-	FVector2f ControlPoint2 = End - (Tangent * ZoomFactor);
-	
-	ControlPoint1 = FMath::Lerp(Start, ControlPoint1, 0.6f);
-	ControlPoint2 = FMath::Lerp(End, ControlPoint2, 0.6f);
-	
-	const FVector2D connectionEnd = FVector2D(End.X, End.Y + 5.f);
+			FSlateDrawElement::MakeBox(
+				DrawElementsList,
+				ArrowLayerID,
+				FPaintGeometry(dotCenter - dotSize * 0.5f, dotSize, 1.0f),
+				dotBrush,
+				ESlateDrawEffect::None,
+				Params.WireColor
+			);
+		}
+	}
 
-	FSlateDrawElement::MakeCubicBezierSpline(
-		DrawElementsList,
-		LayerId,
-		FPaintGeometry(),
-		Start,
-		ControlPoint1,
-		ControlPoint2,
-		connectionEnd,
-		Params.WireThickness,
-		ESlateDrawEffect::None,
-		Params.WireColor
-	);
-}
-
-
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params)
-{
-	FKismetConnectionDrawingPolicy::DrawConnection(LayerId, Start, End, Params);
+	if (Params.AssociatedPin2 && CachedArrangedNodes)
+	{
+		if (UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(Params.AssociatedPin2->GetOwningNode()))
+		{
+			if (UEdNode_MounteaDialogueGraphNode* endNode = edgeNode->GetEndNode())
+			{
+				if (const int32* nodeIdx = NodeWidgetMap.Find(endNode))
+				{
+					const float endWidth = (*CachedArrangedNodes)[*nodeIdx].Widget->GetDesiredSize().X;
+					edgeNode->NodePosX = endNode->NodePosX + endWidth * 0.5f - MounteaDialogueWireConsts::BubbleHalfSize;
+					edgeNode->NodePosY = endNode->NodePosY - MounteaDialogueWireConsts::BubbleYOffset;
+				}
+			}
+		}
+	}
 }

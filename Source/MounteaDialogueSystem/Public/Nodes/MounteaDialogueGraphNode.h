@@ -22,7 +22,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNodeStateChanged, const UMounteaD
  * Does come with ability to define Colours, Name, Description and Title.
  * Contains information about Parent and Children Nodes.
  */
-UCLASS(Abstract, BlueprintType, Blueprintable, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue","Mountea|Dialogue"))
+UCLASS(Abstract, BlueprintType, Blueprintable, ClassGroup=("Mountea|Dialogue"), 
+	AutoExpandCategories=(Dialogue, Previews, Decorators),
+	AutoCollapseCategories=(Defaults))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject, public IMounteaDialogueGraphNodeInterface, public IMounteaDialogueTickableObject
 {
 	GENERATED_BODY()
@@ -30,10 +32,18 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode : public UObject, publ
 public:
 	
 	UMounteaDialogueGraphNode();
+	
+public:
+	
+	virtual TArray<TSubclassOf<UMounteaDialogueGraphNode>> GetAllowedInputClasses_Implementation() const override;
 
-#pragma region Variables
+	virtual void RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
+	virtual void UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
+	virtual void TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime) override;
+	virtual FMounteaDialogueTick& GetMounteaDialogueTickHandle() override {return NodeTickEvent; };
 
-#pragma region ReadOnly
+	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue|Node")
+	FMounteaDialogueTick NodeTickEvent;
 	
 public:
 	
@@ -41,7 +51,10 @@ public:
 	 * Array of parent nodes for the current active node in the dialogue traversal.
 	 *❗ Parent nodes are nodes that have a directed edge pointing to the current active node.
 	 */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", meta=(DisplayThumbnail=false))
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", 
+		meta=(DisplayThumbnail=false),
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	TArray<UMounteaDialogueGraphNode*> ParentNodes;
 	
 	/**
@@ -49,7 +62,10 @@ public:
 	 *❗ The order of the children nodes matter and determines the order in which the options are presented to the player.
 	 *❔ Can be used to traverse the graph and to create UI to display the dialogue options.
 	 */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", meta=(DisplayThumbnail=false))
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", 
+		meta=(DisplayThumbnail=false),
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	TArray<UMounteaDialogueGraphNode*> ChildrenNodes;
 	
 	/**
@@ -57,24 +73,25 @@ public:
 	 *❗ The key of the map is the source node, and the value is the edge connecting it to its target node.
 	 *❔ Can be used to traverse the graph, get information about node connections...
 	 */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", meta=(DisplayThumbnail=false))
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", 
+		meta=(DisplayThumbnail=false),
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	TMap<UMounteaDialogueGraphNode*, UMounteaDialogueGraphEdge*> Edges;
 	
 	/**
 	 * Pointer to the parent dialogue graph of this node.
 	 */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", meta=(DisplayThumbnail=false))
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private", 
+		meta=(DisplayThumbnail=false),
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	TObjectPtr<UMounteaDialogueGraph> Graph;
 	
-	/**
-	 * Temporary NodeIndex.
-	 * This variable will be deleted.
-	 */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
-	int32 NodeIndex = INDEX_NONE;
-
 	/** Execution order within Parent's scope */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Private",
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	int32 ExecutionOrder = INDEX_NONE;
 
 protected:
@@ -84,7 +101,8 @@ protected:
 	 *❗ This is used to differentiate between nodes, and must be unique within the graph.
 	 *❔ Can be used for debugging and tracing purposes.
 	 */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Mountea|Dialogue", meta=(NoResetToDefault))
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Defaults", 
+		meta=(NoResetToDefault))
 	FGuid NodeGUID;
 
 private:
@@ -94,19 +112,21 @@ private:
 	 *❗ This is the world in which this Dialogue Graph Node is currently running.
 	 *❔ Can be used for accessing world-related functionality.
 	 */
-	UPROPERTY(VisibleAnywhere, Category = "Mountea|Dialogue", AdvancedDisplay)
+	UPROPERTY(VisibleAnywhere, Category = "Private", 
+		AdvancedDisplay,
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	TObjectPtr<UWorld> OwningWorld;
-
-#pragma endregion
-
-#pragma region Editable
+	
 public:
 	
 	/**
 	 * Every Node has its own Tags. Those Tags can be used to Match Participants
 	 * or to find specific Nodes.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Defaults",
+		meta=(NoResetToDefault),
+		meta=(Categories="Mountea_Dialogue,Dialogue"))
 	FGameplayTagContainer NodeGameplayTags;
 	
 	/**
@@ -114,11 +134,13 @@ public:
 	 *❗ Only nodes with classes from this array can be connected as inputs to this node.
 	 *❔ Can be used to restrict the types of inputs this node can accept.
 	 */
-	UPROPERTY(SaveGame, EditDefaultsOnly, BlueprintReadOnly, Category="Base")
+	UPROPERTY(SaveGame, EditDefaultsOnly, BlueprintReadOnly, Category="Private",
+		meta=(NoResetToDefault))
 	TArray<TSubclassOf<UMounteaDialogueGraphNode>> AllowedInputClasses;
 
 	/** Defines whether this Node will start automatically or if requires input.*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Defaults",
+		meta=(NoResetToDefault))
 	uint8 bAutoStarts : 1;
 	
 	/**
@@ -126,7 +148,9 @@ public:
 	 *❗ If this value is -1, then there is no limit on the number of children nodes.
 	 *❔ Can be used to enforce a maximum number of connections for certain types of nodes.
 	 */
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Base")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Private",
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	int32 MaxChildrenNodes = -1;
 	
 	/**
@@ -134,14 +158,17 @@ public:
 	 *❗ If true, the decorators of the parent Graph will be inherited and applied to this node during processing.
 	 *❔ This flag can be used to control the inheritance of decorators for nodes in the dialogue graph.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mountea|Dialogue")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Defaults",
+		meta=(NoResetToDefault))
 	uint8 bInheritGraphDecorators : 1;
 
 	/**
 	 * Provides a node-based inversion of global skip settings.
 	 * If global settings are changed, inversion behaviour stays the same, so keep this in mined when changing this setting for nodes!
 	 */
-	UPROPERTY(SaveGame, EditDefaultsOnly, BlueprintReadOnly, Category="Base")
+	UPROPERTY(SaveGame, EditDefaultsOnly, BlueprintReadOnly, Category = "Private",
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	uint8 bInvertSkipRowSetting : 1;
 
 	/**
@@ -149,14 +176,10 @@ public:
 	 * Those Decorators are instanced and exist only as "triggers".
 	 * Could be used to start audio, play animation or do some logic behind the curtains, like triggering Cutscene etc.
 	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mountea|Dialogue", NoClear, meta=(NoResetToDefault))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Decorators",
+		meta=(NoResetToDefault),
+		meta=(ShowOnlyInnerProperties))
 	TArray<FMounteaDialogueDecorator> NodeDecorators;
-
-#pragma endregion
-
-#pragma endregion 
-
-#pragma region Functions
 
 public:
 	
@@ -165,7 +188,8 @@ public:
 	 *
 	 * @param InWorld The world to use for initialization.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Setter"))
 	void InitializeNode(UWorld* InWorld);
 	virtual void InitializeNode_Implementation(UWorld* InWorld);
 	
@@ -173,7 +197,8 @@ public:
 	 * Checks if the node should automatically start when the dialogue is played.
 	 * @return true if the node should automatically start, false otherwise.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Validate"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Validate"))
 	virtual bool DoesAutoStart() const
 	{ return bAutoStarts; }
 	
@@ -183,7 +208,8 @@ public:
 	 * 
 	 * @param Manager The dialogue manager interface responsible for managing the current dialogue.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Setter"))
 	void PreProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	virtual void PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 
@@ -195,7 +221,8 @@ public:
 	 * @param Manager The dialogue manager interface responsible for managing the current dialogue. 
 	 *                It handles context and broadcasts events such as dialogue failure or node start.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Setter"))
 	void ProcessNode(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager);
 	
@@ -203,7 +230,8 @@ public:
 	 * Gets the decorators for this Dialogue Graph Node.
 	 *❔ Returns only Valid decorators!
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Getter"))
 	TArray<FMounteaDialogueDecorator> GetNodeDecorators() const;
 	
 	/**
@@ -213,7 +241,8 @@ public:
 	 *❔ This can be further enhanced by Decorators.
 	 * @return True if the node can be started, false otherwise.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Validate"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Validate"))
 	bool CanStartNode() const;
 	virtual bool CanStartNode_Implementation() const;
 
@@ -224,7 +253,8 @@ public:
 	 * 
 	 * @return Returns true if all node and graph decorators are valid, false otherwise.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Validate"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Validate"))
 	bool EvaluateDecorators() const;
 	virtual bool EvaluateDecorators_Implementation() const;
 	
@@ -235,7 +265,8 @@ public:
 	 *
 	 * @return Whether this node inherits decorators from the graph.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Validate"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Validate"))
 	bool DoesInheritDecorators() const
 	{ return bInheritGraphDecorators; };
 	
@@ -245,33 +276,19 @@ public:
 	 *
 	 * @return MaxChildrenNodes
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Getter"))
 	int32 GetMaxChildNodes() const
 	{ return MaxChildrenNodes; };
 
-
-	/**
-	 * Gets the index of the node within the dialogue graph.
-	 *
-	 * @return The index of the node.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Getter"))
-	FORCEINLINE int32 GetNodeIndex() const
-	{ return NodeIndex; };
-	
-	/**
-	 * Sets the index of this dialogue node in the dialogue graph.
-	 *
-	 * @param NewIndex The new index to set.
-	 */
-	void SetNodeIndex(const int32 NewIndex);
 
 	/**
 	 * Gets the GUID of the node.
 	 *
 	 * @return The GUID of the node.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Getter"))
 	FORCEINLINE FGuid GetNodeGUID() const
 	{ return NodeGUID; };
 
@@ -284,14 +301,16 @@ public:
 	 *
 	 * @return The owning Graph of the node.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, Category = "Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Getter"))
 	UMounteaDialogueGraph* GetGraph() const;
 
 	/**
 	 * If node is owned by graph, then it will return guid of the owning graph.
 	 * @return Guid of the owning Graph
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Getter"))
 	FGuid GetGraphGUID() const;
 	
 	/**
@@ -300,7 +319,8 @@ public:
 	 *
 	 * @return Amount of children Nodes
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Getter"))
 	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetChildrenNodes() const
 	{ return ChildrenNodes; };
 	
@@ -310,7 +330,8 @@ public:
 	 *
 	 * @return Amount of how parent Nodes
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Getter"))
 	FORCEINLINE TArray<UMounteaDialogueGraphNode*> GetParentNodes() const
 	{return ParentNodes; };
 
@@ -318,12 +339,14 @@ public:
 	 * Serves purpose of validating Node before Dialogue gets Started.
 	 * Any broken Node results in non-starting Dialogue to avoid crashes.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Validate"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Validate"))
 	bool ValidateNodeRuntime() const;
 	virtual bool ValidateNodeRuntime_Implementation() const
 	{ return true; };
 
-	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Validate"))
+	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Validate"))
 	void CleanupNode();
 	virtual void CleanupNode_Implementation();
 	
@@ -338,7 +361,8 @@ public:
 	 * Provides a way to update Node's owning World.
 	 * Useful for Loading sub-levels.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Setter"))
+	UFUNCTION(BlueprintCallable, Category="Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Setter"))
 	virtual void SetNewWorld(UWorld* NewWorld);
 	virtual UWorld* GetWorld() const override
 	{
@@ -359,92 +383,92 @@ public:
 		return nullptr;
 	}
 
-#pragma endregion 
-
-#pragma region MounteaDialogueGraphNodeInterface
-
-	virtual TArray<TSubclassOf<UMounteaDialogueGraphNode>> GetAllowedInputClasses_Implementation() const override;
-	
-#pragma endregion
-	
-#pragma region TickableInterface
-	
-public:
-	virtual void RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
-	virtual void UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable) override;
-	virtual void TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime) override;
-	virtual FMounteaDialogueTick& GetMounteaDialogueTickHandle() override {return NodeTickEvent; };
-
-	UPROPERTY(BlueprintReadOnly, Category="Mountea|Dialogue|Node")
-	FMounteaDialogueTick NodeTickEvent;
-	
-#pragma endregion
-	
 #if WITH_EDITORONLY_DATA
 
 	// Defines whether this Node type allows inputs
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor",
+		meta=(NoResetToDefault))
 	bool bAllowInputNodes;
 
 	// Defines whether this Node type allows outputs
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor",
+		meta=(NoResetToDefault))
 	bool bAllowOutputNodes;
 
 	// Defines whether this Node can be copied
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor",
+		meta=(NoResetToDefault))
 	bool bAllowCopy;
 
 	// Defines whether this Node can be cut
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor",
+		meta=(NoResetToDefault))
 	bool bAllowCut;
 
 	// Defines whether this Node can be pasted
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor",
+		meta=(NoResetToDefault))
 	bool bAllowPaste;
 
 	// Defines whether this Node can be deleted
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor",
+		meta=(NoResetToDefault))
 	bool bAllowDelete;
 
 	// Defines whether this Node can be manually created
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor",
+		meta=(NoResetToDefault))
 	bool bAllowManualCreate;
 
 	// Defines whether Node can be renamed
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor",
+		meta=(NoResetToDefault))
 	bool bCanRenameNode;
 	
 	// Display name of the Node menu category
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor",
+		meta=(NoResetToDefault))
 	FText ContextMenuName;
 
 	// List of compatible graph types
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Editor")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Editor",
+		meta=(NoResetToDefault))
 	TSubclassOf<UObject> CompatibleGraphType;
 
-	// Defines background colour of this Node
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
-	FLinearColor BackgroundColor;
+	// Defines accent colour used by the Graph Editor visual system for this node.
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor|Visual",
+		meta=(NoResetToDefault))
+	FLinearColor EditorNodeColour;
+
+	// Defines header foreground colour used by the Graph Editor visual system for this node.
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor|Visual",
+		meta=(NoResetToDefault))
+	FLinearColor EditorHeaderForegroundColour;
 
 	// Contains Node Tooltip text
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor",
+		meta=(NoResetToDefault))
 	FText NodeTooltipText;
 
 #endif
 
 	// User friendly node type name
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor",
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	FText NodeTypeName;
 
 	// Display title of the Node
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Editor",
+		meta=(NoResetToDefault),
+		meta=(HiddenInGraph))
 	FText NodeTitle;
 	
 	FIntPoint NodePosition;
 
 public:
 
-	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Node")
+	UPROPERTY(BlueprintAssignable, Category="Events")
 	FOnNodeStateChanged OnNodeStateChanged;
 
 public:
@@ -456,7 +480,9 @@ public:
 	 *
 	 * @return The tooltip text for this node.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue|Node", meta=(DevelopmentOnly=true), meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue|Node", 
+		meta=(DevelopmentOnly=true), 
+		meta=(CustomTag="MounteaK2Getter"))
 	FText GetNodeTooltipText() const;
 	virtual FText GetNodeTooltipText_Implementation() const;
 	
@@ -465,7 +491,9 @@ public:
 	 *
 	 * @return The Description text for this node.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue|Node", meta=(DevelopmentOnly=true), meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue|Node", 
+		meta=(DevelopmentOnly=true), 
+		meta=(CustomTag="MounteaK2Getter"))
 	FText GetDescription() const;
 	virtual FText GetDescription_Implementation() const;
 
@@ -474,7 +502,9 @@ public:
 	 *
 	 * @return The Node Category text for this node.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue|Node", meta=(DevelopmentOnly=true), meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue|Node", 
+		meta=(DevelopmentOnly=true), 
+		meta=(CustomTag="MounteaK2Getter"))
 	FText GetNodeCategory() const;
 	virtual FText GetNodeCategory_Implementation() const;
 
@@ -483,7 +513,9 @@ public:
 	 *
 	 * @return The Documentation Link for this node.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue|Node", meta=(DevelopmentOnly=true), meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue|Node", 
+		meta=(DevelopmentOnly=true), 
+		meta=(CustomTag="MounteaK2Getter"))
 	FString GetNodeDocumentationLink() const;
 	virtual FString GetNodeDocumentationLink_Implementation() const;
 
@@ -509,7 +541,9 @@ public:
 	virtual void OnPasted();
 
 	// Generates default Tooltip body text used for all Nodes
-	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "Mountea|Dialogue|Node", meta=(DevelopmentOnly=true), meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "Mountea|Dialogue|Node", 
+		meta=(DevelopmentOnly=true), 
+		meta=(CustomTag="MounteaK2Getter"))
 	FText GetDefaultTooltipBody() const;
 	virtual void OnCreatedInEditor() {};
 
@@ -520,7 +554,8 @@ public:
 	 *
 	 * @return The Title text for this node.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue|Node", meta=(CustomTag="MounteaK2Getter"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Mountea|Dialogue|Node", 
+		meta=(CustomTag="MounteaK2Getter"))
 	FText GetNodeTitle() const;
 	virtual FText GetNodeTitle_Implementation() const;
 

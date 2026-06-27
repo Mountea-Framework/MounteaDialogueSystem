@@ -18,7 +18,7 @@ class  UEdNode_MounteaDialogueGraphEdge : public UEdGraphNode
 	GENERATED_BODY()
 
 public:
-	
+
 	UPROPERTY()
 	class UEdGraph* Graph;
 
@@ -44,4 +44,5 @@ public:
 
 	UEdNode_MounteaDialogueGraphNode* GetStartNode();
 	UEdNode_MounteaDialogueGraphNode* GetEndNode();
+
 };

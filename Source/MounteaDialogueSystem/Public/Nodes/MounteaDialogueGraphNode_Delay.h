@@ -11,7 +11,8 @@
  * 
  * ...
  */
-UCLASS(ClassGroup=("Mountea|Dialogue"), NotBlueprintable, DisplayName="Delay Node", meta=(ToolTip="Mountea Dialogue Tree: Delay Node"))
+UCLASS(ClassGroup=("Mountea|Dialogue"), NotBlueprintable, DisplayName="Delay Node", 
+	meta=(ToolTip="Mountea Dialogue Tree: Delay Node"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_Delay : public UMounteaDialogueGraphNode
 {
 	GENERATED_BODY()
@@ -23,9 +24,20 @@ public:
 	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 	virtual FText GetNodeTitle_Implementation() const override;
 
+	inline int32 GetDelayDuration() const
+	{
+		return DelayDuration;
+	}
+
+	inline void SetDelayDuration(const int32 NewDuration)
+	{
+		DelayDuration = FMath::Max(1, NewDuration);
+	}
+
 protected:
 
-	UPROPERTY(SaveGame, Category="Mountea|Dialogue", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault,Units = "s", UIMin = 0.01, ClampMin = 0.01))
+	UPROPERTY(SaveGame, Category="Delay", EditAnywhere, BlueprintReadOnly, 
+		meta=(NoResetToDefault, Units = "s", UIMin = 0.01, ClampMin = 0.01))
 	int32 DelayDuration;
 
 private:

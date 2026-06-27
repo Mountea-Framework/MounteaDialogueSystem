@@ -43,5 +43,6 @@ protected:
 	UMounteaDialogueGraph* Graph;
 	UEdGraph_MounteaDialogueGraph* EdGraph;
 	int32 MaxIteration;
-	int32 OptimalDistance;
+	int32 OptimalHorizontalDistance;
+	int32 OptimalVerticalDistance;
 };

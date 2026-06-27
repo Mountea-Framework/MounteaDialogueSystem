@@ -2,13 +2,17 @@
 
 #include "MounteaDialogueFixUtilities.h"
 
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "EditorUtilityLibrary.h"
+#include "Graph/MounteaDialogueGraph.h"
 #include "K2Node_CallFunction.h"
 #include "Dom/JsonObject.h"
 #include "K2Nodes/K2Node_MounteaDialogueCallFunction.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Misc/FileHelper.h"
+#include "Modules/ModuleManager.h"
+#include "Nodes/MounteaDialogueGraphNode_OpenChildGraph.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 
@@ -240,20 +244,118 @@ TArray<FNodeReplacementRule> FMounteaDialogueFixUtilities::LoadReplacementRules(
 	return Rules;
 }
 
+void FMounteaDialogueFixUtilities::BuildDialogueGraphLookup(TMap<FGuid, TSoftObjectPtr<UMounteaDialogueGraph>>& OutLookup)
+{
+	OutLookup.Reset();
+
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+	FARFilter Filter;
+	Filter.ClassPaths.Add(UMounteaDialogueGraph::StaticClass()->GetClassPathName());
+	Filter.bRecursiveClasses = true;
+
+	TArray<FAssetData> DialogueGraphAssets;
+	AssetRegistryModule.Get().GetAssets(Filter, DialogueGraphAssets);
+
+	for (const FAssetData& asset : DialogueGraphAssets)
+	{
+		UMounteaDialogueGraph* dialogueGraph = Cast<UMounteaDialogueGraph>(asset.GetAsset());
+		if (!IsValid(dialogueGraph))
+			continue;
+
+		OutLookup.Add(dialogueGraph->GetGraphGUID(), TSoftObjectPtr<UMounteaDialogueGraph>(dialogueGraph));
+	}
+}
+
+void FMounteaDialogueFixUtilities::ProcessDialogueGraph(
+	UMounteaDialogueGraph* DialogueGraph,
+	const TMap<FGuid, TSoftObjectPtr<UMounteaDialogueGraph>>& GraphLookup,
+	int32& OutScannedNodes,
+	int32& OutInvalidNodes,
+	int32& OutFixedNodes)
+{
+	if (!IsValid(DialogueGraph))
+		return;
+
+	bool bModified = false;
+	const TArray<UMounteaDialogueGraphNode*> graphNodes = DialogueGraph->GetAllNodes();
+
+	for (const auto& node : graphNodes)
+	{
+		UMounteaDialogueGraphNode_OpenChildGraph* openChildNode = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(node);
+		if (!IsValid(openChildNode))
+			continue;
+
+		OutScannedNodes++;
+		if (!openChildNode->TargetDialogue.IsNull())
+			continue;
+
+#if WITH_EDITORONLY_DATA
+		const FGuid pendingGuid = openChildNode->PendingTargetDialogueGUID;
+		if (pendingGuid.IsValid())
+		{
+			const TSoftObjectPtr<UMounteaDialogueGraph>* foundGraph = GraphLookup.Find(pendingGuid);
+			if (foundGraph)
+			{
+				UMounteaDialogueGraph* resolvedGraph = foundGraph->LoadSynchronous();
+				if (IsValid(resolvedGraph) && resolvedGraph != DialogueGraph)
+				{
+					openChildNode->Modify();
+					openChildNode->TargetDialogue = TSoftObjectPtr<UMounteaDialogueGraph>(resolvedGraph);
+					openChildNode->PendingTargetDialogueGUID.Invalidate();
+					bModified = true;
+					OutFixedNodes++;
+					continue;
+				}
+			}
+		}
+#endif
+
+		OutInvalidNodes++;
+	}
+
+	if (bModified)
+		DialogueGraph->MarkPackageDirty();
+}
+
 void FMounteaDialogueFixUtilities::ReplaceNodesInSelectedBlueprints()
 {
 	TArray<FNodeReplacementRule> Rules = LoadReplacementRules();
-	if (Rules.Num() == 0)
-	{
-		return;
-	}
 
 	TArray<FAssetData> SelectedAssets = UEditorUtilityLibrary::GetSelectedAssetData();
+	TMap<FGuid, TSoftObjectPtr<UMounteaDialogueGraph>> graphLookup;
+	BuildDialogueGraphLookup(graphLookup);
+
+	int32 scannedOpenChildNodes = 0;
+	int32 invalidOpenChildNodes = 0;
+	int32 fixedOpenChildNodes = 0;
+
 	for (const FAssetData& Asset : SelectedAssets)
 	{
-		if (UBlueprint* Blueprint = Cast<UBlueprint>(Asset.GetAsset()))
+		UObject* assetObject = Asset.GetAsset();
+		if (!IsValid(assetObject))
+			continue;
+
+		if (UBlueprint* Blueprint = Cast<UBlueprint>(assetObject))
 		{
-			ProcessBlueprint(Blueprint, Rules);
+			if (Rules.Num() > 0)
+				ProcessBlueprint(Blueprint, Rules);
+			continue;
+		}
+
+		if (UMounteaDialogueGraph* dialogueGraph = Cast<UMounteaDialogueGraph>(assetObject))
+			ProcessDialogueGraph(dialogueGraph, graphLookup, scannedOpenChildNodes, invalidOpenChildNodes, fixedOpenChildNodes);
+	}
+
+	if (scannedOpenChildNodes > 0)
+	{
+		if (fixedOpenChildNodes > 0)
+		{
+			UE_LOG(LogTemp, Log, TEXT("[Mountea Dialogue Fix Utility] OpenChildGraph scan fixed %d unresolved target references."), fixedOpenChildNodes);
+		}
+
+		if (invalidOpenChildNodes > 0)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[Mountea Dialogue Fix Utility] OpenChildGraph scan found %d unresolved nodes with missing TargetDialogue."), invalidOpenChildNodes);
 		}
 	}
 }

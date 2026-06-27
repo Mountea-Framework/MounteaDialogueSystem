@@ -14,7 +14,7 @@ void FMounteaDialogueSystemModule::StartupModule()
 	TSharedPtr<IPlugin> ThisPlugin = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"));
 	check(ThisPlugin.IsValid());
 	
-	UGameplayTagsManager::Get().AddTagIniSearchPath(ThisPlugin->GetBaseDir() / TEXT("Config") / TEXT("Tags"));
+	UGameplayTagsManager::Get().AddTagIniSearchPath(ThisPlugin->GetBaseDir() / TEXT("Config") / TEXT("Tags"));	
 }
 
 void FMounteaDialogueSystemModule::ShutdownModule()

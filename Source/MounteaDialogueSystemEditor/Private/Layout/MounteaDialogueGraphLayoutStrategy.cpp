@@ -3,6 +3,7 @@
 
 #include "MounteaDialogueGraphLayoutStrategy.h"
 
+#include "Consts/MounteaDialogueEditorConsts.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
@@ -13,8 +14,9 @@
 UMounteaDialogueGraphLayoutStrategy::UMounteaDialogueGraphLayoutStrategy()
 {
 	Settings = nullptr;
-	MaxIteration = 50;
-	OptimalDistance = 150;
+	MaxIteration = MounteaGraphLayoutStrategy::MaxIterations;
+	OptimalHorizontalDistance = MounteaGraphLayoutStrategy::OptimalHorizontalDistance;
+	OptimalVerticalDistance = MounteaGraphLayoutStrategy::OptimalVerticalDistance;
 }
 
 UMounteaDialogueGraphLayoutStrategy::~UMounteaDialogueGraphLayoutStrategy()

@@ -13,7 +13,8 @@
  * This Node starts automatically upon reaching in the Dialogue Tree.
  * Requires Dialogue Data Table to work properly.
  */
-UCLASS(ClassGroup=("Mountea|Dialogue"), DisplayName="Lead Node", meta=(ToolTip="Mountea Dialogue Tree: Lead Node"))
+UCLASS(ClassGroup=("Mountea|Dialogue"), DisplayName="Lead Node", 
+	meta=(ToolTip="Mountea Dialogue Tree: Lead Node"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_LeadNode : public UMounteaDialogueGraphNode_DialogueNodeBase
 {
 	GENERATED_BODY()
@@ -21,9 +22,6 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_LeadNode : public UMou
 	UMounteaDialogueGraphNode_LeadNode();
 
 public:
-
-	virtual void PreProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
-	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
 
 #if WITH_EDITOR
 	virtual FText GetDescription_Implementation() const override;

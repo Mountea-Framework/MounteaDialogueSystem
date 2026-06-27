@@ -27,7 +27,8 @@ void UTreeSolveLayoutStrategy::Layout(UEdGraph* InEdGraph)
 	
 	if (Settings != nullptr)
 	{
-		OptimalDistance = Settings->GetOptimalDistance();
+		OptimalHorizontalDistance = Settings->GetOptimalHorizontalDistance();
+		OptimalVerticalDistance = Settings->GetOptimalVerticalDistance();
 		MaxIteration = Settings->GetMaxIteration();
 		bFirstPassOnly = Settings->IsFirstPassOnly();
 	}
@@ -60,6 +61,22 @@ void UTreeSolveLayoutStrategy::Layout(UEdGraph* InEdGraph)
 			ResolveConflict(Graph->RootNodes[j], Graph->RootNodes[i]);
 		}
 	}
+
+	// Shift the entire graph so the start node is anchored at (0, 0).
+	if (Graph->RootNodes.Num() > 0)
+	{
+		UEdNode_MounteaDialogueGraphNode* StartEdNode = EdGraph->NodeMap.FindRef(Graph->RootNodes[0]);
+		if (StartEdNode)
+		{
+			const float OffsetX = -StartEdNode->NodePosX;
+			const float OffsetY = -StartEdNode->NodePosY;
+			for (UEdGraphNode* EdNode : EdGraph->Nodes)
+			{
+				EdNode->NodePosX += OffsetX;
+				EdNode->NodePosY += OffsetY;
+			}
+		}
+	}
 }
 
 void UTreeSolveLayoutStrategy::InitPass(UMounteaDialogueGraphNode* RootNode, const FVector2D& Anchor)
@@ -79,7 +96,7 @@ void UTreeSolveLayoutStrategy::InitPass(UMounteaDialogueGraphNode* RootNode, con
 		return A.ExecutionOrder < B.ExecutionOrder;
 	});
 
-	FVector2D ChildAnchor(FVector2D(0.f, GetNodeHeight(EdNode_RootNode) + OptimalDistance + Anchor.Y));
+	FVector2D ChildAnchor(FVector2D(0.f, GetNodeHeight(EdNode_RootNode) + OptimalVerticalDistance + Anchor.Y));
 	for (int32 i = 0; i < RootNode->ChildrenNodes.Num(); ++i)
 	{
 		UMounteaDialogueGraphNode* Child = RootNode->ChildrenNodes[i];
@@ -88,7 +105,7 @@ void UTreeSolveLayoutStrategy::InitPass(UMounteaDialogueGraphNode* RootNode, con
 		{
 			UMounteaDialogueGraphNode* PreChild = RootNode->ChildrenNodes[i - 1];
 			UEdNode_MounteaDialogueGraphNode* EdNode_PreChildNode = EdGraph->NodeMap[PreChild];
-			ChildAnchor.X += OptimalDistance + GetNodeWidth(EdNode_PreChildNode) / 2;
+			ChildAnchor.X += OptimalHorizontalDistance + GetNodeWidth(EdNode_PreChildNode) / 2;
 		}
 		ChildAnchor.X += GetNodeWidth(EdNode_ChildNode) / 2;
 		InitPass(Child, ChildAnchor);
@@ -154,7 +171,7 @@ bool UTreeSolveLayoutStrategy::ResolveConflict(UMounteaDialogueGraphNode* LRoot,
 
 		int32 RightBound = RightContour[i]->NodePosX + GetNodeWidth(RightContour[i]);
 		int32 LeftBound = LeftContour[i]->NodePosX;
-		int32 Distance = RightBound + OptimalDistance - LeftBound;
+		int32 Distance = RightBound + OptimalHorizontalDistance - LeftBound;
 		if (Distance > MaxOverlapDistance)
 		{
 			MaxOverlapDistance = Distance;

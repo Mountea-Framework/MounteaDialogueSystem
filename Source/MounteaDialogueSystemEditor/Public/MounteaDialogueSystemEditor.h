@@ -48,11 +48,14 @@ private:
 	void RegisterAssetTypeAction(IAssetTools& AssetTools, TSharedRef<IAssetTypeActions> Action);
 	
 	void OnGetResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
-	UFUNCTION() void SendHTTPGet();
+	UFUNCTION() 
+	void SendHTTPGet();
 	void OnGetResponse_Tags(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
-	UFUNCTION() void SendHTTPGet_Tags();
+	UFUNCTION() 
+	void SendHTTPGet_Tags();
 	
 	void LauncherButtonClicked() const;
+	void BuilderButtonClicked() const;
 	void DialoguerButtonClicked() const;
 	void YoutubeButtonClicked() const;
 	void WikiButtonClicked() const;
@@ -61,7 +64,6 @@ private:
 	void SettingsButtonClicked() const;
 	void EditorSettingsButtonClicked() const;
 	void ConfigButtonClicked() const;
-	TSharedRef<SWidget> MakeMounteaMenuWidget() const;
 
 protected:
 		
@@ -72,6 +74,7 @@ protected:
 
 	void RegisterTabSpawners(const TSharedRef<FTabManager>& TabManager);
 	void TutorialButtonClicked() const;
+	void SetupDefaultsButtonClicked() const;
 	
 private:
 	TSharedRef<SDockTab> OnSpawnDialogueSystemTutorialTab(const FSpawnTabArgs& SpawnTabArgs);

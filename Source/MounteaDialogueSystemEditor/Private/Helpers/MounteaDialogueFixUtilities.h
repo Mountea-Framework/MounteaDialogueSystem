@@ -2,6 +2,14 @@
 
 #pragma once
 
+#include "CoreMinimal.h"
+
+class UBlueprint;
+class UEdGraph;
+class UK2Node;
+class UFunction;
+class UMounteaDialogueGraph;
+
 struct FNodeReplacementRule
 {
     // Old node definition
@@ -36,6 +44,13 @@ class FMounteaDialogueFixUtilities
 
 private:
 	static TArray<FNodeReplacementRule> LoadReplacementRules();
+	static void BuildDialogueGraphLookup(TMap<FGuid, TSoftObjectPtr<UMounteaDialogueGraph>>& OutLookup);
+	static void ProcessDialogueGraph(
+		UMounteaDialogueGraph* DialogueGraph,
+		const TMap<FGuid, TSoftObjectPtr<UMounteaDialogueGraph>>& GraphLookup,
+		int32& OutScannedNodes,
+		int32& OutInvalidNodes,
+		int32& OutFixedNodes);
 	static void ProcessBlueprint(UBlueprint* Blueprint, const TArray<FNodeReplacementRule>& Rules);
 	static bool ShouldReplaceNode(UK2Node* Node, const FNodeReplacementRule::FOldNode& OldNodeDef);
 	static void ReplaceNode(UEdGraph* Graph, UK2Node* OldNode, const FNodeReplacementRule::FNewNode& NewNodeDef, const FNodeReplacementRule::FOldNode& OldNodeDef);

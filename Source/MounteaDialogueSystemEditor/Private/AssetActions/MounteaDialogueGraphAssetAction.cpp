@@ -73,10 +73,21 @@ void FMounteaDialogueGraphAssetAction::GetActions(const TArray<UObject *> &InObj
 	Section.AddMenuEntry(
 		"MounteaDialogueGraph_ExportGraph",
 		LOCTEXT("MounteaDialogueGraph_ExportGraphName", "Export Dialogue Graph"),
-		LOCTEXT("MounteaDialogueGraph_ExportGraphTooltip", "📤 Export the Dialogue Graph as a file containing MNTEADLG data."),
+		LOCTEXT("MounteaDialogueGraph_ExportGraphTooltip", "Export the Dialogue Graph as a .mnteadlg file."),
 		FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.ExportGraph.Large"),
 		FUIAction(
 			FExecuteAction::CreateSP( this, &FMounteaDialogueGraphAssetAction::ExecuteExportDialogue, DialogueGraphs ),
+			FCanExecuteAction()
+			)
+		);
+
+	Section.AddMenuEntry(
+		"MounteaDialogueGraph_ExportProject",
+		LOCTEXT("MounteaDialogueGraph_ExportProjectName", "Export as Project"),
+		LOCTEXT("MounteaDialogueGraph_ExportProjectTooltip", "Export selected Dialogue Graph(s) as a .mnteadlgproj project archive."),
+		FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.ExportGraph.Large"),
+		FUIAction(
+			FExecuteAction::CreateSP( this, &FMounteaDialogueGraphAssetAction::ExecuteExportProject, DialogueGraphs ),
 			FCanExecuteAction()
 			)
 		);
@@ -170,6 +181,64 @@ void FMounteaDialogueGraphAssetAction::ExecuteExportDialogue(TArray<TWeakObjectP
 				TEXT("MDSStyleSet.Info.Error"));
 			}
 		}
+	}
+}
+
+void FMounteaDialogueGraphAssetAction::ExecuteExportProject(TArray<TWeakObjectPtr<UObject>> Objects)
+{
+	TArray<UMounteaDialogueGraph*> graphs;
+	for (const TWeakObjectPtr<UObject>& obj : Objects)
+	{
+		UMounteaDialogueGraph* graph = Cast<UMounteaDialogueGraph>(obj.Get());
+		if (graph)
+			graphs.Add(graph);
+	}
+
+	if (graphs.IsEmpty())
+		return;
+
+	IDesktopPlatform* desktopPlatform = FDesktopPlatformModule::Get();
+	if (!desktopPlatform)
+		return;
+
+	const void* parentWindow = FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr);
+	const FString defaultName = graphs.Num() == 1 ? graphs[0]->GetName() : TEXT("DialogueProject");
+	const FString fileTypes = TEXT("Mountea Dialogue Project (*.mnteadlgproj)|*.mnteadlgproj");
+
+	TArray<FString> outFilenames;
+	desktopPlatform->SaveFileDialog(
+		parentWindow,
+		LOCTEXT("ExportProjectDialogTitle", "Export Dialogue Project...").ToString(),
+		TEXT(""),
+		defaultName + TEXT(".mnteadlgproj"),
+		fileTypes,
+		EFileDialogFlags::None,
+		outFilenames);
+
+	if (outFilenames.IsEmpty())
+		return;
+
+	const FString& chosenPath = outFilenames[0];
+	const bool bSuccess = UMounteaDialogueSystemImportExportHelpers::ExportProject(graphs, chosenPath);
+
+	if (bSuccess)
+	{
+		UMounteaDialogueSystemImportExportHelpers::ShowNotification(
+			FText::Format(LOCTEXT("ExportProjectSuccess", "Project exported: {0}"), FText::FromString(FPaths::GetCleanFilename(chosenPath))),
+			5.f,
+			TEXT("MDSStyleSet.Icon.Success"),
+			FSimpleDelegate::CreateLambda([Path = chosenPath]()
+			{
+				FPlatformProcess::ExploreFolder(*FPaths::GetPath(Path));
+			}),
+			LOCTEXT("ExportProjectSuccess_hyperlink", "click here to open export folder"));
+	}
+	else
+	{
+		UMounteaDialogueSystemImportExportHelpers::ShowNotification(
+			LOCTEXT("ExportProjectFailed", "Failed to export Dialogue Project"),
+			5.f,
+			TEXT("MDSStyleSet.Info.Error"));
 	}
 }
 

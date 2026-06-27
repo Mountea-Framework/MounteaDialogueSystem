@@ -5,8 +5,10 @@
 
 #include "Data/MounteaDialogueContext.h"
 #include "Graph/MounteaDialogueGraph.h"
-#include "Helpers/MounteaDialogueSystemBFC.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Helpers/MounteaDialogueParticipantStatics.h"
+#include "Helpers/MounteaDialogueTraversalStatics.h"
+#include "Interfaces/Core/MounteaDialogueManagerInterface.h"
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 
@@ -74,7 +76,7 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::EvaluateDecorator_Implementation()
 	auto Context = GetContext();
 	// Let's return BP Updatable Context rather than Raw
 	if (!Context)
-		Context = OwningManager->Execute_GetDialogueContext(OwningManager.GetObject());
+		Context = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(OwningManager.GetObject());
 
 	// We can live for a moment without Context, because this Decorator might be called before Context is initialized
 	bSatisfied = GetOwnerParticipant() != nullptr  || Context != nullptr;
@@ -99,10 +101,15 @@ bool UMounteaDialogueDecorator_OnlyFirstTime::IsFirstTime() const
 	
 	TScriptInterface<IMounteaDialogueParticipantInterface> ParticipantInterface = GetOwnerParticipant();
 	if (!ParticipantInterface.GetObject())
-		ParticipantInterface = Context->GetDialogueParticipant();
+		ParticipantInterface = UMounteaDialogueParticipantStatics::GetGraphOwnerParticipant(Context->DialogueParticipants);
 	
-	if (UMounteaDialogueSystemBFC::HasNodeBeenTraversed(GetOwningNode(), ParticipantInterface)) return false;
-	if (UMounteaDialogueSystemBFC::HasNodeBeenTraversedV2(GetOwningNode(), Context)) return false;
+	if (ParticipantInterface.GetObject() && ParticipantInterface.GetInterface())
+	{
+		const TArray<FDialogueTraversePath> traversedPath = UMounteaDialogueParticipantStatics::GetTraversedPath(ParticipantInterface);
+		if (UMounteaDialogueTraversalStatics::HasNodeBeenTraversed(GetOwningNode(), traversedPath)) return false;
+	}
+
+	if (UMounteaDialogueTraversalStatics::HasNodeBeenTraversed(GetOwningNode(), Context->GetTraversedPath())) return false;
 
 	return true;
 }

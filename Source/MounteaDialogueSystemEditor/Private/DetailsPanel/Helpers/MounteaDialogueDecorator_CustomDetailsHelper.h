@@ -42,7 +42,7 @@ protected:
 	// Reset to default
 	virtual FReply OnBrowseClicked();
 	virtual FReply OnOpenClicked();
-	FReply OnDocumentationClicked() const;
+	virtual FReply OnDocumentationClicked() const;
 
 	virtual UObject* GetObject() const;
 	UBlueprint* GetBlueprint() const;

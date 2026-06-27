@@ -2,11 +2,15 @@
 
 #include "Graph/MounteaDialogueGraph.h"
 
+#include "Algo/AnyOf.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
+#include "Helpers/MounteaMonologueStatics.h"
 #include "Misc/DataValidation.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
+#include "Settings/MounteaDialogueConfiguration.h"
+#include "Settings/MounteaDialogueSystemSettings.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueGraph"
 
@@ -42,9 +46,7 @@ UMounteaDialogueGraphNode* UMounteaDialogueGraph::FindNodeByGuid(const FGuid& No
 	for (UMounteaDialogueGraphNode* Node : allDialogueNodes)
 	{
 		if (Node && Node->GetNodeGUID() == NodeGuid)
-		{
 			return Node;
-		}
 	}
 
 	return nullptr;
@@ -73,9 +75,7 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraph::GetGraphDecorators() co
 	for (auto Itr : GraphDecorators)
 	{
 		if (Itr.DecoratorType != nullptr)
-		{
 			TempReturn.AddUnique(Itr);
-		}
 	}
 
 	/* TODO: Cleanup duplicates
@@ -102,9 +102,7 @@ TArray<FMounteaDialogueDecorator> UMounteaDialogueGraph::GetAllDecorators() cons
 	for (const auto& Itr : AllNodes)
 	{
 		if (Itr && Itr->GetNodeDecorators().Num() > 0)
-		{
 			TempReturn.Append(Itr->NodeDecorators);
-		}
 	}
 
 	TempReturn.Append(GetGraphDecorators());
@@ -118,34 +116,24 @@ bool UMounteaDialogueGraph::CanStartDialogueGraph() const
 	bool bSatisfied = true;
 
 	if (AllNodes.Num() == 0)
-	{
 		return false;
-	}
 
 	for (const auto& Itr : AllNodes)
 	{
-		if (!Itr)
-		{
+		if (!Itr || Itr->ValidateNodeRuntime() == false)
 			return false;
-		}
-
-		if (Itr->ValidateNodeRuntime() == false)
-		{
-			return false;
-		}
 	}
 
 	auto Decorators = GetAllDecorators();
 
 	if (Decorators.Num() == 0)
-	{
 		return bSatisfied;
-	}
 
 	TArray<FText> DecoratorValidations;
 	for (auto Itr : Decorators)
 	{
-		if (Itr.ValidateDecorator(DecoratorValidations) == false) bSatisfied = false;
+		if (Itr.ValidateDecorator(DecoratorValidations) == false) 
+			bSatisfied = false;
 	}
 
 	if (DecoratorValidations.Num() > 0)
@@ -196,7 +184,8 @@ void UMounteaDialogueGraph::CleanupGraph() const
 {
 	for (const auto& dialogueNode : AllNodes)
 	{
-		if (dialogueNode) dialogueNode->CleanupNode();
+		if (dialogueNode) 
+			dialogueNode->CleanupNode();
 	}
 }
 
@@ -205,15 +194,11 @@ void UMounteaDialogueGraph::CreateGraph()
 #if WITH_EDITOR
 	// We already have existing Graph
 	if (EdGraph != nullptr)
-	{
 		return;
-	}
 
 	// We already have existing Start Node
 	if (StartNode != nullptr)
-	{
 		return;
-	}
 
 	StartNode = ConstructDialogueNode<UMounteaDialogueGraphNode_StartNode>();
 	if (StartNode != nullptr)
@@ -247,9 +232,7 @@ void UMounteaDialogueGraph::PostInitProperties()
 
 	// Ignore these cases
 	if (HasAnyFlags(RF_ClassDefaultObject | RF_NeedLoad))
-	{
 		return;
-	}
 
 #if WITH_EDITOR
 
@@ -261,17 +244,13 @@ void UMounteaDialogueGraph::PostInitProperties()
 void UMounteaDialogueGraph::RegisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
 {
 	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
-	{
 		ParentTickable->GetMounteaDialogueTickHandle().AddUniqueDynamic(this, &UMounteaDialogueGraph::TickMounteaEvent);
-	}
 }
 
 void UMounteaDialogueGraph::UnregisterTick_Implementation(const TScriptInterface<IMounteaDialogueTickableObject>& ParentTickable)
 {
 	if (ParentTickable.GetObject() && ParentTickable.GetInterface())
-	{
 		ParentTickable->GetMounteaDialogueTickHandle().RemoveDynamic(this, &UMounteaDialogueGraph::TickMounteaEvent);
-	}
 }
 
 void UMounteaDialogueGraph::TickMounteaEvent_Implementation(UObject* SelfRef, UObject* ParentTick, float DeltaTime)
@@ -294,6 +273,12 @@ void UMounteaDialogueGraph::InitializePIEInstance(const TScriptInterface<IMounte
 bool UMounteaDialogueGraph::ValidateGraph(FDataValidationContext& Context, bool RichTextFormat) const
 {
 	bool bReturnValue = true;
+
+	// Validate Graph Type
+	bReturnValue &= ValidateGraphType(Context, RichTextFormat);
+
+	// Validate Monologue-specific constraints
+	bReturnValue &= ValidateMonologueConstraints(Context, RichTextFormat);
 	
 	// Validate Graph and Scoped Decorators
 	bReturnValue &= ValidateDecorators(Context, RichTextFormat, GraphDecorators, TEXT("Graph Decorators"));
@@ -308,6 +293,180 @@ bool UMounteaDialogueGraph::ValidateGraph(FDataValidationContext& Context, bool 
 	return bReturnValue;
 }
 
+bool UMounteaDialogueGraph::ValidateGraphType(FDataValidationContext& Context, bool RichTextFormat) const
+{
+	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+	if (!dialogueSettings)
+	{
+		const FText richText = INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: Missing Mountea Dialogue System Settings.");
+		const FText plainText = FText::Format(
+			INVTEXT("{0}: Missing Mountea Dialogue System Settings."),
+			FText::FromString(GetName()));
+
+		Context.AddError(RichTextFormat ? richText : plainText);
+		return false;
+	}
+
+	const TSoftObjectPtr<UMounteaDialogueConfiguration> dialogueConfigurationPath = dialogueSettings->GetDialogueConfiguration();
+	if (dialogueConfigurationPath.IsNull())
+	{
+		const FText richText = INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: Graph Type Validation failed. Dialogue Configuration is not assigned in System Settings.");
+		const FText plainText = FText::Format(
+			INVTEXT("{0}: Graph Type Validation failed. Dialogue Configuration is not assigned in System Settings."),
+			FText::FromString(GetName()));
+
+		Context.AddError(RichTextFormat ? richText : plainText);
+		return false;
+	}
+
+	const UMounteaDialogueConfiguration* dialogueConfiguration = dialogueConfigurationPath.LoadSynchronous();
+	if (!dialogueConfiguration)
+	{
+		const FText richText = FText::Format(
+			INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: Graph Type Validation failed. Dialogue Configuration asset could not be loaded: <RichTextBlock.Bold>{0}</>."),
+			FText::FromString(dialogueConfigurationPath.ToSoftObjectPath().ToString()));
+		const FText plainText = FText::Format(
+			INVTEXT("{0}: Graph Type Validation failed. Dialogue Configuration asset could not be loaded: {1}."),
+			FText::FromString(GetName()),
+			FText::FromString(dialogueConfigurationPath.ToSoftObjectPath().ToString()));
+
+		Context.AddError(RichTextFormat ? richText : plainText);
+		return false;
+	}
+
+	FName resolvedGraphTypeId = NAME_None;
+	FString failureReason;
+	if (!dialogueConfiguration->ResolveGraphTypeFromTags(GraphTags, resolvedGraphTypeId, failureReason))
+	{
+		const FText richText = FText::Format(
+			INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: Graph Type Validation failed. {0}"),
+			FText::FromString(failureReason));
+		const FText plainText = FText::Format(
+			INVTEXT("{0}: Graph Type Validation failed. {1}"),
+			FText::FromString(GetName()),
+			FText::FromString(failureReason));
+
+		Context.AddError(RichTextFormat ? richText : plainText);
+		return false;
+	}
+
+	return true;
+}
+
+bool UMounteaDialogueGraph::ValidateMonologueConstraints(FDataValidationContext& Context, bool RichTextFormat) const
+{
+	if (!UMounteaMonologueStatics::IsGraphMonologue(const_cast<UMounteaDialogueGraph*>(this)))
+		return true;
+
+	const UMounteaDialogueSystemSettings* dialogueSettings = GetDefault<UMounteaDialogueSystemSettings>();
+	if (!dialogueSettings)
+	{
+		const FText richText = INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: Monologue Validation failed. Missing Mountea Dialogue System Settings.");
+		const FText plainText = FText::Format(
+			INVTEXT("{0}: Monologue Validation failed. Missing Mountea Dialogue System Settings."),
+			FText::FromString(GetName()));
+
+		Context.AddError(RichTextFormat ? richText : plainText);
+		return false;
+	}
+
+	const TSoftObjectPtr<UMounteaDialogueConfiguration> dialogueConfigurationPath = dialogueSettings->GetDialogueConfiguration();
+	if (dialogueConfigurationPath.IsNull())
+	{
+		const FText richText = INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: Monologue Validation failed. Dialogue Configuration is not assigned in System Settings.");
+		const FText plainText = FText::Format(
+			INVTEXT("{0}: Monologue Validation failed. Dialogue Configuration is not assigned in System Settings."),
+			FText::FromString(GetName()));
+
+		Context.AddError(RichTextFormat ? richText : plainText);
+		return false;
+	}
+
+	const UMounteaDialogueConfiguration* dialogueConfiguration = dialogueConfigurationPath.LoadSynchronous();
+	if (!dialogueConfiguration)
+	{
+		const FText richText = FText::Format(
+			INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: Monologue Validation failed. Dialogue Configuration asset could not be loaded: <RichTextBlock.Bold>{0}</>."),
+			FText::FromString(dialogueConfigurationPath.ToSoftObjectPath().ToString()));
+		const FText plainText = FText::Format(
+			INVTEXT("{0}: Monologue Validation failed. Dialogue Configuration asset could not be loaded: {1}."),
+			FText::FromString(GetName()),
+			FText::FromString(dialogueConfigurationPath.ToSoftObjectPath().ToString()));
+
+		Context.AddError(RichTextFormat ? richText : plainText);
+		return false;
+	}
+
+	TArray<const UClass*> effectiveWhitelistClasses;
+	for (const TSoftClassPtr<UMounteaDialogueGraphNode>& whitelistedNodeClass : dialogueConfiguration->MonologueWhitelistedNodes)
+	{
+		const UClass* resolvedClass = whitelistedNodeClass.LoadSynchronous();
+		if (IsValid(resolvedClass))
+			effectiveWhitelistClasses.AddUnique(resolvedClass);
+	}
+
+	if (effectiveWhitelistClasses.Num() == 0)
+	{
+		const FText richText = INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: Monologue Validation failed. MonologueWhitelistedNodes are empty or invalid.");
+		const FText plainText = FText::Format(
+			INVTEXT("{0}: Monologue Validation failed. MonologueWhitelistedNodes are empty or invalid."),
+			FText::FromString(GetName()));
+
+		Context.AddError(RichTextFormat ? richText : plainText);
+		return false;
+	}
+
+	bool bResult = true;
+	for (const UMounteaDialogueGraphNode* node : AllNodes)
+	{
+		if (!IsValid(node))
+			continue;
+
+		const UClass* nodeClass = node->GetClass();
+		const bool bIsStartNode = node->IsA(UMounteaDialogueGraphNode_StartNode::StaticClass());
+		const bool bIsWhitelisted = bIsStartNode || Algo::AnyOf(effectiveWhitelistClasses, [nodeClass](const UClass* whitelistedClass)
+		{
+			return IsValid(whitelistedClass) && IsValid(nodeClass) && nodeClass->IsChildOf(whitelistedClass);
+		});
+
+		if (!bIsWhitelisted)
+		{
+			bResult = false;
+
+			const FText richText = FText::Format(
+				INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: Monologue Validation failed. Node <RichTextBlock.Bold>{0}</> uses disallowed class <RichTextBlock.Bold>{1}</>."),
+				node->GetNodeTitle(),
+				FText::FromString(nodeClass ? nodeClass->GetName() : TEXT("None")));
+			const FText plainText = FText::Format(
+				INVTEXT("{0}: Monologue Validation failed. Node {1} uses disallowed class {2}."),
+				FText::FromString(GetName()),
+				node->GetNodeTitle(),
+				FText::FromString(nodeClass ? nodeClass->GetName() : TEXT("None")));
+
+			Context.AddError(RichTextFormat ? richText : plainText);
+		}
+
+		if (node->ChildrenNodes.Num() > 1)
+		{
+			bResult = false;
+
+			const FText richText = FText::Format(
+				INVTEXT("* <RichTextBlock.Bold>Dialogue Graph</>: Monologue Validation failed. Node <RichTextBlock.Bold>{0}</> has {1} children; Monologue supports max 1 child."),
+				node->GetNodeTitle(),
+				FText::AsNumber(node->ChildrenNodes.Num()));
+			const FText plainText = FText::Format(
+				INVTEXT("{0}: Monologue Validation failed. Node {1} has {2} children; Monologue supports max 1 child."),
+				FText::FromString(GetName()),
+				node->GetNodeTitle(),
+				FText::AsNumber(node->ChildrenNodes.Num()));
+
+			Context.AddError(RichTextFormat ? richText : plainText);
+		}
+	}
+
+	return bResult;
+}
+
 bool UMounteaDialogueGraph::ValidateDecorators(FDataValidationContext& Context, bool RichTextFormat, const TArray<FMounteaDialogueDecorator>& Decorators, const FString& DecoratorTypeName) const
 {
 	bool bReturnValue = true;
@@ -319,9 +478,7 @@ bool UMounteaDialogueGraph::ValidateDecorators(FDataValidationContext& Context, 
 	for (int i = 0; i < Decorators.Num(); i++)
 	{
 		if (Decorators.IsValidIndex(i) && Decorators[i].DecoratorType)
-		{
 			UsedNodeDecorators.Add(Decorators[i].DecoratorType);
-		}
 		else
 		{
 			AddInvalidDecoratorError(Context, RichTextFormat, i, DecoratorTypeName);
@@ -344,24 +501,22 @@ void UMounteaDialogueGraph::FindDuplicatedDecorators(const TArray<UMounteaDialog
 {
 	for (const auto& Itr : UsedNodeDecorators)
 	{
-		if (!Itr) continue;
+		if (!Itr) 
+			continue;
 
 		// Let's ignore stackable decorators (executing commands etc.)
-		if (Itr->IsDecoratorStackable()) continue;
+		if (Itr->IsDecoratorStackable()) 
+			continue;
 		
 		int32 ClassAppearance = 1;
 		for (const auto& Itr2 : UsedNodeDecorators)
 		{
 			if (Itr != Itr2 && Itr->GetClass() == Itr2->GetClass())
-			{
 				ClassAppearance++;
-			}
 		}
 
 		if (ClassAppearance > 1 && !DuplicatedDecoratorsMap.Contains(Itr))
-		{
 			DuplicatedDecoratorsMap.Add(Itr, ClassAppearance);
-		}
 	}
 }
 
@@ -393,9 +548,7 @@ bool UMounteaDialogueGraph::ValidateGraphDecorators(FDataValidationContext& Cont
 	for (auto Itr : Decorators)
 	{
 		if (!Itr.ValidateDecorator(DecoratorErrors))
-		{
 			bReturnValue = false;
-		}
 	}
 
 	AddDecoratorErrors(Context, RichTextFormat, DecoratorErrors, DecoratorTypeName);
@@ -433,9 +586,7 @@ bool UMounteaDialogueGraph::ValidateAllNodes(FDataValidationContext& Context, bo
 	for (UMounteaDialogueGraphNode* Itr : AllNodes)
 	{
 		if (Itr != nullptr && !Itr->ValidateNode(Context, RichTextFormat))
-		{
 			bReturnValue = false;
-		}
 	}
 	return bReturnValue;
 }
@@ -444,9 +595,7 @@ bool UMounteaDialogueGraph::ValidateAllNodes(FDataValidationContext& Context, bo
 EDataValidationResult UMounteaDialogueGraph::IsDataValid(FDataValidationContext& Context) 
 {
 	if (ValidateGraph(Context, false))
-	{
 		return EDataValidationResult::Valid;
-	}
 
 	return EDataValidationResult::Invalid;
 }

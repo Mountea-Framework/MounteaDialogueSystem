@@ -5,14 +5,17 @@
 #include "AssetToolsModule.h"
 #include "ContentBrowserModule.h"
 #include "FileHelpers.h"
+#include "HAL/FileManager.h"
 #include "GameplayTagsManager.h"
 #include "HttpModule.h"
 #include "IContentBrowserSingleton.h"
 #include "ISettingsModule.h"
+#include "Misc/MessageDialog.h"
 
 #include "AssetActions/MounteaDialogueAdditionalDataAssetAction.h"
 #include "AssetActions/MounteaDialogueDecoratorAssetAction.h"
 #include "AssetActions/MounteaDialogueGraphAssetAction.h"
+#include "DetailsPanel/MounteaDialogueCondition_DetailsPanel.h"
 #include "DetailsPanel/MounteaDialogueDecorator_DetailsPanel.h"
 #include "DetailsPanel/MounteaDialogueGraphNode_Details.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
@@ -26,22 +29,31 @@
 #include "Interfaces/IHttpResponse.h"
 #include "Interfaces/IPluginManager.h"
 #include "Popups/MDSPopup.h"
+#include "Popups/MDSSetupDefaultsPopup.h"
+#include "Setup/MounteaDialogueSetupUtilities.h"
 #include "Serialization/JsonReader.h"
 #include "Styling/SlateStyleRegistry.h"
+#include "Containers/Ticker.h"
+#include "UnrealEdMisc.h"
 
 #include "ToolMenus.h"
 #include "WorkspaceMenuStructure.h"
 #include "WorkspaceMenuStructureModule.h"
+#include "AssetActions/MounteaDialogueConditionAssetAction.h"
 
 #include "AssetActions/MounteaDialogueConfigurationAssetAction.h"
 #include "AssetActions/MounteaDialogueDataTableAssetAction.h"
 #include "AssetActions/MounteaDialogueNodeAssetAction.h"
+#include "Conditions/MounteaDialogueConditionBase.h"
+#include "Consts/MounteaDialogueEditorConsts.h"
 #include "DetailsPanel/MounteaDialogueDecorator_Details.h"
 #include "DetailsPanel/MounteaDialogueEditorSettings_Details.h"
 #include "DetailsPanel/MounteaDialogueGraph_Details.h"
 #include "Graph/MounteaDialogueGraph.h"
 #include "HelpButton/DialogueSystemTutorialPage.h"
 #include "HelpButton/MDSCommands.h"
+#include "Helpers/MounteaDialogueHtmlHelpers.h"
+#include "Helpers/MounteaDialogueMarkdownHelpers.h"
 #include "Helpers/MounteaDialogueFixUtilities.h"
 #include "ImportConfig/MounteaDialogueImportConfig.h"
 #include "Interfaces/IMainFrameModule.h"
@@ -76,6 +88,71 @@ public:
 
 void FMounteaDialogueSystemEditor::StartupModule()
 {
+	{
+		const TSharedPtr<IPlugin> webBrowserPlugin = IPluginManager::Get().FindPlugin(TEXT("WebBrowserWidget"));
+		if(!webBrowserPlugin.IsValid() || !webBrowserPlugin->IsEnabled())
+		{
+			const FText warningTitle = NSLOCTEXT("MounteaDialogue", "WebBrowserMissing", "Missing Plugin");
+			const FText warningMessage = NSLOCTEXT("MounteaDialogue", "WebBrowserMissingMessage",
+				"The 'Web Browser Widget' plugin is required for HTML help and changelog rendering.");
+			FMessageDialog::Open(EAppMsgType::Ok, warningMessage, warningTitle);
+			
+			FString projectFilePath = FPaths::ProjectDir() / FApp::GetProjectName() + TEXT(".uproject");			
+			FString jsonString;
+			if (FFileHelper::LoadFileToString(jsonString, *projectFilePath))
+			{
+				TSharedPtr<FJsonObject> jsonObject;
+				TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(jsonString);
+				
+				if (FJsonSerializer::Deserialize(reader, jsonObject) && jsonObject.IsValid())
+				{
+					TArray<TSharedPtr<FJsonValue>> pluginsArray;
+					if (jsonObject->HasField(TEXT("Plugins")))
+						pluginsArray = jsonObject->GetArrayField(TEXT("Plugins"));
+					
+					bool bExists = false;
+					for (const TSharedPtr<FJsonValue>& plugin : pluginsArray)
+					{
+						TSharedPtr<FJsonObject> pluginObj = plugin->AsObject();
+						if (pluginObj.IsValid() && pluginObj->GetStringField(TEXT("Name")) == TEXT("WebBrowserWidget"))
+						{
+							pluginObj->SetBoolField(TEXT("Enabled"), true);
+							bExists = true;
+							break;
+						}
+					}
+					
+					if (!bExists)
+					{
+						TSharedPtr<FJsonObject> newPlugin = MakeShareable(new FJsonObject());
+						newPlugin->SetStringField(TEXT("Name"), TEXT("WebBrowserWidget"));
+						newPlugin->SetBoolField(TEXT("Enabled"), true);
+						pluginsArray.Add(MakeShareable(new FJsonValueObject(newPlugin)));
+					}
+					
+					jsonObject->SetArrayField(TEXT("Plugins"), pluginsArray);
+					
+					FString outputString;
+					TSharedRef<TJsonWriter<>> writer = TJsonWriterFactory<>::Create(&outputString);
+					if (FJsonSerializer::Serialize(jsonObject.ToSharedRef(), writer))
+					{
+						if (FFileHelper::SaveStringToFile(outputString, *projectFilePath))
+						{
+							FTSTicker::GetCoreTicker().AddTicker(
+								FTickerDelegate::CreateLambda([](float)
+								{
+									FUnrealEdMisc::Get().RestartEditor(false);
+									return false;
+								})
+							);
+							return;
+						}
+					}
+				}
+			}
+		}
+	}
+
 	// Try to request Changelog from GitHub
 	{
 		Http = &FHttpModule::Get();
@@ -107,6 +184,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		AssetActions.Add(MakeShared<FMounteaDialogueDataTableAssetAction>());
 		AssetActions.Add(MakeShared<UMounteaDialogueConfigurationAssetAction>());
 		AssetActions.Add(MakeShared<FMounteaDialogueNodeAssetAction>());
+		AssetActions.Add(MakeShared<FMounteaDialogueConditionAssetAction>());
 
 		for (const auto& Itr : AssetActions)
 		{
@@ -128,8 +206,8 @@ void FMounteaDialogueSystemEditor::StartupModule()
 			{
 				DialogueTreeSet->SetContentRoot(ContentDir);
 				
-				FSlateImageBrush* DialogueTreeSetClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueTreeIcon_128"), TEXT(".png")), FVector2D(128.f, 128.f));
-				FSlateImageBrush* DialogueTreeSetClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueTreeIcon_16"), TEXT(".png")), FVector2D(16.f, 16.f));
+				FSlateImageBrush* DialogueTreeSetClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueGraph"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueTreeSetClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueGraph"), TEXT(".png")), FVector2D(16.f, 16.f));
 				if (DialogueTreeSetClassThumb && DialogueTreeSetClassIcon)
 				{
 					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueGraph", DialogueTreeSetClassThumb);
@@ -145,7 +223,7 @@ void FMounteaDialogueSystemEditor::StartupModule()
 				}
 
 				FSlateImageBrush* DialogueDecoratorSetClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueDecorator"), TEXT(".png")), FVector2D(128.f, 128.f));
-				FSlateImageBrush* DialogueDecoratorDataSetClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueDecorator_Small"), TEXT(".png")), FVector2D(16.f, 16.f));
+				FSlateImageBrush* DialogueDecoratorDataSetClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueDecorator"), TEXT(".png")), FVector2D(16.f, 16.f));
 				if (DialogueDecoratorSetClassThumb && DialogueDecoratorDataSetClassIcon)
 				{
 					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueDecoratorBase", DialogueDecoratorSetClassThumb);
@@ -184,12 +262,36 @@ void FMounteaDialogueSystemEditor::StartupModule()
 					DialogueTreeSet->Set("ClassIcon.MounteaDialogueManagerNetSync", DialogueManagerSyncSetClassIcon);
 				}
 
-				FSlateImageBrush* DialogueGraphNodeClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueNodeClassIcon"), TEXT(".png")), FVector2D(128.f, 128.f));
-				FSlateImageBrush* DialogueGraphNodeClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueNodeClassIcon"), TEXT(".png")), FVector2D(16.f, 16.f));
+				FSlateImageBrush* DialogueGraphNodeClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueNodeIcon"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueGraphNodeClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueNodeIcon"), TEXT(".png")), FVector2D(16.f, 16.f));
 				if (DialogueGraphNodeClassThumb && DialogueGraphNodeClassIcon)
 				{
 					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueGraphNode", DialogueGraphNodeClassThumb);
 					DialogueTreeSet->Set("ClassIcon.MounteaDialogueGraphNode", DialogueGraphNodeClassIcon);
+				}
+				
+				FSlateImageBrush* DialogueEdgeConditionClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/NodeCondition"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueEdgeConditionClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/NodeCondition"), TEXT(".png")), FVector2D(16.f, 16.f));
+				if (DialogueEdgeConditionClassThumb && DialogueEdgeConditionClassIcon)
+				{
+					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueConditionBase", DialogueEdgeConditionClassThumb);
+					DialogueTreeSet->Set("ClassIcon.MounteaDialogueConditionBase", DialogueEdgeConditionClassIcon);
+				}
+				
+				FSlateImageBrush* DialogueSessionComponentClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueSessionIcon"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueSessionComponentClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/DialogueSessionIcon"), TEXT(".png")), FVector2D(16.f, 16.f));
+				if (DialogueSessionComponentClassThumb && DialogueSessionComponentClassIcon)
+				{
+					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueSession", DialogueSessionComponentClassThumb);
+					DialogueTreeSet->Set("ClassIcon.MounteaDialogueSession", DialogueSessionComponentClassIcon);
+				}
+				
+				FSlateImageBrush* DialogueParticipantInterfaceComponentClassThumb = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/ParticipantInterfaceIcon"), TEXT(".png")), FVector2D(128.f, 128.f));
+				FSlateImageBrush* DialogueParticipantInterfaceComponentClassIcon = new FSlateImageBrush(DialogueTreeSet->RootToContentDir(TEXT("Resources/ParticipantInterfaceIcon"), TEXT(".png")), FVector2D(16.f, 16.f));
+				if (DialogueParticipantInterfaceComponentClassThumb && DialogueParticipantInterfaceComponentClassIcon)
+				{
+					DialogueTreeSet->Set("ClassThumbnail.MounteaDialogueParticipantUserInterfaceComponent", DialogueParticipantInterfaceComponentClassThumb);
+					DialogueTreeSet->Set("ClassIcon.MounteaDialogueParticipantUserInterfaceComponent", DialogueParticipantInterfaceComponentClassIcon);
 				}
 
 				//Register the created style
@@ -226,10 +328,12 @@ void FMounteaDialogueSystemEditor::StartupModule()
 			TArray<FOnGetPropertyTypeCustomizationInstance> CustomPropertyTypeLayouts =
 		   {
 				FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FMounteaDialogueDecorator_DetailsPanel::MakeInstance),
+				FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FMounteaDialogueCondition_DetailsPanel::MakeInstance),
 			};
 			RegisteredCustomPropertyTypeLayout =
 			{
 				FMounteaDialogueDecorator::StaticStruct()->GetFName(),
+				FMounteaDialogueCondition::StaticStruct()->GetFName(),
 			};
 			for (int32 i = 0; i < RegisteredCustomPropertyTypeLayout.Num(); i++)
 			{
@@ -265,7 +369,13 @@ void FMounteaDialogueSystemEditor::StartupModule()
 			FExecuteAction::CreateStatic(&FMounteaDialogueFixUtilities::ReplaceNodesInSelectedBlueprints),
 			FCanExecuteAction::CreateStatic(&FMounteaDialogueFixUtilities::CanExecute)
 		);
-		
+
+		PluginCommands->MapAction(
+			FMDSCommands::Get().SetupDefaultsAction,
+			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::SetupDefaultsButtonClicked),
+			FCanExecuteAction()
+		);
+
 		IMainFrameModule& mainFrame = FModuleManager::Get().LoadModuleChecked<IMainFrameModule>("MainFrame");
 		mainFrame.GetMainFrameCommandBindings()->Append(PluginCommands.ToSharedRef());
 
@@ -290,20 +400,26 @@ void FMounteaDialogueSystemEditor::StartupModule()
 		}
 	}
 
-	// Load import config
+	// Load import config — migrate from legacy INI path if needed, then load JSON
 	{
-		const FString GameDirectory = FPaths::ProjectDir();
-		const FString UpdatedConfigFile = GameDirectory + "/Config/MounteaDialogueImportConfig.ini";
-
+		const FString JsonConfigFile   = UMounteaDialogueImportConfig::GetImportConfigFilePath();
+		const FString LegacyConfigFile = FPaths::ProjectDir() / TEXT("Config/MounteaDialogueImportConfig.ini");
 		UMounteaDialogueImportConfig* ImportConfig = GetMutableDefault<UMounteaDialogueImportConfig>();
 
-		if (FPaths::FileExists(UpdatedConfigFile))
+		if (!FPaths::FileExists(JsonConfigFile) && FPaths::FileExists(LegacyConfigFile))
 		{
-			ImportConfig->LoadConfig(nullptr, *UpdatedConfigFile);
+			// One-time migration: load the old INI into memory, save as JSON, delete the old file
+			ImportConfig->LoadConfig(nullptr, *LegacyConfigFile);
+			ImportConfig->SaveToFile();
+			IFileManager::Get().Delete(*LegacyConfigFile);
+			EditorLOG_INFO(TEXT("[MounteaDialogue] Migrated import config from '%s' to '%s'"),
+				*LegacyConfigFile, *JsonConfigFile);
 		}
 		else
 		{
-			ImportConfig->SaveConfig(CPF_Config, *UpdatedConfigFile);
+			// Normal startup: refresh from JSON (constructor already called LoadFromFile,
+			// but do it again to pick up any changes made outside the editor)
+			ImportConfig->LoadFromFile();
 		}
 	}
 
@@ -429,9 +545,31 @@ void FMounteaDialogueSystemEditor::StartupModule()
 
 void FMounteaDialogueSystemEditor::ShutdownModule()
 {
+	// Property customizations cleanup
+	{
+		if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
+		{
+			FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+			for (const FName& ClassLayoutName : RegisteredCustomClassLayouts)
+			{
+				PropertyModule.UnregisterCustomClassLayout(ClassLayoutName);
+			}
+
+			for (const FName& PropertyLayoutName : RegisteredCustomPropertyTypeLayout)
+			{
+				PropertyModule.UnregisterCustomPropertyTypeLayout(PropertyLayoutName);
+			}
+
+			RegisteredCustomClassLayouts.Reset();
+			RegisteredCustomPropertyTypeLayout.Reset();
+		}
+	}
+
 	// Thumbnails and Icons
 	{
-		FSlateStyleRegistry::UnRegisterSlateStyle(DialogueTreeSet->GetStyleSetName());
+		if (DialogueTreeSet.IsValid())
+			FSlateStyleRegistry::UnRegisterSlateStyle(DialogueTreeSet->GetStyleSetName());
 	}
 
 	// Style Shutdown
@@ -491,19 +629,36 @@ void FMounteaDialogueSystemEditor::RegisterAssetTypeAction(IAssetTools& AssetToo
 
 void FMounteaDialogueSystemEditor::OnGetResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
-	FString ResponseBody;
-	if (Response.Get() == nullptr) return;
-	
-	if (Response.IsValid() && Response->GetResponseCode() == 200)
+	FString responseBody;
+	FString changelogHtml;
+	FString changelogHtmlPath;
+
+	const UMounteaDialogueGraphEditorSettings* editorSettings = GetDefault<UMounteaDialogueGraphEditorSettings>();
+	if(editorSettings)
+		changelogHtmlPath = editorSettings->GetGeneratedChangelogPath();
+
+	if(Response.Get() != nullptr && Response.IsValid() && Response->GetResponseCode() == 200)
 	{
-		ResponseBody = Response->GetContentAsString();
-		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
+		responseBody = Response->GetContentAsString();
+
+		FString markdownBodyHtml;
+		if(FMounteaDialogueMarkdownHelpers::ConvertMarkdownToHtml(responseBody, markdownBodyHtml))
+			changelogHtml = FMounteaDialogueHtmlHelpers::BuildChangelogDocument(markdownBodyHtml);
+		else
+			changelogHtml = FMounteaDialogueHtmlHelpers::BuildChangelogDocument(FMounteaDialogueHtmlHelpers::BuildChangelogFallbackMessage());
 	}
 
-	// Register Popup even if we have no response, this way we can show at least something
+	if(changelogHtml.IsEmpty())
 	{
-		MDSPopup::Register(ResponseBody);
+		FString offlinePath;
+		if(!FMounteaDialogueHtmlHelpers::LoadOfflineChangelogHtml(changelogHtml, offlinePath))
+			changelogHtml = FMounteaDialogueHtmlHelpers::BuildChangelogDocument(FMounteaDialogueHtmlHelpers::BuildChangelogFallbackMessage());
 	}
+
+	if(!changelogHtmlPath.IsEmpty())
+		FMounteaDialogueHtmlHelpers::SaveHtmlFile(changelogHtmlPath, changelogHtml);
+
+	MDSPopup::Register(responseBody, changelogHtml, changelogHtmlPath);
 }
 
 void FMounteaDialogueSystemEditor::SendHTTPGet()
@@ -552,9 +707,14 @@ void FMounteaDialogueSystemEditor::LauncherButtonClicked() const
 	}
 }
 
+void FMounteaDialogueSystemEditor::BuilderButtonClicked() const
+{
+	FPlatformProcess::LaunchURL(TEXT("https://github.com/Mountea-Framework/MounteaUnrealBuilder"), nullptr, nullptr);
+}
+
 void FMounteaDialogueSystemEditor::DialoguerButtonClicked() const
 {
-	const FString URL = "https://mountea-framework.github.io/MounteaDialoguer/";
+	const FString URL = "https://mountea.tools/dialoguer/app";
 
 	if (!URL.IsEmpty())
 	{
@@ -709,13 +869,9 @@ void FMounteaDialogueSystemEditor::OnGetResponse_Tags(FHttpRequestPtr Request, F
 	}
 	
 	if (!DoesHaveValidTags())
-	{
 		CreateTagsConfig(ResponseBody);
-	}
 	else
-	{
 		UpdateTagsConfig(ResponseBody);
-	}
 }
 
 void FMounteaDialogueSystemEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& TabManager)
@@ -725,7 +881,7 @@ void FMounteaDialogueSystemEditor::RegisterTabSpawners(const TSharedRef<FTabMana
 		.SetDisplayName(FText::FromString("Dialogue System Tutorial"))
 		.SetTooltipText(FText::FromString("Learn about the Mountea Dialogue System"))
 		.SetGroup(WorkspaceMenu::GetMenuStructure().GetDeveloperToolsMiscCategory())
-		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "InputBindingEditor.OutputLog"));
+		.SetIcon(FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Tutorial"));
 }
 
 TSharedRef<SDockTab> FMounteaDialogueSystemEditor::OnSpawnDialogueSystemTutorialTab(const FSpawnTabArgs& SpawnTabArgs)
@@ -743,55 +899,214 @@ void FMounteaDialogueSystemEditor::TutorialButtonClicked() const
 	FGlobalTabmanager::Get()->TryInvokeTab(FName("DialogueSystemTutorial"));
 }
 
+void FMounteaDialogueSystemEditor::SetupDefaultsButtonClicked() const
+{
+	const FSetupDefaultsReport report = FMounteaDialogueSetupUtilities::RunSetupDefaults();
+	MDSSetupDefaultsPopup::Open(report);
+}
+
 void FMounteaDialogueSystemEditor::RegisterMenus()
 {
-	// Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
-	FToolMenuOwnerScoped OwnerScoped(this);
+	if (!UToolMenus::Get()->IsMenuRegistered(MounteaAdvancedDialogueToolbar::MounteaSharedMenuName))
+		UToolMenus::Get()->RegisterMenu(MounteaAdvancedDialogueToolbar::MounteaSharedMenuName, NAME_None, EMultiBoxType::Menu, false);
 
-	// Register in Window tab
+	UToolMenu* toolbarMenu = UToolMenus::Get()->ExtendMenu(MenuName);
+	FToolMenuSection& sharedSection = toolbarMenu->FindOrAddSection(MounteaAdvancedDialogueToolbar::MounteaSharedSectionName);
+	sharedSection.Label = LOCTEXT("MounteaSharedSection_Label", "Mountea Framework");
+
+	if (sharedSection.FindEntry(MounteaAdvancedDialogueToolbar::MounteaSharedButtonName) == nullptr)
 	{
-		if (UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Help"))
-		{
-			if (Menu->ContainsSection("MounteaFramework") == false)
+		FToolMenuEntry comboButton = FToolMenuEntry::InitComboButton(
+			MounteaAdvancedDialogueToolbar::MounteaSharedButtonName,
+			FUIAction(),
+			FOnGetContent::CreateLambda([SharedMenuName = MounteaAdvancedDialogueToolbar::MounteaSharedMenuName, CmdList = PluginCommands]() -> TSharedRef<SWidget>
 			{
-				FToolMenuSection& Section = Menu->FindOrAddSection("MounteaFramework");
-				
-				Section.InsertPosition.Position = EToolMenuInsertType::First;
-				Section.Label = FText::FromString(TEXT("Mountea Framework"));
-				
-				FToolMenuEntry SupportEntry = Section.AddMenuEntryWithCommandList
-				(
+				return UToolMenus::Get()->GenerateWidget(SharedMenuName, FToolMenuContext(CmdList));
+			}),
+			LOCTEXT("MounteaMainMenu_Label", "Mountea Framework"),
+			LOCTEXT("MounteaMainMenu_Tooltip", "📂 Open Mountea Framework menu.\n\n❔ Provides access to all Mountea Framework tools, documentation, and support."),
+			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.MounteaLogo"),
+			false,
+			MounteaAdvancedDialogueToolbar::MounteaSharedButtonName
+		);
+		comboButton.StyleNameOverride = "CalloutToolbar";
+		sharedSection.AddEntry(comboButton);
+	}
+
+	FToolMenuOwnerScoped OwnerScoped(this);
+	{
+		// Register in Help menu
+		if (UToolMenu* toolMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Help"))
+		{
+			if (toolMenu->ContainsSection("MounteaFramework") == false)
+			{
+				FToolMenuSection& mounteaSection = toolMenu->FindOrAddSection("MounteaFramework");
+				mounteaSection.InsertPosition.Position = EToolMenuInsertType::First;
+				mounteaSection.Label = FText::FromString(TEXT("Mountea Framework"));
+				FToolMenuEntry supportEntry = mounteaSection.AddMenuEntryWithCommandList(
 					FMDSCommands::Get().PluginAction,
 					PluginCommands,
 					LOCTEXT("MounteaSystemEditor_SupportButton_Label", "Mountea Support"),
 					LOCTEXT("MounteaSystemEditor_SupportButton_ToolTip", "🆘 Open Mountea Framework Support channel"),
 					FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Help")
 				);
-				SupportEntry.Name = FName("MounteaFrameworkSupport");
+				supportEntry.Name = FName("MounteaFrameworkSupport");
 			}
 		}
-	}
 
-	// Register in Level Editor Toolbar
-	{
-		UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu(MenuName);
+		// Extend shared submenu with a nested Dialogue submenu entry
+		UToolMenu* sharedMenu = UToolMenus::Get()->ExtendMenu(MounteaAdvancedDialogueToolbar::MounteaSharedMenuName);
 		{
-			FToolMenuSection& Entry = ToolbarMenu->FindOrAddSection("MounteaDialogueFramework");
-			FToolMenuEntry& MenuEntry = Entry.AddEntry(FToolMenuEntry::InitComboButton(
-				"MounteaMenu",
-				FUIAction(),
-				FOnGetContent::CreateRaw(this, &FMounteaDialogueSystemEditor::MakeMounteaMenuWidget),
-				LOCTEXT("MounteaMainMenu_Label", "Mountea Dialogue Menu"),
-				LOCTEXT("MounteaMainMenu_Tooltip", "📂 Open Mountea Dialogue menu.\n\n❔ Provides link to Documentation, Support Discord and Dialogue tool."),
-				FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.DialogueSystemIcon"),
+			FToolMenuSection& dlgSection = sharedMenu->FindOrAddSection("MounteaDialogue");
+			dlgSection.Label = LOCTEXT("DlgSection_Label", "Mountea Dialogue System");
+			dlgSection.AddEntry(FToolMenuEntry::InitSubMenu(
+				"MounteaDialogueSubMenu",
+				LOCTEXT("DlgSubMenu_Label", "Mountea Dialogue"),
+				LOCTEXT("DlgSubMenu_Tooltip", "💬 Mountea Dialogue System tools"),
+				FNewToolMenuDelegate::CreateLambda([this](UToolMenu* subMenu)
+				{
+					{
+						FToolMenuSection& setupSection = subMenu->FindOrAddSection("MounteaDialogue_Setup");
+						setupSection.Label = LOCTEXT("DlgSetup_Label", "Mountea Dialogue Setup");
+						setupSection.InsertPosition = FToolMenuInsert(NAME_None, EToolMenuInsertType::First);
+						setupSection.AddEntry(FToolMenuEntry::InitMenuEntry(
+							"MounteaDialogue_SetupDefaults",
+							LOCTEXT("MounteaSystemEditor_SetupDefaults_Label", "Setup Defaults"),
+							LOCTEXT("MounteaSystemEditor_SetupDefaults_Tooltip", "⚙ Auto-configure current level's GameMode classes with required Mountea Dialogue components"),
+							FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.AutoSetup"),
+							FToolMenuExecuteAction::CreateLambda([this](const FToolMenuContext&) { SetupDefaultsButtonClicked(); })
+						));
+					}
+
+					{
+						FToolMenuSection& tutorialSection = subMenu->FindOrAddSection("MounteaDialogue_Tutorial");
+						tutorialSection.Label = LOCTEXT("DlgTutorial_Label", "Mountea Dialogue Tutorial");
+						tutorialSection.AddEntry(FToolMenuEntry::InitMenuEntry(
+							"MounteaDialogue_Tutorial",
+							LOCTEXT("MounteaSystemEditor_TutorialButton_Label", "Dialogue System Tutorial"),
+							LOCTEXT("MounteaSystemEditor_TutorialButton_ToolTip", "📖 Open the Mountea Dialogue System Tutorial"),
+							FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Tutorial"),
+							FToolMenuExecuteAction::CreateLambda([this](const FToolMenuContext&) { TutorialButtonClicked(); })
+						));
+						tutorialSection.AddEntry(FToolMenuEntry::InitMenuEntry(
+							"MounteaDialogue_ExampleLevel",
+							LOCTEXT("MounteaSystemEditor_OpenExampleLevel_Label", "Open Example Level"),
+							LOCTEXT("MounteaSystemEditor_OpenExampleLevel_ToolTip", "🌄 Opens an example level demonstrating Mountea Dialogue System"),
+							FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Level"),
+							FToolMenuExecuteAction::CreateLambda([](const FToolMenuContext&)
+							{
+								const FString mapPath = TEXT("/MounteaDialogueSystem/Example/M_DialogueExample");
+								if (FPackageName::DoesPackageExist(mapPath))
+									FEditorFileUtils::LoadMap(mapPath, false, true);
+								else
+									EditorLOG_ERROR(TEXT("Example map not found at:\nContent/Mountea/Maps/M_DialogueExample.umap"))
+							})
+						));
+						tutorialSection.AddEntry(FToolMenuEntry::InitMenuEntry(
+							"MounteaDialogue_PluginFolder",
+							LOCTEXT("MounteaSystemEditor_OpenPluginFolder_Label", "Open Plugin Folder"),
+							LOCTEXT("MounteaSystemEditor_OpenPluginFolder_ToolTip", "📂 Open the Mountea Dialogue plugin's folder"),
+							FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Folder"),
+							FToolMenuExecuteAction::CreateLambda([](const FToolMenuContext&)
+							{
+								const FContentBrowserModule& contentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+								TArray<FString> folderPaths;
+								folderPaths.Add(TEXT("/MounteaDialogueSystem"));
+								contentBrowserModule.Get().SetSelectedPaths(folderPaths, true);
+							})
+						));
+					}
+
+					{
+						FToolMenuSection& settingsSection = subMenu->FindOrAddSection("MounteaDialogue_Settings");
+						settingsSection.Label = LOCTEXT("DlgSettings_Label", "Mountea Dialogue Settings");
+						settingsSection.AddEntry(FToolMenuEntry::InitMenuEntry(
+							"MounteaDialogue_Config",
+							LOCTEXT("MounteaSystemEditor_ConfigButton_Label", "Mountea Dialogue Config"),
+							LOCTEXT("MounteaSystemEditor_ConfigButton_ToolTip", "📄 Open Mountea Dialogue Configuration\n\n❔ Define dialogue UI, subtitles and important settings behaviors used by the core system."),
+							FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Config"),
+							FToolMenuExecuteAction::CreateLambda([this](const FToolMenuContext&) { ConfigButtonClicked(); })
+						));
+						settingsSection.AddEntry(FToolMenuEntry::InitMenuEntry(
+							"MounteaDialogue_Settings",
+							LOCTEXT("MounteaSystemEditor_SettingsButton_Label", "Mountea Dialogue Settings"),
+							LOCTEXT("MounteaSystemEditor_SettingsButton_ToolTip", "⚙ Open Mountea Dialogue Settings\n\n❔ Configure core dialogue system settings including default behaviors, performance options, and dialogue flow parameters. Customize your dialogue system's foundation here."),
+							FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Settings"),
+							FToolMenuExecuteAction::CreateLambda([this](const FToolMenuContext&) { SettingsButtonClicked(); })
+						));
+						settingsSection.AddEntry(FToolMenuEntry::InitMenuEntry(
+							"MounteaDialogue_EditorSettings",
+							LOCTEXT("MounteaSystemEditor_EditorSettingsButton_Label", "Mountea Dialogue Editor Settings"),
+							LOCTEXT("MounteaSystemEditor_EditorSettingsButton_ToolTip", "⚙ Open Mountea Dialogue Editor Settings\n\n❔ Configure editor behavior and tooling options:\n\n📝 Node Behavior:\n- Automatic naming\n- Rename permissions\n- Native decorator edit permissions\n\n🧭 Auto-Arrange:\n- Layout strategy and simulation tuning\n\n🏷️ Gameplay Tags:\n- Auto check configuration\n- Remote source URL\n\nAll settings are saved in DefaultMounteaSettings.ini"),
+							FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Settings"),
+							FToolMenuExecuteAction::CreateLambda([this](const FToolMenuContext&) { EditorSettingsButtonClicked(); })
+						));
+					}
+
+					{
+						FToolMenuSection& linksSection = subMenu->FindOrAddSection("MounteaDialogue_Links");
+						linksSection.Label = LOCTEXT("DlgLinks_Label", "Mountea Dialogue Links");
+						linksSection.AddEntry(FToolMenuEntry::InitMenuEntry(
+							"MounteaDialogue_Support",
+							LOCTEXT("MounteaSystemEditor_SupportButton_Label", "Mountea Support"),
+							LOCTEXT("MounteaSystemEditor_SupportButton_ToolTip", "🆘 Open Mountea Framework Support Channel\n\n❔ Get direct assistance from our support team and community. Find solutions to common issues, share your experiences, and get help with implementation challenges. Join our active community of developers!"),
+							FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Help"),
+							FToolMenuExecuteAction::CreateLambda([this](const FToolMenuContext&) { PluginButtonClicked(); })
+						));
+						linksSection.AddEntry(FToolMenuEntry::InitMenuEntry(
+							"MounteaDialogue_Wiki",
+							LOCTEXT("MounteaSystemEditor_WikiButton_Label", "Mountea Dialogue Wiki"),
+							LOCTEXT("MounteaSystemEditor_WikiButton_ToolTip", "📖 Open Mountea Dialogue Documentation\n\n❔ Access comprehensive guides, tutorials, and API references. Find detailed examples, best practices, and advanced features to master the Mountea Dialogue System. Your one-stop resource for all documentation needs."),
+							FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Wiki"),
+							FToolMenuExecuteAction::CreateLambda([this](const FToolMenuContext&) { WikiButtonClicked(); })
+						));
+						linksSection.AddEntry(FToolMenuEntry::InitMenuEntry(
+							"MounteaDialogue_Youtube",
+							LOCTEXT("MounteaSystemEditor_YoutubeButton_Label", "Mountea Dialogue Youtube"),
+							LOCTEXT("MounteaSystemEditor_YoutubeButton_ToolTip", "👁️ Watch Mountea Dialogue Youtube Videos\n\n❔ Visual learning resources featuring step-by-step tutorials, implementation guides, and practical examples. Perfect for both beginners and advanced users looking to expand their knowledge through video content."),
+							FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Youtube"),
+							FToolMenuExecuteAction::CreateLambda([this](const FToolMenuContext&) { YoutubeButtonClicked(); })
+						));
+					}
+
+				}),
 				false,
-				"MounteaMenu"
+				FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.DialogueSystemIcon")
 			));
-				
-			MenuEntry.Label = LOCTEXT("MounteaMainMenu_Label", "Mountea Dialogue Menu");
-			MenuEntry.Name = TEXT("MounteaMenu");
-			MenuEntry.StyleNameOverride = "CalloutToolbar";
-			MenuEntry.SetCommandList(PluginCommands);
+		}
+
+		// Shared Tools section are always last; all plugins contribute; FindEntry guards prevent duplicates
+		{
+			FToolMenuSection& toolsSection = sharedMenu->FindOrAddSection("MounteaFramework_Tools");
+			toolsSection.InsertPosition = FToolMenuInsert(NAME_None, EToolMenuInsertType::Last);
+			toolsSection.Label = LOCTEXT("Tools_Label", "Mountea Tools");
+
+			if (toolsSection.FindEntry("MounteaFramework_Dialoguer") == nullptr)
+				toolsSection.AddEntry(FToolMenuEntry::InitMenuEntry(
+					"MounteaFramework_Dialoguer",
+					LOCTEXT("MounteaSystemEditor_DialoguerButton_Label", "Mountea Dialoguer"),
+					LOCTEXT("MounteaSystemEditor_DialoguerButton_ToolTip", "⛰ Open Mountea Dialoguer Standalone Tool\n\n❔ A powerful standalone dialogue crafting tool designed for narrative designers and writers. Create, edit, and manage complex dialogue trees with an intuitive interface. Seamlessly import your `.mnteadlg` files directly into the Mountea Dialogue System.\n\n💡 Perfect for teams wanting to separate dialogue content creation from engine implementation."),
+					FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Dialoguer"),
+					FToolMenuExecuteAction::CreateLambda([this](const FToolMenuContext&) { DialoguerButtonClicked(); })
+				));
+
+			if (toolsSection.FindEntry("MounteaFramework_Launcher") == nullptr)
+				toolsSection.AddEntry(FToolMenuEntry::InitMenuEntry(
+					"MounteaFramework_Launcher",
+					LOCTEXT("MounteaSystemEditor_LauncherButton_Label", "Mountea Project Launcher"),
+					LOCTEXT("MounteaSystemEditor_LauncherButton_ToolTip", "🚀 Open Mountea Project Launcher\n\n❔ A versatile standalone tool for streamlined project testing and deployment. Launch your projects with customized configurations, test different build settings, and validate implementations in various environments.\n\n💡 Features include:\n- Multiple configuration profiles\n- Quick-launch presets\n- Custom command-line parameters\n- Integrated testing tools"),
+					FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Launcher"),
+					FToolMenuExecuteAction::CreateLambda([this](const FToolMenuContext&) { LauncherButtonClicked(); })
+				));
+
+			if (toolsSection.FindEntry("MounteaFramework_Builder") == nullptr)
+				toolsSection.AddEntry(FToolMenuEntry::InitMenuEntry(
+					"MounteaFramework_Builder",
+					LOCTEXT("MounteaSystemEditor_BuilderButton_Label", "Mountea Unreal Builder"),
+					LOCTEXT("MounteaSystemEditor_BuilderButton_ToolTip", "⛏️ Open Mountea Unreal Builder\n\n❔ A desktop application for automating Unreal Engine plugin and project builds across multiple engine versions and platforms."),
+					FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Builder"),
+					FToolMenuExecuteAction::CreateLambda([this](const FToolMenuContext&) { BuilderButtonClicked(); })
+				));
 		}
 	}
 }
@@ -819,138 +1134,6 @@ void FMounteaDialogueSystemEditor::ConfigButtonClicked() const
 	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(config->GetPathName());
 }
 
-TSharedRef<SWidget> FMounteaDialogueSystemEditor::MakeMounteaMenuWidget() const
-{
-	FMenuBuilder MenuBuilder(true, PluginCommands);
-
-	MenuBuilder.BeginSection("MounteaMenu_Tools", LOCTEXT("MounteaMenuOptions_Tutorial", "Mountea Dialogue Tutorial"));
-	{
-		MenuBuilder.AddMenuEntry(
-		LOCTEXT("MounteaSystemEditor_TutorialButton_Label", "Dialogue System Tutorial"),
-		LOCTEXT("MounteaSystemEditor_TutorialButton_ToolTip", "📖 Open the Mountea Dialogue System Tutorial"),
-		FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Tutorial"),
-		FUIAction(
-			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::TutorialButtonClicked)
-			)
-		);
-
-		MenuBuilder.AddMenuEntry(
-				LOCTEXT("MounteaSystemEditor_OpenExampleLevel_Label", "Open Example Level"),
-				LOCTEXT("MounteaSystemEditor_OpenExampleLevel_ToolTip", "🌄 Opens an example level demonstrating Mountea Dialogue System"),
-				FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Level"),
-				FUIAction(
-					FExecuteAction::CreateLambda([]()
-					{
-						const FString mapPath = TEXT("/MounteaDialogueSystem/Example/M_DialogueExample");
-						if (FPackageName::DoesPackageExist(mapPath))
-							FEditorFileUtils::LoadMap(mapPath, false, true);
-						else
-							EditorLOG_ERROR(TEXT("Example map not found at:\nContent/Mountea/Maps/M_DialogueExample.umap"))
-					})
-				)
-			);
-
-		MenuBuilder.AddMenuEntry(
-			LOCTEXT("MounteaSystemEditor_OpenPluginFolder_Label", "Open Plugin Folder"),
-			LOCTEXT("MounteaSystemEditor_OpenPluginFolder_ToolTip", "📂 Open the Mountea Dialogue plugin's folder"),
-			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Folder"),
-			FUIAction(
-				FExecuteAction::CreateLambda([]()
-				{
-					const FContentBrowserModule& contentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
-					TArray<FString> folderPaths;
-					folderPaths.Add(TEXT("/MounteaDialogueSystem"));
-					contentBrowserModule.Get().SetSelectedPaths(folderPaths, true);
-				})
-			)
-		);
-	};
-	MenuBuilder.EndSection();
-
-	MenuBuilder.BeginSection("MounteaMenu_Tools", LOCTEXT("MounteaMenuOptions_Settings", "Mountea Dialogue Settings"));
-	{
-		MenuBuilder.AddMenuEntry(
-			LOCTEXT("MounteaSystemEditor_ConfigButton_Label", "Mountea Dialogue Config"),
-			LOCTEXT("MounteaSystemEditor_ConfigButton_ToolTip", "📄 Open Mountea Dialogue Configuration\n\n❔ Define dialogue UI, subtitles and important settings behaviors used by the core system."),
-			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Config"),
-			FUIAction(
-				FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::ConfigButtonClicked)
-			)
-		);
-		
-		MenuBuilder.AddMenuEntry(
-			LOCTEXT("MounteaSystemEditor_SettingsButton_Label", "Mountea Dialogue Settings"),
-			LOCTEXT("MounteaSystemEditor_SettingsButton_ToolTip", "⚙ Open Mountea Dialogue Settings\n\n❔ Configure core dialogue system settings including default behaviors, performance options, and dialogue flow parameters. Customize your dialogue system's foundation here."),
-			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Settings"),
-			FUIAction(
-				FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::SettingsButtonClicked)
-			)
-		);
-
-		MenuBuilder.AddMenuEntry(
-			LOCTEXT("MounteaSystemEditor_EditorSettingsButton_Label", "Mountea Dialogue Editor Settings"),
-			LOCTEXT("MounteaSystemEditor_EditorSettingsButton_ToolTip", "⚙ Open Mountea Dialogue Editor Settings\n\n❔ Customize your dialogue editor experience with settings for:\n\n📝 Node Settings:\n- Visual style (Node Type, Theme, and Info Style)\n- Automatic naming and node behavior options\n- Background colors and decorator settings\n\n🔌 Node Wiring:\n- Wire appearance and arrow types\n- Advanced wiring controls and tangent settings\n- Auto-layout strategies and iteration controls\n\n🏷️ Gameplay Tags:\n- Auto gameplay tag check configuration\n- URL configurations for external resources\n\nAll settings are saved in DefaultMounteaSettings.ini"),
-			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Settings"),
-			FUIAction(
-				FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::EditorSettingsButtonClicked)
-			)
-		);
-	}
-	MenuBuilder.EndSection();
-
-	MenuBuilder.BeginSection("MounteaMenu_Links", LOCTEXT("MounteaMenuOptions_Options", "Mountea Links"));
-	{
-		MenuBuilder.AddMenuEntry(
-			LOCTEXT("MounteaSystemEditor_SupportButton_Label", "Mountea Support"),
-			LOCTEXT("MounteaSystemEditor_SupportButton_ToolTip", "🆘 Open Mountea Framework Support Channel\n\n❔ Get direct assistance from our support team and community. Find solutions to common issues, share your experiences, and get help with implementation challenges. Join our active community of developers!"),
-			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Help"),
-			FUIAction(
-				FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::PluginButtonClicked)
-			)
-		);
-		MenuBuilder.AddMenuEntry(
-			LOCTEXT("MounteaSystemEditor_WikiButton_Label", "Mountea Dialogue Wiki"),
-			LOCTEXT("MounteaSystemEditor_WikiButton_ToolTip", "📖 Open Mountea Dialogue Documentation\n\n❔ Access comprehensive guides, tutorials, and API references. Find detailed examples, best practices, and advanced features to master the Mountea Dialogue System. Your one-stop resource for all documentation needs."),
-			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Wiki"),
-			FUIAction(
-				FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::WikiButtonClicked)
-			)
-		);
-		MenuBuilder.AddMenuEntry(
-			LOCTEXT("MounteaSystemEditor_YoutubeButton_Label", "Mountea Dialogue Youtube"),
-			LOCTEXT("MounteaSystemEditor_YoutubeButton_ToolTip", "👁️ Watch Mountea Dialogue Youtube Videos\n\n❔ Visual learning resources featuring step-by-step tutorials, implementation guides, and practical examples. Perfect for both beginners and advanced users looking to expand their knowledge through video content."),
-			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Youtube"),
-			FUIAction(
-				FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::YoutubeButtonClicked)
-			)
-		);
-	}
-	MenuBuilder.EndSection();
-
-	MenuBuilder.BeginSection("MounteaMenu_Tools", LOCTEXT("MounteaMenuOptions_Tools", "Mountea Tools"));
-	{
-		MenuBuilder.AddMenuEntry(
-			LOCTEXT("MounteaSystemEditor_DialoguerButton_Label", "Mountea Dialoguer"),
-			LOCTEXT("MounteaSystemEditor_DialoguerButton_ToolTip", "⛰ Open Mountea Dialoguer Standalone Tool\n\n❔ A powerful standalone dialogue crafting tool designed for narrative designers and writers. Create, edit, and manage complex dialogue trees with an intuitive interface. Seamlessly import your `.mnteadlg` files directly into the Mountea Dialogue System.\n\n💡 Perfect for teams wanting to separate dialogue content creation from engine implementation."),
-			FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Dialoguer"),
-			FUIAction(
-				FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::DialoguerButtonClicked)
-			)
-		);
-	}
-	
-	MenuBuilder.AddMenuEntry(
-		LOCTEXT("MounteaSystemEditor_LauncherButton_Label", "Mountea Project Launcher"),
-		LOCTEXT("MounteaSystemEditor_LauncherButton_ToolTip", "🚀 Open Mountea Project Launcher\n\n❔ A versatile standalone tool for streamlined project testing and deployment. Launch your projects with customized configurations, test different build settings, and validate dialogue implementations in various environments.\n\n💡 Features include:\n- Multiple configuration profiles\n- Quick-launch presets\n- Custom command-line parameters\n- Integrated testing tools"),
-		FSlateIcon(FMounteaDialogueGraphEditorStyle::GetAppStyleSetName(), "MDSStyleSet.Launcher"),
-		FUIAction(
-			FExecuteAction::CreateRaw(this, &FMounteaDialogueSystemEditor::LauncherButtonClicked)
-		)
-	);
-	MenuBuilder.EndSection();
-
-	return MenuBuilder.MakeWidget();
-}
 
 #undef LOCTEXT_NAMESPACE
 

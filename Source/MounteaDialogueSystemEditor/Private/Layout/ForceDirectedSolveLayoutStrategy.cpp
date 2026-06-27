@@ -43,7 +43,8 @@ void UForceDirectedSolveLayoutStrategy::Layout(UEdGraph* InEdGraph)
 
 	if (Settings != nullptr)
 	{
-		OptimalDistance = Settings->GetOptimalDistance();
+		OptimalHorizontalDistance = Settings->GetOptimalHorizontalDistance();
+		OptimalVerticalDistance = Settings->GetOptimalVerticalDistance();
 		MaxIteration = Settings->GetMaxIteration();
 		bRandomInit = Settings->IsRandomInit();
 	}
@@ -64,8 +65,8 @@ FBox2D UForceDirectedSolveLayoutStrategy::LayoutOneTree(UMounteaDialogueGraphNod
 
 	float Temp = InitTemperature;
 	FBox2D TreeBound = GetActualBounds(RootNode);
-	TreeBound.Min.X += PreTreeBound.Max.X + OptimalDistance;
-	TreeBound.Max.X += PreTreeBound.Max.X + OptimalDistance;
+	TreeBound.Min.X += PreTreeBound.Max.X + OptimalHorizontalDistance;
+	TreeBound.Max.X += PreTreeBound.Max.X + OptimalHorizontalDistance;
 
 	if (bRandomInit)
 	{
@@ -96,7 +97,7 @@ FBox2D UForceDirectedSolveLayoutStrategy::LayoutOneTree(UMounteaDialogueGraphNod
 				Distance = Diff.Size();
 				Diff.Normalize();
 
-				RepulseForce = Distance > 2 * OptimalDistance ? 0 : GetRepulseForce(Distance, OptimalDistance);
+				RepulseForce = Distance > 2 * OptimalHorizontalDistance ? 0 : GetRepulseForce(Distance, OptimalHorizontalDistance);
 
 				NodeToDisplacement[EdGraph->Nodes[i]] += Diff * RepulseForce;
 			}
@@ -127,7 +128,7 @@ FBox2D UForceDirectedSolveLayoutStrategy::LayoutOneTree(UMounteaDialogueGraphNod
 					Distance = Diff.Size();
 					Diff.Normalize();
 
-					AttractForce = GetAttractForce(Distance, OptimalDistance);
+					AttractForce = GetAttractForce(Distance, OptimalHorizontalDistance);
 
 					NodeToDisplacement[EdNode_ParentNode] += Distance * Diff;
 					NodeToDisplacement[EdNode_ChildNode] -= Distance * Diff;

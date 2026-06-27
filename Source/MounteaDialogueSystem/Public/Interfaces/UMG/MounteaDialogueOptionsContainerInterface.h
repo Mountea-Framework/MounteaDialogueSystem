@@ -6,7 +6,7 @@
 #include "UObject/Interface.h"
 #include "MounteaDialogueOptionsContainerInterface.generated.h"
 
-class UMounteaDialogueGraphNode_DialogueNodeBase;
+class UMounteaDialogueGraphNode;
 class IMounteaDialogueWBPInterface;
 class IMounteaDialogueOptionInterface;
 
@@ -68,8 +68,8 @@ public:
 	 * @param NewDialogueOption The UUserWidget instance to be added as a new dialogue option.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|OptionsContainer")
-	void AddNewDialogueOption( UMounteaDialogueGraphNode_DialogueNodeBase* NewDialogueOption);
-	virtual void AddNewDialogueOption_Implementation(UMounteaDialogueGraphNode_DialogueNodeBase* NewDialogueOption) = 0;
+	void AddNewDialogueOption( UMounteaDialogueGraphNode* NewDialogueOption);
+	virtual void AddNewDialogueOption_Implementation(UMounteaDialogueGraphNode* NewDialogueOption) = 0;
 
 	/**
 	 * Adds multiple new dialogue option widgets.
@@ -77,8 +77,8 @@ public:
 	 * @param NewDialogueOptions An array of UUserWidget instances to be added as new dialogue options.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|OptionsContainer")
-	void AddNewDialogueOptions(const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& NewDialogueOptions);
-	virtual void AddNewDialogueOptions_Implementation(const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& NewDialogueOptions) = 0;
+	void AddNewDialogueOptions(const TArray<UMounteaDialogueGraphNode*>& NewDialogueOptions);
+	virtual void AddNewDialogueOptions_Implementation(const TArray<UMounteaDialogueGraphNode*>& NewDialogueOptions) = 0;
 
 	/**
 	 * Removes a specific dialogue option widget.
@@ -86,8 +86,8 @@ public:
 	 * @param DirtyDialogueOption The UUserWidget instance to be removed from the dialogue options.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|OptionsContainer")
-	void RemoveDialogueOption(UMounteaDialogueGraphNode_DialogueNodeBase* DirtyDialogueOption);
-	virtual void RemoveDialogueOption_Implementation(UMounteaDialogueGraphNode_DialogueNodeBase* DirtyDialogueOption) = 0;
+	void RemoveDialogueOption(UMounteaDialogueGraphNode* DirtyDialogueOption);
+	virtual void RemoveDialogueOption_Implementation(UMounteaDialogueGraphNode* DirtyDialogueOption) = 0;
 
 	/**
 	 * Removes multiple dialogue option widgets.
@@ -95,8 +95,8 @@ public:
 	 * @param DirtyDialogueOptions An array of UUserWidget instances to be removed from the dialogue options.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category="Mountea|Dialogue|UserInterface|OptionsContainer")
-	void RemoveDialogueOptions(const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& DirtyDialogueOptions);
-	virtual void RemoveDialogueOptions_Implementation(const TArray<UMounteaDialogueGraphNode_DialogueNodeBase*>& DirtyDialogueOptions) = 0;
+	void RemoveDialogueOptions(const TArray<UMounteaDialogueGraphNode*>& DirtyDialogueOptions);
+	virtual void RemoveDialogueOptions_Implementation(const TArray<UMounteaDialogueGraphNode*>& DirtyDialogueOptions) = 0;
 
 	/**
 	 * Clears all dialogue option widgets.
