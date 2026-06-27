@@ -160,7 +160,6 @@ void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
 	OutputPinBox.Reset();
 
 	SetupErrorReporting();
-	ContentScale.Bind(this, &SGraphNode::GetContentScale);
 
 	const FVector2f nodeSizeHint = GetNodeSizeHint();
 

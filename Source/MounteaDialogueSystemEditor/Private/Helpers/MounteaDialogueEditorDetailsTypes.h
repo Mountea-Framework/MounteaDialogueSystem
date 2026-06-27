@@ -26,7 +26,7 @@ struct FPIEInstanceData
 
 		if (const auto ParticipantPtr = Participant.Get())
 		{
-			if (AActor* Owner = ParticipantPtr->Execute_GetOwningActor(ParticipantPtr->_getUObject()))
+			if (AActor* Owner = ParticipantPtr->Execute_GetOwningActor(Cast<UObject>(ParticipantPtr)))
 				return Owner->GetActorLabel();
 		}
         

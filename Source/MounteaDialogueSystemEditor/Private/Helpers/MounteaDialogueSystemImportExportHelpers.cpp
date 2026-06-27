@@ -1999,7 +1999,7 @@ void UMounteaDialogueSystemImportExportHelpers::BuildStringTableLookup(const TMa
 				break;
 			}
 		}
-		OutLookup.Add(entry.Key, text);
+		OutLookup.Add(FString(entry.Key), text);
 	}
 }
 
@@ -2348,7 +2348,7 @@ void UMounteaDialogueSystemImportExportHelpers::ExportLocalizationPoFiles(
 		if (!localeMap.IsValid())
 			continue;
 		for (const auto& localePair : localeMap->Values)
-			allLocales.Add(localePair.Key);
+			allLocales.Add(FString(localePair.Key));
 		break; // one entry is enough to enumerate locales
 	}
 
@@ -2367,7 +2367,7 @@ void UMounteaDialogueSystemImportExportHelpers::ExportLocalizationPoFiles(
 
 		for (const auto& entryPair : entriesObject->Values)
 		{
-			const FString& textKey = entryPair.Key;
+			const FString textKey(entryPair.Key);
 			const TSharedPtr<FJsonObject> localeMap = entryPair.Value->AsObject();
 			if (!localeMap.IsValid())
 				continue;
@@ -2597,7 +2597,7 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateNodesJson(const TArray<
 
 		TSharedPtr<FJsonObject> NodeObject = MakeShareable(new FJsonObject);
 		NodeObject->SetStringField((TEXT("id")), Data.Node->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
-		NodeObject->SetStringField("type", Data.Type);
+		NodeObject->SetStringField(TEXT("type"), Data.Type);
 		NodeObject->SetNumberField(TEXT("executionOrder"), Data.Node->ExecutionOrder);
 
 		AddNodePosition(NodeObject, Data.Node);
@@ -2620,20 +2620,20 @@ void UMounteaDialogueSystemImportExportHelpers::AddNodePosition(const TSharedPtr
 	if (!IsValid(Node))
 	{
 		EditorLOG_WARNING(TEXT("[AddNodePosition] Invalid Graph or EdGraph for node!"));
-		NodeObject->SetObjectField("position", PositionObject);
+		NodeObject->SetObjectField(TEXT("position"), PositionObject);
 		return;
 	}
 	
-	PositionObject->SetNumberField("x", Node->NodePosition.X);
-	PositionObject->SetNumberField("y", Node->NodePosition.Y);
-	
-	NodeObject->SetObjectField("position", PositionObject);
+	PositionObject->SetNumberField(TEXT("x"), Node->NodePosition.X);
+	PositionObject->SetNumberField(TEXT("y"), Node->NodePosition.Y);
+
+	NodeObject->SetObjectField(TEXT("position"), PositionObject);
 }
 
 void UMounteaDialogueSystemImportExportHelpers::AddNodeData(const TSharedPtr<FJsonObject>& NodeObject, const UMounteaDialogueGraphNode* Node)
 {
 	const TSharedPtr<FJsonObject> DataObject = MakeShareable(new FJsonObject);
-	DataObject->SetStringField("title", Node->NodeTitle.ToString());
+	DataObject->SetStringField(TEXT("title"), Node->NodeTitle.ToString());
 
 	// Export node decorators — id and name read from the CLASS CDO so they match the
 	// definition GUID and human-readable Dialoguer name set during Blueprint creation.
@@ -2683,8 +2683,8 @@ void UMounteaDialogueSystemImportExportHelpers::AddNodeData(const TSharedPtr<FJs
 	if (const UMounteaDialogueGraphNode_OpenChildGraph* OpenChildGraphNode = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(Node))
 		AddOpenChildGraphNodeData(AdditionalInfoObject, OpenChildGraphNode);
 
-	DataObject->SetObjectField("additionalInfo", AdditionalInfoObject);
-	NodeObject->SetObjectField("data", DataObject);
+	DataObject->SetObjectField(TEXT("additionalInfo"), AdditionalInfoObject);
+	NodeObject->SetObjectField(TEXT("data"), DataObject);
 }
 
 void UMounteaDialogueSystemImportExportHelpers::AddDialogueNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode)
@@ -2708,12 +2708,12 @@ void UMounteaDialogueSystemImportExportHelpers::AddDialogueNodeData(const TShare
 		return;
 	}
 
-	AdditionalInfoObject->SetStringField("displayName", DialogueRowRef->RowTitle.ToString());
+	AdditionalInfoObject->SetStringField(TEXT("displayName"), DialogueRowRef->RowTitle.ToString());
 
 	TSharedPtr<FJsonObject> ParticipantObject = MakeShareable(new FJsonObject);
-	ParticipantObject->SetStringField("name", !DialogueRowRef->DialogueParticipantName.IsNone() ? DialogueRowRef->DialogueParticipantName.ToString() : DialogueRowRef->DialogueParticipant.ToString());
-	ParticipantObject->SetStringField("category", DialogueRowRef->CompatibleTags.First().ToString());
-	AdditionalInfoObject->SetObjectField("participant", ParticipantObject);
+	ParticipantObject->SetStringField(TEXT("name"), !DialogueRowRef->DialogueParticipantName.IsNone() ? DialogueRowRef->DialogueParticipantName.ToString() : DialogueRowRef->DialogueParticipant.ToString());
+	ParticipantObject->SetStringField(TEXT("category"), DialogueRowRef->CompatibleTags.First().ToString());
+	AdditionalInfoObject->SetObjectField(TEXT("participant"), ParticipantObject);
 
 	const FString GraphFolder = FPaths::GetPath(DialogueNode->Graph->GetPathName());
 
@@ -2722,30 +2722,30 @@ void UMounteaDialogueSystemImportExportHelpers::AddDialogueNodeData(const TShare
 	{
 		const TSharedPtr<FJsonObject> RowObject = MakeShareable(new FJsonObject);
 		RowObject->SetStringField((TEXT("id")), RowData.RowGUID.ToString(EGuidFormats::DigitsWithHyphensLower));
-		RowObject->SetStringField("text", RowData.RowText.ToString());
-		RowObject->SetStringField("audio", GetRelativeAudioPath(RowData.RowSound, GraphFolder));
+		RowObject->SetStringField(TEXT("text"), RowData.RowText.ToString());
+		RowObject->SetStringField(TEXT("audio"), GetRelativeAudioPath(RowData.RowSound, GraphFolder));
 		DialogueRowsArray.Add(MakeShareable(new FJsonValueObject(RowObject)));
 	}
-	AdditionalInfoObject->SetArrayField("dialogueRows", DialogueRowsArray);
+	AdditionalInfoObject->SetArrayField(TEXT("dialogueRows"), DialogueRowsArray);
 }
 
 void UMounteaDialogueSystemImportExportHelpers::AddJumpNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_ReturnToNode* Node)
 {
 	if (Node && Node->SelectedNode)
-		AdditionalInfoObject->SetStringField("targetNodeId", Node->SelectedNode->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
+		AdditionalInfoObject->SetStringField(TEXT("targetNodeId"), Node->SelectedNode->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
 	else
-		AdditionalInfoObject->SetStringField("targetNodeId", "");
+		AdditionalInfoObject->SetStringField(TEXT("targetNodeId"), TEXT(""));
 }
 
 void UMounteaDialogueSystemImportExportHelpers::AddOpenChildGraphNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_OpenChildGraph* Node)
 {
 	if (!Node)
 	{
-		AdditionalInfoObject->SetStringField("targetDialogue", "");
+		AdditionalInfoObject->SetStringField(TEXT("targetDialogue"), TEXT(""));
 		return;
 	}
 
-	AdditionalInfoObject->SetStringField("targetDialogue", Node->TargetDialogue.ToSoftObjectPath().ToString());
+	AdditionalInfoObject->SetStringField(TEXT("targetDialogue"), Node->TargetDialogue.ToSoftObjectPath().ToString());
 }
 
 FString UMounteaDialogueSystemImportExportHelpers::CreateEdgesJson(const UMounteaDialogueGraph* Graph)
@@ -3069,12 +3069,12 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateDialogueDataJson(const 
 
 	TSharedPtr<FJsonObject> DialogueDataObject = MakeShareable(new FJsonObject);
 
-	DialogueDataObject->SetStringField("dialogueGuid", Graph->GetGraphGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
-	DialogueDataObject->SetStringField("dialogueName", Graph->GetName());
+	DialogueDataObject->SetStringField(TEXT("dialogueGuid"), Graph->GetGraphGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
+	DialogueDataObject->SetStringField(TEXT("dialogueName"), Graph->GetName());
 
 	const FDateTime CurrentTime = FDateTime::UtcNow();
 	const FString FormattedDate = CurrentTime.ToIso8601();
-	DialogueDataObject->SetStringField("modifiedOnDate", FormattedDate);
+	DialogueDataObject->SetStringField(TEXT("modifiedOnDate"), FormattedDate);
 
 	FString OutputString;
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);

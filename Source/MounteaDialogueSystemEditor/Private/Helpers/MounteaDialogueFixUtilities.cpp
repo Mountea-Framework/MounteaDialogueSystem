@@ -177,7 +177,7 @@ bool FNodeReplacementRule::FromJson(const TSharedPtr<FJsonObject>& JsonObject)
 				const FString MappedName = Pair.Value->AsString();
 				if (!MappedName.IsEmpty())
 				{
-					NewNode.PinMapping.Add(Pair.Key, *MappedName);
+					NewNode.PinMapping.Add(FString(Pair.Key), *MappedName);
 				}
 			}
 		}

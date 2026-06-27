@@ -189,7 +189,7 @@ void UMounteaDialogueImportConfig::LoadFromFile()
 		for (const auto& field : (*dlgHistField)->Values)
 		{
 			FGuid guid;
-			if (!KeyToGuid(field.Key, guid)) continue;
+			if (!KeyToGuid(FString(field.Key), guid)) continue;
 			const TSharedPtr<FJsonObject> entry = field.Value->AsObject();
 			if (!entry.IsValid()) continue;
 
@@ -210,7 +210,7 @@ void UMounteaDialogueImportConfig::LoadFromFile()
 		for (const auto& field : (*projHistField)->Values)
 		{
 			FGuid projectGuid;
-			if (!KeyToGuid(field.Key, projectGuid)) continue;
+			if (!KeyToGuid(FString(field.Key), projectGuid)) continue;
 			const TSharedPtr<FJsonObject> entry = field.Value->AsObject();
 			if (!entry.IsValid()) continue;
 
