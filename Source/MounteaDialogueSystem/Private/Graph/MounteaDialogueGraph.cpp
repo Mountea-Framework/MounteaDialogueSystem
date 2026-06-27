@@ -592,7 +592,7 @@ bool UMounteaDialogueGraph::ValidateAllNodes(FDataValidationContext& Context, bo
 }
 
 
-EDataValidationResult UMounteaDialogueGraph::IsDataValid(FDataValidationContext& Context) 
+EDataValidationResult UMounteaDialogueGraph::IsDataValid(FDataValidationContext& Context) const
 {
 	if (ValidateGraph(Context, false))
 		return EDataValidationResult::Valid;

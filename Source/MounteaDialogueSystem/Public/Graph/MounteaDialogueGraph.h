@@ -285,7 +285,7 @@ public:
 	virtual void AddInvalidDecoratorError(FDataValidationContext& Context, bool RichTextFormat, int32 Index, const FString& DecoratorTypeName) const;
 	virtual void AddDuplicateDecoratorErrors(FDataValidationContext& Context, bool RichTextFormat, const TMap<UMounteaDialogueDecoratorBase*, int32>& DuplicatedDecoratorsMap, const FString& DecoratorTypeName) const;
 	virtual void AddDecoratorErrors(FDataValidationContext& Context, bool RichTextFormat, const TArray<FText>& DecoratorErrors, const FString& DecoratorTypeName) const;
-	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) override;
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 
 public:
 	// Construct and initialize a node within this Dialogue.
