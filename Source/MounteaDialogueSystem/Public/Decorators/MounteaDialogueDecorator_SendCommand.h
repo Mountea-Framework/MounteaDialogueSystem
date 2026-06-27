@@ -11,7 +11,7 @@
  *
  * Implements native support send Command to Dialogue Participant.
  */
-UCLASS( BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue,Command"), DisplayName="Send Command")
+UCLASS(BlueprintType, EditInlineNew, ClassGroup=("Mountea|Dialogue"), AutoExpandCategories=("Mountea","Dialogue,Command"), DisplayName="Send Command")
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueDecorator_SendCommand : public UMounteaDialogueDecoratorBase
 {
 	GENERATED_BODY()
@@ -28,9 +28,11 @@ public:
 
 protected:
 
-	UPROPERTY(SaveGame, Category="Command", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault))
+	UPROPERTY(SaveGame, Category="Command", EditAnywhere, BlueprintReadOnly, 
+		meta=(NoResetToDefault))
 	FString Command;
 
-	UPROPERTY(SaveGame, Category="Payload", EditAnywhere, BlueprintReadOnly, meta=(NoResetToDefault))
+	UPROPERTY(SaveGame, Category="Payload", EditAnywhere, BlueprintReadWrite, 
+		meta=(NoResetToDefault))
 	TObjectPtr<UObject> OptionalPayload;
 };

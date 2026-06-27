@@ -74,7 +74,7 @@ void UMounteaDialogueGraphNode_ReturnToNode::OnDelayDurationExpired(const TScrip
 			Context->UpdateActiveDialogueRow( UMounteaDialogueSystemBFC::FindDialogueRow(newDialogueTableHandle.DataTable, newDialogueTableHandle.RowName) );
 			Context->ActiveDialogueRowDataIndex = 0;
 
-			MounteaDialogueManagerInterface->Execute_NodeProcessed(MounteaDialogueManagerInterface.GetObject());
+			MounteaDialogueManagerInterface->Execute_PrepareNode(MounteaDialogueManagerInterface.GetObject());
 
 			// TODO: Force to the new system
 			/*

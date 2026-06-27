@@ -16,7 +16,8 @@ class UMounteaDialogueDialogueNetSync;
  * ❔ Allows any Actor to be Dialogue Manager
  * ❔ Implements 'IMounteaDialogueManagerInterface'.
  */
-UCLASS(ClassGroup=(Mountea), Blueprintable,  AutoExpandCategories=("Mountea","Dialogue","Mountea|Dialogue"), meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Manager"))
+UCLASS(ClassGroup=(Mountea), Blueprintable,  AutoExpandCategories=("Mountea","Dialogue","Mountea|Dialogue"), 
+	meta=(BlueprintSpawnableComponent, DisplayName="Mountea Dialogue Manager"))
 class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueManager : public UActorComponent, public IMounteaDialogueManagerInterface
 {
 	GENERATED_BODY()
@@ -175,7 +176,7 @@ public:
 	
 	bool IsAuthority() const;
 
-protected:
+public:
 
 	UPROPERTY(BlueprintAssignable, Category="Mountea|Dialogue|Manager")
 	FDialogueStartRequested OnDialogueStartRequested;
@@ -274,7 +275,8 @@ protected:
 
 protected:
 
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", meta=(DisplayThumbnail=false))
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", 
+		meta=(DisplayThumbnail=false))
 	TObjectPtr<UObject> DialogueInstigator;
 
 	/**
@@ -282,7 +284,9 @@ protected:
 	 * ❔ Could be left empty if Project Settings are setup properly
 	 * ❗ Must implement MounteaDialogueWBPInterface
 	 */
-	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue|Manager", DisplayName="Dialogue Widget Class Override", meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
+	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue|Manager", 
+		DisplayName="Dialogue Widget Class Override", 
+		meta=(MustImplement="/Script/MounteaDialogueSystem.MounteaDialogueWBPInterface"))
 	TSubclassOf<UUserWidget> DialogueWidgetClass = nullptr;
 
 	/**
@@ -290,7 +294,8 @@ protected:
 	 * ❔ This determines the order in which the widget is rendered relative to other UI elements.
 	 * ❔ A higher Z-order means the widget will be rendered on top of others with lower Z-orders.
 	 */
-	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue|Manager", meta=(UIMin=0,ClampMin=0))
+	UPROPERTY(SaveGame, EditAnywhere, Category="Mountea|Dialogue|Manager", 
+		meta=(UIMin=0,ClampMin=0))
 	int32 DialogueWidgetZOrder;
 
 	/**
@@ -316,20 +321,23 @@ protected:
 	 * An array of dialogue objects. Serves purpose of listeners who receive information about UI events.
 	 * Each must implement `IMounteaDialogueWBPInterface` interface.
 	 */
-	UPROPERTY(VisibleAnywhere, Category="Mountea", AdvancedDisplay, meta=(DisplayThumbnail=false))
+	UPROPERTY(VisibleAnywhere, Category="Mountea", AdvancedDisplay, 
+		meta=(DisplayThumbnail=false))
 	TArray<TObjectPtr<UObject>> DialogueObjects;
 	
 	/**
 	 * Dialogue Widget which has been created.
 	 * ❔ Transient, for actual runtime only.
 	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, 
+		meta=(DisplayThumbnail=false))
 	TObjectPtr<UUserWidget> DialogueWidget = nullptr;
 
 	/**
 	 * Dialogue Context which is used to contain temporary data.
 	 */
-	UPROPERTY(VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
+	UPROPERTY(VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, 
+		meta=(DisplayThumbnail=false))
 	TObjectPtr<UMounteaDialogueContext> DialogueContext = nullptr;
 
 	/**
@@ -338,7 +346,8 @@ protected:
 	 * 
 	 * ❔ Expiration is driven by Dialogue data Duration variable
 	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, meta=(DisplayThumbnail=false))
+	UPROPERTY(Transient, VisibleAnywhere, Category="Mountea|Dialogue|Manager", AdvancedDisplay, 
+		meta=(DisplayThumbnail=false))
 	FTimerHandle TimerHandle_RowTimer;
 
 	UPROPERTY(Transient)

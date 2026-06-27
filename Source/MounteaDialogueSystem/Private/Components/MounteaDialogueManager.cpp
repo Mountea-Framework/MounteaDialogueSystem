@@ -795,6 +795,7 @@ void UMounteaDialogueManager::PrepareNode_Implementation()
 	}
 
 	const auto newActiveParticipant = UMounteaDialogueSystemBFC::SwitchActiveParticipant(DialogueContext);
+	
 	UMounteaDialogueSystemBFC::UpdateMatchingDialogueParticipant(DialogueContext, newActiveParticipant);
 	DialogueContext->ActiveNode->PreProcessNode(this);
 }
@@ -840,8 +841,9 @@ void UMounteaDialogueManager::NodeProcessed_Implementation()
 		OnDialogueFailed.Broadcast(TEXT("[Node Processed] Invalid Active Node!"));
 		return;
 	}
-
-	DialogueContext->ActiveNode->Execute_UnregisterTick(DialogueContext->ActiveNode, DialogueContext->ActiveNode->Graph);
+	
+	OnDialogueNodeFinished.Broadcast(DialogueContext);
+	DialogueContext->ActiveNode->CleanupNode();
 	
 	// TODO: This is extremely similar to NodeSelected!
 	TArray<UMounteaDialogueGraphNode*> allowedChildrenNodes = UMounteaDialogueSystemBFC::GetAllowedChildNodes(DialogueContext->ActiveNode);

@@ -208,7 +208,7 @@ void UMounteaDialogueOptionsContainer::ProcessOptionSelected_Implementation(cons
 TArray<UUserWidget*> UMounteaDialogueOptionsContainer::GetDialogueOptions_Implementation() const
 {
 	TArray<TObjectPtr<UUserWidget>> dialogueOptions;
-	for (const auto dialogueOption : DialogueOptions)
+	for (const auto& dialogueOption : DialogueOptions)
 		dialogueOptions.Add(dialogueOption.Value);
 
 	return dialogueOptions;
