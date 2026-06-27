@@ -59,9 +59,13 @@
 #include "Interfaces/IPluginManager.h"
 #include "IImageWrapper.h"
 #include "IImageWrapperModule.h"
+#include "Engine/Texture.h"
+#include "Engine/Texture2D.h"
 #include "Engine/TextureDefines.h"
+#include "HAL/PlatformFileManager.h"
 
 #include "UObject/SavePackage.h"
+#include "UObject/UObjectIterator.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
 // ---------------------------------------------------------------------------
@@ -2069,7 +2073,7 @@ bool UMounteaDialogueSystemImportExportHelpers::CreateGraphStringTables(UMountea
 				rowText = StringTableLookup.FindRef(tableKey);
 
 			if (!tableKey.IsEmpty())
-				table->GetMutableStringTable()->SetSourceString(tableKey, rowText);
+				table->GetMutableStringTable()->SetSourceString(tableKey, rowText, TEXT(""));
 		}
 	});
 
@@ -2101,7 +2105,7 @@ bool UMounteaDialogueSystemImportExportHelpers::CreateGraphStringTables(UMountea
 			}
 
 			if (!displayName.IsEmpty())
-				table->GetMutableStringTable()->SetSourceString(nodeId, displayName);
+				table->GetMutableStringTable()->SetSourceString(nodeId, displayName, TEXT(""));
 		}
 	});
 
