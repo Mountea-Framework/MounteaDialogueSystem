@@ -23,6 +23,12 @@
  * IN THE SOFTWARE.
  */
 
+/* Suppress MSVC warnings that are intentional in this third-party library. */
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4702) /* unreachable code — intentional after MD_UNREACHABLE() */
+#endif
+
 #include "md4c.h"
 
 #include <limits.h>
@@ -6501,3 +6507,7 @@ md_parse(const MD_CHAR* text, MD_SIZE size, const MD_PARSER* parser, void* userd
 
     return ret;
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
