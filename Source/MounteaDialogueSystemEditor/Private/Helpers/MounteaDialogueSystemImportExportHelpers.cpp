@@ -1989,11 +1989,10 @@ void UMounteaDialogueSystemImportExportHelpers::BuildStringTableLookup(const TMa
 		if (!localeMap->TryGetStringField(*OutDefaultLocale, text))
 		{
 			// Fall back to first available locale
-			for (const auto& locPair : localeMap->Values)
-			{
-				text = locPair.Value->AsString();
-				break;
-			}
+			TArray<TSharedPtr<FJsonValue>> localeValues;
+			localeMap->Values.GenerateValueArray(localeValues);
+			if (localeValues.Num() > 0 && localeValues[0].IsValid())
+				text = localeValues[0]->AsString();
 		}
 		OutLookup.Add(entry.Key, text);
 	}

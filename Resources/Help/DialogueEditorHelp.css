@@ -31,6 +31,7 @@
 	--space-5: 1.25rem;
 	--space-6: 1.5rem;
 	--space-7: 2rem;
+	--space-8: 2.5rem;
 	--radius-card: 0.625rem;
 	--radius-pill: 999px;
 	--radius-button: 0.5rem;
@@ -516,6 +517,88 @@ body.help-page-body--fullscreen::before {
 	color: var(--status-error-fg);
 }
 
+/* ==================== INVENTORY LEGACY HELP BLOCKS ==================== */
+.endpoint {
+	margin: var(--space-3) 0;
+	border: 1px solid var(--page-border);
+	border-radius: var(--radius-card);
+	background: var(--panel);
+	overflow: hidden;
+}
+
+.endpoint-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-3);
+	padding: var(--space-3) var(--space-4);
+	border-bottom: 1px solid var(--page-border);
+}
+
+.path {
+	min-width: 0;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	font-size: var(--font-size-sm);
+	color: var(--text-muted);
+	word-break: break-word;
+}
+
+.method {
+	display: inline-flex;
+	align-items: center;
+	flex: 0 0 auto;
+	padding: var(--space-1) var(--space-3);
+	border: 1px solid var(--page-border);
+	border-radius: var(--radius-pill);
+	font-size: var(--font-size-xs);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+
+.method.get {
+	color: var(--status-success-fg);
+	border-color: var(--status-success-border);
+	background: var(--status-success-bg);
+}
+
+.method.post {
+	color: var(--status-error-fg);
+	border-color: var(--status-error-border);
+	background: var(--status-error-bg);
+}
+
+.endpoint-toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: var(--size-action-height);
+	padding: var(--space-1) var(--space-3);
+	border: 1px solid var(--page-border);
+	border-radius: var(--radius-button);
+	background: var(--code-bg);
+	color: var(--text);
+	font-size: var(--font-size-xs);
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.endpoint-toggle:hover,
+.endpoint-toggle:focus-visible {
+	border-color: var(--accent);
+	outline: none;
+}
+
+.endpoint-body {
+	display: none;
+	padding: var(--space-4);
+	font-size: var(--font-size-sm);
+}
+
+.endpoint-body.open {
+	display: block;
+}
+
 /* ==================== VALIDATION PAGE OVERRIDES ==================== */
 .doc-page.validation-page {
 	display: grid;
@@ -665,7 +748,7 @@ body.help-page-body--fullscreen::before {
 }
 
 /* ==================== RESPONSIVE ==================== */
-@media (max-width: var(--breakpoint-md)) {
+@media (max-width: 53.75rem) {
 	body {
 		padding: var(--space-4);
 	}
