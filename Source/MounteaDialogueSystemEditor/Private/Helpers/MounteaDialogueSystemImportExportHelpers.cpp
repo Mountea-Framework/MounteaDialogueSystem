@@ -2072,7 +2072,7 @@ bool UMounteaDialogueSystemImportExportHelpers::CreateGraphStringTables(UMountea
 				rowText = StringTableLookup.FindRef(tableKey);
 
 			if (!tableKey.IsEmpty())
-				table->GetMutableStringTable()->SetSourceString(tableKey, rowText);
+				table->GetMutableStringTable()->SetSourceString(tableKey, rowText, TEXT(""));
 		}
 	});
 
@@ -2104,7 +2104,7 @@ bool UMounteaDialogueSystemImportExportHelpers::CreateGraphStringTables(UMountea
 			}
 
 			if (!displayName.IsEmpty())
-				table->GetMutableStringTable()->SetSourceString(nodeId, displayName);
+				table->GetMutableStringTable()->SetSourceString(nodeId, displayName, TEXT(""));
 		}
 	});
 
