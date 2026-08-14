@@ -125,5 +125,5 @@ Download the plugin (either from Releases or from Marketplace). For a more detai
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Mountea-Framework/MounteaDialogueSystem&type=Date)](https://star-history.com/#Mountea-Framework/MounteaDialogueSystem&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=Mountea-Framework/MounteaDialogueSystem&type=Date)](https://star-history.dera.page/#Mountea-Framework/MounteaDialogueSystem&Date)
 
