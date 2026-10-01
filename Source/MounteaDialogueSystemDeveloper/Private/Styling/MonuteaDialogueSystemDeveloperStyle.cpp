@@ -44,13 +44,15 @@ void FMonuteaDialogueSystemDeveloperStyle::Initialize()
 		FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
 
 		StyleSet->SetParentStyleName(FAppStyle::GetAppStyleSetName());
-		FAppStyle::SetAppStyleSet(*StyleSet);
 	}
 }
 
 void FMonuteaDialogueSystemDeveloperStyle::Shutdown()
 {
+	if (!StyleSet.IsValid())
+		return;
+
+	// No IsUnique() check: K2 node widgets share ownership of this style and may still be alive at shutdown
 	FSlateStyleRegistry::UnRegisterSlateStyle(*StyleSet.Get());
-	ensure(StyleSet.IsUnique());
 	StyleSet.Reset();
 }
