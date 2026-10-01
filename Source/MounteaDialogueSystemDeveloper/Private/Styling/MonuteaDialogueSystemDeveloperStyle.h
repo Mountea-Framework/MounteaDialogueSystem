@@ -18,6 +18,11 @@ public:
 		return *(StyleSet.Get());
 	}
 
+	static TSharedPtr<ISlateStyle> GetStylePtr()
+	{
+		return StyleSet;
+	}
+
 	static const FSlateBrush * GetBrush(FName PropertyName, const ANSICHAR* Specifier = NULL)
 	{
 		return StyleSet->GetBrush(PropertyName, Specifier);

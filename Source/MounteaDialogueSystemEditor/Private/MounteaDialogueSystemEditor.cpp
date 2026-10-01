@@ -33,6 +33,7 @@
 #include "Setup/MounteaDialogueSetupUtilities.h"
 #include "Serialization/JsonReader.h"
 #include "Styling/SlateStyleRegistry.h"
+#include "WebBrowserModule.h"
 #include "Containers/Ticker.h"
 #include "UnrealEdMisc.h"
 
@@ -88,69 +89,11 @@ public:
 
 void FMounteaDialogueSystemEditor::StartupModule()
 {
+	// Load WebBrowser module - SWebBrowserView only creates a browser if the module is already loaded
+	// (normally done by the WebBrowserWidget plugin, which we do not want to require)
 	{
-		const TSharedPtr<IPlugin> webBrowserPlugin = IPluginManager::Get().FindPlugin(TEXT("WebBrowserWidget"));
-		if(!webBrowserPlugin.IsValid() || !webBrowserPlugin->IsEnabled())
-		{
-			const FText warningTitle = NSLOCTEXT("MounteaDialogue", "WebBrowserMissing", "Missing Plugin");
-			const FText warningMessage = NSLOCTEXT("MounteaDialogue", "WebBrowserMissingMessage",
-				"The 'Web Browser Widget' plugin is required for HTML help and changelog rendering.");
-			FMessageDialog::Open(EAppMsgType::Ok, warningMessage, warningTitle);
-			
-			FString projectFilePath = FPaths::ProjectDir() / FApp::GetProjectName() + TEXT(".uproject");			
-			FString jsonString;
-			if (FFileHelper::LoadFileToString(jsonString, *projectFilePath))
-			{
-				TSharedPtr<FJsonObject> jsonObject;
-				TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(jsonString);
-				
-				if (FJsonSerializer::Deserialize(reader, jsonObject) && jsonObject.IsValid())
-				{
-					TArray<TSharedPtr<FJsonValue>> pluginsArray;
-					if (jsonObject->HasField(TEXT("Plugins")))
-						pluginsArray = jsonObject->GetArrayField(TEXT("Plugins"));
-					
-					bool bExists = false;
-					for (const TSharedPtr<FJsonValue>& plugin : pluginsArray)
-					{
-						TSharedPtr<FJsonObject> pluginObj = plugin->AsObject();
-						if (pluginObj.IsValid() && pluginObj->GetStringField(TEXT("Name")) == TEXT("WebBrowserWidget"))
-						{
-							pluginObj->SetBoolField(TEXT("Enabled"), true);
-							bExists = true;
-							break;
-						}
-					}
-					
-					if (!bExists)
-					{
-						TSharedPtr<FJsonObject> newPlugin = MakeShareable(new FJsonObject());
-						newPlugin->SetStringField(TEXT("Name"), TEXT("WebBrowserWidget"));
-						newPlugin->SetBoolField(TEXT("Enabled"), true);
-						pluginsArray.Add(MakeShareable(new FJsonValueObject(newPlugin)));
-					}
-					
-					jsonObject->SetArrayField(TEXT("Plugins"), pluginsArray);
-					
-					FString outputString;
-					TSharedRef<TJsonWriter<>> writer = TJsonWriterFactory<>::Create(&outputString);
-					if (FJsonSerializer::Serialize(jsonObject.ToSharedRef(), writer))
-					{
-						if (FFileHelper::SaveStringToFile(outputString, *projectFilePath))
-						{
-							FTSTicker::GetCoreTicker().AddTicker(
-								FTickerDelegate::CreateLambda([](float)
-								{
-									FUnrealEdMisc::Get().RestartEditor(false);
-									return false;
-								})
-							);
-							return;
-						}
-					}
-				}
-			}
-		}
+		if (!IWebBrowserModule::Get().IsWebModuleAvailable())
+			EditorLOG_WARNING(TEXT("[MounteaDialogueSystemEditor] Web browser module is not available, HTML pages will not render."));
 	}
 
 	// Try to request Changelog from GitHub
