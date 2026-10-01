@@ -179,6 +179,14 @@ hr {
 	border: 1px solid var(--page-border);
 	border-radius: var(--radius-page);
 	background: var(--doc-page);
+	overflow: hidden;
+}
+
+.doc-content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-5);
+	min-height: 0;
 }
 
 header {
@@ -323,6 +331,7 @@ header {
 }
 
 .ui-scroll-y,
+.doc-content,
 .setup-table-scroll,
 .validation-results-scroll,
 .validation-list--scroll,
@@ -334,6 +343,7 @@ header {
 }
 
 .ui-scroll-y::-webkit-scrollbar,
+.doc-content::-webkit-scrollbar,
 .setup-table-scroll::-webkit-scrollbar,
 .validation-results-scroll::-webkit-scrollbar,
 .validation-list--scroll::-webkit-scrollbar,
@@ -343,6 +353,7 @@ header {
 }
 
 .ui-scroll-y::-webkit-scrollbar-track,
+.doc-content::-webkit-scrollbar-track,
 .setup-table-scroll::-webkit-scrollbar-track,
 .validation-results-scroll::-webkit-scrollbar-track,
 .validation-list--scroll::-webkit-scrollbar-track,
@@ -352,6 +363,7 @@ header {
 }
 
 .ui-scroll-y::-webkit-scrollbar-thumb,
+.doc-content::-webkit-scrollbar-thumb,
 .setup-table-scroll::-webkit-scrollbar-thumb,
 .validation-results-scroll::-webkit-scrollbar-thumb,
 .validation-list--scroll::-webkit-scrollbar-thumb,

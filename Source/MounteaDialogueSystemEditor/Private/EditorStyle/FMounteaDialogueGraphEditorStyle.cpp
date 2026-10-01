@@ -32,6 +32,9 @@ void FMounteaDialogueGraphEditorStyle::Initialize()
 
 void FMounteaDialogueGraphEditorStyle::Shutdown()
 {
+	if (!StyleSet.IsValid())
+		return;
+
 	FSlateStyleRegistry::UnRegisterSlateStyle(*StyleSet.Get());
 	ensure(StyleSet.IsUnique());
 	StyleSet.Reset();

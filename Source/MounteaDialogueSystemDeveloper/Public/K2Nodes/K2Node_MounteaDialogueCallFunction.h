@@ -22,6 +22,9 @@ public:
 
 	void Initialize(const UFunction* relevantFunction, UClass* relevantClass);
 	
+	// UEdGraphNode
+	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
+
 	// UK2Node
 	virtual void GetMenuActions(FBlueprintActionDatabaseRegistrar& actionRegistrar) const override;
 

@@ -4,9 +4,32 @@
 #include "BlueprintActionDatabaseRegistrar.h"
 #include "BlueprintNodeSpawner.h"
 #include "Kismet2/BlueprintEditorUtils.h"
+#include "KismetNodes/SGraphNodeK2Default.h"
 #include "Styling/MonuteaDialogueSystemDeveloperStyle.h"
 
 #define LOCTEXT_NAMESPACE "MounteaDialogueCallFunction"
+
+namespace
+{
+	// Default K2 node widget that resolves its brushes (corner icon) from the Mountea style instead of the global FAppStyle
+	class SGraphNodeK2_MounteaDialogue : public SGraphNodeK2Default
+	{
+	public:
+		SLATE_BEGIN_ARGS(SGraphNodeK2_MounteaDialogue) {}
+		SLATE_END_ARGS()
+
+		void Construct(const FArguments& InArgs, UK2Node* InNode)
+		{
+			Style = FMonuteaDialogueSystemDeveloperStyle::GetStylePtr();
+			SGraphNodeK2Default::Construct(SGraphNodeK2Default::FArguments(), InNode);
+		}
+	};
+}
+
+TSharedPtr<SGraphNode> UK2Node_MounteaDialogueCallFunction::CreateVisualWidget()
+{
+	return SNew(SGraphNodeK2_MounteaDialogue, this);
+}
 
 void UK2Node_MounteaDialogueCallFunction::GetMenuActions(FBlueprintActionDatabaseRegistrar& actionRegistrar) const
 {
