@@ -235,7 +235,7 @@ void UMounteaDialogueHUDStatics::InitializeViewportWidget(UObject* ViewportManag
 		if (ULocalPlayer* localPlayer = playerController->GetLocalPlayer())
 		{
 			if (UMounteaDialogueViewportHUDSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueViewportHUDSubsystem>())
-				subsystem->InitializeViewportWidget();
+				IMounteaDialogueHUDClassInterface::Execute_InitializeViewportWidget(subsystem);
 		}
 	}
 }
@@ -253,7 +253,7 @@ UUserWidget* UMounteaDialogueHUDStatics::GetViewportWidget(UObject* ViewportMana
 		if (ULocalPlayer* localPlayer = playerController->GetLocalPlayer())
 		{
 			if (UMounteaDialogueViewportHUDSubsystem* subsystem = localPlayer->GetSubsystem<UMounteaDialogueViewportHUDSubsystem>())
-				return subsystem->GetViewportWidget();
+				return IMounteaDialogueHUDClassInterface::Execute_GetViewportWidget(subsystem);
 		}
 	}
 
