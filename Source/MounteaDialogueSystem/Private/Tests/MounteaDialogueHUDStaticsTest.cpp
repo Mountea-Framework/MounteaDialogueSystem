@@ -13,17 +13,11 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "Tests/AutomationCommon.h"
+#include "Tests/MounteaDialogueTestFixtures.h"
 #include "Blueprint/UserWidget.h"
-#include "Engine/World.h"
-#include "Engine/Engine.h"
 #include "Components/SceneComponent.h"
-#include "Engine/LocalPlayer.h"
-#include "GameFramework/PlayerController.h"
-#include "GenericPlatform/GenericPlatformInputDeviceMapper.h"
 #include "Helpers/MounteaDialogueHUDStatics.h"
 #include "Interfaces/HUD/MounteaDialogueHUDClassInterface.h"
-#include "Subsystem/MounteaDialogueViewportHUDSubsystem.h"
 
 // Tests in this file cover UMounteaDialogueHUDStatics' "viewport manager" helpers when handed a plain
 // APlayerController (one that does NOT implement IMounteaDialogueHUDClassInterface). That path falls
@@ -31,76 +25,9 @@
 // subsystem through IMounteaDialogueHUDClassInterface::Execute_*. Calling the interface event directly
 // trips the engine's "Do not directly call Event functions in Interfaces" assertion (Bugreport #1).
 //
-// A real UWorld (FTestWorldWrapper) plus a ULocalPlayer registered via PlayerAdded() is the minimum
-// needed for APlayerController::GetLocalPlayer()->GetSubsystem<>() to resolve to a live subsystem.
-// Widget creation / viewport attachment is deliberately NOT exercised here - that needs a real viewport.
+// World / LocalPlayer setup lives in MounteaDialogueTestFixtures.h. Widget creation / viewport
+// attachment is deliberately NOT exercised here - that needs a real viewport.
 
-namespace MounteaDialogueHUDStaticsTest
-{
-	// Owns the test world, a PlayerController, and a registered ULocalPlayer for the duration of a test.
-	struct FPlayerControllerFixture
-	{
-		FTestWorldWrapper WorldWrapper;
-		APlayerController* PlayerController = nullptr;
-		ULocalPlayer* LocalPlayer = nullptr;
-		UMounteaDialogueViewportHUDSubsystem* Subsystem = nullptr;
-
-		bool Setup(FAutomationTestBase& Test)
-		{
-			// Projects using CommonUI without a CommonGameViewportClient log this error on any world
-			// bring-up. It is unrelated to what is under test, but the automation framework treats every
-			// logged error as a failure. Occurrence count 0 = tolerated any number of times (including none).
-			Test.AddExpectedError(TEXT("Using CommonUI without a CommonGameViewportClient"), EAutomationExpectedErrorFlags::Contains, 0);
-
-			if (!WorldWrapper.CreateTestWorld(EWorldType::Game))
-			{
-				Test.AddError(TEXT("Failed to create test world"));
-				return false;
-			}
-
-			UWorld* world = WorldWrapper.GetTestWorld();
-			if (!world)
-			{
-				Test.AddError(TEXT("Test world is null"));
-				return false;
-			}
-			WorldWrapper.BeginPlayInTestWorld();
-
-			PlayerController = world->SpawnActor<APlayerController>();
-			if (!PlayerController)
-			{
-				Test.AddError(TEXT("Failed to spawn PlayerController"));
-				return false;
-			}
-
-			LocalPlayer = NewObject<ULocalPlayer>(GEngine);
-			if (!LocalPlayer)
-			{
-				Test.AddError(TEXT("Failed to create LocalPlayer"));
-				return false;
-			}
-
-			// Initializes the LocalPlayer's subsystem collection, which is what makes
-			// GetSubsystem<UMounteaDialogueViewportHUDSubsystem>() non-null.
-			LocalPlayer->PlayerAdded(nullptr, FPlatformUserId::CreateFromInternalId(0));
-			PlayerController->Player = LocalPlayer;
-
-			Subsystem = LocalPlayer->GetSubsystem<UMounteaDialogueViewportHUDSubsystem>();
-			return true;
-		}
-
-		void Teardown(FAutomationTestBase& Test)
-		{
-			if (LocalPlayer)
-			{
-				LocalPlayer->PlayerRemoved();
-				LocalPlayer = nullptr;
-			}
-			WorldWrapper.ForwardErrorMessages(&Test);
-			WorldWrapper.DestroyTestWorld(true);
-		}
-	};
-}
 
 // Direct regression for Bugreport #1: GetViewportWidget with a PlayerController used to call the
 // interface event stub on the subsystem and assert. It must return the subsystem's widget instead
@@ -111,7 +38,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMounteaDialogueGetViewportWidgetPlayerControll
 
 bool FMounteaDialogueGetViewportWidgetPlayerControllerTest::RunTest(const FString& Parameters)
 {
-	MounteaDialogueHUDStaticsTest::FPlayerControllerFixture fixture;
+	MounteaDialogueTest::FPlayerControllerFixture fixture;
 	if (!fixture.Setup(*this))
 	{
 		fixture.Teardown(*this);
@@ -136,7 +63,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMounteaDialogueGetViewportWidgetSubsystemTest,
 
 bool FMounteaDialogueGetViewportWidgetSubsystemTest::RunTest(const FString& Parameters)
 {
-	MounteaDialogueHUDStaticsTest::FPlayerControllerFixture fixture;
+	MounteaDialogueTest::FPlayerControllerFixture fixture;
 	if (!fixture.Setup(*this))
 	{
 		fixture.Teardown(*this);
@@ -180,7 +107,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMounteaDialogueInitializeViewportWidgetPlayerC
 
 bool FMounteaDialogueInitializeViewportWidgetPlayerControllerTest::RunTest(const FString& Parameters)
 {
-	MounteaDialogueHUDStaticsTest::FPlayerControllerFixture fixture;
+	MounteaDialogueTest::FPlayerControllerFixture fixture;
 	if (!fixture.Setup(*this))
 	{
 		fixture.Teardown(*this);
@@ -203,7 +130,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMounteaDialogueGetViewportBaseClassPlayerContr
 
 bool FMounteaDialogueGetViewportBaseClassPlayerControllerTest::RunTest(const FString& Parameters)
 {
-	MounteaDialogueHUDStaticsTest::FPlayerControllerFixture fixture;
+	MounteaDialogueTest::FPlayerControllerFixture fixture;
 	if (!fixture.Setup(*this))
 	{
 		fixture.Teardown(*this);

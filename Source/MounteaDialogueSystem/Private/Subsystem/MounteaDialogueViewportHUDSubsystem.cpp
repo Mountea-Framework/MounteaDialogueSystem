@@ -14,14 +14,45 @@
 
 #include "Blueprint/UserWidget.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/World.h"
 #include "Interfaces/UMG/MounteaDialogueViewportWidgetInterface.h"
 #include "Settings/MounteaDialogueSystemSettings.h"
 
+void UMounteaDialogueViewportHUDSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+
+	FWorldDelegates::OnWorldBeginTearDown.AddUObject(this, &UMounteaDialogueViewportHUDSubsystem::HandleWorldBeginTearDown);
+}
+
 void UMounteaDialogueViewportHUDSubsystem::Deinitialize()
 {
-	ViewportWidget = nullptr;
+	FWorldDelegates::OnWorldBeginTearDown.RemoveAll(this);
+
+	ResetViewportWidget();
 
 	Super::Deinitialize();
+}
+
+void UMounteaDialogueViewportHUDSubsystem::ResetViewportWidget()
+{
+	if (IsValid(ViewportWidget))
+		ViewportWidget->RemoveFromParent();
+
+	ViewportWidget = nullptr;
+	ViewportWidgetWorld.Reset();
+}
+
+void UMounteaDialogueViewportHUDSubsystem::HandleWorldBeginTearDown(UWorld* World)
+{
+	if (!World || !IsValid(ViewportWidget))
+		return;
+
+	// Drop the wrapper only when its own world (or the subsystem's current one) is going away.
+	// A wrapper whose world is already gone also counts as dead.
+	const UWorld* wrapperWorld = ViewportWidgetWorld.Get();
+	if (!wrapperWorld || wrapperWorld == World || GetWorld() == World)
+		ResetViewportWidget();
 }
 
 TSubclassOf<UUserWidget> UMounteaDialogueViewportHUDSubsystem::GetViewportBaseClass_Implementation() const
@@ -39,8 +70,15 @@ TSubclassOf<UUserWidget> UMounteaDialogueViewportHUDSubsystem::GetViewportBaseCl
 
 void UMounteaDialogueViewportHUDSubsystem::InitializeViewportWidget_Implementation()
 {
+	// Reuse the wrapper only while it still belongs to the current world; this subsystem outlives levels,
+	// so a wrapper from a previous world would otherwise bring its stale child widgets along.
 	if (IsValid(ViewportWidget))
-		return;
+	{
+		if (ViewportWidgetWorld.Get() == GetWorld())
+			return;
+
+		ResetViewportWidget();
+	}
 
 	TSubclassOf<UUserWidget> viewportBaseClass = nullptr;
 	const auto settings = GetDefault<UMounteaDialogueSystemSettings>();
@@ -59,6 +97,7 @@ void UMounteaDialogueViewportHUDSubsystem::InitializeViewportWidget_Implementati
 	if (!IsValid(ViewportWidget))
 		return;
 
+	ViewportWidgetWorld = GetWorld();
 	ViewportWidget->AddToPlayerScreen();
 }
 
