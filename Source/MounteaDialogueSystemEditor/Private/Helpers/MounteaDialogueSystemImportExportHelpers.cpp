@@ -2074,34 +2074,7 @@ bool UMounteaDialogueSystemImportExportHelpers::CreateGraphStringTables(UMountea
 
 	OutNodesStringTable = CreateStringTable(AssetTools, packagePath, stNodesName, [&](UStringTable* table)
 	{
-		for (const auto& nodeValue : nodesArray)
-		{
-			const TSharedPtr<FJsonObject> nodeObj = nodeValue->AsObject();
-			if (!nodeObj.IsValid())
-				continue;
-
-			FString nodeId;
-			nodeObj->TryGetStringField(TEXT("id"), nodeId);
-
-			const TSharedPtr<FJsonObject>* dataPtr;
-			if (!nodeObj->TryGetObjectField(TEXT("data"), dataPtr))
-				continue;
-
-			FString displayName;
-			FString displayNameKey;
-			if ((*dataPtr)->TryGetStringField(TEXT("displayNameKey"), displayNameKey))
-				displayName = StringTableLookup.FindRef(displayNameKey);
-
-			if (displayName.IsEmpty())
-			{
-				const TSharedPtr<FJsonObject>* additionalInfoPtr;
-				if ((*dataPtr)->TryGetObjectField(TEXT("additionalInfo"), additionalInfoPtr))
-					(*additionalInfoPtr)->TryGetStringField(TEXT("displayName"), displayName);
-			}
-
-			if (!displayName.IsEmpty())
-				table->GetMutableStringTable()->SetSourceString(nodeId, displayName);
-		}
+		PopulateNodesStringTable(table, nodesArray, StringTableLookup);
 	});
 
 	if (!OutDialogueRowsStringTable || !OutNodesStringTable)
@@ -2113,6 +2086,98 @@ bool UMounteaDialogueSystemImportExportHelpers::CreateGraphStringTables(UMountea
 	SaveAsset(OutDialogueRowsStringTable);
 	SaveAsset(OutNodesStringTable);
 	return true;
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::ResolveNodeDisplayName(const TSharedPtr<FJsonObject>& NodeData, const TMap<FString, FString>& StringTableLookup)
+{
+	FString displayName;
+	if (!NodeData.IsValid())
+		return displayName;
+
+	FString displayNameKey;
+	if (NodeData->TryGetStringField(TEXT("displayNameKey"), displayNameKey))
+		displayName = StringTableLookup.FindRef(displayNameKey);
+
+	if (displayName.IsEmpty())
+	{
+		const TSharedPtr<FJsonObject>* additionalInfoPtr;
+		if (NodeData->TryGetObjectField(TEXT("additionalInfo"), additionalInfoPtr))
+			(*additionalInfoPtr)->TryGetStringField(TEXT("displayName"), displayName);
+	}
+
+	// Last resort, matching Dialoguer's "... || label": Dialoguer exports "label", UE round-trips use "title"
+	// (same pair PopulateNodeData reads for the node title). Without this a node that has no display name
+	// would point its RowTitle at a Nodes table entry that was never written.
+	if (displayName.IsEmpty() && !NodeData->TryGetStringField(TEXT("label"), displayName))
+		NodeData->TryGetStringField(TEXT("title"), displayName);
+
+	return displayName;
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::ResolveNodeSelectionTitle(const TSharedPtr<FJsonObject>& NodeData, const TMap<FString, FString>& StringTableLookup)
+{
+	FString selectionTitle;
+	if (!NodeData.IsValid())
+		return selectionTitle;
+
+	// The entry can exist but be empty (Dialoguer writes one for every node that supports a Selection Title).
+	FString selectionTitleKey;
+	if (NodeData->TryGetStringField(TEXT("selectionTitleKey"), selectionTitleKey))
+		selectionTitle = StringTableLookup.FindRef(selectionTitleKey);
+
+	if (selectionTitle.IsEmpty())
+		NodeData->TryGetStringField(TEXT("selectionTitle"), selectionTitle);
+
+	return selectionTitle;
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::GetSelectionTitleEntryKey(const FString& NodeId)
+{
+	return NodeId + TEXT(".selection_title");
+}
+
+void UMounteaDialogueSystemImportExportHelpers::PopulateNodesStringTable(UStringTable* Table, const TArray<TSharedPtr<FJsonValue>>& NodesArray, const TMap<FString, FString>& StringTableLookup)
+{
+	if (!Table)
+		return;
+
+	for (const auto& nodeValue : NodesArray)
+	{
+		const TSharedPtr<FJsonObject> nodeObj = nodeValue->AsObject();
+		if (!nodeObj.IsValid())
+			continue;
+
+		FString nodeId;
+		nodeObj->TryGetStringField(TEXT("id"), nodeId);
+
+		const TSharedPtr<FJsonObject>* dataPtr;
+		if (!nodeObj->TryGetObjectField(TEXT("data"), dataPtr))
+			continue;
+
+		const FString displayName = ResolveNodeDisplayName(*dataPtr, StringTableLookup);
+		if (!displayName.IsEmpty())
+			Table->GetMutableStringTable()->SetSourceString(nodeId, displayName);
+
+		const FString selectionTitle = ResolveNodeSelectionTitle(*dataPtr, StringTableLookup);
+		if (!selectionTitle.IsEmpty())
+			Table->GetMutableStringTable()->SetSourceString(GetSelectionTitleEntryKey(nodeId), selectionTitle);
+	}
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::GetRowTitleEntryKey(const UStringTable* NodesStringTable, const FString& NodeId)
+{
+	// Selection Title is what the choice button shows; only nodes that have a non-empty one get the entry.
+	const FString selectionTitleKey = GetSelectionTitleEntryKey(NodeId);
+	FString unused;
+	if (NodesStringTable && NodesStringTable->GetStringTable()->GetSourceString(FTextKey(selectionTitleKey), unused))
+		return selectionTitleKey;
+
+	return NodeId;
+}
+
+FText UMounteaDialogueSystemImportExportHelpers::MakeRowTitle(const UStringTable* NodesStringTable, const FString& NodeId)
+{
+	return FText::FromStringTable(NodesStringTable->GetStringTableId(), GetRowTitleEntryKey(NodesStringTable, NodeId));
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::CreateGraphDataTables(UMounteaDialogueGraph* Graph, IAssetTools& AssetTools, UDataTable*& OutParticipantsTable, UDataTable*& OutDialogueRowsTable)
@@ -2284,7 +2349,7 @@ void UMounteaDialogueSystemImportExportHelpers::ProcessDialogueRowGroup(
 	newRow.RowGUID = FGuid(NodeId);
 	newRow.DialogueParticipantName = participant->ParticipantName;
 	newRow.CompatibleTags.AddTag(participant->ParticipantCategoryTag);
-	newRow.RowTitle = FText::FromStringTable(NodesStringTable->GetStringTableId(), NodeId);
+	newRow.RowTitle = MakeRowTitle(NodesStringTable, NodeId);
 
 	for (const auto& rowObj : Rows)
 	{

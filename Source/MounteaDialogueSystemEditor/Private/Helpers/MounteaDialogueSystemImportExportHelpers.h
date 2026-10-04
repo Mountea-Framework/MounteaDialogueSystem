@@ -136,6 +136,33 @@ private:
 		UStringTable*& OutDialogueRowsStringTable,
 		UStringTable*& OutNodesStringTable);
 
+	// ── Node titles (Nodes string table) ─────────────────────────────────────────
+	// A node has two player-facing titles: its display name and its Selection Title (the text of the
+	// choice button). Dialoguer labels choices "selectionTitle || displayName || label"; these helpers
+	// mirror that chain for the default locale. Both take the node's "data" JSON object.
+
+	// displayNameKey lookup → additionalInfo.displayName → data.label.
+	static FString ResolveNodeDisplayName(const TSharedPtr<FJsonObject>& NodeData, const TMap<FString, FString>& StringTableLookup);
+
+	// selectionTitleKey lookup → inline data.selectionTitle (older exports). Empty if the node has none.
+	static FString ResolveNodeSelectionTitle(const TSharedPtr<FJsonObject>& NodeData, const TMap<FString, FString>& StringTableLookup);
+
+	// Nodes table key of a node's Selection Title entry. The display name entry is keyed by the bare NodeId.
+	static FString GetSelectionTitleEntryKey(const FString& NodeId);
+
+	// Fills the Nodes string table: NodeId → display name, and <NodeId>.selection_title → Selection Title
+	// when the node has a non-empty one.
+	static void PopulateNodesStringTable(UStringTable* Table, const TArray<TSharedPtr<FJsonValue>>& NodesArray, const TMap<FString, FString>& StringTableLookup);
+
+	// Picks the Nodes table entry a node's RowTitle (the choice button text) should read: the Selection Title
+	// entry when the table has one, otherwise the display name entry.
+	static FString GetRowTitleEntryKey(const UStringTable* NodesStringTable, const FString& NodeId);
+	static FText MakeRowTitle(const UStringTable* NodesStringTable, const FString& NodeId);
+
+#if WITH_DEV_AUTOMATION_TESTS
+	friend struct FMounteaDialogueImportTestAccess;
+#endif
+
 	// Creates (or loads existing) DT_*_Participants and DT_*_DialogueRows data tables (empty).
 	static bool CreateGraphDataTables(
 		UMounteaDialogueGraph* Graph,
