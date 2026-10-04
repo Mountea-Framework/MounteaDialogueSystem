@@ -23,6 +23,7 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueGraphNode_ReturnToNode : public 
 public:
 
 	virtual void ProcessNode_Implementation(const TScriptInterface<IMounteaDialogueManagerInterface>& Manager) override;
+	virtual void CleanupNode_Implementation() override;
 
 public:
 
@@ -45,7 +46,11 @@ public:
 		meta=(HiddenInGraph))
 	FString SelectedNodeIndex;
 
-	UPROPERTY(SaveGame, Category="Return", EditAnywhere, BlueprintReadOnly, 
+	/**
+	 * Skip the target node's line and continue directly with its children.
+	 * When off, the dialogue jumps back to the target node and plays it again.
+	 */
+	UPROPERTY(SaveGame, Category="Return", EditAnywhere, BlueprintReadOnly,
 		meta=(EditCondition ="SelectedNode!=nullptr"),
 		meta=(NoResetToDefault))
 	uint8 bAutoCompleteSelectedNode : 1;
@@ -73,6 +78,10 @@ public:
 #endif
 
 protected:
+
+#if WITH_DEV_AUTOMATION_TESTS
+	friend struct FMounteaDialogueReturnTestAccess;
+#endif
 
 	FTimerHandle TimerHandle_Delay;
 

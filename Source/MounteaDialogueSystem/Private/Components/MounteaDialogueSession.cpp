@@ -24,6 +24,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Net/Core/PushModel/PushModel.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
+#include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 #include "Settings/MounteaDialogueSystemSettings.h"
 #include "Subsystem/MounteaDialogueWorldSubsystem.h"
 #include "TimerManager.h"
@@ -493,15 +494,7 @@ bool UMounteaDialogueSession::HandleSelectNode(UMounteaDialogueManager* Manager,
 		false
 	});
 
-	UMounteaDialogueGraphNode* selectedNode = nullptr;
-	for (UMounteaDialogueGraphNode* childNode : dialogueContext->GetChildrenNodes())
-	{
-		if (IsValid(childNode) && childNode->GetNodeGUID() == NodeGUID)
-		{
-			selectedNode = childNode;
-			break;
-		}
-	}
+	UMounteaDialogueGraphNode* selectedNode = UMounteaDialogueTraversalStatics::FindSelectableNode(dialogueContext, NodeGUID);
 
 	if (!IsValid(selectedNode))
 	{
@@ -509,6 +502,14 @@ bool UMounteaDialogueSession::HandleSelectNode(UMounteaDialogueManager* Manager,
 		LOG_ERROR(TEXT("%s"), *errorMessage);
 		Manager->GetDialogueFailedEventHandle().Broadcast(errorMessage);
 		return false;
+	}
+
+	// Leaving a Return node: it jumps via SelectNode, so it never passes through HandleNodeProcessed, which is
+	// where a finished node is normally cleaned up. Do the same here.
+	if (IsValid(dialogueContext->ActiveNode) && dialogueContext->ActiveNode->IsA<UMounteaDialogueGraphNode_ReturnToNode>())
+	{
+		Manager->GetDialogueNodeFinishedEventHandle().Broadcast(dialogueContext);
+		dialogueContext->ActiveNode->CleanupNode();
 	}
 
 	TArray<UMounteaDialogueGraphNode*> allowedChildNodes = UMounteaDialogueTraversalStatics::GetAllowedChildNodesFiltered(selectedNode, dialogueContext);
