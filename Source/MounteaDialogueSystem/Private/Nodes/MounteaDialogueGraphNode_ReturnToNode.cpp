@@ -60,6 +60,15 @@ void UMounteaDialogueGraphNode_ReturnToNode::ProcessNode_Implementation(const TS
 	Super::ProcessNode_Implementation(Manager);
 }
 
+void UMounteaDialogueGraphNode_ReturnToNode::CleanupNode_Implementation()
+{
+	// Cancel a pending jump. Must happen before Super, which clears OwningWorld (and with it GetWorld()).
+	if (const UWorld* world = GetWorld())
+		world->GetTimerManager().ClearTimer(TimerHandle_Delay);
+
+	Super::CleanupNode_Implementation();
+}
+
 void UMounteaDialogueGraphNode_ReturnToNode::OnDelayDurationExpired(const TScriptInterface<IMounteaDialogueManagerInterface>& MounteaDialogueManagerInterface)
 {
 	if (!SelectedNode || !MounteaDialogueManagerInterface)
@@ -68,6 +77,11 @@ void UMounteaDialogueGraphNode_ReturnToNode::OnDelayDurationExpired(const TScrip
 	UObject* managerObject = MounteaDialogueManagerInterface.GetObject();
 	UMounteaDialogueContext* Context = IMounteaDialogueManagerInterface::Execute_GetDialogueContext(managerObject);
 	if (!Context)
+		return;
+
+	// The delay can outlive this node's turn (already jumped, dialogue closed and restarted, or SelectNode sent
+	// early by a client). Jumping then would select a node that is no longer valid and end the dialogue.
+	if (Context->ActiveNode != this)
 		return;
 
 	if (bAutoCompleteSelectedNode)

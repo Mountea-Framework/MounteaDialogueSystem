@@ -59,13 +59,9 @@
 #include "Interfaces/IPluginManager.h"
 #include "IImageWrapper.h"
 #include "IImageWrapperModule.h"
-#include "Engine/Texture.h"
-#include "Engine/Texture2D.h"
 #include "Engine/TextureDefines.h"
-#include "HAL/PlatformFileManager.h"
 
 #include "UObject/SavePackage.h"
-#include "UObject/UObjectIterator.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
 // ---------------------------------------------------------------------------
@@ -1998,7 +1994,7 @@ void UMounteaDialogueSystemImportExportHelpers::BuildStringTableLookup(const TMa
 			if (localeValues.Num() > 0 && localeValues[0].IsValid())
 				text = localeValues[0]->AsString();
 		}
-		OutLookup.Add(FString(entry.Key), text);
+		OutLookup.Add(entry.Key, text);
 	}
 }
 
@@ -2072,40 +2068,13 @@ bool UMounteaDialogueSystemImportExportHelpers::CreateGraphStringTables(UMountea
 				rowText = StringTableLookup.FindRef(tableKey);
 
 			if (!tableKey.IsEmpty())
-				table->GetMutableStringTable()->SetSourceString(tableKey, rowText, TEXT(""));
+				table->GetMutableStringTable()->SetSourceString(tableKey, rowText);
 		}
 	});
 
 	OutNodesStringTable = CreateStringTable(AssetTools, packagePath, stNodesName, [&](UStringTable* table)
 	{
-		for (const auto& nodeValue : nodesArray)
-		{
-			const TSharedPtr<FJsonObject> nodeObj = nodeValue->AsObject();
-			if (!nodeObj.IsValid())
-				continue;
-
-			FString nodeId;
-			nodeObj->TryGetStringField(TEXT("id"), nodeId);
-
-			const TSharedPtr<FJsonObject>* dataPtr;
-			if (!nodeObj->TryGetObjectField(TEXT("data"), dataPtr))
-				continue;
-
-			FString displayName;
-			FString displayNameKey;
-			if ((*dataPtr)->TryGetStringField(TEXT("displayNameKey"), displayNameKey))
-				displayName = StringTableLookup.FindRef(displayNameKey);
-
-			if (displayName.IsEmpty())
-			{
-				const TSharedPtr<FJsonObject>* additionalInfoPtr;
-				if ((*dataPtr)->TryGetObjectField(TEXT("additionalInfo"), additionalInfoPtr))
-					(*additionalInfoPtr)->TryGetStringField(TEXT("displayName"), displayName);
-			}
-
-			if (!displayName.IsEmpty())
-				table->GetMutableStringTable()->SetSourceString(nodeId, displayName, TEXT(""));
-		}
+		PopulateNodesStringTable(table, nodesArray, StringTableLookup);
 	});
 
 	if (!OutDialogueRowsStringTable || !OutNodesStringTable)
@@ -2117,6 +2086,98 @@ bool UMounteaDialogueSystemImportExportHelpers::CreateGraphStringTables(UMountea
 	SaveAsset(OutDialogueRowsStringTable);
 	SaveAsset(OutNodesStringTable);
 	return true;
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::ResolveNodeDisplayName(const TSharedPtr<FJsonObject>& NodeData, const TMap<FString, FString>& StringTableLookup)
+{
+	FString displayName;
+	if (!NodeData.IsValid())
+		return displayName;
+
+	FString displayNameKey;
+	if (NodeData->TryGetStringField(TEXT("displayNameKey"), displayNameKey))
+		displayName = StringTableLookup.FindRef(displayNameKey);
+
+	if (displayName.IsEmpty())
+	{
+		const TSharedPtr<FJsonObject>* additionalInfoPtr;
+		if (NodeData->TryGetObjectField(TEXT("additionalInfo"), additionalInfoPtr))
+			(*additionalInfoPtr)->TryGetStringField(TEXT("displayName"), displayName);
+	}
+
+	// Last resort, matching Dialoguer's "... || label": Dialoguer exports "label", UE round-trips use "title"
+	// (same pair PopulateNodeData reads for the node title). Without this a node that has no display name
+	// would point its RowTitle at a Nodes table entry that was never written.
+	if (displayName.IsEmpty() && !NodeData->TryGetStringField(TEXT("label"), displayName))
+		NodeData->TryGetStringField(TEXT("title"), displayName);
+
+	return displayName;
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::ResolveNodeSelectionTitle(const TSharedPtr<FJsonObject>& NodeData, const TMap<FString, FString>& StringTableLookup)
+{
+	FString selectionTitle;
+	if (!NodeData.IsValid())
+		return selectionTitle;
+
+	// The entry can exist but be empty (Dialoguer writes one for every node that supports a Selection Title).
+	FString selectionTitleKey;
+	if (NodeData->TryGetStringField(TEXT("selectionTitleKey"), selectionTitleKey))
+		selectionTitle = StringTableLookup.FindRef(selectionTitleKey);
+
+	if (selectionTitle.IsEmpty())
+		NodeData->TryGetStringField(TEXT("selectionTitle"), selectionTitle);
+
+	return selectionTitle;
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::GetSelectionTitleEntryKey(const FString& NodeId)
+{
+	return NodeId + TEXT(".selection_title");
+}
+
+void UMounteaDialogueSystemImportExportHelpers::PopulateNodesStringTable(UStringTable* Table, const TArray<TSharedPtr<FJsonValue>>& NodesArray, const TMap<FString, FString>& StringTableLookup)
+{
+	if (!Table)
+		return;
+
+	for (const auto& nodeValue : NodesArray)
+	{
+		const TSharedPtr<FJsonObject> nodeObj = nodeValue->AsObject();
+		if (!nodeObj.IsValid())
+			continue;
+
+		FString nodeId;
+		nodeObj->TryGetStringField(TEXT("id"), nodeId);
+
+		const TSharedPtr<FJsonObject>* dataPtr;
+		if (!nodeObj->TryGetObjectField(TEXT("data"), dataPtr))
+			continue;
+
+		const FString displayName = ResolveNodeDisplayName(*dataPtr, StringTableLookup);
+		if (!displayName.IsEmpty())
+			Table->GetMutableStringTable()->SetSourceString(nodeId, displayName);
+
+		const FString selectionTitle = ResolveNodeSelectionTitle(*dataPtr, StringTableLookup);
+		if (!selectionTitle.IsEmpty())
+			Table->GetMutableStringTable()->SetSourceString(GetSelectionTitleEntryKey(nodeId), selectionTitle);
+	}
+}
+
+FString UMounteaDialogueSystemImportExportHelpers::GetRowTitleEntryKey(const UStringTable* NodesStringTable, const FString& NodeId)
+{
+	// Selection Title is what the choice button shows; only nodes that have a non-empty one get the entry.
+	const FString selectionTitleKey = GetSelectionTitleEntryKey(NodeId);
+	FString unused;
+	if (NodesStringTable && NodesStringTable->GetStringTable()->GetSourceString(FTextKey(selectionTitleKey), unused))
+		return selectionTitleKey;
+
+	return NodeId;
+}
+
+FText UMounteaDialogueSystemImportExportHelpers::MakeRowTitle(const UStringTable* NodesStringTable, const FString& NodeId)
+{
+	return FText::FromStringTable(NodesStringTable->GetStringTableId(), GetRowTitleEntryKey(NodesStringTable, NodeId));
 }
 
 bool UMounteaDialogueSystemImportExportHelpers::CreateGraphDataTables(UMounteaDialogueGraph* Graph, IAssetTools& AssetTools, UDataTable*& OutParticipantsTable, UDataTable*& OutDialogueRowsTable)
@@ -2288,7 +2349,7 @@ void UMounteaDialogueSystemImportExportHelpers::ProcessDialogueRowGroup(
 	newRow.RowGUID = FGuid(NodeId);
 	newRow.DialogueParticipantName = participant->ParticipantName;
 	newRow.CompatibleTags.AddTag(participant->ParticipantCategoryTag);
-	newRow.RowTitle = FText::FromStringTable(NodesStringTable->GetStringTableId(), NodeId);
+	newRow.RowTitle = MakeRowTitle(NodesStringTable, NodeId);
 
 	for (const auto& rowObj : Rows)
 	{
@@ -2347,7 +2408,7 @@ void UMounteaDialogueSystemImportExportHelpers::ExportLocalizationPoFiles(
 		if (!localeMap.IsValid())
 			continue;
 		for (const auto& localePair : localeMap->Values)
-			allLocales.Add(FString(localePair.Key));
+			allLocales.Add(localePair.Key);
 		break; // one entry is enough to enumerate locales
 	}
 
@@ -2366,7 +2427,7 @@ void UMounteaDialogueSystemImportExportHelpers::ExportLocalizationPoFiles(
 
 		for (const auto& entryPair : entriesObject->Values)
 		{
-			const FString textKey(entryPair.Key);
+			const FString& textKey = entryPair.Key;
 			const TSharedPtr<FJsonObject> localeMap = entryPair.Value->AsObject();
 			if (!localeMap.IsValid())
 				continue;
@@ -2596,7 +2657,7 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateNodesJson(const TArray<
 
 		TSharedPtr<FJsonObject> NodeObject = MakeShareable(new FJsonObject);
 		NodeObject->SetStringField((TEXT("id")), Data.Node->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
-		NodeObject->SetStringField(TEXT("type"), Data.Type);
+		NodeObject->SetStringField("type", Data.Type);
 		NodeObject->SetNumberField(TEXT("executionOrder"), Data.Node->ExecutionOrder);
 
 		AddNodePosition(NodeObject, Data.Node);
@@ -2619,20 +2680,20 @@ void UMounteaDialogueSystemImportExportHelpers::AddNodePosition(const TSharedPtr
 	if (!IsValid(Node))
 	{
 		EditorLOG_WARNING(TEXT("[AddNodePosition] Invalid Graph or EdGraph for node!"));
-		NodeObject->SetObjectField(TEXT("position"), PositionObject);
+		NodeObject->SetObjectField("position", PositionObject);
 		return;
 	}
 	
-	PositionObject->SetNumberField(TEXT("x"), Node->NodePosition.X);
-	PositionObject->SetNumberField(TEXT("y"), Node->NodePosition.Y);
-
-	NodeObject->SetObjectField(TEXT("position"), PositionObject);
+	PositionObject->SetNumberField("x", Node->NodePosition.X);
+	PositionObject->SetNumberField("y", Node->NodePosition.Y);
+	
+	NodeObject->SetObjectField("position", PositionObject);
 }
 
 void UMounteaDialogueSystemImportExportHelpers::AddNodeData(const TSharedPtr<FJsonObject>& NodeObject, const UMounteaDialogueGraphNode* Node)
 {
 	const TSharedPtr<FJsonObject> DataObject = MakeShareable(new FJsonObject);
-	DataObject->SetStringField(TEXT("title"), Node->NodeTitle.ToString());
+	DataObject->SetStringField("title", Node->NodeTitle.ToString());
 
 	// Export node decorators — id and name read from the CLASS CDO so they match the
 	// definition GUID and human-readable Dialoguer name set during Blueprint creation.
@@ -2682,8 +2743,8 @@ void UMounteaDialogueSystemImportExportHelpers::AddNodeData(const TSharedPtr<FJs
 	if (const UMounteaDialogueGraphNode_OpenChildGraph* OpenChildGraphNode = Cast<UMounteaDialogueGraphNode_OpenChildGraph>(Node))
 		AddOpenChildGraphNodeData(AdditionalInfoObject, OpenChildGraphNode);
 
-	DataObject->SetObjectField(TEXT("additionalInfo"), AdditionalInfoObject);
-	NodeObject->SetObjectField(TEXT("data"), DataObject);
+	DataObject->SetObjectField("additionalInfo", AdditionalInfoObject);
+	NodeObject->SetObjectField("data", DataObject);
 }
 
 void UMounteaDialogueSystemImportExportHelpers::AddDialogueNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode)
@@ -2707,12 +2768,12 @@ void UMounteaDialogueSystemImportExportHelpers::AddDialogueNodeData(const TShare
 		return;
 	}
 
-	AdditionalInfoObject->SetStringField(TEXT("displayName"), DialogueRowRef->RowTitle.ToString());
+	AdditionalInfoObject->SetStringField("displayName", DialogueRowRef->RowTitle.ToString());
 
 	TSharedPtr<FJsonObject> ParticipantObject = MakeShareable(new FJsonObject);
-	ParticipantObject->SetStringField(TEXT("name"), !DialogueRowRef->DialogueParticipantName.IsNone() ? DialogueRowRef->DialogueParticipantName.ToString() : DialogueRowRef->DialogueParticipant.ToString());
-	ParticipantObject->SetStringField(TEXT("category"), DialogueRowRef->CompatibleTags.First().ToString());
-	AdditionalInfoObject->SetObjectField(TEXT("participant"), ParticipantObject);
+	ParticipantObject->SetStringField("name", !DialogueRowRef->DialogueParticipantName.IsNone() ? DialogueRowRef->DialogueParticipantName.ToString() : DialogueRowRef->DialogueParticipant.ToString());
+	ParticipantObject->SetStringField("category", DialogueRowRef->CompatibleTags.First().ToString());
+	AdditionalInfoObject->SetObjectField("participant", ParticipantObject);
 
 	const FString GraphFolder = FPaths::GetPath(DialogueNode->Graph->GetPathName());
 
@@ -2721,30 +2782,30 @@ void UMounteaDialogueSystemImportExportHelpers::AddDialogueNodeData(const TShare
 	{
 		const TSharedPtr<FJsonObject> RowObject = MakeShareable(new FJsonObject);
 		RowObject->SetStringField((TEXT("id")), RowData.RowGUID.ToString(EGuidFormats::DigitsWithHyphensLower));
-		RowObject->SetStringField(TEXT("text"), RowData.RowText.ToString());
-		RowObject->SetStringField(TEXT("audio"), GetRelativeAudioPath(RowData.RowSound, GraphFolder));
+		RowObject->SetStringField("text", RowData.RowText.ToString());
+		RowObject->SetStringField("audio", GetRelativeAudioPath(RowData.RowSound, GraphFolder));
 		DialogueRowsArray.Add(MakeShareable(new FJsonValueObject(RowObject)));
 	}
-	AdditionalInfoObject->SetArrayField(TEXT("dialogueRows"), DialogueRowsArray);
+	AdditionalInfoObject->SetArrayField("dialogueRows", DialogueRowsArray);
 }
 
 void UMounteaDialogueSystemImportExportHelpers::AddJumpNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_ReturnToNode* Node)
 {
 	if (Node && Node->SelectedNode)
-		AdditionalInfoObject->SetStringField(TEXT("targetNodeId"), Node->SelectedNode->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
+		AdditionalInfoObject->SetStringField("targetNodeId", Node->SelectedNode->GetNodeGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
 	else
-		AdditionalInfoObject->SetStringField(TEXT("targetNodeId"), TEXT(""));
+		AdditionalInfoObject->SetStringField("targetNodeId", "");
 }
 
 void UMounteaDialogueSystemImportExportHelpers::AddOpenChildGraphNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_OpenChildGraph* Node)
 {
 	if (!Node)
 	{
-		AdditionalInfoObject->SetStringField(TEXT("targetDialogue"), TEXT(""));
+		AdditionalInfoObject->SetStringField("targetDialogue", "");
 		return;
 	}
 
-	AdditionalInfoObject->SetStringField(TEXT("targetDialogue"), Node->TargetDialogue.ToSoftObjectPath().ToString());
+	AdditionalInfoObject->SetStringField("targetDialogue", Node->TargetDialogue.ToSoftObjectPath().ToString());
 }
 
 FString UMounteaDialogueSystemImportExportHelpers::CreateEdgesJson(const UMounteaDialogueGraph* Graph)
@@ -3068,12 +3129,12 @@ FString UMounteaDialogueSystemImportExportHelpers::CreateDialogueDataJson(const 
 
 	TSharedPtr<FJsonObject> DialogueDataObject = MakeShareable(new FJsonObject);
 
-	DialogueDataObject->SetStringField(TEXT("dialogueGuid"), Graph->GetGraphGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
-	DialogueDataObject->SetStringField(TEXT("dialogueName"), Graph->GetName());
+	DialogueDataObject->SetStringField("dialogueGuid", Graph->GetGraphGUID().ToString(EGuidFormats::DigitsWithHyphensLower));
+	DialogueDataObject->SetStringField("dialogueName", Graph->GetName());
 
 	const FDateTime CurrentTime = FDateTime::UtcNow();
 	const FString FormattedDate = CurrentTime.ToIso8601();
-	DialogueDataObject->SetStringField(TEXT("modifiedOnDate"), FormattedDate);
+	DialogueDataObject->SetStringField("modifiedOnDate", FormattedDate);
 
 	FString OutputString;
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
