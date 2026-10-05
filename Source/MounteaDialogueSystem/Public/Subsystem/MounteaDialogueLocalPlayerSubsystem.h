@@ -26,8 +26,16 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueLocalPlayerSubsystem : public UL
 
 public:
 
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
-	
+
+	/**
+	 * Removes the wrapper widget from the screen and forgets it, so the next InitializeViewportWidget builds a
+	 * fresh one. This subsystem outlives levels, so a wrapper left over from a previous world would otherwise
+	 * keep its stale child widgets.
+	 */
+	void ResetViewportWidget();
+
 	void SetViewportBaseClass(TSubclassOf<UUserWidget> NewViewportBaseClass);
 	
 	TSubclassOf<UUserWidget> GetViewportBaseClassSafe() const;
@@ -45,8 +53,18 @@ public:
 	// ~IMounteaDialogueHUDClassInterface
 
 private:
+#if WITH_DEV_AUTOMATION_TESTS
+	friend struct FMounteaDialogueTestAccess;
+#endif
+
+	void HandleWorldBeginTearDown(UWorld* World);
+
 	UPROPERTY(Transient)
 	TObjectPtr<UUserWidget> ViewportWidget = nullptr;
+
+	// World the wrapper was created for. UUserWidget::GetWorld() can follow the player context into the
+	// current world, so it cannot be trusted to detect a wrapper left over from a previous one.
+	TWeakObjectPtr<UWorld> ViewportWidgetWorld;
 
 	UPROPERTY(Transient)
 	TSubclassOf<UUserWidget> ViewportBaseClass = nullptr;

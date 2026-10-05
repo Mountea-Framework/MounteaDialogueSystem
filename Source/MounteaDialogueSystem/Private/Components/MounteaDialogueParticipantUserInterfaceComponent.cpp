@@ -54,6 +54,10 @@ void UMounteaDialogueParticipantUserInterfaceComponent::BeginPlay()
 
 void UMounteaDialogueParticipantUserInterfaceComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	// Must run before UnbindFromManager: CloseDialogueUI passes ParentManager to the widget.
+	// Without this the widget stays parented to the viewport wrapper, which outlives the level.
+	Execute_CloseDialogueUI(this);
+
 	if (ParentManager.GetObject())
 		Execute_UnbindFromManager(this);
 
@@ -212,8 +216,11 @@ bool UMounteaDialogueParticipantUserInterfaceComponent::CloseDialogueUI_Implemen
 		}
 	}
 
-	IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(UserInterface, ParentManager, MounteaDialogueWidgetCommands::CloseDialogueWidget);
-	IMounteaDialogueUIBaseInterface::Execute_UnbindEvents(UserInterface);
+	// UserInterface is whatever object SetUserInterface was given; the Execute_ helpers assert on non-implementers.
+	if (UserInterface->Implements<UMounteaDialogueWBPInterface>())
+		IMounteaDialogueWBPInterface::Execute_RefreshDialogueWidget(UserInterface, ParentManager, MounteaDialogueWidgetCommands::CloseDialogueWidget);
+	if (UserInterface->Implements<UMounteaDialogueUIBaseInterface>())
+		IMounteaDialogueUIBaseInterface::Execute_UnbindEvents(UserInterface);
 	UserInterface = nullptr;
 	return true;
 }

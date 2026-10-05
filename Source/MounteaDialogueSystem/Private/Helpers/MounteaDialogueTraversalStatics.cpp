@@ -21,6 +21,7 @@
 #include "Interfaces/Nodes/MounteaDialogueSpeechDataInterface.h"
 #include "Nodes/MounteaDialogueGraphNode.h"
 #include "Nodes/MounteaDialogueGraphNode_DialogueNodeBase.h"
+#include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 #include "Settings/MounteaDialogueSystemSettings.h"
 #include "Sound/SoundBase.h"
 
@@ -45,6 +46,27 @@ TArray<UMounteaDialogueGraphNode*> UMounteaDialogueTraversalStatics::GetAllowedC
 	}
 
 	return returnNodes;
+}
+
+UMounteaDialogueGraphNode* UMounteaDialogueTraversalStatics::FindSelectableNode(const UMounteaDialogueContext* Context, const FGuid& NodeGUID)
+{
+	if (!IsValid(Context))
+		return nullptr;
+
+	for (UMounteaDialogueGraphNode* childNode : Context->GetChildrenNodes())
+	{
+		if (IsValid(childNode) && childNode->GetNodeGUID() == NodeGUID)
+			return childNode;
+	}
+
+	// A Return node has no children; its target (often an ancestor) is selectable only while the Return node is active.
+	if (const UMounteaDialogueGraphNode_ReturnToNode* returnNode = Cast<UMounteaDialogueGraphNode_ReturnToNode>(Context->ActiveNode))
+	{
+		if (IsValid(returnNode->SelectedNode) && returnNode->SelectedNode->GetNodeGUID() == NodeGUID)
+			return returnNode->SelectedNode;
+	}
+
+	return nullptr;
 }
 
 UMounteaDialogueGraphNode* UMounteaDialogueTraversalStatics::GetFirstChildNode(const UMounteaDialogueGraphNode* ParentNode)

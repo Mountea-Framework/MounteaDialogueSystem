@@ -13,15 +13,46 @@
 
 #include "Blueprint/UserWidget.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/World.h"
 #include "Interfaces/UMG/MounteaDialogueViewportWidgetInterface.h"
 #include "Settings/MounteaDialogueSystemSettings.h"
 
+void UMounteaDialogueLocalPlayerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+
+	FWorldDelegates::OnWorldBeginTearDown.AddUObject(this, &UMounteaDialogueLocalPlayerSubsystem::HandleWorldBeginTearDown);
+}
+
 void UMounteaDialogueLocalPlayerSubsystem::Deinitialize()
 {
-	ViewportWidget = nullptr;
+	FWorldDelegates::OnWorldBeginTearDown.RemoveAll(this);
+
+	ResetViewportWidget();
 	ViewportBaseClass = nullptr;
 
 	Super::Deinitialize();
+}
+
+void UMounteaDialogueLocalPlayerSubsystem::ResetViewportWidget()
+{
+	if (IsValid(ViewportWidget))
+		ViewportWidget->RemoveFromParent();
+
+	ViewportWidget = nullptr;
+	ViewportWidgetWorld.Reset();
+}
+
+void UMounteaDialogueLocalPlayerSubsystem::HandleWorldBeginTearDown(UWorld* World)
+{
+	if (!World || !IsValid(ViewportWidget))
+		return;
+
+	// Drop the wrapper only when its own world (or the subsystem's current one) is going away.
+	// A wrapper whose world is already gone also counts as dead.
+	const UWorld* wrapperWorld = ViewportWidgetWorld.Get();
+	if (!wrapperWorld || wrapperWorld == World || GetWorld() == World)
+		ResetViewportWidget();
 }
 
 void UMounteaDialogueLocalPlayerSubsystem::SetViewportBaseClass(TSubclassOf<UUserWidget> NewViewportBaseClass)
@@ -51,8 +82,15 @@ TSubclassOf<UUserWidget> UMounteaDialogueLocalPlayerSubsystem::GetViewportBaseCl
 
 void UMounteaDialogueLocalPlayerSubsystem::InitializeViewportWidget_Implementation()
 {
+	// Reuse the wrapper only while it still belongs to the current world; this subsystem outlives levels,
+	// so a wrapper from a previous world would otherwise bring its stale child widgets along.
 	if (IsValid(ViewportWidget))
-		return;
+	{
+		if (ViewportWidgetWorld.Get() == GetWorld())
+			return;
+
+		ResetViewportWidget();
+	}
 
 	if (!ViewportBaseClass)
 	{
@@ -73,6 +111,7 @@ void UMounteaDialogueLocalPlayerSubsystem::InitializeViewportWidget_Implementati
 	if (!IsValid(ViewportWidget))
 		return;
 
+	ViewportWidgetWorld = GetWorld();
 	ViewportWidget->AddToPlayerScreen();
 }
 

@@ -36,6 +36,17 @@ public:
 		const UMounteaDialogueGraphNode* ParentNode,
 		const TScriptInterface<IMounteaDialogueConditionContextInterface>& ConditionContext);
 
+	/**
+	 * Resolves the node a SelectNode request refers to.
+	 * A node is selectable if it is one of the context's current children, or if the active node is a
+	 * Return To Node and NodeGUID is that Return node's own target (which is usually NOT one of its children,
+	 * since a Return node has none). Anything else is not selectable, so a client cannot use SelectNode to
+	 * jump to an arbitrary node.
+	 *
+	 * @return The selectable node, or nullptr.
+	 */
+	static UMounteaDialogueGraphNode* FindSelectableNode(const UMounteaDialogueContext* Context, const FGuid& NodeGUID);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Helpers",
 		meta=(CustomTag="MounteaK2Getter"))
 	static UMounteaDialogueGraphNode* GetFirstChildNode(const UMounteaDialogueGraphNode* ParentNode);
