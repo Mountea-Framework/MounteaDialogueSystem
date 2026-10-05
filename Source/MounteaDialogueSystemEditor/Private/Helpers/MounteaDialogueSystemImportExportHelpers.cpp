@@ -1,4 +1,4 @@
-﻿// All rights reserved Dominik Morse (Pavlicek) 2024
+// All rights reserved Dominik Morse (Pavlicek) 2024
 
 #include "MounteaDialogueSystemImportExportHelpers.h"
 
@@ -36,6 +36,7 @@
 
 #include "Internationalization/StringTable.h"
 #include "Internationalization/StringTableCore.h"
+#include "Helpers/MounteaDialogueEngineCompat.h"
 
 #include "Nodes/MounteaDialogueGraphNode_AnswerNode.h"
 #include "Nodes/MounteaDialogueGraphNode_CompleteNode.h"
@@ -1994,7 +1995,7 @@ void UMounteaDialogueSystemImportExportHelpers::BuildStringTableLookup(const TMa
 			if (localeValues.Num() > 0 && localeValues[0].IsValid())
 				text = localeValues[0]->AsString();
 		}
-		OutLookup.Add(entry.Key, text);
+		OutLookup.Add(MounteaDialogueCompat::JsonKeyToString(entry.Key), text);
 	}
 }
 
@@ -2068,7 +2069,7 @@ bool UMounteaDialogueSystemImportExportHelpers::CreateGraphStringTables(UMountea
 				rowText = StringTableLookup.FindRef(tableKey);
 
 			if (!tableKey.IsEmpty())
-				table->GetMutableStringTable()->SetSourceString(tableKey, rowText);
+				MounteaDialogueCompat::SetStringTableSourceString(*table->GetMutableStringTable(), tableKey, rowText);
 		}
 	});
 
@@ -2156,11 +2157,11 @@ void UMounteaDialogueSystemImportExportHelpers::PopulateNodesStringTable(UString
 
 		const FString displayName = ResolveNodeDisplayName(*dataPtr, StringTableLookup);
 		if (!displayName.IsEmpty())
-			Table->GetMutableStringTable()->SetSourceString(nodeId, displayName);
+			MounteaDialogueCompat::SetStringTableSourceString(*Table->GetMutableStringTable(), nodeId, displayName);
 
 		const FString selectionTitle = ResolveNodeSelectionTitle(*dataPtr, StringTableLookup);
 		if (!selectionTitle.IsEmpty())
-			Table->GetMutableStringTable()->SetSourceString(GetSelectionTitleEntryKey(nodeId), selectionTitle);
+			MounteaDialogueCompat::SetStringTableSourceString(*Table->GetMutableStringTable(), GetSelectionTitleEntryKey(nodeId), selectionTitle);
 	}
 }
 
@@ -2408,7 +2409,7 @@ void UMounteaDialogueSystemImportExportHelpers::ExportLocalizationPoFiles(
 		if (!localeMap.IsValid())
 			continue;
 		for (const auto& localePair : localeMap->Values)
-			allLocales.Add(localePair.Key);
+			allLocales.Add(MounteaDialogueCompat::JsonKeyToString(localePair.Key));
 		break; // one entry is enough to enumerate locales
 	}
 
@@ -2427,7 +2428,7 @@ void UMounteaDialogueSystemImportExportHelpers::ExportLocalizationPoFiles(
 
 		for (const auto& entryPair : entriesObject->Values)
 		{
-			const FString& textKey = entryPair.Key;
+			const FString textKey = MounteaDialogueCompat::JsonKeyToString(entryPair.Key);
 			const TSharedPtr<FJsonObject> localeMap = entryPair.Value->AsObject();
 			if (!localeMap.IsValid())
 				continue;

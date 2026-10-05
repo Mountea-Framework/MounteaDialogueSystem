@@ -14,6 +14,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Helpers/MounteaDialogueSystemImportExportHelpers.h"
+#include "Helpers/MounteaDialogueEngineCompat.h"
 #include "Dom/JsonObject.h"
 #include "Internationalization/StringTable.h"
 #include "Internationalization/StringTableCore.h"
@@ -218,9 +219,9 @@ bool FMounteaDialogueImportRowTitleTest::RunTest(const FString& Parameters)
 	using namespace MounteaDialogueImportTitleTest;
 
 	UStringTable* table = NewTable();
-	table->GetMutableStringTable()->SetSourceString(TEXT("WithSelection"), TEXT("Player"));
-	table->GetMutableStringTable()->SetSourceString(FMounteaDialogueImportTestAccess::GetSelectionTitleEntryKey(TEXT("WithSelection")), TEXT("Knock again"));
-	table->GetMutableStringTable()->SetSourceString(TEXT("DisplayOnly"), TEXT("Complete"));
+	MounteaDialogueCompat::SetStringTableSourceString(*table->GetMutableStringTable(), TEXT("WithSelection"), TEXT("Player"));
+	MounteaDialogueCompat::SetStringTableSourceString(*table->GetMutableStringTable(), FMounteaDialogueImportTestAccess::GetSelectionTitleEntryKey(TEXT("WithSelection")), TEXT("Knock again"));
+	MounteaDialogueCompat::SetStringTableSourceString(*table->GetMutableStringTable(), TEXT("DisplayOnly"), TEXT("Complete"));
 
 	TestEqual(TEXT("Selection title entry wins when present"),
 		FMounteaDialogueImportTestAccess::GetRowTitleEntryKey(table, TEXT("WithSelection")),
