@@ -11,7 +11,7 @@
 
 #include "Misc/AutomationTest.h"
 
-#if WITH_DEV_AUTOMATION_TESTS
+#if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR // editor-only: needs an editor world, kept out of game builds
 
 #include "Tests/MounteaDialogueTestFixtures.h"
 #include "Components/SceneComponent.h"
@@ -279,4 +279,4 @@ bool FMounteaDialogueLocalPlayerSubsystemWorldTearDownTest::RunTest(const FStrin
 	return true;
 }
 
-#endif // WITH_DEV_AUTOMATION_TESTS
+#endif // WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR

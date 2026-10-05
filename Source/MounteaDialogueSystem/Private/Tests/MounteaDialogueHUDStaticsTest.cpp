@@ -11,13 +11,14 @@
 
 #include "Misc/AutomationTest.h"
 
-#if WITH_DEV_AUTOMATION_TESTS
+#if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR // editor-only: needs an editor world, kept out of game builds
 
 #include "Tests/MounteaDialogueTestFixtures.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/SceneComponent.h"
 #include "Helpers/MounteaDialogueHUDStatics.h"
 #include "Interfaces/HUD/MounteaDialogueHUDClassInterface.h"
+#include "UObject/Package.h"
 
 // Tests in this file cover UMounteaDialogueHUDStatics' "viewport manager" helpers when handed a plain
 // APlayerController (one that does NOT implement IMounteaDialogueHUDClassInterface). That path falls
@@ -151,4 +152,4 @@ bool FMounteaDialogueGetViewportBaseClassPlayerControllerTest::RunTest(const FSt
 	return true;
 }
 
-#endif // WITH_DEV_AUTOMATION_TESTS
+#endif // WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR

@@ -11,7 +11,7 @@
 
 #include "Misc/AutomationTest.h"
 
-#if WITH_DEV_AUTOMATION_TESTS
+#if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR // editor-only: needs an editor world, kept out of game builds
 
 #include "Tests/MounteaDialogueTestFixtures.h"
 #include "Components/MounteaDialogueManager.h"
@@ -22,6 +22,7 @@
 #include "Nodes/MounteaDialogueGraphNode_LeadNode.h"
 #include "Nodes/MounteaDialogueGraphNode_ReturnToNode.h"
 #include "TimerManager.h"
+#include "UObject/Package.h"
 
 // Tests in this file cover Return To Node jumping back to a node that is not one of its children, such as an
 // ancestor Lead (Bugreport #5). A Return node has no children, so the generic "select one of the active node's
@@ -223,4 +224,4 @@ bool FMounteaDialogueReturnCleanupClearsTimerTest::RunTest(const FString& Parame
 	return true;
 }
 
-#endif // WITH_DEV_AUTOMATION_TESTS
+#endif // WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR

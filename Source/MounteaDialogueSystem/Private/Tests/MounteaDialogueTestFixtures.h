@@ -11,7 +11,7 @@
 
 #pragma once
 
-#if WITH_DEV_AUTOMATION_TESTS
+#if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR // editor-only: needs an editor world, kept out of game builds
 
 #include "Misc/AutomationTest.h"
 #include "Tests/AutomationCommon.h"
@@ -114,4 +114,4 @@ struct FMounteaDialogueTestAccess
 	}
 };
 
-#endif // WITH_DEV_AUTOMATION_TESTS
+#endif // WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR
