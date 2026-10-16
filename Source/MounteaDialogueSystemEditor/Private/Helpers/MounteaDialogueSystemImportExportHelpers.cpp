@@ -1282,15 +1282,10 @@ TMap<FString, FString> UMounteaDialogueSystemImportExportHelpers::RegisterGamepl
 		return participantTagMap;
 	}
 
-	TSharedPtr<IPlugin> plugin = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"));
-	if (!plugin.IsValid())
-	{
-		EditorLOG_ERROR(TEXT("[RegisterGameplayTags] MounteaDialogueSystem plugin not found — cannot write participant tags"));
-		return participantTagMap;
-	}
-
-	const FString tagsDir = FPaths::Combine(plugin->GetBaseDir(), TEXT("Config"), TEXT("Tags"));
-	const FString tagsIniPath = FPaths::Combine(tagsDir, TEXT("MounteaDialogueSystemTags.ini"));
+	// Project config, not the plugin folder: survives plugin updates and stays per-project.
+	// Own filename: tag source name is the bare filename, so reusing the plugin's would collide with it.
+	const FString tagsDir = FPaths::Combine(FPaths::ProjectConfigDir(), TEXT("Tags"));
+	const FString tagsIniPath = FPaths::Combine(tagsDir, TEXT("MounteaDialogueParticipants.ini"));
 	IPlatformFile::GetPlatformPhysical().CreateDirectoryTree(*tagsDir);
 
 	FString fileContent;
@@ -1363,7 +1358,6 @@ TMap<FString, FString> UMounteaDialogueSystemImportExportHelpers::RegisterGamepl
 	if (bAnyAdded)
 	{
 		FFileHelper::SaveStringToFile(fileContent, *tagsIniPath);
-		UGameplayTagsManager::Get().AddTagIniSearchPath(tagsDir);
 		UGameplayTagsManager::Get().EditorRefreshGameplayTagTree();
 	}
 
