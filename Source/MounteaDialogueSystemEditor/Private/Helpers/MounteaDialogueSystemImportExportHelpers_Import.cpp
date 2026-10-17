@@ -39,6 +39,8 @@
 #include "ImportConfig/MounteaDialogueImportConfig.h"
 #include "Internationalization/StringTable.h"
 #include "Internationalization/StringTableCore.h"
+#include "Internationalization/TextLocalizationManager.h"
+#include "Internationalization/TextLocalizationResource.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Misc/FileHelper.h"
@@ -729,6 +731,10 @@ bool UMounteaDialogueSystemImportExportHelpers::CreateGraphStringTables(UMountea
 
 	WriteLocalizationPoFiles(rowsTableName, defaultLocale, rowTexts);
 	WriteLocalizationPoFiles(nodesTableName, defaultLocale, nodeTexts);
+
+	WriteLocalizationResources(rowsTableName, defaultLocale, rowTexts);
+	WriteLocalizationResources(nodesTableName, defaultLocale, nodeTexts);
+	RegisterLocalizationPath();
 	return true;
 }
 
@@ -789,6 +795,99 @@ void UMounteaDialogueSystemImportExportHelpers::WriteLocalizationPoFiles(const F
 		const FString poPath = FPaths::Combine(locDir, StringTableID + TEXT(".po"));
 		if (!FFileHelper::SaveStringToFile(poContent, *poPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 			EditorLOG_WARNING(TEXT("[WriteLocalizationPoFiles] Failed to write .po file: %s"), *poPath);
+	}
+}
+
+void UMounteaDialogueSystemImportExportHelpers::WriteLocalizationResources(const FString& StringTableID, const FString& DefaultLocale, const TMap<FString, TMap<FString, FString>>& TextsByKeyAndLocale)
+{
+	if (TextsByKeyAndLocale.IsEmpty())
+		return;
+
+	const FString targetRoot = FPaths::Combine(FPaths::ProjectContentDir(), TEXT("Localization"), TEXT("MounteaDialogue"));
+
+	TSet<FString> locales;
+	locales.Add(DefaultLocale);
+	for (const TPair<FString, TMap<FString, FString>>& entry : TextsByKeyAndLocale)
+	{
+		for (const TPair<FString, FString>& localePair : entry.Value)
+			locales.Add(localePair.Key);
+	}
+
+	const FTextKey tableNamespace(StringTableID);
+
+	for (const FString& locale : locales)
+	{
+		const FString locresPath = FPaths::Combine(targetRoot, locale, TEXT("MounteaDialogue.locres"));
+		IPlatformFile::GetPlatformPhysical().CreateDirectoryTree(*FPaths::GetPath(locresPath));
+
+		// One file per culture holds every Mountea table; only this table's entries are replaced.
+		FTextLocalizationResource resource;
+		if (FPaths::FileExists(locresPath))
+			resource.LoadFromFile(locresPath, 0);
+
+		for (auto it = resource.Entries.CreateIterator(); it; ++it)
+		{
+			if (it.Key().GetNamespace() == tableNamespace)
+				it.RemoveCurrent();
+		}
+
+		for (const TPair<FString, TMap<FString, FString>>& entry : TextsByKeyAndLocale)
+		{
+			const FString source = entry.Value.FindRef(DefaultLocale);
+			const FString* translated = entry.Value.Find(locale);
+			// A missing translation is left out so the text falls back to the string table's source.
+			if (locale != DefaultLocale && (!translated || translated->IsEmpty()))
+				continue;
+
+			resource.AddEntry(tableNamespace, FTextKey(entry.Key), source, locale == DefaultLocale ? source : *translated, 0);
+		}
+
+		if (!resource.SaveToFile(locresPath))
+			EditorLOG_WARNING(TEXT("[WriteLocalizationResources] Failed to write %s"), *locresPath);
+	}
+
+	// The .locmeta tells the engine which culture is the native one and which cultures exist.
+	FTextLocalizationMetaDataResource metaData;
+	metaData.NativeCulture = DefaultLocale;
+	metaData.NativeLocRes = DefaultLocale / FString(TEXT("MounteaDialogue.locres"));
+	TArray<FString> cultureDirectories;
+	IFileManager::Get().FindFiles(cultureDirectories, *(targetRoot / TEXT("*")), false, true);
+	metaData.CompiledCultures = cultureDirectories;
+	if (!metaData.SaveToFile(FPaths::Combine(targetRoot, TEXT("MounteaDialogue.locmeta"))))
+		EditorLOG_WARNING(TEXT("[WriteLocalizationResources] Failed to write the .locmeta file"));
+}
+
+void UMounteaDialogueSystemImportExportHelpers::RegisterLocalizationPath()
+{
+	const FString pathLine = TEXT("+LocalizationPaths=%GAMEDIR%Content/Localization/MounteaDialogue");
+	const FString iniPath = FPaths::Combine(FPaths::ProjectConfigDir(), TEXT("DefaultGame.ini"));
+
+	FString content;
+	FFileHelper::LoadFileToString(content, *iniPath);
+	if (content.Contains(TEXT("Content/Localization/MounteaDialogue")))
+		return;
+
+	TArray<FString> lines;
+	content.ParseIntoArrayLines(lines, false);
+
+	const int32 section = lines.IndexOfByPredicate([](const FString& Line) { return Line.TrimStartAndEnd().Equals(TEXT("[Internationalization]")); });
+	if (section == INDEX_NONE)
+	{
+		if (!lines.IsEmpty() && !lines.Last().IsEmpty())
+			lines.Add(FString());
+		lines.Add(TEXT("[Internationalization]"));
+		lines.Add(pathLine);
+	}
+	else
+		lines.Insert(pathLine, section + 1);
+
+	if (FFileHelper::SaveStringToFile(FString::Join(lines, LINE_TERMINATOR) + LINE_TERMINATOR, *iniPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+	{
+		EditorLOG_INFO(TEXT("[RegisterLocalizationPath] Added the Mountea localization folder to DefaultGame.ini. Restart the editor to load the translations."));
+	}
+	else
+	{
+		EditorLOG_WARNING(TEXT("[RegisterLocalizationPath] Could not update %s (read-only?). Add '%s' under [Internationalization] to load the translations."), *iniPath, *pathLine);
 	}
 }
 

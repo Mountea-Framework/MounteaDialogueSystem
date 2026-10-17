@@ -204,8 +204,16 @@ private:
 	// The string table itself holds the default locale; this carries every other one.
 	static void WriteLocalizationPoFiles(const FString& StringTableID, const FString& DefaultLocale, const TMap<FString, TMap<FString, FString>>& TextsByKeyAndLocale);
 
+	// Writes the same texts straight into Content/Localization/MounteaDialogue/<culture>/MounteaDialogue.locres
+	// (plus the .locmeta), replacing only this table's entries, so no Localization Dashboard compile is needed.
+	static void WriteLocalizationResources(const FString& StringTableID, const FString& DefaultLocale, const TMap<FString, TMap<FString, FString>>& TextsByKeyAndLocale);
+
+	// Makes sure DefaultGame.ini lists the Mountea localization folder under [Internationalization] LocalizationPaths.
+	static void RegisterLocalizationPath();
+
 #if WITH_DEV_AUTOMATION_TESTS
 	friend struct FMounteaDialogueImportTestAccess;
+	friend struct FMounteaDialogueLocalizationTestAccess;
 #endif
 
 	// ── Utilities ─────────────────────────────────────────────────────────────────
