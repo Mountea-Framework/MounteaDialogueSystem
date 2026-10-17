@@ -393,11 +393,7 @@ bool UMounteaDialogueSystemImportExportHelpers::ImportArchiveModel(const Mountea
 
 	if (!OutRoot && !OutGraphs.IsEmpty())
 	{
-		for (const TPair<FGuid, UMounteaDialogueGraph*>& pair : OutGraphs)
-		{
-			OutRoot = pair.Value;
-			break;
-		}
+		OutRoot = OutGraphs.CreateConstIterator().Value();
 	}
 
 	if (!failures.IsEmpty())
