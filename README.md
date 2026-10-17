@@ -117,6 +117,10 @@ Download the plugin (either from Releases or from Marketplace). For a more detai
 1. Download the branch release you are interested in
 2. Instal the plugin to your Game Project (within /Plugin folder)
 
+## Running the Tests
+
+Close the editor, then run `Scripts/RunTests.ps1` (add `-Suite Runtime` or `-Suite Editor` for one suite, `-Build` to compile first). It exits non-zero on any failure and writes the log and report to `Saved/Automation/`. In the editor the same tests are under **Tools > Test Automation > Mountea.DialogueSystem** and **Mountea.DialogueSystemEditor**.
+
 ## Branches
 
 * Master: A master branch, should always be relevant to the most current Engine version and stable.
