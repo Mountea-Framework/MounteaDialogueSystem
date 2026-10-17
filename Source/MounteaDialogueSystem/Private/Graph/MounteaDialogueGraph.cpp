@@ -222,6 +222,15 @@ void UMounteaDialogueGraph::ClearGraph()
 		Node->Edges.Empty();
 	}
 
+	// The Start node is not necessarily part of AllNodes; its links must not survive a clear either,
+	// otherwise a reimport keeps adding children on top of the stale ones.
+	if (IsValid(StartNode))
+	{
+		StartNode->ParentNodes.Empty();
+		StartNode->ChildrenNodes.Empty();
+		StartNode->Edges.Empty();
+	}
+
 	AllNodes.Empty();
 	RootNodes.Empty();
 }
