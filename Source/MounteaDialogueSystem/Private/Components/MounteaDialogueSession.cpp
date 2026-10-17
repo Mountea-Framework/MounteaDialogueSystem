@@ -699,7 +699,8 @@ bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager
 				ContextPayload.ContextVersion,
 				false
 			});
-			Manager->GetDialogueNodeFinishedEventHandle().Broadcast(dialogueContext);
+			// Stopping finishes the whole node: NodeProcessed broadcasts NodeFinished, cleans up and advances.
+			IMounteaDialogueManagerInterface::Execute_NodeProcessed(Manager);
 			break;
 		case ERowExecutionMode::Default:
 			break;

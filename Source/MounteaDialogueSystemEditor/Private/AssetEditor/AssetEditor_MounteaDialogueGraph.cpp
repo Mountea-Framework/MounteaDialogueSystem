@@ -1,4 +1,4 @@
-// Copyright Dominik Pavlicek 2023. All Rights Reserved.
+﻿// Copyright Dominik Pavlicek 2023. All Rights Reserved.
 
 #include "AssetEditor_MounteaDialogueGraph.h"
 
@@ -598,94 +598,36 @@ void FAssetEditor_MounteaDialogueGraph::CreateEdGraph()
 			TArray<UEdNode_MounteaDialogueGraphNode*> dummyNodes;
 			dummyNodes.Add(NewNode);
 			
-			FString NodesJsonContent;
-			for (const FDialogueImportData& ImportData : EditingGraph->SourceData)
+			// Import stores each node's canvas position on the node itself; nodes without one are stacked.
+			for (const auto& Node : EditingGraph->AllNodes)
 			{
-				if (ImportData.JsonFile == "nodes.json")
+				if (Node && Node->IsA(UMounteaDialogueGraphNode_StartNode::StaticClass())) continue;
+
+				const auto DummyNewNode = MounteaDialogueGraph->CreateIntermediateNode<
+					UEdNode_MounteaDialogueGraphNode>();
+
+				DummyNewNode->SetMounteaDialogueGraphNode(Node);
+				DummyNewNode->NodeGuid = Node->GetNodeGUID();
+				DummyNewNode->PostPlacedNewNode();
+				DummyNewNode->AllocateDefaultPins();
+				DummyNewNode->AutowireNewNode(nullptr);
+
+				if (Node->NodePosition != FIntPoint::ZeroValue)
 				{
-					NodesJsonContent = ImportData.JsonData;
-					break;
+					DummyNewNode->NodePosX = Node->NodePosition.X;
+					DummyNewNode->NodePosY = Node->NodePosition.Y;
 				}
-			}
-
-			TArray<TSharedPtr<FJsonValue>> JsonArray;
-			const TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(NodesJsonContent);
-
-			if (FJsonSerializer::Deserialize(JsonReader, JsonArray))
-			{
-				for (const auto& Node : EditingGraph->AllNodes)
+				else
 				{
-					if (Node && Node->IsA(UMounteaDialogueGraphNode_StartNode::StaticClass())) continue;
-
-					const auto DummyNewNode = MounteaDialogueGraph->CreateIntermediateNode<
-						UEdNode_MounteaDialogueGraphNode>();
-
-					DummyNewNode->SetMounteaDialogueGraphNode(Node);
-					DummyNewNode->NodeGuid = Node->GetNodeGUID();
-					DummyNewNode->PostPlacedNewNode();
-					DummyNewNode->AllocateDefaultPins();
-					DummyNewNode->AutowireNewNode(nullptr);
-					
-					TSharedPtr<FJsonObject> FoundNode;
-					for (const auto& JsonValue : JsonArray)
-					{
-						const TSharedPtr<FJsonObject> NodeObject = JsonValue->AsObject();
-						const FGuid NodeObjectGuid = FGuid(NodeObject->GetStringField((TEXT("id"))));
-						if (NodeObjectGuid == Node->GetNodeGUID())
-						{
-							FoundNode = NodeObject;
-							break;
-						}
-					}
-
-					if (FoundNode.IsValid())
-					{
-						TSharedPtr<FJsonObject> PositionObject = FoundNode->GetObjectField(TEXT("position"));
-						const float X = PositionObject->GetNumberField(TEXT("x"));
-						const float Y = PositionObject->GetNumberField(TEXT("y"));
-
-						DummyNewNode->NodePosX = X;
-						DummyNewNode->NodePosY = Y;
-					}
-					else
-					{
-						DummyNewNode->NodePosX = 0;
-						DummyNewNode->NodePosY = lastNodeY + 150;
-						lastNodeY = DummyNewNode->NodePosY;
-					}
-
-					DummyNewNode->DialogueGraphNode->SetFlags(RF_Transactional);
-					DummyNewNode->SetFlags(RF_Transactional);
-
-					dummyNodes.Add(DummyNewNode);
-				}
-			}
-			else
-			{
-				// Fallback to old positioning logic if JSON parsing fails
-				for (const auto& Node : EditingGraph->AllNodes)
-				{
-					if (Node && Node->IsA(UMounteaDialogueGraphNode_StartNode::StaticClass())) continue;
-
-					const auto DummyNewNode = MounteaDialogueGraph->CreateIntermediateNode<
-						UEdNode_MounteaDialogueGraphNode>();
-
-					DummyNewNode->SetMounteaDialogueGraphNode(Node);
-					DummyNewNode->NodeGuid = Node->GetNodeGUID();
-					DummyNewNode->PostPlacedNewNode();
-					DummyNewNode->AllocateDefaultPins();
-					DummyNewNode->AutowireNewNode(nullptr);
-
 					DummyNewNode->NodePosX = 0;
 					DummyNewNode->NodePosY = lastNodeY + 150;
-
 					lastNodeY = DummyNewNode->NodePosY;
-
-					DummyNewNode->DialogueGraphNode->SetFlags(RF_Transactional);
-					DummyNewNode->SetFlags(RF_Transactional);
-
-					dummyNodes.Add(DummyNewNode);
 				}
+
+				DummyNewNode->DialogueGraphNode->SetFlags(RF_Transactional);
+				DummyNewNode->SetFlags(RF_Transactional);
+
+				dummyNodes.Add(DummyNewNode);
 			}
 
 			// Create connections
