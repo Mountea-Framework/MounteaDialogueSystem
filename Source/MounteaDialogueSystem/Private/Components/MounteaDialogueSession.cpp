@@ -666,7 +666,6 @@ bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager
 	const bool bIsActiveRowValid = UMounteaDialogueTraversalStatics::IsDialogueRowValid(dialogueRow);
 	const bool bDialogueRowDataValid = rowDataArray.IsValidIndex(nextIndex)
 		&& UMounteaDialogueTraversalStatics::IsDialogueRowDataValid(rowDataArray[nextIndex]);
-	const ERowExecutionMode nextRowExecutionMode = bDialogueRowDataValid ? rowDataArray[nextIndex].RowExecutionBehaviour : ERowExecutionMode::EREM_Automatic;
 	const ERowExecutionMode activeRowExecutionMode = rowDataArray.IsValidIndex(currentIndex) ? rowDataArray[currentIndex].RowExecutionBehaviour : ERowExecutionMode::EREM_Automatic;
 
 	if (activeRowExecutionMode == ERowExecutionMode::EREM_AwaitInput && !bForceFinish)
@@ -674,37 +673,19 @@ bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager
 
 	Manager->GetDialogueRowFinishedEventHandle().Broadcast(dialogueContext);
 
-	if (bIsActiveRowValid && bDialogueRowDataValid)
+	// A row's own mode applies when that row finishes: a Stopping row has now played, so the node ends here.
+	if (activeRowExecutionMode != ERowExecutionMode::EREM_Stopping && bIsActiveRowValid && bDialogueRowDataValid)
 	{
-		switch (nextRowExecutionMode)
-		{
-		case ERowExecutionMode::EREM_Automatic:
-		case ERowExecutionMode::EREM_AwaitInput:
-			dialogueContext->UpdateActiveDialogueRowDataIndex(nextIndex);
-			Manager->GetDialogueContextUpdatedEventHande().Broadcast(dialogueContext);
-			ApplyRowStatePayload(dialogueContext);
-			Manager->Client_DispatchUISignal(FMounteaDialogueUISignal{
-				MounteaDialogueWidgetCommands::ShowDialogueRow,
-				dialogueContext->SessionGUID,
-				ContextPayload.ContextVersion,
-				false
-			});
-			IMounteaDialogueManagerInterface::Execute_ProcessDialogueRow(Manager);
-			break;
-		case ERowExecutionMode::EREM_Stopping:
-			Manager->Client_DispatchUISignal(FMounteaDialogueUISignal{
-				MounteaDialogueWidgetCommands::HideDialogueRow,
-				dialogueContext->SessionGUID,
-				ContextPayload.ContextVersion,
-				false
-			});
-			// Stopping finishes the whole node: NodeProcessed broadcasts NodeFinished, cleans up and advances.
-			IMounteaDialogueManagerInterface::Execute_NodeProcessed(Manager);
-			break;
-		case ERowExecutionMode::Default:
-			break;
-		}
-
+		dialogueContext->UpdateActiveDialogueRowDataIndex(nextIndex);
+		Manager->GetDialogueContextUpdatedEventHande().Broadcast(dialogueContext);
+		ApplyRowStatePayload(dialogueContext);
+		Manager->Client_DispatchUISignal(FMounteaDialogueUISignal{
+			MounteaDialogueWidgetCommands::ShowDialogueRow,
+			dialogueContext->SessionGUID,
+			ContextPayload.ContextVersion,
+			false
+		});
+		IMounteaDialogueManagerInterface::Execute_ProcessDialogueRow(Manager);
 		return true;
 	}
 

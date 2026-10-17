@@ -126,7 +126,6 @@ FMounteaDialogueRowDataInfo GetDialogueRowDataInfo(const UMounteaDialogueContext
 	
 	Info.bDialogueRowDataValid = rowDataArray.IsValidIndex(Info.IncreasedIndex);
 
-	Info.NextRowExecutionMode = Info.bDialogueRowDataValid ? rowDataArray[Info.IncreasedIndex].RowExecutionBehaviour : ERowExecutionMode::EREM_Automatic;
 	Info.ActiveRowExecutionMode = rowDataArray.IsValidIndex(currentIndex) ? rowDataArray[currentIndex].RowExecutionBehaviour : ERowExecutionMode::EREM_Automatic;
 
 	return Info;
