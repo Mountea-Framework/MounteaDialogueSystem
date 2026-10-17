@@ -370,7 +370,7 @@ bool UMounteaDialogueSession::IsSessionRequestValid(UMounteaDialogueManager* Man
 	{
 		LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][Validate] %s rejected: invalid request GUID. Active=%s"),
 			ActionName, *activeSessionGUID.ToString())
-		Manager->GetDialogueFailedEventHandle().Broadcast(FString::Printf(TEXT("[%s] Invalid session GUID!"), ActionName));
+		// Refused, not failed: a stale request must not end the session that is running.
 		return false;
 	}
 
@@ -378,7 +378,6 @@ bool UMounteaDialogueSession::IsSessionRequestValid(UMounteaDialogueManager* Man
 	{
 		LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][Validate] %s rejected: mismatch. Requested=%s Active=%s Manager=%s"),
 			ActionName, *SessionGUID.ToString(), *activeSessionGUID.ToString(), *GetNameSafe(Manager))
-		Manager->GetDialogueFailedEventHandle().Broadcast(FString::Printf(TEXT("[%s] Session mismatch!"), ActionName));
 		return false;
 	}
 
