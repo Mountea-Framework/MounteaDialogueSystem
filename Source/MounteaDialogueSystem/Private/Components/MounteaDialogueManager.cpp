@@ -206,7 +206,7 @@ void UMounteaDialogueManager::OnContextPayloadUpdated(const FMounteaDialogueCont
 	DialogueContext->ActiveDialogueParticipant = Payload.ActiveDialogueParticipant;
 	DialogueContext->DialogueParticipants = Payload.DialogueParticipants;
 
-	UMounteaDialogueGraph* activeGraph = UMounteaDialogueManagerStatics::ResolveGraphByGuid(Payload.DialogueParticipants, Payload.ActiveGraphGUID);
+	UMounteaDialogueGraph* activeGraph = UMounteaDialogueManagerStatics::ResolveGraphByGuid(Payload.DialogueParticipants, Payload.ActiveGraphGUID, Payload.RootGraph);
 	if (!activeGraph)
 	{
 		const TScriptInterface<IMounteaDialogueParticipantInterface> graphSource =

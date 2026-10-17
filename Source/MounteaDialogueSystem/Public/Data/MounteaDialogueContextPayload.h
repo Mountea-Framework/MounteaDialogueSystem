@@ -15,6 +15,8 @@
 #include "Data/MounteaDialogueGraphDataTypes.h"
 #include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 
+class UMounteaDialogueGraph;
+
 #include "MounteaDialogueContextPayload.generated.h"
 
 /**
@@ -69,6 +71,13 @@ public:
 	FGuid ActiveGraphGUID;
 
 	/**
+	 * Graph the session started on (the start request's override, or the main participant's graph).
+	 * Lets managers resolve ActiveGraphGUID when no participant owns that graph.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category="Context")
+	TObjectPtr<UMounteaDialogueGraph> RootGraph = nullptr;
+
+	/**
 	 * The participant that is currently speaking or acting.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category="Context")
@@ -118,6 +127,7 @@ public:
 		PreviousNodeGUID.Invalidate();
 		AllowedChildNodeGUIDs.Empty();
 		ActiveGraphGUID.Invalidate();
+		RootGraph = nullptr;
 		ActiveDialogueParticipant = nullptr;
 		DialogueParticipants.Empty();
 		ActiveDialogueRow = FDialogueRow();

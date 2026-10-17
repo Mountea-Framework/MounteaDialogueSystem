@@ -11,6 +11,7 @@
 
 #include "Data/MounteaDialogueContextPayload.h"
 #include "GameFramework/Actor.h"
+#include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueParticipantStatics.h"
 #include "Interfaces/Core/MounteaDialogueParticipantInterface.h"
 #include "Net/UnrealNetwork.h"
@@ -87,6 +88,12 @@ bool FMounteaDialogueContextPayload::NetSerialize(FArchive& Ar, UPackageMap* Map
 	Ar << PreviousNodeGUID;
 	Ar << AllowedChildNodeGUIDs;
 	Ar << ActiveGraphGUID;
+	{
+		UObject* rootGraph = RootGraph;
+		Map->SerializeObject(Ar, UMounteaDialogueGraph::StaticClass(), rootGraph);
+		if (Ar.IsLoading())
+			RootGraph = Cast<UMounteaDialogueGraph>(rootGraph);
+	}
 	SerializeParticipantInterface(Ar, Map, ActiveDialogueParticipant);
 	SerializeParticipantInterfaces(Ar, Map, DialogueParticipants);
 

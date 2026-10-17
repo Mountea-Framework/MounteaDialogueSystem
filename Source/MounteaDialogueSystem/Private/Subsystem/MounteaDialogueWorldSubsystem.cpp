@@ -197,6 +197,7 @@ void UMounteaDialogueWorldSubsystem::HandleStartRequest(UMounteaDialogueManager*
 	payload.ActiveDialogueParticipant = tempContext->ActiveDialogueParticipant;
 	payload.ActiveNodeGUID = firstRuntimeNode->GetNodeGUID();
 	payload.ActiveGraphGUID = firstRuntimeNode->GetGraphGUID();
+	payload.RootGraph = resolvedGraph;
 	for (const auto& child : filteredChildren)
 	{
 		if (IsValid(child))
