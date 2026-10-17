@@ -35,6 +35,7 @@
 #include "Engine/DataTable.h"
 #include "GameplayTagsManager.h"
 #include "Graph/MounteaDialogueGraph.h"
+#include "Helpers/MounteaDialogueEngineCompat.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
 #include "ImportConfig/MounteaDialogueImportConfig.h"
 #include "Internationalization/StringTable.h"
@@ -711,13 +712,13 @@ bool UMounteaDialogueSystemImportExportHelpers::CreateGraphStringTables(UMountea
 	OutDialogueRowsStringTable = CreateStringTable(AssetTools, packagePath, rowsTableName, [&](UStringTable* table)
 	{
 		for (const TPair<FString, TMap<FString, FString>>& pair : rowTexts)
-			table->GetMutableStringTable()->SetSourceString(pair.Key, pair.Value.FindRef(defaultLocale));
+			MounteaDialogueCompat::SetStringTableSourceString(*table->GetMutableStringTable(), pair.Key, pair.Value.FindRef(defaultLocale));
 	});
 
 	OutNodesStringTable = CreateStringTable(AssetTools, packagePath, nodesTableName, [&](UStringTable* table)
 	{
 		for (const TPair<FString, TMap<FString, FString>>& pair : nodeTexts)
-			table->GetMutableStringTable()->SetSourceString(pair.Key, pair.Value.FindRef(defaultLocale));
+			MounteaDialogueCompat::SetStringTableSourceString(*table->GetMutableStringTable(), pair.Key, pair.Value.FindRef(defaultLocale));
 	});
 
 	if (!OutDialogueRowsStringTable || !OutNodesStringTable)

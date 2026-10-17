@@ -14,6 +14,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Archive/MounteaDialogueArchive.h"
+#include "Helpers/MounteaDialogueEngineCompat.h"
 #include "Helpers/MounteaDialogueSystemImportExportHelpers.h"
 #include "Internationalization/StringTable.h"
 #include "Internationalization/StringTableCore.h"
@@ -47,7 +48,7 @@ namespace MounteaImportTitleTest
 		UStringTable* table = NewObject<UStringTable>(GetTransientPackage());
 		table->GetMutableStringTable()->SetNamespace(TEXT("ST_Test_Nodes"));
 		for (const TPair<FString, FString>& pair : Entries)
-			table->GetMutableStringTable()->SetSourceString(pair.Key, pair.Value);
+			MounteaDialogueCompat::SetStringTableSourceString(*table->GetMutableStringTable(), pair.Key, pair.Value);
 		return table;
 	}
 

@@ -93,7 +93,7 @@ int32 UMounteaDialogueHUDStatics::GetWidgetZOrder(UUserWidget* Widget, UObject* 
 	ULocalPlayer* localPlayer = Widget->GetOwningLocalPlayer();
 	if (localPlayer)
 	{
-		if (UGameViewportSubsystem* viewportSubsystem = UGameViewportSubsystem::Get(WorldContext->GetWorld()))
+		if (UGameViewportSubsystem* viewportSubsystem = UGameViewportSubsystem::Get())
 		{
 			FGameViewportWidgetSlot widgetSlot = viewportSubsystem->GetWidgetSlot(Widget);
 
