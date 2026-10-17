@@ -18,6 +18,15 @@ namespace MounteaDialogueConfigurationTags
 	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_MDS_GraphTypeNamespace, "Mountea_Dialogue.Graph.Type");
 	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_MDS_GraphTypeDialogue, "Mountea_Dialogue.Graph.Type.Dialogue");
 	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_MDS_GraphTypeMonologue, "Mountea_Dialogue.Graph.Type.Monologue");
+
+	// Tags used by bundled content. Native registration happens at module load, so assets loading
+	// before the Config/Tags ini search path is added still resolve them.
+	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_MDS_Participants, "Mountea_Dialogue.Participants");
+	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_MDS_ParticipantsNPC, "Mountea_Dialogue.Participants.NPC");
+	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_MDS_ParticipantsNPCAria, "Mountea_Dialogue.Participants.NPC.Aria");
+	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_MDS_ParticipantsNPCLily, "Mountea_Dialogue.Participants.NPC.Lily");
+	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_MDS_ParticipantsPlayer, "Mountea_Dialogue.Participants.Player");
+	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_MDS_PlayerPlayer, "Mountea_Dialogue.Player.Player");
 }
 
 UMounteaDialogueConfiguration::UMounteaDialogueConfiguration() :

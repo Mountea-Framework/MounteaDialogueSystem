@@ -13,277 +13,128 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include "Archive/MounteaDialogueArchive.h"
 #include "Helpers/MounteaDialogueSystemImportExportHelpers.h"
-#include "Dom/JsonObject.h"
 #include "Internationalization/StringTable.h"
 #include "Internationalization/StringTableCore.h"
-#include "Serialization/JsonReader.h"
-#include "Serialization/JsonSerializer.h"
+#include "UObject/Package.h"
 
-// Tests in this file cover how the Dialoguer importer turns a node's two titles into the Nodes string
-// table and into DialogueRow.RowTitle (Bugreport #3): the choice button must read the node's Selection
-// Title, falling back to its display name, then to its label - the same chain Dialoguer's preview uses
-// (selectionTitle || displayName || label). Default locale only.
-//
-// No assets are created: the tests drive the title helpers with JSON literals and an in-memory
-// UStringTable, so no IAssetTools or disk access is involved.
+// Node titles on import: the Nodes string table holds the archive's displayName / selectionTitle texts under the
+// keys the archive names, and a node's RowTitle (the choice button text) prefers the Selection Title.
 
 struct FMounteaDialogueImportTestAccess
 {
-	static FString ResolveNodeDisplayName(const TSharedPtr<FJsonObject>& NodeData, const TMap<FString, FString>& Lookup)
+	static FString GetRowTitleEntryKey(const UStringTable* Table, const MounteaArchive::FNode& Node)
 	{
-		return UMounteaDialogueSystemImportExportHelpers::ResolveNodeDisplayName(NodeData, Lookup);
+		return UMounteaDialogueSystemImportExportHelpers::GetRowTitleEntryKey(Table, Node);
 	}
 
-	static FString ResolveNodeSelectionTitle(const TSharedPtr<FJsonObject>& NodeData, const TMap<FString, FString>& Lookup)
+	static FText MakeRowTitle(const UStringTable* Table, const MounteaArchive::FNode& Node)
 	{
-		return UMounteaDialogueSystemImportExportHelpers::ResolveNodeSelectionTitle(NodeData, Lookup);
+		return UMounteaDialogueSystemImportExportHelpers::MakeRowTitle(Table, Node);
 	}
 
-	static FString GetSelectionTitleEntryKey(const FString& NodeId)
+	static TMap<FString, FString> BuildParticipantTags(const MounteaArchive::FDialogueArchive& Archive)
 	{
-		return UMounteaDialogueSystemImportExportHelpers::GetSelectionTitleEntryKey(NodeId);
-	}
-
-	static void PopulateNodesStringTable(UStringTable* Table, const TArray<TSharedPtr<FJsonValue>>& Nodes, const TMap<FString, FString>& Lookup)
-	{
-		UMounteaDialogueSystemImportExportHelpers::PopulateNodesStringTable(Table, Nodes, Lookup);
-	}
-
-	static FString GetRowTitleEntryKey(const UStringTable* Table, const FString& NodeId)
-	{
-		return UMounteaDialogueSystemImportExportHelpers::GetRowTitleEntryKey(Table, NodeId);
-	}
-
-	static FText MakeRowTitle(const UStringTable* Table, const FString& NodeId)
-	{
-		return UMounteaDialogueSystemImportExportHelpers::MakeRowTitle(Table, NodeId);
-	}
-
-	static void BuildStringTableLookup(const TMap<FString, FString>& ExtractedFiles, FString& OutDefaultLocale, TMap<FString, FString>& OutLookup, TSharedPtr<FJsonObject>& OutEntries)
-	{
-		UMounteaDialogueSystemImportExportHelpers::BuildStringTableLookup(ExtractedFiles, OutDefaultLocale, OutLookup, OutEntries);
+		return UMounteaDialogueSystemImportExportHelpers::BuildParticipantTags(Archive);
 	}
 };
 
-namespace MounteaDialogueImportTitleTest
+namespace MounteaImportTitleTest
 {
-	static TSharedPtr<FJsonObject> ParseObject(const FString& Json)
+	UStringTable* MakeTable(const TMap<FString, FString>& Entries)
 	{
-		TSharedPtr<FJsonObject> object;
-		const TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(Json);
-		FJsonSerializer::Deserialize(reader, object);
-		return object;
+		UStringTable* table = NewObject<UStringTable>(GetTransientPackage());
+		table->GetMutableStringTable()->SetNamespace(TEXT("ST_Test_Nodes"));
+		for (const TPair<FString, FString>& pair : Entries)
+			table->GetMutableStringTable()->SetSourceString(pair.Key, pair.Value);
+		return table;
 	}
 
-	static TArray<TSharedPtr<FJsonValue>> ParseArray(const FString& Json)
+	MounteaArchive::FNode MakeNode(const TCHAR* DisplayNameKey, const TCHAR* SelectionTitleKey)
 	{
-		TArray<TSharedPtr<FJsonValue>> array;
-		const TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(Json);
-		FJsonSerializer::Deserialize(reader, array);
-		return array;
-	}
-
-	static UStringTable* NewTable()
-	{
-		return NewObject<UStringTable>(GetTransientPackage());
-	}
-
-	static bool TryGetEntry(const UStringTable* Table, const FString& Key, FString& OutText)
-	{
-		return Table->GetStringTable()->GetSourceString(FTextKey(Key), OutText);
+		MounteaArchive::FNode node;
+		node.Id = TEXT("node-1");
+		node.DisplayNameKey = DisplayNameKey;
+		node.SelectionTitleKey = SelectionTitleKey;
+		return node;
 	}
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMounteaDialogueImportResolveSelectionTitleTest,
-	"Mountea.DialogueSystemEditor.Import.NodeTitles.ResolveSelectionTitle",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMounteaImportRowTitlePrefersSelectionTitleTest,
+	"Mountea.DialogueSystemEditor.Import.NodeTitles.PrefersSelectionTitle",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
-bool FMounteaDialogueImportResolveSelectionTitleTest::RunTest(const FString& Parameters)
+bool FMounteaImportRowTitlePrefersSelectionTitleTest::RunTest(const FString& Parameters)
 {
-	using namespace MounteaDialogueImportTitleTest;
+	UStringTable* table = MounteaImportTitleTest::MakeTable({
+		{ TEXT("dlg.a.n_x.display_name"), TEXT("Greeting") },
+		{ TEXT("dlg.a.n_x.selection_title"), TEXT("Hello there") } });
+	const MounteaArchive::FNode node = MounteaImportTitleTest::MakeNode(TEXT("dlg.a.n_x.display_name"), TEXT("dlg.a.n_x.selection_title"));
 
-	const TMap<FString, FString> lookup = {
-		{ TEXT("k.full"), TEXT("Knock again") },
-		{ TEXT("k.empty"), TEXT("") }
-	};
-
-	TestEqual(TEXT("A selectionTitleKey resolves through the lookup"),
-		FMounteaDialogueImportTestAccess::ResolveNodeSelectionTitle(ParseObject(TEXT(R"({"selectionTitleKey":"k.full"})")), lookup),
-		FString(TEXT("Knock again")));
-
-	TestEqual(TEXT("An empty entry falls back to an inline selectionTitle"),
-		FMounteaDialogueImportTestAccess::ResolveNodeSelectionTitle(ParseObject(TEXT(R"({"selectionTitleKey":"k.empty","selectionTitle":"Legacy"})")), lookup),
-		FString(TEXT("Legacy")));
-
-	TestEqual(TEXT("An empty entry with no inline value stays empty (caller falls back to display name)"),
-		FMounteaDialogueImportTestAccess::ResolveNodeSelectionTitle(ParseObject(TEXT(R"({"selectionTitleKey":"k.empty"})")), lookup),
-		FString());
-
-	TestEqual(TEXT("An unknown key stays empty"),
-		FMounteaDialogueImportTestAccess::ResolveNodeSelectionTitle(ParseObject(TEXT(R"({"selectionTitleKey":"k.missing"})")), lookup),
-		FString());
-
-	TestEqual(TEXT("No key reads the inline selectionTitle"),
-		FMounteaDialogueImportTestAccess::ResolveNodeSelectionTitle(ParseObject(TEXT(R"({"selectionTitle":"Inline"})")), lookup),
-		FString(TEXT("Inline")));
-
-	TestEqual(TEXT("A node with no selection title at all is empty"),
-		FMounteaDialogueImportTestAccess::ResolveNodeSelectionTitle(ParseObject(TEXT(R"({"label":"New Player"})")), lookup),
-		FString());
-
-	TestEqual(TEXT("Null node data is tolerated"),
-		FMounteaDialogueImportTestAccess::ResolveNodeSelectionTitle(nullptr, lookup),
-		FString());
+	TestEqual(TEXT("selection title key wins"), FMounteaDialogueImportTestAccess::GetRowTitleEntryKey(table, node), FString(TEXT("dlg.a.n_x.selection_title")));
+	TestEqual(TEXT("title text comes from the table"), FMounteaDialogueImportTestAccess::MakeRowTitle(table, node).ToString(), FString(TEXT("Hello there")));
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMounteaDialogueImportResolveDisplayNameTest,
-	"Mountea.DialogueSystemEditor.Import.NodeTitles.ResolveDisplayName",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMounteaImportRowTitleFallsBackTest,
+	"Mountea.DialogueSystemEditor.Import.NodeTitles.FallsBackToDisplayName",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
-bool FMounteaDialogueImportResolveDisplayNameTest::RunTest(const FString& Parameters)
+bool FMounteaImportRowTitleFallsBackTest::RunTest(const FString& Parameters)
 {
-	using namespace MounteaDialogueImportTitleTest;
+	// Selection title entry exists but is empty (Dialoguer writes one for every node that supports it).
+	UStringTable* table = MounteaImportTitleTest::MakeTable({
+		{ TEXT("dlg.a.n_x.display_name"), TEXT("Greeting") },
+		{ TEXT("dlg.a.n_x.selection_title"), TEXT("") } });
+	const MounteaArchive::FNode node = MounteaImportTitleTest::MakeNode(TEXT("dlg.a.n_x.display_name"), TEXT("dlg.a.n_x.selection_title"));
 
-	const TMap<FString, FString> lookup = { { TEXT("d.full"), TEXT("Player") } };
-
-	TestEqual(TEXT("displayNameKey resolves through the lookup"),
-		FMounteaDialogueImportTestAccess::ResolveNodeDisplayName(ParseObject(TEXT(R"({"displayNameKey":"d.full","label":"New Player"})")), lookup),
-		FString(TEXT("Player")));
-
-	TestEqual(TEXT("Without a usable key, UE round-trip additionalInfo.displayName is used"),
-		FMounteaDialogueImportTestAccess::ResolveNodeDisplayName(ParseObject(TEXT(R"({"additionalInfo":{"displayName":"Round trip"},"label":"New Player"})")), lookup),
-		FString(TEXT("Round trip")));
-
-	TestEqual(TEXT("With neither, the node label is the last resort"),
-		FMounteaDialogueImportTestAccess::ResolveNodeDisplayName(ParseObject(TEXT(R"({"displayNameKey":"d.missing","label":"New Player"})")), lookup),
-		FString(TEXT("New Player")));
-
-	TestEqual(TEXT("A node with no name at all is empty"),
-		FMounteaDialogueImportTestAccess::ResolveNodeDisplayName(ParseObject(TEXT("{}")), lookup),
-		FString());
+	TestEqual(TEXT("display name key used"), FMounteaDialogueImportTestAccess::GetRowTitleEntryKey(table, node), FString(TEXT("dlg.a.n_x.display_name")));
+	TestEqual(TEXT("display name text"), FMounteaDialogueImportTestAccess::MakeRowTitle(table, node).ToString(), FString(TEXT("Greeting")));
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMounteaDialogueImportPopulateNodesTableTest,
-	"Mountea.DialogueSystemEditor.Import.NodeTitles.PopulateNodesTable",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMounteaImportRowTitleLabelFallbackTest,
+	"Mountea.DialogueSystemEditor.Import.NodeTitles.NodeWithoutKeysUsesLabel",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
-bool FMounteaDialogueImportPopulateNodesTableTest::RunTest(const FString& Parameters)
+bool FMounteaImportRowTitleLabelFallbackTest::RunTest(const FString& Parameters)
 {
-	using namespace MounteaDialogueImportTitleTest;
+	UStringTable* table = MounteaImportTitleTest::MakeTable({});
+	MounteaArchive::FNode node = MounteaImportTitleTest::MakeNode(TEXT(""), TEXT(""));
+	node.Label = TEXT("Dialogue entry point");
 
-	const TMap<FString, FString> lookup = {
-		{ TEXT("a.dn"), TEXT("Player") },
-		{ TEXT("a.st"), TEXT("Knock again") },
-		{ TEXT("b.dn"), TEXT("Complete") },
-		{ TEXT("b.st"), TEXT("") }
-	};
-
-	const TArray<TSharedPtr<FJsonValue>> nodes = ParseArray(TEXT(R"([
-		{"id":"A","data":{"label":"New Player","displayNameKey":"a.dn","selectionTitleKey":"a.st"}},
-		{"id":"B","data":{"label":"New Complete","displayNameKey":"b.dn","selectionTitleKey":"b.st"}},
-		{"id":"C","data":{"label":"Label C"}}
-	])"));
-
-	UStringTable* table = NewTable();
-	FMounteaDialogueImportTestAccess::PopulateNodesStringTable(table, nodes, lookup);
-
-	FString text;
-	const FString selectionKeyA = FMounteaDialogueImportTestAccess::GetSelectionTitleEntryKey(TEXT("A"));
-	TestTrue(TEXT("A: display name entry exists"), TryGetEntry(table, TEXT("A"), text));
-	TestEqual(TEXT("A: display name text"), text, FString(TEXT("Player")));
-	TestTrue(TEXT("A: selection title entry exists"), TryGetEntry(table, selectionKeyA, text));
-	TestEqual(TEXT("A: selection title text"), text, FString(TEXT("Knock again")));
-
-	TestTrue(TEXT("B: display name entry exists"), TryGetEntry(table, TEXT("B"), text));
-	TestEqual(TEXT("B: display name text"), text, FString(TEXT("Complete")));
-	TestFalse(TEXT("B: an empty selection title must not create an entry"),
-		TryGetEntry(table, FMounteaDialogueImportTestAccess::GetSelectionTitleEntryKey(TEXT("B")), text));
-
-	TestTrue(TEXT("C: a node with neither title falls back to its label"), TryGetEntry(table, TEXT("C"), text));
-	TestEqual(TEXT("C: label text"), text, FString(TEXT("Label C")));
-	TestFalse(TEXT("C: no selection title entry"),
-		TryGetEntry(table, FMounteaDialogueImportTestAccess::GetSelectionTitleEntryKey(TEXT("C")), text));
+	TestTrue(TEXT("no table key"), FMounteaDialogueImportTestAccess::GetRowTitleEntryKey(table, node).IsEmpty());
+	TestEqual(TEXT("label text"), FMounteaDialogueImportTestAccess::MakeRowTitle(table, node).ToString(), FString(TEXT("Dialogue entry point")));
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMounteaDialogueImportRowTitleTest,
-	"Mountea.DialogueSystemEditor.Import.NodeTitles.RowTitleChoosesSelectionTitle",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMounteaImportParticipantTagsTest,
+	"Mountea.DialogueSystemEditor.Import.ParticipantTags.UseCategoryChain",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
-bool FMounteaDialogueImportRowTitleTest::RunTest(const FString& Parameters)
+bool FMounteaImportParticipantTagsTest::RunTest(const FString& Parameters)
 {
-	using namespace MounteaDialogueImportTitleTest;
+	MounteaArchive::FDialogueArchive archive;
+	archive.Categories.Add({ TEXT("c-npc"), TEXT("NPC"), FString() });
+	archive.Categories.Add({ TEXT("c-merchant"), TEXT("Merchant"), TEXT("c-npc") });
+	archive.Categories.Add({ TEXT("c-player"), TEXT("Player"), FString() });
 
-	UStringTable* table = NewTable();
-	table->GetMutableStringTable()->SetSourceString(TEXT("WithSelection"), TEXT("Player"));
-	table->GetMutableStringTable()->SetSourceString(FMounteaDialogueImportTestAccess::GetSelectionTitleEntryKey(TEXT("WithSelection")), TEXT("Knock again"));
-	table->GetMutableStringTable()->SetSourceString(TEXT("DisplayOnly"), TEXT("Complete"));
+	MounteaArchive::FParticipant waldermar;
+	waldermar.Id = TEXT("p-1");
+	waldermar.Name = TEXT("Waldermar");
+	waldermar.CategoryId = TEXT("c-merchant");
+	archive.Participants.Add(waldermar);
 
-	TestEqual(TEXT("Selection title entry wins when present"),
-		FMounteaDialogueImportTestAccess::GetRowTitleEntryKey(table, TEXT("WithSelection")),
-		FMounteaDialogueImportTestAccess::GetSelectionTitleEntryKey(TEXT("WithSelection")));
-	TestEqual(TEXT("Without a selection title entry the bare node id (display name) is used"),
-		FMounteaDialogueImportTestAccess::GetRowTitleEntryKey(table, TEXT("DisplayOnly")),
-		FString(TEXT("DisplayOnly")));
+	MounteaArchive::FParticipant player;
+	player.Id = TEXT("p-2");
+	player.Name = TEXT("Player");
+	player.CategoryId = TEXT("c-player");
+	archive.Participants.Add(player);
 
-	TestEqual(TEXT("RowTitle reads the selection title"),
-		FMounteaDialogueImportTestAccess::MakeRowTitle(table, TEXT("WithSelection")).ToString(), FString(TEXT("Knock again")));
-	TestEqual(TEXT("RowTitle falls back to the display name"),
-		FMounteaDialogueImportTestAccess::MakeRowTitle(table, TEXT("DisplayOnly")).ToString(), FString(TEXT("Complete")));
-	return true;
-}
-
-// Trimmed copy of the real export from the report (TCoTT_Demo / FirstMeeting): an Answer and a Complete node
-// with Selection Titles, and a Start node whose selection title entry exists but is empty. Runs the same
-// stringTable.json -> lookup -> Nodes table -> RowTitle path the importer uses.
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMounteaDialogueImportReportScenarioTest,
-	"Mountea.DialogueSystemEditor.Import.NodeTitles.ReportScenario",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
-
-bool FMounteaDialogueImportReportScenarioTest::RunTest(const FString& Parameters)
-{
-	using namespace MounteaDialogueImportTitleTest;
-
-	TMap<FString, FString> extractedFiles;
-	extractedFiles.Add(TEXT("stringTable.json"), TEXT(R"({
-		"version": 2, "format": "stringTable.v2", "defaultLocale": "en", "locales": ["en"],
-		"entries": {
-			"dlg.firstmeeting.n_complete_49d7.display_name":   { "en": "Complete" },
-			"dlg.firstmeeting.n_complete_49d7.selection_title": { "en": "What is this?" },
-			"dlg.firstmeeting.n_player_e3db.display_name":     { "en": "Player" },
-			"dlg.firstmeeting.n_player_e3db.selection_title":  { "en": "Knock again" },
-			"dlg.firstmeeting.n_start_552c.display_name":      { "en": "Start" },
-			"dlg.firstmeeting.n_start_552c.selection_title":   { "en": "" }
-		}
-	})"));
-
-	FString defaultLocale;
-	TMap<FString, FString> lookup;
-	TSharedPtr<FJsonObject> entries;
-	FMounteaDialogueImportTestAccess::BuildStringTableLookup(extractedFiles, defaultLocale, lookup, entries);
-	TestEqual(TEXT("Default locale is read from the export"), defaultLocale, FString(TEXT("en")));
-
-	const TArray<TSharedPtr<FJsonValue>> nodes = ParseArray(TEXT(R"([
-		{"id":"00000000-0000-0000-0000-000000000001","type":"startNode","data":{"label":"Dialogue entry point",
-			"displayNameKey":"dlg.firstmeeting.n_start_552c.display_name","selectionTitleKey":"dlg.firstmeeting.n_start_552c.selection_title"}},
-		{"id":"29456d61-96cd-4e69-8937-1dbee4df554b","type":"answerNode","data":{"label":"New Player",
-			"displayNameKey":"dlg.firstmeeting.n_player_e3db.display_name","selectionTitleKey":"dlg.firstmeeting.n_player_e3db.selection_title"}},
-		{"id":"45e4a48d-8a52-497f-9f33-bccaffd72994","type":"completeNode","data":{"label":"New Complete",
-			"displayNameKey":"dlg.firstmeeting.n_complete_49d7.display_name","selectionTitleKey":"dlg.firstmeeting.n_complete_49d7.selection_title"}}
-	])"));
-
-	UStringTable* table = NewTable();
-	FMounteaDialogueImportTestAccess::PopulateNodesStringTable(table, nodes, lookup);
-
-	TestEqual(TEXT("Answer choice reads its Selection Title, not 'Player'"),
-		FMounteaDialogueImportTestAccess::MakeRowTitle(table, TEXT("29456d61-96cd-4e69-8937-1dbee4df554b")).ToString(), FString(TEXT("Knock again")));
-	TestEqual(TEXT("Complete choice reads its Selection Title, not 'Complete'"),
-		FMounteaDialogueImportTestAccess::MakeRowTitle(table, TEXT("45e4a48d-8a52-497f-9f33-bccaffd72994")).ToString(), FString(TEXT("What is this?")));
-	TestEqual(TEXT("A node with an empty Selection Title falls back to its display name"),
-		FMounteaDialogueImportTestAccess::MakeRowTitle(table, TEXT("00000000-0000-0000-0000-000000000001")).ToString(), FString(TEXT("Start")));
+	const TMap<FString, FString> tags = FMounteaDialogueImportTestAccess::BuildParticipantTags(archive);
+	TestEqual(TEXT("nested category"), tags.FindRef(TEXT("p-1")), FString(TEXT("Mountea_Dialogue.NPC.Merchant.Waldermar")));
+	TestEqual(TEXT("root category"), tags.FindRef(TEXT("p-2")), FString(TEXT("Mountea_Dialogue.Player.Player")));
 	return true;
 }
 

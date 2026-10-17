@@ -19,14 +19,52 @@ class UMounteaDialogueGraphEdge;
 class IAssetTools;
 class IAudioEditorModule;
 class FAssetRegistryModule;
+class UStringTable;
+class UDataTable;
 
-// Define a struct to hold node data
-struct FDialogueNodeData
+namespace MounteaArchive
 {
-	FString Type;
-	UMounteaDialogueGraphNode* Node;
+	struct FDialogueArchive;
+	struct FDialogue;
+	struct FDefinition;
+	struct FNode;
+	struct FRow;
+}
 
-	FDialogueNodeData(const FString &InType, UMounteaDialogueGraphNode *InNode) : Type(InType), Node(InNode) {}
+/** Where and how one archive is imported. */
+struct FMounteaArchiveImportRequest
+{
+	/** File the archive came from (stored on the graph for Reimport). */
+	FString SourceFilePath;
+
+	/** Long package path that receives Decorators, Conditions and thumbnails. */
+	FString TargetFolder;
+
+	/** Long package path that receives dialogue graphs created next to the root. Defaults to TargetFolder. */
+	FString DialoguesFolder;
+
+	/** True for .mnteadlgproj imports. */
+	bool bProjectImport = false;
+
+	/** Outer, name and flags used when the root dialogue asset has to be created (single-file import). */
+	UObject* RootParent = nullptr;
+	FName RootName = NAME_None;
+	EObjectFlags Flags = RF_Public | RF_Standalone | RF_Transactional;
+
+	/** Reimport target for the root dialogue; when null the graph is looked up by its dialogue id. */
+	UMounteaDialogueGraph* ExistingRoot = nullptr;
+};
+
+/** Data shared by every dialogue of one archive import. */
+struct FMounteaArchiveImportContext
+{
+	const MounteaArchive::FDialogueArchive* Archive = nullptr;
+	FMounteaArchiveImportRequest Request;
+
+	/** participant id -> full gameplay tag */
+	TMap<FString, FString> ParticipantTags;
+	TMap<FGuid, UClass*> DecoratorClasses;
+	TMap<FGuid, UClass*> ConditionClasses;
 };
 
 /**
@@ -41,143 +79,110 @@ public:
 
 	static void ShowNotification(const FText& Message, const float Duration, const FString& BrushName = TEXT("MDSStyleSet.Icon.Success"), const FSimpleDelegate& Hyperlink = FSimpleDelegate(), const FText& HyperlinkText = FText());
 
-	// Main reimport logic
+	// ── Archive import (mountea.archive.v3, see Docs/ArchiveContract-v3.md) ─────────────────────
+
+	/** Reads, unzips and validates a .mnteadlg / .mnteadlgproj. OutMessage lists the problems on failure. */
+	static bool ReadArchiveFile(const FString& FilePath, MounteaArchive::FDialogueArchive& OutArchive, FString& OutMessage);
+
+	/** True when the file's root dialogue was imported before (import config history). */
 	static bool IsReimport(const FString& Filename);
+
 	static bool ReimportDialogueGraph(const FString& FilePath, UObject* ObjectRedirector, UMounteaDialogueGraph*& OutGraph, FString& OutMessage);
 	static bool CanReimport(UObject* ObjectRedirector, TArray<FString>& OutFilenames);
 
 	/**
 	 * Resolves pending OpenChildGraph targets after all graphs have been imported.
 	 *
-	 * During import, OpenChildGraph nodes store the Dialoguer target GUID in
+	 * During import, OpenChildGraph nodes store the target dialogue GUID in
 	 * PendingTargetDialogueGUID instead of resolving immediately (because the target
 	 * graph may not exist yet). Call this once all graphs are available.
 	 *
 	 * @param Graph       The graph whose OpenChildGraph nodes should be resolved.
-	 * @param KnownGraphs Optional map of GUID → graph for graphs imported in the same batch.
+	 * @param KnownGraphs Optional map of GUID -> graph for graphs imported in the same batch.
 	 *                    Checked before falling back to a full asset-registry scan.
 	 */
 	static void ResolveOpenChildGraphTargets(UMounteaDialogueGraph* Graph, const TMap<FGuid, UMounteaDialogueGraph*>& KnownGraphs);
 
-	// Main import function — loads/extracts then delegates to ImportDialogueGraphFromFiles
+	/** Single .mnteadlg import; creates the root graph (and its child dialogues next to it). */
 	static bool ImportDialogueGraph(const FString& FilePath, UObject* InParent, FName Name, EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph, FString& OutMessage);
 
-	// Core import logic — accepts already-extracted files so callers can inject project-level data
-	static bool ImportDialogueGraphFromFiles(TMap<FString, FString>& ExtractedFiles, const FString& SourceFilePath, UObject* InParent, FName Name, EObjectFlags Flags, UMounteaDialogueGraph*& OutGraph, FString& OutMessage);
+	/** Core: creates or reimports one graph per dialogue of the archive. */
+	static bool ImportArchiveModel(const MounteaArchive::FDialogueArchive& Archive, const FMounteaArchiveImportRequest& Request,
+		TMap<FGuid, UMounteaDialogueGraph*>& OutGraphs, UMounteaDialogueGraph*& OutRoot, FString& OutMessage);
+
+	/** Existing graphs that importing Archive would overwrite. */
+	static TArray<UMounteaDialogueGraph*> FindGraphsToBeReimported(const MounteaArchive::FDialogueArchive& Archive);
+
+	// Searches import config history then asset registry for an existing graph with ImportedGuid.
+	// Returns nullptr if not found.
+	static UMounteaDialogueGraph* LookupExistingGraphByGuid(const FGuid& ImportedGuid);
 
 	// Main export functions
 	static bool ExportDialogueGraph(const UMounteaDialogueGraph* Graph, const FString& FilePath);
 	static bool ExportProject(const TArray<UMounteaDialogueGraph*>& Graphs, const FString& FilePath);
 
-	// Helper functions for import process
-	static bool IsZipFile(const TArray<uint8>& FileData);
-	static bool ExtractFilesFromZip(const TArray<uint8>& ZipData, TMap<FString, FString>& OutExtractedFiles);
-	static bool ValidateExtractedContent(const TMap<FString, FString>& ExtractedFiles);
-	static bool PopulateGraphFromExtractedFiles(UMounteaDialogueGraph* Graph, const TMap<FString, FString>& ExtractedFiles, const FString& SourceFilePath);
-
-	static TArray<UMounteaDialogueGraph*> FindGraphsToBeReimported(const TMap<FString, FString>& ExtractedProjectFiles);
-
-	// Imports PNG files from the Thumbnails/ folder of the archive into UTexture2D assets.
-	// DestPackagePath is the UE content path under which a "thumbnails" subfolder is created.
-	// Called both from PopulateGraphFromExtractedFiles (per-dialogue) and from the project factory (project-level).
-	static void CreateTextureAssets(
-		const TMap<FString, FString>& ExtractedFiles,
-		const FString& DestPackagePath);
-
 private:
 
-	// ── Phase 0: Decorator / Condition Blueprint class creation ──────────────────
+	// ── Definitions (decorator / condition Blueprint classes) ────────────────────
 
-	// Parses decorators.json definitions (each entry has id, name, type, properties[]).
-	// For each unique definition GUID, finds or creates a Blueprint subclass of
-	// UMounteaDialogueDecoratorBase under <ProjectPackagePath>/Decorators/.
-	// Returns a definition-GUID → generated UClass* map for use during node population.
-	static TMap<FGuid, UClass*> CreateDecoratorBlueprints(
-		const FString& Json,
-		const FString& ProjectPackagePath);
-
-	// Same for conditions.json → UMounteaDialogueConditionBase subclasses.
-	// Assets land under <ProjectPackagePath>/Conditions/.
-	static TMap<FGuid, UClass*> CreateConditionBlueprints(
-		const FString& Json,
-		const FString& ProjectPackagePath);
+	// Finds or creates one Blueprint subclass per definition under PackagePath (Decorators/ or Conditions/).
+	// Returns definition GUID -> generated class.
+	static TMap<FGuid, UClass*> CreateDefinitionClasses(const TArray<MounteaArchive::FDefinition>& Definitions, const FString& PackagePath, bool bDecorators);
 
 	// Finds an already-created Blueprint class by CDO GUID (pass 1: loaded classes,
 	// pass 2: asset registry at PackagePath/Name). Returns nullptr if not found.
 	static UClass* FindExistingDecoratorClass(const FGuid& DefinitionGUID, const FString& Name, const FString& PackagePath);
 	static UClass* FindExistingConditionClass(const FGuid& DefinitionGUID, const FString& Name, const FString& PackagePath);
 
-	// ── Phase 1: Pre-graph asset creation ───────────────────────────────────────
+	// Class-resolution helpers for import: search by class name, display name, and GUID string
+	static UClass* FindConditionClassByName(const FString& NameOrGUID);
+	static UClass* FindDecoratorClassByName(const FString& NameOrGUID);
 
-	// Parses participants.json, writes gameplay tags to the plugin INI, and returns
-	// a name→fullTag map for use during DataTable population.
-	static TMap<FString, FString> RegisterGameplayTags(
-		const UMounteaDialogueGraph* Graph,
-		const FString& ParticipantsJson);
+	// ── Participants and gameplay tags ───────────────────────────────────────────
 
-	// Parses stringTable.json and builds the default-locale text lookup used by string tables.
-	static void BuildStringTableLookup(
-		const TMap<FString, FString>& ExtractedFiles,
-		FString& OutDefaultLocale,
-		TMap<FString, FString>& OutLookup,
-		TSharedPtr<FJsonObject>& OutEntriesObject);
+	// participant id -> "Mountea_Dialogue.<category chain>.<participant name>"
+	static TMap<FString, FString> BuildParticipantTags(const MounteaArchive::FDialogueArchive& Archive);
 
-	// Builds the row-UUID → textKey map from dialogueRows.json.
-	static TMap<FString, FString> BuildRowIdToTextKeyMap(const FString& DialogueRowsJson);
+	// Appends missing tags to <Project>/Config/Tags/MounteaDialogueParticipants.ini and refreshes the tag tree.
+	static void RegisterParticipantTags(const TArray<FString>& FullTags);
 
-	// Creates (or loads existing) ST_*_DialogueRows and ST_*_Nodes string tables,
-	// fills them with content from lookup maps, and saves them.
-	static bool CreateGraphStringTables(
-		UMounteaDialogueGraph* Graph,
-		IAssetTools& AssetTools,
-		const TMap<FString, FString>& ExtractedFiles,
-		const TMap<FString, FString>& StringTableLookup,
-		const TMap<FString, FString>& RowIdToTextKey,
-		UStringTable*& OutDialogueRowsStringTable,
-		UStringTable*& OutNodesStringTable);
+	// Imports participant thumbnails as <TargetFolder>/thumbnails/<ParticipantName>.
+	static void ImportParticipantThumbnails(const MounteaArchive::FDialogueArchive& Archive, const FString& TargetFolder);
 
-	// ── Node titles (Nodes string table) ─────────────────────────────────────────
-	// A node has two player-facing titles: its display name and its Selection Title (the text of the
-	// choice button). Dialoguer labels choices "selectionTitle || displayName || label"; these helpers
-	// mirror that chain for the default locale. Both take the node's "data" JSON object.
+	// ── One dialogue ─────────────────────────────────────────────────────────────
 
-	// displayNameKey lookup → additionalInfo.displayName → data.label.
-	static FString ResolveNodeDisplayName(const TSharedPtr<FJsonObject>& NodeData, const TMap<FString, FString>& StringTableLookup);
+	static bool PopulateGraphFromArchive(UMounteaDialogueGraph* Graph, const FMounteaArchiveImportContext& Context, const MounteaArchive::FDialogue& Dialogue);
 
-	// selectionTitleKey lookup → inline data.selectionTitle (older exports). Empty if the node has none.
-	static FString ResolveNodeSelectionTitle(const TSharedPtr<FJsonObject>& NodeData, const TMap<FString, FString>& StringTableLookup);
-
-	// Nodes table key of a node's Selection Title entry. The display name entry is keyed by the bare NodeId.
-	static FString GetSelectionTitleEntryKey(const FString& NodeId);
-
-	// Fills the Nodes string table: NodeId → display name, and <NodeId>.selection_title → Selection Title
-	// when the node has a non-empty one.
-	static void PopulateNodesStringTable(UStringTable* Table, const TArray<TSharedPtr<FJsonValue>>& NodesArray, const TMap<FString, FString>& StringTableLookup);
-
-	// Picks the Nodes table entry a node's RowTitle (the choice button text) should read: the Selection Title
-	// entry when the table has one, otherwise the display name entry.
-	static FString GetRowTitleEntryKey(const UStringTable* NodesStringTable, const FString& NodeId);
-	static FText MakeRowTitle(const UStringTable* NodesStringTable, const FString& NodeId);
-
-#if WITH_DEV_AUTOMATION_TESTS
-	friend struct FMounteaDialogueImportTestAccess;
-#endif
+	static bool CreateGraphStringTables(UMounteaDialogueGraph* Graph, IAssetTools& AssetTools, const FMounteaArchiveImportContext& Context,
+		const MounteaArchive::FDialogue& Dialogue, UStringTable*& OutDialogueRowsStringTable, UStringTable*& OutNodesStringTable);
 
 	// Creates (or loads existing) DT_*_Participants and DT_*_DialogueRows data tables (empty).
-	static bool CreateGraphDataTables(
-		UMounteaDialogueGraph* Graph,
-		IAssetTools& AssetTools,
-		UDataTable*& OutParticipantsTable,
-		UDataTable*& OutDialogueRowsTable);
+	static bool CreateGraphDataTables(UMounteaDialogueGraph* Graph, IAssetTools& AssetTools, UDataTable*& OutParticipantsTable, UDataTable*& OutDialogueRowsTable);
 
-	// Imports audio WAV files from the archive into USoundWave assets.
-	// Returns a row-GUID → USoundWave map for use during DataTable row filling.
-	static TMap<FGuid, USoundWave*> CreateAudioAssets(
-		const TMap<FString, FString>& ExtractedFiles,
-		UObject* InParent);
+	static bool PopulateNodes(UMounteaDialogueGraph* Graph, const FMounteaArchiveImportContext& Context, const MounteaArchive::FDialogue& Dialogue,
+		TMap<FGuid, UMounteaDialogueGraphNode*>& OutSpawnedNodes, const UStringTable* NodesStringTable);
+
+	static void PopulateNodeData(UMounteaDialogueGraphNode* Node, const MounteaArchive::FNode& NodeRecord, const FMounteaArchiveImportContext& Context, const UStringTable* NodesStringTable);
+
+	static bool PopulateEdges(UMounteaDialogueGraph* Graph, const FMounteaArchiveImportContext& Context, const MounteaArchive::FDialogue& Dialogue);
+
+	// Resolves ReturnToNode.SelectedNode after all nodes have been created.
+	static void ResolveReturnToNodeTargets(UMounteaDialogueGraph* Graph, const TMap<FGuid, UMounteaDialogueGraphNode*>& SpawnedNodesByGuid);
+
+	static bool FillParticipantsDataTable(UMounteaDialogueGraph* Graph, UDataTable* ParticipantsTable, const FMounteaArchiveImportContext& Context, const MounteaArchive::FDialogue& Dialogue);
+
+	static bool FillDialogueRowsDataTable(UMounteaDialogueGraph* Graph, UDataTable* DialogueRowsTable, UDataTable* ParticipantsTable,
+		UStringTable* DialogueRowsStringTable, UStringTable* NodesStringTable, const FMounteaArchiveImportContext& Context,
+		const MounteaArchive::FDialogue& Dialogue, const TMap<FGuid, USoundWave*>& AudioMap);
+
+	static void ProcessDialogueRowGroup(UMounteaDialogueGraph* Graph, const MounteaArchive::FNode& NodeRecord, const FString& ParticipantName,
+		UDataTable* ParticipantsTable, UDataTable* DialogueRowsTable, UStringTable* DialogueRowsStringTable, UStringTable* NodesStringTable,
+		const TMap<FGuid, USoundWave*>& AudioMap);
+
+	// Imports each row's audio bytes as a USoundWave under <GraphPackage>/audio/<RowGuid>/. Returns row GUID -> sound.
+	static TMap<FGuid, USoundWave*> ImportRowAudio(const MounteaArchive::FDialogueArchive& Archive, const MounteaArchive::FDialogue& Dialogue, UObject* InParent);
 
 	// Imports or re-imports one audio file at TempPath into the UE content system.
-	// Returns the imported USoundWave, or nullptr on failure.
 	static USoundWave* ImportSingleAudioAsset(
 		const FString& TempPath,
 		const FString& FullPackagePath,
@@ -186,152 +191,44 @@ private:
 		IAudioEditorModule& AudioEditorModule,
 		FAssetRegistryModule& AssetRegistryModule);
 
-	// ── Phase 2: Graph population ────────────────────────────────────────────────
+	// ── Node titles (Nodes string table) ─────────────────────────────────────────
+	// A node has two player-facing titles: its display name and its Selection Title (the text of the
+	// choice button). Both live in the Nodes string table under the keys named by the archive.
 
-	static bool PopulateDialogueData(UMounteaDialogueGraph* Graph, const FString& SourceFilePath, const TMap<FString, FString>& ExtractedFiles);
-	static bool PopulateCategories(UMounteaDialogueGraph* Graph, const FString& Json);
+	// Nodes table key a node's RowTitle (the choice button text) should read: the Selection Title key when
+	// the table has text for it, otherwise the display name key. Empty when the node has neither.
+	static FString GetRowTitleEntryKey(const UStringTable* NodesStringTable, const MounteaArchive::FNode& NodeRecord);
+	static FText MakeRowTitle(const UStringTable* NodesStringTable, const MounteaArchive::FNode& NodeRecord);
 
-	// Creates all node objects and fills their properties. Builds OutSpawnedNodes for the
-	// subsequent ReturnToNode resolution pass.
-	static bool PopulateNodes(UMounteaDialogueGraph* Graph, const FString& Json,
-		TMap<FGuid, UMounteaDialogueGraphNode*>& OutSpawnedNodes,
-		const TMap<FGuid, UClass*>& DecoratorClasses);
+	// Writes a .po file per non-default locale so UE's localization pipeline can produce .locres files.
+	// The string table itself holds the default locale; this carries every other one.
+	static void WriteLocalizationPoFiles(const FString& StringTableID, const FString& DefaultLocale, const TMap<FString, TMap<FString, FString>>& TextsByKeyAndLocale);
 
-	static bool PopulateEdges(UMounteaDialogueGraph* Graph, const FString& Json,
-		const TMap<FGuid, UClass*>& ConditionClasses);
+	// Writes the same texts straight into Content/Localization/MounteaDialogue/<culture>/MounteaDialogue.locres
+	// (plus the .locmeta), replacing only this table's entries, so no Localization Dashboard compile is needed.
+	static void WriteLocalizationResources(const FString& StringTableID, const FString& DefaultLocale, const TMap<FString, TMap<FString, FString>>& TextsByKeyAndLocale);
 
-	// Resolves ReturnToNode.SelectedNode after all nodes have been created.
-	static void ResolveReturnToNodeTargets(
-		UMounteaDialogueGraph* Graph,
-		const TMap<FGuid, UMounteaDialogueGraphNode*>& SpawnedNodesByGuid);
+	// Makes sure DefaultGame.ini lists the Mountea localization folder under [Internationalization] LocalizationPaths.
+	static void RegisterLocalizationPath();
 
-	// Searches import config history then asset registry for an existing graph with ImportedGuid.
-	// Returns nullptr if not found.
-	static UMounteaDialogueGraph* LookupExistingGraphByGuid(const FGuid& ImportedGuid);
-
-	// Validates, populates, rebuilds and saves Graph from ExtractedFiles.
-	// Returns false and sets OutMessage on any failure.
-	static bool PopulateAndSaveGraph(
-		UMounteaDialogueGraph* Graph,
-		TMap<FString, FString>& ExtractedFiles,
-		const FString& SourceFilePath,
-		FString& OutMessage);
-
-	// Parses "data.conditions" from EdgeObject and fills Edge->EdgeConditions.
-	static void ParseEdgeConditions(
-		UMounteaDialogueGraphEdge* Edge,
-		const TSharedPtr<FJsonObject>& EdgeObject,
-		const TMap<FGuid, UClass*>& ConditionClasses);
-
-	// ── Phase 3: Fill data tables ─────────────────────────────────────────────────
-
-	// Empties and repopulates DT_*_Participants from participants.json.
-	static bool FillParticipantsDataTable(
-		const UMounteaDialogueGraph* Graph,
-		UDataTable* ParticipantsTable,
-		const FString& ParticipantsJson,
-		const TMap<FString, FString>& ParticipantTagMap);
-
-	// Empties and repopulates DT_*_DialogueRows; links dialogue nodes to their rows;
-	// sets RowSound references from the audio map.
-	static bool FillDialogueRowsDataTable(
-		UMounteaDialogueGraph* Graph,
-		UDataTable* DialogueRowsTable,
-		UDataTable* ParticipantsTable,
-		UStringTable* DialogueRowsStringTable,
-		UStringTable* NodesStringTable,
-		const TMap<FString, FString>& ExtractedFiles,
-		const TMap<FString, FString>& RowIdToTextKey,
-		const TMap<FGuid, USoundWave*>& AudioMap);
-
-	// Builds a nodeId → participantName map from the parsed nodes JSON array.
-	static TMap<FString, FString> BuildNodeParticipantMap(
-		const TArray<TSharedPtr<FJsonValue>>& NodesArray);
-
-	// Creates FDialogueRow entries for one node's rows, links matching graph nodes, and adds them to DialogueRowsTable.
-	static void ProcessDialogueRowGroup(
-		UMounteaDialogueGraph* Graph,
-		const FString& NodeId,
-		const FString& ParticipantName,
-		const TArray<TSharedPtr<FJsonObject>>& Rows,
-		UDataTable* ParticipantsTable,
-		UDataTable* DialogueRowsTable,
-		UStringTable* DialogueRowsStringTable,
-		UStringTable* NodesStringTable,
-		const TMap<FString, FString>& RowIdToTextKey,
-		const TMap<FGuid, USoundWave*>& AudioMap);
+#if WITH_DEV_AUTOMATION_TESTS
+	friend struct FMounteaDialogueImportTestAccess;
+	friend struct FMounteaDialogueLocalizationTestAccess;
+#endif
 
 	// ── Utilities ─────────────────────────────────────────────────────────────────
 
-	static FString BytesToString(const uint8* Bytes, int32 Count);
-	static void PopulateNodeData(UMounteaDialogueGraphNode* Node, const TSharedPtr<FJsonObject>& JsonObject, const TMap<FGuid, UClass*>& DecoratorClasses);
-
-	// Parses the "decorators" array from DataObject and appends resolved instances to Node->NodeDecorators.
-	static void PopulateNodeDecorators(
-		UMounteaDialogueGraphNode* Node,
-		const TSharedPtr<FJsonObject>& DataObject,
-		const TMap<FGuid, UClass*>& DecoratorClasses);
-
-	// Deserialises JsonStr as a JSON array and appends entries (deduplicated by KeyField) to Target.
-	static void MergeJsonArrayInto(
-		const FString& JsonStr,
-		TArray<TSharedPtr<FJsonValue>>& Target,
-		TSet<FString>& SeenKeys,
-		const FString& KeyField);
-
-	// Serialises a JSON array to a compact string.
-	static FString SerializeJsonArray(const TArray<TSharedPtr<FJsonValue>>& Array);
 	static UStringTable* CreateStringTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName, TFunction<void(UStringTable*)> PopulateFunction);
 
 	template <typename RowType>
 	static UDataTable* CreateDataTable(IAssetTools& AssetTools, const FString& PackagePath, const FString& AssetName);
 	static void SaveAsset(UObject* Asset);
 
-	// Helper functions for export process
-	static bool GatherAssetsFromGraph(const UMounteaDialogueGraph* Graph, TMap<FString, FString>& OutJsonFiles, TArray<FString>& OutAudioFiles);
-	static bool ExportAudioFiles(const TArray<FString>& AudioFiles, const FString& ExportPath, TArray<FString>& OutExportedFiles);
-	static bool GatherThumbnailFiles(const UMounteaDialogueGraph* Graph, TMap<FString, FString>& OutThumbnailFiles);
-	static bool PackToMNTEADLG(const TMap<FString, FString>& JsonFiles, const TArray<FString>& ExportedAudioFiles, const TMap<FString, FString>& ThumbnailFiles, const FString& OutputPath);
-	static bool PackToMNTEADLGPROJ(const TMap<FString, FString>& ProjectJsonFiles, const TMap<FString, FString>& DialogueArchives, const TMap<FString, FString>& ThumbnailFiles, const FString& OutputPath);
+	// ── Archive export ───────────────────────────────────────────────────────────
 
-	// Helper functions for gathering specific parts of the graph
-	static void GatherNodesFromGraph(const UMounteaDialogueGraph* Graph, TArray<FDialogueNodeData>& OutNodeData);
-	static bool GatherAudioFiles(const UMounteaDialogueGraph* Graph, TArray<FString>& OutAudioFiles);
+	// Walks the graphs (plus every dialogue they open) into the archive model. Collects every problem into OutErrors.
+	static bool BuildArchiveFromGraphs(const TArray<const UMounteaDialogueGraph*>& Graphs, const UMounteaDialogueGraph* Root, bool bProject,
+		const FString& ProjectName, MounteaArchive::FDialogueArchive& OutArchive, TArray<FString>& OutErrors);
 
-	// Class-resolution helpers for import — search by class name, display name, and GUID string
-	static UClass* FindConditionClassByName(const FString& NameOrGUID);
-	static UClass* FindDecoratorClassByName(const FString& NameOrGUID);
-
-	// Export helper for localized string table (v2)
-	static FString CreateStringTableJson(const UMounteaDialogueGraph* Graph);
-
-	// Writes a .po file per non-default locale so UE's localization pipeline can produce .locres files.
-	// StringTableID  — asset name of the UStringTable (e.g. "ST_Foo_DialogueRows")
-	// DefaultLocale  — locale whose text was written into the UStringTable (e.g. "en")
-	// DefaultTexts   — textKey → default-locale text (already-built stringTableLookup map)
-	// EntriesObject  — the "entries" object from stringTable.json
-	static void ExportLocalizationPoFiles(
-		const FString& StringTableID,
-		const FString& DefaultLocale,
-		const TMap<FString, FString>& DefaultTexts,
-		const TSharedPtr<FJsonObject>& EntriesObject);
-
-	// Helper function to get relative audio paths
-	static FString GetRelativeAudioPath(const USoundBase* Sound, const FString& GraphFolder);
-	static void CreateWAVFile(const TArray<uint8>& InPCMData, uint32 InSampleRate, uint16 InNumChannels, TArray<uint8>& OutWAVData);
-
-	// Helper functions to generate JSON files
-	static FString CreateNodesJson(const TArray<FDialogueNodeData>& NodeData);
-	static void AddNodePosition(const TSharedPtr<FJsonObject>& NodeObject, const UMounteaDialogueGraphNode* Node);
-	static void AddNodeData(const TSharedPtr<FJsonObject>& NodeObject, const UMounteaDialogueGraphNode* Node);
-	static void AddDialogueNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_DialogueNodeBase* DialogueNode);
-	static void AddJumpNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_ReturnToNode* Node);
-	static void AddOpenChildGraphNodeData(const TSharedPtr<FJsonObject>& AdditionalInfoObject, const UMounteaDialogueGraphNode_OpenChildGraph* Node);
-	static FString CreateEdgesJson(const UMounteaDialogueGraph* Graph);
-	static FString CreateCategoriesJson(const UMounteaDialogueGraph* Graph);
-	static FString CreateDialogueDataJson(const UMounteaDialogueGraph* Graph);
-	static FString CreateParticipantsJson(const UMounteaDialogueGraph* Graph);
-	static FString CreateDialogueRowsJson(const TArray<FDialogueNodeData>& AllNodeData, const UMounteaDialogueGraph* Graph);
-	static FString CreateDecoratorsJson(const UMounteaDialogueGraph* Graph);
-	static FString CreateConditionsJson(const UMounteaDialogueGraph* Graph);
+	static bool SaveArchiveToFile(const MounteaArchive::FDialogueArchive& Archive, const FString& FilePath, FString& OutMessage);
 };
