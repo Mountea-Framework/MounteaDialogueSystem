@@ -13,6 +13,7 @@
 #include "Components/MounteaDialogueManager.h"
 #include "Data/MounteaDialogueContext.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
+#include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueContextStatics.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueManagerStatics.h"
@@ -96,6 +97,7 @@ void UMounteaDialogueSession::WriteContextPayload(FMounteaDialogueContextPayload
 	{
 		RoleOverrides.Empty();
 		SessionTraversedPath.Empty();
+		ExitEnteredGraphs();
 	}
 
 	NewPayload.ContextVersion = ContextPayload.ContextVersion + 1;
@@ -185,9 +187,39 @@ void UMounteaDialogueSession::FinalizeSession()
 		}
 	}
 
+	ExitEnteredGraphs();
 	AuthoritativeManager.Reset();
 	RoleOverrides.Empty();
 	SessionTraversedPath.Empty();
+}
+
+void UMounteaDialogueSession::EnterGraph(UMounteaDialogueGraph* Graph, UMounteaDialogueManager* Manager, const UMounteaDialogueContext* DialogueContext)
+{
+	if (!IsValid(Graph) || EnteredGraphs.Contains(Graph))
+		return;
+
+	EnteredGraphs.Add(Graph);
+	Graph->InitializeGraph();
+
+	const TScriptInterface<IMounteaDialogueParticipantInterface> participant =
+		IsValid(DialogueContext) ? DialogueContext->ActiveDialogueParticipant : nullptr;
+	for (const FMounteaDialogueDecorator& decorator : Graph->GetGraphDecorators())
+		decorator.InitializeDecorator(GetWorld(), participant, Manager);
+}
+
+void UMounteaDialogueSession::ExitEnteredGraphs()
+{
+	for (UMounteaDialogueGraph* graph : EnteredGraphs)
+	{
+		if (!IsValid(graph))
+			continue;
+
+		for (const FMounteaDialogueDecorator& decorator : graph->GetGraphDecorators())
+			decorator.CleanupDecorator();
+		graph->ShutdownGraph();
+	}
+
+	EnteredGraphs.Empty();
 }
 
 void UMounteaDialogueSession::SetRoleOverride(const EDialogueParticipantType Role, const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant)
@@ -781,6 +813,7 @@ bool UMounteaDialogueSession::HandlePrepareNode(UMounteaDialogueManager* Manager
 
 	const TScriptInterface<IMounteaDialogueParticipantInterface> newActiveParticipant = UMounteaDialogueTraversalStatics::ResolveActiveParticipant(dialogueContext);
 	UMounteaDialogueTraversalStatics::UpdateMatchingDialogueParticipant(dialogueContext, newActiveParticipant);
+	EnterGraph(dialogueContext->ActiveNode->GetGraph(), Manager, dialogueContext);
 	dialogueContext->ActiveNode->PreProcessNode(Manager);
 	return true;
 }
