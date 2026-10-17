@@ -466,7 +466,6 @@ bool UMounteaDialogueGraphNode::ValidateNode(FDataValidationContext& Context, co
 			
 				const FString TextReturn =
 				FString(NodeTitle.ToString()).
-				Append(NodeTitle.ToString()).
 				Append(": has Node Decorator ").
 				Append( Itr.Key->GetName().LeftChop(2)).
 				Append(" ").

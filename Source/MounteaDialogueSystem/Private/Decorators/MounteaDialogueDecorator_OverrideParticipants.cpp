@@ -54,15 +54,15 @@ bool UMounteaDialogueDecorator_OverrideParticipants::ValidateDecorator_Implement
 
 	if (bOverridePlayerParticipant)
 	{
-		bSatisfied = ValidateInterfaceActor(NewPlayerParticipant, ValidationMessages);
+		bSatisfied &= ValidateInterfaceActor(NewPlayerParticipant, ValidationMessages);
 	}
 	if (bOverrideDialogueParticipant)
 	{
-		bSatisfied = ValidateInterfaceActor(NewDialogueParticipant, ValidationMessages);
+		bSatisfied &= ValidateInterfaceActor(NewDialogueParticipant, ValidationMessages);
 	}
 	if (bOverrideActiveParticipant)
 	{
-		bSatisfied = ValidateInterfaceActor(NewActiveParticipant, ValidationMessages);
+		bSatisfied &= ValidateInterfaceActor(NewActiveParticipant, ValidationMessages);
 	}
 
 	return bSatisfied;

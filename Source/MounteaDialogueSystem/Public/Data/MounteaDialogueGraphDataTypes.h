@@ -682,7 +682,7 @@ public:
 
 	friend uint32 GetTypeHash(const FUIRowID& RowID)
 	{
-		return FCrc::MemCrc32(&RowID.RowWidgetClass, sizeof(FUIRowID)) + RowID.UIRowID;
+		return HashCombine(GetTypeHash(RowID.UIRowID), GetTypeHash(RowID.RowWidgetClass));
 	}
 };
 

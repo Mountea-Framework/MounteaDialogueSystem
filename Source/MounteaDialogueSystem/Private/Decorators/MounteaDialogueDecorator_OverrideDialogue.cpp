@@ -32,9 +32,9 @@ bool UMounteaDialogueDecorator_OverrideDialogue::ValidateDecorator_Implementatio
 		bSatisfied = false;
 	}
 	
-	if (RowName.IsNone() || RowName.IsNone())
+	if (RowName.IsNone())
 	{
-		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_DT", "Decorator {0}: Invalid Row Name!"), Name);
+		const FText TempText = FText::Format(LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_Row", "Decorator {0}: Invalid Row Name!"), Name);
 		ValidationMessages.Add(TempText);
 		
 		bSatisfied = false;
@@ -57,7 +57,7 @@ bool UMounteaDialogueDecorator_OverrideDialogue::ValidateDecorator_Implementatio
 		
 		const FText TempText = FText::Format(
 			LOCTEXT("MounteaDialogueDecorator_OverrideDialogue_Validation_ReturnNode",
-				"Decorator {0}: is not allowed for Start Nodes!\nAttach this decorator to different nodes instead."),
+				"Decorator {0}: is not allowed for Return Nodes!\nAttach this decorator to different nodes instead."),
 				Name);
 		ValidationMessages.Add(TempText);
 	}
