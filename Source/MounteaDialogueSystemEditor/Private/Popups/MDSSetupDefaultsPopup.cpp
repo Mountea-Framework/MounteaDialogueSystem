@@ -46,6 +46,8 @@ void MDSSetupDefaultsPopup::Open(const FSetupDefaultsReport& Report)
 			windowContent
 		];
 
+  window = FSlateApplication::Get().AddWindow(window.ToSharedRef(), false);
+
 	TSharedPtr<SMounteaDialogueHtmlView> htmlView;
 	const TWeakPtr<SWindow> weakWindow = window;
 
@@ -64,8 +66,6 @@ void MDSSetupDefaultsPopup::Open(const FSetupDefaultsReport& Report)
 			))
 		]
 	);
-
-	window = FSlateApplication::Get().AddWindow(window.ToSharedRef());
 
 	const TWeakPtr<SWindow> resizeWeakWindow = window;
 	const FTSTicker::FDelegateHandle resizeTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
@@ -87,12 +87,15 @@ void MDSSetupDefaultsPopup::Open(const FSetupDefaultsReport& Report)
 
 	if (htmlView.IsValid())
 	{
+    htmlView->SetParentWindow(window);
 		const UMounteaDialogueGraphEditorSettings* settings = GetDefault<UMounteaDialogueGraphEditorSettings>();
 		const FString htmlSourcePath = settings ? settings->GetSetupDefaultsHtmlPath() : FString();
 
 		const FString resultHtml = BuildResultHtml(Report);
 		htmlView->LoadHtmlString(resultHtml, htmlSourcePath);
 	}
+
+  window->ShowWindow();
 }
 
 FString MDSSetupDefaultsPopup::BuildResultHtml(const FSetupDefaultsReport& Report)

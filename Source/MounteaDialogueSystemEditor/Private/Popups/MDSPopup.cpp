@@ -162,6 +162,8 @@ void MDSPopup::Open(const FString& ChangelogHtml, const FString& ChangelogHtmlPa
 			windowContent
 		];
 
+  window = FSlateApplication::Get().AddWindow(window.ToSharedRef(), false);
+
 	TSharedPtr<SMounteaDialogueHtmlView> htmlView;
 
 	const TSharedRef<SVerticalBox> innerContent = SNew(SVerticalBox)
@@ -231,16 +233,15 @@ void MDSPopup::Open(const FString& ChangelogHtml, const FString& ChangelogHtmlPa
 		];
 
 	windowContent->SetContent(innerContent);
-	window = FSlateApplication::Get().AddWindow(window.ToSharedRef());
 
-	if(!htmlView.IsValid())
-		return;
+  if(htmlView.IsValid())
+  {
+    htmlView->SetParentWindow(window);
+    if(!ChangelogHtmlPath.IsEmpty() && FPaths::FileExists(ChangelogHtmlPath))
+      htmlView->LoadHtmlFile(ChangelogHtmlPath);
+    else
+      htmlView->LoadHtmlString(ChangelogHtml, ChangelogHtmlPath);
+  }
 
-	if(!ChangelogHtmlPath.IsEmpty() && FPaths::FileExists(ChangelogHtmlPath))
-	{
-		htmlView->LoadHtmlFile(ChangelogHtmlPath);
-		return;
-	}
-
-	htmlView->LoadHtmlString(ChangelogHtml, ChangelogHtmlPath);
+  window->ShowWindow();
 }

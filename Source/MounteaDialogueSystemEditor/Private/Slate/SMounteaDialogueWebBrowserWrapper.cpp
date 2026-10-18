@@ -31,6 +31,14 @@ void SMounteaDialogueWebBrowserWrapper::Construct(const FArguments& InArgs)
 	];
 }
 
+void SMounteaDialogueWebBrowserWrapper::SetParentWindow(TSharedPtr<SWindow> Window) const
+{
+  if(!WebBrowser.IsValid())
+    return;
+
+  WebBrowser->SetParentWindow(Window);
+}
+
 void SMounteaDialogueWebBrowserWrapper::LoadString(const FString& Contents, const FString& DummyURL) const
 {
 	if(!WebBrowser.IsValid())
