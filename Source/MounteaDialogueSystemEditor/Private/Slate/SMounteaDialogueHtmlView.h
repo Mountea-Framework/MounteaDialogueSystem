@@ -15,6 +15,8 @@
 #include "Slate/SMounteaDialogueWebBrowserWrapper.h"
 #include "Widgets/SCompoundWidget.h"
 
+class SWindow;
+
 class SMounteaDialogueHtmlView : public SCompoundWidget
 {
 public:
@@ -30,6 +32,7 @@ public:
 
 	void Construct(const FArguments& InArgs);
 
+  void SetParentWindow(TSharedPtr<SWindow> Window) const;
 	void LoadHtmlFile(const FString& FilePath);
 	void LoadHtmlString(const FString& HtmlContent, const FString& SourcePath = FString());
 	void ExecuteJavascript(const FString& ScriptText) const;
