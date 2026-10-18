@@ -15,6 +15,9 @@
 #include "Helpers/MounteaDialogueSystemEditorBFC.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 #include "GraphScheme/AssetGraphScheme_MounteaDialogueGraph.h"
+#include "Ed/SEdNode_MounteaDialogueGraphNode.h"
+#include "Layout/Layered/MounteaLayeredLayout.h"
+#include "Settings/MounteaDialogueGraphEditorSettings.h"
 
 namespace
 {
@@ -792,4 +795,241 @@ void UEdGraph_MounteaDialogueGraph::UnregisterEdge(UMounteaDialogueGraphEdge* Ed
 	EdgeMap.Remove(Edge);
 
 	EnsureExecutionOrders();
+}
+
+FVector2D UEdGraph_MounteaDialogueGraph::MeasureNode(const UEdNode_MounteaDialogueGraphNode* Node)
+{
+	if (Node && Node->SEdNode)
+	{
+		const FVector2D cached = Node->SEdNode->GetCachedGeometry().GetLocalSize();
+		if (cached.X > KINDA_SMALL_NUMBER && cached.Y > KINDA_SMALL_NUMBER)
+			return cached;
+
+		const FVector2D desired = Node->SEdNode->GetDesiredSize();
+		if (desired.X > KINDA_SMALL_NUMBER && desired.Y > KINDA_SMALL_NUMBER)
+			return desired;
+	}
+	return FVector2D(MounteaLayout::FallbackNodeWidth, MounteaLayout::FallbackNodeHeight);
+}
+
+bool UEdGraph_MounteaDialogueGraph::BuildLayoutSnapshot(FDialogueLayoutSnapshot& OutSnapshot, FDialogueLayoutBinding& OutBinding, FString& OutError) const
+{
+	OutSnapshot = FDialogueLayoutSnapshot();
+	OutBinding = FDialogueLayoutBinding();
+
+	const UMounteaDialogueGraph* dialogueGraph = Cast<UMounteaDialogueGraph>(GetOuter());
+	if (!dialogueGraph)
+	{
+		OutError = TEXT("The editor graph has no dialogue asset.");
+		return false;
+	}
+
+	TArray<UEdNode_MounteaDialogueGraphNode*> edNodes;
+	for (UEdGraphNode* graphNode : Nodes)
+	{
+		UEdNode_MounteaDialogueGraphNode* edNode = Cast<UEdNode_MounteaDialogueGraphNode>(graphNode);
+		if (edNode && edNode->DialogueGraphNode)
+			edNodes.Add(edNode);
+	}
+
+	// Stable ids: independent of the order in which the editor happens to store nodes.
+	edNodes.Sort([](const UEdNode_MounteaDialogueGraphNode& A, const UEdNode_MounteaDialogueGraphNode& B)
+	{
+		const FGuid guidA = A.DialogueGraphNode->GetNodeGUID();
+		const FGuid guidB = B.DialogueGraphNode->GetNodeGUID();
+		return guidA != guidB ? guidA < guidB : A.GetFName().LexicalLess(B.GetFName());
+	});
+
+	const UMounteaDialogueGraphNode* startNode = dialogueGraph->GetStartNode();
+	TMap<const UEdNode_MounteaDialogueGraphNode*, int32> idOf;
+	for (int32 i = 0; i < edNodes.Num(); ++i)
+	{
+		FDialogueLayoutNode node;
+		node.Id = i;
+		node.Guid = edNodes[i]->DialogueGraphNode->GetNodeGUID();
+		node.Size = MeasureNode(edNodes[i]);
+		node.ExecutionOrder = edNodes[i]->DialogueGraphNode->ExecutionOrder;
+		node.bIsStart = startNode && edNodes[i]->DialogueGraphNode == startNode;
+		if (node.bIsStart)
+			OutSnapshot.AnchorId = i;
+		OutSnapshot.Nodes.Add(node);
+		OutBinding.Nodes.Add(edNodes[i]);
+		idOf.Add(edNodes[i], i);
+	}
+
+	struct FEdgeEntry { int32 From; int32 To; UEdNode_MounteaDialogueGraphEdge* Node; };
+	TArray<FEdgeEntry> edges;
+	for (UEdGraphNode* graphNode : Nodes)
+	{
+		UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(graphNode);
+		if (!edgeNode)
+			continue;
+		const int32* from = idOf.Find(edgeNode->GetStartNode());
+		const int32* to = idOf.Find(edgeNode->GetEndNode());
+		if (from && to)
+			edges.Add({*from, *to, edgeNode});
+	}
+	edges.Sort([](const FEdgeEntry& A, const FEdgeEntry& B)
+	{
+		if (A.From != B.From) return A.From < B.From;
+		if (A.To != B.To) return A.To < B.To;
+		return A.Node->GetFName().LexicalLess(B.Node->GetFName());
+	});
+	for (const FEdgeEntry& entry : edges)
+	{
+		OutSnapshot.Edges.Add({entry.From, entry.To});
+		OutBinding.Edges.Add(entry.Node);
+	}
+
+	const UMounteaDialogueGraphEditorSettings* settings = GetDefault<UMounteaDialogueGraphEditorSettings>();
+	OutSnapshot.HorizontalClearance = settings->GetOptimalHorizontalDistance();
+	OutSnapshot.VerticalClearance = settings->GetOptimalVerticalDistance();
+
+	uint32 revision = HashCombineFast(GetTypeHash(OutSnapshot.AnchorId), GetTypeHash(OutSnapshot.HorizontalClearance));
+	revision = HashCombineFast(revision, GetTypeHash(OutSnapshot.VerticalClearance));
+	for (const FDialogueLayoutNode& node : OutSnapshot.Nodes)
+	{
+		revision = HashCombineFast(revision, GetTypeHash(node.Guid));
+		revision = HashCombineFast(revision, GetTypeHash(FIntPoint(FMath::RoundToInt(node.Size.X), FMath::RoundToInt(node.Size.Y))));
+		revision = HashCombineFast(revision, GetTypeHash(node.ExecutionOrder));
+	}
+	for (const FDialogueLayoutEdge& edge : OutSnapshot.Edges)
+		revision = HashCombineFast(revision, GetTypeHash(FIntPoint(edge.From, edge.To)));
+	OutSnapshot.Revision = revision;
+	return true;
+}
+
+bool UEdGraph_MounteaDialogueGraph::ApplyLayoutCheckpoint(const FDialogueLayoutSnapshot& Expected, const FDialogueLayoutBinding& Binding, const FDialogueLayoutCheckpoint& Checkpoint, FString& OutError)
+{
+	FDialogueLayoutSnapshot current;
+	FDialogueLayoutBinding currentBinding;
+	if (!BuildLayoutSnapshot(current, currentBinding, OutError))
+		return false;
+
+	const bool bSameObjects = currentBinding.Nodes == Binding.Nodes && currentBinding.Edges == Binding.Edges;
+	if (!bSameObjects || current.Revision != Expected.Revision || Checkpoint.InputRevision != Expected.Revision
+		|| Checkpoint.NodePositions.Num() != current.Nodes.Num() || Checkpoint.Routes.Num() != current.Edges.Num())
+	{
+		OutError = TEXT("The dialogue was changed while it was being arranged, so the result was discarded.");
+		return false;
+	}
+
+	TArray<FString> problems;
+	if (!FMounteaLayeredLayout::Validate(current, Checkpoint, problems))
+	{
+		OutError = FString::Join(problems, TEXT(" "));
+		return false;
+	}
+
+	Modify(true);
+	PreparedRoutes.Reset();
+
+	for (int32 i = 0; i < current.Nodes.Num(); ++i)
+	{
+		UEdNode_MounteaDialogueGraphNode* edNode = Cast<UEdNode_MounteaDialogueGraphNode>(currentBinding.Nodes[i].Get());
+		edNode->Modify(true);
+		edNode->NodePosX = Checkpoint.NodePositions[i].X;
+		edNode->NodePosY = Checkpoint.NodePositions[i].Y;
+		edNode->UpdatePosition(); // keeps the runtime NodePosition in step with the editor position
+	}
+
+	for (int32 i = 0; i < current.Edges.Num(); ++i)
+	{
+		const FDialogueLayoutRoute& route = Checkpoint.Routes[i];
+		UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(currentBinding.Edges[i].Get());
+		if (!route.IsValid())
+			continue;
+
+		edgeNode->Modify(true);
+		edgeNode->NodePosX = route.ControlPosition.X;
+		edgeNode->NodePosY = route.ControlPosition.Y;
+
+		const int32 from = current.Edges[i].From;
+		const int32 to = current.Edges[i].To;
+		FPreparedDialogueRoute prepared;
+		prepared.Points = route.Points;
+		prepared.SourcePosition = Checkpoint.NodePositions[from];
+		prepared.TargetPosition = Checkpoint.NodePositions[to];
+		prepared.SourceSize = current.Nodes[from].Size;
+		prepared.TargetSize = current.Nodes[to].Size;
+		prepared.bUsable = true;
+		PreparedRoutes.Add(edgeNode, MoveTemp(prepared));
+	}
+
+	PreparedSignature = ComputeNodeSignature();
+	PreparedFrame = GFrameCounter;
+	return true;
+}
+
+uint32 UEdGraph_MounteaDialogueGraph::ComputeNodeSignature() const
+{
+	uint32 signature = 0;
+	for (const UEdGraphNode* graphNode : Nodes)
+	{
+		if (const UEdNode_MounteaDialogueGraphNode* edNode = Cast<UEdNode_MounteaDialogueGraphNode>(graphNode))
+		{
+			const FVector2D size = MeasureNode(edNode);
+			signature = HashCombineFast(signature, GetTypeHash(FIntPoint(edNode->NodePosX, edNode->NodePosY)));
+			signature = HashCombineFast(signature, GetTypeHash(FIntPoint(FMath::RoundToInt(size.X), FMath::RoundToInt(size.Y))));
+		}
+	}
+	return signature;
+}
+
+void UEdGraph_MounteaDialogueGraph::RefreshPreparedRoutes() const
+{
+	if (PreparedRoutes.IsEmpty() || PreparedFrame == GFrameCounter)
+		return;
+	PreparedFrame = GFrameCounter;
+
+	const uint32 signature = ComputeNodeSignature();
+	if (signature == PreparedSignature)
+		return;
+	PreparedSignature = signature;
+
+	// Something moved or resized: re-check every route against the current diagram.
+	TArray<FBox2D> obstacles;
+	for (const UEdGraphNode* graphNode : Nodes)
+	{
+		if (const UEdNode_MounteaDialogueGraphNode* edNode = Cast<UEdNode_MounteaDialogueGraphNode>(graphNode))
+		{
+			const FVector2D size = MeasureNode(edNode);
+			obstacles.Add(FBox2D(FVector2D(edNode->NodePosX, edNode->NodePosY), FVector2D(edNode->NodePosX + size.X, edNode->NodePosY + size.Y)));
+		}
+	}
+
+	for (auto it = PreparedRoutes.CreateIterator(); it; ++it)
+	{
+		UEdNode_MounteaDialogueGraphEdge* edge = Cast<UEdNode_MounteaDialogueGraphEdge>(const_cast<UEdGraphNode*>(it.Key().Get()));
+		if (!edge)
+		{
+			it.RemoveCurrent();
+			continue;
+		}
+
+		FPreparedDialogueRoute& route = it.Value();
+		const UEdNode_MounteaDialogueGraphNode* source = edge->GetStartNode();
+		const UEdNode_MounteaDialogueGraphNode* target = edge->GetEndNode();
+		bool bUsable = source && target;
+		if (bUsable)
+		{
+			const FVector2D sourceSize = MeasureNode(source);
+			const FVector2D targetSize = MeasureNode(target);
+			bUsable = route.SourcePosition == FIntPoint(source->NodePosX, source->NodePosY)
+				&& route.TargetPosition == FIntPoint(target->NodePosX, target->NodePosY)
+				&& route.SourceSize.Equals(sourceSize, 1.0) && route.TargetSize.Equals(targetSize, 1.0)
+				&& FMounteaLayeredLayout::IsRouteClear(route.Points, obstacles);
+		}
+		route.bUsable = bUsable;
+	}
+}
+
+const FPreparedDialogueRoute* UEdGraph_MounteaDialogueGraph::FindPreparedRoute(const UEdNode_MounteaDialogueGraphEdge* Edge) const
+{
+	if (!Edge || PreparedRoutes.IsEmpty())
+		return nullptr;
+
+	RefreshPreparedRoutes();
+	const FPreparedDialogueRoute* route = PreparedRoutes.Find(TWeakObjectPtr<const UEdGraphNode>(Edge));
+	return route && route->bUsable ? route : nullptr;
 }
