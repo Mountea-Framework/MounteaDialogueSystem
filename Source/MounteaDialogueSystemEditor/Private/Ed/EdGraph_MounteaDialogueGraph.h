@@ -63,8 +63,10 @@ public:
 public:
 
 	void UpdateFocusedInstance(const FPIEInstanceData& InstanceId);
-	void AssignExecutionOrder();
-	void ResetExecutionOrders() const;
+	/** Explicit, position-derived option ordering. Call only for intentional reordering (manual node movement). */
+	bool ReorderFromPositions();
+	/** Initialises missing orders, keeping every existing one. Safe on any topology change. */
+	void EnsureExecutionOrders();
 
 protected:
 
@@ -73,8 +75,6 @@ protected:
 	
 	static UMounteaDialogueGraphNode* GetParentNode(const UMounteaDialogueGraphNode& Node);
 	
-	static void AssignNodeToLayer(UMounteaDialogueGraphNode* Node, int32 LayerIndex, TMap<int32, TArray<UMounteaDialogueGraphNode*>>& LayeredNodes);
-
 private:
 
 	UPROPERTY()

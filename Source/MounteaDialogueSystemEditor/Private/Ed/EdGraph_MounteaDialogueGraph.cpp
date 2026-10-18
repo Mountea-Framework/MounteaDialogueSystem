@@ -255,7 +255,7 @@ void UEdGraph_MounteaDialogueGraph::RebuildMounteaDialogueGraph()
 		return EdNode_LNode->NodePosX < EdNode_RNode->NodePosX;
 	});
 
-	AssignExecutionOrder();
+	EnsureExecutionOrders();
 
 	bSuppressDeltaSync = false;
 }
@@ -282,9 +282,6 @@ bool UEdGraph_MounteaDialogueGraph::Modify(bool bAlwaysMarkDirty)
 {
 	bool Rtn = Super::Modify(bAlwaysMarkDirty);
 
-	ResetExecutionOrders();
-	AssignExecutionOrder();
-	
 	for (int32 i = 0; i < Nodes.Num(); ++i)
 	{
 		Nodes[i]->Modify();
@@ -364,19 +361,6 @@ void UEdGraph_MounteaDialogueGraph::SortNodes(UMounteaDialogueGraphNode* RootNod
 	}
 }
 
-void UEdGraph_MounteaDialogueGraph::ResetExecutionOrders() const
-{
-	UMounteaDialogueGraph* dialogueGraph = GetMounteaDialogueGraph();
-	if (!dialogueGraph) 
-		return;
-
-	for (UMounteaDialogueGraphNode* graphNode : dialogueGraph->AllNodes)
-	{
-		if (graphNode)
-			graphNode->ExecutionOrder = INDEX_NONE;
-	}
-}
-
 UMounteaDialogueGraphNode* UEdGraph_MounteaDialogueGraph::GetParentNode(const UMounteaDialogueGraphNode& Node)
 {
 	if (Node.ParentNodes.Num() > 0)
@@ -389,73 +373,147 @@ void UEdGraph_MounteaDialogueGraph::UpdateFocusedInstance(const FPIEInstanceData
 	FocusedInstance = InstanceId;
 }
 
-void UEdGraph_MounteaDialogueGraph::AssignExecutionOrder()
+namespace
 {
-	ResetExecutionOrders();
-
-	UMounteaDialogueGraph* Graph = GetMounteaDialogueGraph();
-	if (!Graph) return;
-
-	TMap<int32, TArray<UMounteaDialogueGraphNode*>> LayeredNodes;
-	int32 CurrentExecutionOrder = 1;
-	
-	if (UMounteaDialogueGraphNode* RootNode = Graph->GetStartNode())
+	/** Writes through the undo buffer only when the value actually changes. */
+	bool SetExecutionOrder(UMounteaDialogueGraphNode* Node, int32 NewOrder)
 	{
-		RootNode->ExecutionOrder = 0;
-		AssignNodeToLayer(RootNode, 0, LayeredNodes);
-	}
+		if (!Node || Node->ExecutionOrder == NewOrder)
+			return false;
 
-	for (int32 LayerIndex = 0; LayeredNodes.Contains(LayerIndex); ++LayerIndex)
-	{
-		TArray<UMounteaDialogueGraphNode*>& NodesInLayer = LayeredNodes[LayerIndex];
-		NodesInLayer.Sort([this](const UMounteaDialogueGraphNode& A, const UMounteaDialogueGraphNode& B)
-		{
-			if (!NodeMap.Contains(&A)) return false;
-			if (!NodeMap.Contains(&B)) return false;
-			
-			UEdNode_MounteaDialogueGraphNode* EdNode_A = NodeMap.FindRef(&A);
-			UEdNode_MounteaDialogueGraphNode* EdNode_B = NodeMap.FindRef(&B);
-
-			UMounteaDialogueGraphNode* ParentA = GetParentNode(A);
-			UMounteaDialogueGraphNode* ParentB = GetParentNode(B);
-
-			if (!ParentA && !ParentB) return EdNode_A->NodePosX < EdNode_B->NodePosX;
-			if (ParentA && !ParentB) return true;
-			if (!ParentA && ParentB) return false;
-			
-			if (ParentA && ParentB && (ParentA->ExecutionOrder != ParentB->ExecutionOrder))
-				return ParentA->ExecutionOrder < ParentB->ExecutionOrder;
-
-			// If we reach here, either both nodes have parents with the same execution order
-			// In this case, sort based on X position
-			return EdNode_A->NodePosX < EdNode_B->NodePosX;
-		});
-
-		for (UMounteaDialogueGraphNode* Node : NodesInLayer)
-		{
-			if (!Node) 
-				continue;
-			if (Node->IsA(UMounteaDialogueGraphNode_StartNode::StaticClass())) 
-				continue;
-			if (GetParentNode(*Node))
-				Node->ExecutionOrder = CurrentExecutionOrder++;
-			else
-				Node->ExecutionOrder = INDEX_NONE;
-		}
+		Node->Modify(false);
+		Node->ExecutionOrder = NewOrder;
+		return true;
 	}
 }
 
-void UEdGraph_MounteaDialogueGraph::AssignNodeToLayer(UMounteaDialogueGraphNode* Node, int32 LayerIndex, TMap<int32, TArray<UMounteaDialogueGraphNode*>>& LayeredNodes)
+bool UEdGraph_MounteaDialogueGraph::ReorderFromPositions()
 {
-	if (!Node) 
+	UMounteaDialogueGraph* graph = GetMounteaDialogueGraph();
+	if (!graph)
+		return false;
+
+	TMap<UMounteaDialogueGraphNode*, int32> newOrders;
+	TSet<UMounteaDialogueGraphNode*> visited;
+	TArray<UMounteaDialogueGraphNode*> layer;
+	int32 nextOrder = 1;
+
+	UMounteaDialogueGraphNode* startNode = graph->GetStartNode();
+	if (startNode)
+	{
+		newOrders.Add(startNode, 0);
+		visited.Add(startNode);
+		layer.Add(startNode);
+	}
+
+	const auto positionX = [this](const UMounteaDialogueGraphNode* Node) -> int32
+	{
+		UEdNode_MounteaDialogueGraphNode* const* edNode = NodeMap.Find(Node);
+		return edNode && *edNode ? (*edNode)->NodePosX : 0;
+	};
+
+	const auto orderOf = [&newOrders](const UMounteaDialogueGraphNode* Node) -> int32
+	{
+		const int32* order = newOrders.Find(Node);
+		return order ? *order : INDEX_NONE;
+	};
+
+	// Breadth-first, each node visited once: safe on joins and cycles.
+	while (layer.Num() > 0)
+	{
+		layer.StableSort([&](const UMounteaDialogueGraphNode& A, const UMounteaDialogueGraphNode& B)
+		{
+			const UMounteaDialogueGraphNode* parentA = GetParentNode(A);
+			const UMounteaDialogueGraphNode* parentB = GetParentNode(B);
+
+			if ((parentA == nullptr) != (parentB == nullptr))
+				return parentA != nullptr;
+
+			if (parentA && parentB && orderOf(parentA) != orderOf(parentB))
+				return orderOf(parentA) < orderOf(parentB);
+
+			return positionX(&A) < positionX(&B);
+		});
+
+		TArray<UMounteaDialogueGraphNode*> nextLayer;
+		for (UMounteaDialogueGraphNode* node : layer)
+		{
+			if (node != startNode)
+				newOrders.Add(node, GetParentNode(*node) ? nextOrder++ : INDEX_NONE);
+
+			for (UMounteaDialogueGraphNode* child : node->ChildrenNodes)
+			{
+				if (child && !visited.Contains(child))
+				{
+					visited.Add(child);
+					nextLayer.Add(child);
+				}
+			}
+		}
+		layer = MoveTemp(nextLayer);
+	}
+
+	bool bChanged = false;
+	for (UMounteaDialogueGraphNode* node : graph->AllNodes)
+		bChanged |= SetExecutionOrder(node, orderOf(node));
+	return bChanged;
+}
+
+void UEdGraph_MounteaDialogueGraph::EnsureExecutionOrders()
+{
+	UMounteaDialogueGraph* graph = GetMounteaDialogueGraph();
+	if (!graph)
 		return;
 
-	LayeredNodes.FindOrAdd(LayerIndex).Add(Node);
+	UMounteaDialogueGraphNode* startNode = graph->GetStartNode();
+	TArray<UMounteaDialogueGraphNode*> missing;
+	int32 maxOrder = 0;
+	bool bAnyValid = false;
 
-	for (UMounteaDialogueGraphNode* ChildNode : Node->ChildrenNodes)
+	for (UMounteaDialogueGraphNode* node : graph->AllNodes)
 	{
-		AssignNodeToLayer(ChildNode, LayerIndex + 1, LayeredNodes);
+		if (!node)
+			continue;
+
+		if (node == startNode)
+			SetExecutionOrder(node, 0);
+		else if (node->ParentNodes.Num() == 0)
+			SetExecutionOrder(node, INDEX_NONE);
+		else if (node->ExecutionOrder == INDEX_NONE)
+			missing.Add(node);
+		else
+		{
+			bAnyValid = true;
+			maxOrder = FMath::Max(maxOrder, node->ExecutionOrder);
+		}
 	}
+
+	if (missing.Num() == 0)
+		return;
+
+	// Nothing to preserve (legacy data): derive everything once.
+	if (!bAnyValid)
+	{
+		ReorderFromPositions();
+		return;
+	}
+
+	const auto position = [this](const UMounteaDialogueGraphNode* Node) -> FIntPoint
+	{
+		UEdNode_MounteaDialogueGraphNode* const* edNode = NodeMap.Find(Node);
+		return edNode && *edNode ? FIntPoint((*edNode)->NodePosX, (*edNode)->NodePosY) : FIntPoint::ZeroValue;
+	};
+
+	// `missing` follows AllNodes order, so the stable sort is deterministic.
+	missing.StableSort([&](const UMounteaDialogueGraphNode& A, const UMounteaDialogueGraphNode& B)
+	{
+		const FIntPoint a = position(&A);
+		const FIntPoint b = position(&B);
+		return a.X != b.X ? a.X < b.X : a.Y < b.Y;
+	});
+
+	for (UMounteaDialogueGraphNode* node : missing)
+		SetExecutionOrder(node, ++maxOrder);
 }
 
 void UEdGraph_MounteaDialogueGraph::SyncTopology()
@@ -546,7 +604,7 @@ void UEdGraph_MounteaDialogueGraph::SyncTopology()
 		return EdNode_LNode->NodePosX < EdNode_RNode->NodePosX;
 	});
 
-	AssignExecutionOrder();
+	EnsureExecutionOrders();
 
 	bSuppressDeltaSync = false;
 }
@@ -618,7 +676,7 @@ void UEdGraph_MounteaDialogueGraph::RegisterNode(UEdNode_MounteaDialogueGraphNod
 		});
 	}
 
-	AssignExecutionOrder();
+	EnsureExecutionOrders();
 }
 
 void UEdGraph_MounteaDialogueGraph::UnregisterNode(UMounteaDialogueGraphNode* Node)
@@ -664,7 +722,7 @@ void UEdGraph_MounteaDialogueGraph::UnregisterNode(UMounteaDialogueGraphNode* No
 		return (*LEdNode)->NodePosX < (*REdNode)->NodePosX;
 	});
 
-	AssignExecutionOrder();
+	EnsureExecutionOrders();
 }
 
 void UEdGraph_MounteaDialogueGraph::RegisterEdge(UEdNode_MounteaDialogueGraphEdge* EdEdge)
@@ -698,7 +756,7 @@ void UEdGraph_MounteaDialogueGraph::RegisterEdge(UEdNode_MounteaDialogueGraphEdg
 
 	Graph->RootNodes.Remove(Edge->EndNode);
 
-	AssignExecutionOrder();
+	EnsureExecutionOrders();
 }
 
 void UEdGraph_MounteaDialogueGraph::UnregisterEdge(UMounteaDialogueGraphEdge* Edge)
@@ -733,5 +791,5 @@ void UEdGraph_MounteaDialogueGraph::UnregisterEdge(UMounteaDialogueGraphEdge* Ed
 
 	EdgeMap.Remove(Edge);
 
-	AssignExecutionOrder();
+	EnsureExecutionOrders();
 }

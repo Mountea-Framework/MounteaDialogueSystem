@@ -1509,12 +1509,11 @@ void FAssetEditor_MounteaDialogueGraph::OnFinishedChangingProperties(const FProp
 
 	EditingGraph->EdGraph->GetSchema()->ForceVisualizationCacheClear();
 
-	// Property-only change — topology is unchanged; only refresh execution order and visuals.
+	// Property-only change — topology is unchanged; only initialise missing execution orders and refresh visuals.
 	UEdGraph_MounteaDialogueGraph* mounteaGraphEditor = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
 	if (mounteaGraphEditor)
 	{
-		mounteaGraphEditor->ResetExecutionOrders();
-		mounteaGraphEditor->AssignExecutionOrder();
+		mounteaGraphEditor->EnsureExecutionOrders();
 	}
 
 	TSharedPtr<SGraphEditor> currentGraphEditor = GetCurrGraphEditor();

@@ -148,6 +148,14 @@ void SEdNode_MounteaDialogueGraphNode::MoveTo(const FVector2f& NewPosition, FNod
 		adjustedPosition.Y = FMath::Max(adjustedPosition.Y, requiredTopY);
 
 	SGraphNode::MoveTo(adjustedPosition, NodeFilter, bMarkDirty);
+
+	// bMarkDirty is only set when the drag is committed (inside its transaction): this is the one place
+	// where node positions intentionally re-derive option order. Cost is O(V+E) and only writes real changes.
+	if (bMarkDirty && dialogueNode)
+	{
+		if (UEdGraph_MounteaDialogueGraph* dialogueEdGraph = dialogueNode->GetDialogueGraphEdGraph())
+			dialogueEdGraph->ReorderFromPositions();
+	}
 }
 
 void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()
