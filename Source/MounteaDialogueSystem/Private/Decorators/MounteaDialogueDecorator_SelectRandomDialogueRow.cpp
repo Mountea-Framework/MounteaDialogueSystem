@@ -64,11 +64,9 @@ void UMounteaDialogueDecorator_SelectRandomDialogueRow::ExecuteDecorator_Impleme
 	}
 
 	const int32 MaxValue = GetContext()->GetActiveDialogueRow().RowData.Num() - 1;
-	const int32 Range = FMath::RandRange
-	(
-		FMath::Max(0, ClampedRange.X),
-		FMath::Min(MaxValue, ClampedRange.Y)
-	);
+	// Both ends are clamped into the row, otherwise a range starting past the last line picks a missing line.
+	const int32 minIndex = FMath::Clamp(ClampedRange.X, 0, MaxValue);
+	const int32 Range = FMath::RandRange(minIndex, FMath::Clamp(ClampedRange.Y, minIndex, MaxValue));
 
 	GetContext()->UpdateActiveDialogueRowDataIndex(Range);
 }

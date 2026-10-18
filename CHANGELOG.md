@@ -8,14 +8,23 @@ All notable changes to this project will be documented in this file.
 ### Added
 > - Added new features to Toolbar menu
 > - Added dependency on CommonUI
+> - Added `Layered` Auto Arrange: asynchronous (progress + Cancel, the dialogue editor is locked while it runs), routed orthogonal connections, one control slot per connection. Cancel applies the latest complete, validated arrangement as one undoable change
 
 ### Changed
 > - Updated Toolbar menu
 > - Changed version validation process to match against Major, Minor and Hotfix values
+> - **Behaviour change:** a row with `Stopping` execution mode now plays, then finishes the whole Node (rows after it are skipped). Previously the `Stopping` row itself was never shown. Dialogues that used a `Stopping` row as an invisible terminator now show that row
 
 ### Fixed
+> - Fixed Auto Arrange freezing or crashing on graphs with shared descendants, cycles, self-loops or parallel connections; `Tree` and `Force Directed` are retired and resolve to `Layered`
+> - Fixed Slate spline subdivision running away on very large (but finite) graph coordinates: connections are now drawn as bounded, clipped polylines
+> - Fixed option order (`ExecutionOrder`) being recalculated from node positions on every edit, rebuild and undo; it now only changes when nodes are moved manually, and never when arranging
 > - Guid validation ignored for builds
 > - Fixed Crash when `ActiveDialogueParticipant` is nullptr
+> - Fixed `FDialogueStartRequest::DialogueGraph` override: the dialogue failed right after starting because the manager could not resolve nodes of a graph no participant owns
+> - Fixed requests with a stale or invalid session GUID closing the dialogue that is running; they are now refused without failing the session
+> - Fixed a row followed by a row with `Default` execution mode stalling its Node
+> - Fixed Graph Decorators of the running graph: nodes now inherit decorators from their own graph, so a start-request override graph and Open Child Graph targets run their own Graph Decorators (previously the main participant's graph decorators ran, and the running graph's were never initialized). Each graph entered during a dialogue is initialized on entry and cleaned up when the dialogue ends
 
 **Version 3.0.2**
 ### Fixed

@@ -23,7 +23,6 @@ struct MOUNTEADIALOGUESYSTEM_API FMounteaDialogueRowDataInfo
 	int32 IncreasedIndex = 0;
 	bool bIsActiveRowValid = false;
 	bool bDialogueRowDataValid = false;
-	ERowExecutionMode NextRowExecutionMode = ERowExecutionMode::EREM_Automatic;
 	ERowExecutionMode ActiveRowExecutionMode = ERowExecutionMode::EREM_Automatic;
 };
 

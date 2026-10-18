@@ -21,6 +21,5 @@ namespace MounteaDialogueNodeSpacingUtils
 	float GetMinParentChildGap();
 	float GetNodeHeight(const UEdNode_MounteaDialogueGraphNode* Node);
 	bool ComputeRequiredChildTopY(const UEdNode_MounteaDialogueGraphNode* ChildNode, float& OutRequiredTopY);
-	void EnforceMinimumParentChildYSpacing(UEdGraph_MounteaDialogueGraph* Graph, int32 MaxPasses = 12);
 }
 

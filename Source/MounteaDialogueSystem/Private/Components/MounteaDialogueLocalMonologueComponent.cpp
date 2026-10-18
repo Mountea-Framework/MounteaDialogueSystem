@@ -513,25 +513,13 @@ void UMounteaDialogueLocalMonologueComponent::DialogueRowProcessed_Implementatio
 
 	OnDialogueRowFinished.Broadcast(dialogueContext);
 
-	if (rowInfo.bIsActiveRowValid && rowInfo.bDialogueRowDataValid)
+	// A row's own mode applies when that row finishes: a Stopping row has now played, so the node ends here.
+	if (rowInfo.ActiveRowExecutionMode != ERowExecutionMode::EREM_Stopping && rowInfo.bIsActiveRowValid && rowInfo.bDialogueRowDataValid)
 	{
-		switch (rowInfo.NextRowExecutionMode)
-		{
-		case ERowExecutionMode::EREM_Automatic:
-		case ERowExecutionMode::EREM_AwaitInput:
-			dialogueContext->UpdateActiveDialogueRowDataIndex(rowInfo.IncreasedIndex);
-			OnDialogueContextUpdated.Broadcast(dialogueContext);
-			ExecuteWidgetCommand(MounteaDialogueWidgetCommands::ShowDialogueRow);
-			Execute_ProcessDialogueRow(this);
-			break;
-		case ERowExecutionMode::EREM_Stopping:
-			ExecuteWidgetCommand(MounteaDialogueWidgetCommands::HideDialogueRow);
-			Execute_NodeProcessed(this);
-			break;
-		case ERowExecutionMode::Default:
-			break;
-		}
-
+		dialogueContext->UpdateActiveDialogueRowDataIndex(rowInfo.IncreasedIndex);
+		OnDialogueContextUpdated.Broadcast(dialogueContext);
+		ExecuteWidgetCommand(MounteaDialogueWidgetCommands::ShowDialogueRow);
+		Execute_ProcessDialogueRow(this);
 		return;
 	}
 

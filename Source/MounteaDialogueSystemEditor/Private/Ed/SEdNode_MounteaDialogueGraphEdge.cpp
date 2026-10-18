@@ -10,6 +10,7 @@
 #include "SNodePanel.h"
 
 #include "Consts/MounteaDialogueEditorConsts.h"
+#include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "Edges/MounteaDialogueGraphEdge.h"
@@ -43,6 +44,11 @@ void SEdNode_MounteaDialogueGraphEdge::PerformSecondPassLayout(const TMap<UObjec
 	if (!End)
 		return;
 
+	// A layout-calculated route owns the control position; only fall back to "above the target" without one.
+	if (const UEdGraph_MounteaDialogueGraph* dialogueGraph = Cast<UEdGraph_MounteaDialogueGraph>(EdgeNode->GetGraph()))
+		if (dialogueGraph->FindPreparedRoute(EdgeNode))
+			return;
+
 	const TSharedRef<SNode>* pToWidget = NodeToWidgetLookup.Find(End);
 	if (!pToWidget)
 		return;
@@ -66,6 +72,10 @@ void SEdNode_MounteaDialogueGraphEdge::Tick(const FGeometry& AllottedGeometry, c
 	UEdNode_MounteaDialogueGraphNode* end = edgeNode->GetEndNode();
 	if (!end)
 		return;
+
+	if (const UEdGraph_MounteaDialogueGraph* dialogueGraph = Cast<UEdGraph_MounteaDialogueGraph>(edgeNode->GetGraph()))
+		if (dialogueGraph->FindPreparedRoute(edgeNode))
+			return;
 
 	GraphNode->NodePosX = end->NodePosX + CachedEndNodeSize.X * 0.5f - MounteaDialogueWireConsts::BubbleHalfSize;
 	GraphNode->NodePosY = end->NodePosY - MounteaDialogueWireConsts::BubbleYOffset;

@@ -38,7 +38,7 @@ void UEdNode_MounteaDialogueGraphNode::SetMounteaDialogueGraphNode(UMounteaDialo
 	}
 
 	if (GetDialogueGraphEdGraph())
-		GetDialogueGraphEdGraph()->AssignExecutionOrder();
+		GetDialogueGraphEdGraph()->EnsureExecutionOrders();
 }
 
 UEdGraph_MounteaDialogueGraph* UEdNode_MounteaDialogueGraphNode::GetDialogueGraphEdGraph() const

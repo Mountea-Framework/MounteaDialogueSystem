@@ -21,7 +21,7 @@ UObject* UMounteaDialogueDataTableFactory::FactoryCreateNew(UClass* Class, UObje
 	if (Struct && ensure(SupportedClass == Class))
 	{
 		ensure(0 != (RF_Public & Flags));
-		DialogueTable = NewObject<UDataTable>(InParent, Name, Flags);
+		DialogueTable = NewObject<UMounteaDialogueDataTable>(InParent, Name, Flags);
 		if (DialogueTable)
 		{
 			DialogueTable->RowStruct = const_cast<UScriptStruct*>(ToRawPtr(Struct));

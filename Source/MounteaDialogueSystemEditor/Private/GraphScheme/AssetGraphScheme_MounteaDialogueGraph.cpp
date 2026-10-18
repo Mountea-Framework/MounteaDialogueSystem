@@ -1,4 +1,13 @@
-// Copyright Dominik Pavlicek 2023. All Rights Reserved.
+// Copyright (C) 2026 Dominik (Pavlicek) Morse. All rights reserved.
+//
+// Developed for the Mountea Framework as a free tool. This solution is provided
+// for use and sharing without charge. Redistribution is allowed under the following conditions:
+//
+// - You may use this solution in commercial products, provided the product is not 
+//   this solution itself (or unless significant modifications have been made to the solution).
+// - You may not resell or redistribute the original, unmodified solution.
+//
+// For more information, visit: https://mountea.tools
 
 #include "AssetGraphScheme_MounteaDialogueGraph.h"
 
@@ -411,9 +420,11 @@ const FPinConnectionResponse UAssetGraphScheme_MounteaDialogueGraph::CanCreateCo
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("MonologueSingleChildLimit", "Monologue graphs allow only one child per node."));
 
 	FText errorMessage;
+	// The input-side node is the target either way; EGPD_Output makes it apply its allowed-input-class rule
+	// no matter which pin the user dragged from.
 	if (A->Direction == EGPD_Input)
 	{
-		if (!nodeA->DialogueGraphNode->CanCreateConnection(nodeB->DialogueGraphNode, EGPD_Input, errorMessage))
+		if (!nodeA->DialogueGraphNode->CanCreateConnection(nodeB->DialogueGraphNode, EGPD_Output, errorMessage))
 			return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, errorMessage);
 	}
 	else

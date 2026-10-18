@@ -13,62 +13,11 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "Archive/MounteaDialogueArchive.h"
-#include "Archive/MounteaDialogueArchiveZip.h"
-#include "Interfaces/IPluginManager.h"
-#include "Misc/FileHelper.h"
-#include "Misc/Paths.h"
+#include "Tests/MounteaDialogueEditorTestFixtures.h"
 
 // Tests for the v3 archive contract layer. The golden files in Tests/Fixtures were produced by the real
 // Mountea Dialoguer exporter (exportProjectArchive), so reading them proves compatibility with Dialoguer
 // rather than with a hand-written approximation of it.
-
-namespace MounteaArchiveTest
-{
-	bool LoadFixture(const TCHAR* Name, TArray<uint8>& OutBytes)
-	{
-		const TSharedPtr<IPlugin> plugin = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"));
-		if (!plugin.IsValid())
-			return false;
-		const FString path = FPaths::Combine(plugin->GetBaseDir(), TEXT("Source/MounteaDialogueSystemEditor/Private/Tests/Fixtures"), Name);
-		return FFileHelper::LoadFileToArray(OutBytes, *path);
-	}
-
-	bool ReadFixture(FAutomationTestBase& Test, const TCHAR* Name, MounteaArchive::FDialogueArchive& OutArchive)
-	{
-		TArray<uint8> bytes;
-		if (!LoadFixture(Name, bytes))
-		{
-			Test.AddError(FString::Printf(TEXT("Fixture %s could not be loaded"), Name));
-			return false;
-		}
-		TArray<FString> errors;
-		if (!MounteaArchive::ReadArchiveFromBytes(bytes, OutArchive, errors))
-		{
-			for (const FString& error : errors)
-				Test.AddError(error);
-			return false;
-		}
-		return true;
-	}
-
-	bool LoadEntries(FAutomationTestBase& Test, const TCHAR* Name, MounteaArchive::FEntries& OutEntries)
-	{
-		TArray<uint8> bytes;
-		TArray<FString> errors;
-		if (!LoadFixture(Name, bytes) || !MounteaArchive::UnzipEntries(bytes, OutEntries, errors))
-		{
-			Test.AddError(FString::Printf(TEXT("Fixture %s could not be unzipped"), Name));
-			return false;
-		}
-		return true;
-	}
-
-	bool HasError(const TArray<FString>& Errors, const TCHAR* Code)
-	{
-		return Errors.ContainsByPredicate([Code](const FString& Error) { return Error.StartsWith(Code); });
-	}
-}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMounteaArchiveReadDialogueTest,
 	"Mountea.DialogueSystemEditor.Archive.Read.DialoguerDialogue",

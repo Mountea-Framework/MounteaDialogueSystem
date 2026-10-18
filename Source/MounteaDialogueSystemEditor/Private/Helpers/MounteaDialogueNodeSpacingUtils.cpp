@@ -24,6 +24,26 @@ namespace MounteaDialogueNodeSpacingUtils
 	{
 		constexpr float ExtraVerticalPadding = 10.0f;
 		constexpr float FallbackNodeHeight = 150.0f;
+
+		/** True when Target can be reached from From (iterative, visited-guarded). */
+		bool CanReach(const UMounteaDialogueGraphNode* From, const UMounteaDialogueGraphNode* Target)
+		{
+			TSet<const UMounteaDialogueGraphNode*> visited;
+			TArray<const UMounteaDialogueGraphNode*> stack;
+			stack.Add(From);
+			while (stack.Num() > 0)
+			{
+				const UMounteaDialogueGraphNode* node = stack.Pop(EAllowShrinking::No);
+				if (!node || visited.Contains(node))
+					continue;
+				if (node == Target)
+					return true;
+				visited.Add(node);
+				for (const UMounteaDialogueGraphNode* child : node->ChildrenNodes)
+					stack.Add(child);
+			}
+			return false;
+		}
 	}
 
 	float GetMinParentChildGap()
@@ -69,6 +89,10 @@ namespace MounteaDialogueNodeSpacingUtils
 			if (!parentNode)
 				continue;
 
+			// Feedback connection (child can reach its parent): it must not force the child below that parent.
+			if (parentNode == ChildNode->DialogueGraphNode || CanReach(ChildNode->DialogueGraphNode, parentNode))
+				continue;
+
 			UEdNode_MounteaDialogueGraphNode* const* parentEdNodePtr = graph->NodeMap.Find(parentNode);
 			UEdNode_MounteaDialogueGraphNode* parentEdNode = parentEdNodePtr ? *parentEdNodePtr : nullptr;
 			if (!parentEdNode)
@@ -84,37 +108,5 @@ namespace MounteaDialogueNodeSpacingUtils
 
 		OutRequiredTopY = requiredTopY;
 		return true;
-	}
-
-	void EnforceMinimumParentChildYSpacing(UEdGraph_MounteaDialogueGraph* Graph, int32 MaxPasses)
-	{
-		if (!Graph)
-			return;
-
-		const int32 clampedPasses = FMath::Clamp(MaxPasses, 1, 64);
-		for (int32 pass = 0; pass < clampedPasses; ++pass)
-		{
-			bool bChanged = false;
-
-			for (UEdGraphNode* graphNode : Graph->Nodes)
-			{
-				UEdNode_MounteaDialogueGraphNode* dialogueNode = Cast<UEdNode_MounteaDialogueGraphNode>(graphNode);
-				if (!dialogueNode)
-					continue;
-
-				float requiredTopY = 0.0f;
-				if (!ComputeRequiredChildTopY(dialogueNode, requiredTopY))
-					continue;
-
-				if (static_cast<float>(dialogueNode->NodePosY) < requiredTopY)
-				{
-					dialogueNode->NodePosY = FMath::CeilToInt(requiredTopY);
-					bChanged = true;
-				}
-			}
-
-			if (!bChanged)
-				break;
-		}
 	}
 }

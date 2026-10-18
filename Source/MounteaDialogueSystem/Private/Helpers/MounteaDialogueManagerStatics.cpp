@@ -13,13 +13,17 @@
 
 UMounteaDialogueGraph* UMounteaDialogueManagerStatics::ResolveGraphByGuid(
 	const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants,
-	const FGuid& GraphGuid)
+	const FGuid& GraphGuid,
+	UMounteaDialogueGraph* RootGraph)
 {
 	if (!GraphGuid.IsValid())
 		return nullptr;
 
 	TArray<UMounteaDialogueGraph*> graphsToVisit;
 	TSet<const UMounteaDialogueGraph*> visitedGraphs;
+
+	if (IsValid(RootGraph))
+		graphsToVisit.Add(RootGraph);
 
 	for (const auto& participant : Participants)
 	{

@@ -13,6 +13,7 @@
 #include "Components/MounteaDialogueManager.h"
 #include "Data/MounteaDialogueContext.h"
 #include "Data/MounteaDialogueGraphDataTypes.h"
+#include "Graph/MounteaDialogueGraph.h"
 #include "Helpers/MounteaDialogueContextStatics.h"
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueManagerStatics.h"
@@ -96,6 +97,7 @@ void UMounteaDialogueSession::WriteContextPayload(FMounteaDialogueContextPayload
 	{
 		RoleOverrides.Empty();
 		SessionTraversedPath.Empty();
+		ExitEnteredGraphs();
 	}
 
 	NewPayload.ContextVersion = ContextPayload.ContextVersion + 1;
@@ -185,9 +187,39 @@ void UMounteaDialogueSession::FinalizeSession()
 		}
 	}
 
+	ExitEnteredGraphs();
 	AuthoritativeManager.Reset();
 	RoleOverrides.Empty();
 	SessionTraversedPath.Empty();
+}
+
+void UMounteaDialogueSession::EnterGraph(UMounteaDialogueGraph* Graph, UMounteaDialogueManager* Manager, const UMounteaDialogueContext* DialogueContext)
+{
+	if (!IsValid(Graph) || EnteredGraphs.Contains(Graph))
+		return;
+
+	EnteredGraphs.Add(Graph);
+	Graph->InitializeGraph();
+
+	const TScriptInterface<IMounteaDialogueParticipantInterface> participant =
+		IsValid(DialogueContext) ? DialogueContext->ActiveDialogueParticipant : nullptr;
+	for (const FMounteaDialogueDecorator& decorator : Graph->GetGraphDecorators())
+		decorator.InitializeDecorator(GetWorld(), participant, Manager);
+}
+
+void UMounteaDialogueSession::ExitEnteredGraphs()
+{
+	for (UMounteaDialogueGraph* graph : EnteredGraphs)
+	{
+		if (!IsValid(graph))
+			continue;
+
+		for (const FMounteaDialogueDecorator& decorator : graph->GetGraphDecorators())
+			decorator.CleanupDecorator();
+		graph->ShutdownGraph();
+	}
+
+	EnteredGraphs.Empty();
 }
 
 void UMounteaDialogueSession::SetRoleOverride(const EDialogueParticipantType Role, const TScriptInterface<IMounteaDialogueParticipantInterface>& Participant)
@@ -370,7 +402,7 @@ bool UMounteaDialogueSession::IsSessionRequestValid(UMounteaDialogueManager* Man
 	{
 		LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][Validate] %s rejected: invalid request GUID. Active=%s"),
 			ActionName, *activeSessionGUID.ToString())
-		Manager->GetDialogueFailedEventHandle().Broadcast(FString::Printf(TEXT("[%s] Invalid session GUID!"), ActionName));
+		// Refused, not failed: a stale request must not end the session that is running.
 		return false;
 	}
 
@@ -378,7 +410,6 @@ bool UMounteaDialogueSession::IsSessionRequestValid(UMounteaDialogueManager* Man
 	{
 		LOG_ERROR_KEY(FString(ANSI_TO_TCHAR(__FUNCTION__)), TEXT("[Diag][Session][Validate] %s rejected: mismatch. Requested=%s Active=%s Manager=%s"),
 			ActionName, *SessionGUID.ToString(), *activeSessionGUID.ToString(), *GetNameSafe(Manager))
-		Manager->GetDialogueFailedEventHandle().Broadcast(FString::Printf(TEXT("[%s] Session mismatch!"), ActionName));
 		return false;
 	}
 
@@ -667,7 +698,6 @@ bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager
 	const bool bIsActiveRowValid = UMounteaDialogueTraversalStatics::IsDialogueRowValid(dialogueRow);
 	const bool bDialogueRowDataValid = rowDataArray.IsValidIndex(nextIndex)
 		&& UMounteaDialogueTraversalStatics::IsDialogueRowDataValid(rowDataArray[nextIndex]);
-	const ERowExecutionMode nextRowExecutionMode = bDialogueRowDataValid ? rowDataArray[nextIndex].RowExecutionBehaviour : ERowExecutionMode::EREM_Automatic;
 	const ERowExecutionMode activeRowExecutionMode = rowDataArray.IsValidIndex(currentIndex) ? rowDataArray[currentIndex].RowExecutionBehaviour : ERowExecutionMode::EREM_Automatic;
 
 	if (activeRowExecutionMode == ERowExecutionMode::EREM_AwaitInput && !bForceFinish)
@@ -675,37 +705,19 @@ bool UMounteaDialogueSession::HandleDialogueRowProcessed(UMounteaDialogueManager
 
 	Manager->GetDialogueRowFinishedEventHandle().Broadcast(dialogueContext);
 
-	if (bIsActiveRowValid && bDialogueRowDataValid)
+	// A row's own mode applies when that row finishes: a Stopping row has now played, so the node ends here.
+	if (activeRowExecutionMode != ERowExecutionMode::EREM_Stopping && bIsActiveRowValid && bDialogueRowDataValid)
 	{
-		switch (nextRowExecutionMode)
-		{
-		case ERowExecutionMode::EREM_Automatic:
-		case ERowExecutionMode::EREM_AwaitInput:
-			dialogueContext->UpdateActiveDialogueRowDataIndex(nextIndex);
-			Manager->GetDialogueContextUpdatedEventHande().Broadcast(dialogueContext);
-			ApplyRowStatePayload(dialogueContext);
-			Manager->Client_DispatchUISignal(FMounteaDialogueUISignal{
-				MounteaDialogueWidgetCommands::ShowDialogueRow,
-				dialogueContext->SessionGUID,
-				ContextPayload.ContextVersion,
-				false
-			});
-			IMounteaDialogueManagerInterface::Execute_ProcessDialogueRow(Manager);
-			break;
-		case ERowExecutionMode::EREM_Stopping:
-			Manager->Client_DispatchUISignal(FMounteaDialogueUISignal{
-				MounteaDialogueWidgetCommands::HideDialogueRow,
-				dialogueContext->SessionGUID,
-				ContextPayload.ContextVersion,
-				false
-			});
-			// Stopping finishes the whole node: NodeProcessed broadcasts NodeFinished, cleans up and advances.
-			IMounteaDialogueManagerInterface::Execute_NodeProcessed(Manager);
-			break;
-		case ERowExecutionMode::Default:
-			break;
-		}
-
+		dialogueContext->UpdateActiveDialogueRowDataIndex(nextIndex);
+		Manager->GetDialogueContextUpdatedEventHande().Broadcast(dialogueContext);
+		ApplyRowStatePayload(dialogueContext);
+		Manager->Client_DispatchUISignal(FMounteaDialogueUISignal{
+			MounteaDialogueWidgetCommands::ShowDialogueRow,
+			dialogueContext->SessionGUID,
+			ContextPayload.ContextVersion,
+			false
+		});
+		IMounteaDialogueManagerInterface::Execute_ProcessDialogueRow(Manager);
 		return true;
 	}
 
@@ -801,6 +813,7 @@ bool UMounteaDialogueSession::HandlePrepareNode(UMounteaDialogueManager* Manager
 
 	const TScriptInterface<IMounteaDialogueParticipantInterface> newActiveParticipant = UMounteaDialogueTraversalStatics::ResolveActiveParticipant(dialogueContext);
 	UMounteaDialogueTraversalStatics::UpdateMatchingDialogueParticipant(dialogueContext, newActiveParticipant);
+	EnterGraph(dialogueContext->ActiveNode->GetGraph(), Manager, dialogueContext);
 	dialogueContext->ActiveNode->PreProcessNode(Manager);
 	return true;
 }

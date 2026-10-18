@@ -171,7 +171,7 @@ void UMounteaDialogueGraphFactory::PostImportCleanUp()
 
 bool UMounteaDialogueGraphFactory::FactoryCanImport(const FString& Filename)
 {
-	const FString extension = FPaths::GetExtension(Filename);
+	const FString extension = FPaths::GetExtension(Filename).ToLower();
 	if (!(extension == TEXT("mnteadlg") || extension == TEXT("zip")))
 	{
 		return false;

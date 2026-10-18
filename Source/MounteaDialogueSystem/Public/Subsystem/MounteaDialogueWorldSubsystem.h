@@ -108,6 +108,9 @@ public:
 	void ReleaseDialogueLock(UMounteaDialogueManager* Manager, const FGuid& SessionGUID = FGuid());
 
 private:
+#if WITH_DEV_AUTOMATION_TESTS
+	friend struct FMounteaDialogueTestAccess;
+#endif
 
 	/**
 	 * Resolves soft actor references in Request into typed participant interfaces.

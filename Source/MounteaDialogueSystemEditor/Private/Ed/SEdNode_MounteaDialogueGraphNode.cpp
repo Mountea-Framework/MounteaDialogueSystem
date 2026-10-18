@@ -1,4 +1,13 @@
-// Copyright Dominik Pavlicek 2023. All Rights Reserved.
+// Copyright (C) 2026 Dominik (Pavlicek) Morse. All rights reserved.
+//
+// Developed for the Mountea Framework as a free tool. This solution is provided
+// for use and sharing without charge. Redistribution is allowed under the following conditions:
+//
+// - You may use this solution in commercial products, provided the product is not 
+//   this solution itself (or unless significant modifications have been made to the solution).
+// - You may not resell or redistribute the original, unmodified solution.
+//
+// For more information, visit: https://mountea.tools
 
 #include "Ed/SEdNode_MounteaDialogueGraphNode.h"
 
@@ -148,6 +157,14 @@ void SEdNode_MounteaDialogueGraphNode::MoveTo(const FVector2f& NewPosition, FNod
 		adjustedPosition.Y = FMath::Max(adjustedPosition.Y, requiredTopY);
 
 	SGraphNode::MoveTo(adjustedPosition, NodeFilter, bMarkDirty);
+
+	// bMarkDirty is only set when the drag is committed (inside its transaction): this is the one place
+	// where node positions intentionally re-derive option order. Cost is O(V+E) and only writes real changes.
+	if (bMarkDirty && dialogueNode)
+	{
+		if (UEdGraph_MounteaDialogueGraph* dialogueEdGraph = dialogueNode->GetDialogueGraphEdGraph())
+			dialogueEdGraph->ReorderFromPositions();
+	}
 }
 
 void SEdNode_MounteaDialogueGraphNode::UpdateGraphNode()

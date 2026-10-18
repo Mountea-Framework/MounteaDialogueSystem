@@ -30,7 +30,7 @@ UObject* UMounteaDialogueConditionAssetFactory::FactoryCreateNew(UClass* Class, 
 	// Something is not right!
 	if (ParentClass == nullptr || !FKismetEditorUtilities::CanCreateBlueprintOfClass(ParentClass))
 	{
-		FMessageDialog::Open(EAppMsgType::Ok, FText::Format(NSLOCTEXT("UnrealEd", "CannotCreateBlueprintFromClass", "Cannot create a blueprint based on the class '{0}'."), FText::FromString(ParentClass->GetName())));
+		FMessageDialog::Open(EAppMsgType::Ok, FText::Format(NSLOCTEXT("UnrealEd", "CannotCreateBlueprintFromClass", "Cannot create a blueprint based on the class '{0}'."), FText::FromString(GetNameSafe(ParentClass))));
 		return nullptr;
 	}
 
