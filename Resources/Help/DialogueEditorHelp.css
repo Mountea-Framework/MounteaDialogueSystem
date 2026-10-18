@@ -170,16 +170,16 @@ hr {
 
 /* ==================== CORE DOC LAYOUT ==================== */
 .doc-page {
-	display: grid;
-	grid-template-rows: auto 1fr auto;
-	height: 95svh;
+	display: block;
+	height: auto;
+	min-height: 95svh;
 	margin: 0 auto;
 	inline-size: 100%;
 	padding: var(--space-6);
 	border: 1px solid var(--page-border);
 	border-radius: var(--radius-page);
 	background: var(--doc-page);
-	overflow: hidden;
+	overflow: visible;
 }
 
 .doc-content {
@@ -641,6 +641,8 @@ body.help-page-body--fullscreen::before {
 
 .validation-results-scroll {
 	display: flex;
+	flex: 1 1 auto;
+	min-height: 0;
 	flex-direction: column;
 	gap: var(--space-1);
 	padding: var(--space-4) var(--space-5);
