@@ -11,6 +11,9 @@
 
 #include "MDSPopup.h"
 
+#include "Consts/MounteaDialogueEditorConsts.h"
+#include "Framework/Docking/TabManager.h"
+#include "Widgets/Docking/SDockTab.h"
 #include "Interfaces/IPluginManager.h"
 #include "MDSPopupConfig.h"
 #include "Misc/FileHelper.h"
@@ -146,6 +149,20 @@ void MDSPopup::Open(const FString& ChangelogHtml, const FString& ChangelogHtmlPa
 	if(!FSlateApplication::Get().CanDisplayWindows())
 		return;
 
+  FSimpleDelegate closeAction;
+#if PLATFORM_MAC
+  const TSharedPtr<SDockTab> tab = FGlobalTabmanager::Get()->TryInvokeTab(
+    FTabId(MounteaPopup::WelcomeTabId, ETabIdFlags::None));
+  if(!tab.IsValid())
+    return;
+
+  const TWeakPtr<SDockTab> weakTab = tab;
+  closeAction = FSimpleDelegate::CreateLambda([weakTab]()
+  {
+    if(const TSharedPtr<SDockTab> pinnedTab = weakTab.Pin())
+      pinnedTab->RequestCloseTab();
+  });
+#else
 	const TSharedRef<SBorder> windowContent = SNew(SBorder)
 		.BorderImage(FCoreStyle::Get().GetBrush("NoBorder"))
 		.Padding(FMargin(0.0f, 0.0f));
@@ -163,6 +180,14 @@ void MDSPopup::Open(const FString& ChangelogHtml, const FString& ChangelogHtmlPa
 		];
 
   window = FSlateApplication::Get().AddWindow(window.ToSharedRef(), false);
+
+  const TWeakPtr<SWindow> weakWindow = window;
+  closeAction = FSimpleDelegate::CreateLambda([weakWindow]()
+  {
+    if(const TSharedPtr<SWindow> pinnedWindow = weakWindow.Pin())
+      pinnedWindow->RequestDestroyWindow();
+  });
+#endif
 
 	TSharedPtr<SMounteaDialogueHtmlView> htmlView;
 
@@ -220,9 +245,9 @@ void MDSPopup::Open(const FString& ChangelogHtml, const FString& ChangelogHtmlPa
 			.AutoWidth()
 			[
 				SNew(SButton)
-				.OnClicked_Lambda([window]()
+				.OnClicked_Lambda([closeAction]()
 				{
-					window->RequestDestroyWindow();
+          closeAction.ExecuteIfBound();
 					return FReply::Handled();
 				})
 				[
@@ -232,16 +257,22 @@ void MDSPopup::Open(const FString& ChangelogHtml, const FString& ChangelogHtmlPa
 			]
 		];
 
+#if PLATFORM_MAC
+  tab->SetContent(innerContent);
+#else
 	windowContent->SetContent(innerContent);
+#endif
 
   if(htmlView.IsValid())
   {
-    htmlView->SetParentWindow(window);
+    htmlView->SetParentWindow(FSlateApplication::Get().FindWidgetWindow(htmlView.ToSharedRef()));
     if(!ChangelogHtmlPath.IsEmpty() && FPaths::FileExists(ChangelogHtmlPath))
       htmlView->LoadHtmlFile(ChangelogHtmlPath);
     else
       htmlView->LoadHtmlString(ChangelogHtml, ChangelogHtmlPath);
   }
 
+#if !PLATFORM_MAC
   window->ShowWindow();
+#endif
 }

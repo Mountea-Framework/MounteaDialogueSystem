@@ -11,6 +11,9 @@
 
 #include "MDSPopup_GraphValidation.h"
 
+#include "Consts/MounteaDialogueEditorConsts.h"
+#include "Framework/Docking/TabManager.h"
+#include "Widgets/Docking/SDockTab.h"
 #include "Framework/Application/SlateApplication.h"
 #include "GenericPlatform/GenericApplication.h"
 #include "HAL/PlatformProcess.h"
@@ -26,9 +29,9 @@
 
 namespace
 {
+#if !PLATFORM_MAC
 	constexpr float PopupWidthRatio = 0.3f;
 	constexpr float PopupHeightRatio = 0.8f;
-	const TCHAR* ValidationTemplateRelativePath = TEXT("Resources/Help/graph_validation.html");
 
 	FVector2f GetPopupClientSize(const TSharedPtr<SWindow>& Window)
 	{
@@ -51,6 +54,9 @@ namespace
 		const float workAreaHeight = static_cast<float>(workArea.Bottom - workArea.Top);
 		return FVector2f(workAreaWidth * PopupWidthRatio, workAreaHeight * PopupHeightRatio);
 	}
+#endif
+
+  const TCHAR* ValidationTemplateRelativePath = TEXT("Resources/Help/graph_validation.html");
 
 	FString EscapeHtml(const FString& InputValue)
 	{
@@ -211,13 +217,26 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText>& Errors, 
 	if(!FSlateApplication::Get().CanDisplayWindows())
 		return nullptr;
 
+  TSharedPtr<SWindow> window;
+  TSharedPtr<SMounteaDialogueHtmlView> htmlView;
+#if PLATFORM_MAC
+  const TSharedPtr<SDockTab> tab = FGlobalTabmanager::Get()->TryInvokeTab(
+    FTabId(MounteaPopup::GraphValidationTabId, ETabIdFlags::None));
+  if(!tab.IsValid())
+    return nullptr;
+
+  tab->SetContent(
+    SAssignNew(htmlView, SMounteaDialogueHtmlView)
+      .OnConsoleMessage(FOnMounteaDialogueConsoleMessage::CreateStatic(&MDSPopup_GraphValidation::HandleConsoleMessage))
+  );
+#else
 	const FVector2f popupClientSize = GetPopupClientSize(TSharedPtr<SWindow>());
 
 	const TSharedRef<SBorder> windowContent = SNew(SBorder)
 		.BorderImage(FCoreStyle::Get().GetBrush("NoBorder"))
 		.Padding(FMargin(0.0f, 0.0f));
 
-	TSharedPtr<SWindow> window = SNew(SWindow)
+	window = SNew(SWindow)
 		.AutoCenter(EAutoCenter::PreferredWorkArea)
 		.SupportsMaximize(false)
 		.SupportsMinimize(false)
@@ -231,7 +250,6 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText>& Errors, 
 
   window = FSlateApplication::Get().AddWindow(window.ToSharedRef(), false);
 
-	TSharedPtr<SMounteaDialogueHtmlView> htmlView;
 	windowContent->SetContent(
 		SNew(SBorder)
 		.Padding(0)
@@ -260,10 +278,11 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText>& Errors, 
 	{
 		FTSTicker::GetCoreTicker().RemoveTicker(resizeTickerHandle);
 	}));
+#endif
 
 	if(htmlView.IsValid())
 	{
-    htmlView->SetParentWindow(window);
+    htmlView->SetParentWindow(FSlateApplication::Get().FindWidgetWindow(htmlView.ToSharedRef()));
 		FString validationHtml;
 		FString htmlSourcePath;
 		if(!BuildValidationHtmlFromTemplate(Errors, Warnings, validationHtml, htmlSourcePath))
@@ -275,7 +294,9 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText>& Errors, 
 		htmlView->LoadHtmlString(validationHtml, htmlSourcePath);
 	}
 
+#if !PLATFORM_MAC
   window->ShowWindow();
+#endif
 
 	return window;
 }
