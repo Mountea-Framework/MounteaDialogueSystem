@@ -2,9 +2,10 @@
 
 #include "FConnectionDrawingPolicy_MounteaDialogueGraph.h"
 
-#include "FMDSPathDrawer.h"
+#include "MDSBoundedPath.h"
 #include "SGraphPanel.h"
 #include "Consts/MounteaDialogueEditorConsts.h"
+#include "Ed/EdGraph_MounteaDialogueGraph.h"
 #include "Ed/EdNode_MounteaDialogueGraphEdge.h"
 #include "Ed/EdNode_MounteaDialogueGraphNode.h"
 #include "EditorStyle/FMounteaDialogueGraphEditorStyle.h"
@@ -94,31 +95,25 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::Draw(TMap<TSharedRef<SWidget
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FGeometry& StartGeom, const FGeometry& EndGeom, const FConnectionParams& Params)
 {
+	if (TryDrawPreparedRoute(StartGeom, Params))
+		return;
+
+	// Culled nodes arrive with a synthesized, zero-size geometry (see ResolveCulledAnchors).
+	const bool bSynthesized = StartGeom.GetLocalSize().IsNearlyZero() || EndGeom.GetLocalSize().IsNearlyZero();
+	if (bSynthesized)
+	{
+		FVector2f culledStart, culledEnd;
+		if (ResolveCulledAnchors(Params, culledStart, culledEnd))
+			DrawSubwayWireWithArrow(culledStart, culledEnd, Params);
+		return;
+	}
+
 	// Resolve exact top/bottom centers directly in absolute space.
 	// This avoids extreme-value closest-point queries that introduce visible X drift at deep zoom-out.
-	const FVector2D startPoint = StartGeom.LocalToAbsolute(FVector2D(StartGeom.GetLocalSize().X * 0.5f, StartGeom.GetLocalSize().Y));
-	const FVector2D endPoint   = EndGeom.LocalToAbsolute(FVector2D(EndGeom.GetLocalSize().X * 0.5f, 0.0f));
+	const FVector2f startPoint = StartGeom.LocalToAbsolute(FVector2f(StartGeom.GetLocalSize().X * 0.5f, StartGeom.GetLocalSize().Y));
+	const FVector2f endPoint   = EndGeom.LocalToAbsolute(FVector2f(EndGeom.GetLocalSize().X * 0.5f, 0.0f));
 
 	DrawSubwayWireWithArrow(startPoint, endPoint, Params);
-}
-
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)
-{
-	DrawSubwayWireWithArrow(StartPoint, EndPoint, Params);
-}
-
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawPreviewConnector(const FGeometry& PinGeometry, const FVector2D& StartPoint, const FVector2D& EndPoint, UEdGraphPin* Pin)
-{
-	FConnectionParams previewParams;
-	previewParams.WireColor     = FMounteaDialogueGraphVisualTokens::GetWireColor();
-	previewParams.WireThickness = MounteaDialogueWireConsts::WireThickness;
-	previewParams.bDrawBubbles  = false;
-	DrawSubwayWireWithArrow(StartPoint, EndPoint, previewParams);
-}
-
-FVector2D FConnectionDrawingPolicy_MounteaDialogueGraph::ComputeSplineTangent(const FVector2D& Start, const FVector2D& End) const
-{
-	return FVector2D(0.0f, MounteaDialogueWireConsts::WireStubOffset * ZoomFactor);
 }
 
 void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineLinkGeometry(FArrangedChildren& ArrangedNodes, TSharedRef<SWidget>& OutputPinWidget, UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FArrangedWidget*& StartWidgetGeometry, FArrangedWidget*& EndWidgetGeometry)
@@ -185,97 +180,75 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DetermineLinkGeometry(FArran
 	}
 }
 
-void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSubwayWireWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSubwayWireWithArrow(const FVector2f& InStartPoint, const FVector2f& InEndPoint, const FConnectionParams& Params)
 {
-	// Keep wire construction numerically stable at extreme zoom-out levels.
-	const float stubOffset = MounteaDialogueWireConsts::WireStubOffset * ZoomFactor;
-	const float gridStep   = FMath::Max(MounteaDialogueWireConsts::WireGridSize * ZoomFactor, 0.1f);
-	const float minStyleDistance = FMath::Max(MounteaDialogueWireConsts::MinStyleDistance * ZoomFactor, 1.0f);
-	const bool bExtremeZoomOut = ZoomFactor < 0.35f;
+	// Slate hands us floats; everything below is double so extreme coordinates are clipped before any float conversion.
+	const FVector2D StartPoint(InStartPoint);
+	const FVector2D EndPoint(InEndPoint);
+	const double stubOffset = MounteaDialogueWireConsts::WireStubOffset * ZoomFactor;
 
-	auto snapToGrid = [gridStep](const FVector2D& V) -> FVector2D
+	const FVector2D wireStart = StartPoint + FVector2D(0.0, stubOffset);
+	const FVector2D wireEnd   = EndPoint   - FVector2D(0.0, stubOffset);
+
+	TArray<FVector2D> corners;
+	corners.Add(StartPoint);
+	corners.Add(wireStart);
+	if (wireEnd.Y < wireStart.Y)
 	{
-		return FVector2D(
-			FMath::RoundToFloat(V.X / gridStep) * gridStep,
-			FMath::RoundToFloat(V.Y / gridStep) * gridStep
-		);
-	};
-
-	FVector2D wireStart = StartPoint + FVector2D(0.0f, stubOffset);
-	FVector2D wireEnd   = EndPoint   - FVector2D(0.0f, stubOffset);
-	if (!bExtremeZoomOut)
-	{
-		wireStart = snapToGrid(wireStart);
-		wireEnd   = snapToGrid(wireEnd);
-	}
-
-	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
-		StartPoint, FVector2D::ZeroVector, wireStart, FVector2D::ZeroVector,
-		Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
-
-	FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
-		wireEnd, FVector2D::ZeroVector, EndPoint, FVector2D::ZeroVector,
-		Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
-
-	if (bExtremeZoomOut)
-	{
-		// At tiny zoom scales, use deterministic orthogonal routing to avoid zig-zag and drift.
-		const float midY = (wireStart.Y + wireEnd.Y) * 0.5f;
-		const FVector2D firstTurn(wireStart.X, midY);
-		const FVector2D secondTurn(wireEnd.X, midY);
-
-		FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
-			wireStart, FVector2D::ZeroVector, firstTurn, FVector2D::ZeroVector,
-			Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
-
-		FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
-			firstTurn, FVector2D::ZeroVector, secondTurn, FVector2D::ZeroVector,
-			Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
-
-		FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
-			secondTurn, FVector2D::ZeroVector, wireEnd, FVector2D::ZeroVector,
-			Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
+		// Backward link: leave through an exterior lane beside both nodes.
+		const double laneX = FMath::Max(wireStart.X, wireEnd.X) + stubOffset;
+		corners.Add(FVector2D(laneX, wireStart.Y));
+		corners.Add(FVector2D(laneX, wireEnd.Y));
 	}
 	else
 	{
-		const float dist = FVector2D::Distance(wireStart, wireEnd);
-		const bool bBackward = wireEnd.Y < wireStart.Y;
-
-		if (dist < minStyleDistance)
-		{
-			FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
-				wireStart, FVector2D::ZeroVector, wireEnd, FVector2D::ZeroVector,
-				Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
-		}
-		else if (bBackward)
-		{
-			const FVector2D delta = wireEnd - wireStart;
-			// Keep backward-link curvature gentle; aggressive tangents create visible hooks at deep zoom.
-			const float horizontalSpan = FMath::Abs(delta.X);
-			const float maxAllowedTangent = FVector2D::Distance(wireStart, wireEnd) * 0.35f;
-			const float tangentLen = FMath::Min(horizontalSpan * 0.35f, maxAllowedTangent);
-			const FVector2D tangent(FMath::Sign(delta.X) * tangentLen, 0.0f);
-
-			FSlateDrawElement::MakeDrawSpaceSpline(DrawElementsList, WireLayerID,
-				wireStart, tangent, wireEnd, tangent,
-				Params.WireThickness, ESlateDrawEffect::None, Params.WireColor);
-		}
-		else
-		{
-			FMDSPathDrawer drawer(WireLayerID, ZoomFactor, DrawElementsList, Params);
-			drawer.DrawSubwayWire(wireStart, FVector2D(0.0f, 1.0f), wireEnd, FVector2D(0.0f, 1.0f));
-		}
+		const double midY = (wireStart.Y + wireEnd.Y) * 0.5;
+		corners.Add(FVector2D(wireStart.X, midY));
+		corners.Add(FVector2D(wireEnd.X, midY));
 	}
+	corners.Add(wireEnd);
+	corners.Add(EndPoint);
+
+	DrawWirePath(corners, Params);
+}
+
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawWirePath(TArray<FVector2D>& Corners, const FConnectionParams& Params)
+{
+	if (!MDSBoundedPath::Sanitize(Corners))
+	{
+		static double lastInvalidLogTime = 0.0;
+		const double now = FPlatformTime::Seconds();
+		if ((now - lastInvalidLogTime) > 1.0)
+		{
+			EditorLOG_WARNING(TEXT("[DrawWirePath] Invalid wire geometry (%d point(s)). Wire skipped."), Corners.Num());
+			lastInvalidLogTime = now;
+		}
+		return;
+	}
+
+	const FVector2D endPoint = Corners.Last();
+	const double radius = FMath::Max(MounteaDialogueWireConsts::RoundRadius * ZoomFactor, 1.0f);
+
+	TArray<FVector2D> path;
+	MDSBoundedPath::RoundCorners(Corners, radius, path);
+
+	const FBox2D clipBox(FVector2D(ClippingRect.Left, ClippingRect.Top), FVector2D(ClippingRect.Right, ClippingRect.Bottom));
+	MDSBoundedPath::Draw(DrawElementsList, WireLayerID, path, clipBox, Params.WireThickness, Params.WireColor);
+
+	// Arrow direction and animation distance come from the displayed path.
+	const double pathLength = MDSBoundedPath::Length(path);
+	FVector2D pathEndDirection(0.0, 1.0);
+	MDSBoundedPath::SampleAt(path, pathLength, pathEndDirection);
 
 	if (ArrowImage)
 	{
-		const FVector2D arrowDirection    = FVector2D(0.0f, 1.0f);
+		const FVector2D arrowDirection    = pathEndDirection;
 		const FVector2D rawArrowSize      = ArrowImage->ImageSize * ZoomFactor;
 		const FVector2D arrowSize(
-			FMath::Max(rawArrowSize.X, 4.0f),
-			FMath::Max(rawArrowSize.Y, 4.0f)
+			FMath::Max(rawArrowSize.X, 4.0),
+			FMath::Max(rawArrowSize.Y, 4.0)
 		);
-		const FVector2D arrowCenter       = EndPoint - (arrowDirection * (arrowSize.X * 0.50f));
+		const FVector2D arrowCenter       = endPoint - (arrowDirection * (arrowSize.X * 0.50f));
 		const FVector2D arrowDrawPosition = arrowCenter - (arrowSize * 0.5f);
 		const float arrowAngle            = FMath::Atan2(arrowDirection.Y, arrowDirection.X);
 
@@ -301,15 +274,11 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSubwayWireWithArrow(cons
 		const FVector2D dotSize(dotRadius * 2.0f, dotRadius * 2.0f);
 		const FSlateBrush* dotBrush = FMounteaDialogueGraphEditorStyle::GetBrush(TEXT("MDSStyleSet.Icon.BulletPoint"));
 
-		const TArray<TPair<FVector2D, FVector2D>> dotSegments = {
-			{ StartPoint, wireStart },
-			{ wireEnd,    EndPoint  }
-		};
-
 		for (int32 i = 0; i < dotCount; ++i)
 		{
-			const float t         = FMath::Frac(time * speed + static_cast<float>(i) / static_cast<float>(dotCount));
-			const FVector2D dotCenter = FMath::Lerp(StartPoint, EndPoint, t);
+			const float t = FMath::Frac(time * speed + static_cast<float>(i) / static_cast<float>(dotCount));
+			FVector2D dotDirection;
+			const FVector2D dotCenter = MDSBoundedPath::SampleAt(path, pathLength * t, dotDirection);
 
 			FSlateDrawElement::MakeBox(
 				DrawElementsList,
@@ -321,20 +290,124 @@ void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSubwayWireWithArrow(cons
 			);
 		}
 	}
+}
 
-	if (Params.AssociatedPin2 && CachedArrangedNodes)
+bool FConnectionDrawingPolicy_MounteaDialogueGraph::TryDrawPreparedRoute(const FGeometry& StartGeom, const FConnectionParams& Params)
+{
+	// Connections are two links (node -> control, control -> node); the route covers the whole connection.
+	const UEdNode_MounteaDialogueGraphEdge* edgeNode = Params.AssociatedPin2 ? Cast<UEdNode_MounteaDialogueGraphEdge>(Params.AssociatedPin2->GetOwningNode()) : nullptr;
+	bool bControlToNodeLink = false;
+	if (!edgeNode && Params.AssociatedPin1)
 	{
-		if (UEdNode_MounteaDialogueGraphEdge* edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(Params.AssociatedPin2->GetOwningNode()))
-		{
-			if (UEdNode_MounteaDialogueGraphNode* endNode = edgeNode->GetEndNode())
-			{
-				if (const int32* nodeIdx = NodeWidgetMap.Find(endNode))
-				{
-					const float endWidth = (*CachedArrangedNodes)[*nodeIdx].Widget->GetDesiredSize().X;
-					edgeNode->NodePosX = endNode->NodePosX + endWidth * 0.5f - MounteaDialogueWireConsts::BubbleHalfSize;
-					edgeNode->NodePosY = endNode->NodePosY - MounteaDialogueWireConsts::BubbleYOffset;
-				}
-			}
-		}
+		edgeNode = Cast<UEdNode_MounteaDialogueGraphEdge>(Params.AssociatedPin1->GetOwningNode());
+		bControlToNodeLink = edgeNode != nullptr;
 	}
+
+	const UEdGraph_MounteaDialogueGraph* dialogueGraph = Cast<UEdGraph_MounteaDialogueGraph>(GraphObj);
+	const FPreparedDialogueRoute* route = dialogueGraph ? dialogueGraph->FindPreparedRoute(edgeNode) : nullptr;
+	if (!route)
+		return false;
+	if (bControlToNodeLink)
+		return true;
+
+	// Graph -> screen with the panel's real zoom. The geometry's own scale cannot be used: for a culled source node
+	// Slate synthesizes a scale of 1, which drew whole routes un-zoomed. Its absolute top-left is correct in both cases.
+	TArray<FVector2D> corners;
+	corners.Reserve(route->Points.Num());
+	const FVector2D sourceOrigin(route->SourcePosition.X, route->SourcePosition.Y);
+	const FVector2D screenOrigin(StartGeom.LocalToAbsolute(FVector2f::ZeroVector));
+	for (const FVector2D& point : route->Points)
+		corners.Add(screenOrigin + (point - sourceOrigin) * static_cast<double>(ZoomFactor));
+
+	DrawWirePath(corners, Params);
+	return true;
+}
+
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FVector2f& StartPoint, const FVector2f& EndPoint, const FConnectionParams& Params)
+{
+	DrawSubwayWireWithArrow(StartPoint, EndPoint, Params);
+}
+
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnection(int32 LayerId, const FVector2f& Start, const FVector2f& End, const FConnectionParams& Params)
+{
+	DrawSubwayWireWithArrow(Start, End, Params);
+}
+
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawPreviewConnector(const FGeometry& PinGeometry, const FVector2f& StartPoint, const FVector2f& EndPoint, UEdGraphPin* Pin)
+{
+	FConnectionParams previewParams;
+	previewParams.WireColor     = FMounteaDialogueGraphVisualTokens::GetWireColor();
+	previewParams.WireThickness = MounteaDialogueWireConsts::WireThickness;
+	previewParams.bDrawBubbles  = false;
+	DrawSubwayWireWithArrow(StartPoint, EndPoint, previewParams);
+}
+
+FVector2f FConnectionDrawingPolicy_MounteaDialogueGraph::ComputeSplineTangent(const FVector2f& Start, const FVector2f& End) const
+{
+	return FVector2f(0.0f, MounteaDialogueWireConsts::WireStubOffset * ZoomFactor);
+}
+
+#if UE_VERSION_OLDER_THAN(5, 7, 0)
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawSplineWithArrow(const FVector2D& StartPoint, const FVector2D& EndPoint, const FConnectionParams& Params)
+{
+	DrawSplineWithArrow(FVector2f(StartPoint), FVector2f(EndPoint), Params);
+}
+
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawConnection(int32 LayerId, const FVector2D& Start, const FVector2D& End, const FConnectionParams& Params)
+{
+	DrawConnection(LayerId, FVector2f(Start), FVector2f(End), Params);
+}
+
+void FConnectionDrawingPolicy_MounteaDialogueGraph::DrawPreviewConnector(const FGeometry& PinGeometry, const FVector2D& StartPoint, const FVector2D& EndPoint, UEdGraphPin* Pin)
+{
+	DrawPreviewConnector(PinGeometry, FVector2f(StartPoint), FVector2f(EndPoint), Pin);
+}
+
+FVector2D FConnectionDrawingPolicy_MounteaDialogueGraph::ComputeSplineTangent(const FVector2D& Start, const FVector2D& End) const
+{
+	return FVector2D(ComputeSplineTangent(FVector2f(Start), FVector2f(End)));
+}
+#endif
+
+bool FConnectionDrawingPolicy_MounteaDialogueGraph::ResolveCulledAnchors(const FConnectionParams& Params, FVector2f& OutStart, FVector2f& OutEnd) const
+{
+	// Only the node -> control link is a real node-to-node connection; the control -> node stub is dropped.
+	const UEdNode_MounteaDialogueGraphEdge* edgeNode = Params.AssociatedPin2 ? Cast<UEdNode_MounteaDialogueGraphEdge>(Params.AssociatedPin2->GetOwningNode()) : nullptr;
+	const UEdNode_MounteaDialogueGraphNode* startNode = Params.AssociatedPin1 ? Cast<UEdNode_MounteaDialogueGraphNode>(Params.AssociatedPin1->GetOwningNode()) : nullptr;
+	const UEdNode_MounteaDialogueGraphNode* endNode = edgeNode ? const_cast<UEdNode_MounteaDialogueGraphEdge*>(edgeNode)->GetEndNode() : nullptr;
+	if (!startNode || !endNode || !CachedArrangedNodes)
+		return false;
+
+	const auto topLeftAndSize = [this](const UEdNode_MounteaDialogueGraphNode* Node, FVector2f& OutTopLeft, FVector2f& OutSize) -> bool
+	{
+		const int32* index = NodeWidgetMap.Find(Node);
+		if (!index)
+			return false;
+
+		const FGeometry& geometry = (*CachedArrangedNodes)[*index].Geometry;
+		OutTopLeft = geometry.LocalToAbsolute(FVector2f::ZeroVector);
+		const FVector2f local = geometry.GetLocalSize();
+		const FVector2f size = local.IsNearlyZero() ? FVector2f(UEdGraph_MounteaDialogueGraph::MeasureNode(Node)) : local;
+		OutSize = size * ZoomFactor;
+		return true;
+	};
+
+	FVector2f startTopLeft, startSize, endTopLeft, endSize;
+	if (!topLeftAndSize(startNode, startTopLeft, startSize) || !topLeftAndSize(endNode, endTopLeft, endSize))
+		return false;
+
+	OutStart = FVector2f(startTopLeft.X + startSize.X * 0.5f, startTopLeft.Y + startSize.Y);
+	OutEnd = FVector2f(endTopLeft.X + endSize.X * 0.5f, endTopLeft.Y);
+	return true;
+}
+
+bool FConnectionDrawingPolicy_MounteaDialogueGraph::IsConnectionCulled(const FArrangedWidget& StartLink, const FArrangedWidget& EndLink) const
+{
+	// A routed wire can cross the viewport while both of its (zero-size, synthesized) endpoints are off to one side.
+	// DrawWirePath clips to the viewport, so skipping the endpoint test costs nothing visible.
+	const UEdGraph_MounteaDialogueGraph* dialogueGraph = Cast<UEdGraph_MounteaDialogueGraph>(GraphObj);
+	if (dialogueGraph && dialogueGraph->HasPreparedRoutes())
+		return false;
+
+	return FKismetConnectionDrawingPolicy::IsConnectionCulled(StartLink, EndLink);
 }
