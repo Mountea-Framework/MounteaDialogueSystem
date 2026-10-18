@@ -488,6 +488,18 @@ void FMounteaDialogueSystemEditor::StartupModule()
 
 void FMounteaDialogueSystemEditor::ShutdownModule()
 {
+  if(FSlateApplication::IsInitialized())
+  {
+    const TSharedRef<FGlobalTabmanager> tabManager = FGlobalTabmanager::Get();
+    for(const FName tabId : {MounteaPopup::WelcomeTabId, MounteaPopup::GraphValidationTabId})
+    {
+      if(const TSharedPtr<SDockTab> tab = tabManager->FindExistingLiveTab(tabId))
+        tab->RequestCloseTab();
+
+      tabManager->UnregisterTabSpawner(tabId);
+    }
+  }
+
 	// Property customizations cleanup
 	{
 		if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
@@ -819,6 +831,23 @@ void FMounteaDialogueSystemEditor::OnGetResponse_Tags(FHttpRequestPtr Request, F
 
 void FMounteaDialogueSystemEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& TabManager)
 {
+  for(const FName tabId : {MounteaPopup::WelcomeTabId, MounteaPopup::GraphValidationTabId})
+  {
+    const FText tabTitle = tabId == MounteaPopup::WelcomeTabId
+      ? NSLOCTEXT("MounteaDialogueSystemEditor", "WelcomeTab", "Mountea Dialogue System - Welcome")
+      : NSLOCTEXT("MounteaDialogueSystemEditor", "GraphValidationTab", "Mountea Dialogue System - Graph Validation");
+
+    TabManager->RegisterTabSpawner(tabId, FOnSpawnTab::CreateLambda(
+      [tabTitle](const FSpawnTabArgs& SpawnTabArgs)
+      {
+        return SNew(SDockTab)
+          .TabRole(ETabRole::NomadTab)
+          .Label(tabTitle);
+      }))
+      .SetDisplayName(tabTitle)
+      .SetMenuType(ETabSpawnerMenuType::Hidden);
+  }
+
 	TabManager->RegisterTabSpawner("DialogueSystemTutorial", 
 		FOnSpawnTab::CreateRaw(this, &FMounteaDialogueSystemEditor::OnSpawnDialogueSystemTutorialTab))
 		.SetDisplayName(FText::FromString("Dialogue System Tutorial"))
