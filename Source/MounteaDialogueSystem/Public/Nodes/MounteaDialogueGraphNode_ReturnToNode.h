@@ -80,7 +80,7 @@ public:
 protected:
 
 #if WITH_DEV_AUTOMATION_TESTS
-	friend struct FMounteaDialogueReturnTestAccess;
+	friend struct FMounteaDialogueTestAccess;
 #endif
 
 	FTimerHandle TimerHandle_Delay;

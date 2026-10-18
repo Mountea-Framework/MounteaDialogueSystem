@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraph.h"
 #include "Helpers/MounteaDialogueEditorDetailsTypes.h"
+#include "Layout/Layered/MounteaDialogueLayoutTypes.h"
 #include "EdGraph_MounteaDialogueGraph.generated.h"
 
 class UMounteaDialogueGraphNode;
@@ -13,6 +14,24 @@ class UMounteaDialogueGraphEdge;
 class UEdNode_MounteaDialogueGraphNode;
 class UEdNode_MounteaDialogueGraphEdge;
 class FAssetEditor_MounteaDialogueGraph;
+
+/** Maps layout snapshot ids back to editor objects. Game thread only. */
+struct FDialogueLayoutBinding
+{
+	TArray<TWeakObjectPtr<UEdGraphNode>> Nodes; // UEdNode_MounteaDialogueGraphNode, parallel to snapshot nodes
+	TArray<TWeakObjectPtr<UEdGraphNode>> Edges; // UEdNode_MounteaDialogueGraphEdge, parallel to snapshot edges
+};
+
+/** A wire route calculated by the layered layout, valid while the nodes it was calculated for stay where they are. */
+struct FPreparedDialogueRoute
+{
+	TArray<FVector2D> Points; // graph space
+	FIntPoint SourcePosition = FIntPoint::ZeroValue;
+	FIntPoint TargetPosition = FIntPoint::ZeroValue;
+	FVector2D SourceSize = FVector2D::ZeroVector;
+	FVector2D TargetSize = FVector2D::ZeroVector;
+	bool bUsable = false;
+};
 
 UCLASS()
 class MOUNTEADIALOGUESYSTEMEDITOR_API UEdGraph_MounteaDialogueGraph : public UEdGraph
@@ -62,9 +81,28 @@ public:
 
 public:
 
+	/** Captures a value-only layout input (game thread). Does not mutate the graph. */
+	bool BuildLayoutSnapshot(FDialogueLayoutSnapshot& OutSnapshot, FDialogueLayoutBinding& OutBinding, FString& OutError) const;
+
+	/**
+	 * Writes a validated checkpoint: node and control positions (editor and runtime NodePosition) and prepared routes.
+	 * Fails without touching anything when the graph no longer matches the snapshot. The caller owns the transaction.
+	 */
+	bool ApplyLayoutCheckpoint(const FDialogueLayoutSnapshot& Expected, const FDialogueLayoutBinding& Binding, const FDialogueLayoutCheckpoint& Checkpoint, FString& OutError);
+
+	/** Route prepared for this connection, or nullptr when none exists or the diagram changed since it was calculated. */
+	const FPreparedDialogueRoute* FindPreparedRoute(const UEdNode_MounteaDialogueGraphEdge* Edge) const;
+	void ClearPreparedRoutes() { PreparedRoutes.Reset(); }
+	bool HasPreparedRoutes() const { return !PreparedRoutes.IsEmpty(); }
+
+	/** Positive cached size, then desired size, then the documented fallback. */
+	static FVector2D MeasureNode(const UEdNode_MounteaDialogueGraphNode* Node);
+
 	void UpdateFocusedInstance(const FPIEInstanceData& InstanceId);
-	void AssignExecutionOrder();
-	void ResetExecutionOrders() const;
+	/** Explicit, position-derived option ordering. Call only for intentional reordering (manual node movement). */
+	bool ReorderFromPositions();
+	/** Initialises missing orders, keeping every existing one. Safe on any topology change. */
+	void EnsureExecutionOrders();
 
 protected:
 
@@ -73,9 +111,14 @@ protected:
 	
 	static UMounteaDialogueGraphNode* GetParentNode(const UMounteaDialogueGraphNode& Node);
 	
-	static void AssignNodeToLayer(UMounteaDialogueGraphNode* Node, int32 LayerIndex, TMap<int32, TArray<UMounteaDialogueGraphNode*>>& LayeredNodes);
-
 private:
+
+	void RefreshPreparedRoutes() const;
+	uint32 ComputeNodeSignature() const;
+
+	mutable TMap<TWeakObjectPtr<const UEdGraphNode>, FPreparedDialogueRoute> PreparedRoutes;
+	mutable uint32 PreparedSignature = 0;
+	mutable uint64 PreparedFrame = TNumericLimits<uint64>::Max();
 
 	UPROPERTY()
 	TArray<UMounteaDialogueGraphNode*> CachedGraphData;

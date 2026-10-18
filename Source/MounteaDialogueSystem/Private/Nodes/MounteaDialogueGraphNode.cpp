@@ -22,15 +22,11 @@ namespace MounteaDialogueNodeRuntime
 		if (!IsValid(DialogueContext))
 			return;
 
-		const TScriptInterface<IMounteaDialogueParticipantInterface> graphOwner =
-			UMounteaDialogueParticipantStatics::GetGraphOwnerParticipant(DialogueContext->DialogueParticipants);
-		if (!graphOwner.GetObject() || !graphOwner.GetInterface())
-			return;
-
-		UObject* participantObject = graphOwner.GetObject();
-		const UMounteaDialogueGraph* dialogueGraph = graphOwner->Execute_GetDialogueGraph(participantObject);
+		// Graph decorators come from the graph the node belongs to (a start override or a child graph), not from
+		// the graph the participant owns.
 		const UMounteaDialogueGraphNode* activeNode = DialogueContext->GetActiveNode();
-		if (!IsValid(dialogueGraph) || !IsValid(activeNode))
+		const UMounteaDialogueGraph* dialogueGraph = IsValid(activeNode) ? activeNode->GetGraph() : nullptr;
+		if (!IsValid(dialogueGraph))
 			return;
 
 		TArray<FMounteaDialogueDecorator> allDecorators;
@@ -466,7 +462,6 @@ bool UMounteaDialogueGraphNode::ValidateNode(FDataValidationContext& Context, co
 			
 				const FString TextReturn =
 				FString(NodeTitle.ToString()).
-				Append(NodeTitle.ToString()).
 				Append(": has Node Decorator ").
 				Append( Itr.Key->GetName().LeftChop(2)).
 				Append(" ").

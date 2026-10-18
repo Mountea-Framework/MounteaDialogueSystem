@@ -19,6 +19,7 @@
 
 class UMounteaDialogueWorldSubsystem;
 class UMounteaDialogueManager;
+class UMounteaDialogueGraph;
 class UMounteaDialogueGraphNode;
 class UMounteaDialogueContext;
 
@@ -147,6 +148,13 @@ private:
 	void ApplyNodeSwitchPayload(const UMounteaDialogueContext* DialogueContext);
 	void ApplyAllowedChildrenPayload(const UMounteaDialogueContext* DialogueContext);
 	void ApplyRowStatePayload(const UMounteaDialogueContext* DialogueContext);
+	// First time traversal reaches a graph this session: initialize it and its graph decorators.
+	void EnterGraph(UMounteaDialogueGraph* Graph, UMounteaDialogueManager* Manager, const UMounteaDialogueContext* DialogueContext);
+	// Clean up the graph decorators and shut down every graph entered this session.
+	void ExitEnteredGraphs();
+
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UMounteaDialogueGraph>> EnteredGraphs;
 
 	TWeakObjectPtr<UMounteaDialogueManager> AuthoritativeManager;
 	TMap<int32, TScriptInterface<IMounteaDialogueParticipantInterface>> RoleOverrides;

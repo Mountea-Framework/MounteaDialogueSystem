@@ -1,4 +1,13 @@
-// Copyright Dominik Pavlicek 2023. All Rights Reserved.
+// Copyright (C) 2026 Dominik (Pavlicek) Morse. All rights reserved.
+//
+// Developed for the Mountea Framework as a free tool. This solution is provided
+// for use and sharing without charge. Redistribution is allowed under the following conditions:
+//
+// - You may use this solution in commercial products, provided the product is not 
+//   this solution itself (or unless significant modifications have been made to the solution).
+// - You may not resell or redistribute the original, unmodified solution.
+//
+// For more information, visit: https://mountea.tools
 
 #pragma once
 
@@ -28,6 +37,7 @@ public:
 	virtual void UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager) override;
 
 	virtual bool CloseWindow() override;
+	virtual bool OnRequestClose(EAssetEditorCloseReason InCloseReason) override;
 	// End of IToolkit interface
 
 #pragma endregion
@@ -119,6 +129,9 @@ private:
 	void AutoArrange();
 	bool CanAutoArrange() const;
 
+	/** True while an Auto Arrange calculation owns this editor (all interaction is locked). */
+	bool IsLayoutBusy() const;
+
 	void RecenterGraph();
 	bool CanRecenterGraph() const;
 
@@ -149,6 +162,16 @@ private:
 	
 private:
 
+	TSharedRef<SWidget> BuildLayoutOverlay();
+	EVisibility GetLayoutOverlayVisibility() const;
+	bool IsInteractionAllowed() const;
+	FText GetLayoutStatusText() const;
+	TOptional<float> GetLayoutProgress() const;
+	FText GetLayoutCancelText() const;
+	bool IsLayoutCancelEnabled() const;
+	FReply OnLayoutCancelClicked();
+	void OnLayoutFinished(bool bApplied, const FText& Message);
+
 	TSharedRef<SDockTab> SpawnTab_Viewport(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_Details(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_Search(const FSpawnTabArgs& Args);
@@ -163,6 +186,7 @@ private:
 	/** Handle to the registered OnPackageSave delegate */
 	FDelegateHandle OnPackageSavedDelegateHandle;
 
+	TSharedPtr<class FMounteaDialogueLayoutController> LayoutController;
 	TSharedPtr<SGraphEditor> ViewportWidget;
 	TSharedPtr<class IDetailsView> PropertyWidget;
 	TSharedPtr<SMounteaDialogueSearch> FindResultsView;

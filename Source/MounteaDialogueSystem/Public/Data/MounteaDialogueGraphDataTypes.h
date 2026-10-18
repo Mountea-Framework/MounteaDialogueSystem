@@ -100,7 +100,7 @@ enum class ERowExecutionMode : uint8
 {
 	EREM_Automatic 		UMETA(DisplayName="Automatic", Tooltip="Next row will be executed if any is present."),
 	EREM_AwaitInput 	UMETA(DisplayName="Await Input", Tooltip="Next row will be executed once request is triggered."),
-	EREM_Stopping 		UMETA(DisplayName="Stopping", Tooltip="Row will stop execution of whole Node and will finish both."),
+	EREM_Stopping 		UMETA(DisplayName="Stopping", Tooltip="Plays this row, then finishes the whole Node. Rows after it are skipped."),
 
 	Default 			UMETA(hidden)
 };
@@ -682,7 +682,7 @@ public:
 
 	friend uint32 GetTypeHash(const FUIRowID& RowID)
 	{
-		return FCrc::MemCrc32(&RowID.RowWidgetClass, sizeof(FUIRowID)) + RowID.UIRowID;
+		return HashCombine(GetTypeHash(RowID.UIRowID), GetTypeHash(RowID.RowWidgetClass));
 	}
 };
 

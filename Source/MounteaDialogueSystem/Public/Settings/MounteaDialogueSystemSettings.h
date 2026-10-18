@@ -33,6 +33,10 @@ class MOUNTEADIALOGUESYSTEM_API UMounteaDialogueSystemSettings : public UDevelop
 
 	UMounteaDialogueSystemSettings();
 
+#if WITH_DEV_AUTOMATION_TESTS
+	friend struct FMounteaDialogueTestAccess;
+#endif
+
 protected:
 	/**
 	 * Mountea Dialogue Configuration.

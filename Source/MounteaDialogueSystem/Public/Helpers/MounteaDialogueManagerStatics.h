@@ -112,9 +112,11 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Mountea|Dialogue|Manager", meta=(CustomTag="MounteaK2Validate"))
 	static bool ShouldExecuteCosmetics(const AActor* Owner);
 
+	// RootGraph (optional) is searched too, with its child graphs: the session may run a graph no participant owns.
 	static UMounteaDialogueGraph* ResolveGraphByGuid(
 		const TArray<TScriptInterface<IMounteaDialogueParticipantInterface>>& Participants,
-		const FGuid& GraphGuid);
+		const FGuid& GraphGuid,
+		UMounteaDialogueGraph* RootGraph = nullptr);
 
 	// --- Dialogue functions ------------------------------
 

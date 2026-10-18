@@ -23,15 +23,10 @@ UMounteaDialogueGraphEditorSettings::UMounteaDialogueGraphEditorSettings() : bAl
 		return FPaths::ConvertRelativePathToFull(fullPath);
 	};
 	
-	AutoLayoutStrategy = EAutoLayoutStrategyType::EALS_Tree;
+	AutoLayoutStrategy = EAutoLayoutStrategyType::EALS_Layered;
 
-	bFirstPassOnly = false;
-	bRandomInit = false;
 	OptimalHorizontalDistance = MounteaGraphLayoutStrategy::OptimalHorizontalDistance;
 	OptimalVerticalDistance = MounteaGraphLayoutStrategy::OptimalVerticalDistance;
-	MaxIteration = MounteaGraphLayoutStrategy::MaxIterations;
-	InitTemperature = 10.f;
-	CoolDownRate = 10.f;
 
 	bAllowRenameNodes = true;
 	bDisplayAutomaticNames = false;

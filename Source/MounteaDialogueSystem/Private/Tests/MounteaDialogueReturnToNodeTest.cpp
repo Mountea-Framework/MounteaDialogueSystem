@@ -31,19 +31,6 @@
 // Nodes and the dialogue context are plain objects; the full session/replication path is too heavy for a unit
 // test, so the end-to-end jump is verified in PIE.
 
-struct FMounteaDialogueReturnTestAccess
-{
-	static void OnDelayDurationExpired(UMounteaDialogueGraphNode_ReturnToNode* Node, const TScriptInterface<IMounteaDialogueManagerInterface>& Manager)
-	{
-		Node->OnDelayDurationExpired(Manager);
-	}
-
-	static FTimerHandle& TimerHandle(UMounteaDialogueGraphNode_ReturnToNode* Node)
-	{
-		return Node->TimerHandle_Delay;
-	}
-};
-
 namespace MounteaDialogueReturnToNodeTest
 {
 	template<typename TNode>
@@ -180,12 +167,12 @@ bool FMounteaDialogueReturnStaleTimerTest::RunTest(const FString& Parameters)
 
 	// Stale: some other node is active now.
 	context->SetDialogueContext(currentlyActive, {});
-	FMounteaDialogueReturnTestAccess::OnDelayDurationExpired(returnNode, managerScript);
+	FMounteaDialogueTestAccess::OnDelayDurationExpired(returnNode, managerScript);
 	TestTrue(TEXT("A Return node that is no longer active must not touch the context"), context->ActiveNode == currentlyActive);
 
 	// Control: when the Return node IS active, the existing behaviour is untouched.
 	context->SetDialogueContext(returnNode, {});
-	FMounteaDialogueReturnTestAccess::OnDelayDurationExpired(returnNode, managerScript);
+	FMounteaDialogueTestAccess::OnDelayDurationExpired(returnNode, managerScript);
 	TestTrue(TEXT("An active Return node with auto-complete on still switches to its target"), context->ActiveNode == target);
 
 	fixture.Teardown(*this);
@@ -212,7 +199,7 @@ bool FMounteaDialogueReturnCleanupClearsTimerTest::RunTest(const FString& Parame
 	UMounteaDialogueGraphNode_ReturnToNode* returnNode = NewNode<UMounteaDialogueGraphNode_ReturnToNode>();
 	returnNode->SetNewWorld(world);
 
-	FTimerHandle& handle = FMounteaDialogueReturnTestAccess::TimerHandle(returnNode);
+	FTimerHandle& handle = FMounteaDialogueTestAccess::TimerHandle(returnNode);
 	world->GetTimerManager().SetTimer(handle, FTimerDelegate::CreateLambda([]() {}), 60.f, false);
 	TestTrue(TEXT("Precondition: the jump timer is pending"), world->GetTimerManager().IsTimerActive(handle));
 

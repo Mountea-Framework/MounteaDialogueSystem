@@ -1,6 +1,26 @@
-﻿// Copyright Dominik Pavlicek 2023. All Rights Reserved.
+﻿// Copyright (C) 2026 Dominik (Pavlicek) Morse. All rights reserved.
+//
+// Developed for the Mountea Framework as a free tool. This solution is provided
+// for use and sharing without charge. Redistribution is allowed under the following conditions:
+//
+// - You may use this solution in commercial products, provided the product is not 
+//   this solution itself (or unless significant modifications have been made to the solution).
+// - You may not resell or redistribute the original, unmodified solution.
+//
+// For more information, visit: https://mountea.tools
 
 #include "AssetEditor_MounteaDialogueGraph.h"
+
+#include "Layout/MounteaDialogueLayoutController.h"
+#include "Framework/Notifications/NotificationManager.h"
+#include "Widgets/Notifications/SNotificationList.h"
+#include "Widgets/Input/SButton.h"
+#include "Widgets/Layout/SBorder.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/Notifications/SProgressBar.h"
+#include "Widgets/SBoxPanel.h"
+#include "Widgets/SOverlay.h"
+#include "Widgets/Text/STextBlock.h"
 
 #include "DesktopPlatformModule.h"
 #include "GraphEditorActions.h"
@@ -28,9 +48,6 @@
 #include "Helpers/MounteaDialogueGraphHelpers.h"
 #include "Helpers/MounteaDialogueSystemEditorBFC.h"
 #include "Helpers/MounteaDialogueSystemImportExportHelpers.h"
-#include "Layout/ForceDirectedSolveLayoutStrategy.h"
-#include "Layout/MounteaDialogueGraphLayoutStrategy.h"
-#include "Layout/TreeSolveLayoutStrategy.h"
 #include "Misc/DataValidation.h"
 #include "Nodes/MounteaDialogueGraphNode_StartNode.h"
 #include "Popups/MDSPopup_GraphValidation.h"
@@ -205,6 +222,12 @@ FAssetEditor_MounteaDialogueGraph::FAssetEditor_MounteaDialogueGraph()
 
 FAssetEditor_MounteaDialogueGraph::~FAssetEditor_MounteaDialogueGraph()
 {
+	if (LayoutController.IsValid())
+	{
+		LayoutController->OnFinished.Unbind();
+		LayoutController->Discard();
+		LayoutController.Reset();
+	}
 	EditingGraph = nullptr;
 	UPackage::PackageSavedWithContextEvent.Remove(OnPackageSavedDelegateHandle);
 	FMounteaDialogueGraphEditorCommands::Unregister();
@@ -506,7 +529,7 @@ TSharedRef<SGraphEditor> FAssetEditor_MounteaDialogueGraph::CreateViewportWidget
 
 	return SNew(SGraphEditor)
 		.AdditionalCommands(GraphEditorCommands)
-		.IsEditable(true)
+		.IsEditable(TAttribute<bool>::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::IsInteractionAllowed))
 		.Appearance(AppearanceInfo)
 		.GraphToEdit(EditingGraph->EdGraph)
 		.GraphEvents(InEvents)
@@ -547,13 +570,15 @@ void FAssetEditor_MounteaDialogueGraph::BindCommands()
 	ToolkitCommands->MapAction
 	(
 		FMounteaDialogueGraphEditorCommands::Get().FindInDialogue,
-		FExecuteAction::CreateLambda([this] { SummonSearchUI(); })
+		FExecuteAction::CreateLambda([this] { SummonSearchUI(); }),
+		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::IsInteractionAllowed)
 	);
 
 	ToolkitCommands->MapAction
 	(
 		FMounteaDialogueGraphEditorCommands::Get().ExportGraph,
-		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::ExportGraph)
+		FExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::ExportGraph),
+		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::IsInteractionAllowed)
 	);
 }
 
@@ -757,7 +782,7 @@ void FAssetEditor_MounteaDialogueGraph::CreateCommandList()
 
 	GraphEditorCommands->MapAction(FMounteaDialogueGraphEditorCommands::Get().ExportGraph,
 								FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::ExportGraph),
-								FCanExecuteAction());
+								FCanExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::IsInteractionAllowed));
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().SelectAll,
 									FExecuteAction::CreateRaw(this, &FAssetEditor_MounteaDialogueGraph::SelectAllNodes),
@@ -805,7 +830,8 @@ void FAssetEditor_MounteaDialogueGraph::CreateCommandList()
 	ToolkitCommands->MapAction
 	(
 		FMounteaDialogueGraphEditorCommands::Get().FindInDialogue,
-		FExecuteAction::CreateLambda([this] { SummonSearchUI(); })
+		FExecuteAction::CreateLambda([this] { SummonSearchUI(); }),
+		FCanExecuteAction::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::IsInteractionAllowed)
 	);
 }
 
@@ -933,6 +959,9 @@ void FAssetEditor_MounteaDialogueGraph::SelectAllNodes()
 
 bool FAssetEditor_MounteaDialogueGraph::CanSelectAllNodes()
 {
+	if (IsLayoutBusy())
+		return false;
+
 	return true;
 }
 
@@ -1015,6 +1044,9 @@ void FAssetEditor_MounteaDialogueGraph::DeleteSelectedNodes()
 
 bool FAssetEditor_MounteaDialogueGraph::CanDeleteNodes()
 {
+	if (IsLayoutBusy())
+		return false;
+
 	// If any of the nodes can be deleted then we should allow deleting
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
@@ -1071,6 +1103,9 @@ void FAssetEditor_MounteaDialogueGraph::CutSelectedNodes()
 
 bool FAssetEditor_MounteaDialogueGraph::CanCutNodes()
 {
+	if (IsLayoutBusy())
+		return false;
+
 	return CanCopyNodes() && CanDeleteNodes();
 }
 
@@ -1111,6 +1146,9 @@ void FAssetEditor_MounteaDialogueGraph::CopySelectedNodes()
 
 bool FAssetEditor_MounteaDialogueGraph::CanCopyNodes()
 {
+	if (IsLayoutBusy())
+		return false;
+
 	// If any of the nodes can be duplicated then we should allow copying
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
@@ -1259,6 +1297,9 @@ void FAssetEditor_MounteaDialogueGraph::PasteNodesHere(const FVector2f& Location
 
 bool FAssetEditor_MounteaDialogueGraph::CanPasteNodes()
 {
+	if (IsLayoutBusy())
+		return false;
+
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
 	{
@@ -1289,48 +1330,163 @@ void FAssetEditor_MounteaDialogueGraph::DuplicateNodes()
 
 bool FAssetEditor_MounteaDialogueGraph::CanDuplicateNodes()
 {
+	if (IsLayoutBusy())
+		return false;
+
 	return CanCopyNodes();
 }
 
 void FAssetEditor_MounteaDialogueGraph::AutoArrange()
 {
-	UEdGraph_MounteaDialogueGraph* EdGraph = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
-	check(EdGraph != nullptr);
+	if (IsLayoutBusy())
+		return;
 
-	const FScopedTransaction Transaction(LOCTEXT("MounteaDialogueGraphEditorAutoArrange", "Mountea Dialogue Graph Editor: Auto Arrange all Nodes"));
-
-	EdGraph->Modify(true);
-
-	UMounteaDialogueGraphLayoutStrategy* LayoutStrategy = nullptr;
-	switch (MounteaDialogueGraphEditorSettings->GetAutoLayoutStrategy())
+	UEdGraph_MounteaDialogueGraph* EdGraph = EditingGraph ? Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph) : nullptr;
+	if (!EdGraph)
 	{
-	case EAutoLayoutStrategyType::EALS_Tree:
-		LayoutStrategy = NewObject<UMounteaDialogueGraphLayoutStrategy>(
-			EdGraph, UTreeSolveLayoutStrategy::StaticClass());
-		break;
-	case EAutoLayoutStrategyType::EALS_ForceDirected:
-		LayoutStrategy = NewObject<UMounteaDialogueGraphLayoutStrategy>(
-			EdGraph, UForceDirectedSolveLayoutStrategy::StaticClass());
-		break;
-	default:
-		break;
+		EditorLOG_ERROR(TEXT("[AutoArrange] There is no editor graph to arrange."));
+		return;
 	}
 
-	if (LayoutStrategy != nullptr)
+	if (!LayoutController.IsValid())
 	{
-		LayoutStrategy->Layout(EdGraph);
-		MounteaDialogueNodeSpacingUtils::EnforceMinimumParentChildYSpacing(EdGraph, 12);
-		LayoutStrategy->ConditionalBeginDestroy();
+		LayoutController = MakeShared<FMounteaDialogueLayoutController>();
+		LayoutController->OnFinished.BindSP(this, &FAssetEditor_MounteaDialogueGraph::OnLayoutFinished);
 	}
-	else
+
+	FText error;
+	const bool bStarted = LayoutController->Start(EdGraph, LOCTEXT("MounteaDialogueGraphEditorAutoArrange", "Mountea Dialogue Graph Editor: Auto Arrange all Nodes"), error);
+	if (!bStarted)
+		OnLayoutFinished(false, error);
+}
+
+void FAssetEditor_MounteaDialogueGraph::OnLayoutFinished(bool bApplied, const FText& Message)
+{
+	if (ViewportWidget.IsValid())
+		ViewportWidget->NotifyGraphChanged();
+
+	if (Message.IsEmpty())
+		return;
+
+	FNotificationInfo info(Message);
+	info.ExpireDuration = bApplied ? 4.0f : 8.0f;
+	info.bFireAndForget = true;
+	FSlateNotificationManager::Get().AddNotification(info);
+}
+
+bool FAssetEditor_MounteaDialogueGraph::IsLayoutBusy() const
+{
+	return LayoutController.IsValid() && LayoutController->IsBusy();
+}
+
+bool FAssetEditor_MounteaDialogueGraph::IsInteractionAllowed() const
+{
+	return !IsLayoutBusy();
+}
+
+EVisibility FAssetEditor_MounteaDialogueGraph::GetLayoutOverlayVisibility() const
+{
+	// Visible (not SelfHitTestInvisible): the overlay swallows pan, zoom and clicks over the graph.
+	return IsLayoutBusy() ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
+FText FAssetEditor_MounteaDialogueGraph::GetLayoutStatusText() const
+{
+	return LayoutController.IsValid() ? LayoutController->GetStatusText() : FText::GetEmpty();
+}
+
+TOptional<float> FAssetEditor_MounteaDialogueGraph::GetLayoutProgress() const
+{
+	return LayoutController.IsValid() ? LayoutController->GetProgress() : TOptional<float>();
+}
+
+FText FAssetEditor_MounteaDialogueGraph::GetLayoutCancelText() const
+{
+	return LayoutController.IsValid() && LayoutController->IsStopping()
+		? LOCTEXT("LayoutStopping", "Stopping…")
+		: LOCTEXT("LayoutCancel", "Cancel");
+}
+
+bool FAssetEditor_MounteaDialogueGraph::IsLayoutCancelEnabled() const
+{
+	return LayoutController.IsValid() && LayoutController->CanCancel();
+}
+
+FReply FAssetEditor_MounteaDialogueGraph::OnLayoutCancelClicked()
+{
+	if (LayoutController.IsValid())
+		LayoutController->Cancel();
+	return FReply::Handled();
+}
+
+TSharedRef<SWidget> FAssetEditor_MounteaDialogueGraph::BuildLayoutOverlay()
+{
+	return SNew(SBorder)
+		.Visibility(this, &FAssetEditor_MounteaDialogueGraph::GetLayoutOverlayVisibility)
+		.BorderImage(FAppStyle::GetBrush("WhiteBrush"))
+		.BorderBackgroundColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.5f))
+		.HAlign(HAlign_Center)
+		.VAlign(VAlign_Center)
+		[
+			SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+			.Padding(FMargin(24.0f))
+			[
+				SNew(SBox)
+				.WidthOverride(360.0f)
+				[
+					SNew(SVerticalBox)
+					+ SVerticalBox::Slot().AutoHeight().Padding(0.0f, 0.0f, 0.0f, 8.0f)
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("LayoutTitle", "Arranging dialogue graph"))
+						.Font(FAppStyle::GetFontStyle("BoldFont"))
+					]
+					+ SVerticalBox::Slot().AutoHeight().Padding(0.0f, 0.0f, 0.0f, 8.0f)
+					[
+						SNew(STextBlock)
+						.Text(this, &FAssetEditor_MounteaDialogueGraph::GetLayoutStatusText)
+					]
+					+ SVerticalBox::Slot().AutoHeight().Padding(0.0f, 0.0f, 0.0f, 12.0f)
+					[
+						SNew(SProgressBar)
+						.Percent(this, &FAssetEditor_MounteaDialogueGraph::GetLayoutProgress)
+					]
+					+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Right)
+					[
+						SNew(SButton)
+						.Text(this, &FAssetEditor_MounteaDialogueGraph::GetLayoutCancelText)
+						.IsEnabled(this, &FAssetEditor_MounteaDialogueGraph::IsLayoutCancelEnabled)
+						.OnClicked(this, &FAssetEditor_MounteaDialogueGraph::OnLayoutCancelClicked)
+					]
+				]
+			]
+		];
+}
+
+bool FAssetEditor_MounteaDialogueGraph::OnRequestClose(EAssetEditorCloseReason InCloseReason)
+{
+	if (IsLayoutBusy())
 	{
-		EditorLOG_ERROR(TEXT("[AutoArrange] LayoutStrategy is null."));
+		// The ordinary close button is blocked until Cancel; unloading, deletion, refresh and shutdown discard the run.
+		if (InCloseReason == EAssetEditorCloseReason::AssetEditorHostClosed)
+		{
+			FNotificationInfo info(LOCTEXT("CloseBlocked", "Cancel the arrangement before closing this editor."));
+			info.ExpireDuration = 4.0f;
+			FSlateNotificationManager::Get().AddNotification(info);
+			return false;
+		}
+
+		// Unloading, deletion or shutdown: stop the worker and drop its result.
+		LayoutController->OnFinished.Unbind();
+		LayoutController->Discard();
 	}
+	return FAssetEditorToolkit::OnRequestClose(InCloseReason);
 }
 
 bool FAssetEditor_MounteaDialogueGraph::CanAutoArrange() const
 {
-	return EditingGraph != nullptr && Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph) != nullptr;
+	return !IsLayoutBusy() && EditingGraph != nullptr && Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph) != nullptr;
 }
 
 void FAssetEditor_MounteaDialogueGraph::RecenterGraph()
@@ -1366,6 +1522,9 @@ void FAssetEditor_MounteaDialogueGraph::RecenterGraph()
 
 bool FAssetEditor_MounteaDialogueGraph::CanRecenterGraph() const
 {
+	if (IsLayoutBusy())
+		return false;
+
 	return EditingGraph && EditingGraph->EdGraph && EditingGraph->StartNode && ViewportWidget.IsValid();
 }
 
@@ -1382,6 +1541,9 @@ void FAssetEditor_MounteaDialogueGraph::FitGraphToView()
 
 bool FAssetEditor_MounteaDialogueGraph::CanFitGraphToView() const
 {
+	if (IsLayoutBusy())
+		return false;
+
 	return EditingGraph && EditingGraph->EdGraph && ViewportWidget.IsValid();
 }
 
@@ -1412,6 +1574,9 @@ void FAssetEditor_MounteaDialogueGraph::ValidateGraph()
 
 bool FAssetEditor_MounteaDialogueGraph::CanValidateGraph() const
 {
+	if (IsLayoutBusy())
+		return false;
+
 	return true;
 }
 
@@ -1443,6 +1608,9 @@ void FAssetEditor_MounteaDialogueGraph::OnRenameNode()
 
 bool FAssetEditor_MounteaDialogueGraph::CanRenameNodes() const
 {
+	if (IsLayoutBusy())
+		return false;
+
 	check(GetSettings() != nullptr);
 	if (GetSettings()->AllowRenameNodes() == false) return false;
 	if (GetSelectedNodes().Num() != 1) return false; 
@@ -1509,12 +1677,11 @@ void FAssetEditor_MounteaDialogueGraph::OnFinishedChangingProperties(const FProp
 
 	EditingGraph->EdGraph->GetSchema()->ForceVisualizationCacheClear();
 
-	// Property-only change — topology is unchanged; only refresh execution order and visuals.
+	// Property-only change — topology is unchanged; only initialise missing execution orders and refresh visuals.
 	UEdGraph_MounteaDialogueGraph* mounteaGraphEditor = Cast<UEdGraph_MounteaDialogueGraph>(EditingGraph->EdGraph);
 	if (mounteaGraphEditor)
 	{
-		mounteaGraphEditor->ResetExecutionOrders();
-		mounteaGraphEditor->AssignExecutionOrder();
+		mounteaGraphEditor->EnsureExecutionOrders();
 	}
 
 	TSharedPtr<SGraphEditor> currentGraphEditor = GetCurrGraphEditor();
@@ -1544,7 +1711,21 @@ TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Viewport(const 
 		.Label(LOCTEXT("ViewportTab_Title", "Viewport"));
 
 	if (ViewportWidget.IsValid())
-		SpawnedTab->SetContent(ViewportWidget.ToSharedRef());
+	{
+		ViewportWidget->SetEnabled(TAttribute<bool>::CreateSP(this, &FAssetEditor_MounteaDialogueGraph::IsInteractionAllowed));
+		SpawnedTab->SetContent
+		(
+			SNew(SOverlay)
+			+ SOverlay::Slot()
+			[
+				ViewportWidget.ToSharedRef()
+			]
+			+ SOverlay::Slot()
+			[
+				BuildLayoutOverlay()
+			]
+		);
+	}
 
 	return SpawnedTab;
 }
@@ -1556,7 +1737,11 @@ TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Details(const F
 	auto DockTab = SNew(SDockTab)
 		.Label(LOCTEXT("Details_Title", "Property"))
 		[
-			PropertyWidget.ToSharedRef()
+			SNew(SBox)
+			.IsEnabled(this, &FAssetEditor_MounteaDialogueGraph::IsInteractionAllowed)
+			[
+				PropertyWidget.ToSharedRef()
+			]
 		];
 
 	DockTab->SetTabIcon(FAppStyle::GetBrush("LevelEditor.Tabs.Details"));
@@ -1570,7 +1755,11 @@ TSharedRef<SDockTab> FAssetEditor_MounteaDialogueGraph::SpawnTab_Search(const FS
 	auto DockTab = SNew(SDockTab)
 		.Label(LOCTEXT("Search_Title", "Search"))
 		[
-			FindResultsView.ToSharedRef()
+			SNew(SBox)
+			.IsEnabled(this, &FAssetEditor_MounteaDialogueGraph::IsInteractionAllowed)
+			[
+				FindResultsView.ToSharedRef()
+			]
 		];
 
 	DockTab->SetTabIcon(FAppStyle::GetBrush("Kismet.Tabs.FindResults"));
