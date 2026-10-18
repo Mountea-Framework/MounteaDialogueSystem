@@ -12,10 +12,15 @@
 UENUM(BlueprintType)
 enum class EAutoLayoutStrategyType : uint8
 {
-	EALS_Tree				UMETA(DisplayName="Tree"),
-	EALS_ForceDirected		UMETA(DisplayName="Force Directed"),
+	/** Legacy. Resolved to Layered; the unsafe legacy algorithms no longer exist. */
+	EALS_Tree				UMETA(DisplayName="Tree", Hidden),
+	/** Legacy. Resolved to Layered; the unsafe legacy algorithms no longer exist. */
+	EALS_ForceDirected		UMETA(DisplayName="Force Directed", Hidden),
 
-	Default					UMETA(Hidden)
+	Default					UMETA(Hidden),
+
+	/** Layered layout with routed connections. Appended: existing values keep their numbers. */
+	EALS_Layered			UMETA(DisplayName="Layered")
 };
 
 #pragma endregion 
@@ -108,21 +113,6 @@ protected:
 	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
 	EAutoLayoutStrategyType AutoLayoutStrategy;
 
-	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
-	int32 MaxIteration;
-
-	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
-	bool bFirstPassOnly;
-
-	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
-	bool bRandomInit;
-
-	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
-	float InitTemperature;
-
-	UPROPERTY(config, EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
-	float CoolDownRate;
-
 #pragma endregion
 
 #pragma region GameplayTags
@@ -208,8 +198,9 @@ public:
 
 #pragma region GraphArrange_Getters
 	
+	/** Always Layered: configs that still name Tree / Force Directed resolve here. */
 	EAutoLayoutStrategyType GetAutoLayoutStrategy() const
-	{ return AutoLayoutStrategy; };
+	{ return EAutoLayoutStrategyType::EALS_Layered; };
 
 	float GetOptimalHorizontalDistance() const
 	{ return OptimalHorizontalDistance; };
@@ -217,20 +208,6 @@ public:
 	float GetOptimalVerticalDistance() const
 	{ return OptimalVerticalDistance; };
 
-	int32 GetMaxIteration() const
-	{ return MaxIteration; };
-	
-	bool IsFirstPassOnly() const
-	{ return bFirstPassOnly; };
-
-	bool IsRandomInit() const
-	{ return bRandomInit; };
-
-	float GetInitTemperature() const
-	{ return InitTemperature; };
-
-	float GetCoolDownRate() const
-	{ return CoolDownRate; };
 
 #pragma endregion 
 

@@ -109,36 +109,4 @@ namespace MounteaDialogueNodeSpacingUtils
 		OutRequiredTopY = requiredTopY;
 		return true;
 	}
-
-	void EnforceMinimumParentChildYSpacing(UEdGraph_MounteaDialogueGraph* Graph, int32 MaxPasses)
-	{
-		if (!Graph)
-			return;
-
-		const int32 clampedPasses = FMath::Clamp(MaxPasses, 1, 64);
-		for (int32 pass = 0; pass < clampedPasses; ++pass)
-		{
-			bool bChanged = false;
-
-			for (UEdGraphNode* graphNode : Graph->Nodes)
-			{
-				UEdNode_MounteaDialogueGraphNode* dialogueNode = Cast<UEdNode_MounteaDialogueGraphNode>(graphNode);
-				if (!dialogueNode)
-					continue;
-
-				float requiredTopY = 0.0f;
-				if (!ComputeRequiredChildTopY(dialogueNode, requiredTopY))
-					continue;
-
-				if (static_cast<float>(dialogueNode->NodePosY) < requiredTopY)
-				{
-					dialogueNode->NodePosY = FMath::CeilToInt(requiredTopY);
-					bChanged = true;
-				}
-			}
-
-			if (!bChanged)
-				break;
-		}
-	}
 }

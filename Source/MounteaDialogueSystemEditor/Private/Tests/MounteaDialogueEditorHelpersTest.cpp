@@ -46,7 +46,7 @@ bool FMounteaEditorMarkdownTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-// A child must sit at least the minimum gap below the lowest of its parents; children above that are pushed down.
+// A child must sit at least the minimum gap below the lowest of its parents (feedback parents do not count).
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMounteaEditorSpacingTest,
 	"Mountea.DialogueSystemEditor.Helpers.NodeSpacing",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
@@ -77,10 +77,7 @@ bool FMounteaEditorSpacingTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("The gap is positive"), Spacing::GetMinParentChildGap() > 0.f);
 	TestTrue(TEXT("Nodes without widgets have a fallback height"), Spacing::GetNodeHeight(nullptr) > 0.f);
 
-	Spacing::EnforceMinimumParentChildYSpacing(graph.EdGraph);
-	TestTrue(TEXT("The overlapping child is pushed below its parent"), edLead->NodePosY >= FMath::FloorToInt(required));
-	TestEqual(TEXT("A child already far enough below is left alone"), edAnswer->NodePosY, 5000);
-	TestEqual(TEXT("Roots never move"), edStart->NodePosY, 0);
+	TestTrue(TEXT("A child already far enough below needs nothing more"), Spacing::ComputeRequiredChildTopY(edAnswer, required) && required < 5000.f);
 	return true;
 }
 
