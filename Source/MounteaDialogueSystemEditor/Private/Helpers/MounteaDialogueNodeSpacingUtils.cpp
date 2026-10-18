@@ -24,6 +24,26 @@ namespace MounteaDialogueNodeSpacingUtils
 	{
 		constexpr float ExtraVerticalPadding = 10.0f;
 		constexpr float FallbackNodeHeight = 150.0f;
+
+		/** True when Target can be reached from From (iterative, visited-guarded). */
+		bool CanReach(const UMounteaDialogueGraphNode* From, const UMounteaDialogueGraphNode* Target)
+		{
+			TSet<const UMounteaDialogueGraphNode*> visited;
+			TArray<const UMounteaDialogueGraphNode*> stack;
+			stack.Add(From);
+			while (stack.Num() > 0)
+			{
+				const UMounteaDialogueGraphNode* node = stack.Pop(EAllowShrinking::No);
+				if (!node || visited.Contains(node))
+					continue;
+				if (node == Target)
+					return true;
+				visited.Add(node);
+				for (const UMounteaDialogueGraphNode* child : node->ChildrenNodes)
+					stack.Add(child);
+			}
+			return false;
+		}
 	}
 
 	float GetMinParentChildGap()
@@ -67,6 +87,10 @@ namespace MounteaDialogueNodeSpacingUtils
 		for (UMounteaDialogueGraphNode* parentNode : ChildNode->DialogueGraphNode->ParentNodes)
 		{
 			if (!parentNode)
+				continue;
+
+			// Feedback connection (child can reach its parent): it must not force the child below that parent.
+			if (parentNode == ChildNode->DialogueGraphNode || CanReach(ChildNode->DialogueGraphNode, parentNode))
 				continue;
 
 			UEdNode_MounteaDialogueGraphNode* const* parentEdNodePtr = graph->NodeMap.Find(parentNode);
