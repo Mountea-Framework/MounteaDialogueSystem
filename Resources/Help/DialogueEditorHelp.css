@@ -81,6 +81,16 @@ a {
 	text-underline-offset: var(--space-1);
 }
 
+/* Explicit link cursor. Links use href="#" plus data attributes, and every element inside a link
+   inherits the pointer, so the embedded editor browser never falls back to the text or arrow cursor mid-link. */
+a,
+a *,
+[data-mds-type],
+[data-mds-type] *,
+[data-toggle] {
+	cursor: pointer;
+}
+
 h1,
 h2,
 h3,
