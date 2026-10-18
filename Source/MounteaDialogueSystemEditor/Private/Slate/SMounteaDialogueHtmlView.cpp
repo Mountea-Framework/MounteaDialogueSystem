@@ -84,6 +84,14 @@ void SMounteaDialogueHtmlView::Construct(const FArguments& InArgs)
 	];
 }
 
+void SMounteaDialogueHtmlView::SetParentWindow(TSharedPtr<SWindow> Window) const
+{
+  if(!WebBrowser.IsValid())
+    return;
+
+  WebBrowser->SetParentWindow(Window);
+}
+
 void SMounteaDialogueHtmlView::LoadHtmlFile(const FString& FilePath)
 {
 	if(!WebBrowser.IsValid())

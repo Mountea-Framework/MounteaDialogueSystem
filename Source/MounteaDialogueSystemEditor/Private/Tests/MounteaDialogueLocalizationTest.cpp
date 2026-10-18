@@ -117,7 +117,7 @@ bool FMounteaLocalizationWritesLocresTest::RunTest(const FString& Parameters)
 				continue;
 			for (auto it = resource.Entries.CreateIterator(); it; ++it)
 			{
-				const FString ns = it.Key().GetNamespace().GetChars();
+				const FString ns = it.Key().GetNamespace().ToString();
 				if (ns.StartsWith(TEXT("ST_MounteaLocTest_")))
 					it.RemoveCurrent();
 			}

@@ -229,6 +229,8 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText>& Errors, 
 			windowContent
 		];
 
+  window = FSlateApplication::Get().AddWindow(window.ToSharedRef(), false);
+
 	TSharedPtr<SMounteaDialogueHtmlView> htmlView;
 	windowContent->SetContent(
 		SNew(SBorder)
@@ -240,8 +242,6 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText>& Errors, 
 			.OnConsoleMessage(FOnMounteaDialogueConsoleMessage::CreateStatic(&MDSPopup_GraphValidation::HandleConsoleMessage))
 		]
 	);
-
-	window = FSlateApplication::Get().AddWindow(window.ToSharedRef());
 
 	const TWeakPtr<SWindow> weakWindow = window;
 	const FTSTicker::FDelegateHandle resizeTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
@@ -263,6 +263,7 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText>& Errors, 
 
 	if(htmlView.IsValid())
 	{
+    htmlView->SetParentWindow(window);
 		FString validationHtml;
 		FString htmlSourcePath;
 		if(!BuildValidationHtmlFromTemplate(Errors, Warnings, validationHtml, htmlSourcePath))
@@ -273,6 +274,8 @@ TSharedPtr<SWindow> MDSPopup_GraphValidation::Open(const TArray<FText>& Errors, 
 
 		htmlView->LoadHtmlString(validationHtml, htmlSourcePath);
 	}
+
+  window->ShowWindow();
 
 	return window;
 }

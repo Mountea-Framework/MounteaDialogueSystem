@@ -11,6 +11,7 @@
 
 #include "Helpers/MounteaDialogueHtmlHelpers.h"
 
+#include "Containers/StringConv.h"
 #include "Interfaces/IPluginManager.h"
 #include "HAL/FileManager.h"
 #include "Helpers/MounteaDialogueGraphEditorHelpers.h"
@@ -21,14 +22,49 @@
 
 FString FMounteaDialogueHtmlHelpers::BuildBaseUrl(const FString& SourcePath)
 {
-	if(SourcePath.IsEmpty())
-		return TEXT("about:blank");
+  FString sourcePath = SourcePath;
+  if(sourcePath.IsEmpty())
+  {
+    const TSharedPtr<IPlugin> plugin = IPluginManager::Get().FindPlugin(TEXT("MounteaDialogueSystem"));
+    if(!plugin.IsValid())
+      return TEXT("about:blank");
 
-	FString normalizedPath = FPaths::ConvertRelativePathToFull(SourcePath);
-	normalizedPath = FPaths::GetPath(normalizedPath);
-	normalizedPath = normalizedPath.Replace(TEXT("\\"), TEXT("/"));
+    sourcePath = FPaths::Combine(plugin->GetBaseDir(), TEXT("Resources/Help/generated.html"));
+  }
 
-	return FString::Printf(TEXT("file:///%s/"), *normalizedPath);
+  const FString normalizedPath = FPaths::ConvertRelativePathToFull(sourcePath);
+  const bool hasDriveLetter = normalizedPath.Len() >= 3
+    && ((normalizedPath[0] >= TEXT('A') && normalizedPath[0] <= TEXT('Z'))
+      || (normalizedPath[0] >= TEXT('a') && normalizedPath[0] <= TEXT('z')))
+    && normalizedPath[1] == TEXT(':') && normalizedPath[2] == TEXT('/');
+
+  const FTCHARToUTF8 pathUtf8(*normalizedPath);
+  const TCHAR* hexDigits = TEXT("0123456789ABCDEF");
+  FString encodedPath;
+  encodedPath.Reserve(pathUtf8.Length());
+
+  for(int32 byteIndex = 0; byteIndex < pathUtf8.Length(); ++byteIndex)
+  {
+    const uint8 pathByte = static_cast<uint8>(pathUtf8.Get()[byteIndex]);
+    const bool isUnreserved = (pathByte >= 'A' && pathByte <= 'Z')
+      || (pathByte >= 'a' && pathByte <= 'z')
+      || (pathByte >= '0' && pathByte <= '9')
+      || pathByte == '-' || pathByte == '.' || pathByte == '_' || pathByte == '~';
+
+    if(isUnreserved || pathByte == '/' || (hasDriveLetter && byteIndex == 1))
+      encodedPath.AppendChar(static_cast<TCHAR>(pathByte));
+    else
+    {
+      encodedPath.AppendChar(TEXT('%'));
+      encodedPath.AppendChar(hexDigits[pathByte >> 4]);
+      encodedPath.AppendChar(hexDigits[pathByte & 0x0f]);
+    }
+  }
+
+  if(normalizedPath.StartsWith(TEXT("//")))
+    return TEXT("file:") + encodedPath;
+
+  return (normalizedPath.StartsWith(TEXT("/")) ? TEXT("file://") : TEXT("file:///")) + encodedPath;
 }
 
 FString FMounteaDialogueHtmlHelpers::InjectSharedAssets(const FString& HtmlContent)

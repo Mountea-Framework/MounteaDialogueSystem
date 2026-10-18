@@ -15,6 +15,7 @@
 #include "Widgets/SCompoundWidget.h"
 
 class SWebBrowser;
+class SWindow;
 enum class EWebBrowserConsoleLogSeverity;
 
 DECLARE_DELEGATE_FourParams(FOnMounteaDialogueConsoleMessage, const FString&, const FString&, int32, EWebBrowserConsoleLogSeverity);
@@ -33,6 +34,7 @@ public:
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs);
+  void SetParentWindow(TSharedPtr<SWindow> Window) const;
 	void LoadString(const FString& Contents, const FString& DummyURL) const;
 	void ExecuteJavascript(const FString& ScriptText) const;
 
