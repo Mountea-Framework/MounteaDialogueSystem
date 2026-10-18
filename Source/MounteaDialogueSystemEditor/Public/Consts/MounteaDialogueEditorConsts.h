@@ -56,6 +56,9 @@ namespace MounteaGraphLayoutStrategy
 
 namespace MounteaPopup
 {
+  static const FName WelcomeTabId(TEXT("MounteaDialogueWelcome"));
+  static const FName GraphValidationTabId(TEXT("MounteaDialogueGraphValidation"));
+
 	constexpr float PopupWidthRatio = 0.4f;
 	constexpr float PopupHeightRatio = 0.6f;
 }
