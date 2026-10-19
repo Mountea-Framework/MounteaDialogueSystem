@@ -66,12 +66,30 @@ body {
 	font-size: var(--font-size-base);
 }
 
+html {
+	scrollbar-gutter: stable;
+}
+
 body {
 	padding: var(--space-5);
 }
 
+/* Page-level scrollbar. A width without track/thumb colours renders an invisible bar. */
 ::-webkit-scrollbar {
 	width: var(--size-scrollbar);
+}
+
+::-webkit-scrollbar-track {
+	background: var(--code-bg);
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--accent);
+	border-radius: var(--radius-scroll);
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: var(--text-muted);
 }
 
 a {
@@ -350,6 +368,8 @@ header {
 	overflow-y: auto;
 	overflow-x: hidden;
 	overscroll-behavior: contain;
+	/* Reserve the scrollbar lane so content does not shift when a scrollbar appears. */
+	scrollbar-gutter: stable;
 }
 
 .ui-scroll-y::-webkit-scrollbar,
@@ -368,7 +388,7 @@ header {
 .validation-results-scroll::-webkit-scrollbar-track,
 .validation-list--scroll::-webkit-scrollbar-track,
 .validation-fold .validation-list::-webkit-scrollbar-track {
-	background: transparent;
+	background: var(--code-bg);
 	border-radius: var(--radius-scroll);
 }
 
@@ -378,8 +398,17 @@ header {
 .validation-results-scroll::-webkit-scrollbar-thumb,
 .validation-list--scroll::-webkit-scrollbar-thumb,
 .validation-fold .validation-list::-webkit-scrollbar-thumb {
-	background: var(--page-border);
+	background: var(--accent);
 	border-radius: var(--radius-scroll);
+}
+
+.ui-scroll-y::-webkit-scrollbar-thumb:hover,
+.doc-content::-webkit-scrollbar-thumb:hover,
+.setup-table-scroll::-webkit-scrollbar-thumb:hover,
+.validation-results-scroll::-webkit-scrollbar-thumb:hover,
+.validation-list--scroll::-webkit-scrollbar-thumb:hover,
+.validation-fold .validation-list::-webkit-scrollbar-thumb:hover {
+	background: var(--text-muted);
 }
 
 /* ==================== FULLSCREEN SHELL ==================== */
@@ -395,6 +424,7 @@ header {
 	block-size: 100vh;
 	max-block-size: 100vh;
 	overflow: hidden;
+	scrollbar-gutter: auto;
 	background: var(--page-bg);
 }
 
