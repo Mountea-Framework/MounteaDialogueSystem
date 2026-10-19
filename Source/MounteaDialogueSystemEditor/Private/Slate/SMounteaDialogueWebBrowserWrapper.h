@@ -17,6 +17,7 @@
 class SWebBrowser;
 class SWindow;
 enum class EWebBrowserConsoleLogSeverity;
+struct FWebNavigationRequest;
 
 DECLARE_DELEGATE_FourParams(FOnMounteaDialogueConsoleMessage, const FString&, const FString&, int32, EWebBrowserConsoleLogSeverity);
 
@@ -41,5 +42,8 @@ public:
 	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 
 private:
+	bool HandleBeforeNavigation(const FString& Url, const FWebNavigationRequest& Request);
+
 	TSharedPtr<SWebBrowser> WebBrowser;
+	FOnMounteaDialogueConsoleMessage OnConsoleMessage;
 };
