@@ -19,8 +19,30 @@
 		return element;
 	}
 
+	// Must match LinkBridgePrefix in SMounteaDialogueWebBrowserWrapper.cpp.
+	const LINK_BRIDGE_PREFIX = "https://mds-link.invalid/";
+	let linkBridgeFrame = null;
+
+	function sendLinkBridge(typeValue, targetValue) {
+		if (!linkBridgeFrame || !linkBridgeFrame.isConnected) {
+			linkBridgeFrame = document.createElement("iframe");
+			linkBridgeFrame.setAttribute("aria-hidden", "true");
+			linkBridgeFrame.tabIndex = -1;
+			linkBridgeFrame.style.cssText = "position:absolute;width:0;height:0;border:0;visibility:hidden;";
+			document.body.appendChild(linkBridgeFrame);
+		}
+
+		// The editor cancels this navigation and runs the link action, so the frame never loads anything.
+		linkBridgeFrame.src = LINK_BRIDGE_PREFIX + encodeURIComponent(typeValue) + "/" + encodeURIComponent(targetValue || "") + "?t=" + Date.now();
+	}
+
 	function emitMessage(prefixValue, typeValue, targetValue) {
 		if (!typeValue) {
+			return;
+		}
+
+		if (prefixValue === "MDS") {
+			sendLinkBridge(typeValue, targetValue);
 			return;
 		}
 
@@ -157,25 +179,48 @@
 		renderSetupRows("player-results", "Player", report.playerResults);
 	}
 
+	let lastLinkActivation = 0;
+
+	function activateLink(eventValue) {
+		const targetElement = eventValue.target instanceof Element ? eventValue.target : null;
+		if (!targetElement) {
+			return;
+		}
+
+		const mdsLink = targetElement.closest("a[data-mds-type]");
+		const inventoryLink = targetElement.closest("a[data-type]");
+		const linkElement = mdsLink || inventoryLink;
+		if (!linkElement) {
+			return;
+		}
+
+		eventValue.preventDefault();
+
+		// Embedded browsers may not synthesize "click" reliably, so links also activate on primary-button release.
+		// Whichever event arrives second within the window is ignored.
+		const now = Date.now();
+		if (now - lastLinkActivation < 400) {
+			return;
+		}
+		lastLinkActivation = now;
+
+		if (mdsLink) {
+			emitMessage("MDS", linkElement.getAttribute("data-mds-type"), linkElement.getAttribute("data-mds-target"));
+			return;
+		}
+
+		emitMessage("MIAE", linkElement.getAttribute("data-type"), linkElement.getAttribute("href"));
+	}
+
+	document.addEventListener("click", activateLink, true);
 	document.addEventListener(
-		"click",
+		"mouseup",
 		function (eventValue) {
-			const mdsLink = eventValue.target.closest("a[data-mds-type]");
-			const inventoryLink = eventValue.target.closest("a[data-type]");
-			const linkElement = mdsLink || inventoryLink;
-			if (!linkElement) {
-				return;
+			if (eventValue.button === 0) {
+				activateLink(eventValue);
 			}
-
-			eventValue.preventDefault();
-			if (mdsLink) {
-				emitMessage("MDS", linkElement.getAttribute("data-mds-type"), linkElement.getAttribute("data-mds-target"));
-				return;
-			}
-
-			emitMessage("MIAE", linkElement.getAttribute("data-type"), linkElement.getAttribute("href"));
 		},
-		false
+		true
 	);
 
 	document.addEventListener(

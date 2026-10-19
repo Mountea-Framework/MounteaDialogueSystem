@@ -90,3 +90,4 @@ compile_commands.json
 Resources/Help/changelog.html
 /Bugreports
 /Docs
+.DS_Store
